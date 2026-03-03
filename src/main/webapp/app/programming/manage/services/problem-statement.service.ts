@@ -1,14 +1,17 @@
-import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, OperatorFunction, catchError, finalize, map, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileService } from 'app/shared/service/file.service';
 import { HyperionProblemStatementApiService } from 'app/openapi/api/hyperionProblemStatementApi.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import {
+    InlineRefinementEvent,
+    MAX_INSTRUCTION_LENGTH,
     MAX_PROBLEM_STATEMENT_LENGTH,
     buildGenerationRequest,
     buildGlobalRefinementRequest,
+    buildTargetedRefinementRequest,
     getCourseId,
     isValidGenerationResponse,
     isValidRefinementResponse,
@@ -86,6 +89,44 @@ export class ProblemStatementService {
                     'artemisApp.programmingExercise.problemStatement.refinementError',
                     isValidRefinementResponse,
                     (response) => response?.refinedProblemStatement,
+                ),
+            );
+    }
+
+    /** Refines a problem statement with targeted selection-based instructions. */
+    refineTargeted(
+        exercise: ProgrammingExercise | undefined,
+        currentContent: string,
+        event: InlineRefinementEvent,
+        setLoading: (loading: boolean) => void,
+    ): Observable<OperationResult> {
+        const courseId = getCourseId(exercise);
+        if (!courseId || !currentContent?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+            return of({ success: false, errorHandled: true });
+        }
+        if (!event.instruction?.trim()) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+            return of({ success: false, errorHandled: true });
+        }
+        if (currentContent.length > MAX_PROBLEM_STATEMENT_LENGTH) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.problemStatementTooLong');
+            return of({ success: false, errorHandled: true });
+        }
+        if (event.instruction.trim().length > MAX_INSTRUCTION_LENGTH) {
+            this.alertService.error('artemisApp.programmingExercise.problemStatement.inlineRefinement.instructionTooLong');
+            return of({ success: false, errorHandled: true });
+        }
+        setLoading(true);
+        return this.hyperionApiService
+            .refineProblemStatementTargeted(courseId, buildTargetedRefinementRequest(currentContent, event))
+            .pipe(
+                this.handleApiResponse(
+                    setLoading,
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.success',
+                    'artemisApp.programmingExercise.problemStatement.inlineRefinement.error',
+                    isValidRefinementResponse,
+                    (r) => r?.refinedProblemStatement,
                 ),
             );
     }
