@@ -47,10 +47,17 @@
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
             "searchLectureContent": "Search Lecture Content",
             "searchLectureContentDescription": "Deep semantic search through transcripts and materials",
+            "searchLectureContentHint": "Start typing to search through lecture content",
             "lectureResultsAriaLabel": "Lecture search results",
             "arrowUpAriaLabel": "Up arrow",
             "arrowDownAriaLabel": "Down arrow",
-            "pageAbbreviation": "pg."
+            "pageAbbreviation": "pg.",
+            "askIris": "Ask Iris",
+            "askIrisDescription": "Ask Iris a question about your courses",
+            "irisAnswerTitle": "Iris Answer",
+            "irisAnswerSources": "Sources",
+            "irisAnswerError": "Something went wrong. Please try again.",
+            "continueInIris": "Continue in Iris"
         },
         "menu": {
             "home": "Home",

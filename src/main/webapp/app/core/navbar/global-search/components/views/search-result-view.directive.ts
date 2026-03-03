@@ -1,5 +1,7 @@
 import { Directive, Signal } from '@angular/core';
 
+export const SEARCH_DEBOUNCE_MS = 300;
+
 /**
  * Base class for search result view components that report their item count
  * and handle selection to the modal.

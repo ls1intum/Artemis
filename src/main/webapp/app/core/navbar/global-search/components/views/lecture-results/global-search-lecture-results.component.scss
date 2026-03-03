@@ -6,7 +6,7 @@
         background 0.15s;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         color: var(--bs-body-color);
         background: var(--bs-secondary-bg);
         text-decoration: none;
@@ -29,7 +29,7 @@
 
     &.is-selected,
     &:hover,
-    &:focus {
+    &:focus-visible {
         border-color: var(--global-search-result-hover-border) !important;
         background: var(--global-search-result-hover-bg);
         text-decoration: none !important;

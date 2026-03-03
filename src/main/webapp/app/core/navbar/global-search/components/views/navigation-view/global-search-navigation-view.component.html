@@ -1,25 +1,27 @@
 <!-- Action buttons: Only show when no filter is active -->
 @if (!showResults()) {
-    <!-- Action button: Ask Iris (index 0) - Placeholder -->
-    <div #selectableItem>
-        <jhi-global-search-action-item
-            [title]="'Ask Iris'"
-            [description]="'Chat with Iris AI assistant'"
-            [selected]="selectedIndex() === 0"
-            accentColor="var(--bs-primary)"
-            secondaryAccentColor="var(--bs-info)"
-            (clicked)="viewSelected.emit(SearchView.Iris)"
-        >
-            <fa-icon slot="icon" [icon]="faHashtag" aria-hidden="true" />
-        </jhi-global-search-action-item>
-    </div>
+    <!-- Action button: Ask Iris (index 0) -->
+    @if (!irisOpen()) {
+        <div #selectableItem>
+            <jhi-global-search-action-item
+                [title]="'global.search.askIris' | artemisTranslate"
+                [description]="'global.search.askIrisDescription' | artemisTranslate"
+                [selected]="selectedIndex() === 0"
+                accentColor="var(--global-search-iris-accent)"
+                secondaryAccentColor="var(--global-search-iris-accent-secondary)"
+                (clicked)="viewSelected.emit(SearchView.Iris)"
+            >
+                <jhi-iris-logo slot="icon" [size]="IrisLogoSize.FLUID" aria-hidden="true" />
+            </jhi-global-search-action-item>
+        </div>
+    }
 
     <!-- Action button: Search Lecture Content (index 1) -->
     <div #selectableItem>
         <jhi-global-search-action-item
             [title]="'global.search.searchLectureContent' | artemisTranslate"
             [description]="'global.search.searchLectureContentDescription' | artemisTranslate"
-            [selected]="selectedIndex() === 1"
+            [selected]="selectedIndex() === (irisOpen() ? 0 : 1)"
             accentColor="var(--global-search-lecture-accent)"
             secondaryAccentColor="var(--bs-primary)"
             (clicked)="viewSelected.emit(SearchView.Lecture)"

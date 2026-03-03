@@ -12,6 +12,7 @@ import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
+import { GlobalSearchIrisAnswerComponent } from 'app/core/navbar/global-search/components/views/iris-answer/global-search-iris-answer.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { SearchInputComponent } from './search-input/search-input.component';
@@ -21,7 +22,15 @@ import { SearchableEntity } from '../../models/searchable-entity.model';
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
+    imports: [
+        DialogModule,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        GlobalSearchNavigationViewComponent,
+        GlobalSearchLectureResultsComponent,
+        GlobalSearchIrisAnswerComponent,
+        SearchInputComponent,
+    ],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -35,6 +44,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
     protected readonly currentView = signal(SearchView.Navigation);
+    protected readonly irisSourceView = signal(SearchView.Navigation);
     protected readonly SearchView = SearchView;
     protected readonly searchQuery = signal('');
     protected readonly activeFilters = signal<string[]>([]);
@@ -214,6 +224,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.hasSearched.set(false);
         this.isLoading.set(false);
         this.currentView.set(SearchView.Navigation);
+        this.irisSourceView.set(SearchView.Navigation);
+    }
+
+    // Updates which view is shown on the left side of the Iris split layout
+    // without closing the drawer. Used when an action button is clicked inside the split.
+    protected updateIrisSource(view: SearchView) {
+        this.irisSourceView.set(view);
+        this.selectedIndex.set(-1);
     }
 
     protected focusInput() {
@@ -257,6 +275,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
     }
 
     protected navigateTo(view: SearchView) {
+        if (view === SearchView.Iris) {
+            if (this.currentView() === SearchView.Iris) {
+                // Drawer is already open — do nothing to avoid collapsing it
+                return;
+            }
+            this.irisSourceView.set(this.currentView());
+        }
         this.currentView.set(view);
         this.selectedIndex.set(-1);
     }

@@ -8,9 +8,8 @@ import { LectureSearchResult } from 'app/core/navbar/global-search/models/lectur
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { catchError, debounceTime, of, switchMap, tap } from 'rxjs';
-import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-
-const SEARCH_DEBOUNCE_MS = 300;
+import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 
 @Component({
     selector: 'jhi-global-search-lecture-results',
@@ -24,17 +23,21 @@ const SEARCH_DEBOUNCE_MS = 300;
 export class GlobalSearchLectureResultsComponent extends SearchResultView {
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
+    readonly irisOpen = input<boolean>(false);
     protected readonly back = output<void>();
+    protected readonly viewSelected = output<SearchView>();
     private readonly searchService = inject(LectureSearchService);
     private readonly router = inject(Router);
     private readonly hostElement = inject(ElementRef<HTMLElement>);
     protected readonly lectureResults = signal<LectureSearchResult[]>([]);
     protected readonly isLoading = signal(false);
+    protected readonly hasError = signal(false);
     readonly itemCount = computed(() => this.lectureResults().length);
     private readonly cards = viewChildren<ElementRef<HTMLAnchorElement>>('cardRef');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
-    protected readonly skeletonItems = Array(5);
+    protected readonly skeletonItems = Array.from({ length: 5 });
+    protected readonly SearchView = SearchView;
 
     constructor() {
         super();
@@ -50,6 +53,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
             .pipe(
                 debounceTime(SEARCH_DEBOUNCE_MS),
                 tap((query) => {
+                    this.hasError.set(false);
                     if (query.trim()) {
                         this.isLoading.set(true);
                     }
@@ -58,7 +62,12 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
                     if (!query.trim()) {
                         return of([]);
                     }
-                    return this.searchService.search(query).pipe(catchError(() => of([])));
+                    return this.searchService.search(query).pipe(
+                        catchError(() => {
+                            this.hasError.set(true);
+                            return of([]);
+                        }),
+                    );
                 }),
                 takeUntilDestroyed(),
             )
@@ -71,6 +80,7 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     @HostListener('window:keydown', ['$event'])
     handleKeydown(event: KeyboardEvent): void {
         const index = this.selectedIndex();
+        if (index < 0) return;
         const result = this.lectureResults()[index];
         if (event.key === 'Enter' && result) {
             event.preventDefault();

@@ -29,6 +29,7 @@ import { SearchResultItemComponent } from 'app/core/navbar/global-search/compone
 import { Router } from '@angular/router';
 import { SearchOverlayService } from 'app/core/navbar/global-search/services/search-overlay.service';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 // Number of fixed action buttons rendered above the search results.
 // Arrow-key indices 0..NAV_ACTION_COUNT-1 map to these buttons in template order.
@@ -39,7 +40,7 @@ export const NAV_ACTION_COUNT = 2;
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, ArtemisTranslatePipe],
+    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, ArtemisTranslatePipe, IrisLogoComponent],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -47,6 +48,7 @@ export const NAV_ACTION_COUNT = 2;
 export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly searchQuery = input.required<string>();
     readonly selectedIndex = input<number>(-1);
+    readonly irisOpen = input<boolean>(false);
     readonly results = input<GlobalSearchResult[]>([]);
     readonly hasSearched = input<boolean>(false);
     readonly showResults = input<boolean>(false);
@@ -159,14 +161,16 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             // When showing results, action buttons are hidden, only count results
             return this.results().length;
         } else {
-            // When showing entities, count action buttons + entities
-            return NAV_ACTION_COUNT + this.searchableEntities.length;
+            // When showing entities, count visible action buttons + entities.
+            // Iris button is hidden when irisOpen() is true.
+            const actionCount = this.irisOpen() ? NAV_ACTION_COUNT - 1 : NAV_ACTION_COUNT;
+            return actionCount + this.searchableEntities.length;
         }
     });
 
     protected readonly SearchView = SearchView;
+    protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faFileLines = faFileLines;
-    protected readonly faHashtag = faHashtag;
 
     protected onEntityItemClick(entity: SearchableEntity) {
         this.entityClick.emit(entity);
@@ -198,6 +202,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
+        if (idx < 0) return;
 
         if (this.showResults()) {
             // When showing results, no action buttons are present
@@ -207,16 +212,19 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
                 this.navigateToResult(result);
             }
         } else {
-            // When showing entities, action buttons are present
-            if (idx === 0) {
+            // When showing entities, action buttons are present.
+            // Iris button is hidden when irisOpen() is true, shifting indices down by 1.
+            const irisHidden = this.irisOpen();
+            const actionCount = irisHidden ? NAV_ACTION_COUNT - 1 : NAV_ACTION_COUNT;
+            if (!irisHidden && idx === 0) {
                 event.preventDefault();
                 this.viewSelected.emit(SearchView.Iris);
-            } else if (idx === 1) {
+            } else if (idx === (irisHidden ? 0 : 1)) {
                 event.preventDefault();
                 this.viewSelected.emit(SearchView.Lecture);
-            } else if (idx >= NAV_ACTION_COUNT) {
+            } else if (idx >= actionCount) {
                 event.preventDefault();
-                const entityIndex = idx - NAV_ACTION_COUNT;
+                const entityIndex = idx - actionCount;
                 const entity = this.searchableEntities[entityIndex];
                 if (entity && entity.enabled) {
                     this.entityClick.emit(entity);
