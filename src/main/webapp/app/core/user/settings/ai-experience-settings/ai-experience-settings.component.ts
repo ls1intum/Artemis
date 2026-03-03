@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
-import { Subject, forkJoin } from 'rxjs';
+import { Subject, forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import dayjs from 'dayjs/esm';
 import { RouterLink } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -55,16 +56,28 @@ export class AiExperienceSettingsComponent implements OnInit {
     }
 
     deleteAllIrisInteractions() {
-        forkJoin([this.irisChatHttpService.deleteAllSessions(), this.irisMemoriesHttpService.deleteAllUserMemories()]).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.alertService.success('artemisApp.userSettings.aiExperienceSettingsPage.deleteSuccess');
-                this.sessionCount.set(0);
-                this.messageCount.set(0);
-                this.memoryCount.set(0);
-            },
-            error: () => {
-                this.dialogErrorSource.next('artemisApp.userSettings.aiExperienceSettingsPage.deleteFailure');
+        forkJoin([
+            this.irisChatHttpService.deleteAllSessions().pipe(catchError(() => of('error'))),
+            this.irisMemoriesHttpService.deleteAllUserMemories().pipe(catchError(() => of('error'))),
+        ]).subscribe({
+            next: ([sessionsResult, memoriesResult]) => {
+                const sessionsDeleted = sessionsResult !== 'error';
+                const memoriesDeleted = memoriesResult !== 'error';
+
+                if (sessionsDeleted) {
+                    this.sessionCount.set(0);
+                    this.messageCount.set(0);
+                }
+                if (memoriesDeleted) {
+                    this.memoryCount.set(0);
+                }
+
+                if (sessionsDeleted && memoriesDeleted) {
+                    this.dialogErrorSource.next('');
+                    this.alertService.success('artemisApp.userSettings.aiExperienceSettingsPage.deleteSuccess');
+                } else {
+                    this.dialogErrorSource.next('artemisApp.userSettings.aiExperienceSettingsPage.deleteFailure');
+                }
             },
         });
     }

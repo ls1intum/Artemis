@@ -117,7 +117,7 @@ describe('AiExperienceSettingsComponent', () => {
         expect(component.memoryCount()).toBe(0);
     });
 
-    it('should handle delete failure', () => {
+    it('should handle delete failure when chat deletion fails', () => {
         jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         jest.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(0));
         fixture.detectChanges();
@@ -131,6 +131,29 @@ describe('AiExperienceSettingsComponent', () => {
         component.deleteAllIrisInteractions();
 
         expect(dialogErrorSpy).toHaveBeenCalledWith('artemisApp.userSettings.aiExperienceSettingsPage.deleteFailure');
+        // sessions not reset, memories were deleted
+        expect(component.sessionCount()).toBe(3);
+        expect(component.memoryCount()).toBe(0);
+    });
+
+    it('should reset only memories when chat deletion succeeds but memory deletion fails', () => {
+        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
+        jest.spyOn(irisMemoriesHttpService, 'getUserMemoryCount').mockReturnValue(of(5));
+        fixture.detectChanges();
+
+        jest.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+        jest.spyOn(irisMemoriesHttpService, 'deleteAllUserMemories').mockReturnValue(throwError(() => new Error('error')));
+
+        const dialogErrorSpy = jest.fn();
+        component.dialogError$.subscribe(dialogErrorSpy);
+
+        component.deleteAllIrisInteractions();
+
+        expect(dialogErrorSpy).toHaveBeenCalledWith('artemisApp.userSettings.aiExperienceSettingsPage.deleteFailure');
+        // sessions reset, memories not reset
+        expect(component.sessionCount()).toBe(0);
+        expect(component.messageCount()).toBe(0);
+        expect(component.memoryCount()).toBe(5);
     });
 
     it('should open selection modal and update on choice', async () => {
