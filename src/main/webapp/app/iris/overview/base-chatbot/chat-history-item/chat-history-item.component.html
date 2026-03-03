@@ -13,12 +13,27 @@
         }
         {{ session().title ? session().title : (session().creationDate | date: 'dd.MM.yy HH:mm') }}
     </div>
-    @if (relatedEntityName() && icon() && tooltipKey()) {
-        <div class="related-entity-info">
-            <div class="related-entity-name">
-                <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
-                {{ relatedEntityName() }}
+    <div class="chat-history-item-actions">
+        @if (relatedEntityName() && icon() && tooltipKey()) {
+            <div class="related-entity-info">
+                <div class="related-entity-name">
+                    <fa-icon [icon]="icon()!" [ngbTooltip]="tooltipKey()! | artemisTranslate" />
+                    {{ relatedEntityName() }}
+                </div>
             </div>
-        </div>
-    }
+        }
+        @if (!isNewChat()) {
+            <button type="button" class="menu-trigger" (click)="onMenuToggle($event)" [attr.aria-label]="'artemisApp.iris.chatHistory.sessionMenuAriaLabel' | artemisTranslate">
+                <fa-icon [icon]="faEllipsisVertical" />
+            </button>
+        }
+    </div>
+    <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body" styleClass="chat-history-item-menu">
+        <ng-template #item let-item>
+            <a class="p-menu-item-link danger">
+                <fa-icon [icon]="faTrash" />
+                <span class="p-menu-item-label ms-2">{{ item.label }}</span>
+            </a>
+        </ng-template>
+    </p-menu>
 </div>
