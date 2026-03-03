@@ -63,13 +63,12 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
-        if (!this.irisEnabled) return;
-        if (idx === 0) {
+        if (this.irisEnabled && idx === 0) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
         }
-        // TODO: Handle Enter on navigation search results (idx >= NAV_ACTION_COUNT).
-        // const result = this.navResults()[idx - NAV_ACTION_COUNT];
+        // TODO: Handle Enter on navigation search results.
+        // const result = this.navResults()[this.resultSelectedIndex()];
         // if (result) { event.preventDefault(); this.router.navigateByUrl(result.link); }
     }
 }
