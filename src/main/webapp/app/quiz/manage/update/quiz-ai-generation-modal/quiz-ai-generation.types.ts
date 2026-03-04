@@ -9,6 +9,7 @@ export interface GeneratedOption {
 export interface GeneratedQuestion {
     id: string;
     type: GeneratedQuestionType;
+    title: string;
     questionText: string;
     options: GeneratedOption[];
 }

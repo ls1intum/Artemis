@@ -55,6 +55,7 @@ class HyperionQuizQuestionGenerationServiceTest {
                   "questions": [
                     {
                       "type": "single-choice",
+                      "title": "HTTP Methods",
                       "questionText": "Which HTTP method is idempotent for updating an existing resource?",
                       "options": [
                         { "text": "PATCH", "correct": false },
@@ -78,6 +79,7 @@ class HyperionQuizQuestionGenerationServiceTest {
 
         assertThat(response.questions()).hasSize(1);
         assertThat(response.questions().getFirst().type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE);
+        assertThat(response.questions().getFirst().title()).isEqualTo("HTTP Methods");
         assertThat(response.questions().getFirst().options()).hasSize(3);
     }
 
@@ -103,6 +105,7 @@ class HyperionQuizQuestionGenerationServiceTest {
                   "questions": [
                     {
                       "type": "essay",
+                      "title": "Why",
                       "questionText": "Why?",
                       "options": [
                         { "text": "A", "correct": true },

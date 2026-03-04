@@ -19,6 +19,10 @@ export interface GeneratedQuizQuestion {
      */
     type: GeneratedQuizQuestion.TypeEnum;
     /**
+     * Question title
+     */
+    title: string;
+    /**
      * Question text
      */
     questionText: string;

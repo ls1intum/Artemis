@@ -20,6 +20,7 @@ export class QuizAiGenerationService {
         return {
             id: `${question.type}-${index}`,
             type: question.type,
+            title: question.title,
             questionText: question.questionText,
             options: question.options.map((option) => ({
                 text: option.text,

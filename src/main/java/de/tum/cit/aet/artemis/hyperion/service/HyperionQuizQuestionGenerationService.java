@@ -43,6 +43,8 @@ public class HyperionQuizQuestionGenerationService {
 
     private static final int MAX_QUESTION_TEXT_LENGTH = 2_000;
 
+    private static final int MAX_QUESTION_TITLE_LENGTH = 255;
+
     private static final int MAX_OPTION_TEXT_LENGTH = 500;
 
     @Nullable
@@ -115,6 +117,11 @@ public class HyperionQuizQuestionGenerationService {
             throw new InternalServerErrorAlertException("Generated quiz question type is invalid", "QuizQuestionGeneration", "QuizQuestionGeneration.invalidQuestionType");
         }
 
+        String questionTitle = sanitizeInput(generatedQuestion.title());
+        if (questionTitle.isBlank() || questionTitle.length() > MAX_QUESTION_TITLE_LENGTH) {
+            throw new InternalServerErrorAlertException("Generated quiz question title is invalid", "QuizQuestionGeneration", "QuizQuestionGeneration.invalidQuestionTitle");
+        }
+
         String questionText = sanitizeInput(generatedQuestion.questionText());
         if (questionText.isBlank() || questionText.length() > MAX_QUESTION_TEXT_LENGTH) {
             throw new InternalServerErrorAlertException("Generated quiz question text is invalid", "QuizQuestionGeneration", "QuizQuestionGeneration.invalidQuestionText");
@@ -127,7 +134,7 @@ public class HyperionQuizQuestionGenerationService {
         List<GeneratedQuizAnswerOptionDTO> options = generatedQuestion.options().stream().map(this::mapAndValidateOption).toList();
         validateCorrectOptionCount(questionType, options);
 
-        return new GeneratedQuizQuestionDTO(questionType, questionText, options);
+        return new GeneratedQuizQuestionDTO(questionType, questionTitle, questionText, options);
     }
 
     private GeneratedQuizAnswerOptionDTO mapAndValidateOption(@Nullable GeneratedOptionOutput generatedOption) {
@@ -173,7 +180,7 @@ public class HyperionQuizQuestionGenerationService {
     private record GeneratedQuestionsOutput(List<GeneratedQuestionOutput> questions) {
     }
 
-    private record GeneratedQuestionOutput(String type, String questionText, List<GeneratedOptionOutput> options) {
+    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options) {
     }
 
     private record GeneratedOptionOutput(String text, Boolean correct) {
