@@ -19,6 +19,14 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Accepts the code of conduct for a course.
+     * @param course - The course to accept code of conduct for.
+     */
+    async acceptCodeOfConduct(course: Course) {
+        await this.page.request.patch(`api/communication/courses/${course.id}/code-of-conduct/agreement`);
+    }
+
+    /**
      * Creates a new course post.
      *
      * @param course - The course to which the post belongs.

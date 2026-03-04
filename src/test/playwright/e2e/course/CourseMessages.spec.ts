@@ -9,7 +9,7 @@ import { GroupChat } from 'app/communication/shared/entities/conversation/group-
 test.describe('Course messages', { tag: '@fast' }, () => {
     let course: Course;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, courseMessages }) => {
+    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, communicationAPIRequests }) => {
         await login(admin);
         course = await courseManagementAPIRequests.createCourse();
 
@@ -18,14 +18,11 @@ test.describe('Course messages', { tag: '@fast' }, () => {
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
 
-        await login(instructor, `/courses/${course.id}/communication`);
-        await courseMessages.acceptCodeOfConductButton();
-        await login(studentOne, `/courses/${course.id}/communication`);
-        await courseMessages.acceptCodeOfConductButton();
-        await login(studentTwo, `/courses/${course.id}/communication`);
-        await courseMessages.acceptCodeOfConductButton();
-        await login(tutor, `/courses/${course.id}/communication`);
-        await courseMessages.acceptCodeOfConductButton();
+        // Accept code of conduct for all users via API (much faster than 4 UI logins)
+        for (const user of [instructor, studentOne, studentTwo, tutor]) {
+            await login(user);
+            await communicationAPIRequests.acceptCodeOfConduct(course);
+        }
     });
 
     test.describe('Channel messages', () => {
