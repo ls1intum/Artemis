@@ -28,6 +28,19 @@ import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 public class CourseAccessPolicies {
 
     /**
+     * Provides the course visibility access policy by delegating to the CourseVisibilityPolicy component.
+     * This ensures the policy is available as an AccessPolicy bean for dependency injection in repositories and services.
+     *
+     * @param policyProvider the CourseVisibilityPolicy component
+     * @return the course visibility access policy
+     */
+    @Bean("courseVisibilityPolicy")
+    @Lazy
+    public AccessPolicy<Course> visibilityPolicy(CourseVisibilityPolicy policyProvider) {
+        return policyProvider.getPolicy();
+    }
+
+    /**
      * Defines the course student access policy (no start-date gate).
      * <ul>
      * <li>Any enrolled user (student, TA, editor, instructor) or admin can access.</li>

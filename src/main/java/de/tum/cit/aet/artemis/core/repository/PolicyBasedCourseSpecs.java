@@ -5,6 +5,7 @@ import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Component;
 
@@ -72,8 +73,11 @@ public class PolicyBasedCourseSpecs {
      * @param courseEditorAccessPolicy     the course editor access policy bean
      * @param courseInstructorAccessPolicy the course instructor access policy bean
      */
-    public PolicyBasedCourseSpecs(AccessPolicy<Course> courseVisibilityPolicy, AccessPolicy<Course> courseStudentAccessPolicy, AccessPolicy<Course> courseStaffAccessPolicy,
-            AccessPolicy<Course> courseEditorAccessPolicy, AccessPolicy<Course> courseInstructorAccessPolicy) {
+    public PolicyBasedCourseSpecs(@Qualifier("courseVisibilityPolicy") AccessPolicy<Course> courseVisibilityPolicy,
+            @Qualifier("courseStudentAccessPolicy") AccessPolicy<Course> courseStudentAccessPolicy,
+            @Qualifier("courseStaffAccessPolicy") AccessPolicy<Course> courseStaffAccessPolicy,
+            @Qualifier("courseEditorAccessPolicy") AccessPolicy<Course> courseEditorAccessPolicy,
+            @Qualifier("courseInstructorAccessPolicy") AccessPolicy<Course> courseInstructorAccessPolicy) {
         this.courseVisibilityPolicy = courseVisibilityPolicy;
         this.courseStudentAccessPolicy = courseStudentAccessPolicy;
         this.courseStaffAccessPolicy = courseStaffAccessPolicy;

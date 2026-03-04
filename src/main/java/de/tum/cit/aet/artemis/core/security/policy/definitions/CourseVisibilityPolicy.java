@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.core.security.policy.PolicyProvider;
  * This policy is used by endpoints that show course information to enrolled users.
  */
 @Profile(PROFILE_CORE)
-@Component
+@Component("courseVisibilityPolicyProvider")
 @Lazy
 public class CourseVisibilityPolicy implements PolicyProvider<Course> {
 
