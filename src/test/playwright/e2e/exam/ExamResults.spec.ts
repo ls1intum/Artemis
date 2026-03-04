@@ -130,14 +130,10 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         const modelingExerciseAssessment = new ModelingExerciseAssessmentEditor(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
-        // Assess text exercise (index 0)
+        // Only text and modeling exercises need manual assessment (quiz is auto-evaluated, programming is auto-assessed).
+        // The assessment dashboard sorts exercises by type: Modeling (index 0), Text (index 1).
+        // Assess modeling first (index 0), then text becomes index 0 after modeling is complete.
         await Commands.login(page, tutor);
-        await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
-        await examAssessment.addNewFeedback(7, 'Good job');
-        await examAssessment.submitTextAssessment();
-
-        // Assess modeling exercise (only text and modeling need manual assessment;
-        // after assessing text above, modeling is the only remaining unfinished exercise at index 0)
         await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
         await modelingExerciseAssessment.addNewFeedback(5, 'Good');
         await modelingExerciseAssessment.openAssessmentForComponent(0);
@@ -146,6 +142,11 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         await modelingExerciseAssessment.assessComponent(0, 'Neutral');
         await modelingExerciseAssessment.clickNextAssessment();
         await examAssessment.submitModelingAssessment();
+
+        // After modeling is assessed, text is the only remaining unfinished exercise at index 0.
+        await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
+        await examAssessment.addNewFeedback(7, 'Good job');
+        await examAssessment.submitTextAssessment();
 
         // Evaluate quiz exercise
         await Commands.login(page, instructor);
