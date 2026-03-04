@@ -513,13 +513,14 @@ components:
           type: string
           description: Question type
           enum: [single-choice, multiple-choice, true-false]
+        title: {type: string, description: Question title, minLength: 1}
         questionText: {type: string, description: Question text, minLength: 1}
         options:
           type: array
           description: Answer options
           items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
           minItems: 1
-      required: [options, questionText, type]
+      required: [options, questionText, title, type]
     ProblemStatementGenerationResponse:
       type: object
       description: Response containing generated problem statement

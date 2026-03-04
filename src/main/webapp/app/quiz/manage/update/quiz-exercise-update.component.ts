@@ -699,7 +699,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     private convertGeneratedQuestionToQuizQuestion(generatedQuestion: GeneratedQuestion, questionNumber: number): MultipleChoiceQuestion {
         const question = new MultipleChoiceQuestion();
-        question.title = `AI Question ${questionNumber}`;
+        question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
         question.text = generatedQuestion.questionText;
         question.points = 1;
         question.randomizeOrder = true;

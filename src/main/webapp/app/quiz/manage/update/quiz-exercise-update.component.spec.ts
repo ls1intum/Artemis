@@ -2165,6 +2165,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 {
                     id: 'q1',
                     type: 'single-choice',
+                    title: 'Generated Title 1',
                     questionText: 'First generated question',
                     options: [
                         { text: 'A', correct: true },
@@ -2174,6 +2175,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 {
                     id: 'q2',
                     type: 'multiple-choice',
+                    title: 'Generated Title 2',
                     questionText: 'Second generated question',
                     options: [
                         { text: 'A', correct: true },
@@ -2184,6 +2186,7 @@ describe('QuizExerciseUpdateComponent', () => {
                 {
                     id: 'q3',
                     type: 'true-false',
+                    title: 'Generated Title 3',
                     questionText: 'Third generated question',
                     options: [
                         { text: 'True', correct: false },
@@ -2196,6 +2199,7 @@ describe('QuizExerciseUpdateComponent', () => {
 
             expect(comp.quizExercise.quizQuestions).toHaveLength(4);
             expect(comp.quizExercise.quizQuestions?.[0]).toBe(existingQuestion);
+            expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).title).toBe('Generated Title 1');
             expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).text).toBe('First generated question');
             expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
             expect((comp.quizExercise.quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);

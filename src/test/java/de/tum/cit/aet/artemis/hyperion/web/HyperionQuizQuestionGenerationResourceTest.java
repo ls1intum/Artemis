@@ -74,6 +74,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
                   "questions": [
                     {
                       "type": "single-choice",
+                      "title": "REST Basics",
                       "questionText": "What does REST stand for?",
                       "options": [
                         {"text": "Representational State Transfer", "correct": true},
@@ -106,7 +107,7 @@ class HyperionQuizQuestionGenerationResourceTest extends AbstractSpringIntegrati
         request.performMvcRequest(
                 post("/api/hyperion/courses/{courseId}/quiz-exercises/generate-questions", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.questions").isArray()).andExpect(jsonPath("$.questions[0].type").value("single-choice"))
-                .andExpect(jsonPath("$.questions[0].options").isArray());
+                .andExpect(jsonPath("$.questions[0].title").value("REST Basics")).andExpect(jsonPath("$.questions[0].options").isArray());
     }
 
     @Test
