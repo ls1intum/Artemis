@@ -15,6 +15,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -75,6 +76,9 @@ public class ExerciseVersionUtilService {
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
     @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
     private GitService gitService;
 
     /**
@@ -114,13 +118,20 @@ public class ExerciseVersionUtilService {
      *         or null if the exercise does not exist
      */
     private Exercise findExerciseForVersioning(Long exerciseId, ExerciseType exerciseType) {
-        return switch (exerciseType) {
+        Exercise fetchedExercise = switch (exerciseType) {
             case PROGRAMMING -> programmingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case QUIZ -> quizExerciseTestRepository.findForVersioningById(exerciseId).orElse(null);
             case TEXT -> textExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case MODELING -> modelingExerciseRepository.findForVersioningById(exerciseId).orElse(null);
             case FILE_UPLOAD -> fileUploadExerciseRepository.findForVersioningById(exerciseId).orElse(null);
         };
+        if (fetchedExercise != null) {
+            var channel = channelRepository.findChannelByExerciseId(fetchedExercise.getId());
+            if (channel != null) {
+                fetchedExercise.setChannelName(channel.getName());
+            }
+        }
+        return fetchedExercise;
     }
 
     /**

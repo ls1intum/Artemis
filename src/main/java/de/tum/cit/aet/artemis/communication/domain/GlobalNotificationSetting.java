@@ -21,7 +21,7 @@ public class GlobalNotificationSetting extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @NonNull
-    @Column(name = "global_notification_type", nullable = false, columnDefinition = "varchar(20)")
+    @Column(name = "global_notification_type", nullable = false, columnDefinition = "varchar(32)")
     private GlobalNotificationType notificationType;
 
     @NonNull

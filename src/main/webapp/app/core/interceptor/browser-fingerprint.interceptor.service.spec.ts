@@ -13,15 +13,18 @@ describe(`BrowserFingerprintInterceptor`, () => {
 
     const fingerprint = '123456789012345';
     const instanceIdentifier = 'abcdefgh';
+    const sessionIdentifier = 'session-123';
 
     const browserFingerPrintServiceMock = {
         browserFingerprint: of(fingerprint),
         browserInstanceId: of(instanceIdentifier),
+        browserSessionId: of(sessionIdentifier),
     } as any as BrowserFingerprintService;
 
     const falsyBrowserFingerPrintServiceMock = {
         browserFingerprint: of(null),
         browserInstanceId: of(null),
+        browserSessionId: of(null),
     } as any as BrowserFingerprintService;
 
     beforeEach(() => {
@@ -42,7 +45,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
         vi.restoreAllMocks();
     });
 
-    const testExpectedFingerprintAndInstanceID = (localFingerprint: string, localInstanceIdentifier: string) => {
+    const testExpectedFingerprintAndInstanceID = (localFingerprint: string, localInstanceIdentifier: string, localSessionIdentifier: string) => {
         const requestMock = new HttpRequest('GET', `test`);
         const cloneSpy = vi.spyOn(requestMock, 'clone');
         const mockHandler = {
@@ -55,6 +58,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
         expect(cloneSpy).toHaveBeenCalledWith({
             setHeaders: {
                 'X-Artemis-Client-Instance-ID': localInstanceIdentifier,
+                'X-Artemis-Client-Session-ID': localSessionIdentifier,
                 'X-Artemis-Client-Fingerprint': localFingerprint,
             },
         });
@@ -62,7 +66,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
     };
 
     it('should add fingerprint and instance ID if request goes to artemis', () => {
-        testExpectedFingerprintAndInstanceID(fingerprint, instanceIdentifier);
+        testExpectedFingerprintAndInstanceID(fingerprint, instanceIdentifier, sessionIdentifier);
     });
 
     it('should not send headers if fingerprint service returns falsy values', () => {

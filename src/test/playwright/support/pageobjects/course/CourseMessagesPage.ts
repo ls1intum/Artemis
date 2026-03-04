@@ -366,14 +366,14 @@ export class CourseMessagesPage {
      * @param force - Whether to force the click action.
      * @returns A promise that resolves with the Post object after saving.
      */
-    async save(force = false): Promise<Post> {
+    async save(): Promise<Post> {
         const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages`);
         const saveButton = this.page.locator('#save');
-        // Ensure the button is visible and scrolled into view
+        // Wait for the save button to be visible and enabled before clicking
+        await saveButton.waitFor({ state: 'visible', timeout: 10000 });
+        await expect(saveButton).toBeEnabled({ timeout: 10000 });
         await saveButton.scrollIntoViewIfNeeded();
-        // Wait for any notifications that might overlap to disappear
-        await this.page.waitForTimeout(500);
-        await saveButton.click({ force });
+        await saveButton.click();
         const response = await responsePromise;
         return response.json();
     }
@@ -412,7 +412,9 @@ export class CourseMessagesPage {
      */
     async addUserToGroupChat(user: string) {
         await this.page.locator('#users-selector0-search-input').fill(user);
-        await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
+        const dropdownItem = this.page.locator('.dropdown-item', { hasText: `(${user})` });
+        await dropdownItem.waitFor({ state: 'visible', timeout: 10000 });
+        await dropdownItem.click();
     }
 
     /**
@@ -429,7 +431,9 @@ export class CourseMessagesPage {
      */
     async listMembersButton(courseID: number, conversationID: number) {
         await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
-        await this.page.locator('.members').click();
+        const membersButton = this.page.locator('.members');
+        await membersButton.waitFor({ state: 'visible', timeout: 30000 });
+        await membersButton.click();
     }
 
     /**
@@ -479,11 +483,11 @@ export class CourseMessagesPage {
     async acceptCodeOfConductButton() {
         const button = this.page.locator('#acceptCodeOfConductButton');
         // Wait a short time for the page to load and determine if the button should be shown
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         if (await button.isVisible()) {
             await button.click();
             // Wait for the acceptance to be processed
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
         }
     }
 }

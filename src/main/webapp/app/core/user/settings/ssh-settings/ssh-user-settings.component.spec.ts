@@ -37,6 +37,7 @@ describe('SshUserSettingsComponent', () => {
     let sshServiceMock: {
         deleteSshPublicKey: ReturnType<typeof vi.fn>;
         getSshPublicKeys: ReturnType<typeof vi.fn>;
+        sshKeys: UserSshPublicKey[];
     };
     let translateService: TranslateService;
 
@@ -44,18 +45,27 @@ describe('SshUserSettingsComponent', () => {
         sshServiceMock = {
             deleteSshPublicKey: vi.fn(),
             getSshPublicKeys: vi.fn(),
+            sshKeys: [],
         };
         alertServiceMock = {
             error: vi.fn(),
             success: vi.fn(),
         };
         await TestBed.configureTestingModule({
+            imports: [SshUserSettingsComponent],
             providers: [
                 { provide: SshUserSettingsService, useValue: sshServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(SshUserSettingsComponent, {
+                set: {
+                    imports: [],
+                    template: '',
+                },
+            })
+            .compileComponents();
         fixture = TestBed.createComponent(SshUserSettingsComponent);
         comp = fixture.componentInstance;
         translateService = TestBed.inject(TranslateService);

@@ -10,6 +10,7 @@ import { MockProvider } from 'ng-mocks';
 import { User } from 'app/core/user/user.model';
 import { IrisMemoriesHttpService } from 'app/iris/overview/services/iris-memories-http.service';
 import { provideHttpClient } from '@angular/common/http';
+import { of } from 'rxjs';
 
 describe('IrisLearnerProfileComponent', () => {
     setupTestBed({ zoneless: true });
@@ -44,7 +45,7 @@ describe('IrisLearnerProfileComponent', () => {
                 provideHttpClient(),
                 // Mock the IrisMemoriesHttpService to avoid HttpClient dependency in nested component
                 MockProvider(IrisMemoriesHttpService, {
-                    listUserMemories: vi.fn().mockReturnValue({ subscribe: () => {} } as any),
+                    getUserMemoryData: vi.fn().mockReturnValue(of({ memories: [], learnings: [], connections: [] } as any)),
                     getUserMemory: vi.fn(),
                     deleteUserMemory: vi.fn(),
                 }),

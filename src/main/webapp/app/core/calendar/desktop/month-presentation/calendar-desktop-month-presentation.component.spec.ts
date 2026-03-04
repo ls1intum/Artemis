@@ -2,8 +2,9 @@ import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vite
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { NgTemplateOutlet } from '@angular/common';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockCalendarService } from 'test/helpers/mocks/service/mock-calendar.service';
@@ -14,6 +15,8 @@ import { CalendarDayBadgeComponent } from 'app/core/calendar/shared/calendar-day
 import { CalendarEventDetailPopoverComponent } from 'app/core/calendar/shared/calendar-event-detail-popover-component/calendar-event-detail-popover.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { PopoverModule } from 'primeng/popover';
 
 describe('CalendarDesktopMonthPresentationComponent', () => {
     setupTestBed({ zoneless: true });
@@ -78,7 +81,24 @@ describe('CalendarDesktopMonthPresentationComponent', () => {
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CalendarDesktopMonthPresentationComponent, {
+                set: {
+                    imports: [
+                        NgTemplateOutlet,
+                        MockComponent(FaIconComponent),
+                        MockDirective(TranslateDirective),
+                        MockComponent(CalendarDayBadgeComponent),
+                        CalendarEventDetailPopoverComponent,
+                    ],
+                },
+            })
+            .overrideComponent(CalendarEventDetailPopoverComponent, {
+                set: {
+                    imports: [MockModule(PopoverModule), MockDirective(TranslateDirective), MockComponent(FaIconComponent)],
+                },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(CalendarDesktopMonthPresentationComponent);
         component = fixture.componentInstance;
