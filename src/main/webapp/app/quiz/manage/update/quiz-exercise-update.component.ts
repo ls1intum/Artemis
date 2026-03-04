@@ -47,6 +47,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ButtonModule } from 'primeng/button';
+import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -73,6 +77,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        ButtonModule,
+        QuizAiGenerationModalComponent,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -88,8 +94,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
+    private profileService = inject(ProfileService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    aiGenerationModalVisible = false;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -285,6 +294,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
 
         this.cacheValidation();
+    }
+
+    openAiGenerationModal(): void {
+        this.aiGenerationModalVisible = true;
     }
 
     /**

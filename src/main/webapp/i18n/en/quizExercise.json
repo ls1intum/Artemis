@@ -15,6 +15,86 @@
                 "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
+            "aiGeneration": {
+                "button": "Generate with AI",
+                "modalTitle": "Generate Quiz with AI",
+                "configuration": {
+                    "title": "Configuration",
+                    "topic": "Topic",
+                    "optionalPrompt": "Optional prompt",
+                    "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
+                    "language": "Language",
+                    "numberOfQuestions": "Number of questions",
+                    "questionType": "Question type",
+                    "difficulty": "Difficulty",
+                    "difficultyLevels": {
+                        "easy": "Easy",
+                        "medium": "Medium",
+                        "hard": "Hard"
+                    }
+                },
+                "languages": {
+                    "en": "English",
+                    "de": "German"
+                },
+                "types": {
+                    "single-choice": "Single Choice",
+                    "multiple-choice": "Multiple Choice",
+                    "true-false": "True/False"
+                },
+                "actions": {
+                    "generate": "Generate",
+                    "openInEditor": "Open in editor"
+                },
+                "preview": {
+                    "title": "Preview Results",
+                    "emptyTitle": "No questions generated yet",
+                    "emptyDescription": "Fill in the configuration on the left and click Generate to preview AI-generated quiz questions.",
+                    "correct": "CORRECT",
+                    "oneResultGenerated": "1 result generated",
+                    "multipleResultsGenerated": "{{ count }} results generated"
+                },
+                "mock": {
+                    "en": {
+                        "singleChoice": {
+                            "question": "Which attack persists malicious JavaScript on the server and executes when users open the affected page?",
+                            "optionA": "Stored XSS",
+                            "optionB": "Reflected XSS",
+                            "optionC": "SQL Injection"
+                        },
+                        "multipleChoice": {
+                            "question": "Which measures reduce SQL injection risk?",
+                            "optionA": "Use prepared statements",
+                            "optionB": "Validate and sanitize user input",
+                            "optionC": "Concatenate raw user input into SQL queries"
+                        },
+                        "trueFalse": {
+                            "question": "True or false: CSRF attacks can only happen when a user is authenticated in the target application.",
+                            "optionA": "False",
+                            "optionB": "True"
+                        }
+                    },
+                    "de": {
+                        "singleChoice": {
+                            "question": "Welche Attacke speichert bösartiges JavaScript dauerhaft auf dem Server und führt es beim Öffnen der betroffenen Seite aus?",
+                            "optionA": "Stored XSS",
+                            "optionB": "Reflected XSS",
+                            "optionC": "SQL Injection"
+                        },
+                        "multipleChoice": {
+                            "question": "Welche Maßnahmen reduzieren das Risiko für SQL-Injection?",
+                            "optionA": "Prepared Statements verwenden",
+                            "optionB": "Benutzereingaben validieren und bereinigen",
+                            "optionC": "Rohdaten von Benutzereingaben direkt in SQL-Queries anhängen"
+                        },
+                        "trueFalse": {
+                            "question": "Wahr oder falsch: CSRF-Angriffe sind nur möglich, wenn ein Benutzer in der Zielanwendung angemeldet ist.",
+                            "optionA": "Falsch",
+                            "optionB": "Wahr"
+                        }
+                    }
+                }
+            },
             "detail": {
                 "title": "Quiz Exercise",
                 "questionCount": {

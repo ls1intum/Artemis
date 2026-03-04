@@ -43,6 +43,7 @@ import { QuizQuestionListEditComponent } from 'app/quiz/manage/list-edit/quiz-qu
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('QuizExerciseUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -162,6 +163,9 @@ describe('QuizExerciseUpdateComponent', () => {
                 { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
                 MockProvider(CalendarService),
+                MockProvider(ProfileService, {
+                    isModuleFeatureActive: () => true,
+                }),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
