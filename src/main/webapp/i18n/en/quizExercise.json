@@ -44,7 +44,8 @@
                 },
                 "actions": {
                     "generate": "Generate",
-                    "openInEditor": "Open in editor"
+                    "openInEditor": "Open in editor",
+                    "addToEditor": "Add to quiz"
                 },
                 "preview": {
                     "title": "Preview Results",
