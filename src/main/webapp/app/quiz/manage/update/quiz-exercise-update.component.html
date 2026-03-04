@@ -336,5 +336,5 @@
             </div>
         </div>
     </div>
-    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId" />
+    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId" (addQuestions)="appendAiGeneratedQuestions($event)" />
 }

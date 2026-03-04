@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, ViewEncapsulation, computed, inject, input, model, signal } from '@angular/core';
+import { Component, ViewEncapsulation, computed, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -49,6 +49,7 @@ export class QuizAiGenerationModalComponent {
     protected readonly faQuestionCircle = faQuestionCircle;
     visible = model.required<boolean>();
     courseId = input<number>();
+    addQuestions = output<GeneratedQuestion[]>();
     topic = signal('');
     optionalPrompt = signal('');
     numberOfQuestions = signal(3);
@@ -134,5 +135,14 @@ export class QuizAiGenerationModalComponent {
 
     getResultCountTranslateValues() {
         return { count: this.generatedQuestions().length };
+    }
+
+    addGeneratedQuestionsToQuiz(): void {
+        const questions = this.generatedQuestions();
+        if (!questions.length) {
+            return;
+        }
+        this.addQuestions.emit(questions);
+        this.close();
     }
 }
