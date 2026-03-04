@@ -5,21 +5,11 @@ saml2:
     email-pattern: '{email}'
     registration-number-pattern: '{uid}'
     identity-providers:
-        - metadata: http://saml-test:8080/simplesaml/saml2/idp/metadata.php
-          registration-id: testidp
+        - metadata: http://keycloak:9080/realms/artemis/protocol/saml/descriptor
+          registration-id: keycloak
           entity-id: artemis
-          cert-file: # data/saml/cert (optional) Set this path to the Certificate for encryption/signing or leave it blank
-          key-file: # data/saml/key path-to-key (optional) Set this path to the Key for encryption/signing or leave it blank
 
 info.saml2:
-    # The name of the SAML2 identity provider shown on the login page (optional)
-    identityProviderName:
-    # The label for the SAML2 login button (e.g., 'Shibboleth Login')
     buttonLabel: 'SAML2 Login'
-    # Disables the password-based login user interface, but leaves the API enabled.
-    # Use the URL query parameter '?showLoginForm' to display the login form nevertheless.
     passwordLoginDisabled: false
-    # Sends an e-mail to the new user with a link to set the Artemis password. This password allows login to Artemis and its
-    # services such as Jenkins. This allows the users to use password-based Git workflows.
-    # Enables the password reset function in Artemis.
     enablePassword: true

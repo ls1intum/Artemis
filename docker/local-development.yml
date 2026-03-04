@@ -1,0 +1,13 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Local development services for testing SAML2 and email
+#
+# Usage:
+#   All services:     docker compose -f docker/local-development.yml up
+#   SAML2 only:       docker compose -f docker/local-development.yml up keycloak
+#   Email only:       docker compose -f docker/local-development.yml up mailpit
+#   With dev MySQL:   docker compose -f docker/artemis-dev-mysql.yml -f docker/local-development.yml up
+# ----------------------------------------------------------------------------------------------------------------------
+
+include:
+    - saml-test.yml
+    - mailpit.yml

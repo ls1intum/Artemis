@@ -1,13 +1,16 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Mailhog service
+# Mailpit service (drop-in replacement for MailHog)
+#
+# Web UI: http://localhost:8025
+# SMTP:   localhost:1025
 #
 # Out of the box this setup just works with a containerized dev Artemis instance
-# see comments above artemis-app on how to get it working wit a non-containerized Artemis instance
+# see comments above artemis-app on how to get it working with a non-containerized Artemis instance
 # ----------------------------------------------------------------------------------------------------------------------
 services:
-    mailhog:
-        container_name: artemis-mailhog
-        image: docker.io/mailhog/mailhog:${MAILHOG_VERSION}
+    mailpit:
+        container_name: artemis-mailpit
+        image: docker.io/axllent/mailpit:${MAILPIT_VERSION}
         pull_policy: missing
         ports:
             - "1025:1025"
@@ -19,11 +22,11 @@ services:
         networks:
             - artemis
 
-    # comment this section if you use mailhog with a non-containerized Artemis instance
+    # comment this section if you use mailpit with a non-containerized Artemis instance
     # and add the following spring configuration in your application-local.yml
     artemis-app:
         environment:
-            SPRING_MAIL_HOST: "mailhog"
+            SPRING_MAIL_HOST: "mailpit"
             SPRING_MAIL_PORT: "1025"
             SPRING_MAIL_USERNAME:
             SPRING_MAIL_PASSWORD:

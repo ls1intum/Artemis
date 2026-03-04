@@ -1,27 +1,33 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# SAML2 Testing service
+# SAML2 Testing service (Keycloak)
 # ----------------------------------------------------------------------------------------------------------------------
-# based on the work of: https://github.com/kit-sdq/Artemis-SAML2-Test-Docker
+# Keycloak provides a full-featured SAML2 Identity Provider for local testing.
 #
-# when using this service you have to manually add the saml2 spring profile in your Artemis configuration
+# Admin console: http://localhost:8443 (admin/admin)
+# SAML metadata: http://localhost:8443/realms/artemis/protocol/saml/descriptor
 #
-# Out of the box this setup just works with a containerized Artemis instance
-# see comments above artemis-app on how to get it working wit a non-containerized Artemis instance
+# When using this service you have to manually add the saml2 spring profile in your Artemis configuration.
+#
+# Out of the box this setup just works with a containerized Artemis instance.
+# See comments above artemis-app on how to get it working with a non-containerized Artemis instance.
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
-    saml-test:
-        container_name: artemis-saml-test
-        image: docker.io/jamedjo/test-saml-idp:${SAML_TEST_IDP_VERSION}
+    keycloak:
+        container_name: artemis-keycloak
+        image: quay.io/keycloak/keycloak:${KEYCLOAK_VERSION}
         pull_policy: missing
+        command: start-dev --import-realm
+        environment:
+            KC_BOOTSTRAP_ADMIN_USERNAME: admin
+            KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+            KC_HTTP_PORT: 9080
         ports:
-            - "9980:8080"
-        # expose the port to make it reachable docker internally even if the external port mapping changes
+            - "9080:9080"
         expose:
-            - "8080"
+            - "9080"
         volumes:
-            - ./saml-test/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
-            - ./saml-test/config.php:/var/www/simplesamlphp/config/config.php
+            - ./saml-test/artemis-realm.json:/opt/keycloak/data/import/artemis-realm.json
         networks:
             - artemis
 

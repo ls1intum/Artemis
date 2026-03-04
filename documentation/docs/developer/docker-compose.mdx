@@ -82,14 +82,84 @@ For each service being used in these *docker compose* files, a **base service** 
 
 For testing mails or SAML logins, you can append the following services to any setup with an Artemis container:
 
-- `mailhog.yml`: **Mailhog Service** (email testing tool)
-- `saml-test.yml`: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
+- `mailpit.yml`: **Mailpit Service** (email testing tool, web UI at `http://localhost:8025`)
+- `saml-test.yml`: **Keycloak Service** (SAML2 Identity Provider for testing SAML features, admin console at `http://localhost:9080`)
+- `local-development.yml`: **Combined** setup that includes both Mailpit and Keycloak
 
-An example command to run such an extended setup:
+Example commands to run such extended setups:
 
 ```bash
-docker compose -f docker/artemis-dev-mysql.yml -f docker/mailhog.yml up
+# Email testing only
+docker compose -f docker/artemis-dev-mysql.yml -f docker/mailpit.yml up
+
+# SAML2 testing only (add 'saml2' to your Spring profiles)
+docker compose -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
+
+# Both services
+docker compose -f docker/artemis-dev-mysql.yml -f docker/local-development.yml up
 ```
+
+#### Mailpit
+
+Mailpit is a drop-in email testing tool. All emails sent by Artemis will appear in the web UI at `http://localhost:8025`.
+
+For **non-containerized Artemis** (e.g., running via IntelliJ or `./gradlew bootRun`), add the following to your `application-local.yml`:
+
+```yaml
+spring:
+    mail:
+        host: localhost
+        port: 1025
+        username:
+        password:
+```
+
+This overrides the default mail port (25) from `application-dev.yml` to match Mailpit's SMTP port.
+
+#### Keycloak (SAML2 Testing)
+
+Keycloak provides a full-featured SAML2 Identity Provider pre-configured with an `artemis` realm containing test users and SAML attribute mappers.
+
+For **containerized Artemis** (Docker Compose with an Artemis container), the `application-saml2.yml` is automatically mounted. You only need to add `saml2` to your Spring profiles (e.g., in `SPRING_PROFILES_ACTIVE`).
+
+For **non-containerized Artemis**, create or update `src/main/resources/config/application-local.yml` with:
+
+```yaml
+spring:
+    profiles:
+        active: artemis,scheduling,core,dev,local,saml2
+    security:
+        saml2:
+            relyingparty:
+                registration:
+                    keycloak:
+                        assertingparty:
+                            metadata-uri: http://localhost:9080/realms/artemis/protocol/saml/descriptor
+
+saml2:
+    username-pattern: 'saml2-{first_name}_{last_name}'
+    first-name-pattern: '{first_name}'
+    last-name-pattern: '{last_name}'
+    email-pattern: '{email}'
+    registration-number-pattern: '{uid}'
+    identity-providers:
+        - metadata: http://localhost:9080/realms/artemis/protocol/saml/descriptor
+          registration-id: keycloak
+          entity-id: artemis
+
+info.saml2:
+    buttonLabel: 'SAML2 Login'
+    passwordLoginDisabled: false
+    enablePassword: true
+```
+
+**Usage:**
+
+1. Start Keycloak: `docker compose -f docker/saml-test.yml up keycloak`
+2. Start Artemis with the `saml2` Spring profile
+3. Click "SAML2 Login" on the Artemis login page
+4. Authenticate with test user `saml2user1` / `password` (or `saml2user2` / `password`)
+5. Keycloak admin console: `http://localhost:9080` (admin/admin)
 
 <Callout variant={CalloutVariant.warning}>
     If you want to run multiple *docker compose* setups in parallel on one host, you might have to modify volume, container, and network names!
