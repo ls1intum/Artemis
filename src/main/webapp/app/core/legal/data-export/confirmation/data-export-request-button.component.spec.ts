@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { DataExportRequestButtonDirective } from 'app/core/legal/data-export/confirmation/data-export-request-button.directive';
+import { DataExportRequestButtonComponent } from 'app/core/legal/data-export/confirmation/data-export-request-button.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
@@ -13,11 +13,11 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
 @Component({
     selector: 'jhi-test-component',
     template: '<button jhiDataExportRequestButton [adminDialog]="true" [expectedLogin]="\'login\'"></button>',
-    imports: [DataExportRequestButtonDirective],
+    imports: [DataExportRequestButtonComponent],
 })
 class TestComponent {}
 
-describe('DataExportRequestButtonDirective', () => {
+describe('DataExportRequestButtonComponent', () => {
     setupTestBed({ zoneless: true });
 
     let fixture: ComponentFixture<TestComponent>;
@@ -55,16 +55,16 @@ describe('DataExportRequestButtonDirective', () => {
         expect(buttonText).not.toBeNull();
         expect(buttonText.nativeElement.textContent).toBe('artemisApp.dataExport.request');
 
-        const directiveEl = debugElement.query(By.directive(DataExportRequestButtonDirective));
+        const directiveEl = debugElement.query(By.directive(DataExportRequestButtonComponent));
         expect(directiveEl).not.toBeNull();
-        const directiveInstance = directiveEl.injector.get(DataExportRequestButtonDirective);
+        const directiveInstance = directiveEl.injector.get(DataExportRequestButtonComponent);
         expect(directiveInstance.expectedLogin()).toBe('login');
     });
 
     it('should on click open the dialog', async () => {
         fixture.detectChanges();
-        const directiveEl = debugElement.query(By.directive(DataExportRequestButtonDirective));
-        const directiveInstance = directiveEl.injector.get(DataExportRequestButtonDirective);
+        const directiveEl = debugElement.query(By.directive(DataExportRequestButtonComponent));
+        const directiveInstance = directiveEl.injector.get(DataExportRequestButtonComponent);
         expect(directiveInstance.dialogVisible()).toBe(false);
 
         directiveEl.nativeElement.click();

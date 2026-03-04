@@ -56,7 +56,7 @@ describe('SentryErrorHandler', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        vi.clearAllMocks();
     });
 
     describe('initSentry', () => {

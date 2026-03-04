@@ -24,7 +24,7 @@ import { DataExportConfirmationDialogComponent } from 'app/core/legal/data-expor
         '[attr.type]': '"submit"',
     },
 })
-export class DataExportRequestButtonDirective implements OnInit {
+export class DataExportRequestButtonComponent implements OnInit {
     private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 

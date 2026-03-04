@@ -139,7 +139,11 @@ const originalConsoleWarn = console.warn;
 console.warn = (...args: unknown[]) => {
     const msg = args[0];
     if (typeof msg === 'string') {
-        // Suppress Angular NG0953: Unexpected emit for destroyed OutputRef
+        // Suppress Angular NG0953: Unexpected emit for destroyed OutputRef.
+        // This warning fires during test teardown when components with output() signals
+        // are destroyed while subscriptions are still active. It's harmless in tests
+        // because Angular cleans up these subscriptions automatically, but the warning
+        // fires before cleanup completes. In production, takeUntilDestroyed() prevents this.
         if (msg.includes('NG0953')) {
             return;
         }

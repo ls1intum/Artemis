@@ -143,7 +143,7 @@ describe('FeedbackLearnerProfileComponent', () => {
             component.learnerProfile.set(undefined);
             component.disabled = true;
             // Clear any existing mocks
-            vi.clearAllMocks();
+            vi.restoreAllMocks();
         });
 
         it('should handle HTTP errors with specific message', async () => {

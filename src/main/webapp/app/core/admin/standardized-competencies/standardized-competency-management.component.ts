@@ -92,7 +92,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     protected readonly confirmDialogTitle = signal('');
     protected readonly confirmDialogTextKey = signal('');
     protected readonly confirmDialogTextParams = signal<Record<string, string>>({});
-    protected readonly confirmDialogCallback = signal<() => void>(() => {});
+    private confirmDialogCallback: () => void = () => {};
 
     // Icons
     protected readonly faChevronRight = faChevronRight;
@@ -463,13 +463,13 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
         this.confirmDialogTitle.set(`artemisApp.${entityType}.manage.cancelModal.title`);
         this.confirmDialogTextKey.set(`artemisApp.${entityType}.manage.cancelModal.text`);
         this.confirmDialogTextParams.set({ title: title });
-        this.confirmDialogCallback.set(callback);
+        this.confirmDialogCallback = callback;
         this.confirmDialogVisible.set(true);
     }
 
     protected onConfirmDialogConfirm(): void {
         this.confirmDialogVisible.set(false);
-        this.confirmDialogCallback()();
+        this.confirmDialogCallback();
     }
 
     protected onConfirmDialogCancel(): void {

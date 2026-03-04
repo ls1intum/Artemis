@@ -31,8 +31,8 @@ export class DataExportConfirmationDialogComponent implements OnInit {
     /** Input for whether this is an admin dialog */
     readonly adminDialog = input(false);
 
-    /** Input for the expected login */
-    readonly expectedLoginInput = input<string>('', { alias: 'expectedLogin' }); // eslint-disable-line @angular-eslint/no-input-rename
+    /** Input for the initial expected login value */
+    readonly initialExpectedLogin = input<string>('', { alias: 'expectedLogin' }); // eslint-disable-line @angular-eslint/no-input-rename
 
     /** Output events replacing the old OutputEmitterRef approach */
     readonly dataExportRequest = output<void>();
@@ -55,7 +55,7 @@ export class DataExportConfirmationDialogComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        this.expectedLogin.set(this.expectedLoginInput());
+        this.expectedLogin.set(this.initialExpectedLogin());
         this.dialogError()
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe((errorMessage: string) => {
