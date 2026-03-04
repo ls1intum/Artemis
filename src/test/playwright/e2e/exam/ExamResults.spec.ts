@@ -50,14 +50,15 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
     });
 
     test.beforeAll('Create exam with all exercise types', async ({ browser }) => {
+        test.setTimeout(300_000); // Creating 4 exercise groups with programming builds
         const page = await browser.newPage();
         await Commands.login(page, admin);
         const examAPIRequests = new ExamAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
 
-        // C programming exercises build quickly (~5s), so 30s is sufficient
-        examEndDate = dayjs().add(30, 'seconds');
+        // Allow enough time for student to submit all 4 exercises before exam ends
+        examEndDate = dayjs().add(45, 'seconds');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
@@ -87,6 +88,7 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
     });
 
     test.beforeAll('Participate in exam', async ({ browser }) => {
+        test.setTimeout(300_000); // Programming exercise submission waits for build result
         const page = await browser.newPage();
         await Commands.login(page, admin);
         const examNavigation = new ExamNavigationBar(page);
