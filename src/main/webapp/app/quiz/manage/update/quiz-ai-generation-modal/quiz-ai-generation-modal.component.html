@@ -26,10 +26,10 @@
                     <label class="mb-0" for="quiz-ai-optional-prompt" jhiTranslate="artemisApp.quizExercise.aiGeneration.configuration.optionalPrompt"></label>
                     <span
                         class="text-secondary d-inline-flex align-items-center"
-                        [ngbTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
-                        container="body"
-                        placement="right auto"
-                        tooltipClass="quiz-ai-generation-tooltip"
+                        [pTooltip]="'artemisApp.quizExercise.aiGeneration.configuration.optionalPromptTooltip' | artemisTranslate"
+                        tooltipPosition="right"
+                        appendTo="body"
+                        tooltipStyleClass="quiz-ai-generation-tooltip"
                         tabindex="0"
                     >
                         <fa-stack class="icon-full-size">

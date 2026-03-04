@@ -7,9 +7,9 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { SliderModule } from 'primeng/slider';
 import { TextareaModule } from 'primeng/textarea';
+import { TooltipModule } from 'primeng/tooltip';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -32,13 +32,13 @@ import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGen
         InputNumberModule,
         SliderModule,
         TextareaModule,
+        TooltipModule,
         FormsModule,
         TranslateDirective,
         NgClass,
         FaStackComponent,
         FaIconComponent,
         FaStackItemSizeDirective,
-        NgbTooltip,
         ArtemisTranslatePipe,
         QuizAiGeneratedQuestionCardComponent,
     ],
