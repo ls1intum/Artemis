@@ -96,7 +96,12 @@ export class ExamExerciseGroupCreationPage {
             case ExerciseType.QUIZ:
                 return await this.exerciseAPIRequests.createQuizExercise({ body: { exerciseGroup }, quizQuestions: [multipleChoiceTemplate], title });
             case ExerciseType.PROGRAMMING:
-                return await this.exerciseAPIRequests.createProgrammingExercise({ exerciseGroup, title, assessmentType: additionalData.progExerciseAssessmentType });
+                return await this.exerciseAPIRequests.createProgrammingExercise({
+                    exerciseGroup,
+                    title,
+                    assessmentType: additionalData.progExerciseAssessmentType,
+                    programmingLanguage: additionalData.programmingLanguage,
+                });
         }
     }
 }

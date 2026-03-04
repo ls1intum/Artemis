@@ -72,9 +72,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {
         await this.programmingExerciseEditor.toggleCompressFileTree(exerciseID);
-        await this.programmingExerciseEditor.deleteFile(exerciseID, 'Client.java');
-        await this.programmingExerciseEditor.deleteFile(exerciseID, 'BubbleSort.java');
-        await this.programmingExerciseEditor.deleteFile(exerciseID, 'MergeSort.java');
+        for (const deleteFile of submission.deleteFiles) {
+            await this.programmingExerciseEditor.deleteFile(exerciseID, deleteFile);
+        }
         await this.programmingExerciseEditor.typeSubmission(exerciseID, submission);
         if (practiceMode) {
             await this.programmingExerciseEditor.submitPractice(exerciseID);

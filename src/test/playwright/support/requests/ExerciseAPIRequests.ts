@@ -170,15 +170,11 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${programmingExercise.id}/test-cases`);
         const testCases = (await response.json()) as unknown as ProgrammingExerciseTestCase[];
 
-        if (retryNumber > 0) {
-            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
-        }
-
-        await this.page.waitForTimeout(RETRY_DELAY);
-
         if (testCases.length > 0) {
             await this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
         } else {
+            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
+            await this.page.waitForTimeout(RETRY_DELAY);
             await this.changeProgrammingExerciseTestVisibility(programmingExercise, newVisibility, retryNumber + 1);
         }
     }

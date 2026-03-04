@@ -59,14 +59,12 @@ export HOST_HOSTNAME="nginx"
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 
 # Set platform for ARM64 Macs (Apple Silicon)
-# Note: We keep DOCKER_DEFAULT_PLATFORM for building the Artemis app natively on ARM,
-# but we do NOT set ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE. This allows LocalCI
-# to use amd64 images (the default) which Docker Desktop can emulate via Rosetta.
-# This is necessary because some exercise images (e.g., sharingcodeability/fact) only provide amd64.
+# Build the Artemis app natively on ARM and tell LocalCI to use arm64 exercise images.
+# Most exercise images (C, Java, Python) support arm64 natively for better performance.
 if [ "$(uname -m)" = "arm64" ]; then
     export DOCKER_DEFAULT_PLATFORM="linux/arm64"
-    echo "Detected ARM64 architecture, using linux/arm64 platform for Artemis build"
-    echo "LocalCI will use amd64 images (emulated via Rosetta when needed)"
+    export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE="arm64"
+    echo "Detected ARM64 architecture, using linux/arm64 for Artemis build and exercise images"
 fi
 
 # Change to docker directory
@@ -103,12 +101,12 @@ trap cleanup EXIT
 # Pull required images (except artemis-app which we build)
 echo ""
 echo "Pulling Docker images..."
-docker compose -f $COMPOSE_FILE pull $DB nginx 2>/dev/null || true
+docker compose --env-file ../.env -f $COMPOSE_FILE pull $DB nginx 2>/dev/null || true
 
 # Build Artemis image from external WAR file
 echo ""
 echo "Building Artemis Docker image from WAR file..."
-docker compose -f $COMPOSE_FILE build \
+docker compose --env-file ../.env -f $COMPOSE_FILE build \
     --build-arg WAR_FILE_STAGE=external_builder \
     --no-cache \
     --pull \
@@ -122,7 +120,7 @@ echo ""
 
 # Disable exit on error to capture exit code
 set +e
-docker compose -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
 EXIT_CODE=$?
 set -e
 

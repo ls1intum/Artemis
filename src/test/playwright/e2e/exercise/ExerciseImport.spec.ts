@@ -6,7 +6,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 
-import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
+import cPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/c/partially_successful/submission.json';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import shortAnswerQuizTemplate from '../../fixtures/exercise/quiz/short_answer/template.json';
 import { admin, instructor, studentOne } from '../../support/users';
@@ -17,7 +17,7 @@ import { Fixtures } from '../../fixtures/fixtures';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
-import { QuizMode } from '../../support/constants';
+import { ProgrammingLanguage, QuizMode } from '../../support/constants';
 
 test.describe('Import exercises', () => {
     let course: Course;
@@ -36,7 +36,7 @@ test.describe('Import exercises', () => {
         multipleChoiceQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
         shortAnswerQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [shortAnswerQuizTemplate], quizMode: QuizMode.INDIVIDUAL });
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
-        programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course });
+        programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         secondCourse = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(secondCourse, studentOne);
         await courseManagementAPIRequests.addInstructorToCourse(secondCourse, instructor);
@@ -206,10 +206,10 @@ test.describe('Import exercises', () => {
                 await login(studentOne, `/courses/${secondCourse.id}/exercises/${exercise.id}`);
                 await courseOverview.startExercise(exercise.id!);
                 await courseOverview.openRunningExercise(exercise.id!);
-                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, javaPartiallySuccessfulSubmission, async () => {
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, cPartiallySuccessfulSubmission, async () => {
                     // Use exercise-scoped locator and check for text content
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                    await expect(resultScore).toContainText(javaPartiallySuccessfulSubmission.expectedResult, { timeout: 30000 });
+                    await expect(resultScore).toContainText(cPartiallySuccessfulSubmission.expectedResult, { timeout: 30000 });
                 });
             },
         );

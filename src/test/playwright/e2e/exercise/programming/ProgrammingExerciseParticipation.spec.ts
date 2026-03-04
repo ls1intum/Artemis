@@ -2,9 +2,9 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import javaPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/java/partially_successful/submission.json';
 import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
+import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
+import cPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
@@ -31,15 +31,15 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
 
     const testCases = [
         {
-            description: 'Makes a failing Java submission',
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            submission: javaBuildErrorSubmission,
+            description: 'Makes a failing C submission',
+            programmingLanguage: ProgrammingLanguage.C,
+            submission: cBuildErrorSubmission,
             commitMessage: 'Initial commit',
         },
         {
-            description: 'Makes a partially successful Java submission',
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            submission: javaPartiallySuccessfulSubmission,
+            description: 'Makes a partially successful C submission',
+            programmingLanguage: ProgrammingLanguage.C,
+            submission: cPartiallySuccessfulSubmission,
             commitMessage: 'Initial implementation',
         },
         {
@@ -92,13 +92,13 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
 
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.JAVA });
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
         test('Makes a git submission through HTTPS using token', async ({ programmingExerciseOverview }) => {
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'Solution', GitCloneMethod.httpsWithToken);
-            await programmingExerciseOverview.checkResultScore(javaAllSuccessfulSubmission.expectedResult);
+            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Solution', GitCloneMethod.httpsWithToken);
+            await programmingExerciseOverview.checkResultScore(cAllSuccessful.expectedResult);
         });
 
         test.describe('Programming exercise participation using SSH', () => {
@@ -119,15 +119,8 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                     await expect(sshKeyNotFoundAlert).toBeVisible();
                     await GitExerciseParticipation.setupSSHCredentials(page.context(), sshAlgorithm);
                     await page.reload();
-                    await GitExerciseParticipation.makeSubmission(
-                        programmingExerciseOverview,
-                        studentOne,
-                        javaAllSuccessfulSubmission,
-                        'Solution',
-                        GitCloneMethod.ssh,
-                        sshAlgorithm,
-                    );
-                    await programmingExerciseOverview.checkResultScore(javaAllSuccessfulSubmission.expectedResult);
+                    await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'Solution', GitCloneMethod.ssh, sshAlgorithm);
+                    await programmingExerciseOverview.checkResultScore(cAllSuccessful.expectedResult);
                 });
             }
 
@@ -145,8 +138,8 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
         let tutorUser: any;
 
         const submissions = [
-            { student: studentOne, submission: javaBuildErrorSubmission, commitMessage: 'Initial commit' },
-            { student: studentTwo, submission: javaPartiallySuccessfulSubmission, commitMessage: 'Initial implementation' },
+            { student: studentOne, submission: cBuildErrorSubmission, commitMessage: 'Initial commit' },
+            { student: studentTwo, submission: cPartiallySuccessfulSubmission, commitMessage: 'Initial implementation' },
         ];
 
         test.beforeEach('Create team programming exercise', async ({ login, exerciseAPIRequests }) => {
@@ -154,7 +147,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             const teamAssignmentConfig = { minTeamSize: 2, maxTeamSize: 3 };
             exercise = await exerciseAPIRequests.createProgrammingExercise({
                 course,
-                programmingLanguage: ProgrammingLanguage.JAVA,
+                programmingLanguage: ProgrammingLanguage.C,
                 mode: ExerciseMode.TEAM,
                 teamAssignmentConfig,
             });
@@ -241,7 +234,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                     participation = await response.json();
                     // Only create files that haven't been created yet
                     for (const file of submission.files) {
-                        const filename = `src/${submission.packageName.replace(/\./g, '/')}/${file.name}`;
+                        const filename = (submission as any).packageName ? `src/${(submission as any).packageName.replace(/\./g, '/')}/${file.name}` : file.name;
                         if (!createdFiles.has(filename)) {
                             await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                             createdFiles.add(filename);
@@ -274,10 +267,10 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
 
     test.describe('Instructor Makes a git submission to the student participation', () => {
         let exercise: ProgrammingExercise;
-        let programmingLanguage = ProgrammingLanguage.JAVA;
+
         test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
         test('Makes a git submission through HTTPS', async ({
@@ -295,19 +288,18 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             test.slow();
             // student submits to create a participation + submission
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, javaAllSuccessfulSubmission, 'student commit');
+            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
             // now instructor commits to the student participation
             await login(instructor);
             // Wait for the student's build to complete before the instructor submits.
             // Exercise creation triggers BASE + SOLUTION builds, then startParticipation triggers
             // a student template clone build, and makeSubmission triggers the student submission build.
-            // Locally these builds queue serially (~18s each), so we need a generous timeout
-            // to cover all 4 builds. On CI, builds may be merged/faster but we use the same timeout.
+            // Locally these builds queue serially, so we need a generous timeout.
             await waitForExerciseBuildToFinish(exercise.id!, undefined, 240000);
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.openExerciseParticipations(exercise.id!);
-            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, javaPartiallySuccessfulSubmission, 'instructor commit');
+            await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');
             // check the submission
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);

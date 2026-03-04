@@ -4,8 +4,8 @@
     "files": [
         {
             "name": "helloWorld.c",
-            "path": "exercise/programming/c/all_successful/exercise.txt"
+            "path": "exercise/programming/c/build_error/exercise.txt"
         }
     ],
-    "expectedResult": "87.5%"
+    "expectedResult": "0%"
 }

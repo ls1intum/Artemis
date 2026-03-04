@@ -45,7 +45,7 @@ test.describe('Exam assessment', () => {
 
     test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(2, 'minutes');
+            examEnd = dayjs().add(45, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
@@ -68,7 +68,7 @@ test.describe('Exam assessment', () => {
             await examAssessment.addNewFeedback(2, 'Good job');
             await examAssessment.submit();
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
-            await examParticipation.checkResultScore('66.2%');
+            await examParticipation.checkResultScore('70%');
         });
 
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
@@ -155,7 +155,7 @@ test.describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(45, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.QUIZ, page);
@@ -165,7 +165,7 @@ test.describe('Exam assessment', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
             if (dayjs().isBefore(examEnd)) {
-                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 10000);
+                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 2000);
             }
             await examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);

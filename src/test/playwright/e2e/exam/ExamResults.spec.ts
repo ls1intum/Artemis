@@ -6,11 +6,11 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateUUID, waitForExamEnd } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
-import { Exercise, ExerciseType } from '../../support/constants';
+import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/assessment/ExerciseAssessmentDashboardPage';
-import javaPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/java/partially_successful/submission.json';
+import cPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/ExamResultsPage';
 import { Page } from '@playwright/test';
@@ -32,7 +32,7 @@ test.describe('Exam Results', () => {
 
     const testCases = [
         { exerciseType: ExerciseType.TEXT, resultScore: '70%' },
-        { exerciseType: ExerciseType.PROGRAMMING, resultScore: '46.2%' },
+        { exerciseType: ExerciseType.PROGRAMMING, resultScore: '50%' },
         { exerciseType: ExerciseType.QUIZ, resultScore: '50%' },
         { exerciseType: ExerciseType.MODELING, resultScore: '40%' },
     ];
@@ -49,14 +49,7 @@ test.describe('Exam Results', () => {
                 test.beforeEach('Prepare exam', async ({ login, examAPIRequests }) => {
                     await login(admin);
 
-                    if (testCase.exerciseType === ExerciseType.PROGRAMMING) {
-                        // Programming exercises need more time for the build to complete
-                        // Use 60s to leave sufficient margin within the sequential timeout
-                        // and account for potentially slow CI build agents
-                        examEndDate = dayjs().add(60, 'seconds');
-                    } else {
-                        examEndDate = dayjs().add(30, 'seconds');
-                    }
+                    examEndDate = dayjs().add(45, 'seconds');
                     const examConfig = {
                         course,
                         title: 'exam' + generateUUID(),
@@ -78,7 +71,7 @@ test.describe('Exam Results', () => {
                             additionalData = { textFixture: 'loremIpsum.txt' };
                             break;
                         case ExerciseType.PROGRAMMING:
-                            additionalData = { submission: javaPartiallySuccessfulSubmission };
+                            additionalData = { submission: cPartiallySuccessfulSubmission, programmingLanguage: ProgrammingLanguage.C };
                             break;
                         case ExerciseType.QUIZ:
                             additionalData = { quizExerciseID: 0 };
@@ -146,16 +139,12 @@ test.describe('Exam Results', () => {
                                 await examResultsPage.checkAdditionalFeedback(exercise.id!, 7, 'Good job');
                                 break;
                             case ExerciseType.PROGRAMMING:
-                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 7);
-                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 6);
+                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 4);
+                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 4);
                                 const taskStatuses: ProgrammingExerciseTaskStatus[] = [
-                                    ProgrammingExerciseTaskStatus.SUCCESS,
-                                    ProgrammingExerciseTaskStatus.SUCCESS,
-                                    ProgrammingExerciseTaskStatus.SUCCESS,
-                                    ProgrammingExerciseTaskStatus.FAILURE,
-                                    ProgrammingExerciseTaskStatus.FAILURE,
-                                    ProgrammingExerciseTaskStatus.FAILURE,
-                                    ProgrammingExerciseTaskStatus.FAILURE,
+                                    ProgrammingExerciseTaskStatus.SUCCESS, // Compile (TestCompile)
+                                    ProgrammingExerciseTaskStatus.FAILURE, // Output (TestOutput, TestOutputASan, TestOutputUBSan, TestOutputLSan)
+                                    ProgrammingExerciseTaskStatus.NOT_EXECUTED, // Sanitizers (TestASan, TestUBSan, TestLSan)
                                 ];
                                 await examResultsPage.checkProgrammingExerciseTasks(exercise.id!, taskStatuses);
                                 break;

@@ -60,6 +60,9 @@ export class ExamResultsPage {
                 case ProgrammingExerciseTaskStatus.FAILURE:
                     await expect(taskElement.locator('.stepwizard-step--failed')).toBeVisible();
                     break;
+                case ProgrammingExerciseTaskStatus.NOT_EXECUTED:
+                    await expect(taskElement.locator('.stepwizard-step--not-executed')).toBeVisible();
+                    break;
             }
         }
     }
@@ -100,4 +103,5 @@ export enum ProgrammingExerciseTaskStatus {
     PENDING = 'pending',
     SUCCESS = 'success',
     FAILURE = 'failure',
+    NOT_EXECUTED = 'not_executed',
 }

@@ -1,9 +1,9 @@
 import { test } from '../../support/fixtures';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType } from '../../support/constants';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
-import javaAllSuccessfulSubmission from '../../fixtures/exercise/programming/java/all_successful/submission.json';
+import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
@@ -57,7 +57,10 @@ test.describe('Exam participation', () => {
             await login(admin);
             exam = await createExam(course, examAPIRequests, { title: examTitle, examMaxPoints: 40, numberOfExercisesInExam: 4 });
             const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
-            const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission });
+            const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                submission: cAllSuccessfulSubmission,
+                programmingLanguage: ProgrammingLanguage.C,
+            });
             const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
             const modelingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
             exerciseArray = [textExercise, programmingExercise, quizExercise, modelingExercise];
@@ -273,8 +276,9 @@ test.describe('Exam participation', () => {
                 await login(admin);
                 exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(10, 'minutes') });
                 const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
-                    submission: javaAllSuccessfulSubmission,
+                    submission: cAllSuccessfulSubmission,
                     progExerciseAssessmentType: ProgrammingExerciseAssessmentType.AUTOMATIC,
+                    programmingLanguage: ProgrammingLanguage.C,
                 });
                 programmingExercise = exercise as ProgrammingExercise;
 
@@ -301,8 +305,8 @@ test.describe('Exam participation', () => {
             }) => {
                 await examParticipation.startParticipation(studentTwo, course, exam);
                 await examNavigation.openOrSaveExerciseByTitle(programmingExercise.exerciseGroup!.title!);
-                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, javaAllSuccessfulSubmission, 'Solution', cloneMethod);
-                await examParticipation.checkExerciseScore(javaAllSuccessfulSubmission.expectedResult);
+                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
+                await examParticipation.checkExerciseScore(cAllSuccessfulSubmission.expectedResult);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
                 await login(instructor);

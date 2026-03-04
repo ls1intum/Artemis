@@ -81,7 +81,7 @@ export PLAYWRIGHT_CREATE_USERS="${PLAYWRIGHT_CREATE_USERS:-true}"
 # Timeouts matching CI values for reliable local execution
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-150}"             # CI: 300
 export TEST_RETRIES="${TEST_RETRIES:-1}"
-export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-2}"
+export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-3}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-180}"   # CI: 180
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"    # CI: 60
 # Build timeouts match CI defaults to avoid flaky failures from slow local builds
@@ -117,7 +117,7 @@ if [ "$SKIP_CLEANUP" = false ]; then
         DB_VOLUME="artemis-mysql-data"
     fi
     cd docker
-    docker compose -f "$COMPOSE_FILE" down -v 2>/dev/null || true
+    docker compose --env-file ../.env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
     cd ..
     docker volume rm "$DB_VOLUME" artemis-data 2>/dev/null || true
     echo -e "${GREEN}Done${NC}"

@@ -3,9 +3,9 @@ import dayjs from 'dayjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
-import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import { Exercise, ExerciseType } from '../../../support/constants';
+import cAllSuccessfulSubmission from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
+import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
+import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
 import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
@@ -48,8 +48,16 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
 
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission, expectedScore: 100 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, expectedScore: 0 }),
+                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                    submission: cAllSuccessfulSubmission,
+                    expectedScore: 100,
+                    programmingLanguage: ProgrammingLanguage.C,
+                }),
+                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                    submission: cBuildErrorSubmission,
+                    expectedScore: 0,
+                    programmingLanguage: ProgrammingLanguage.C,
+                }),
 
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),

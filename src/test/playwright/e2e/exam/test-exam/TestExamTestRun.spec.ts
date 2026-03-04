@@ -1,8 +1,8 @@
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import { Exercise, ExerciseType } from '../../../support/constants';
+import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
+import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
 import { admin, instructor } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
@@ -32,7 +32,11 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
         exam = await examAPIRequests.createExam(examConfig);
         Promise.all([
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, practiceMode: true }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                submission: cBuildErrorSubmission,
+                practiceMode: true,
+                programmingLanguage: ProgrammingLanguage.C,
+            }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
         ]).then((responses) => {

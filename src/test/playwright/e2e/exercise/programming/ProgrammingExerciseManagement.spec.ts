@@ -5,7 +5,7 @@ import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, t
 import { test } from '../../../support/fixtures';
 import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
-import { Exercise, ExerciseMode } from '../../../support/constants';
+import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 
 test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     let course: Course;
@@ -24,9 +24,9 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await page.waitForURL('**/programming-exercises/new**');
             const exerciseTitle = 'Programming exercise ' + generateUUID();
             await programmingExerciseCreation.changeEditMode();
+            await programmingExerciseCreation.setProgrammingLanguage(ProgrammingLanguage.C);
             await programmingExerciseCreation.setTitle(exerciseTitle);
             await programmingExerciseCreation.setShortName('programming' + generateUUID());
-            await programmingExerciseCreation.setPackageName('de.test');
             await programmingExerciseCreation.setPoints(100);
             await programmingExerciseCreation.checkAllowOnlineEditor();
             const response = await programmingExerciseCreation.generate();
@@ -72,7 +72,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
 
         test.beforeEach('Create programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin, '/');
-            exercise = await exerciseAPIRequests.createProgrammingExercise({ course });
+            exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
         test('Deletes an existing programming exercise', async ({ login, navigationBar, courseManagement, courseManagementExercises }) => {
@@ -102,6 +102,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             const teamAssignmentConfig = { minTeamSize: 2, maxTeamSize: 3 };
             exercise = await exerciseAPIRequests.createProgrammingExercise({
                 course,
+                programmingLanguage: ProgrammingLanguage.C,
                 mode: ExerciseMode.TEAM,
                 teamAssignmentConfig,
             });

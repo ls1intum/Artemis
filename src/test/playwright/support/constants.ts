@@ -71,6 +71,7 @@ export class AdditionalData {
     textFixture?: string;
     practiceMode?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
+    programmingLanguage?: ProgrammingLanguage;
 }
 
 // Exercise
