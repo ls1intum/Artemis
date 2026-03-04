@@ -41,25 +41,20 @@ public record IrisChatWebsocketDTO(IrisWebsocketMessageType type, IrisMessageRes
      */
     public IrisChatWebsocketDTO(@Nullable IrisMessageResponseDTO message, IrisRateLimitService.IrisRateLimitInformation rateLimitInfo, List<PyrisStageDTO> stages,
             String sessionTitle, List<String> suggestions, List<LLMRequest> tokens, List<IrisCitationMetaDTO> citationInfo) {
-        this(determineType(message, stages), message, rateLimitInfo, stages, sessionTitle, suggestions, tokens, citationInfo);
+        this(determineType(message), message, rateLimitInfo, stages, sessionTitle, suggestions, tokens, citationInfo);
     }
 
     /**
-     * Determines the type of WebSocket message based on the presence of a message or stages.
+     * Determines the type of WebSocket message based on the presence of a message.
      * <p>
-     * This method categorizes the WebSocket message type as follows:
-     * <ul>
-     * <li>{@link IrisWebsocketMessageType#MESSAGE} if the {@code message} parameter is not null.</li>
-     * <li>{@link IrisWebsocketMessageType#STATUS} if {@code stages} is not null.</li>
-     * <li>{@code null} otherwise.</li>
-     * </ul>
+     * Returns {@link IrisWebsocketMessageType#MESSAGE} if the message is not null,
+     * {@link IrisWebsocketMessageType#STATUS} otherwise.
      *
      * @param message The message DTO associated with the WebSocket, which may be null.
-     * @param stages  The stages associated with the WebSocket, which may be null.
      * @return The {@link IrisWebsocketMessageType} indicating the type of the message based on the given parameters.
      */
-    private static IrisWebsocketMessageType determineType(@Nullable IrisMessageResponseDTO message, @Nullable List<PyrisStageDTO> stages) {
-        return message != null ? IrisWebsocketMessageType.MESSAGE : (stages != null ? IrisWebsocketMessageType.STATUS : null);
+    private static IrisWebsocketMessageType determineType(@Nullable IrisMessageResponseDTO message) {
+        return message != null ? IrisWebsocketMessageType.MESSAGE : IrisWebsocketMessageType.STATUS;
     }
 
     @Override

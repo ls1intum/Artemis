@@ -216,7 +216,7 @@ class IrisTextExerciseChatSessionResourceTest extends AbstractIrisIntegrationTes
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         irisTextExerciseChatSessionRepository.save(new IrisTextExerciseChatSession(textExercise, user));
 
-        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisTextExerciseChatSession.class, HttpStatus.OK);
+        request.postWithResponseBody("/api/iris/text-exercise-chat/" + textExercise.getId() + "/sessions/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
 
         verify(irisCitationService).enrichSessionWithCitationInfo(any());
     }
