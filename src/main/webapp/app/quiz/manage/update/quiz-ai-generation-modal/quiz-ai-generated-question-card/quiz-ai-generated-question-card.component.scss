@@ -1,0 +1,53 @@
+.quiz-ai-generation-question-card {
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    padding: 0.9rem;
+}
+
+.quiz-ai-generation-question-card .question-card-header {
+    align-items: center;
+    color: var(--text-color);
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+}
+
+.quiz-ai-generation-question-card .type-badge {
+    background: var(--surface-ground);
+    border: 1px solid var(--surface-border);
+    border-radius: 999px;
+    color: var(--text-color-secondary);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.quiz-ai-generation-question-card .option-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.quiz-ai-generation-question-card .option-item {
+    border: 1px solid var(--surface-border);
+    border-left: 3px solid transparent;
+    border-radius: 0.5rem;
+    color: var(--text-color);
+    display: flex;
+    justify-content: space-between;
+    padding: 0.55rem 0.7rem;
+}
+
+.quiz-ai-generation-question-card .option-item.correct {
+    border-left-color: var(--green-500);
+    background: var(--surface-ground);
+}
+
+.quiz-ai-generation-question-card .correct-label {
+    color: var(--green-500);
+    font-size: 0.75rem;
+    font-weight: 700;
+}
