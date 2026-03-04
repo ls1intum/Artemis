@@ -497,7 +497,7 @@ export class MetisService implements OnDestroy {
         }
     }
     /**
-     * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
+     * creates empty default post needed on initialization of a newly opened modal to edit or create a post
      * @param conversation optional conversation as default context
      * @param plagiarismCase optional plagiarism case as default context
      * @return {Post} created default object
