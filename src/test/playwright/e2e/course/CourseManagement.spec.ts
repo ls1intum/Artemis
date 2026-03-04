@@ -7,6 +7,7 @@ import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';
 import multipleChoiceQuizTemplate from '../../fixtures/exercise/quiz/multiple_choice/template.json';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { ProgrammingLanguage } from '../../support/constants';
 
 // Common primitives
 const courseData = {
@@ -276,7 +277,7 @@ test.describe('Course management', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.addTutorToCourse(course, tutor);
             await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
 
-            await exerciseAPIRequests.createProgrammingExercise({ course });
+            await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
 
             await exerciseAPIRequests.createModelingExercise({ course });
             await exerciseAPIRequests.createModelingExercise({ course });

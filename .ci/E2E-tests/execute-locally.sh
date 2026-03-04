@@ -70,10 +70,10 @@ fi
 # Change to docker directory
 cd "$(dirname "$0")/../../docker"
 
-# Create override file if test filter is specified
-OVERRIDE_ARGS=""
+# Create override file for local test execution.
+echo "Creating local test override..."
 if [ -n "$TEST_FILTER" ]; then
-    echo "Creating test filter override..."
+    # With a filter, use a single npx command (--grep works across all projects)
     cat > playwright-local-override.yml << EOF
 # AUTO-GENERATED - DO NOT COMMIT
 services:
@@ -89,6 +89,8 @@ services:
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
+else
+    OVERRIDE_ARGS=""
 fi
 
 # Cleanup function

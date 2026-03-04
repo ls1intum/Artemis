@@ -124,44 +124,40 @@ test.describe('Exam Results', () => {
                     },
                 );
 
-                test(
-                    `Check exam ${exerciseTypeString} exercise results`,
-                    { tag: testCase.exerciseType === ExerciseType.PROGRAMMING ? '@sequential' : '@slow' },
-                    async ({ page, login, examParticipation, examResultsPage }) => {
-                        await login(studentOne);
-                        await waitForExamEnd(examEndDate, page);
-                        await page.goto(`/courses/${course.id}/exams/${exam.id}`);
-                        await examParticipation.checkResultScore(testCase.resultScore, exercise.id!);
+                test(`Check exam ${exerciseTypeString} exercise results`, { tag: '@slow' }, async ({ page, login, examParticipation, examResultsPage }) => {
+                    await login(studentOne);
+                    await waitForExamEnd(examEndDate, page);
+                    await page.goto(`/courses/${course.id}/exams/${exam.id}`);
+                    await examParticipation.checkResultScore(testCase.resultScore, exercise.id!);
 
-                        switch (testCase.exerciseType) {
-                            case ExerciseType.TEXT:
-                                await examResultsPage.checkTextExerciseContent(exercise.id!, exercise.additionalData!.textFixture!);
-                                await examResultsPage.checkAdditionalFeedback(exercise.id!, 7, 'Good job');
-                                break;
-                            case ExerciseType.PROGRAMMING:
-                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 4);
-                                await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 4);
-                                const taskStatuses: ProgrammingExerciseTaskStatus[] = [
-                                    ProgrammingExerciseTaskStatus.SUCCESS, // Compile (TestCompile)
-                                    ProgrammingExerciseTaskStatus.FAILURE, // Output (TestOutput, TestOutputASan, TestOutputUBSan, TestOutputLSan)
-                                    ProgrammingExerciseTaskStatus.NOT_EXECUTED, // Sanitizers (TestASan, TestUBSan, TestLSan)
-                                ];
-                                await examResultsPage.checkProgrammingExerciseTasks(exercise.id!, taskStatuses);
-                                break;
-                            case ExerciseType.QUIZ:
-                                await examResultsPage.checkQuizExerciseScore(exercise.id!, 5, 10);
-                                const studentAnswers = [true, false, true, false];
-                                const correctAnswers = [true, true, false, false];
-                                await examResultsPage.checkQuizExerciseAnswers(exercise.id!, studentAnswers, correctAnswers);
-                                break;
-                            case ExerciseType.MODELING:
-                                await examResultsPage.checkAdditionalFeedback(exercise.id!, 5, 'Good');
-                                await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class Class', 'Wrong', -1);
-                                await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'abstract class Abstract', 'Neutral', 0);
-                                break;
-                        }
-                    },
-                );
+                    switch (testCase.exerciseType) {
+                        case ExerciseType.TEXT:
+                            await examResultsPage.checkTextExerciseContent(exercise.id!, exercise.additionalData!.textFixture!);
+                            await examResultsPage.checkAdditionalFeedback(exercise.id!, 7, 'Good job');
+                            break;
+                        case ExerciseType.PROGRAMMING:
+                            await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Wrong', 4);
+                            await examResultsPage.checkProgrammingExerciseAssessments(exercise.id!, 'Correct', 4);
+                            const taskStatuses: ProgrammingExerciseTaskStatus[] = [
+                                ProgrammingExerciseTaskStatus.SUCCESS, // Compile (TestCompile)
+                                ProgrammingExerciseTaskStatus.FAILURE, // Output (TestOutput, TestOutputASan, TestOutputUBSan, TestOutputLSan)
+                                ProgrammingExerciseTaskStatus.NOT_EXECUTED, // Sanitizers (TestASan, TestUBSan, TestLSan)
+                            ];
+                            await examResultsPage.checkProgrammingExerciseTasks(exercise.id!, taskStatuses);
+                            break;
+                        case ExerciseType.QUIZ:
+                            await examResultsPage.checkQuizExerciseScore(exercise.id!, 5, 10);
+                            const studentAnswers = [true, false, true, false];
+                            const correctAnswers = [true, true, false, false];
+                            await examResultsPage.checkQuizExerciseAnswers(exercise.id!, studentAnswers, correctAnswers);
+                            break;
+                        case ExerciseType.MODELING:
+                            await examResultsPage.checkAdditionalFeedback(exercise.id!, 5, 'Good');
+                            await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class Class', 'Wrong', -1);
+                            await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'abstract class Abstract', 'Neutral', 0);
+                            break;
+                    }
+                });
 
                 if (testCase.exerciseType === ExerciseType.TEXT) {
                     // This test needs @slow tag because it runs all beforeEach hooks including assessment

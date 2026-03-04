@@ -234,7 +234,7 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
                     participation = await response.json();
                     // Only create files that haven't been created yet
                     for (const file of submission.files) {
-                        const filename = (submission as any).packageName ? `src/${(submission as any).packageName.replace(/\./g, '/')}/${file.name}` : file.name;
+                        const filename = submission.packageName ? `src/${submission.packageName.replace(/\./g, '/')}/${file.name}` : file.name;
                         if (!createdFiles.has(filename)) {
                             await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                             createdFiles.add(filename);

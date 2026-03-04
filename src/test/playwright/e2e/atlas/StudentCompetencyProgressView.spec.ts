@@ -264,7 +264,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
         });
     });
 
-    test.describe('Student Competency Progress - Exercise Completion', { tag: '@slow' }, () => {
+    test.describe('Student Competency Progress - Exercise Completion', () => {
         test.beforeEach('Setup course', async ({ login, courseManagementAPIRequests }) => {
             await login(admin);
             nestedCourse = await courseManagementAPIRequests.createCourse();
@@ -304,10 +304,10 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 quizMode: 'SYNCHRONIZED',
                 // When startQuizNow is called, the server overrides dueDate to
                 // now + duration + QUIZ_GRACE_PERIOD (5s). Results are calculated at
-                // dueDate + 5s by QuizScheduleService. With duration=30, results are
-                // calculated ~40s after quiz start. The student needs ~20s to navigate
-                // and submit, so duration must be long enough for participation.
-                duration: 30,
+                // dueDate + 5s by QuizScheduleService. With duration=10, results are
+                // calculated ~20s after quiz start. Programmatic participation (login,
+                // navigate, tick, submit) takes ~5s, so 10s is sufficient.
+                duration: 10,
                 quizBatches: [{ startTime: dayjs().toISOString() }],
                 quizQuestions: [
                     {

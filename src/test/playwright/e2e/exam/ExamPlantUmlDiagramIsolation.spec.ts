@@ -7,6 +7,7 @@ import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { ProgrammingLanguage } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
 /**
@@ -76,6 +77,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             exerciseGroup: exerciseGroupA,
             title: 'Exercise Alpha ' + generateUUID(),
             problemStatement: problemStatementA,
+            programmingLanguage: ProgrammingLanguage.C,
         });
 
         groupTitleB = 'Group Beta ' + generateUUID();
@@ -84,6 +86,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             exerciseGroup: exerciseGroupB,
             title: 'Exercise Beta ' + generateUUID(),
             problemStatement: problemStatementB,
+            programmingLanguage: ProgrammingLanguage.C,
         });
 
         groupTitleC = 'Group Gamma ' + generateUUID();
@@ -92,6 +95,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             exerciseGroup: exerciseGroupC,
             title: 'Exercise Gamma ' + generateUUID(),
             problemStatement: problemStatementC,
+            programmingLanguage: ProgrammingLanguage.C,
         });
 
         // Wait for CI pipelines to complete by checking test case availability

@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page, expect } from '@playwright/test';
 import { Commands } from '../../commands';
 
 export class CourseAssessmentDashboardPage {
@@ -24,8 +24,10 @@ export class CourseAssessmentDashboardPage {
     }
 
     async clickEvaluateQuizzes() {
+        const button = this.page.locator('#evaluateQuizExercisesButton');
+        await expect(button).toBeEnabled({ timeout: 30000 });
         const evaluateQuizzesPromise = this.page.waitForResponse(`api/exam/courses/*/exams/*/student-exams/evaluate-quiz-exercises`);
-        await this.page.locator('#evaluateQuizExercisesButton').click();
+        await button.click();
         return await evaluateQuizzesPromise;
     }
 }

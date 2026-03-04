@@ -164,10 +164,12 @@ test.describe('Exam assessment', () => {
         test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            if (dayjs().isBefore(examEnd)) {
-                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 2000);
+            // Wait for exam end + grace period (10s) so the evaluate button is enabled on load.
+            // The button's disabled state is computed once during component init and not re-evaluated.
+            const graceEnd = examEnd.add(10, 'seconds');
+            if (dayjs().isBefore(graceEnd)) {
+                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 2000);
             }
-            await examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);
