@@ -1270,7 +1270,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         it('should show confirmation dialog with correct translation key', () => {
             const confirmSpy = vi.spyOn(confirmationService, 'confirm');
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
 
             component.onDeleteSession(session);
 
@@ -1286,7 +1286,7 @@ describe('IrisBaseChatbotComponent', () => {
                 return confirmationService;
             });
             const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
 
             component.onDeleteSession(session);
 
@@ -1301,7 +1301,7 @@ describe('IrisBaseChatbotComponent', () => {
             vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
             const alertService = fixture.debugElement.injector.get(AlertService);
             const successSpy = vi.spyOn(alertService, 'success');
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
 
             component.onDeleteSession(session);
 
@@ -1314,7 +1314,7 @@ describe('IrisBaseChatbotComponent', () => {
                 return confirmationService;
             });
             const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
 
             component.onDeleteSession(session);
 
