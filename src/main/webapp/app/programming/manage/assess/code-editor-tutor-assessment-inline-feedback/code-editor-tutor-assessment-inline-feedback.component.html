@@ -4,7 +4,8 @@
     [style.max-width.%]="95"
     [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
     [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
-    [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined"
+    [class.alert-warning]="!feedback.credits && feedback.isSubsequent === undefined && !Feedback.isNonGradedFeedbackSuggestion(feedback)"
+    [class.alert-info]="Feedback.isNonGradedFeedbackSuggestion(feedback)"
     [class.alert-secondary]="readOnly && feedback.isSubsequent"
 >
     @if (Feedback.isFeedbackSuggestion(feedback) && !readOnly) {
