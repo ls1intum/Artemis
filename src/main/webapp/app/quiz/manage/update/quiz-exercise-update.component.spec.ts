@@ -44,6 +44,7 @@ import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 
 describe('QuizExerciseUpdateComponent', () => {
     setupTestBed({ zoneless: true });
@@ -2141,6 +2142,64 @@ describe('QuizExerciseUpdateComponent', () => {
                 expect(event.preventDefault).not.toHaveBeenCalled();
                 expect(result).toBeTruthy();
             });
+        });
+    });
+
+    describe('AI Quiz Generation', () => {
+        beforeEach(async () => {
+            await configureTestBed();
+            configureFixtureAndServices();
+            comp.quizExercise = quizExercise;
+        });
+
+        it('should append generated questions to existing quiz questions', () => {
+            vi.spyOn(comp, 'handleQuestionChanged').mockImplementation(() => {});
+
+            const existingQuestion = new MultipleChoiceQuestion();
+            existingQuestion.title = 'Existing question';
+            existingQuestion.points = 1;
+            existingQuestion.answerOptions = [];
+            comp.quizExercise.quizQuestions = [existingQuestion];
+
+            const generatedQuestions: GeneratedQuestion[] = [
+                {
+                    id: 'q1',
+                    type: 'single-choice',
+                    questionText: 'First generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: false },
+                    ],
+                },
+                {
+                    id: 'q2',
+                    type: 'multiple-choice',
+                    questionText: 'Second generated question',
+                    options: [
+                        { text: 'A', correct: true },
+                        { text: 'B', correct: true },
+                        { text: 'C', correct: false },
+                    ],
+                },
+                {
+                    id: 'q3',
+                    type: 'true-false',
+                    questionText: 'Third generated question',
+                    options: [
+                        { text: 'True', correct: false },
+                        { text: 'False', correct: true },
+                    ],
+                },
+            ];
+
+            comp.appendAiGeneratedQuestions(generatedQuestions);
+
+            expect(comp.quizExercise.quizQuestions).toHaveLength(4);
+            expect(comp.quizExercise.quizQuestions?.[0]).toBe(existingQuestion);
+            expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).text).toBe('First generated question');
+            expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).singleChoice).toBe(true);
+            expect((comp.quizExercise.quizQuestions?.[2] as MultipleChoiceQuestion).singleChoice).toBe(false);
+            expect((comp.quizExercise.quizQuestions?.[3] as MultipleChoiceQuestion).singleChoice).toBe(true);
         });
     });
 });

@@ -133,7 +133,7 @@
         <button pButton type="button" severity="secondary" outlined (click)="close()">
             <span jhiTranslate="entity.action.close"></span>
         </button>
-        <button pButton type="button" severity="success" [disabled]="!hasGeneratedQuestions()">
+        <button pButton type="button" severity="success" [disabled]="!hasGeneratedQuestions()" (click)="addGeneratedQuestionsToQuiz()">
             <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.addToEditor"></span>
         </button>
     </ng-template>
