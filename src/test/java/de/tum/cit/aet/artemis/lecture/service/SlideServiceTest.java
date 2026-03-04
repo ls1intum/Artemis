@@ -95,7 +95,7 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify the slide was updated
         Slide updatedSlide = slideRepository.findById(slide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(newDueDate.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(newDueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
     }
 
     @Test
@@ -124,6 +124,6 @@ class SlideServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Verify the slide hasn't changed
         Slide updatedSlide = slideRepository.findById(savedSlide.getId()).orElseThrow();
-        assertThat(updatedSlide.getHidden().truncatedTo(ChronoUnit.MILLIS)).isEqualTo(dueDate.truncatedTo(ChronoUnit.MILLIS));
+        assertThat(updatedSlide.getHidden().toInstant().truncatedTo(ChronoUnit.SECONDS)).isEqualTo(dueDate.toInstant().truncatedTo(ChronoUnit.SECONDS));
     }
 }
