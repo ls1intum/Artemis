@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, ViewEncapsulation, computed, inject, input, model, output, signal } from '@angular/core';
+import { Component, OnDestroy, ViewEncapsulation, computed, inject, input, model, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -42,7 +42,7 @@ import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGen
         QuizAiGeneratedQuestionCardComponent,
     ],
 })
-export class QuizAiGenerationModalComponent {
+export class QuizAiGenerationModalComponent implements OnDestroy {
     private alertService = inject(AlertService);
     private quizAiGenerationService = inject(QuizAiGenerationService);
 
@@ -58,11 +58,21 @@ export class QuizAiGenerationModalComponent {
     selectedQuestionTypes = signal<GeneratedQuestionType[]>(['single-choice']);
     generatedQuestions = signal<GeneratedQuestion[]>([]);
     isGenerating = signal(false);
+    loadingPhraseIndex = signal(0);
+    loadingDotsCount = signal(0);
 
     readonly questionTypes: GeneratedQuestionType[] = ['single-choice', 'multiple-choice', 'true-false'];
     readonly languages: GenerationLanguage[] = ['en', 'de'];
+    readonly loadingPhraseKeys = [
+        'artemisApp.quizExercise.aiGeneration.actions.loading.thinking',
+        'artemisApp.quizExercise.aiGeneration.actions.loading.analyzing',
+        'artemisApp.quizExercise.aiGeneration.actions.loading.generating',
+        'artemisApp.quizExercise.aiGeneration.actions.loading.refining',
+    ] as const;
     readonly hasGeneratedQuestions = computed(() => this.generatedQuestions().length > 0);
     readonly canGenerate = computed(() => !!this.courseId() && !!this.topic().trim() && this.selectedQuestionTypes().length > 0);
+    private loadingPhraseIntervalId?: ReturnType<typeof setInterval>;
+    private loadingDotsIntervalId?: ReturnType<typeof setInterval>;
 
     close(): void {
         this.visible.set(false);
@@ -105,10 +115,10 @@ export class QuizAiGenerationModalComponent {
             difficulty: Math.max(0, Math.min(100, this.difficulty() ?? 50)),
         };
 
-        this.isGenerating.set(true);
+        this.startLoadingAnimation();
         this.quizAiGenerationService
             .generateQuizQuestions(courseId, request)
-            .pipe(finalize(() => this.isGenerating.set(false)))
+            .pipe(finalize(() => this.stopLoadingAnimation()))
             .subscribe({
                 next: (generatedQuestions) => {
                     this.generatedQuestions.set(generatedQuestions);
@@ -144,5 +154,44 @@ export class QuizAiGenerationModalComponent {
         }
         this.addQuestions.emit(questions);
         this.close();
+    }
+
+    getCurrentLoadingPhraseKey(): string {
+        return this.loadingPhraseKeys[this.loadingPhraseIndex()];
+    }
+
+    getLoadingDots(): string {
+        return '.'.repeat(this.loadingDotsCount());
+    }
+
+    ngOnDestroy(): void {
+        this.stopLoadingAnimation();
+    }
+
+    private startLoadingAnimation(): void {
+        this.stopLoadingAnimation();
+        this.isGenerating.set(true);
+        this.loadingPhraseIndex.set(0);
+        this.loadingDotsCount.set(0);
+
+        this.loadingPhraseIntervalId = setInterval(() => {
+            this.loadingPhraseIndex.update((index) => (index + 1) % this.loadingPhraseKeys.length);
+        }, 2200);
+
+        this.loadingDotsIntervalId = setInterval(() => {
+            this.loadingDotsCount.update((count) => (count + 1) % 4);
+        }, 400);
+    }
+
+    private stopLoadingAnimation(): void {
+        this.isGenerating.set(false);
+        if (this.loadingPhraseIntervalId) {
+            clearInterval(this.loadingPhraseIntervalId);
+            this.loadingPhraseIntervalId = undefined;
+        }
+        if (this.loadingDotsIntervalId) {
+            clearInterval(this.loadingDotsIntervalId);
+            this.loadingDotsIntervalId = undefined;
+        }
     }
 }
