@@ -251,7 +251,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private startCodeGeneration() {
         this.isGeneratingCode.set(true);
-        const repositoryType = this.selectedRepository as unknown as CodeGenerationRequest.RepositoryTypeEnum;
+        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
+        if (!repositoryType) {
+            this.isGeneratingCode.set(false);
+            this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' });
+            return;
+        }
         const exerciseId = this.exercise!.id!;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
             next: (res) => {
@@ -320,7 +325,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
             return;
         }
-        const repositoryType = this.selectedRepository as unknown as CodeGenerationRequest.RepositoryTypeEnum;
+        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
+        if (!repositoryType) {
+            return;
+        }
         const requestId = this.restoreRequestId;
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
             next: (res) => {
@@ -340,6 +348,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.clearJobSubscription(true);
             },
         });
+    }
+
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): CodeGenerationRequest.RepositoryTypeEnum | undefined {
+        switch (repositoryType) {
+            case RepositoryType.TEMPLATE:
+                return CodeGenerationRequest.RepositoryTypeEnum.Exercise;
+            case RepositoryType.SOLUTION:
+                return CodeGenerationRequest.RepositoryTypeEnum.Solution;
+            case RepositoryType.TESTS:
+                return CodeGenerationRequest.RepositoryTypeEnum.Tests;
+            case RepositoryType.AUXILIARY:
+                return CodeGenerationRequest.RepositoryTypeEnum.Auxiliary;
+            case RepositoryType.USER:
+            case RepositoryType.ASSIGNMENT:
+                return CodeGenerationRequest.RepositoryTypeEnum.User;
+            default:
+                return undefined;
+        }
     }
 
     /**

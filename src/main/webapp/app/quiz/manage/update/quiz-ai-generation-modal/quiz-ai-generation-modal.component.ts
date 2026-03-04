@@ -17,6 +17,7 @@ import { QuizAiGeneratedQuestionCardComponent } from 'app/quiz/manage/update/qui
 import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
 import { finalize } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
 import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 
 @Component({
@@ -73,6 +74,7 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     readonly canGenerate = computed(() => !!this.courseId() && !!this.topic().trim() && this.selectedQuestionTypes().length > 0);
     private loadingPhraseIntervalId?: ReturnType<typeof setInterval>;
     private loadingDotsIntervalId?: ReturnType<typeof setInterval>;
+    private generationSubscription?: Subscription;
 
     close(): void {
         this.visible.set(false);
@@ -116,7 +118,7 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
         };
 
         this.startLoadingAnimation();
-        this.quizAiGenerationService
+        this.generationSubscription = this.quizAiGenerationService
             .generateQuizQuestions(courseId, request)
             .pipe(finalize(() => this.stopLoadingAnimation()))
             .subscribe({
@@ -165,6 +167,7 @@ export class QuizAiGenerationModalComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
+        this.generationSubscription?.unsubscribe();
         this.stopLoadingAnimation();
     }
 
