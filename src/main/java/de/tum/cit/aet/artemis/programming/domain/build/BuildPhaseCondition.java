@@ -1,11 +1,11 @@
-package de.tum.cit.aet.artemis.programming.dto;
+package de.tum.cit.aet.artemis.programming.domain.build;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Represents the condition under which a build phase should be executed.
  */
-public enum BuildPhaseConditionDTO {
+public enum BuildPhaseCondition {
 
     @JsonProperty("ALWAYS")
     ALWAYS,

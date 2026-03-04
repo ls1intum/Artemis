@@ -198,29 +198,6 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         expect(resetSpy).toHaveBeenCalled();
     });
 
-    it('should call getAeolusTemplateScript', () => {
-        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
-        comp.programmingExercise.id = 1;
-        jest.spyOn(comp, 'resetCustomBuildPlan');
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.next("echo 'test'")));
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateFile').mockReturnValue(new Observable((subscriber) => subscriber.next(mockAeolusService.serializeWindFile(windfile))));
-        comp.loadAeolusTemplate();
-        expect(comp.resetCustomBuildPlan).not.toHaveBeenCalled();
-        expect(comp.programmingExercise.buildConfig?.buildScript).toBe("echo 'test'");
-    });
-
-    it('should call getAeolusTemplateScript and reset', () => {
-        comp.programmingExerciseCreationConfig = programmingExerciseCreationConfigMock;
-        comp.programmingExerciseCreationConfig.customBuildPlansSupported = PROFILE_LOCALCI;
-        comp.programmingExercise.id = 1;
-        jest.spyOn(mockAeolusService, 'getAeolusTemplateScript').mockReturnValue(new Observable((subscriber) => subscriber.error('error')));
-        jest.spyOn(comp, 'resetCustomBuildPlan');
-        comp.loadAeolusTemplate();
-        expect(comp.resetCustomBuildPlan).toHaveBeenCalledOnce();
-        expect(comp.programmingExercise.buildConfig?.buildScript).toBeUndefined();
-    });
-
     /*it('should accept editor for existing exercise', () => {
         comp.programmingExercise.id = 1;
         comp.programmingExercise.buildConfig!.buildScript = 'buildscript';
@@ -238,10 +215,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         comp.programmingExercise.buildConfig!.windfile = windfile;
         comp.programmingExercise.buildConfig!.windfile.metadata.docker.image = 'old';
         comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.buildConfig?.windfile?.metadata.docker.image).toBe('testImage');
-        comp.programmingExercise.buildConfig!.windfile = undefined;
-        comp.setDockerImage('testImage');
-        expect(comp.programmingExercise.buildConfig?.windfile).toBeUndefined();
+        expect(comp.buildPlanPhases.dockerImage!).toBe('testImage');
     });
 
     it('should not call getAeolusTemplateScript when import from file if script present', () => {
