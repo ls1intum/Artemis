@@ -313,15 +313,13 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             return;
         }
 
-        if (!this.quizExercise.quizQuestions) {
-            this.quizExercise.quizQuestions = [];
-        }
-
-        const existingQuestionCount = this.quizExercise.quizQuestions.length;
+        const existingQuestions = this.quizExercise.quizQuestions ?? [];
+        const existingQuestionCount = existingQuestions.length;
         const mappedQuestions = generatedQuestions.map((generatedQuestion, index) =>
             this.convertGeneratedQuestionToQuizQuestion(generatedQuestion, existingQuestionCount + index + 1),
         );
-        this.quizExercise.quizQuestions.push(...mappedQuestions);
+        // Reassign the array to ensure OnPush children receive a new input reference.
+        this.quizExercise.quizQuestions = [...existingQuestions, ...mappedQuestions];
         this.handleQuestionChanged();
     }
 

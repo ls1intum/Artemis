@@ -2207,6 +2207,7 @@ describe('QuizExerciseUpdateComponent', () => {
             existingQuestion.points = 1;
             existingQuestion.answerOptions = [];
             comp.quizExercise.quizQuestions = [existingQuestion];
+            const originalReference = comp.quizExercise.quizQuestions;
 
             const generatedQuestions: GeneratedQuestion[] = [
                 {
@@ -2245,6 +2246,7 @@ describe('QuizExerciseUpdateComponent', () => {
             comp.appendAiGeneratedQuestions(generatedQuestions);
 
             expect(comp.quizExercise.quizQuestions).toHaveLength(4);
+            expect(comp.quizExercise.quizQuestions).not.toBe(originalReference);
             expect(comp.quizExercise.quizQuestions?.[0]).toBe(existingQuestion);
             expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).title).toBe('Generated Title 1');
             expect((comp.quizExercise.quizQuestions?.[1] as MultipleChoiceQuestion).text).toBe('First generated question');
