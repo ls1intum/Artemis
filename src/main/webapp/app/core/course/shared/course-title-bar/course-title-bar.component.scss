@@ -21,7 +21,7 @@
         border-color: transparent;
     }
 
-    transition: border-color $transition-color-length $transition-delay +$transition-chevron-rotate-length * 2 ease-in-out;
+    transition: border-color $transition-color-length $transition-delay + $transition-chevron-rotate-length * 2 ease-in-out;
 }
 
 .btn-sidebar-collapse::after,
