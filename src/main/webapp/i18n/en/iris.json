@@ -180,13 +180,10 @@
                 "openChatHistory": "Open chat history",
                 "aboutIris": "About Iris",
                 "today": "Today",
-                "yesterday": "Yesterday",
-                "last7Days": "Last 7 Days",
-                "last30Days": "Last 30 Days",
                 "older": "Older",
                 "relatedEntityTooltip": {
-                    "programmingExercise": "This chat is related to a programming exercise.",
-                    "lecture": "This chat is related to a lecture."
+                    "programmingExercise": "Related Programming Exercise:\n{{ name }}",
+                    "lecture": "Related Lecture:\n{{ name }}"
                 },
                 "deleteSession": "Delete",
                 "deleteSessionHeader": "Delete Chat Session",

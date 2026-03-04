@@ -44,7 +44,7 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-3">
+                        <div class="px-2 mt-2 mb-2">
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                         </div>
 
@@ -62,7 +62,12 @@
                                     <p [jhiTranslate]="bucket.labelKey"></p>
                                 </div>
                                 @for (session of bucket.sessions; track session.id) {
-                                    <jhi-chat-history-item [session]="session" [active]="session.id === currentSessionId()" (sessionClicked)="onSessionClick(session)" />
+                                    <jhi-chat-history-item
+                                        [session]="session"
+                                        [active]="session.id === currentSessionId()"
+                                        (sessionClicked)="onSessionClick(session)"
+                                        (deleteSession)="onDeleteSession(session)"
+                                    />
                                 }
                             }
                         }
@@ -92,16 +97,6 @@
         @if (!isEmbeddedChat()) {
             <div class="chat-header" [class.has-content]="hasHeaderContent()">
                 <div class="d-flex gap-2">
-                    @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
-                        <div class="toolbox">
-                            <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
-                                <div>
-                                    {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
-                                </div>
-                                <fa-icon [icon]="faLink" />
-                            </button>
-                        </div>
-                    }
                     @if (rateLimitInfo()?.rateLimit; as rateLimit) {
                         @if (rateLimit > 0) {
                             <div class="toolbox">
@@ -164,7 +159,7 @@
                                             </div>
                                         }
                                         @if (message.sender === IrisSender.LLM) {
-                                            <div style="width: fit-content; position: relative">
+                                            <div class="llm-message-wrapper">
                                                 @if (content.type === IrisMessageContentType.TEXT) {
                                                     <div class="bubble-left">
                                                         <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />

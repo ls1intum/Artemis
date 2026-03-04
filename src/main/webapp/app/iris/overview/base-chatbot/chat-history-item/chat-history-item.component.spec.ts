@@ -13,6 +13,7 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { provideRouter } from '@angular/router';
 
 describe('ChatHistoryItemComponent', () => {
     setupTestBed({ zoneless: true });
@@ -23,7 +24,7 @@ describe('ChatHistoryItemComponent', () => {
     beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [ChatHistoryItemComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [DatePipe, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [DatePipe, { provide: TranslateService, useClass: MockTranslateService }, provideRouter([])],
         });
 
         fixture = TestBed.createComponent(ChatHistoryItemComponent);
@@ -101,18 +102,17 @@ describe('ChatHistoryItemComponent', () => {
         expect(itemDiv.classList).not.toContain('chat-history-item-selected');
     });
 
-    function testSessionRendering(session: IrisSessionDTO, expectedIcon: IconProp, expectedTooltipKey: string, expectedEntityName: string) {
+    function testSessionRendering(session: IrisSessionDTO, expectedIcon: IconProp, expectedTooltipKey: string, expectedEntityRoute: string) {
         fixture.componentRef.setInput('session', session);
         fixture.detectChanges();
-        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-info fa-icon'));
+        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-icon fa-icon'));
         const iconInstance = iconDebugEl.componentInstance as FaIconComponent;
-        const entityNameEl = fixture.debugElement.query(By.css('.related-entity-name')).nativeElement;
         expect(iconInstance.icon()).toBe(expectedIcon);
-        expect(component.tooltipKey()).toBe(expectedTooltipKey);
-        expect(entityNameEl.textContent).toContain(expectedEntityName);
+        expect(component.tooltipText()).toContain(expectedTooltipKey);
+        expect(component.entityRoute()).toBe(expectedEntityRoute);
     }
 
-    it('should render correct icon with correct tooltip and entity name for lecture session', () => {
+    it('should render correct icon with correct tooltip and entity route for lecture session', () => {
         const session: IrisSessionDTO = {
             id: 1,
             title: 'New chat',
@@ -121,10 +121,10 @@ describe('ChatHistoryItemComponent', () => {
             entityId: 42,
             entityName: 'Lecture 1',
         };
-        testSessionRendering(session, faChalkboardUser, 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture', 'Lecture 1');
+        testSessionRendering(session, faChalkboardUser, 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture', '../lectures/42');
     });
 
-    it('should render correct icon with correct tooltip and entity name for programming exercise session', () => {
+    it('should render correct icon with correct tooltip and entity route for programming exercise session', () => {
         const session: IrisSessionDTO = {
             id: 2,
             title: 'New chat',
@@ -133,7 +133,7 @@ describe('ChatHistoryItemComponent', () => {
             entityId: 77,
             entityName: 'Exercise 1',
         };
-        testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', 'Exercise 1');
+        testSessionRendering(session, faKeyboard, 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise', '../exercises/77');
     });
 
     it('should detect new chat session with English title', async () => {
@@ -314,7 +314,7 @@ describe('ChatHistoryItemComponent', () => {
         expect(component.menuItems[0].label).toBe('Löschen');
     });
 
-    it('should not render an icon and entity name for course session', async () => {
+    it('should not render related-entity-icon for course session', async () => {
         const session: IrisSessionDTO = {
             id: 3,
             title: 'Course chat',
@@ -327,9 +327,29 @@ describe('ChatHistoryItemComponent', () => {
         fixture.componentRef.setInput('session', session);
         await fixture.whenStable();
 
-        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-info fa-icon'));
-
+        const iconDebugEl = fixture.debugElement.query(By.css('.related-entity-icon'));
         expect(iconDebugEl).toBeNull();
-        expect(fixture.debugElement.query(By.css('.related-entity-name'))).toBeFalsy();
+    });
+
+    it('should call stopPropagation and not emit sessionClicked when entity icon is clicked', async () => {
+        const session: IrisSessionDTO = {
+            id: 20,
+            title: 'Exercise chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 99,
+            entityName: 'Exercise 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        vi.spyOn(component.sessionClicked, 'emit');
+
+        const mockEvent = { stopPropagation: vi.fn() } as unknown as Event;
+        component.onEntityIconClick(mockEvent);
+
+        expect(mockEvent.stopPropagation).toHaveBeenCalled();
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
     });
 });

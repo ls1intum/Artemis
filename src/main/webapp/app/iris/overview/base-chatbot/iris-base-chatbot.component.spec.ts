@@ -43,6 +43,8 @@ import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { DialogService } from 'primeng/dynamicdialog';
+import { ConfirmationService } from 'primeng/api';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -91,6 +93,8 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
                 MockProvider(DialogService),
+                MockProvider(ConfirmationService),
+                MockProvider(AlertService),
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -1018,12 +1022,8 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
-    describe('Related entity button', () => {
-        it('should display correct related entity button when lecture session selected', async () => {
-            // Mock the service observables before component creation
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
-
+    describe('Chat header visibility', () => {
+        it('should show chat header when chat history is available', async () => {
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -1034,29 +1034,23 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
-            expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe('../lectures/55');
+            const chatHeader = fixture.nativeElement.querySelector('.chat-header');
+            expect(chatHeader).toBeTruthy();
         });
 
-        it('should display correct related entity button when programming exercise session selected', async () => {
-            // Mock the service observables before component creation
-            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
-            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(99));
-
+        it('should show chat header when chat history is not available', async () => {
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.componentRef.setInput('isChatHistoryAvailable', true);
-            fixture.componentRef.setInput('fullSize', undefined);
-            fixture.componentRef.setInput('showCloseButton', false);
+            fixture.componentRef.setInput('isChatHistoryAvailable', false);
+            fixture.componentRef.setInput('fullSize', true);
+            fixture.componentRef.setInput('showCloseButton', true);
             fixture.componentRef.setInput('isChatGptWrapper', false);
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
-            expect(relatedEntityButton).not.toBeNull();
-            expect(component.relatedEntityRoute()).toBe('../exercises/99');
+            const chatHeader = fixture.nativeElement.querySelector('.chat-header');
+            expect(chatHeader).not.toBeNull();
         });
     });
 
@@ -1262,6 +1256,69 @@ describe('IrisBaseChatbotComponent', () => {
             // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
             expect(llmContent.textContent).toBe(tableMarkdown);
             expect(userContent.textContent).toBe(userText);
+        });
+    });
+
+    describe('onDeleteSession', () => {
+        let confirmationService: ConfirmationService;
+
+        beforeEach(() => {
+            // The component declares ConfirmationService as a component-level provider,
+            // so we need to get the instance from the component's injector
+            confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        });
+
+        it('should show confirmation dialog with correct translation key', () => {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+
+            component.onDeleteSession(session);
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            const confirmArg = confirmSpy.mock.calls[0][0];
+            expect(confirmArg.header).toBe('artemisApp.iris.chatHistory.deleteSessionHeader');
+            expect(confirmArg.message).toBe('artemisApp.iris.chatHistory.deleteSessionQuestion');
+        });
+
+        it('should call chatService.deleteSession on confirm', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((config) => {
+                config.accept!();
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+
+            component.onDeleteSession(session);
+
+            expect(deleteSessionSpy).toHaveBeenCalledWith(42);
+        });
+
+        it('should show success alert on successful deletion', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((config) => {
+                config.accept!();
+                return confirmationService;
+            });
+            vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            const alertService = fixture.debugElement.injector.get(AlertService);
+            const successSpy = vi.spyOn(alertService, 'success');
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+
+            component.onDeleteSession(session);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionSuccess');
+        });
+
+        it('should not call deleteSession when confirmation is rejected', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation(() => {
+                // User rejects — accept callback is not invoked
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
+            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date() };
+
+            component.onDeleteSession(session);
+
+            expect(deleteSessionSpy).not.toHaveBeenCalled();
         });
     });
 });
