@@ -1,3 +1,4 @@
+import { Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
@@ -5,10 +6,7 @@ import { admin, instructor, studentOne, tutor } from '../../support/users';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateUUID, waitForExamEnd } from '../../support/utils';
-import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
-import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
-import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/assessment/ExerciseAssessmentDashboardPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { ModelingExerciseAssessmentEditor } from '../../support/pageobjects/assessment/ModelingExerciseAssessmentEditor';
@@ -123,18 +121,19 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         const page = await browser.newPage();
         await waitForExamEnd(examEndDate, page);
 
-        const examManagement = new ExamManagementPage(page);
-        const courseAssessment = new CourseAssessmentDashboardPage(page);
         const exerciseAssessment = new ExerciseAssessmentDashboardPage(page);
         const examAssessment = new ExamAssessmentPage(page);
         const modelingExerciseAssessment = new ModelingExerciseAssessmentEditor(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
         // Only text and modeling exercises need manual assessment (quiz is auto-evaluated, programming is auto-assessed).
-        // The assessment dashboard sorts exercises by type: Modeling (index 0), Text (index 1).
-        // Assess modeling first (index 0), then text becomes index 0 after modeling is complete.
+        // Navigate directly to each exercise's assessment dashboard by ID to avoid fragile index-based selection.
         await Commands.login(page, tutor);
-        await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
+        await startAssessing(course.id!, exam.id!, exercises['text'].id!, exerciseAssessment, page);
+        await examAssessment.addNewFeedback(7, 'Good job');
+        await examAssessment.submitTextAssessment();
+
+        await startAssessing(course.id!, exam.id!, exercises['modeling'].id!, exerciseAssessment, page);
         await modelingExerciseAssessment.addNewFeedback(5, 'Good');
         await modelingExerciseAssessment.openAssessmentForComponent(0);
         await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
@@ -142,11 +141,6 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         await modelingExerciseAssessment.assessComponent(0, 'Neutral');
         await modelingExerciseAssessment.clickNextAssessment();
         await examAssessment.submitModelingAssessment();
-
-        // After modeling is assessed, text is the only remaining unfinished exercise at index 0.
-        await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
-        await examAssessment.addNewFeedback(7, 'Good job');
-        await examAssessment.submitTextAssessment();
 
         // Evaluate quiz exercise
         await Commands.login(page, instructor);
@@ -217,17 +211,8 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
     });
 });
 
-async function startAssessing(
-    courseID: number,
-    examID: number,
-    exerciseIndex: number = 0,
-    timeout: number,
-    examManagement: ExamManagementPage,
-    courseAssessment: CourseAssessmentDashboardPage,
-    exerciseAssessment: ExerciseAssessmentDashboardPage,
-) {
-    await examManagement.openAssessmentDashboard(courseID, examID, timeout);
-    await courseAssessment.clickExerciseDashboardButton(exerciseIndex);
+async function startAssessing(courseID: number, examID: number, exerciseID: number, exerciseAssessment: ExerciseAssessmentDashboardPage, page: Page) {
+    await page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard/${exerciseID}`);
     await exerciseAssessment.clickHaveReadInstructionsButton();
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
