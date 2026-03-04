@@ -51,7 +51,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
 
     test.describe('Quiz exercise scheduled participation', () => {
         let quizExercise: QuizExercise;
-        const timeUntilQuizStartInSeconds = 10;
+        const timeUntilQuizStartInSeconds = 5;
 
         test.beforeEach('Create quiz exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);

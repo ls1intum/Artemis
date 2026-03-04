@@ -97,7 +97,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
         });
 
         test('Exam ends after end time', async ({ page, login, examAPIRequests, exerciseAPIRequests, examStartEnd, examNavigation, textExerciseEditor, examParticipation }) => {
-            const examEnd = dayjs().add(10, 'seconds');
+            const examEnd = dayjs().add(5, 'seconds');
             const examConfig = {
                 course,
                 title: examTitle,
