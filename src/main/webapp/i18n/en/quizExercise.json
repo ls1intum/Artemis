@@ -45,7 +45,13 @@
                 "actions": {
                     "generate": "Generate",
                     "openInEditor": "Open in editor",
-                    "addToEditor": "Add to quiz"
+                    "addToEditor": "Add to quiz",
+                    "loading": {
+                        "thinking": "Thinking",
+                        "analyzing": "Analyzing input",
+                        "generating": "Generating questions",
+                        "refining": "Refining results"
+                    }
                 },
                 "errors": {
                     "invalidConfiguration": "Please provide a topic and select at least one question type.",

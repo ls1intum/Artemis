@@ -106,6 +106,26 @@
     margin-top: 0.5rem;
 }
 
+.quiz-ai-generation-modal .generate-button .p-button-label {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.quiz-ai-generation-modal .generate-loading-label {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 1.25rem;
+}
+
+.quiz-ai-generation-modal .loading-dots {
+    display: inline-block;
+    text-align: left;
+    width: 1.8rem;
+}
+
 .quiz-ai-generation-modal .preview-header {
     align-items: center;
     border-bottom: 1px solid var(--surface-border);

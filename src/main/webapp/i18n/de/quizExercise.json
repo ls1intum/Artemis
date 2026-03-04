@@ -45,7 +45,13 @@
                 "actions": {
                     "generate": "Generieren",
                     "openInEditor": "Im Editor öffnen",
-                    "addToEditor": "Zum Quiz hinzufügen"
+                    "addToEditor": "Zum Quiz hinzufügen",
+                    "loading": {
+                        "thinking": "Denke nach",
+                        "analyzing": "Analysiere Eingaben",
+                        "generating": "Generiere Fragen",
+                        "refining": "Verfeinere Ergebnisse"
+                    }
                 },
                 "errors": {
                     "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
