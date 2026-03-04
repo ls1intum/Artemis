@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.8.4
+  version: 9.0.0
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -81,8 +81,81 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}:
+    put:
+      tags: [tutorial-groups-configuration]
+      operationId: update_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
-  : delete:
+  : get:
+      tags: [tutorial-group-free-period]
+      operationId: getOneOfConfiguration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+    put:
+      tags: [tutorial-group-free-period]
+      operationId: update_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+    delete:
       tags: [tutorial-group-free-period]
       operationId: delete_1
       parameters:
@@ -210,6 +283,64 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
+    get:
+      tags: [tutorial-groups-configuration]
+      operationId: getOneOfCourse_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+    post:
+      tags: [tutorial-groups-configuration]
+      operationId: create_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
+    post:
+      tags: [tutorial-group-free-period]
+      operationId: create_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
   /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
       tags: [hyperion-problem-statement]
@@ -285,6 +416,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
+  /api/hyperion/courses/{courseId}/problem-statements/refine/targeted:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: refineProblemStatementTargeted
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/ProblemStatementTargetedRefinementRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/refine/global:
     post:
       tags: [hyperion-problem-statement]
@@ -501,6 +652,20 @@ components:
         isOnline: {type: boolean}
         language: {type: string}
         campus: {type: string}
+    TutorialGroupConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        tutorialPeriodStartInclusive: {type: string, minLength: 1}
+        tutorialPeriodEndInclusive: {type: string, minLength: 1}
+        useTutorialGroupChannels: {type: boolean}
+        usePublicTutorialGroupChannels: {type: boolean}
+        tutorialGroupFreePeriods:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+          uniqueItems: true
+      required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
+        useTutorialGroupChannels]
     TutorialGroupStatus:
       type: object
       properties:
@@ -527,27 +692,6 @@ components:
       properties:
         draftProblemStatement: {type: string, description: Draft problem statement
             text}
-        error: {type: string, description: Error message if generation failed}
-    ProblemStatementTargetedRefinementRequest:
-      type: object
-      description: Request to refine a problem statement using targeted selection-based
-        instructions
-      properties:
-        problemStatementText: {type: string, description: 'Original problem statement
-            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
-        startLine: {type: integer, format: int32, description: Start line number (1-indexed),
-          maximum: 10000, minimum: 1}
-        endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
-            inclusive)', maximum: 10000, minimum: 1}
-        startColumn: {type: integer, format: int32, description: 'Start column within
-            start line (1-indexed, optional for character-level targeting)', maximum: 10000,
-          minimum: 1}
-        endColumn: {type: integer, format: int32, description: 'End column within
-            end line (1-indexed, exclusive — points after the last selected character,
-            optional for character-level targeting)', maximum: 10000, minimum: 1}
-        instruction: {type: string, description: Instruction describing what should
-            change, maxLength: 500, minLength: 0}
-      required: [endLine, instruction, problemStatementText, startLine]
     QuizQuestionGenerationRequest:
       type: object
       description: Request to generate quiz questions
@@ -573,6 +717,26 @@ components:
         difficulty: {type: integer, format: int32, description: Difficulty as a value
             from 0 to 100, maximum: 100, minimum: 0}
       required: [difficulty, language, numberOfQuestions, questionTypes, topic]
+    ProblemStatementTargetedRefinementRequest:
+      type: object
+      description: Request to refine a problem statement using targeted selection-based
+        instructions
+      properties:
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 0}
+        startLine: {type: integer, format: int32, description: Start line number (1-indexed),
+          maximum: 10000, minimum: 1}
+        endLine: {type: integer, format: int32, description: 'End line number (1-indexed,
+            inclusive)', maximum: 10000, minimum: 1}
+        startColumn: {type: integer, format: int32, description: 'Start column within
+            start line (1-indexed, optional for character-level targeting)', maximum: 10000,
+          minimum: 1}
+        endColumn: {type: integer, format: int32, description: 'End column within
+            end line (1-indexed, exclusive — points after the last selected character,
+            optional for character-level targeting)', maximum: 10000, minimum: 1}
+        instruction: {type: string, description: Instruction describing what should
+            change, maxLength: 500, minLength: 0}
+      required: [endLine, instruction, problemStatementText, startLine]
     CodeGenerationRequest:
       type: object
       properties:
@@ -692,6 +856,14 @@ components:
         text: {type: string, description: Answer option text, minLength: 1}
         correct: {type: boolean, description: Whether this option is correct}
       required: [text]
+    TutorialGroupFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     Channel:
       type: object
       properties:
