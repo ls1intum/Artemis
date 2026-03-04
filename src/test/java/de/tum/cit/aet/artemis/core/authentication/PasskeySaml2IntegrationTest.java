@@ -7,7 +7,6 @@ import java.net.URI;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalVCSamlTe
  * Otherwise, {@code /login/webauthn} requests would be captured by the SAML2 chain and
  * redirected to the IdP instead of being processed by {@code ArtemisWebAuthnAuthenticationFilter}.
  */
-@TestPropertySource(properties = { "artemis.user-management.passkey.enabled=true" })
 class PasskeySaml2IntegrationTest extends AbstractSpringIntegrationLocalVCSamlTest {
 
     @Test
