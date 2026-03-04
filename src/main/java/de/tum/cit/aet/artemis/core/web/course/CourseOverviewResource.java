@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.EnforceAccessPolicy;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.FilterByAccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
 import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseVisibilityPolicy;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
@@ -132,12 +131,9 @@ public class CourseOverviewResource {
      */
     @GetMapping("courses/for-dropdown")
     @EnforceAtLeastStudent
-    @FilterByAccessPolicy(value = CourseVisibilityPolicy.class, includeActive = true)
     public ResponseEntity<Set<CourseDropdownDTO>> getCoursesForDropdown() {
         long start = System.nanoTime();
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        // Policy-based SQL filtering is automatically applied via @FilterByAccessPolicy annotation
-        // The CourseVisibilityPolicy is converted to a JPA Specification and passed to the service layer via PolicyContext
         final var courses = courseService.findAllActiveForUser(user);
         final var response = courses.stream().map(course -> new CourseDropdownDTO(course.getId(), course.getTitle(), course.getCourseIcon())).collect(Collectors.toSet());
         log.info("GET /courses/for-dropdown took {} for {} courses for user {}", TimeLogUtil.formatDurationFrom(start), courses.size(), user.getLogin());

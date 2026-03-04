@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseVisibilityPolicy;
+import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseAccessPolicies;
 
 class CourseAccessPoliciesTest {
 
@@ -23,8 +23,8 @@ class CourseAccessPoliciesTest {
 
     @BeforeEach
     void setUp() {
-        CourseVisibilityPolicy policyProvider = new CourseVisibilityPolicy();
-        policy = policyProvider.getPolicy();
+        CourseAccessPolicies config = new CourseAccessPolicies();
+        policy = config.courseVisibilityPolicy();
         policyEngine = new PolicyEngine();
     }
 

@@ -17,7 +17,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
@@ -30,7 +29,6 @@ import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.core.repository.CourseSpecs;
 import de.tum.cit.aet.artemis.core.repository.PolicyBasedCourseSpecs;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
@@ -219,24 +217,13 @@ public class CourseService {
     /**
      * Get all courses for the given user.
      * Uses policy-based SQL query generation to filter courses at the database level.
-     * <p>
-     * If called from a method annotated with {@link de.tum.cit.aet.artemis.core.security.annotations.enforceAccessPolicy.FilterByAccessPolicy},
-     * the policy specification is automatically derived from the ThreadLocal policy context.
-     * Otherwise, falls back to manually building the specification.
      *
      * @param user the user entity
      * @return an unmodifiable set of all courses for the user
      */
     public Set<Course> findAllActiveForUser(User user) {
-        // Try to get specification from PolicyContext (set by @FilterByAccessPolicy annotation)
-        Specification<Course> spec = de.tum.cit.aet.artemis.core.security.policy.PolicyContext.getCurrentSpecification(Course.class).map((Specification<Course> policySpec) -> {
-            // Combine policy spec with temporal "active" filtering
-            return CourseSpecs.and(policySpec, CourseSpecs.isActive(ZonedDateTime.now()), CourseSpecs.distinct());
-        }).orElseGet(() -> {
-            // Fallback: manually build specification (backward compatibility)
-            return policyBasedCourseSpecs.withVisibilityAccessAndActive(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
-        });
-
+        // Use policy-based specification to generate SQL query that filters courses at the database level
+        var spec = policyBasedCourseSpecs.withVisibilityAccessAndActive(user.getGroups(), authCheckService.isAdmin(user), ZonedDateTime.now());
         return Set.copyOf(courseRepository.findAll(spec));
     }
 
