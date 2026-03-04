@@ -101,7 +101,7 @@
                 </div>
             </div>
 
-            <button pButton type="button" class="w-100 mt-2" (click)="generateQuestions()">
+            <button pButton type="button" class="w-100 mt-2" [loading]="isGenerating()" [disabled]="!canGenerate() || isGenerating()" (click)="generateQuestions()">
                 <span jhiTranslate="artemisApp.quizExercise.aiGeneration.actions.generate"></span>
             </button>
         </section>

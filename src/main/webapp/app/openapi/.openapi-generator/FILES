@@ -17,6 +17,8 @@ model/consistencyIssue.ts
 model/conversationUser.ts
 model/costs.ts
 model/examSeat.ts
+model/generatedQuizAnswerOption.ts
+model/generatedQuizQuestion.ts
 model/problemStatementGenerationRequest.ts
 model/problemStatementGenerationResponse.ts
 model/problemStatementGlobalRefinementRequest.ts
@@ -24,6 +26,8 @@ model/problemStatementRefinementResponse.ts
 model/problemStatementRewriteRequest.ts
 model/problemStatementRewriteResponse.ts
 model/problemStatementTargetedRefinementRequest.ts
+model/quizQuestionGenerationRequest.ts
+model/quizQuestionGenerationResponse.ts
 model/rewriteFaqRequest.ts
 model/rewriteFaqResponse.ts
 model/student.ts

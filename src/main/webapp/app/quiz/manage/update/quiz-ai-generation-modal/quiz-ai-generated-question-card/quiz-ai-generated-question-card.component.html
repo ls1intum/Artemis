@@ -2,11 +2,11 @@
     <div class="question-card-header">
         <span class="type-badge" [jhiTranslate]="getQuestionTypeLabelKey(question().type)"></span>
     </div>
-    <h5 class="question-title">{{ questionIndex() + 1 }}. <span [jhiTranslate]="question().questionKey"></span></h5>
+    <h5 class="question-title">{{ questionIndex() + 1 }}. {{ question().questionText }}</h5>
     <div class="option-list">
-        @for (option of question().options; track option.key) {
+        @for (option of question().options; track option.text) {
             <div class="option-item" [ngClass]="{ correct: option.correct }">
-                <span class="option-text" [jhiTranslate]="option.key"></span>
+                <span class="option-text">{{ option.text }}</span>
                 @if (option.correct) {
                     <span class="correct-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.correct"></span>
                 }

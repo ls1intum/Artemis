@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.8.2
+  version: 8.8.4
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -245,6 +245,26 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
+  /api/hyperion/courses/{courseId}/quiz-exercises/generate-questions:
+    post:
+      tags: [hyperion-quiz-question-generation]
+      operationId: generateQuizQuestions
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/QuizQuestionGenerationRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/QuizQuestionGenerationResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/rewrite:
     post:
       tags: [hyperion-problem-statement]
@@ -265,26 +285,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/ProblemStatementRewriteResponse'}
-  /api/hyperion/courses/{courseId}/problem-statements/refine/targeted:
-    post:
-      tags: [hyperion-problem-statement]
-      operationId: refineProblemStatementTargeted
-      parameters:
-      - name: courseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/ProblemStatementTargetedRefinementRequest'}
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ProblemStatementRefinementResponse'}
   /api/hyperion/courses/{courseId}/problem-statements/refine/global:
     post:
       tags: [hyperion-problem-statement]
@@ -505,6 +505,21 @@ components:
       type: object
       properties:
         status_explanation: {type: string}
+    GeneratedQuizQuestion:
+      type: object
+      description: One generated quiz question
+      properties:
+        type:
+          type: string
+          description: Question type
+          enum: [single-choice, multiple-choice, true-false]
+        questionText: {type: string, description: Question text, minLength: 1}
+        options:
+          type: array
+          description: Answer options
+          items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
+          minItems: 1
+      required: [options, questionText, type]
     ProblemStatementGenerationResponse:
       type: object
       description: Response containing generated problem statement
@@ -532,6 +547,31 @@ components:
         instruction: {type: string, description: Instruction describing what should
             change, maxLength: 500, minLength: 0}
       required: [endLine, instruction, problemStatementText, startLine]
+    QuizQuestionGenerationRequest:
+      type: object
+      description: Request to generate quiz questions
+      properties:
+        topic: {type: string, description: Main topic for the generated quiz, maxLength: 500,
+          minLength: 0}
+        optionalPrompt: {type: string, description: Optional additional instructions,
+          maxLength: 2000, minLength: 0}
+        language:
+          type: string
+          description: Target language for the generated quiz
+          enum: [en, de]
+        questionTypes:
+          type: array
+          description: Question types to include
+          items:
+            type: string
+            enum: [single-choice, multiple-choice, true-false]
+          minItems: 1
+          uniqueItems: true
+        numberOfQuestions: {type: integer, format: int32, description: Number of questions
+            to generate, maximum: 10, minimum: 1}
+        difficulty: {type: integer, format: int32, description: Difficulty as a value
+            from 0 to 100, maximum: 100, minimum: 0}
+      required: [difficulty, language, numberOfQuestions, questionTypes, topic]
     CodeGenerationRequest:
       type: object
       properties:
@@ -619,6 +659,16 @@ components:
       properties:
         refinedProblemStatement: {type: string, description: Refined problem statement
             text}
+    QuizQuestionGenerationResponse:
+      type: object
+      description: Response containing generated quiz questions
+      properties:
+        questions:
+          type: array
+          description: Generated quiz questions
+          items: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
+          minItems: 1
+      required: [questions]
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement
@@ -634,6 +684,13 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    GeneratedQuizAnswerOption:
+      type: object
+      description: One generated answer option
+      properties:
+        text: {type: string, description: Answer option text, minLength: 1}
+        correct: {type: boolean, description: Whether this option is correct}
+      required: [text]
     Channel:
       type: object
       properties:

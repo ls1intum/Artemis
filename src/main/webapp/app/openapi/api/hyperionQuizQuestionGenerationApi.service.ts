@@ -15,9 +15,9 @@ import { HttpClient,
         }       from '@angular/common/http';
 import { Observable }                                        from 'rxjs';
 // @ts-ignore
-import { CodeGenerationJobStart } from '../model/codeGenerationJobStart';
+import { QuizQuestionGenerationRequest } from '../model/quizQuestionGenerationRequest';
 // @ts-ignore
-import { CodeGenerationRequest } from '../model/codeGenerationRequest';
+import { QuizQuestionGenerationResponse } from '../model/quizQuestionGenerationResponse';
 
 // @ts-ignore
 import { BASE_PATH }                     from '../variables';
@@ -29,29 +29,29 @@ import { BaseService } from '../api.base.service';
 @Injectable({
   providedIn: 'root'
 })
-export class HyperionCodeGenerationApiService extends BaseService {
+export class HyperionQuizQuestionGenerationApiService extends BaseService {
 
     constructor(protected httpClient: HttpClient, @Optional() @Inject(BASE_PATH) basePath: string|string[], @Optional() configuration?: Configuration) {
         super(basePath, configuration);
     }
 
     /**
-     * @endpoint post /api/hyperion/programming-exercises/{exerciseId}/generate-code
-     * @param exerciseId 
-     * @param codeGenerationRequest 
+     * @endpoint post /api/hyperion/courses/{courseId}/quiz-exercises/generate-questions
+     * @param courseId 
+     * @param quizQuestionGenerationRequest 
      * @param observe set whether or not to return the data Observable as the body, response or events. defaults to returning the body.
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<CodeGenerationJobStart>;
-    public generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<CodeGenerationJobStart>>;
-    public generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<CodeGenerationJobStart>>;
-    public generateCode(exerciseId: number, codeGenerationRequest: CodeGenerationRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
-        if (exerciseId === null || exerciseId === undefined) {
-            throw new Error('Required parameter exerciseId was null or undefined when calling generateCode.');
+    public generateQuizQuestions(courseId: number, quizQuestionGenerationRequest: QuizQuestionGenerationRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<QuizQuestionGenerationResponse>;
+    public generateQuizQuestions(courseId: number, quizQuestionGenerationRequest: QuizQuestionGenerationRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<QuizQuestionGenerationResponse>>;
+    public generateQuizQuestions(courseId: number, quizQuestionGenerationRequest: QuizQuestionGenerationRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<QuizQuestionGenerationResponse>>;
+    public generateQuizQuestions(courseId: number, quizQuestionGenerationRequest: QuizQuestionGenerationRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+        if (courseId === null || courseId === undefined) {
+            throw new Error('Required parameter courseId was null or undefined when calling generateQuizQuestions.');
         }
-        if (codeGenerationRequest === null || codeGenerationRequest === undefined) {
-            throw new Error('Required parameter codeGenerationRequest was null or undefined when calling generateCode.');
+        if (quizQuestionGenerationRequest === null || quizQuestionGenerationRequest === undefined) {
+            throw new Error('Required parameter quizQuestionGenerationRequest was null or undefined when calling generateQuizQuestions.');
         }
 
         let localVarHeaders = this.defaultHeaders;
@@ -88,12 +88,12 @@ export class HyperionCodeGenerationApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/programming-exercises/${this.configuration.encodeParam({name: "exerciseId", value: exerciseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/generate-code`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/quiz-exercises/generate-questions`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<CodeGenerationJobStart>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<QuizQuestionGenerationResponse>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
-                body: codeGenerationRequest,
+                body: quizQuestionGenerationRequest,
                 responseType: <any>responseType_,
                 ...(withCredentials ? { withCredentials } : {}),
                 headers: localVarHeaders,
