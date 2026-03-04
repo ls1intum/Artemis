@@ -78,7 +78,7 @@ test.describe('Exam assessment', () => {
 
     test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(45, 'seconds');
+            examEnd = dayjs().add(20, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page);
         });
@@ -155,7 +155,7 @@ test.describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(45, 'seconds');
+            examEnd = dayjs().add(25, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.QUIZ, page);
@@ -188,7 +188,7 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
         let exam: Exam;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(40, 'seconds');
+            examEnd = dayjs().add(20, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page);
         });
@@ -223,7 +223,7 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
     });
 });
 
-test.describe('Exam statistics', { tag: '@sequential' }, () => {
+test.describe('Exam statistics', { tag: '@slow' }, () => {
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 
@@ -234,7 +234,7 @@ test.describe('Exam statistics', { tag: '@sequential' }, () => {
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(1, 'minutes'),
+            endDate: dayjs().add(30, 'seconds'),
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
         };

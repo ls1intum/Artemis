@@ -230,7 +230,7 @@ test.describe('Exam participation', () => {
         });
     });
 
-    test.describe('Normal Hand-in', { tag: '@sequential' }, () => {
+    test.describe('Normal Hand-in', { tag: '@slow' }, () => {
         let exam: Exam;
         const examTitle = 'exam' + generateUUID();
 

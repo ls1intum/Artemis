@@ -17,16 +17,14 @@ import { GitCloneMethod } from '../../../support/pageobjects/exercises/programmi
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
 
-test.describe('Programming exercise participation', { tag: '@sequential' }, () => {
+// Basic submission tests: each creates its own course+exercise, so they can run in parallel.
+test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => {
     let course: Course;
 
     test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
         await login(admin, '/');
         course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
         await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
     });
 
     const testCases = [
@@ -86,6 +84,25 @@ test.describe('Programming exercise participation', { tag: '@sequential' }, () =
             });
         }
     }
+
+    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
+        await courseManagementAPIRequests.deleteCourse(course, admin);
+    });
+});
+
+// Tests that require sequential execution: secure git (shared SSH keys), team exercises
+// (shared repository), and instructor submissions (multiple queued builds).
+test.describe('Programming exercise advanced participation', { tag: '@sequential' }, () => {
+    let course: Course;
+
+    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
+        await login(admin, '/');
+        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
+        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
+        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
+        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
+    });
 
     test.describe('Programming exercise participation using secure git', () => {
         let exercise: ProgrammingExercise;
