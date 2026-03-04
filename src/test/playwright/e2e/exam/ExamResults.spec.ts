@@ -31,7 +31,7 @@ import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 // All 4 exercise types share a single exam to avoid redundant lifecycle waits.
 // Uses test.describe.serial so that setup (beforeAll) runs once before all tests.
-test.describe.serial('Exam Results', { tag: '@slow' }, () => {
+test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
     let course: Course;
     let exam: Exam;
     let studentExam: StudentExam;
