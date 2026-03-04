@@ -230,7 +230,7 @@ export class TutorialSessionCreateOrEditModalComponent {
         const startTimeChanged = startTime.getHours() !== originalStart.hour() || startTime.getMinutes() !== originalStart.minute();
         const endTimeChanged = endTime.getHours() !== originalEnd.hour() || endTime.getMinutes() !== originalEnd.minute();
         const locationChanged = location !== session.location;
-        const attendanceChanged = this.attendance() !== session.attendance;
+        const attendanceChanged = (this.attendance() ?? undefined) !== session.attendance;
         return dateChanged || startTimeChanged || endTimeChanged || locationChanged || attendanceChanged;
     }
 

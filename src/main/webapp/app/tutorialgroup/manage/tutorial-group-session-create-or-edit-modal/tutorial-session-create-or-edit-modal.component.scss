@@ -1,18 +1,22 @@
 .frame {
-    width: 18rem;
+    width: 20rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 2rem;
 
-    .label-and-input {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: start;
-        gap: 0.5rem;
+    .inputs-grid {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        column-gap: 1rem;
+        row-gap: 1.5rem;
+        align-items: center;
 
-        .danger {
-            color: var(--danger);
+        .label-and-input {
+            display: contents;
+
+            .danger {
+                color: var(--danger);
+            }
         }
     }
 
@@ -20,7 +24,6 @@
         display: flex;
         justify-content: end;
         gap: 1rem;
-        margin-top: 1rem;
         align-items: center;
 
         span {
