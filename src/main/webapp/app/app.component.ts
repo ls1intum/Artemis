@@ -143,9 +143,11 @@ export class AppComponent implements OnInit, OnDestroy {
      * for the standalone feedback component.
      */
     private shouldShowSkeleton(url: string): boolean {
+        const pathname = new URL(url, 'http://localhost').pathname;
+        const isLandingPage = pathname === '/';
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        return !isStandaloneProblemStatement && !isStandaloneFeedback;
+        return !isLandingPage && !isStandaloneProblemStatement && !isStandaloneFeedback;
     }
 
     ngOnDestroy(): void {

@@ -27,6 +27,7 @@
         "@ctrl/ngx-emoji-mart": "9.3.0",
         "@danielmoncada/angular-datetime-picker": "21.0.0",
         "@fingerprintjs/fingerprintjs": "5.0.1",
+        "@fontsource-variable/inter": "^5.2.8",
         "@fortawesome/angular-fontawesome": "4.0.0",
         "@fortawesome/fontawesome-svg-core": "7.2.0",
         "@fortawesome/free-regular-svg-icons": "7.2.0",

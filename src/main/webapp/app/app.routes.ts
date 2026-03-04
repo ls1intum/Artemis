@@ -1,4 +1,6 @@
-import { Routes } from '@angular/router';
+import { inject } from '@angular/core';
+import { Router, Routes, UrlTree } from '@angular/router';
+import { AccountService } from 'app/core/auth/account.service';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { IS_AT_LEAST_ADMIN, IS_AT_LEAST_EDITOR, IS_AT_LEAST_STUDENT } from 'app/shared/constants/authority.constants';
 import { navbarRoute } from 'app/core/navbar/navbar.route';
@@ -11,6 +13,27 @@ const routes: Routes = [
     ...LAYOUT_ROUTES,
     {
         path: '',
+        pathMatch: 'full',
+        loadComponent: () => import('./core/landing/landing.component').then((m) => m.LandingComponent),
+        data: {
+            pageTitle: 'landing.hero.title',
+            showSkeleton: false,
+        },
+        canMatch: [
+            (): Promise<boolean | UrlTree> => {
+                const accountService = inject(AccountService);
+                const router = inject(Router);
+                return accountService.identity().then((account) => {
+                    if (account) {
+                        return router.parseUrl('/courses');
+                    }
+                    return true;
+                });
+            },
+        ],
+    },
+    {
+        path: 'sign-in',
         loadComponent: () => import('./core/home/home.component').then((m) => m.HomeComponent),
         data: {
             pageTitle: 'home.title',

@@ -114,7 +114,7 @@ describe('PasskeyAuthenticationPageComponent', () => {
 
             component.redirectToOriginalUrlOrHome();
 
-            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/']);
+            expect(navigateSpy).toHaveBeenCalledExactlyOnceWith(['/sign-in']);
         });
     });
 

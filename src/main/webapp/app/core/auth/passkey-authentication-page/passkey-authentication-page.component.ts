@@ -73,7 +73,7 @@ export class PasskeyAuthenticationPageComponent implements OnInit, OnDestroy {
         if (this.returnUrl) {
             this.router.navigateByUrl(this.returnUrl);
         } else {
-            this.router.navigate(['/']);
+            this.router.navigate(['/sign-in']);
         }
     }
 }

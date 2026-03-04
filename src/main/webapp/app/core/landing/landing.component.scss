@@ -1,0 +1,30 @@
+@import '@fontsource-variable/inter/index.css';
+
+.landing-page {
+    --topclx: #353d47;
+    --topcl: #2f6fb1;
+    --bottomclx: #181a18;
+    --bottomcl: #03131c;
+
+    background: black;
+    color: white;
+    min-height: 100vh;
+    overflow: hidden;
+    scroll-behavior: smooth;
+    font-family:
+        'Inter Variable',
+        'Inter',
+        -apple-system,
+        BlinkMacSystemFont,
+        'Segoe UI',
+        Roboto,
+        sans-serif;
+
+    img {
+        content-visibility: auto;
+    }
+
+    jhi-landing-glowbar:first-of-type {
+        margin-top: 4rem;
+    }
+}
