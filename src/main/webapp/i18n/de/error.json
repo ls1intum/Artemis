@@ -206,6 +206,12 @@
             "courseIdMissing": "Die Kurs ID ist erforderlich.",
             "forbidChangeCourseId": "Die Übungskurs-ID stimmt nicht mit der gespeicherten Kurs-ID überein"
         },
+        "PlagiarismPost": {
+            "idNull": "Der Beitrag muss eine ID besitzen.",
+            "courseInformationSharingDisabled": "Beiträge sind in diesem Kurs deaktiviert.",
+            "plagiarismCaseMissing": "Der Beitrag muss einem Plagiatsfall zugeordnet sein.",
+            "idExists": "Ein neuer Beitrag darf noch keine ID haben"
+        },
         "ProblemStatementGeneration": {
             "generatedProblemStatementTooLong": "Die generierte Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer anderen Eingabe.",
             "chatClientNotConfigured": "KI-Generierung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
@@ -225,7 +231,20 @@
             "problemStatementRefinementNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
             "refinedProblemStatementTooLong": "Die verfeinerte Aufgabenbeschreibung ist zu lang. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
             "refinedProblemStatementUnchanged": "Die KI hat keine Änderungen an der Aufgabenbeschreibung vorgenommen. Bitte passe die Verfeinerungsanweisungen an und versuche es erneut.",
-            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut."
+            "problemStatementRefinementFailed": "Die Verfeinerung der Aufgabenbeschreibung ist fehlgeschlagen. Bitte versuche es später erneut.",
+            "textExtractionFailed": "Der ausgewählte Text konnte nicht extrahiert werden. Bitte passe die Auswahl an und versuche es erneut.",
+            "invalidLineRange": "Der ausgewählte Zeilenbereich liegt außerhalb der Grenzen. Bitte passe die Auswahl an und versuche es erneut.",
+            "invalidColumnRange": "Der ausgewählte Spaltenbereich ist ungültig. Bitte passe die Auswahl an und versuche es erneut.",
+            "instructionEmpty": "Die Verfeinerungsanweisung darf nicht leer sein.",
+            "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
+        },
+        "ProblemStatementRewrite": {
+            "chatClientNotConfigured": "KI-Umschreibung ist derzeit nicht verfügbar. Bitte kontaktiere den Administrator.",
+            "chatClientNotConfigured_detail": "Der KI-Chat-Client ist nicht konfiguriert.",
+            "problemStatementEmpty": "Die Aufgabenbeschreibung darf nicht leer sein.",
+            "problemStatementRewriteFailed": "Fehler beim Umschreiben der Aufgabenstellung. Bitte versuche es später erneut.",
+            "problemStatementRewriteNull": "Die KI hat eine leere Antwort zurückgegeben. Bitte versuche es erneut.",
+            "rewrittenProblemStatementTooLong": "Die umgeschriebene Aufgabenbeschreibung ist zu lang. Bitte versuche es erneut mit einer kürzeren Eingabe."
         },
         "noCourse": "Eine Klausur muss zu einem Kurs gehören.",
         "wrongCourseId": "Die Kurs-ID stimmt nicht mit dem Kurs der Klausur überein.",
@@ -240,6 +259,26 @@
         "userManagement": {
             "onlySuperAdminCanManageAdmins": "Du bist kein Super-Administrator und kannst daher keine Administrator-Accounts verwalten.",
             "cannotRemoveDefaultAdminRights": "Du kannst die Super-Admin-Rechte des Standard-Admin-Benutzers nicht entfernen."
+        },
+        "tutorialGroupsConfiguration": {
+            "idExists": "Eine neue Tutoriengruppen-Konfiguration darf noch keine ID besitzen.",
+            "alreadyExists": "Für diesen Kurs existiert bereits eine Tutoriengruppen-Konfiguration.",
+            "courseHasNoTimeZone": "Für diesen Kurs ist keine Zeitzone konfiguriert.",
+            "idNull": "Eine Tutoriengruppen-Konfiguration kann nicht ohne ID aktualisiert werden.",
+
+            "tutorialPeriodMissing": "Das Start- und Enddatum des Tutorienzeitraums müssen gesetzt sein.",
+            "tutorialPeriodInvalidFormat": "Das Start- und Enddatum des Tutorienzeitraums müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialPeriodInvalidOrder": "Das Startdatum des Tutorienzeitraums muss vor dem Enddatum liegen.",
+
+            "courseIdMismatch": "Die Kurs-ID im Pfad stimmt nicht mit dem Kurs der Tutoriengruppen-Konfiguration überein.",
+            "tutorialGroupConfigurationIdMismatch": "Die ID der Tutoriengruppen-Konfiguration im Pfad stimmt nicht mit der zu aktualisierenden Konfiguration überein."
+        },
+        "tutorialGroupFreePeriod": {
+            "tutorialFreePeriodStartDateMissing": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss angegeben werden.",
+            "tutorialFreePeriodEndDateMissing": "Das Enddatum des freien Zeitraums der Tutoriengruppe muss angegeben werden.",
+            "tutorialFreePeriodInvalidFormat": "Das Start- und Enddatum des freien Zeitraums der Tutoriengruppe müssen gültige ISO-8601-Datumsangaben sein.",
+            "tutorialFreePeriodInvalidOrder": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss vor dem Enddatum liegen.",
+            "tutorialFreePeriodOutOfBounds": "Freie Zeiträume der Tutoriengruppe müssen innerhalb des Tutorienzeitraums liegen."
         }
     }
 }
