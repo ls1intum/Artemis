@@ -133,8 +133,9 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         await examAssessment.addNewFeedback(7, 'Good job');
         await examAssessment.submitTextAssessment();
 
-        // Assess modeling exercise (index 3)
-        await startAssessing(course.id!, exam.id!, 3, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
+        // Assess modeling exercise (only text and modeling need manual assessment;
+        // after assessing text above, modeling is the only remaining unfinished exercise at index 0)
+        await startAssessing(course.id!, exam.id!, 0, EXAM_DASHBOARD_TIMEOUT, examManagement, courseAssessment, exerciseAssessment);
         await modelingExerciseAssessment.addNewFeedback(5, 'Good');
         await modelingExerciseAssessment.openAssessmentForComponent(0);
         await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
