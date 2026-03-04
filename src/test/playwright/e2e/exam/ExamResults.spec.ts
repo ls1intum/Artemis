@@ -56,8 +56,8 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
 
-        // Programming exercises need the most time for CI builds
-        examEndDate = dayjs().add(45, 'seconds');
+        // C programming exercises build quickly (~5s), so 30s is sufficient
+        examEndDate = dayjs().add(30, 'seconds');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
@@ -117,6 +117,7 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
     });
 
     test.beforeAll('Assess all submissions', async ({ browser }) => {
+        test.setTimeout(300_000); // Assessment involves multiple dashboard loads with retries
         const page = await browser.newPage();
         await waitForExamEnd(examEndDate, page);
 
