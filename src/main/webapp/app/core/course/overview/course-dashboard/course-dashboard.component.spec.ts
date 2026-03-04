@@ -31,6 +31,8 @@ import { StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model'
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockProvider } from 'ng-mocks';
 
 // Manual mock for CourseChatbotComponent to avoid ng-mocks issues with signal queries (viewChild)
 @Component({
@@ -196,6 +198,7 @@ describe('CourseDashboardComponent', () => {
                     },
                 },
                 provideNoopAnimationsForTests(),
+                MockProvider(DialogService),
             ],
         }).compileComponents();
     });
@@ -233,13 +236,13 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should toggle isCollapsed when toggleSidebar is called', () => {
-        expect(component.isCollapsed).toBe(false);
+        expect(component.isCollapsed()).toBe(false);
 
         component.toggleSidebar();
-        expect(component.isCollapsed).toBe(true);
+        expect(component.isCollapsed()).toBe(true);
 
         component.toggleSidebar();
-        expect(component.isCollapsed).toBe(false);
+        expect(component.isCollapsed()).toBe(false);
     });
 
     it('should correctly calculate overall performance', () => {

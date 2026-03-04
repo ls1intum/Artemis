@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AiExperienceSettingsComponent } from './ai-experience-settings.component';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -20,6 +22,8 @@ import { ActivatedRoute } from '@angular/router';
 import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-activated-route';
 
 describe('AiExperienceSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AiExperienceSettingsComponent;
     let fixture: ComponentFixture<AiExperienceSettingsComponent>;
     let irisChatHttpService: IrisChatHttpService;
@@ -58,14 +62,18 @@ describe('AiExperienceSettingsComponent', () => {
         llmModalService = TestBed.inject(LLMSelectionModalService);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
     it('should load session and message counts on init', () => {
-        const countSpy = jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 5, messages: 42 }));
+        const countSpy = vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 5, messages: 42 }));
         fixture.detectChanges();
 
         expect(countSpy).toHaveBeenCalledOnce();
@@ -74,7 +82,7 @@ describe('AiExperienceSettingsComponent', () => {
     });
 
     it('should handle zero counts', () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         fixture.detectChanges();
 
         expect(component.sessionCount()).toBe(0);
@@ -82,11 +90,11 @@ describe('AiExperienceSettingsComponent', () => {
     });
 
     it('should delete all Iris interactions successfully', () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         fixture.detectChanges();
 
-        const deleteSpy = jest.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
-        const alertSpy = jest.spyOn(alertService, 'success');
+        const deleteSpy = vi.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+        const alertSpy = vi.spyOn(alertService, 'success');
 
         component.deleteAllIrisInteractions();
 
@@ -97,12 +105,12 @@ describe('AiExperienceSettingsComponent', () => {
     });
 
     it('should handle delete failure', () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         fixture.detectChanges();
 
-        jest.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(throwError(() => new Error('error')));
+        vi.spyOn(irisChatHttpService, 'deleteAllSessions').mockReturnValue(throwError(() => new Error('error')));
 
-        const dialogErrorSpy = jest.fn();
+        const dialogErrorSpy = vi.fn();
         component.dialogError$.subscribe(dialogErrorSpy);
 
         component.deleteAllIrisInteractions();
@@ -111,12 +119,12 @@ describe('AiExperienceSettingsComponent', () => {
     });
 
     it('should open selection modal and update on choice', async () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         fixture.detectChanges();
 
-        const openSpy = jest.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
-        const updateConsentSpy = jest.spyOn(irisChatService, 'updateLLMUsageConsent').mockImplementation(() => {});
-        const setDecisionSpy = jest.spyOn(accountService, 'setUserLLMSelectionDecision').mockImplementation(() => {});
+        const openSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+        const updateConsentSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent').mockImplementation(() => {});
+        const setDecisionSpy = vi.spyOn(accountService, 'setUserLLMSelectionDecision').mockImplementation(() => {});
 
         await component.openSelectionModal();
 
@@ -126,7 +134,7 @@ describe('AiExperienceSettingsComponent', () => {
     });
 
     it('should render delete button when sessions exist', () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 3, messages: 10 }));
         fixture.detectChanges();
 
         const deleteButton = fixture.debugElement.query(By.directive(DeleteButtonDirective));
@@ -134,12 +142,12 @@ describe('AiExperienceSettingsComponent', () => {
     });
 
     it('should not update when modal is dismissed', async () => {
-        jest.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
+        vi.spyOn(irisChatHttpService, 'getSessionAndMessageCount').mockReturnValue(of({ sessions: 0, messages: 0 }));
         fixture.detectChanges();
 
-        jest.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
-        const updateConsentSpy = jest.spyOn(irisChatService, 'updateLLMUsageConsent');
-        const setDecisionSpy = jest.spyOn(accountService, 'setUserLLMSelectionDecision');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
+        const updateConsentSpy = vi.spyOn(irisChatService, 'updateLLMUsageConsent');
+        const setDecisionSpy = vi.spyOn(accountService, 'setUserLLMSelectionDecision');
 
         await component.openSelectionModal();
 
