@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.core.service.course;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -11,6 +10,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEngine;
+import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseVisibilityPolicy;
 
 /**
  * Service for determining whether a course is visible to a user.
@@ -24,9 +24,9 @@ public class CourseVisibleService {
 
     private final AccessPolicy<Course> courseVisibilityPolicy;
 
-    public CourseVisibleService(PolicyEngine policyEngine, @Qualifier("courseVisibilityPolicy") AccessPolicy<Course> courseVisibilityPolicy) {
+    public CourseVisibleService(PolicyEngine policyEngine, CourseVisibilityPolicy courseVisibilityPolicyProvider) {
         this.policyEngine = policyEngine;
-        this.courseVisibilityPolicy = courseVisibilityPolicy;
+        this.courseVisibilityPolicy = courseVisibilityPolicyProvider.getPolicy();
     }
 
     /**
