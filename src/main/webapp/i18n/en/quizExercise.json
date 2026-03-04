@@ -47,6 +47,10 @@
                     "openInEditor": "Open in editor",
                     "addToEditor": "Add to quiz"
                 },
+                "errors": {
+                    "invalidConfiguration": "Please provide a topic and select at least one question type.",
+                    "generationFailed": "Failed to generate quiz questions. Please try again."
+                },
                 "preview": {
                     "title": "Preview Results",
                     "emptyTitle": "No questions generated yet",

@@ -35,7 +35,7 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
+import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -239,7 +239,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private startCodeGeneration() {
         this.isGeneratingCode.set(true);
-        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const repositoryType = this.selectedRepository as unknown as CodeGenerationRequest.RepositoryTypeEnum;
         const exerciseId = this.exercise!.id!;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
             next: (res) => {
@@ -308,7 +308,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
             return;
         }
-        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const repositoryType = this.selectedRepository as unknown as CodeGenerationRequest.RepositoryTypeEnum;
         const requestId = this.restoreRequestId;
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
             next: (res) => {

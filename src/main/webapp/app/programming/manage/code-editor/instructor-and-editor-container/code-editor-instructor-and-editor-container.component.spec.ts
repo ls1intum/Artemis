@@ -593,7 +593,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('runs full consistency check and shows success when no issues', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
 
             comp.checkConsistencies(comp.exercise!);
@@ -607,7 +609,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('error when first consistency check fails', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const failSpy = jest.spyOn(alertService, 'error');
 
             comp.checkConsistencies(comp.exercise!);
@@ -620,7 +624,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('error when exercise id undefined', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const failSpy = jest.spyOn(alertService, 'error');
 
             comp.checkConsistencies({ id: undefined } as any);
@@ -933,7 +939,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = mockIssues[0];
 
             jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             jest.spyOn(alertService, 'success');
 
             comp.checkConsistencies(comp.exercise!);

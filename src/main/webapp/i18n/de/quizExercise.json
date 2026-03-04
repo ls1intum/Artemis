@@ -47,6 +47,10 @@
                     "openInEditor": "Im Editor öffnen",
                     "addToEditor": "Zum Quiz hinzufügen"
                 },
+                "errors": {
+                    "invalidConfiguration": "Bitte gib ein Thema an und wähle mindestens einen Fragetyp aus.",
+                    "generationFailed": "Quizfragen konnten nicht generiert werden. Bitte versuche es erneut."
+                },
                 "preview": {
                     "title": "Vorschau",
                     "emptyTitle": "Noch keine Fragen generiert",

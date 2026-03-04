@@ -1,5 +1,5 @@
 import { NgClass } from '@angular/common';
-import { Component, ViewEncapsulation, computed, model, signal } from '@angular/core';
+import { Component, ViewEncapsulation, computed, inject, input, model, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
@@ -12,8 +12,12 @@ import { FaIconComponent, FaStackComponent, FaStackItemSizeDirective } from '@fo
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AlertService } from 'app/shared/service/alert.service';
 import { QuizAiGeneratedQuestionCardComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generated-question-card/quiz-ai-generated-question-card.component';
-import { GeneratedQuestion, GeneratedQuestionTemplate, GeneratedQuestionType, GenerationLanguage } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { GeneratedQuestion, GeneratedQuestionType, GenerationLanguage } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { finalize } from 'rxjs/operators';
+import { QuizQuestionGenerationRequest } from 'app/openapi/model/quizQuestionGenerationRequest';
 
 @Component({
     selector: 'jhi-quiz-ai-generation-modal',
@@ -39,8 +43,12 @@ import { GeneratedQuestion, GeneratedQuestionTemplate, GeneratedQuestionType, Ge
     ],
 })
 export class QuizAiGenerationModalComponent {
+    private alertService = inject(AlertService);
+    private quizAiGenerationService = inject(QuizAiGenerationService);
+
     protected readonly faQuestionCircle = faQuestionCircle;
     visible = model.required<boolean>();
+    courseId = input<number>();
     topic = signal('');
     optionalPrompt = signal('');
     numberOfQuestions = signal(3);
@@ -48,10 +56,12 @@ export class QuizAiGenerationModalComponent {
     language = signal<GenerationLanguage>('en');
     selectedQuestionTypes = signal<GeneratedQuestionType[]>(['single-choice']);
     generatedQuestions = signal<GeneratedQuestion[]>([]);
+    isGenerating = signal(false);
 
     readonly questionTypes: GeneratedQuestionType[] = ['single-choice', 'multiple-choice', 'true-false'];
     readonly languages: GenerationLanguage[] = ['en', 'de'];
     readonly hasGeneratedQuestions = computed(() => this.generatedQuestions().length > 0);
+    readonly canGenerate = computed(() => !!this.courseId() && !!this.topic().trim() && this.selectedQuestionTypes().length > 0);
 
     close(): void {
         this.visible.set(false);
@@ -79,19 +89,33 @@ export class QuizAiGenerationModalComponent {
     }
 
     generateQuestions(): void {
-        const selectedTypes = this.selectedQuestionTypes();
-        const questionCount = Math.max(1, this.numberOfQuestions() ?? 1);
-        const templates = this.getTemplatesForSelectedTypes(selectedTypes);
-        const generated = Array.from({ length: questionCount }, (_, index) => {
-            const template = templates[index % templates.length];
-            return {
-                id: `${template.key}-${index}`,
-                type: template.type,
-                questionKey: template.questionKey,
-                options: template.options,
-            };
-        });
-        this.generatedQuestions.set(generated);
+        const courseId = this.courseId();
+        if (!courseId || !this.canGenerate()) {
+            this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.invalidConfiguration');
+            return;
+        }
+
+        const request: QuizQuestionGenerationRequest = {
+            topic: this.topic().trim(),
+            optionalPrompt: this.optionalPrompt().trim() || undefined,
+            language: this.language(),
+            questionTypes: this.selectedQuestionTypes(),
+            numberOfQuestions: Math.max(1, this.numberOfQuestions() ?? 1),
+            difficulty: Math.max(0, Math.min(100, this.difficulty() ?? 50)),
+        };
+
+        this.isGenerating.set(true);
+        this.quizAiGenerationService
+            .generateQuizQuestions(courseId, request)
+            .pipe(finalize(() => this.isGenerating.set(false)))
+            .subscribe({
+                next: (generatedQuestions) => {
+                    this.generatedQuestions.set(generatedQuestions);
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.quizExercise.aiGeneration.errors.generationFailed');
+                },
+            });
     }
 
     getQuestionTypeLabelKey(type: GeneratedQuestionType): string {
@@ -110,42 +134,5 @@ export class QuizAiGenerationModalComponent {
 
     getResultCountTranslateValues() {
         return { count: this.generatedQuestions().length };
-    }
-
-    private getTemplatesForSelectedTypes(selectedTypes: GeneratedQuestionType[]): GeneratedQuestionTemplate[] {
-        const templates: GeneratedQuestionTemplate[] = [
-            {
-                key: 'single-choice',
-                type: 'single-choice',
-                questionKey: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.singleChoice.question`,
-                options: [
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.singleChoice.optionA`, correct: true },
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.singleChoice.optionB`, correct: false },
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.singleChoice.optionC`, correct: false },
-                ],
-            },
-            {
-                key: 'multiple-choice',
-                type: 'multiple-choice',
-                questionKey: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.multipleChoice.question`,
-                options: [
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.multipleChoice.optionA`, correct: true },
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.multipleChoice.optionB`, correct: true },
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.multipleChoice.optionC`, correct: false },
-                ],
-            },
-            {
-                key: 'true-false',
-                type: 'true-false',
-                questionKey: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.trueFalse.question`,
-                options: [
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.trueFalse.optionA`, correct: false },
-                    { key: `artemisApp.quizExercise.aiGeneration.mock.${this.language()}.trueFalse.optionB`, correct: true },
-                ],
-            },
-        ];
-
-        const filteredTemplates = templates.filter((template) => selectedTypes.includes(template.type));
-        return filteredTemplates.length > 0 ? filteredTemplates : templates;
     }
 }
