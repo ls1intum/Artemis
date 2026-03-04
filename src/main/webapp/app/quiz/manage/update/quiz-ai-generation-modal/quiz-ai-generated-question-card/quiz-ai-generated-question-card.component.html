@@ -1,12 +1,12 @@
 <article class="quiz-ai-generation-question-card">
     <div class="question-card-header">
-        <strong>{{ questionIndex() + 1 }}. <span [jhiTranslate]="question().questionKey"></span></strong>
         <span class="type-badge" [jhiTranslate]="getQuestionTypeLabelKey(question().type)"></span>
     </div>
+    <h5 class="question-title">{{ questionIndex() + 1 }}. <span [jhiTranslate]="question().questionKey"></span></h5>
     <div class="option-list">
         @for (option of question().options; track option.key) {
             <div class="option-item" [ngClass]="{ correct: option.correct }">
-                <span [jhiTranslate]="option.key"></span>
+                <span class="option-text" [jhiTranslate]="option.key"></span>
                 @if (option.correct) {
                     <span class="correct-label" jhiTranslate="artemisApp.quizExercise.aiGeneration.preview.correct"></span>
                 }

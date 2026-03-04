@@ -1,26 +1,34 @@
 .quiz-ai-generation-question-card {
-    border: 1px solid var(--surface-border);
-    border-radius: 0.75rem;
-    padding: 0.9rem;
+    background: var(--surface-card);
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.8rem;
+    padding: 1.2rem;
 }
 
 .quiz-ai-generation-question-card .question-card-header {
     align-items: center;
-    color: var(--text-color);
     display: flex;
-    gap: 0.75rem;
-    justify-content: space-between;
-    margin-bottom: 0.75rem;
+    justify-content: flex-end;
+    margin-bottom: 0.5rem;
+}
+
+.quiz-ai-generation-question-card .question-title {
+    color: var(--text-color);
+    font-size: var(--bs-body-font-size);
+    font-weight: 700;
+    line-height: 1.3;
+    margin: 0 0 1.05rem;
 }
 
 .quiz-ai-generation-question-card .type-badge {
-    background: var(--surface-ground);
-    border: 1px solid var(--surface-border);
+    background: var(--bs-secondary-bg);
+    border: 1px solid var(--bs-border-color);
     border-radius: 999px;
-    color: var(--text-color-secondary);
+    color: var(--text-color);
     font-size: 0.75rem;
     font-weight: 700;
-    padding: 0.2rem 0.6rem;
+    letter-spacing: 0.01em;
+    padding: 0.2rem 0.65rem;
     text-transform: uppercase;
     white-space: nowrap;
 }
@@ -32,22 +40,37 @@
 }
 
 .quiz-ai-generation-question-card .option-item {
-    border: 1px solid var(--surface-border);
+    align-items: center;
+    background: var(--bs-body-bg);
+    border: 1px solid var(--bs-border-color);
     border-left: 3px solid transparent;
     border-radius: 0.5rem;
-    color: var(--text-color);
     display: flex;
     justify-content: space-between;
-    padding: 0.55rem 0.7rem;
+    padding: 0.7rem 0.85rem;
+}
+
+.quiz-ai-generation-question-card .option-text {
+    color: var(--text-color);
+    font-size: var(--bs-body-font-size);
+    font-weight: 600;
 }
 
 .quiz-ai-generation-question-card .option-item.correct {
-    border-left-color: var(--green-500);
-    background: var(--surface-ground);
+    background: rgba(var(--bs-success-rgb), 0.08);
+    border-color: rgba(var(--bs-success-rgb), 0.28);
+    border-left-color: var(--bs-success);
+    border-left-width: 5px;
 }
 
 .quiz-ai-generation-question-card .correct-label {
-    color: var(--green-500);
-    font-size: 0.75rem;
+    background: rgba(var(--bs-success-rgb), 0.15);
+    border: 1px solid rgba(var(--bs-success-rgb), 0.35);
+    border-radius: 0.35rem;
+    color: var(--bs-success-text-emphasis);
+    font-size: 0.78rem;
     font-weight: 700;
+    letter-spacing: 0.015em;
+    padding: 0.1rem 0.45rem;
+    text-transform: uppercase;
 }
