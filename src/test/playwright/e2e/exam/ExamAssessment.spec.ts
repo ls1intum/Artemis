@@ -18,10 +18,7 @@ import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
 
-let exam: Exam;
-
 let course: Course;
-let examEnd: Dayjs;
 let studentOneName: string;
 
 test.beforeAll('Create course', async ({ browser }) => {
@@ -41,9 +38,10 @@ test.beforeAll('Create course', async ({ browser }) => {
 });
 
 test.describe('Exam assessment', () => {
-    test.describe.configure({ mode: 'serial' });
-
     test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
+
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(45, 'seconds');
             const page = await newBrowserPage(browser);
@@ -77,6 +75,9 @@ test.describe('Exam assessment', () => {
     });
 
     test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
+
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(20, 'seconds');
             const page = await newBrowserPage(browser);
@@ -117,6 +118,9 @@ test.describe('Exam assessment', () => {
     });
 
     test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
+
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(20, 'seconds');
             const page = await newBrowserPage(browser);
@@ -152,6 +156,8 @@ test.describe('Exam assessment', () => {
     });
 
     test.describe('Quiz exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -186,6 +192,7 @@ test.describe('Exam assessment', () => {
 test.describe('Exam grading', { tag: '@slow' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
+        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
             examEnd = dayjs().add(20, 'seconds');
@@ -224,6 +231,7 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
 });
 
 test.describe('Exam statistics', { tag: '@slow' }, () => {
+    let exam: Exam;
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 

@@ -274,7 +274,7 @@ test.describe('Exam participation', () => {
 
             test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
                 await login(admin);
-                exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(10, 'minutes') });
+                exam = await createExam(course, examAPIRequests, { title: 'exam' + generateUUID(), endDate: dayjs().add(2, 'minutes') });
                 const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
                     submission: cAllSuccessfulSubmission,
                     progExerciseAssessmentType: ProgrammingExerciseAssessmentType.AUTOMATIC,

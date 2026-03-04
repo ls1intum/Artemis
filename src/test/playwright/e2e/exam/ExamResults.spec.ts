@@ -54,7 +54,7 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         await Commands.login(page, admin);
         const examAPIRequests = new ExamAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
-        const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, exerciseAPIRequests, examAPIRequests);
+        const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
 
         // Programming exercises need the most time for CI builds
         examEndDate = dayjs().add(45, 'seconds');
