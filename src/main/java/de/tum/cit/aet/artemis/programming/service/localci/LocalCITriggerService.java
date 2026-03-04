@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhases;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.BuildJobRepository;
@@ -332,9 +332,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
 
         // Try the new build phases format first
-        BuildPlanPhases buildPlanPhases = buildConfig.getBuildPlanPhases();
-        if (buildPlanPhases != null) {
-            return getBuildConfigFromPhases(buildPlanPhases, participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
+        BuildPlanPhasesDTO buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
+        if (buildPlanPhasesDTO != null) {
+            return getBuildConfigFromPhases(buildPlanPhasesDTO, participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
                     programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
         }
 
@@ -348,14 +348,14 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * Evaluates phase conditions, assembles the build script from active phases,
      * and extracts result paths only from active phases.
      */
-    private BuildConfig getBuildConfigFromPhases(BuildPlanPhases buildPlanPhases, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise,
-            ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
-            ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
+    private BuildConfig getBuildConfigFromPhases(BuildPlanPhasesDTO buildPlanPhasesDTO, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise,
+                                                 ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
+                                                 ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhases, participation);
+        BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhasesDTO, participation);
 
         // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
-        String dockerImage = buildPlanPhases.dockerImage();
+        String dockerImage = buildPlanPhasesDTO.dockerImage();
         if (dockerImage == null || dockerImage.isBlank()) {
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }

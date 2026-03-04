@@ -1,18 +1,23 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
 import java.util.List;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhase;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhases;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 /**
  * Service for evaluating build phase conditions at build trigger time.
  * Determines which phases are active based on their conditions and the participation's due date.
  */
+@Profile(PROFILE_LOCALCI)
+@Lazy
 @Service
 public class BuildPhaseEvaluationService {
 
@@ -22,7 +27,7 @@ public class BuildPhaseEvaluationService {
         this.exerciseDateService = exerciseDateService;
     }
 
-    public record EvaluatedBuildPlan(List<BuildPhase> activePhases, List<String> resultPaths) {
+    public record EvaluatedBuildPlan(List<BuildPhaseDTO> activePhases, List<String> resultPaths) {
     }
 
     /**
@@ -36,10 +41,10 @@ public class BuildPhaseEvaluationService {
      * @param participation the participation for which the build is being triggered
      * @return the evaluated build plan with active phases and result paths
      */
-    public EvaluatedBuildPlan evaluate(BuildPlanPhases phases, ProgrammingExerciseParticipation participation) {
+    public EvaluatedBuildPlan evaluate(BuildPlanPhasesDTO phases, ProgrammingExerciseParticipation participation) {
         boolean allPhasesActive = isInstructorParticipation(participation) || exerciseDateService.isAfterDueDate(participation);
 
-        List<BuildPhase> activePhases = phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList();
+        List<BuildPhaseDTO> activePhases = phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList();
 
         List<String> resultPaths = activePhases.stream().filter(phase -> phase.resultPaths() != null).flatMap(phase -> phase.resultPaths().stream()).toList();
 
@@ -50,7 +55,7 @@ public class BuildPhaseEvaluationService {
         return participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation;
     }
 
-    private boolean isPhaseActive(BuildPhase phase, boolean allPhasesActive) {
+    private boolean isPhaseActive(BuildPhaseDTO phase, boolean allPhasesActive) {
         return switch (phase.condition()) {
             case ALWAYS -> true;
             case AFTER_DUE_DATE -> allPhasesActive;

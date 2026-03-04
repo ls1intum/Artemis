@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
-import de.tum.cit.aet.artemis.programming.dto.BuildPhase;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.service.BuildScriptProviderService;
@@ -57,7 +57,7 @@ public class LocalCIBuildConfigurationService {
      * @param activePhases        the pre-evaluated active build phases, or null to fall back to existing paths
      * @return the build script
      */
-    public String createBuildScript(ProgrammingExercise programmingExercise, List<BuildPhase> activePhases) {
+    public String createBuildScript(ProgrammingExercise programmingExercise, List<BuildPhaseDTO> activePhases) {
 
         StringBuilder buildScriptBuilder = new StringBuilder();
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
@@ -68,7 +68,7 @@ public class LocalCIBuildConfigurationService {
             buildScriptBuilder.append("set -e\n");
             buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
 
-            for (BuildPhase phase : activePhases) {
+            for (BuildPhaseDTO phase : activePhases) {
                 buildScriptBuilder.append(phase.script()).append("\n");
             }
         } else {

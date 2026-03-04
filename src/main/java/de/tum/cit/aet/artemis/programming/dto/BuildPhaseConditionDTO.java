@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * Represents the condition under which a build phase should be executed.
  */
-public enum BuildPhaseCondition {
+public enum BuildPhaseConditionDTO {
 
     @JsonProperty("ALWAYS")
     ALWAYS,

@@ -17,7 +17,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.service.ProfileService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhases;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
@@ -86,7 +86,7 @@ public class ProgrammingExerciseBuildPlanService {
 
     /**
      * Ensures that the build plan configuration for a programming exercise is stored in the
-     * {@link BuildPlanPhases} format. This handles three cases:
+     * {@link BuildPlanPhasesDTO} format. This handles three cases:
      * <ol>
      * <li>No config exists ({@code null}): loads the default windfile template and converts it to phases format</li>
      * <li>Config exists in legacy Windfile format: converts it to phases format</li>
@@ -118,7 +118,7 @@ public class ProgrammingExerciseBuildPlanService {
         }
 
         if (windfile != null) {
-            BuildPlanPhases phases = BuildPlanPhases.fromWindfile(windfile);
+            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromWindfile(windfile);
             buildConfig.setBuildPlanConfiguration(phases.serialize());
             programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         } else {

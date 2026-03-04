@@ -5,5 +5,5 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record BuildPhase(String name, String script, BuildPhaseCondition condition, List<String> resultPaths) {
+public record BuildPhaseDTO(String name, String script, BuildPhaseConditionDTO condition, List<String> resultPaths) {
 }

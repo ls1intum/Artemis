@@ -12,22 +12,22 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public record BuildPlanPhases(List<BuildPhase> phases, String dockerImage) {
+public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage) {
 
     private static final ObjectMapper mapper = new ObjectMapper();
 
     /**
-     * Converts a {@link Windfile} into the {@link BuildPlanPhases} format.
-     * Each {@link ScriptAction} in the windfile becomes a {@link BuildPhase} with condition {@link BuildPhaseCondition#ALWAYS}.
+     * Converts a {@link Windfile} into the {@link BuildPlanPhasesDTO} format.
+     * Each {@link ScriptAction} in the windfile becomes a {@link BuildPhaseDTO} with condition {@link BuildPhaseConditionDTO#ALWAYS}.
      * The docker image is extracted from the windfile metadata.
      *
      * @param windfile the windfile to convert
-     * @return the converted {@link BuildPlanPhases}, never null
+     * @return the converted {@link BuildPlanPhasesDTO}, never null
      */
-    public static BuildPlanPhases fromWindfile(Windfile windfile) {
-        List<BuildPhase> phases = windfile.scriptActions().stream().map(action -> {
+    public static BuildPlanPhasesDTO fromWindfile(Windfile windfile) {
+        List<BuildPhaseDTO> phases = windfile.scriptActions().stream().map(action -> {
             List<String> resultPaths = action.results() != null ? action.results().stream().map(AeolusResult::path).toList() : Collections.emptyList();
-            return new BuildPhase(action.name(), action.script(), BuildPhaseCondition.ALWAYS, resultPaths);
+            return new BuildPhaseDTO(action.name(), action.script(), BuildPhaseConditionDTO.ALWAYS, resultPaths);
         }).toList();
 
         String dockerImage = null;
@@ -35,11 +35,11 @@ public record BuildPlanPhases(List<BuildPhase> phases, String dockerImage) {
             dockerImage = windfile.metadata().docker().getFullImageName();
         }
 
-        return new BuildPlanPhases(phases, dockerImage);
+        return new BuildPlanPhasesDTO(phases, dockerImage);
     }
 
-    public static BuildPlanPhases deserialize(String json) throws JsonProcessingException {
-        return mapper.readValue(json, BuildPlanPhases.class);
+    public static BuildPlanPhasesDTO deserialize(String json) throws JsonProcessingException {
+        return mapper.readValue(json, BuildPlanPhasesDTO.class);
     }
 
     public String serialize() throws JsonProcessingException {
