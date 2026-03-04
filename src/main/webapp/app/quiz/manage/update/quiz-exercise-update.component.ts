@@ -304,6 +304,10 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.aiGenerationModalVisible = true;
     }
 
+    canShowAiGenerationButton(): boolean {
+        return !!this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+    }
+
     appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {
         if (!generatedQuestions.length) {
             return;
