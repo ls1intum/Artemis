@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyEffect;
 import de.tum.cit.aet.artemis.core.security.policy.PolicyRule;
 import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseAccessPolicies;
+import de.tum.cit.aet.artemis.core.security.policy.definitions.CourseVisibilityPolicy;
 import de.tum.cit.aet.artemis.core.security.policy.definitions.ProgrammingExerciseAccessPolicies;
 
 /**
@@ -56,8 +57,8 @@ public final class PolicyDocGenerator {
         List<AccessPolicy<?>> policies = new ArrayList<>();
 
         // Collect policy-based endpoints
+        policies.add(new CourseVisibilityPolicy().getPolicy());
         CourseAccessPolicies courseConfig = new CourseAccessPolicies();
-        policies.add(courseConfig.courseVisibilityPolicy());
         policies.add(courseConfig.courseStudentAccessPolicy());
         policies.add(courseConfig.courseStaffAccessPolicy());
         policies.add(courseConfig.courseEditorAccessPolicy());

@@ -8,7 +8,6 @@ import static de.tum.cit.aet.artemis.core.security.Role.STUDENT;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 import static de.tum.cit.aet.artemis.core.security.Role.TEACHING_ASSISTANT;
 import static de.tum.cit.aet.artemis.core.security.policy.AccessPolicy.when;
-import static de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions.hasStarted;
 import static de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions.isAdmin;
 import static de.tum.cit.aet.artemis.core.security.policy.SpecificationConditions.memberOfGroup;
 
@@ -27,28 +26,6 @@ import de.tum.cit.aet.artemis.core.security.policy.AccessPolicy;
 @Configuration
 @Profile(PROFILE_CORE)
 public class CourseAccessPolicies {
-
-    /**
-     * Defines the course visibility policy.
-     * <ul>
-     * <li>Teaching assistants, editors, instructors, and admins can always see a course.</li>
-     * <li>Students can see a course only if it has started (start date is null or in the past).</li>
-     * <li>All other users are denied access by default.</li>
-     * </ul>
-     *
-     * @return the course visibility access policy
-     */
-    @Bean
-    @Lazy
-    public AccessPolicy<Course> courseVisibilityPolicy() {
-        return AccessPolicy.forResource(Course.class).named("course-visibility").section("Navigation").feature("Course Overview")
-                .rule(when(memberOfGroup(Course::getTeachingAssistantGroupName, Course_.teachingAssistantGroupName)
-                        .or(memberOfGroup(Course::getEditorGroupName, Course_.editorGroupName)).or(memberOfGroup(Course::getInstructorGroupName, Course_.instructorGroupName))
-                        .or(isAdmin())).thenAllow().documentedFor(SUPER_ADMIN, ADMIN, INSTRUCTOR, EDITOR, TEACHING_ASSISTANT))
-                .rule(when(memberOfGroup(Course::getStudentGroupName, Course_.studentGroupName).and(hasStarted(Course::getStartDate, Course_.startDate))).thenAllow()
-                        .documentedFor(STUDENT).withNote("if enrolled + started"))
-                .denyByDefault();
-    }
 
     /**
      * Defines the course student access policy (no start-date gate).
