@@ -236,13 +236,13 @@ describe('CourseDashboardComponent', () => {
     });
 
     it('should toggle isCollapsed when toggleSidebar is called', () => {
-        expect(component.isCollapsed()).toBe(false);
+        expect(component.isCollapsed).toBe(false);
 
         component.toggleSidebar();
-        expect(component.isCollapsed()).toBe(true);
+        expect(component.isCollapsed).toBe(true);
 
         component.toggleSidebar();
-        expect(component.isCollapsed()).toBe(false);
+        expect(component.isCollapsed).toBe(false);
     });
 
     it('should correctly calculate overall performance', () => {

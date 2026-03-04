@@ -366,7 +366,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise, true, false);
         component.hasUserAcceptedLLMUsage = false;
 
-        const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue('none');
+        const modalSpy = vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
 
         await initAndTick();
 
@@ -385,7 +385,7 @@ describe('RequestFeedbackButtonComponent', () => {
         await initAndTick();
         component.hasUserAcceptedLLMUsage = false;
 
-        vi.spyOn(llmModalService, 'open').mockResolvedValue('cloud');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
         vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
         vi.spyOn(accountService, 'setUserLLMSelectionDecision');
         vi.spyOn(courseExerciseService, 'requestFeedback').mockReturnValue(of({} as StudentParticipation));
@@ -406,7 +406,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise);
         await initAndTick();
 
-        vi.spyOn(llmModalService, 'open').mockResolvedValue('local');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
         vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
         vi.spyOn(accountService, 'setUserLLMSelectionDecision');
 
@@ -425,7 +425,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise);
         await initAndTick();
 
-        vi.spyOn(llmModalService, 'open').mockResolvedValue('no_ai');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLMSelectionDecision.NO_AI);
         vi.spyOn(userService, 'updateLLMSelectionDecision').mockReturnValue(of(new HttpResponse<void>({})));
         vi.spyOn(accountService, 'setUserLLMSelectionDecision');
 
@@ -444,7 +444,7 @@ describe('RequestFeedbackButtonComponent', () => {
         setupComponentInputs(exercise);
         await initAndTick();
 
-        vi.spyOn(llmModalService, 'open').mockResolvedValue('none');
+        vi.spyOn(llmModalService, 'open').mockResolvedValue(LLM_MODAL_DISMISSED);
         // Reset the mock to clear any calls from previous tests
         mockUserService.updateLLMSelectionDecision.mockClear();
 
