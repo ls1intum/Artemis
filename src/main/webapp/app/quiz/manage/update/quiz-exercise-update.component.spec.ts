@@ -2150,6 +2150,53 @@ describe('QuizExerciseUpdateComponent', () => {
             await configureTestBed();
             configureFixtureAndServices();
             comp.quizExercise = quizExercise;
+            comp.quizExercise.isEditable = true;
+            comp.courseId = course.id;
+            comp.isImport = false;
+            comp.isExamMode = false;
+            comp.hyperionEnabled = true;
+        });
+
+        it('should show AI generation button in edit/create contexts when requirements are met', () => {
+            expect(comp.canShowAiGenerationButton()).toBe(true);
+        });
+
+        it('should not show AI generation button when Hyperion is disabled', () => {
+            comp.hyperionEnabled = false;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button in import mode', () => {
+            comp.isImport = true;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button in exam mode', () => {
+            comp.isExamMode = true;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button without courseId', () => {
+            comp.courseId = undefined;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should not show AI generation button when quiz is not editable', () => {
+            comp.quizExercise.isEditable = false;
+
+            expect(comp.canShowAiGenerationButton()).toBe(false);
+        });
+
+        it('should open AI generation modal', () => {
+            comp.aiGenerationModalVisible = false;
+
+            comp.openAiGenerationModal();
+
+            expect(comp.aiGenerationModalVisible).toBe(true);
         });
 
         it('should append generated questions to existing quiz questions', () => {
