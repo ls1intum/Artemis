@@ -12,7 +12,7 @@
 services:
     saml-test:
         container_name: artemis-saml-test
-        image: docker.io/jamedjo/test-saml-idp:1.18
+        image: docker.io/jamedjo/test-saml-idp:${SAML_TEST_IDP_VERSION}
         pull_policy: missing
         ports:
             - "9980:8080"
