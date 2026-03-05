@@ -54,13 +54,10 @@
                 "rejectSuccess": "Course request \"{{ title }}\" rejected.",
                 "link": "Open course",
                 "acceptTitle": "Accept course request",
-                "courseDataSection": "Course Data",
-                "shortNameSection": "Short Name",
                 "shortNameHint": "Must start with a letter, only letters and numbers, at least 3 characters.",
                 "shortNameConflictModal": "This short name is already in use. Please choose a different one.",
                 "instructorCoursesHint": "The following courses are taught by the requester. Use them as a reference for naming.",
                 "loadingCourses": "Loading instructor courses...",
-                "noInstructorCourses": "The requester has no previous instructor courses.",
                 "acceptAndCreate": "Accept & create course"
             }
         }

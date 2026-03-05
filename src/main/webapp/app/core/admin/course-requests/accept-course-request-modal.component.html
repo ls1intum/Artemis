@@ -8,9 +8,6 @@
     appendTo="body"
 >
     <form [formGroup]="acceptForm" novalidate>
-        <!-- Section 1: Course Data -->
-        <h6 class="fw-semibold mb-3" jhiTranslate="artemisApp.courseRequest.admin.courseDataSection"></h6>
-
         <div class="mb-3">
             <label class="form-label fw-semibold" for="accept-title" jhiTranslate="artemisApp.courseRequest.form.title"></label>
             <input
@@ -57,10 +54,30 @@
             <div class="text-danger mb-3" jhiTranslate="artemisApp.courseRequest.form.dateError"></div>
         }
 
-        <!-- Section 2: Short Name -->
-        <h6 class="fw-semibold mb-3 mt-4" jhiTranslate="artemisApp.courseRequest.admin.shortNameSection"></h6>
+        <hr class="my-3" />
 
-        <!-- Instructor Course History Table -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold" for="accept-shortName" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
+            <input
+                id="accept-shortName"
+                type="text"
+                class="form-control"
+                formControlName="shortName"
+                [class.is-invalid]="acceptForm.get('shortName')?.invalid && acceptForm.get('shortName')?.touched"
+            />
+            <small class="form-text text-secondary" jhiTranslate="artemisApp.courseRequest.admin.shortNameHint"></small>
+            @if (acceptForm.get('shortName')?.touched) {
+                @if (acceptForm.get('shortName')?.hasError('required')) {
+                    <div class="text-danger small" jhiTranslate="entity.validation.required"></div>
+                } @else if (acceptForm.get('shortName')?.hasError('minlength')) {
+                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></div>
+                } @else if (acceptForm.get('shortName')?.hasError('regexInvalid')) {
+                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></div>
+                }
+            }
+        </div>
+
+        <!-- Instructor Course History Table (only shown when courses exist) -->
         @if (loadingCourses()) {
             <div class="text-muted mb-3" jhiTranslate="artemisApp.courseRequest.admin.loadingCourses"></div>
         } @else if (instructorCourses().length > 0) {
@@ -97,30 +114,7 @@
                     </tbody>
                 </table>
             </div>
-        } @else {
-            <p class="text-muted mb-3" jhiTranslate="artemisApp.courseRequest.admin.noInstructorCourses"></p>
         }
-
-        <div class="mb-3">
-            <label class="form-label fw-semibold" for="accept-shortName" jhiTranslate="artemisApp.courseRequest.form.shortName"></label>
-            <input
-                id="accept-shortName"
-                type="text"
-                class="form-control"
-                formControlName="shortName"
-                [class.is-invalid]="acceptForm.get('shortName')?.invalid && acceptForm.get('shortName')?.touched"
-            />
-            <small class="form-text text-secondary" jhiTranslate="artemisApp.courseRequest.admin.shortNameHint"></small>
-            @if (acceptForm.get('shortName')?.touched) {
-                @if (acceptForm.get('shortName')?.hasError('required')) {
-                    <div class="text-danger small" jhiTranslate="entity.validation.required"></div>
-                } @else if (acceptForm.get('shortName')?.hasError('minlength')) {
-                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameTooShort"></div>
-                } @else if (acceptForm.get('shortName')?.hasError('regexInvalid')) {
-                    <div class="text-danger small" jhiTranslate="artemisApp.courseRequest.form.shortNameInvalid"></div>
-                }
-            }
-        </div>
     </form>
 
     <ng-template pTemplate="footer">

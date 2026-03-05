@@ -54,13 +54,10 @@
                 "rejectSuccess": "Kursanfrage \"{{ title }}\" abgelehnt.",
                 "link": "Kurs öffnen",
                 "acceptTitle": "Kursanfrage akzeptieren",
-                "courseDataSection": "Kursdaten",
-                "shortNameSection": "Kürzel",
                 "shortNameHint": "Muss mit einem Buchstaben beginnen, nur Buchstaben und Zahlen, mindestens 3 Zeichen.",
                 "shortNameConflictModal": "Dieses Kürzel wird bereits verwendet. Bitte wähle ein anderes.",
                 "instructorCoursesHint": "Die folgenden Kurse werden vom Anfragenden geleitet. Nutze sie als Referenz für die Benennung.",
                 "loadingCourses": "Kurse des Kursleiters werden geladen...",
-                "noInstructorCourses": "Der Anfragende hat bisher keine Kurse als Kursleiter.",
                 "acceptAndCreate": "Akzeptieren & Kurs erstellen"
             }
         }
