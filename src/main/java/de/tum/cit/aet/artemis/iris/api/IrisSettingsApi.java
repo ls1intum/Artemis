@@ -75,10 +75,10 @@ public class IrisSettingsApi extends AbstractIrisApi {
      * Finds all Iris course chat sessions with messages for export.
      *
      * @param courseId the ID of the course
-     * @return list of chat session export DTOs with messages
+     * @return list of chat session export DTOs with messages, sorted by creation date
      */
     public List<IrisChatSessionExportDTO> findCourseChatSessionsForExport(long courseId) {
-        List<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseId(courseId);
+        List<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseIdSortedByCreationDate(courseId);
         return sessions.stream().map(this::convertToExportDTO).toList();
     }
 
