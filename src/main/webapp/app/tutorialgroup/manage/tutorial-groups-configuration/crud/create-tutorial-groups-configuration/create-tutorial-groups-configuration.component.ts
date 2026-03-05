@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfigurationFormData } from 'app/tutorialgroup/manage/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { finalize, switchMap, take, takeUntil } from 'rxjs/operators';
@@ -14,6 +13,7 @@ import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TutorialGroupsConfigurationFormComponent } from '../tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupConfigurationDTO, tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
@@ -32,7 +32,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
 
     ngUnsubscribe = new Subject<void>();
 
-    newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+    newTutorialGroupsConfiguration: TutorialGroupConfigurationDTO = {};
     isLoading: boolean;
     course: Course;
 
@@ -52,7 +52,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                 next: (courseResult) => {
                     if (courseResult.body) {
                         this.course = courseResult.body;
-                        this.newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+                        this.newTutorialGroupsConfiguration = {} as TutorialGroupConfigurationDTO;
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -75,7 +75,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
             )
             .subscribe({
                 next: (resp) => {
-                    this.course.tutorialGroupsConfiguration = resp.body!;
+                    this.course.tutorialGroupsConfiguration = tutorialGroupsConfigurationEntityFromDto(resp.body!);
                     this.courseStorageService.updateCourse(this.course);
                     this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups-checklist']);
                 },
