@@ -141,7 +141,9 @@ export class CourseMessagesPage {
      * @param isPublic - Specifies if the channel is public.
      */
     async createChannel(isAnnouncementChannel: boolean, isPublic: boolean) {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels`);
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/channels') && resp.request().method() === 'POST' && resp.status() === 201,
+        );
         await this.page.locator('.modal-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();

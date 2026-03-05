@@ -70,6 +70,9 @@ fi
 # Change to docker directory
 cd "$(dirname "$0")/../../docker"
 
+# Clean up stale JUnit XML files from previous runs to avoid double-counting
+rm -f ../src/test/playwright/test-reports/results*.xml
+
 # Create override file for local test execution.
 echo "Creating local test override..."
 if [ -n "$TEST_FILTER" ]; then
@@ -140,22 +143,33 @@ TOTAL_FAILURES=0
 TOTAL_ERRORS=0
 TOTAL_SKIPPED=0
 
-for xml_file in "$REPORT_DIR"/results*.xml; do
-    if [ -f "$xml_file" ]; then
-        # Extract and sum test counts from ALL testsuites in the JUnit XML
-        # Each spec file creates a separate <testsuite> element
-        while IFS= read -r line; do
-            tests=$(echo "$line" | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
-            failures=$(echo "$line" | grep -o 'failures="[0-9]*"' | grep -o '[0-9]*')
-            errors=$(echo "$line" | grep -o 'errors="[0-9]*"' | grep -o '[0-9]*')
-            skipped=$(echo "$line" | grep -o 'skipped="[0-9]*"' | grep -o '[0-9]*')
+# Determine which XML files to parse to avoid double-counting.
+# The test runner generates results-parallel.xml + results-sequential.xml,
+# then merges them into results.xml. If the merged file exists, use only that.
+# Otherwise fall back to individual files.
+XML_FILES=()
+if [ -f "$REPORT_DIR/results.xml" ]; then
+    XML_FILES=("$REPORT_DIR/results.xml")
+else
+    for f in "$REPORT_DIR"/results-parallel.xml "$REPORT_DIR"/results-sequential.xml; do
+        [ -f "$f" ] && XML_FILES+=("$f")
+    done
+fi
 
-            TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
-            TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
-            TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
-            TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
-        done < <(grep '<testsuite ' "$xml_file")
-    fi
+for xml_file in "${XML_FILES[@]}"; do
+    # Extract and sum test counts from ALL testsuites in the JUnit XML
+    # Each spec file creates a separate <testsuite> element
+    while IFS= read -r line; do
+        tests=$(echo "$line" | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
+        failures=$(echo "$line" | grep -o 'failures="[0-9]*"' | grep -o '[0-9]*')
+        errors=$(echo "$line" | grep -o 'errors="[0-9]*"' | grep -o '[0-9]*')
+        skipped=$(echo "$line" | grep -o 'skipped="[0-9]*"' | grep -o '[0-9]*')
+
+        TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
+        TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
+        TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
+        TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
+    done < <(grep '<testsuite ' "$xml_file")
 done
 
 TOTAL_PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS - TOTAL_SKIPPED))
@@ -173,13 +187,11 @@ if [ $TOTAL_TESTS -gt 0 ]; then
         echo ""
         echo "FAILED TESTS:"
         echo "-------------"
-        for xml_file in "$REPORT_DIR"/results*.xml; do
-            if [ -f "$xml_file" ]; then
-                # Extract failed test names from failure message attributes
-                # The message attribute contains the test file and name
-                grep '<failure message=' "$xml_file" 2>/dev/null | \
-                    sed 's/.*message="\([^"]*\)".*/  - \1/' || true
-            fi
+        for xml_file in "${XML_FILES[@]}"; do
+            # Extract failed test names from failure message attributes
+            # The message attribute contains the test file and name
+            grep '<failure message=' "$xml_file" 2>/dev/null | \
+                sed 's/.*message="\([^"]*\)".*/  - \1/' || true
         done
         echo ""
     fi

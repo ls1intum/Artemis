@@ -41,10 +41,8 @@ test.describe('File upload exercise assessment', { tag: '@fast' }, () => {
     });
 
     test.describe.serial('Feedback', () => {
-        test('Assesses the file upload exercise submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, fileUploadExerciseAssessment }) => {
-            await login(tutor, '/course-management');
-            await courseManagement.openAssessmentDashboardOfCourse(course.id!);
-            await courseAssessment.clickExerciseDashboardButton();
+        test('Assesses the file upload exercise submission', async ({ login, exerciseAssessment, fileUploadExerciseAssessment }) => {
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${exercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(fileUploadExerciseAssessment.getInstructionsRootElement().getByText(exercise.title!)).toBeVisible();

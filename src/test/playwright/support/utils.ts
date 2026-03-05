@@ -359,7 +359,7 @@ export async function createFileWithContent(filePath: string, content: string) {
 }
 
 export async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
     return await context.newPage();
 }
 

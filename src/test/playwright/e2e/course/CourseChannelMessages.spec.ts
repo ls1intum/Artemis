@@ -22,7 +22,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to create a public announcement channel', async ({ login, courseMessages }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication`);
-            const name = 'public-ancmnt-ch';
+            const name = 'pub-ann-' + generateUUID().slice(0, 8);
             await courseMessages.createChannelButton();
             await courseMessages.setName(name);
             await courseMessages.setDescription('A public announcement channel');
@@ -34,7 +34,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to create a private announcement channel', async ({ login, courseMessages }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication`);
-            const name = 'private-ancmnt-ch';
+            const name = 'prv-ann-' + generateUUID().slice(0, 8);
             await courseMessages.createChannelButton();
             await courseMessages.setName(name);
             await courseMessages.setDescription('A private announcement channel');
@@ -46,7 +46,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to create a public unrestricted channel', async ({ login, courseMessages }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication`);
-            const name = 'public-unrstct-ch';
+            const name = 'pub-unr-' + generateUUID().slice(0, 8);
             await courseMessages.createChannelButton();
             await courseMessages.setName(name);
             await courseMessages.setDescription('A public unrestricted channel');
@@ -58,7 +58,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to create a public course-wide unrestricted channel', async ({ login, courseMessages }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication`);
-            const name = 'public-cw-unrstct-ch';
+            const name = 'pub-cw-' + generateUUID().slice(0, 8);
             await courseMessages.createChannelButton();
             await courseMessages.setName(name);
             await courseMessages.setDescription('A public unrestricted channel');
@@ -71,7 +71,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to create a private unrestricted channel', async ({ login, courseMessages }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication`);
-            const name = 'private-unrstct-ch';
+            const name = 'prv-unr-' + generateUUID().slice(0, 8);
             await courseMessages.createChannelButton();
             await courseMessages.setName(name);
             await courseMessages.setDescription('A public unrestricted channel');
@@ -137,7 +137,7 @@ test.describe('Channel messages', { tag: '@fast' }, () => {
 
         test('Instructor should be able to edit a channel', async ({ login, courseMessages, page }) => {
             await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${channel.id}`);
-            const newName = 'new-test-name';
+            const newName = 'new-' + generateUUID().slice(0, 8);
             const topic = 'test-topic';
 
             await courseMessages.editName(newName);

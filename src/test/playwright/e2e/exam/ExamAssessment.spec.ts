@@ -33,7 +33,7 @@ test.describe('Exam assessment', () => {
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(30, 'seconds');
+            examEnd = dayjs().add(60, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });

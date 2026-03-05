@@ -1,12 +1,10 @@
-import { Page } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
 import dayjs, { Dayjs } from 'dayjs';
-import { generateUUID, waitForExamEnd } from '../../support/utils';
+import { generateUUID } from '../../support/utils';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
-import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/assessment/ExerciseAssessmentDashboardPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { ModelingExerciseAssessmentEditor } from '../../support/pageobjects/assessment/ModelingExerciseAssessmentEditor';
 import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
@@ -38,7 +36,8 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
 
     test.beforeAll('Create exam with all exercise types', async ({ browser }) => {
         test.setTimeout(300_000); // Creating 4 exercise groups with programming builds
-        const page = await browser.newPage();
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
+        const page = await context.newPage();
         await Commands.login(page, admin);
         const examAPIRequests = new ExamAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
@@ -55,6 +54,7 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
             publishResultsDate: examEndDate.add(1, 'seconds'),
             examMaxPoints: 40,
             numberOfExercisesInExam: 4,
+            gracePeriod: 10,
         };
         exam = await examAPIRequests.createExam(examConfig);
 
@@ -68,6 +68,7 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         exercises['modeling'] = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
 
         await examAPIRequests.registerStudentForExam(exam, studentOne);
+        await examAPIRequests.generateMissingIndividualExams(exam);
         const studentExams = await examAPIRequests.getAllStudentExams(exam);
         studentExam = studentExams[0];
         await examAPIRequests.prepareExerciseStartForExam(exam);
@@ -76,7 +77,8 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
 
     test.beforeAll('Participate in exam', async ({ browser }) => {
         test.setTimeout(300_000); // Programming exercise submission waits for build result
-        const page = await browser.newPage();
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
+        const page = await context.newPage();
         await Commands.login(page, admin);
         const examNavigation = new ExamNavigationBar(page);
         const examStartEnd = new ExamStartEndPage(page);
@@ -95,11 +97,18 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         await examParticipation.startParticipation(studentOne, course, exam);
 
         // Submit all 4 exercises
-        for (const [, exercise] of Object.entries(exercises)) {
+        const exerciseEntries = Object.entries(exercises);
+        for (let i = 0; i < exerciseEntries.length; i++) {
+            const [key, exercise] = exerciseEntries[i];
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
         }
-
+        // Save the last exercise before handing in (navigating away triggers auto-save).
+        // Wait briefly to ensure the modeling editor has fully processed the drag operations.
+        await page.waitForTimeout(1000);
+        await examNavigation.openOrSaveExerciseByTitle(exerciseEntries[0][1].exerciseGroup!.title!);
+        // Wait for auto-save to complete
+        await page.waitForTimeout(2000);
         await examParticipation.handInEarly();
         await examStartEnd.pressShowSummary();
         await page.close();
@@ -107,22 +116,32 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
 
     test.beforeAll('Assess all submissions', async ({ browser }) => {
         test.setTimeout(300_000); // Assessment involves multiple dashboard loads with retries
-        const page = await browser.newPage();
-        await waitForExamEnd(examEndDate, page);
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
+        const page = await context.newPage();
+        // Wait for exam end + grace period (10s) so submissions are available for assessment
+        const graceEnd = examEndDate.add(10, 'seconds');
+        if (dayjs().isBefore(graceEnd)) {
+            const timeToWait = graceEnd.diff(dayjs(), 'ms') + 2000;
+            console.log(`Waiting ${timeToWait}ms for exam end + grace period...`);
+            await page.waitForTimeout(timeToWait);
+        }
 
-        const exerciseAssessment = new ExerciseAssessmentDashboardPage(page);
         const examAssessment = new ExamAssessmentPage(page);
         const modelingExerciseAssessment = new ModelingExerciseAssessmentEditor(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
         // Only text and modeling exercises need manual assessment (quiz is auto-evaluated, programming is auto-assessed).
-        // Navigate directly to each exercise's assessment dashboard by ID to avoid fragile index-based selection.
+        // Navigate directly to each exercise's assessment dashboard by exercise ID.
         await Commands.login(page, tutor);
-        await startAssessing(course.id!, exam.id!, exercises['text'].id!, exerciseAssessment, page);
+
+        // Assess text exercise
+        await navigateToExerciseAssessment(page, course.id!, exam.id!, exercises['text'].id!);
         await examAssessment.addNewFeedback(7, 'Good job');
         await examAssessment.submitTextAssessment();
 
-        await startAssessing(course.id!, exam.id!, exercises['modeling'].id!, exerciseAssessment, page);
+        // Assess modeling exercise
+        await navigateToExerciseAssessment(page, course.id!, exam.id!, exercises['modeling'].id!);
+
         await modelingExerciseAssessment.addNewFeedback(5, 'Good');
         await modelingExerciseAssessment.openAssessmentForComponent(0);
         await modelingExerciseAssessment.assessComponent(-1, 'Wrong');
@@ -194,9 +213,17 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
     // Seed courses are persistent — no cleanup needed
 });
 
-async function startAssessing(courseID: number, examID: number, exerciseID: number, exerciseAssessment: ExerciseAssessmentDashboardPage, page: Page) {
-    await page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard/${exerciseID}`);
-    await exerciseAssessment.clickHaveReadInstructionsButton();
-    await exerciseAssessment.clickStartNewAssessment();
-    exerciseAssessment.getLockedMessage();
+async function navigateToExerciseAssessment(page: import('@playwright/test').Page, courseId: number, examId: number, exerciseId: number) {
+    const url = `/course-management/${courseId}/exams/${examId}/assessment-dashboard/${exerciseId}`;
+    await page.goto(url);
+
+    // Click "I have read the instructions" to register tutor participation (persisted server-side).
+    // After this, reloads will show the submissions table directly.
+    const participateButton = page.locator('#participate-in-assessment');
+    await Commands.reloadUntilFound(page, participateButton);
+    await participateButton.click();
+    // Wait for the start-assessment button (reloadUntilFound works because participation is persisted)
+    const startButton = page.locator('#start-new-assessment').first();
+    await Commands.reloadUntilFound(page, startButton);
+    await startButton.click();
 }

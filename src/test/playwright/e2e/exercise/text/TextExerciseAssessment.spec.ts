@@ -23,7 +23,7 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
     test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
-        const context = await browser.newContext();
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
         const page = await context.newPage();
         dueDate = dayjs().add(5, 'seconds');
         assessmentDueDate = dueDate.add(5, 'seconds');
@@ -34,7 +34,6 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const submission = await Fixtures.get('loremIpsum-short.txt');
         await exerciseAPIRequests.makeTextExerciseSubmission(exercise.id!, submission!);
-        //exercise = await exerciseAPIRequests.createTextExercise({ course });
         const now = dayjs();
         if (now.isBefore(dueDate)) {
             await page.waitForTimeout(dueDate.diff(now, 'ms'));
@@ -42,10 +41,8 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
     });
 
     test.describe.serial('Feedback', () => {
-        test('Assesses the text exercise submission', async ({ login, courseManagement, courseAssessment, exerciseAssessment, textExerciseAssessment }) => {
-            await login(tutor, '/course-management');
-            await courseManagement.openAssessmentDashboardOfCourse(course.id!);
-            await courseAssessment.clickExerciseDashboardButton();
+        test('Assesses the text exercise submission', async ({ login, page, exerciseAssessment, textExerciseAssessment }) => {
+            await login(tutor, `/course-management/${course.id}/assessment-dashboard/${exercise.id!}`);
             await exerciseAssessment.clickHaveReadInstructionsButton();
             await exerciseAssessment.clickStartNewAssessment();
             await expect(textExerciseAssessment.getInstructionsRootElement().filter({ hasText: exercise.title })).toBeVisible();
