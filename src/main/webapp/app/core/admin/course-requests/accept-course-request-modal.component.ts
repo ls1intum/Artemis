@@ -87,8 +87,8 @@ export class AcceptCourseRequestModalComponent {
             title: this.acceptForm.get('title')!.value!,
             shortName: this.acceptForm.get('shortName')!.value!,
             semester: this.acceptForm.get('semester')!.value ?? undefined,
-            startDate,
-            endDate,
+            startDate: startDate ?? undefined,
+            endDate: endDate ?? undefined,
         };
 
         this.isSubmitting.set(true);
