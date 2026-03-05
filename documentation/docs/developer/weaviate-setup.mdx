@@ -60,7 +60,7 @@ For semantic search with automatic embedding generation using the `embeddinggemm
 # Set your Hugging Face token (required for gated model access)
 export HF_TOKEN=your_huggingface_token
 
-# First-time setup: Build the transformer image (downloads the model, ~1.2GB)
+# First-time setup: Build the transformer image (downloads the model, ~1.2GB) - this might take several minutes
 # The token is passed securely using Docker BuildKit secrets
 docker compose -f weaviate-embeddings.yml build
 
