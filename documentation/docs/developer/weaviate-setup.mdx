@@ -69,7 +69,7 @@ docker compose -f weaviate-embeddings.yml up -d
 ```
 
 <Callout variant={CalloutVariant.danger}>
-  In the current version we do not support authenticated access to Weaviate (see docker/weaviate/embeddings.env).
+  In the current version we do not support authenticated access to Weaviate (see `docker/weaviate/embeddings.env`).
   This means that if you enable the embedding model, anyone with access to your machine could potentially query Weaviate and generate embeddings.
   For local development this is usually not a concern, but be cautious when running this setup on shared or public machines.
 </Callout>
@@ -124,6 +124,7 @@ docker compose -f weaviate-embeddings.yml down
 ## Embedding Model Configuration
 
 When using `weaviate-embeddings.yml`, Weaviate automatically generates embeddings using the `embeddinggemma-300m` model from Google.
+See [Setup with Local Embeddings](#setup-with-local-embeddings-recommended-for-global-search) for more details.
 
 ### About embeddinggemma-300m
 
