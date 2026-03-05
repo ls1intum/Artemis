@@ -18,7 +18,11 @@ services:
       - "${WEAVIATE_REST_PORT:-8001}:8001"
       - "${WEAVIATE_GRPC_PORT:-50051}:50051"
     volumes:
-      - ${WEAVIATE_VOLUME_MOUNT:-./.docker-data/weaviate-data}:/var/lib/weaviate
+      - artemis-weaviate:/var/lib/weaviate
     restart: on-failure:3
     env_file:
       - ./weaviate/default.env
+
+volumes:
+  artemis-weaviate:
+    name: artemis-weaviate
