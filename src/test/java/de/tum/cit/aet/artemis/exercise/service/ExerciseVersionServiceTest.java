@@ -2,24 +2,41 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService.zonedDateTimeBiPredicate;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
+import java.lang.reflect.RecordComponent;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.mockito.ArgumentCaptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
+import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncEventType;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
+import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseNewVersionAlertDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
+import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseVersionUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
@@ -86,6 +103,12 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @Autowired
     private ExerciseVersionUtilService exerciseVersionUtilService;
 
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private ConversationUtilService conversationUtilService;
+
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -99,7 +122,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_OnCreate(ExerciseType exerciseType) {
+    void testCreateExerciseVersionOnCreate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -108,7 +131,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_OnUpdate(ExerciseType exerciseType) {
+    void testCreateExerciseVersionOnUpdate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -136,7 +159,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     @ParameterizedTest
     @EnumSource(ExerciseType.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_OnInvalidUpdate(ExerciseType exerciseType) {
+    void testCreateExerciseVersionOnInvalidUpdate(ExerciseType exerciseType) {
         Exercise exercise = createExerciseByType(exerciseType);
         exerciseVersionService.createExerciseVersion(exercise);
         ExerciseVersion previousVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(exercise.getId(), TEST_PREFIX + "instructor1", exerciseType);
@@ -163,7 +186,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_OnNullExericise() {
+    void testCreateExerciseVersionOnNullExercise() {
         var previousCount = exerciseVersionRepository.count();
         exerciseVersionService.createExerciseVersion(null);
         var afterCount = exerciseVersionRepository.count();
@@ -173,7 +196,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_OnNullExericiseId() {
+    void testCreateExerciseVersionOnNullExerciseId() {
         Exercise exercise = createExerciseByType(ExerciseType.TEXT);
         exercise.setId(null);
         var previousCount = exerciseVersionRepository.count();
@@ -184,7 +207,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCreateExerciseVersion_OnNullUser() {
+    void testCreateExerciseVersionOnNullUser() {
         Exercise exercise = createExerciseByType(ExerciseType.TEXT);
         var previousCount = exerciseVersionRepository.count();
         exerciseVersionService.createExerciseVersion(exercise, null);
@@ -222,7 +245,6 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
         newProgrammingExercise.setSubmissionPolicy(penaltyPolicy);
         programmingExerciseRepository.saveAndFlush(newProgrammingExercise);
 
-        String projectKey = newProgrammingExercise.getProjectKey();
         try {
             newProgrammingExercise = programmingExerciseRepository.findForVersioningById(newProgrammingExercise.getId()).orElseThrow();
 
@@ -268,7 +290,7 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
     }
 
     private Exercise fetchExerciseForComparison(Exercise exercise) {
-        return switch (exercise) {
+        Exercise fetched = switch (exercise) {
             case ProgrammingExercise pExercise -> programmingExerciseRepository.findForVersioningById(exercise.getId()).orElse(pExercise);
             case QuizExercise qExercise -> quizExerciseRepository.findForVersioningById(exercise.getId()).orElse(qExercise);
             case TextExercise tExercise -> textExerciseRepository.findForVersioningById(exercise.getId()).orElse(tExercise);
@@ -276,6 +298,11 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             case FileUploadExercise fExercise -> fileUploadExerciseRepository.findForVersioningById(exercise.getId()).orElse(fExercise);
             default -> exercise;
         };
+        var channel = channelRepository.findChannelByExerciseId(fetched.getId());
+        if (channel != null) {
+            fetched.setChannelName(channel.getName());
+        }
+        return fetched;
     }
 
     private void saveExerciseByType(Exercise exercise) {
@@ -312,6 +339,162 @@ class ExerciseVersionServiceTest extends AbstractProgrammingIntegrationLocalCILo
             default:
                 throw new IllegalArgumentException("Unsupported exercise type");
         };
+    }
+
+    /**
+     * Ensures no synchronization messages are sent for the initial version.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testNoSynchronizationBroadcastWhenNoPreviousVersion() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        reset(websocketMessagingService);
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        // No synchronization should be broadcast for the initial version
+        verify(websocketMessagingService, never()).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), any());
+    }
+
+    /**
+     * Ensures metadata alerts are broadcast when metadata changes without commit changes.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastWhenNoCommitChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        // Update without changing any repository commits
+        exercise.setTitle("New Title");
+        programmingExerciseRepository.saveAndFlush(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        // Metadata synchronization should be broadcast when no commits have changed
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.exerciseVersionId()).isNotNull();
+        assertThat(payload.eventType()).isEqualTo(ExerciseEditorSyncEventType.NEW_EXERCISE_VERSION_ALERT);
+        assertThat(payload.target()).isEqualTo(ExerciseEditorSyncTarget.EXERCISE_METADATA);
+        assertThat(payload.author()).isNotNull();
+        assertThat(payload.changedFields()).contains("title");
+    }
+
+    /**
+     * Ensures channel name changes are reported via metadata alerts.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastWhenChannelNameChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        var channel = channelRepository.findChannelByExerciseId(exercise.getId());
+        if (channel == null) {
+            channel = conversationUtilService.addChannelToExercise(exercise);
+        }
+        assertThat(channel).isNotNull();
+        channel.setName("exercise-updated-channel");
+        channelRepository.saveAndFlush(channel);
+
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.changedFields()).contains("channelName");
+    }
+
+    /**
+     * Ensures auxiliary repository metadata changes are reported via metadata alerts.
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testMetadataSynchronizationBroadcastWhenAuxiliaryRepositoryMetadataChanges() {
+        ProgrammingExercise exercise = createProgrammingExercise();
+        exerciseVersionService.createExerciseVersion(exercise);
+        reset(websocketMessagingService);
+
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        programmingExerciseUtilService.addAuxiliaryRepositoryToExercise(exercise);
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        programmingExerciseRepository.saveAndFlush(exercise);
+
+        exercise = programmingExerciseRepository.findForVersioningById(exercise.getId()).orElseThrow();
+        exerciseVersionService.createExerciseVersion(exercise);
+
+        var captor = ArgumentCaptor.forClass(ExerciseNewVersionAlertDTO.class);
+        verify(websocketMessagingService, times(1)).sendMessage(eq("/topic/exercises/" + exercise.getId() + "/synchronization"), captor.capture());
+        var payload = captor.getValue();
+        assertThat(payload.changedFields()).contains("programmingData.auxiliaryRepositories");
+    }
+
+    /**
+     * Ensures that every field in {@link ExerciseSnapshotDTO} is either tracked by
+     * {@code collectChangedFields} or explicitly excluded. If this test fails, a new
+     * field was added to the snapshot DTO without updating the change detection logic.
+     */
+    @Test
+    void testCollectChangedFieldsCoversAllExerciseSnapshotFields() {
+        Set<String> allFields = Arrays.stream(ExerciseSnapshotDTO.class.getRecordComponents()).map(RecordComponent::getName).collect(Collectors.toSet());
+
+        // Fields covered by addIfChanged calls in ExerciseVersionService.collectChangedFields
+        Set<String> coveredFields = Set.of("title", "shortName", "channelName", "competencyLinks", "maxPoints", "bonusPoints", "assessmentType", "releaseDate", "startDate",
+                "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate", "difficulty", "mode", "allowComplaintsForAutomaticAssessments", "allowFeedbackRequests",
+                "includedInOverallScore", "gradingInstructions", "categories", "teamAssignmentConfig", "presentationScoreEnabled", "secondCorrectionEnabled",
+                "feedbackSuggestionModule", "gradingCriteria", "plagiarismDetectionConfig");
+
+        // Fields intentionally excluded from metadata sync change detection
+        Set<String> excludedFields = Set.of("id", // structural identifier, not editable metadata
+                "problemStatement", // synchronized via Yjs client-to-client, not metadata sync
+                "programmingData", // delegated to collectProgrammingChanges
+                "textData", // exercise-type-specific sync not yet implemented
+                "modelingData", // exercise-type-specific sync not yet implemented
+                "quizData", // exercise-type-specific sync not yet implemented
+                "fileUploadData" // exercise-type-specific sync not yet implemented
+        );
+
+        Set<String> accountedFor = new java.util.HashSet<>(coveredFields);
+        accountedFor.addAll(excludedFields);
+        assertThat(accountedFor).as("Every ExerciseSnapshotDTO field must be either covered or explicitly excluded in collectChangedFields").isEqualTo(allFields);
+    }
+
+    /**
+     * Ensures that every field in {@link ProgrammingExerciseSnapshotDTO} is either tracked by
+     * {@code collectProgrammingChanges} or explicitly excluded.
+     */
+    @Test
+    void testCollectProgrammingChangesCoversAllProgrammingSnapshotFields() {
+        Set<String> allFields = Arrays.stream(ProgrammingExerciseSnapshotDTO.class.getRecordComponents()).map(RecordComponent::getName).collect(Collectors.toSet());
+
+        // Fields covered by addIfChanged calls in ExerciseVersionService.collectProgrammingChanges
+        Set<String> coveredFields = Set.of("allowOnlineEditor", "allowOfflineIde", "allowOnlineIde", "maxStaticCodeAnalysisPenalty", "showTestNamesToStudents",
+                "auxiliaryRepositories", "buildAndTestStudentSubmissionsAfterDueDate", "releaseTestsWithExampleSolution", "buildConfig");
+
+        // Fields intentionally excluded: not editable on the exercise edit page or handled separately
+        Set<String> excludedFields = Set.of("testRepositoryUri", // not editable
+                "staticCodeAnalysisEnabled", // not editable after creation
+                "programmingLanguage", // not editable after creation
+                "packageName", // not editable after creation
+                "projectKey", // not editable
+                "projectType", // not editable after creation
+                "templateParticipation", // repository commit, handled by determineSynchronizationForActiveEditors
+                "solutionParticipation", // repository commit, handled by determineSynchronizationForActiveEditors
+                "testsCommitId", // repository commit, handled by determineSynchronizationForActiveEditors
+                "testCases", // not editable via metadata sync
+                "tasks", // not editable via metadata sync
+                "staticCodeAnalysisCategories", // not editable via metadata sync
+                "submissionPolicy" // not editable on the exercise edit page
+        );
+
+        Set<String> accountedFor = new java.util.HashSet<>(coveredFields);
+        accountedFor.addAll(excludedFields);
+        assertThat(accountedFor).as("Every ProgrammingExerciseSnapshotDTO field must be either covered or explicitly excluded in collectProgrammingChanges").isEqualTo(allFields);
     }
 
 }

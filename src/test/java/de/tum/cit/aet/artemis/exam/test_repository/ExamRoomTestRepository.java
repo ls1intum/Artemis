@@ -18,6 +18,9 @@ import de.tum.cit.aet.artemis.exam.repository.ExamRoomRepository;
 @Primary
 public interface ExamRoomTestRepository extends ExamRoomRepository {
 
+    // TODO: Add DISTINCT back once the json columns (exam_seats, parameters) are migrated to jsonb.
+    // PostgreSQL's json type does not support equality operators, so SELECT DISTINCT fails
+    // when Hibernate includes json columns in the SQL. The Set return type deduplicates in Java instead.
     @Query("""
             WITH latestRooms AS (
                 SELECT
@@ -26,7 +29,7 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
                 FROM ExamRoom
                 GROUP BY roomNumber
             )
-            SELECT DISTINCT examRoom
+            SELECT examRoom
             FROM ExamRoom examRoom
             JOIN latestRooms latestRoom
                 ON examRoom.roomNumber = latestRoom.roomNumber
@@ -35,6 +38,8 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
             """)
     Set<ExamRoom> findAllNewestExamRoomVersionsWithEagerLayoutStrategies();
 
+    // TODO: Add DISTINCT back once the json columns (exam_seats, parameters) are migrated to jsonb.
+    // See comment on findAllNewestExamRoomVersionsWithEagerLayoutStrategies.
     @Query("""
             WITH latestRooms AS (
                 SELECT
@@ -43,7 +48,7 @@ public interface ExamRoomTestRepository extends ExamRoomRepository {
                 FROM ExamRoom
                 GROUP BY roomNumber
             )
-            SELECT DISTINCT examRoom
+            SELECT examRoom
             FROM ExamRoom examRoom
             JOIN latestRooms latestRoom
                 ON examRoom.roomNumber = latestRoom.roomNumber
