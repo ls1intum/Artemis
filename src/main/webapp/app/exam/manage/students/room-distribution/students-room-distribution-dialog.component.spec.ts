@@ -287,7 +287,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toContain(rooms[1]);
     });
 
-    it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', async () => {
+    it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
         const updateSpy = vi.spyOn(service, 'updateAliases');
         const emitSpy = vi.spyOn(component.onSave, 'emit');
 
@@ -296,12 +296,11 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
         component['setRoomAlias']({ target: { value: 'Main Hall' } } as unknown as Event, rooms[0].id);
 
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         const button = fixture.debugElement.nativeElement.querySelector('#update-aliases-button');
         button.click();
-        fixture.detectChanges();
-        await fixture.whenStable();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
         expect(component.dialogVisible()).toBe(false);
@@ -312,7 +311,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const updateSpy = vi.spyOn(service, 'updateAliases');
 
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.detectChanges();
+        fixture.changeDetectorRef.detectChanges();
 
         component['updateRoomAliases']();
 
