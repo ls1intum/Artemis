@@ -109,11 +109,33 @@ jobs:
           artifact-name-suffix: phase1
           test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
 
+      - name: Record test start time
+        id: test-timer
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
         id: run-tests-phase1
         run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: success() || failure()
+        run: |
+          START=${{ steps.test-timer.outputs.start }}
+          END=$(date +%s)
+          ELAPSED=$((END - START))
+          HOURS=$((ELAPSED / 3600))
+          MINUTES=$(( (ELAPSED % 3600) / 60 ))
+          SECONDS=$((ELAPSED % 60))
+          if [ $HOURS -gt 0 ]; then
+            echo "duration=${HOURS}h ${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+          elif [ $MINUTES -gt 0 ]; then
+            echo "duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+          else
+            echo "duration=${SECONDS}s" >> $GITHUB_OUTPUT
+          fi
 
       - name: E2E Teardown
         if: success() || failure()
@@ -149,7 +171,11 @@ jobs:
 
             const testOutcome = '${{ steps.run-tests-phase1.outcome }}';
             const jobStatus = '${{ job.status }}';
-            const summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
+            const wallClock = '${{ steps.wall-clock.outputs.duration }}';
+            let summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
+            if (wallClock) {
+              summary = summary.replace(/<td>[^<]*<\/td>(<\/tr><\/table>)/, `<td>${wallClock}</td>$1`);
+            }
             const reporterFailed = '${{ steps.run-tests-phase1.outputs.reporter_failed }}';
             const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
             const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
@@ -258,11 +284,33 @@ jobs:
           artifact-name-suffix: phase2
           test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
 
+      - name: Record test start time
+        id: test-timer
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
         id: run-tests-phase2
         run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: success() || failure()
+        run: |
+          START=${{ steps.test-timer.outputs.start }}
+          END=$(date +%s)
+          ELAPSED=$((END - START))
+          HOURS=$((ELAPSED / 3600))
+          MINUTES=$(( (ELAPSED % 3600) / 60 ))
+          SECONDS=$((ELAPSED % 60))
+          if [ $HOURS -gt 0 ]; then
+            echo "duration=${HOURS}h ${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+          elif [ $MINUTES -gt 0 ]; then
+            echo "duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+          else
+            echo "duration=${SECONDS}s" >> $GITHUB_OUTPUT
+          fi
 
       - name: E2E Teardown
         if: success() || failure()
@@ -299,7 +347,11 @@ jobs:
 
             const testOutcome = '${{ steps.run-tests-phase2.outcome }}';
             const jobStatus = '${{ job.status }}';
-            const summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
+            const wallClock = '${{ steps.wall-clock.outputs.duration }}';
+            let summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
+            if (wallClock) {
+              summary = summary.replace(/<td>[^<]*<\/td>(<\/tr><\/table>)/, `<td>${wallClock}</td>$1`);
+            }
             const reporterFailed = '${{ steps.run-tests-phase2.outputs.reporter_failed }}';
 
             const phase2Emoji = testOutcome === 'success' ? '✅' : '❌';
@@ -410,11 +462,33 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running all tests (infrastructure/config changes detected)"
 
+      - name: Record test start time
+        id: test-timer
+        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+
       - name: Run E2E Playwright tests (PostgreSQL, Local)
         id: run-tests-all-pr
         run: .ci/E2E-tests/execute.sh postgres-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: Calculate wall-clock duration
+        id: wall-clock
+        if: success() || failure()
+        run: |
+          START=${{ steps.test-timer.outputs.start }}
+          END=$(date +%s)
+          ELAPSED=$((END - START))
+          HOURS=$((ELAPSED / 3600))
+          MINUTES=$(( (ELAPSED % 3600) / 60 ))
+          SECONDS=$((ELAPSED % 60))
+          if [ $HOURS -gt 0 ]; then
+            echo "duration=${HOURS}h ${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+          elif [ $MINUTES -gt 0 ]; then
+            echo "duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
+          else
+            echo "duration=${SECONDS}s" >> $GITHUB_OUTPUT
+          fi
 
       - name: E2E Teardown
         if: success() || failure()
@@ -461,7 +535,11 @@ jobs:
 
             const testOutcome = '${{ steps.run-tests-all-pr.outcome }}';
             const jobStatus = '${{ job.status }}';
-            const summary = `${{ steps.test-report.outputs.summary || '' }}`;
+            const wallClock = '${{ steps.wall-clock.outputs.duration }}';
+            let summary = `${{ steps.test-report.outputs.summary || '' }}`;
+            if (wallClock) {
+              summary = summary.replace(/<td>[^<]*<\/td>(<\/tr><\/table>)/, `<td>${wallClock}</td>$1`);
+            }
             const reporterFailed = '${{ steps.run-tests-all-pr.outputs.reporter_failed }}';
 
             const emoji = testOutcome === 'success' ? '✅' : '❌';
