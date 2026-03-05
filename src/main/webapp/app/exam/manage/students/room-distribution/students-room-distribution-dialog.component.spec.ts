@@ -289,7 +289,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', async () => {
         const updateSpy = vi.spyOn(service, 'updateAliases');
-        const closeSpy = vi.spyOn(component, 'closeDialog');
         const emitSpy = vi.spyOn(component.onSave, 'emit');
 
         component.pickSelectedRoom({ item: rooms[0] });
@@ -305,7 +304,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         await fixture.whenStable();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
-        expect(closeSpy).toHaveBeenCalled();
+        expect(component.dialogVisible).toBe(false);
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
