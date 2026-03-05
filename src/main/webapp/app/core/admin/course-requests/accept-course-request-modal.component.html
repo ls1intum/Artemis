@@ -76,7 +76,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @for (course of instructorCourses(); track course.shortName) {
+                        @for (course of instructorCourses(); track $index) {
                             <tr>
                                 <td>{{ course.title }}</td>
                                 <td class="fw-semibold">{{ course.shortName }}</td>

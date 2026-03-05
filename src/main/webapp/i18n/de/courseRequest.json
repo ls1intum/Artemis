@@ -57,8 +57,8 @@
                 "courseDataSection": "Kursdaten",
                 "shortNameSection": "Kürzel",
                 "shortNameHint": "Muss mit einem Buchstaben beginnen, nur Buchstaben und Zahlen, mindestens 3 Zeichen.",
-                "shortNameConflictModal": "Dieses Kürzel wird bereits verwendet. Bitte wählen Sie ein anderes.",
-                "instructorCoursesHint": "Die folgenden Kurse werden vom Anfragenden geleitet. Nutzen Sie sie als Referenz für die Benennung.",
+                "shortNameConflictModal": "Dieses Kürzel wird bereits verwendet. Bitte wähle ein anderes.",
+                "instructorCoursesHint": "Die folgenden Kurse werden vom Anfragenden geleitet. Nutze sie als Referenz für die Benennung.",
                 "loadingCourses": "Kurse des Kursleiters werden geladen...",
                 "noInstructorCourses": "Der Anfragende hat keine bisherigen Kursleiterkurse.",
                 "acceptAndCreate": "Akzeptieren & Kurs erstellen"

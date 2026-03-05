@@ -12,5 +12,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * The admin can modify the course title, semester, dates and must provide the short name.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseRequestAcceptDTO(@NotBlank @Size(max = 255) String title, @NotBlank String shortName, String semester, ZonedDateTime startDate, ZonedDateTime endDate) {
+public record CourseRequestAcceptDTO(@NotBlank @Size(max = 255) String title, @NotBlank @Size(max = 255) String shortName, String semester, ZonedDateTime startDate,
+        ZonedDateTime endDate) {
 }
