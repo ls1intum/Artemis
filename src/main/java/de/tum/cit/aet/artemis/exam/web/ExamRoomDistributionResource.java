@@ -88,7 +88,8 @@ public class ExamRoomDistributionResource {
             throw new BadRequestAlertException("Alias name too long", ENTITY_NAME, "aliasNameTooLong");
         }
 
-        if (examRoomAliases.size() > examRoomAliases.values().stream().distinct().toList().size()) {
+        long distinctAliasesCount = examRoomAliases.values().stream().distinct().count();
+        if (examRoomAliases.size() > distinctAliasesCount) {
             throw new BadRequestAlertException("Alias names must be unique per exam", ENTITY_NAME, "aliasNameNotUnique");
         }
 

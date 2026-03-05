@@ -225,9 +225,9 @@ class ExamRoomDistributionIntegrationTest extends AbstractSpringIntegrationIndep
         examUtilService.registerUsersForExamAndSaveExam(exam, TEST_PREFIX, 200);
 
         examRoomService.parseAndStoreExamRoomDataFromZipFile(ExamRoomZipFiles.zipFileFourExamRooms);
-        Set<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.02.179"));
-        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false", ids,
-                HttpStatus.BAD_REQUEST);
+        List<Long> ids = examRoomRepository.findAllIdsOfNewestExamRoomVersionsByRoomNumbers(Set.of("0101.02.179")).stream().toList();
+        request.postWithoutResponseBody("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/distribute-registered-students?useOnlyDefaultLayouts=false",
+                new ExamRoomDistributionRequestBodyDTO(ids, Map.of()), HttpStatus.BAD_REQUEST);
 
         verifyAllUsersAreNotDistributed(exam);
     }

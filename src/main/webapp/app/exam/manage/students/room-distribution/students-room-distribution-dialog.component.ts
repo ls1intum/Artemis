@@ -28,13 +28,14 @@ import { CapacityDisplayDTO, ExamDistributionCapacityDTO, RoomForDistributionDTO
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
 
 @Component({
     selector: 'jhi-students-room-distribution-dialog',
     standalone: true,
     templateUrl: './students-room-distribution-dialog.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, NgbTypeaheadModule, ArtemisTranslatePipe, HelpIconComponent, DialogModule, ButtonModule, InputTextModule],
 })
 export class StudentsRoomDistributionDialogComponent implements OnInit {
     readonly RESERVE_FACTOR_DEFAULT_PERCENTAGE: number = 10;
@@ -62,13 +63,14 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
     private selectedRoomsCapacity: Signal<ExamDistributionCapacityDTO> = this.studentsRoomDistributionService.capacityData;
     selectedRooms: WritableSignal<RoomForDistributionDTO[]> = signal([]);
     hasSelectedRooms: Signal<boolean> = computed(() => this.selectedRooms().length > 0);
-    protected roomAliases: Signal<Record<number, string>> = computed(() =>
+    private roomAliases: Signal<Record<number, string>> = computed(() =>
         Object.fromEntries(
             this.selectedRooms()
                 .filter((room) => room.alias)
                 .map((room) => [room.id, room.alias!]),
         ),
     );
+    protected roomAliasesChanged: WritableSignal<boolean> = signal(false);
     seatInfo: Signal<CapacityDisplayDTO> = computed(() => this.computeSeatInfo());
     canSeatAllStudents: Signal<boolean> = computed(() => this.seatInfo().usableCapacity >= this.seatInfo().totalStudents);
 
@@ -100,6 +102,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
 
     openDialog(): void {
         this.dialogVisible.set(true);
+        this.roomAliasesChanged.set(false);
 
         this.studentsRoomDistributionService.loadRoomsUsedInExam(this.courseId(), this.exam().id).subscribe({
             next: (usedRooms: RoomForDistributionDTO[]) => {
@@ -260,6 +263,7 @@ export class StudentsRoomDistributionDialogComponent implements OnInit {
         const alias = input.value.trim();
 
         this.selectedRooms.update((rooms) => rooms.map((room) => (room.id === roomId ? { ...room, alias: alias || undefined } : room)));
+        this.roomAliasesChanged.set(true);
     }
 
     protected updateRoomAliases() {

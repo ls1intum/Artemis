@@ -11,6 +11,7 @@
                 <label for="reserveFactor" jhiTranslate="artemisApp.exam.examUsers.rooms.reserveFactor" class="small"></label>
                 <jhi-help-icon class="ps-1" text="artemisApp.exam.examUsers.rooms.reserveFactorTooltip" />
                 <input
+                    pInputText
                     id="reserveFactor"
                     type="text"
                     class="form-control form-control-sm"
@@ -28,6 +29,7 @@
             </div>
         </div>
         <input
+            pInputText
             type="text"
             class="form-control"
             placeholder="{{ 'artemisApp.exam.examUsers.rooms.searchPlaceholder' | artemisTranslate }}"
@@ -67,7 +69,13 @@
                                     }
                                 </td>
                                 <td>
-                                    <input type="text" [maxLength]="ALIAS_NAME_MAX_LENGTH" [defaultValue]="examRoom.alias ?? ''" (change)="setRoomAlias($event, examRoom.id)" />
+                                    <input
+                                        pInputText
+                                        type="text"
+                                        [maxLength]="ALIAS_NAME_MAX_LENGTH"
+                                        [defaultValue]="examRoom.alias ?? ''"
+                                        (change)="setRoomAlias($event, examRoom.id)"
+                                    />
                                 </td>
                                 <td>
                                     <button type="button" jhiTranslate="entity.action.remove" class="btn btn-sm btn-danger" (click)="removeSelectedRoom(examRoom)"></button>
@@ -101,7 +109,7 @@
             <fa-icon [icon]="faBan" />
             <span jhiTranslate="entity.action.cancel" class="m-1"></span>
         </button>
-        <button class="btn btn-primary" id="update-aliases-button" (click)="updateRoomAliases()" [disabled]="!hasSelectedRooms()">
+        <button class="btn btn-primary" id="update-aliases-button" (click)="updateRoomAliases()" [disabled]="!(hasSelectedRooms() && roomAliasesChanged())">
             <fa-icon [icon]="faTag" />
             <span jhiTranslate="artemisApp.exam.examUsers.rooms.updateAliases"></span>
         </button>

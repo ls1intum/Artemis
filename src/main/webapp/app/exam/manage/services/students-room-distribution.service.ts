@@ -152,7 +152,7 @@ export class StudentsRoomDistributionService {
     }
 
     /**
-     * Sends a POST request to update the registered aliases for all rooms of the given exam in the given course.
+     * Sends a PUT request to update the registered aliases for all rooms of the given exam in the given course.
      * Rooms for which no alias is specified are reset to having no alias.
      *
      * @param courseId the id of the course
