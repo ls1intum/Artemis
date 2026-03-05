@@ -77,7 +77,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', course.id);
         fixture.componentRef.setInput('exam', exam);
-        service = TestBed.inject(StudentsRoomDistributionService) as unknown as MockStudentsRoomDistributionService;
+        service = TestBed.inject(StudentsRoomDistributionService);
 
         vi.spyOn(service, 'loadRoomData').mockImplementation(() => {
             (service as MockStudentsRoomDistributionService).availableRooms.set(rooms);
@@ -100,7 +100,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     it('should not have selected rooms and distribute button disabled on first open', () => {
         fixture.detectChanges();
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -115,7 +115,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.changeDetectorRef.detectChanges();
 
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(component.hasSelectedRooms()).toBe(true);
         expect(button.hidden).toBe(false);
     });
@@ -130,7 +130,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(component.hasSelectedRooms()).toBe(false);
-        const button = fixture.debugElement.nativeElement.querySelector('#finish-button');
+        const button = document.body.querySelector('#finish-button') as HTMLButtonElement;
         expect(button.disabled).toBe(true);
     });
 
@@ -182,7 +182,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should update reserve percentage when typing valid numbers', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -195,7 +195,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should reset reserve factor to latest value when invalid input is entered', () => {
         fixture.detectChanges();
-        const input: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#reserveFactor');
+        const input: HTMLInputElement = document.body.querySelector('#reserveFactor') as HTMLInputElement;
 
         dispatchInputEvent(input, '25');
         fixture.changeDetectorRef.detectChanges();
@@ -232,7 +232,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should toggle use narrow layouts when switch is pressed', () => {
         fixture.detectChanges();
-        const checkbox: HTMLInputElement = fixture.debugElement.nativeElement.querySelector('#allowNarrowLayoutsToggle');
+        const checkbox: HTMLInputElement = document.body.querySelector('#allowNarrowLayoutsToggle') as HTMLInputElement;
 
         expect(component.allowNarrowLayouts()).toBe(false);
 
@@ -287,7 +287,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toContain(rooms[1]);
     });
 
-    it('should call updateAliases and emit onSave when clicking the update aliases button', () => {
+    it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
         const updateSpy = vi.spyOn(service, 'updateAliases');
         const emitSpy = vi.spyOn(component.onSave, 'emit');
 
@@ -298,11 +298,12 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
         fixture.changeDetectorRef.detectChanges();
 
-        const button = fixture.debugElement.nativeElement.querySelector('#update-aliases-button');
-        button.click();
+        const updateAliasButton = document.body.querySelector('#update-aliases-button') as HTMLButtonElement;
+        updateAliasButton.click();
         fixture.changeDetectorRef.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
+        expect(component.dialogVisible()).toBe(false);
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
@@ -310,7 +311,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         const updateSpy = vi.spyOn(service, 'updateAliases');
 
         component.pickSelectedRoom({ item: rooms[0] });
-        fixture.changeDetectorRef.detectChanges();
+        fixture.detectChanges();
 
         component['updateRoomAliases']();
 
