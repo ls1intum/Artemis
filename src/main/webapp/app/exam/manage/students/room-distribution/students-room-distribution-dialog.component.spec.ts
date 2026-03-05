@@ -302,11 +302,13 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component['setRoomAlias']({ target: { value: 'Main Hall' } } as unknown as Event, rooms[0].id);
 
         vi.runAllTimers();
+        fixture.changeDetectorRef.detectChanges();
 
         const updateAliasButton = document.body.querySelector('#update-aliases-button') as HTMLButtonElement;
         expect(updateAliasButton).not.toBeNull();
         dispatchClickEvent(updateAliasButton);
         vi.runAllTimers();
+        fixture.changeDetectorRef.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
         expect(component.dialogVisible()).toBe(false);
