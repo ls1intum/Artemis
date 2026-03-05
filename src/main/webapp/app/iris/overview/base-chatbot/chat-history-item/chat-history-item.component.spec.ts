@@ -258,7 +258,7 @@ describe('ChatHistoryItemComponent', () => {
 
         // After toggle, menu items should be populated with the delete action
         expect(component.menuItems).toHaveLength(1);
-        expect(component.menuItems[0].styleClass).toBe('danger');
+        expect(component.menuItems[0].styleClass).toBe('chat-history-item-menu-danger');
         expect(component.menuItems[0].label).toBeTruthy();
     });
 

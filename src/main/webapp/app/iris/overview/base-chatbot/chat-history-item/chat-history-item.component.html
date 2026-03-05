@@ -34,10 +34,10 @@
     }
     <p-menu #menu [model]="menuItems" [popup]="true" appendTo="body" styleClass="chat-history-item-menu">
         <ng-template #item let-item>
-            <button type="button" class="p-menu-item-link danger" role="menuitem">
-                <fa-icon [icon]="faTrash" />
-                <span class="p-menu-item-label" style="margin-left: 0.5rem">{{ item.label }}</span>
-            </button>
+            <a class="p-menuitem-link chat-history-item-menu-danger" [attr.data-automationid]="item.automationId">
+                <fa-icon [icon]="faTrash" class="p-menuitem-icon" />
+                <span class="p-menuitem-text">{{ item.label }}</span>
+            </a>
         </ng-template>
     </p-menu>
 </div>

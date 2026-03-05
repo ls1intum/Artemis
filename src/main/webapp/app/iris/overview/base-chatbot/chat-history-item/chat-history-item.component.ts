@@ -63,7 +63,7 @@ export class ChatHistoryItemComponent {
         this.menuItems = [
             {
                 label: this.translateService.instant('artemisApp.iris.chatHistory.deleteSession'),
-                styleClass: 'danger',
+                styleClass: 'chat-history-item-menu-danger',
                 command: () => this.onDeleteClick(),
             },
         ];

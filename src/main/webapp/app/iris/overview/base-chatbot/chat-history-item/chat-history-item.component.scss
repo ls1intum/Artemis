@@ -37,6 +37,7 @@
         color: var(--bs-body-color);
         text-decoration: none;
         flex-shrink: 0;
+        font-size: 14px;
 
         &:hover,
         &:focus {
@@ -76,13 +77,19 @@
 
 // Scoped to .chat-history-item-menu to avoid leaking to other PrimeNG menus.
 // ::ng-deep is needed because the popup is portaled to <body> via appendTo="body".
-:host ::ng-deep .chat-history-item-menu .danger {
+:host ::ng-deep .chat-history-item-menu .chat-history-item-menu-danger {
     color: var(--bs-danger);
     cursor: pointer;
-    padding: 0.5rem 0.75rem;
+    padding: 1rem;
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     text-decoration: none;
+
+    .p-menuitem-icon,
+    .p-menuitem-text {
+        color: var(--bs-danger);
+    }
 
     &:hover {
         background-color: var(--iris-accent-background);
