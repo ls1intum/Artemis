@@ -304,7 +304,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         await fixture.whenStable();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
-        expect(component.dialogVisible).toBe(false);
+        expect(component.dialogVisible()).toBe(false);
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
