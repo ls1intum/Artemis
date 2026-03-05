@@ -188,6 +188,7 @@ const toExercise = (dto?: ExerciseForCompetencyDTO, course?: Course): Exercise |
             exercise = new QuizExercise(course, undefined);
             break;
         default:
+            globalThis.console.warn(`Unknown exercise type '${dto.type}' for competency exercise mapping (id=${dto.id}); falling back to TextExercise.`);
             exercise = new TextExercise(course, undefined);
             break;
     }
