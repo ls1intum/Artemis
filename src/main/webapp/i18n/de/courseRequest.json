@@ -60,7 +60,7 @@
                 "shortNameConflictModal": "Dieses Kürzel wird bereits verwendet. Bitte wähle ein anderes.",
                 "instructorCoursesHint": "Die folgenden Kurse werden vom Anfragenden geleitet. Nutze sie als Referenz für die Benennung.",
                 "loadingCourses": "Kurse des Kursleiters werden geladen...",
-                "noInstructorCourses": "Der Anfragende hat keine bisherigen Kursleiterkurse.",
+                "noInstructorCourses": "Der Anfragende hat bisher keine Kurse als Kursleiter.",
                 "acceptAndCreate": "Akzeptieren & Kurs erstellen"
             }
         }
