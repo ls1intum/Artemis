@@ -37,7 +37,7 @@ import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 
 /**
- * Service to handle the course chat subsystem of Iris.
+ * TODO: DELETE this service — replaced by {@link IrisChatSessionService}. See Ticket 4.
  */
 @Lazy
 @Service

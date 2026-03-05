@@ -52,7 +52,7 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentP
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingSubmissionRepository;
 
 /**
- * Service to handle the chat subsystem of Iris.
+ * TODO: DELETE this service — replaced by {@link IrisChatSessionService}. See Ticket 4.
  */
 @Lazy
 @Service

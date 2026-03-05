@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service;
 
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
@@ -9,23 +8,13 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.communication.repository.PostRepository;
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
-import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
-import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
-import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 
 /**
  * Service for the rate limit of the iris chatbot.
@@ -39,22 +28,9 @@ public class IrisRateLimitService {
 
     private final IrisSettingsService irisSettingsService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    private final Optional<TextRepositoryApi> textRepositoryApi;
-
-    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
-
-    private final Optional<PostRepository> postRepository;
-
-    public IrisRateLimitService(IrisMessageRepository irisMessageRepository, IrisSettingsService irisSettingsService, ProgrammingExerciseRepository programmingExerciseRepository,
-            Optional<TextRepositoryApi> textRepositoryApi, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<PostRepository> postRepository) {
+    public IrisRateLimitService(IrisMessageRepository irisMessageRepository, IrisSettingsService irisSettingsService) {
         this.irisMessageRepository = irisMessageRepository;
         this.irisSettingsService = irisSettingsService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.textRepositoryApi = textRepositoryApi;
-        this.lectureRepositoryApi = lectureRepositoryApi;
-        this.postRepository = postRepository;
     }
 
     /**
@@ -63,6 +39,7 @@ public class IrisRateLimitService {
      * @param user the user
      * @return the rate limit information
      */
+    // TODO: Nachschauen, ob vorher auch nicht genutzt
     public IrisRateLimitInformation getRateLimitInformation(User user) {
         return getRateLimitInformation((Long) null, user);
     }
@@ -107,6 +84,7 @@ public class IrisRateLimitService {
      *
      * @param user the user
      */
+    // TODO: Nachschauen, ob vorher auch nicht genutzt
     public void checkRateLimitElseThrow(User user) {
         checkRateLimitElseThrow((Long) null, user);
     }
@@ -142,30 +120,9 @@ public class IrisRateLimitService {
     }
 
     private Optional<Long> resolveCourseId(IrisChatSession session) {
-        if (session instanceof IrisCourseChatSession courseChatSession) {
-            return Optional.of(courseChatSession.getCourseId());
-        }
-        if (session instanceof IrisProgrammingExerciseChatSession exerciseChatSession) {
-            return programmingExerciseRepository.findById(exerciseChatSession.getExerciseId()).map(exercise -> exercise.getCourseViaExerciseGroupOrCourseMember())
-                    .map(this::courseIdOrNull).filter(Objects::nonNull);
-        }
-        if (session instanceof IrisTextExerciseChatSession textChatSession) {
-            return textRepositoryApi.flatMap(api -> Optional.ofNullable(api.findByIdElseThrow(textChatSession.getExerciseId()).getCourseViaExerciseGroupOrCourseMember()))
-                    .map(this::courseIdOrNull).filter(Objects::nonNull);
-        }
-        if (session instanceof IrisLectureChatSession lectureChatSession) {
-            return lectureRepositoryApi.flatMap(api -> Optional.ofNullable(api.findByIdElseThrow(lectureChatSession.getLectureId()).getCourse())).map(this::courseIdOrNull)
-                    .filter(Objects::nonNull);
-        }
-        if (session instanceof IrisTutorSuggestionSession tutorSuggestionSession) {
-            return postRepository.flatMap(repo -> repo.findById(tutorSuggestionSession.getPostId())).map(post -> post.getCoursePostingBelongsTo()).map(this::courseIdOrNull)
-                    .filter(Objects::nonNull);
-        }
-        return Optional.empty();
-    }
-
-    private Long courseIdOrNull(@Nullable Course course) {
-        return course != null ? course.getId() : null;
+        // IrisChatSession always carries courseId; 0 means not set (e.g. tutor suggestions)
+        long courseId = session.getCourseId();
+        return courseId > 0 ? Optional.of(courseId) : Optional.empty();
     }
 
     /**

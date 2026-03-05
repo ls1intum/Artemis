@@ -40,6 +40,9 @@ import de.tum.cit.aet.artemis.text.api.TextRepositoryApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextSubmission;
 
+/**
+ * TODO: DELETE this service — replaced by {@link IrisChatSessionService}. See Ticket 4.
+ */
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)

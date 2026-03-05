@@ -10,8 +10,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 
 /**
- * An IrisCourseChatSession represents a conversation between a user and an LLM.
- * This is used for students receiving tutor assistance from Iris while looking at the course dashboard.
+ * TODO: DELETE this class — replaced by {@link IrisChatSession} with courseId field. See Ticket 4.
  */
 @Entity
 @DiscriminatorValue("COURSE_CHAT")
@@ -25,7 +24,8 @@ public class IrisCourseChatSession extends IrisChatSession {
     }
 
     public IrisCourseChatSession(Course course, User user) {
-        super(user);
+        super();
+        setUserId(user.getId());
         this.courseId = course.getId();
     }
 
@@ -44,6 +44,6 @@ public class IrisCourseChatSession extends IrisChatSession {
 
     @Override
     public IrisChatMode getMode() {
-        return IrisChatMode.COURSE_CHAT;
+        return IrisChatMode.CHAT;
     }
 }

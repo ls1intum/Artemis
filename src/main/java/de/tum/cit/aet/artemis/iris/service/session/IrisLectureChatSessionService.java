@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 
 /**
- * Service to handle the lecture chat subsystem of Iris.
+ * TODO: DELETE this service — replaced by {@link IrisChatSessionService}. See Ticket 4.
  */
 @Lazy
 @Service
