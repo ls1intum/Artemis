@@ -257,8 +257,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' });
             return;
         }
+        const request = this.createCodeGenerationRequest(repositoryType);
         const exerciseId = this.exercise!.id!;
-        this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
+        this.hyperionCodeGenerationApi.generateCode(exerciseId, request).subscribe({
             next: (res) => {
                 if (!res?.jobId) {
                     this.isGeneratingCode.set(false);
@@ -329,8 +330,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (!repositoryType) {
             return;
         }
+        const request = this.createCodeGenerationRequest(repositoryType, true);
         const requestId = this.restoreRequestId;
-        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
+        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({
             next: (res) => {
                 if (requestId !== this.restoreRequestId) {
                     return;
@@ -350,22 +352,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
-    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): CodeGenerationRequest.RepositoryTypeEnum | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): RepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
-                return CodeGenerationRequest.RepositoryTypeEnum.Exercise;
+                return RepositoryType.TEMPLATE;
             case RepositoryType.SOLUTION:
-                return CodeGenerationRequest.RepositoryTypeEnum.Solution;
+                return RepositoryType.SOLUTION;
             case RepositoryType.TESTS:
-                return CodeGenerationRequest.RepositoryTypeEnum.Tests;
-            case RepositoryType.AUXILIARY:
-                return CodeGenerationRequest.RepositoryTypeEnum.Auxiliary;
-            case RepositoryType.USER:
-            case RepositoryType.ASSIGNMENT:
-                return CodeGenerationRequest.RepositoryTypeEnum.User;
+                return RepositoryType.TESTS;
             default:
                 return undefined;
         }
+    }
+
+    private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false): CodeGenerationRequest {
+        // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
+        return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
     }
 
     /**
