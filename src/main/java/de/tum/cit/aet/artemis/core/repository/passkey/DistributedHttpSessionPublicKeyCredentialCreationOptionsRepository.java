@@ -95,8 +95,8 @@ public class DistributedHttpSessionPublicKeyCredentialCreationOptionsRepository 
         }
 
         if (options != null) {
-            passkeyMapAccess.getDistributedPasskeyCreationOptionsMap().put(userId,
-                    PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options), REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS, TimeUnit.SECONDS);
+            passkeyMapAccess.getDistributedPasskeyCreationOptionsMap().put(userId, PublicKeyCredentialCreationOptionsDTO.publicKeyCredentialCreationOptionsToDTO(options),
+                    REGISTRATION_OPTIONS_TIME_TO_LIVE_SECONDS, TimeUnit.SECONDS);
         }
         else {
             passkeyMapAccess.getDistributedPasskeyCreationOptionsMap().remove(userId);

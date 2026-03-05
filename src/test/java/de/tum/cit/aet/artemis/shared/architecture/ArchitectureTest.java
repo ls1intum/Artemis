@@ -292,8 +292,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
         ArchRule rule = classes().that().areAnnotatedWith(Controller.class).or().areAnnotatedWith(RestController.class).or().areAnnotatedWith(Repository.class).or()
                 .areAnnotatedWith(Service.class).or().areAnnotatedWith(Component.class).or().areAnnotatedWith(Configuration.class).and()
                 .doNotBelongToAnyOf(ApplicationConfiguration.class, ConditionalMetricsExclusionConfiguration.class, DistributedDataAccessService.class)
-                .should(beProfileOrConditionalAnnotated())
-                .because("we want to be able to exclude these classes from application startup by specifying profiles");
+                .should(beProfileOrConditionalAnnotated()).because("we want to be able to exclude these classes from application startup by specifying profiles");
 
         rule.check(productionClasses);
     }

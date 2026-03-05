@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.service.localci;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE;
+
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;

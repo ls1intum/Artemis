@@ -1,11 +1,6 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.HAZELCAST;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;

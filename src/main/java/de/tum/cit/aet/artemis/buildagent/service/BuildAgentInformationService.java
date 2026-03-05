@@ -179,6 +179,18 @@ public class BuildAgentInformationService {
             try {
                 // Add/update
                 BuildAgentInformation info = getUpdatedLocalBuildAgentInformation(recentBuildJob, isPaused, isPausedDueToFailures, consecutiveFailures);
+                BuildAgentInformation existingInfo = distributedDataAccessService.getDistributedBuildAgentInformation().get(agentKey);
+
+                if (existingInfo != null && existingInfo.buildAgent() != null && info.buildAgent() != null) {
+                    String existingMemberAddress = existingInfo.buildAgent().memberAddress();
+                    String currentMemberAddress = info.buildAgent().memberAddress();
+                    if (existingMemberAddress != null && currentMemberAddress != null && !existingMemberAddress.equals(currentMemberAddress)) {
+                        log.warn(
+                                "Build agent info key collision detected for key '{}': existing entry is from memberAddress='{}' (name='{}'), current update is from memberAddress='{}' (name='{}'). "
+                                        + "Ensure each build agent uses a unique artemis.continuous-integration.build-agent.short-name.",
+                                agentKey, existingMemberAddress, existingInfo.buildAgent().name(), currentMemberAddress, info.buildAgent().name());
+                    }
+                }
 
                 log.debug("Updating build agent info: key='{}', name='{}', memberAddress='{}', displayName='{}'", agentKey, info.buildAgent().name(),
                         info.buildAgent().memberAddress(), info.buildAgent().displayName());
