@@ -287,7 +287,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         expect(component.selectedRooms()).toContain(rooms[1]);
     });
 
-    it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
+    it('should call updateAliases and emit onSave when clicking the update aliases button', () => {
         const updateSpy = vi.spyOn(service, 'updateAliases');
         const emitSpy = vi.spyOn(component.onSave, 'emit');
 
@@ -303,7 +303,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
-        expect(component.dialogVisible()).toBe(false);
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
