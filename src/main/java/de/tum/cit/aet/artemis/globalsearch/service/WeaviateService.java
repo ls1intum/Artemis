@@ -98,8 +98,8 @@ public class WeaviateService {
 
             client.collections.create(collectionName, collection -> {
                 // Configure vectorizer based on deployment setup
-                // - "none": Use self-provided vectors (docker/weaviate.yml)
-                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (docker/weaviate-embeddings.yml)
+                // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
+                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
                 switch (vectorizerModule) {
                     case WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS -> {
                         log.debug("Configuring collection '{}' with text2vec-transformers vectorizer", collectionName);
