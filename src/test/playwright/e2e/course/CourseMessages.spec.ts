@@ -361,7 +361,7 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await courseMessages.openSettingsTab();
                 await courseMessages.leaveGroupChat();
                 await page.goto(`/courses/${course.id}/communication`);
-                await page.waitForLoadState('networkidle');
+                await page.waitForLoadState('domcontentloaded');
                 await courseMessages.checkGroupChatExists(groupChatName, false);
             });
 
@@ -373,7 +373,7 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await courseMessages.openSettingsTab();
                 await courseMessages.leaveGroupChat();
                 await page.goto(`/courses/${course.id}/communication`);
-                await page.waitForLoadState('networkidle');
+                await page.waitForLoadState('domcontentloaded');
                 await courseMessages.checkGroupChatExists(groupChatName, false);
             });
         });
@@ -390,7 +390,7 @@ test.describe('Course messages', { tag: '@fast' }, () => {
                 await login(studentOne, `/courses/${course.id}/communication?conversationId=${groupChat.id}`);
                 const messageText = 'Student Test Message';
                 await courseMessages.writeMessage(messageText);
-                const message = await courseMessages.save(true);
+                const message = await courseMessages.save();
                 await courseMessages.checkMessage(message.id!, messageText);
             });
 

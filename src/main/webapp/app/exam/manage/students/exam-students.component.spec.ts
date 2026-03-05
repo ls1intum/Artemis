@@ -1,4 +1,6 @@
-import { HttpResponse, provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpResponse } from '@angular/common/http';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, UrlSegment, convertToParamMap, provideRouter } from '@angular/router';
@@ -26,6 +28,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentsRoomDistributionService } from 'app/exam/manage/services/students-room-distribution.service';
 import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/mock-students-room-distribution.service';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 // Stub component for UsersImportButtonComponent to avoid signal viewChild issues with ng-mocks
 @Component({
@@ -36,6 +40,7 @@ import { MockStudentsRoomDistributionService } from 'test/helpers/mocks/service/
 class UsersImportButtonStubComponent {}
 
 describe('ExamStudentsComponent', () => {
+    setupTestBed({ zoneless: true });
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
@@ -72,10 +77,12 @@ describe('ExamStudentsComponent', () => {
     let userService: UserService;
     let studentsRoomDistributionService: StudentsRoomDistributionService;
 
-    beforeEach(() => {
-        TestBed.configureTestingModule({
-            imports: [NgxDatatableModule, FaIconComponent, UsersImportButtonStubComponent],
-            declarations: [
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [
+                NgxDatatableModule,
+                FaIconComponent,
+                UsersImportButtonStubComponent,
                 ExamStudentsComponent,
                 MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),
@@ -89,7 +96,7 @@ describe('ExamStudentsComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: StudentsRoomDistributionService, useClass: MockStudentsRoomDistributionService },
-                provideHttpClient(),
+                { provide: DeleteDialogService, useClass: MockDialogService },
                 provideHttpClientTesting(),
             ],
         }).compileComponents();
@@ -102,7 +109,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         fixture.destroy();
     });
 
@@ -112,11 +119,11 @@ describe('ExamStudentsComponent', () => {
         expect(component).not.toBeNull();
         expect(component.courseId).toEqual(course.id);
         expect(component.exam).toEqual(examWithCourse);
-        expect(component.isLoading).toBeFalse();
+        expect(component.isLoading).toBe(false);
     });
 
     it('should handle auto-complete for user without login', () => {
-        const callbackSpy = jest.fn();
+        const callbackSpy = vi.fn();
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user1, callbackSpy);
@@ -128,10 +135,10 @@ describe('ExamStudentsComponent', () => {
     it('should handle auto-complete for unregistered user', () => {
         const user3 = { id: 3, login: 'user3' } as User;
         const student3 = { login: 'user3', firstName: 'student2', lastName: 'student2', registrationNumber: '1234567' } as ExamUserDTO;
-        const callbackSpy = jest.fn();
-        const flashSpy = jest.spyOn(component, 'flashRowClass');
-        const reloadSpy = jest.spyOn(component, 'reloadExamWithRegisteredUsers');
-        const examServiceStub = jest.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
+        const callbackSpy = vi.fn();
+        const flashSpy = vi.spyOn(component, 'flashRowClass');
+        const reloadSpy = vi.spyOn(component, 'reloadExamWithRegisteredUsers');
+        const examServiceStub = vi.spyOn(examManagementService, 'addStudentToExam').mockReturnValue(of(new HttpResponse({ body: student3 })));
         fixture.detectChanges();
 
         component.onAutocompleteSelect(user3, callbackSpy);
@@ -142,11 +149,11 @@ describe('ExamStudentsComponent', () => {
         expect(reloadSpy).toHaveBeenCalledOnce();
         expect(callbackSpy).not.toHaveBeenCalled();
         expect(flashSpy).toHaveBeenCalledOnce();
-        expect(component.isTransitioning).toBeFalse();
+        expect(component.isTransitioning).toBe(false);
     });
 
     it('should search for users', () => {
-        const userServiceStub = jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user2] })));
+        const userServiceStub = vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [user2] })));
         fixture.detectChanges();
 
         const search = component.searchAllUsers(of({ text: user2.login!, entities: [user2] }));
@@ -155,8 +162,8 @@ describe('ExamStudentsComponent', () => {
         // Check if the observable output matches our expectancies
         search.subscribe((a) => {
             expect(a).toEqual([{ id: user2.id, login: user2.login }]);
-            expect(component.searchNoResults).toBeFalse();
-            expect(component.searchFailed).toBeFalse();
+            expect(component.searchNoResults).toBe(false);
+            expect(component.searchFailed).toBe(false);
         });
 
         expect(userServiceStub).toHaveBeenCalledOnce();
@@ -169,7 +176,7 @@ describe('ExamStudentsComponent', () => {
             id: 2,
             examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
-        const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
+        const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
         component.reloadExamWithRegisteredUsers();
@@ -183,7 +190,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove users from the exam', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStub = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -203,13 +210,13 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should register all enrolled students of the course to the exam', () => {
-        const examServiceStubAddAll = jest.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStubAddAll = vi.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
         const examWithOneUser = {
             course,
             id: 2,
             examUsers: [{ didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 } as ExamUser],
         };
-        const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
+        const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
         component.exam = examWithCourse;
@@ -223,7 +230,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove all users from the exam', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -238,7 +245,7 @@ describe('ExamStudentsComponent', () => {
     });
 
     it('should remove all users from the exam with participaations', () => {
-        const examServiceStub = jest.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
+        const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
         component.allRegisteredUsers = [
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
@@ -264,7 +271,7 @@ describe('ExamStudentsComponent', () => {
 
     it('should test on error', () => {
         component.onError('ErrorString');
-        expect(component.isTransitioning).toBeFalse();
+        expect(component.isTransitioning).toBe(false);
     });
 
     describe('room alias handling', () => {
@@ -275,7 +282,7 @@ describe('ExamStudentsComponent', () => {
                 R2: 'Side Room',
             };
 
-            jest.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
+            vi.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
 
             fixture.detectChanges();
             await fixture.whenStable();
@@ -293,7 +300,7 @@ describe('ExamStudentsComponent', () => {
                 R1: 'Main Hall',
             };
 
-            jest.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
+            vi.spyOn(studentsRoomDistributionService, 'getAliases').mockReturnValue(of(aliasMap));
 
             fixture.detectChanges();
             await fixture.whenStable();
