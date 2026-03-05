@@ -10,10 +10,8 @@ import { BaseCourseRequest } from 'app/core/shared/entities/course-request.model
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentAndFutureSemesters, getDefaultSemester } from 'app/shared/util/semester-utils';
-import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { onError } from 'app/shared/util/global.utils';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-course-request',
@@ -35,7 +33,6 @@ export class CourseRequestComponent {
 
     form = this.fb.group({
         title: ['', [Validators.required, Validators.maxLength(255)]],
-        shortName: ['', [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)]],
         semester: [getDefaultSemester(), [Validators.required]],
         startDate: [undefined as dayjs.Dayjs | undefined],
         endDate: [undefined as dayjs.Dayjs | undefined],
@@ -58,7 +55,6 @@ export class CourseRequestComponent {
 
         const payload: BaseCourseRequest = {
             title: this.form.get('title')!.value!,
-            shortName: this.form.get('shortName')!.value!,
             semester: this.form.get('semester')!.value ?? undefined,
             startDate,
             endDate,
@@ -72,7 +68,6 @@ export class CourseRequestComponent {
                 this.alertService.success('artemisApp.courseRequest.success');
                 this.form.reset({
                     title: '',
-                    shortName: '',
                     semester: getDefaultSemester(),
                     startDate: undefined,
                     endDate: undefined,
@@ -83,25 +78,9 @@ export class CourseRequestComponent {
                 this.isSubmitting = false;
             },
             error: (error: HttpErrorResponse) => {
-                this.handleSubmitError(error);
+                onError(this.alertService, error);
                 this.isSubmitting = false;
             },
         });
-    }
-
-    private handleSubmitError(error: HttpErrorResponse): void {
-        const errorKey = error.error?.errorKey;
-        const isShortNameConflict = errorKey === 'courseShortNameExists' || errorKey === 'courseRequestShortNameExists';
-
-        if (isShortNameConflict) {
-            const suggestedShortName = error.error?.params?.suggestedShortName;
-            this.alertService.warning('artemisApp.courseRequest.form.shortNameNotUnique', { suggestedShortName: suggestedShortName ?? '' });
-            if (suggestedShortName) {
-                this.form.patchValue({ shortName: suggestedShortName });
-            }
-            return;
-        }
-
-        onError(this.alertService, error);
     }
 }

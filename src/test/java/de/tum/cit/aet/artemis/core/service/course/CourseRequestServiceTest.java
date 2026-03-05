@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.CourseRequest;
 import de.tum.cit.aet.artemis.core.domain.CourseRequestStatus;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseRequestAcceptDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestCreateDTO;
 import de.tum.cit.aet.artemis.core.dto.CourseRequestDTO;
 import de.tum.cit.aet.artemis.core.repository.CourseRequestRepository;
@@ -84,7 +85,6 @@ class CourseRequestServiceTest {
         CourseRequest pendingRequest = new CourseRequest();
         pendingRequest.setId(1L);
         pendingRequest.setTitle("New Course");
-        pendingRequest.setShortName("NEW123");
         pendingRequest.setStartDate(ZonedDateTime.now().minusDays(1));
         pendingRequest.setEndDate(ZonedDateTime.now().plusDays(10));
         User requester = new User();
@@ -95,7 +95,6 @@ class CourseRequestServiceTest {
 
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
-        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
         doAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setStudentGroupName(course.getDefaultStudentGroupName());
@@ -113,7 +112,8 @@ class CourseRequestServiceTest {
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(resourceLoaderService.getResource(any())).thenReturn(new ByteArrayResource("code of conduct".getBytes(StandardCharsets.UTF_8)));
 
-        CourseRequestDTO result = courseRequestService.acceptRequest(1L);
+        var acceptDTO = new CourseRequestAcceptDTO("New Course", "NEW123", null, pendingRequest.getStartDate(), pendingRequest.getEndDate());
+        CourseRequestDTO result = courseRequestService.acceptRequest(1L, acceptDTO);
 
         verify(courseAccessService).setDefaultGroupsIfNotSet(courseCaptor.capture());
         verify(channelService).createDefaultChannels(courseCaptor.getValue());
@@ -139,7 +139,6 @@ class CourseRequestServiceTest {
 
         when(courseRequestRepository.findOneWithEagerRelationshipsById(1L)).thenReturn(Optional.of(pendingRequest));
         when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
-        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
         doAnswer(invocation -> {
             Course course = invocation.getArgument(0);
             course.setStudentGroupName(course.getDefaultStudentGroupName());
@@ -163,14 +162,14 @@ class CourseRequestServiceTest {
             CourseRequest merged = new CourseRequest();
             merged.setId(original.getId());
             merged.setTitle(original.getTitle());
-            merged.setShortName(original.getShortName());
             merged.setStatus(original.getStatus());
             merged.setCreatedCourseId(original.getCreatedCourseId());
             merged.setRequester(null);
             return merged;
         });
 
-        courseRequestService.acceptRequest(1L);
+        var acceptDTO = new CourseRequestAcceptDTO("New Course", "NEW123", null, pendingRequest.getStartDate(), pendingRequest.getEndDate());
+        courseRequestService.acceptRequest(1L, acceptDTO);
 
         verify(mailSendingService).buildAndSendAsync(userCaptor.capture(), anyString(), eq("mail/courseRequestAcceptedEmail"), anyMap());
         assertThat(userCaptor.getValue()).isSameAs(requester);
@@ -193,7 +192,6 @@ class CourseRequestServiceTest {
             CourseRequest merged = new CourseRequest();
             merged.setId(original.getId());
             merged.setTitle(original.getTitle());
-            merged.setShortName(original.getShortName());
             merged.setStatus(original.getStatus());
             merged.setDecisionReason(original.getDecisionReason());
             merged.setRequester(null);
@@ -217,8 +215,6 @@ class CourseRequestServiceTest {
     void createCourseRequestShouldSendReceivedEmailWithCorrectRequester() {
         User requester = createRequester();
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(requester);
-        when(courseRepository.existsByShortNameIgnoreCase("NEW123")).thenReturn(false);
-        when(courseRequestRepository.findOneByShortNameIgnoreCase("NEW123")).thenReturn(Optional.empty());
 
         // save() returns a new entity without requester (simulates merge behavior for defensive testing)
         when(courseRequestRepository.save(any(CourseRequest.class))).thenAnswer(invocation -> {
@@ -226,7 +222,6 @@ class CourseRequestServiceTest {
             CourseRequest saved = new CourseRequest();
             saved.setId(42L);
             saved.setTitle(original.getTitle());
-            saved.setShortName(original.getShortName());
             saved.setSemester(original.getSemester());
             saved.setStartDate(original.getStartDate());
             saved.setEndDate(original.getEndDate());
@@ -240,13 +235,12 @@ class CourseRequestServiceTest {
             CourseRequest refetched = new CourseRequest();
             refetched.setId(42L);
             refetched.setTitle("New Course");
-            refetched.setShortName("NEW123");
             refetched.setStatus(CourseRequestStatus.PENDING);
             refetched.setRequester(requester);
             return Optional.of(refetched);
         });
 
-        var createDTO = new CourseRequestCreateDTO("New Course", "NEW123", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
+        var createDTO = new CourseRequestCreateDTO("New Course", "WS25", ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(10), false, "Need a course");
         courseRequestService.createCourseRequest(createDTO);
 
         // Verify received email was sent with the original requester, not from the saved entity
@@ -271,7 +265,6 @@ class CourseRequestServiceTest {
         CourseRequest request = new CourseRequest();
         request.setId(1L);
         request.setTitle("New Course");
-        request.setShortName("NEW123");
         request.setStartDate(ZonedDateTime.now().minusDays(1));
         request.setEndDate(ZonedDateTime.now().plusDays(10));
         request.setStatus(CourseRequestStatus.PENDING);

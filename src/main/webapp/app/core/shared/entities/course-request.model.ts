@@ -18,7 +18,6 @@ export interface CourseRequestRequester {
 
 export interface BaseCourseRequest {
     title: string;
-    shortName: string;
     semester?: string;
     startDate?: dayjs.Dayjs;
     endDate?: dayjs.Dayjs;
@@ -41,4 +40,26 @@ export interface CourseRequestsAdminOverview {
     pendingRequests: CourseRequest[];
     decidedRequests: CourseRequest[];
     totalDecidedCount: number;
+}
+
+/**
+ * DTO for accepting a course request with admin-provided course data.
+ */
+export interface CourseRequestAccept {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
+}
+
+/**
+ * Lightweight DTO for displaying an instructor's existing courses.
+ */
+export interface InstructorCourse {
+    title: string;
+    shortName: string;
+    semester?: string;
+    startDate?: dayjs.Dayjs;
+    endDate?: dayjs.Dayjs;
 }

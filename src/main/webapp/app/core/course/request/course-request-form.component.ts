@@ -4,8 +4,6 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
-import { generateCourseShortName } from 'app/shared/util/semester-utils';
 
 @Component({
     selector: 'jhi-course-request-form',
@@ -30,15 +28,4 @@ export class CourseRequestFormComponent {
 
     /** Emitted when the form values change */
     formChange = output<void>();
-
-    protected readonly SHORT_NAME_PATTERN = SHORT_NAME_PATTERN;
-
-    generateShortName(): void {
-        const formGroup = this.form();
-        const title = formGroup.get('title')?.value ?? '';
-        const semester = formGroup.get('semester')?.value ?? '';
-        const shortName = generateCourseShortName(title, semester);
-        formGroup.patchValue({ shortName });
-        this.formChange.emit();
-    }
 }
