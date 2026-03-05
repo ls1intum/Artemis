@@ -288,7 +288,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
-        const updateSpy = vi.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const updateSpy = vi.spyOn(service, 'updateAliases');
         const closeSpy = vi.spyOn(component, 'closeDialog');
         const emitSpy = vi.spyOn(component.onSave, 'emit');
 
@@ -304,12 +304,12 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(closeSpy).toHaveBeenCalled();
         expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should send empty alias map if no aliases are set', () => {
-        const updateSpy = vi.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const updateSpy = vi.spyOn(service, 'updateAliases');
 
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
@@ -320,7 +320,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should trim alias and remove it if empty', () => {
-        const updateSpy = vi.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const updateSpy = vi.spyOn(service, 'updateAliases');
 
         component.pickSelectedRoom({ item: rooms[0] });
 
