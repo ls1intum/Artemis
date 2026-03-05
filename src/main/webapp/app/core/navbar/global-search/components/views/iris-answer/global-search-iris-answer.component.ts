@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, ElementRef, computed, effect, forwardRef, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChild, viewChildren } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faComments, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { Skeleton } from 'primeng/skeleton';
@@ -28,6 +28,7 @@ export class GlobalSearchIrisAnswerComponent extends SearchResultView {
     readonly closeDrawer = output<void>();
 
     private readonly lectureSearchService = inject(LectureSearchService);
+    private readonly router = inject(Router);
 
     protected readonly result = signal<IrisSearchResult | undefined>(undefined);
     protected readonly isLoading = signal(false);
@@ -82,5 +83,17 @@ export class GlobalSearchIrisAnswerComponent extends SearchResultView {
                 this.result.set(result);
                 this.isLoading.set(false);
             });
+    }
+
+    @HostListener('window:keydown', ['$event'])
+    handleKeydown(event: KeyboardEvent): void {
+        if (event.key !== 'Enter') return;
+        const index = this.selectedSourceIndex();
+        if (index < 0) return;
+        const source = this.result()?.sources[index];
+        if (source) {
+            event.preventDefault();
+            this.router.navigateByUrl(source.lectureUnit.link);
+        }
     }
 }
