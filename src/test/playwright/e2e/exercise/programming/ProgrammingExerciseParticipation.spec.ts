@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
@@ -16,17 +15,12 @@ import { GitCloneMethod } from '../../../support/pageobjects/exercises/programmi
 
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { GitExerciseParticipation } from '../../../support/pageobjects/exercises/programming/GitExerciseParticipation';
+import { SEED_COURSES } from '../../../support/seedData';
 
-// Basic submission tests: each creates its own course+exercise, so they can run in parallel.
+const course = { id: SEED_COURSES.programmingParticipation.id } as any;
+
+// Basic submission tests: use seed course, only create exercises per test.
 test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin, '/');
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-    });
-
     const testCases = [
         {
             description: 'Makes a failing C submission',
@@ -85,25 +79,12 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
         }
     }
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });
 
 // Tests that require sequential execution: secure git (shared SSH keys), team exercises
 // (shared repository), and instructor submissions (multiple queued builds).
 test.describe('Programming exercise advanced participation', { tag: '@sequential' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin, '/');
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    });
-
     test.describe('Programming exercise participation using secure git', () => {
         let exercise: ProgrammingExercise;
 
@@ -329,7 +310,5 @@ test.describe('Programming exercise advanced participation', { tag: '@sequential
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

@@ -67,7 +67,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(300);
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {

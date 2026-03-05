@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import dayjs from 'dayjs';
 
@@ -7,8 +6,8 @@ import { test } from '../../../support/fixtures';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { expect } from '@playwright/test';
 import { Commands } from '../../../support/commands';
-import { CourseManagementAPIRequests } from '../../../support/requests/CourseManagementAPIRequests';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
+import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
 const tutorFeedback = 'Try to use some newlines next time!';
@@ -17,23 +16,19 @@ const tutorTextFeedback = 'Nice ending of the sentence!';
 const tutorTextFeedbackPoints = 2;
 const complaint = "That feedback wasn't very useful!";
 
+const course = { id: SEED_COURSES.textAssessment.id } as any;
+
 test.describe('Text exercise assessment', { tag: '@fast' }, () => {
-    let course: Course;
     let exercise: TextExercise;
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
-    test.beforeAll('Create course and make a submission', async ({ browser }) => {
+    test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
         const context = await browser.newContext();
         const page = await context.newPage();
         dueDate = dayjs().add(5, 'seconds');
         assessmentDueDate = dueDate.add(5, 'seconds');
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         await Commands.login(page, admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), dueDate, assessmentDueDate);
         await Commands.login(page, studentOne);
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
@@ -91,10 +86,5 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterAll('Delete course', async ({ browser }) => {
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

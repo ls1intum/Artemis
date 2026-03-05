@@ -18,7 +18,7 @@ set -e
 SKIP_BUILD=false
 SKIP_CLEANUP=false
 TEST_FILTER=""
-DB_TYPE="mysql"
+DB_TYPE="postgres"
 
 # Colors
 RED='\033[0;31m'
@@ -75,9 +75,7 @@ echo ""
 # Environment variables
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
 export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
-export PLAYWRIGHT_USERNAME_TEMPLATE="${PLAYWRIGHT_USERNAME_TEMPLATE:-artemis_test_user_}"
-export PLAYWRIGHT_PASSWORD_TEMPLATE="${PLAYWRIGHT_PASSWORD_TEMPLATE:-artemis_test_user_}"
-export PLAYWRIGHT_CREATE_USERS="${PLAYWRIGHT_CREATE_USERS:-true}"
+export SPRING_LIQUIBASE_CONTEXTS="${SPRING_LIQUIBASE_CONTEXTS:-prod,e2e}"
 # Timeouts matching CI values for reliable local execution
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-150}"             # CI: 300
 export TEST_RETRIES="${TEST_RETRIES:-1}"

@@ -37,7 +37,7 @@ export class CourseMessagesPage {
      * @param name - The name of the channel to check for existence.
      */
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name)).toBeVisible();
+        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name, { exact: true })).toBeVisible();
     }
 
     /**

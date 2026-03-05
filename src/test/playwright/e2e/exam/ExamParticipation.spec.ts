@@ -1,7 +1,7 @@
 import { test } from '../../support/fixtures';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage } from '../../support/constants';
-import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor, users } from '../../support/users';
+import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, users } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import cAllSuccessfulSubmission from '../../fixtures/exercise/programming/c/all_successful/submission.json';
 import dayjs from 'dayjs';
@@ -18,26 +18,21 @@ import { GitExerciseParticipation } from '../../support/pageobjects/exercises/pr
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { GitCloneMethod } from '../../support/pageobjects/exercises/programming/ProgrammingExerciseOverviewPage';
 import { SshEncryptionAlgorithm } from '../../support/pageobjects/exercises/programming/GitClient';
+import { SEED_COURSES } from '../../support/seedData';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
 const textFixtureShort = 'loremIpsum-short.txt';
+const course = { id: SEED_COURSES.examParticipation.id } as any;
 
 test.describe('Exam participation', () => {
-    let course: Course;
     let exerciseArray: Array<Exercise> = [];
     let studentTwoName: string;
     let studentThreeName: string;
     let studentFourName: string;
 
-    test.beforeEach('Create course', async ({ login, page, courseManagementAPIRequests }) => {
+    test.beforeEach('Get user names', async ({ login, page }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
 
         const studentTwoInfo = await users.getUserInfo(studentTwo.username, page);
         studentTwoName = studentTwoInfo.name!;
@@ -470,9 +465,7 @@ test.describe('Exam participation', () => {
         );
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });
 
 async function createExam(course: Course, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {

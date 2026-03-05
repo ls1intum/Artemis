@@ -3,35 +3,63 @@ import { Locator, Page, expect } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
+import fs from 'fs';
+import path from 'path';
+
+const JWT_TOKENS_PATH = path.join(__dirname, '..', '.auth', 'jwt-tokens.json');
+
+let cachedTokens: Record<string, { value: string; expires: number }> | undefined;
+
+function loadJwtTokens(): Record<string, { value: string; expires: number }> {
+    if (cachedTokens) return cachedTokens;
+    try {
+        const data = fs.readFileSync(JWT_TOKENS_PATH, 'utf-8');
+        cachedTokens = JSON.parse(data);
+        return cachedTokens!;
+    } catch {
+        cachedTokens = {};
+        return cachedTokens;
+    }
+}
 
 /**
  * A class that encapsulates static helper command methods.
  */
 export class Commands {
     /**
-     * Logs in using API.
+     * Logs in using pre-cached JWT cookie swap (no HTTP call needed).
+     * Falls back to API authentication if no cached token is available.
      * @param page - Playwright page object.
      * @param credentials - UserCredentials object containing username and password.
      * @param url - Optional URL to navigate to after successful login.
      */
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
-        await Commands.logout(page);
         const { username, password } = credentials;
+        const tokens = loadJwtTokens();
+        const token = tokens[username];
 
-        const jwtCookie = await page
-            .context()
-            .cookies()
-            .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
-        if (!jwtCookie) {
-            const response = await page.request.post(`api/core/public/authenticate`, {
-                data: {
-                    username,
-                    password,
-                    rememberMe: true,
+        if (token && token.expires > Date.now()) {
+            // Zero-cost login: clear old cookie then swap the JWT cookie
+            const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
+            const domain = new URL(baseURL).hostname;
+            await page.context().clearCookies({ name: 'jwt' });
+            await page.context().addCookies([
+                {
+                    name: 'jwt',
+                    value: token.value,
+                    domain,
+                    path: '/',
+                    httpOnly: true,
+                    secure: false,
                 },
+            ]);
+        } else {
+            // Fallback: authenticate via API
+            await Commands.logout(page);
+            const response = await page.request.post('api/core/public/authenticate', {
+                data: { username, password, rememberMe: true },
                 failOnStatusCode: false,
             });
-
             expect(response.status()).toBe(200);
 
             const newJwtCookie = await page
@@ -47,7 +75,7 @@ export class Commands {
     };
 
     static logout = async (page: Page): Promise<void> => {
-        await page.request.post(`api/core/public/logout`);
+        await page.request.post('api/core/public/logout');
     };
 
     static reloadUntilFound = async (page: Page, locator: Locator, interval = 10000, timeout = 60000) => {

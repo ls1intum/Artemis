@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 import cBuildErrorSubmission from '../../fixtures/exercise/programming/c/build_error/submission.json';
@@ -11,20 +10,19 @@ import { test } from '../../support/fixtures';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
 import { Commands } from '../../support/commands';
+import { SEED_COURSES } from '../../support/seedData';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
+const course = { id: SEED_COURSES.examTestRun.id } as any;
 
-test.describe('Exam test run', { tag: '@fast' }, () => {
-    let course: Course;
+test.describe('Exam test run', { tag: '@slow' }, () => {
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
 
-    test.beforeEach('Create course', async ({ login, examExerciseGroupCreation, courseManagementAPIRequests, examAPIRequests }) => {
+    test.beforeEach('Create exam', async ({ login, examExerciseGroupCreation, examAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         const examConfig = {
             course,
             title: examTitle,
@@ -102,7 +100,6 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
         });
 
         test('Conducts a test run', async ({ login, courseManagementAPIRequests, examTestRun, examParticipation, examNavigation }) => {
-            test.slow();
             await login(instructor);
             const testRun = await courseManagementAPIRequests.createExamTestRun(exam, exerciseArray);
 
@@ -136,10 +133,6 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
         });
 
         test('Deletes a test run', async ({ login, page, examTestRun }) => {
-            // The shared beforeEach creates a programming exercise whose solution build
-            // must complete before test cases can be fetched. On slow CI this can exceed
-            // the default fast-test timeout, so triple it.
-            test.slow();
             await login(instructor);
             await examTestRun.openTestRunPage(course, exam);
             // The test run was created via API in beforeEach, but the page may load
@@ -150,7 +143,5 @@ test.describe('Exam test run', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

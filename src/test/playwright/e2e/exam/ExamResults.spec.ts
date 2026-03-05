@@ -3,7 +3,6 @@ import { test } from '../../support/fixtures';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
 import { admin, instructor, studentOne, tutor } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import dayjs, { Dayjs } from 'dayjs';
 import { generateUUID, waitForExamEnd } from '../../support/utils';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../support/constants';
@@ -23,29 +22,19 @@ import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
 import { ExamExerciseGroupCreationPage } from '../../support/pageobjects/exam/ExamExerciseGroupCreationPage';
 import cPartiallySuccessfulSubmission from '../../fixtures/exercise/programming/c/partially_successful/submission.json';
-import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ProgrammingExerciseTaskStatus } from '../../support/pageobjects/exam/ExamResultsPage';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.examResults.id } as any;
 
 // All 4 exercise types share a single exam to avoid redundant lifecycle waits.
 // Uses test.describe.serial so that setup (beforeAll) runs once before all tests.
 test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
-    let course: Course;
     let exam: Exam;
     let studentExam: StudentExam;
     let examEndDate: Dayjs;
     const exercises: Record<string, Exercise> = {};
-
-    test.beforeAll('Create course', async ({ browser }) => {
-        const page = await browser.newPage();
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-        await Commands.login(page, admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        await page.close();
-    });
 
     test.beforeAll('Create exam with all exercise types', async ({ browser }) => {
         test.setTimeout(300_000); // Creating 4 exercise groups with programming builds
@@ -202,13 +191,7 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         await examResultsPage.checkGradeSummary(gradeSummary);
     });
 
-    test.afterAll('Delete course', async ({ browser }) => {
-        const page = await browser.newPage();
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-        await Commands.login(page, admin);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-        await page.close();
-    });
+    // Seed courses are persistent — no cleanup needed
 });
 
 async function startAssessing(courseID: number, examID: number, exerciseID: number, exerciseAssessment: ExerciseAssessmentDashboardPage, page: Page) {

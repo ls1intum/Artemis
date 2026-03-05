@@ -12,28 +12,18 @@ import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/asses
 import { StudentAssessmentPage } from '../../support/pageobjects/assessment/StudentAssessmentPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { test } from '../../support/fixtures';
-import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamEnd } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
+import { SEED_COURSES } from '../../support/seedData';
 
-let course: Course;
+const course = { id: SEED_COURSES.examAssessment.id } as any;
 let studentOneName: string;
 
-test.beforeAll('Create course', async ({ browser }) => {
+test.beforeAll('Get student name', async ({ browser }) => {
     const page = await newBrowserPage(browser);
-    const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-
     await Commands.login(page, admin);
-    course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-    await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-    await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-    await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-    await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-    await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-    await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-
     studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
 });
 
@@ -43,7 +33,7 @@ test.describe('Exam assessment', () => {
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(45, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
@@ -161,7 +151,7 @@ test.describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(25, 'seconds');
+            examEnd = dayjs().add(15, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.QUIZ, page);
@@ -298,11 +288,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
     });
 });
 
-test.afterAll('Delete course', async ({ browser }) => {
-    const page = await newBrowserPage(browser);
-    const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-    await courseManagementAPIRequests.deleteCourse(course, admin);
-});
+// Seed courses are persistent — no cleanup needed
 
 async function handleComplaint(
     course: Course,
