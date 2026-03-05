@@ -488,7 +488,7 @@ public class ExamRoomDistributionService {
      * is not explicitly given, a possibly pre-existing alias is removed.
      *
      * @param examId      the id of the exam
-     * @param roomAliases a {roomNumber => alias} mapping
+     * @param roomAliases a {roomId => alias} mapping
      */
     public void updateAliases(long examId, Map<Long, String> roomAliases) {
         Set<ExamRoomExamAssignment> roomAssignments = examRoomExamAssignmentRepository.findAllByExamId(examId);
