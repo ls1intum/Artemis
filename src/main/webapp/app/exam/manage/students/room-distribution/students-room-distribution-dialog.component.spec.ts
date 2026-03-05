@@ -288,9 +288,9 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
-        const updateSpy = jest.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
-        const closeSpy = jest.spyOn(component, 'closeDialog');
-        const emitSpy = jest.spyOn(component.onSave, 'emit');
+        const updateSpy = vi.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const closeSpy = vi.spyOn(component, 'closeDialog');
+        const emitSpy = vi.spyOn(component.onSave, 'emit');
 
         component.pickSelectedRoom({ item: rooms[0] });
         component.pickSelectedRoom({ item: rooms[1] });
@@ -309,7 +309,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should send empty alias map if no aliases are set', () => {
-        const updateSpy = jest.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const updateSpy = vi.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
 
         component.pickSelectedRoom({ item: rooms[0] });
         fixture.detectChanges();
@@ -320,7 +320,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should trim alias and remove it if empty', () => {
-        const updateSpy = jest.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
+        const updateSpy = vi.spyOn(service, 'updateAliases').mockReturnValue(of(undefined));
 
         component.pickSelectedRoom({ item: rooms[0] });
 
