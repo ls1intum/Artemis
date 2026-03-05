@@ -30,6 +30,10 @@ function dispatchInputEvent(inputElement: HTMLInputElement, value: string) {
     inputElement.dispatchEvent(new Event('input'));
 }
 
+function dispatchClickEvent(buttonElement: HTMLButtonElement) {
+    buttonElement.dispatchEvent(new Event('click'));
+}
+
 describe('StudentsRoomDistributionDialogComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -92,8 +96,8 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
     it('should close the dialog on pressing the close button', () => {
         fixture.detectChanges();
-        const button = document.body.querySelector('#cancel-button') as HTMLButtonElement;
-        button.click();
+        const closeButton = document.body.querySelector('#cancel-button') as HTMLButtonElement;
+        dispatchClickEvent(closeButton);
         expect(component.dialogVisible()).toBe(false);
     });
 
@@ -299,7 +303,7 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const updateAliasButton = document.body.querySelector('#update-aliases-button') as HTMLButtonElement;
-        updateAliasButton.click();
+        dispatchClickEvent(updateAliasButton);
         fixture.changeDetectorRef.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
