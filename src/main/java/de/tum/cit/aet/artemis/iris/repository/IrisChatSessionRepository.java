@@ -1,17 +1,24 @@
 package de.tum.cit.aet.artemis.iris.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.dao.IrisChatSessionDAO;
@@ -47,6 +54,120 @@ public interface IrisChatSessionRepository extends ArtemisJpaRepository<IrisChat
                 ORDER BY s.creationDate DESC
             """)
     List<IrisChatSessionDAO> findByCourseIdAndUserId(@Param("courseId") long courseId, @Param("userId") long userId);
+
+    // -------------------------------------------------------------------------
+    // Session lookup — by ID + user
+    // -------------------------------------------------------------------------
+    // TODO: Warum nicht genutzt
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    Optional<IrisChatSession> findSessionWithMessagesByIdAndUserId(Long id, Long userId);
+
+    // -------------------------------------------------------------------------
+    // Exercise-context queries
+    // -------------------------------------------------------------------------
+
+    List<IrisChatSession> findByExerciseIdAndUserIdOrderByCreationDateDesc(Long exerciseId, Long userId, Pageable pageable);
+
+    @EntityGraph(type = LOAD, attributePaths = "messages")
+    List<IrisChatSession> findSessionsWithMessagesByIdIn(List<Long> ids);
+
+    /**
+     * Finds the latest exercise chat sessions (exerciseId set) for the given exercise and user, with messages eagerly loaded.
+     *
+     * @param exerciseId the exercise ID
+     * @param userId     the user ID
+     * @param pageable   pagination info
+     * @return list of sessions with messages
+     */
+    default List<IrisChatSession> findLatestByExerciseIdAndUserIdWithMessages(Long exerciseId, Long userId, Pageable pageable) {
+        List<Long> ids = findByExerciseIdAndUserIdOrderByCreationDateDesc(exerciseId, userId, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return findSessionsWithMessagesByIdIn(ids);
+    }
+
+    // -------------------------------------------------------------------------
+    // Course-context queries (exerciseId IS NULL AND lectureId IS NULL)
+    // -------------------------------------------------------------------------
+
+    List<IrisChatSession> findByCourseIdAndExerciseIdIsNullAndLectureIdIsNullAndUserIdOrderByCreationDateDesc(long courseId, long userId, Pageable pageable);
+
+    /**
+     * Finds the latest course-only chat sessions (no exercise, no lecture) for the given course and user, with messages eagerly loaded.
+     *
+     * @param courseId the course ID
+     * @param userId   the user ID
+     * @param pageable pagination info
+     * @return list of sessions with messages
+     */
+    default List<IrisChatSession> findLatestCourseChatSessionsByUserIdWithMessages(long courseId, long userId, Pageable pageable) {
+        List<Long> ids = findByCourseIdAndExerciseIdIsNullAndLectureIdIsNullAndUserIdOrderByCreationDateDesc(courseId, userId, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return findSessionsWithMessagesByIdIn(ids);
+    }
+
+    /**
+     * Deletes all chat sessions for a given course.
+     *
+     * @param courseId The ID of the course.
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    void deleteAllByCourseId(long courseId);
+
+    // TODO: Stand jetzt nur in test ?
+    /**
+     * Count the number of chat sessions for a given course.
+     *
+     * @param courseId the id of the course
+     * @return the number of chat sessions in the course
+     */
+    long countByCourseId(long courseId);
+
+    // TODO: Warum jetzt genutzt und vorher nicht ?
+    /**
+     * Find all chat sessions with messages for a given course, ordered by creation date.
+     *
+     * @param courseId the id of the course
+     * @return list of chat sessions with their messages
+     */
+    @Query("""
+            SELECT DISTINCT s
+            FROM IrisChatSession s
+                LEFT JOIN FETCH s.messages
+            WHERE s.courseId = :courseId
+            ORDER BY s.creationDate ASC
+            """)
+    List<IrisChatSession> findAllWithMessagesByCourseId(@Param("courseId") long courseId);
+
+    // -------------------------------------------------------------------------
+    // Lecture-context queries
+    // -------------------------------------------------------------------------
+
+    List<IrisChatSession> findByLectureIdAndUserIdOrderByCreationDateDesc(Long lectureId, Long userId, Pageable pageable);
+
+    /**
+     * Finds the latest lecture chat sessions for the given lecture and user, with messages eagerly loaded.
+     *
+     * @param lectureId the lecture ID
+     * @param userId    the user ID
+     * @param pageable  pagination info
+     * @return list of sessions with messages
+     */
+    default List<IrisChatSession> findLatestByLectureIdAndUserIdWithMessages(Long lectureId, Long userId, Pageable pageable) {
+        List<Long> ids = findByLectureIdAndUserIdOrderByCreationDateDesc(lectureId, userId, pageable).stream().map(DomainObject::getId).toList();
+        if (ids.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return findSessionsWithMessagesByIdIn(ids);
+    }
+
+    // -------------------------------------------------------------------------
+    // Global user queries (cross-context)
+    // -------------------------------------------------------------------------
 
     /**
      * Finds all chat session IDs for a user, ordered by creation date.

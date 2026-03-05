@@ -22,8 +22,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 
 /**
- * Repository interface for managing {@link IrisTextExerciseChatSession} entities.
- * Provides custom queries for finding text exercise chat sessions based on different criteria.
+ * TODO: DELETE this repository — replaced by {@link IrisChatSessionRepository}. See Ticket 4.
  */
 @Conditional(IrisEnabled.class)
 @Lazy

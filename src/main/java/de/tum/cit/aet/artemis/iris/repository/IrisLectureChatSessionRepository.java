@@ -17,6 +17,9 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisLectureChatSession;
 
+/**
+ * TODO: DELETE this repository — replaced by {@link IrisChatSessionRepository}. See Ticket 4.
+ */
 @Lazy
 @Repository
 @Conditional(IrisEnabled.class)

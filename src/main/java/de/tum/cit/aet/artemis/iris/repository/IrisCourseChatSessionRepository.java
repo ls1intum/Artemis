@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 
 /**
- * Repository interface for managing {@link IrisCourseChatSession} entities.
+ * TODO: DELETE this repository — replaced by {@link IrisChatSessionRepository}. See Ticket 4.
  */
 @Lazy
 @Repository
