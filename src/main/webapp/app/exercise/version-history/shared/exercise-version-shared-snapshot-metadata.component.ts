@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
+import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
@@ -44,7 +44,7 @@ interface MetadataDateField {
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy {
-    private readonly sanitizer = inject(DomSanitizer);
+    private readonly markdownService = inject(ArtemisMarkdownService);
     private readonly translateService = inject(TranslateService);
     private readonly plantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
 
@@ -154,9 +154,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             return undefined;
         }
 
-        // Safe: htmlForMarkdown() sanitizes via DOMPurify before returning
-        const rendered = htmlForMarkdown(markdown, [this.plantUmlWrapper.getExtension()]);
-        return this.sanitizer.bypassSecurityTrustHtml(rendered);
+        return this.markdownService.safeHtmlForMarkdown(markdown, [this.plantUmlWrapper.getExtension()]);
     }
 
     /** Parses an ISO date string into a dayjs instance, or returns `undefined`. */
