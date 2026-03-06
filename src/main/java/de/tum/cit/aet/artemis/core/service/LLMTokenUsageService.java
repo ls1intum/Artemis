@@ -37,7 +37,7 @@ public class LLMTokenUsageService {
 
     private static final Logger log = LoggerFactory.getLogger(LLMTokenUsageService.class);
 
-    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-\\d{4}-\\d{2}-\\d{2}$");
+    private static final Pattern DATE_SUFFIX_PATTERN = Pattern.compile("-?\\d{4}-\\d{2}-\\d{2}$");
 
     /**
      * Default value used when token-count metadata is missing ({@code null}).
@@ -50,12 +50,20 @@ public class LLMTokenUsageService {
 
     private final Map<String, ModelCost> costs;
 
+    private final Map<String, ModelCost> costsByDashlessKey;
+
     public LLMTokenUsageService(LLMTokenUsageTraceRepository llmTokenUsageTraceRepository, LLMTokenUsageRequestRepository llmTokenUsageRequestRepository,
             LLMModelCostConfiguration costConfiguration) {
         this.llmTokenUsageTraceRepository = llmTokenUsageTraceRepository;
         this.llmTokenUsageRequestRepository = llmTokenUsageRequestRepository;
         this.costs = costConfiguration.getModelCosts().entrySet().stream()
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> new ModelCost(e.getValue().getInputCostPerMillionEur(), e.getValue().getOutputCostPerMillionEur())));
+        this.costsByDashlessKey = costConfiguration.getModelCosts().entrySet().stream()
+                .collect(Collectors.toMap(entry -> entry.getKey().replace("-", ""),
+                        entry -> new DashlessModelCost(entry.getKey(), entry.getKey().replace("-", ""),
+                                new ModelCost(entry.getValue().getInputCostPerMillionEur(), entry.getValue().getOutputCostPerMillionEur())),
+                        LLMTokenUsageService::throwOnDashlessCostCollision))
+                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> entry.getValue().cost()));
     }
 
     /**
@@ -69,13 +77,23 @@ public class LLMTokenUsageService {
      */
     public LLMRequest buildLLMRequest(String model, int inputTokens, int outputTokens, String pipelineId) {
         String normalized = model != null ? DATE_SUFFIX_PATTERN.matcher(model).replaceAll("") : "";
-        ModelCost cost = costs.getOrDefault(normalized, ModelCost.ZERO);
+        String dashless = normalized.replace("-", "");
+        ModelCost cost = costs.getOrDefault(normalized, costsByDashlessKey.getOrDefault(dashless, ModelCost.ZERO));
         return new LLMRequest(model, inputTokens, cost.input(), outputTokens, cost.output(), pipelineId);
     }
 
     private record ModelCost(float input, float output) {
 
         static final ModelCost ZERO = new ModelCost(0f, 0f);
+    }
+
+    private record DashlessModelCost(String originalKey, String dashlessKey, ModelCost cost) {
+    }
+
+    private static DashlessModelCost throwOnDashlessCostCollision(DashlessModelCost existing, DashlessModelCost replacement) {
+        String message = new StringBuilder("Conflicting LLM model cost keys '").append(existing.originalKey()).append("' and '").append(replacement.originalKey())
+                .append("' normalize to identical dashless key '").append(existing.dashlessKey()).append("'").toString();
+        throw new IllegalStateException(message);
     }
 
     /**
