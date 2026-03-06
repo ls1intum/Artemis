@@ -105,6 +105,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exercise/version-history/**', // exercise version history module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
@@ -133,6 +134,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
+        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module uses Vitest
     ],
@@ -185,6 +187,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',    // migrated to Vitest
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',               // migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
+        '<rootDir>/src/main/webapp/app/exercise/version-history/', // exercise version history module
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module
     ],

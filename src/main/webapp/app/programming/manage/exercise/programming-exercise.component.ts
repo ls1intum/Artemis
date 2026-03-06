@@ -16,7 +16,21 @@ import { ProgrammingExerciseEditSelectedComponent } from 'app/programming/manage
 import { AlertService } from 'app/shared/service/alert.service';
 import { createBuildPlanUrl } from 'app/programming/shared/utils/programming-exercise.utils';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTrash, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    faBook,
+    faCheckDouble,
+    faDownload,
+    faFileSignature,
+    faHistory,
+    faListAlt,
+    faPencilAlt,
+    faPlus,
+    faSort,
+    faTable,
+    faTrash,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { MODULE_FEATURE_THEIA, PROFILE_LOCALCI } from 'app/app.constants';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { FormsModule } from '@angular/forms';
@@ -96,6 +110,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     faListAlt = faListAlt;
     faPencilAlt = faPencilAlt;
     faFileSignature = faFileSignature;
+    faHistory = faHistory;
 
     protected get exercises() {
         return this.programmingExercises;
