@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizAnswerOptionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationTypeDTO;
 import io.micrometer.observation.annotation.Observed;
 
 /**
@@ -74,7 +74,7 @@ public class HyperionQuizQuestionGenerationService {
 
         String topic = sanitizeInput(request.topic());
         String optionalPrompt = sanitizeInput(request.optionalPrompt());
-        String requestedQuestionTypes = request.questionTypes().stream().map(QuizQuestionGenerationType::getValue).collect(Collectors.joining(", "));
+        String requestedQuestionTypes = request.questionTypes().stream().map(QuizQuestionGenerationTypeDTO::getValue).collect(Collectors.joining(", "));
 
         var outputConverter = new BeanOutputConverter<>(GeneratedQuestionsOutput.class);
         String systemPrompt = templateService.render(PROMPT_GENERATE_QUIZ_QUESTIONS_SYSTEM, Map.of());
@@ -109,9 +109,9 @@ public class HyperionQuizQuestionGenerationService {
             throw new InternalServerErrorAlertException("Generated quiz question is null", "QuizQuestionGeneration", "QuizQuestionGeneration.invalidQuestion");
         }
 
-        QuizQuestionGenerationType questionType;
+        QuizQuestionGenerationTypeDTO questionType;
         try {
-            questionType = QuizQuestionGenerationType.fromValue(generatedQuestion.type());
+            questionType = QuizQuestionGenerationTypeDTO.fromValue(generatedQuestion.type());
         }
         catch (IllegalArgumentException e) {
             throw new InternalServerErrorAlertException("Generated quiz question type is invalid", "QuizQuestionGeneration", "QuizQuestionGeneration.invalidQuestionType");
@@ -151,7 +151,7 @@ public class HyperionQuizQuestionGenerationService {
         return new GeneratedQuizAnswerOptionDTO(optionText, isCorrect);
     }
 
-    private static void validateCorrectOptionCount(QuizQuestionGenerationType questionType, List<GeneratedQuizAnswerOptionDTO> options) {
+    private static void validateCorrectOptionCount(QuizQuestionGenerationTypeDTO questionType, List<GeneratedQuizAnswerOptionDTO> options) {
         long correctOptions = options.stream().filter(GeneratedQuizAnswerOptionDTO::correct).count();
 
         switch (questionType) {

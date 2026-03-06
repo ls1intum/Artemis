@@ -663,7 +663,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('shows success when no new consistency threads are persisted after consistency check', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [mockIssues[0]] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [mockIssues[0]] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
             const warningSpy = jest.spyOn(alertService, 'warning');
 
@@ -678,7 +680,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('shows warning and toolbar when new consistency threads are persisted after consistency check', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
             const warningSpy = jest.spyOn(alertService, 'warning');
             (reviewCommentService.reloadThreads as jest.Mock).mockImplementationOnce((onLoaded?: () => void) => {
@@ -698,7 +702,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('shows success when no new issues are reported, even if persisted consistency threads already exist', () => {
             reviewCommentService.threads.set(createConsistencyThreads([mockIssues[0]]) as any);
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
             const warningSpy = jest.spyOn(alertService, 'warning');
 

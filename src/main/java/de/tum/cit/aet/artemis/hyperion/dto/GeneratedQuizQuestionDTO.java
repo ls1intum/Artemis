@@ -16,7 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "One generated quiz question")
-public record GeneratedQuizQuestionDTO(@NotNull @Schema(description = "Question type") QuizQuestionGenerationType type,
+public record GeneratedQuizQuestionDTO(@NotNull @Schema(description = "Question type") QuizQuestionGenerationTypeDTO type,
         @NotBlank @Schema(description = "Question title") String title, @NotBlank @Schema(description = "Question text") String questionText,
         @NotEmpty @Schema(description = "Answer options") List<@Valid GeneratedQuizAnswerOptionDTO> options) {
 }
