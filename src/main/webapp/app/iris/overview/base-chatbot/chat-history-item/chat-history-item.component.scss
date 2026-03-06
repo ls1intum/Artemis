@@ -22,15 +22,17 @@
             flex: 1;
             min-width: 0;
         }
+    }
 
-        &:hover,
-        &:focus-within {
+    &:hover,
+    &:focus-within {
+        .chat-history-text {
             background-color: var(--iris-accent-background);
             border-radius: 6px;
+        }
 
-            .menu-trigger {
-                display: block;
-            }
+        .menu-trigger {
+            display: block;
         }
     }
 
