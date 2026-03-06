@@ -55,7 +55,7 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
      * @return list of comment threads with comments and groups
      */
     @Query("""
-            SELECT DISTINCT ct
+            SELECT ct
             FROM CommentThread ct
                 LEFT JOIN FETCH ct.group
                 LEFT JOIN FETCH ct.comments c
