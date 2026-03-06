@@ -1,15 +1,7 @@
 <p-card class="mb-2 border">
-    <!-- Phase controls row -->
-    <div class="d-flex align-items-start gap-2 mb-2">
-        <div class="d-flex flex-column gap-1">
-            <label class="form-label mb-0 small">Phase Name</label>
-            <input pInputText pSize="small" [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="e.g. compile" />
-        </div>
-
-        <div class="d-flex flex-column gap-1">
-            <label class="form-label mb-0 small">Condition</label>
-            <p-select size="small" [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
-        </div>
+    <div class="d-flex align-items-center gap-2 mb-2">
+        <p-badge [value]="index() + 1" badgeSize="large" />
+        <span class="bold"> Phase: {{ phase().name }} </span>
 
         <div class="d-flex gap-1 ms-auto">
             <button pButton [text]="true" [rounded]="true" size="small" severity="secondary" [disabled]="isFirst()" (click)="moveUp.emit()">
@@ -25,16 +17,31 @@
             </button>
         </div>
     </div>
+    <!-- Phase controls row -->
+    <div class="d-flex align-items-start gap-2 mb-2">
+        <div class="d-flex flex-column gap-1">
+            <label>Phase Name</label>
+            <input pInputText pSize="small" [ngModel]="phase().name" (ngModelChange)="updateName($event)" placeholder="e.g. compile" />
+        </div>
+
+        <div class="d-flex flex-column gap-1">
+            <label>Condition</label>
+            <p-select size="small" [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+        </div>
+    </div>
 
     <!-- Script editor -->
     <div class="d-flex flex-column gap-1 mb-2">
-        <label class="form-label mb-0 small">Script</label>
+        <label>Script</label>
         <jhi-monaco-editor-fit-text [text]="phase().script" (textChange)="updateScript($event)" />
     </div>
 
     <!-- Result paths -->
     <div class="d-flex flex-column gap-1">
-        <label class="form-label mb-0 small">Result Paths</label>
+        <div class="d-flex flex-row gap-2 align-items-center">
+            <label>Result Paths</label>
+            <span class="small text-secondary">{{ testsExpectedForThisPhase() ? 'Tests expected for this phase' : 'No tests expected for this phase' }}</span>
+        </div>
 
         @for (path of phase().resultPaths; track $index) {
             <div class="d-flex align-items-center gap-2">

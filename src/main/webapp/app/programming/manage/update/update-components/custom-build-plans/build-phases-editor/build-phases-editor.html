@@ -4,9 +4,8 @@
     @for (phase of phases(); track $index) {
         <jhi-build-phase
             [phase]="phase"
-            [isFirst]="$index === 0"
+            [index]="$index"
             [isLast]="$index === phaseCount() - 1"
-            [isOnly]="phaseCount() === 1"
             (phaseChange)="updatePhase($index, $event)"
             (delete)="deletePhase($index)"
             (moveUp)="moveUp($index)"
