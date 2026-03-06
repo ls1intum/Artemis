@@ -1,4 +1,4 @@
-import { Directive, Input } from '@angular/core';
+import { Directive, input } from '@angular/core';
 import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
 
 /**
@@ -9,13 +9,13 @@ import { FormControl, NG_VALIDATORS, Validator } from '@angular/forms';
     providers: [{ provide: NG_VALIDATORS, useExisting: CustomMaxLengthDirective, multi: true }],
 })
 export class CustomMaxLengthDirective implements Validator {
-    @Input({ required: true }) customMaxLength: number;
+    customMaxLength = input.required<number>();
 
     validate(c: FormControl<string | undefined | null>): { [key: string]: any } | null {
         const value = c.value;
         if (value === undefined || value === null) {
             return null;
         }
-        return value.length > this.customMaxLength ? { customMaxLength: true } : null;
+        return value.length > this.customMaxLength() ? { customMaxLength: true } : null;
     }
 }
