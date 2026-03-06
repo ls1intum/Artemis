@@ -1,29 +1,39 @@
 package de.tum.cit.aet.artemis.iris.web;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
+import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -32,33 +42,31 @@ import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
-import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisHealthIndicator;
+import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
+import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
+import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 /**
  * REST controller for managing {@link IrisChatSession}.
+ * Provides endpoints for session CRUD operations, chat history sidebar, and user-global operations.
  */
 @Conditional(IrisEnabled.class)
 @Lazy
 @RestController
-@RequestMapping("api/iris/chat-history/")
+@RequestMapping("api/iris/chat/")
 public class IrisChatSessionResource {
 
     private static final Logger log = LoggerFactory.getLogger(IrisChatSessionResource.class);
 
-    protected final UserRepository userRepository;
+    private final UserRepository userRepository;
 
-    protected final IrisSessionService irisSessionService;
+    private final IrisSessionService irisSessionService;
 
-    protected final IrisSettingsService irisSettingsService;
+    private final IrisSettingsService irisSettingsService;
 
-    protected final PyrisHealthIndicator pyrisHealthIndicator;
-
-    protected final IrisRateLimitService irisRateLimitService;
-
-    protected final CourseRepository courseRepository;
+    private final CourseRepository courseRepository;
 
     private final IrisSessionRepository irisSessionRepository;
 
@@ -68,28 +76,175 @@ public class IrisChatSessionResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
-    protected IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService,
-            IrisSettingsService irisSettingsService, PyrisHealthIndicator pyrisHealthIndicator, IrisRateLimitService irisRateLimitService,
+    private final IrisChatSessionService irisChatSessionService;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
+
+    private final AuthorizationCheckService authorizationCheckService;
+
+    public IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisSessionRepository irisSessionRepository, IrisCitationService irisCitationService, IrisChatSessionRepository irisChatSessionRepository,
-            CustomAuditEventRepository auditEventRepository) {
+            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService, ExerciseRepository exerciseRepository,
+            Optional<LectureRepositoryApi> lectureRepositoryApi, AuthorizationCheckService authorizationCheckService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
-        this.pyrisHealthIndicator = pyrisHealthIndicator;
-        this.irisRateLimitService = irisRateLimitService;
         this.courseRepository = courseRepository;
         this.irisSessionRepository = irisSessionRepository;
         this.irisCitationService = irisCitationService;
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.auditEventRepository = auditEventRepository;
+        this.irisChatSessionService = irisChatSessionService;
+        this.exerciseRepository = exerciseRepository;
+        this.lectureRepositoryApi = lectureRepositoryApi;
+        this.authorizationCheckService = authorizationCheckService;
+    }
+
+    // -------------------------------------------------------------------------
+    // Course-scoped endpoints (require courseId path variable)
+    // -------------------------------------------------------------------------
+
+    /**
+     * POST api/iris/chat/{courseId}/sessions/current: Retrieve or create the current Iris chat session.
+     *
+     * @param courseId   the course ID (required for authorization)
+     * @param exerciseId optional exercise ID for exercise chat context
+     * @param lectureId  optional lecture ID for lecture chat context
+     * @return the current or newly created session
+     */
+    @PostMapping("{courseId}/sessions/current")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<IrisChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
+            @RequestParam(required = false) Long lectureId) throws URISyntaxException {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        user.hasOptedIntoLLMUsageElseThrow();
+
+        IrisChatSession session;
+        if (exerciseId != null) {
+            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+            if (exercise.isExamExercise()) {
+                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+            }
+            session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(exercise, user);
+        }
+        else if (lectureId != null) {
+            var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+            var lecture = api.findByIdElseThrow(lectureId);
+            authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+            session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(lecture, user);
+        }
+        else {
+            var course = courseRepository.findByIdElseThrow(courseId);
+            session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user);
+        }
+
+        irisCitationService.enrichSessionWithCitationInfo(session);
+        return ResponseEntity.ok(session);
     }
 
     /**
-     * GET chat-history/{courseId}/session/{id}: Retrieve an Iris Session for a id
+     * POST api/iris/chat/{courseId}/sessions: Create a new Iris chat session.
+     *
+     * @param courseId   the course ID (required for authorization)
+     * @param exerciseId optional exercise ID for exercise chat context
+     * @param lectureId  optional lecture ID for lecture chat context
+     * @return the newly created session
+     */
+    @PostMapping("{courseId}/sessions")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<IrisChatSession> createSession(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
+            @RequestParam(required = false) Long lectureId) throws URISyntaxException {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        user.hasOptedIntoLLMUsageElseThrow();
+
+        IrisChatSession session;
+        if (exerciseId != null) {
+            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+            if (exercise.isExamExercise()) {
+                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+            }
+            session = irisChatSessionService.createSession(exercise, user);
+        }
+        else if (lectureId != null) {
+            var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+            var lecture = api.findByIdElseThrow(lectureId);
+            authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+            session = irisChatSessionService.createSession(lecture, user);
+        }
+        else {
+            var course = courseRepository.findByIdElseThrow(courseId);
+            session = irisChatSessionService.createSession(course, user);
+        }
+
+        var uriString = "/api/iris/sessions/" + session.getId();
+        return ResponseEntity.created(new URI(uriString)).body(session);
+    }
+
+    /**
+     * GET api/iris/chat/{courseId}/sessions: Retrieve all Iris chat sessions for a context.
+     *
+     * @param courseId   the course ID (required for authorization)
+     * @param exerciseId optional exercise ID for exercise chat context
+     * @param lectureId  optional lecture ID for lecture chat context
+     * @return list of sessions
+     */
+    @GetMapping("{courseId}/sessions")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<IrisChatSession>> getAllSessions(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
+            @RequestParam(required = false) Long lectureId) {
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        user.hasOptedIntoLLMUsageElseThrow();
+
+        List<IrisChatSession> sessions;
+        if (exerciseId != null) {
+            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+            sessions = irisChatSessionRepository.findByExerciseIdAndUserIdOrderByCreationDateDesc(exerciseId, user.getId(), Pageable.unpaged());
+        }
+        else if (lectureId != null) {
+            var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+            var lecture = api.findByIdElseThrow(lectureId);
+            authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
+            sessions = irisChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lectureId, user.getId(), Pageable.unpaged());
+        }
+        else {
+            sessions = irisChatSessionRepository.findByCourseIdAndExerciseIdIsNullAndLectureIdIsNullAndUserIdOrderByCreationDateDesc(courseId, user.getId(), Pageable.unpaged());
+        }
+
+        sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
+        return ResponseEntity.ok(sessions);
+    }
+
+    /**
+     * GET api/iris/chat/{courseId}/sessions/overview: Retrieve all Iris Sessions as DTOs for the sidebar.
+     *
+     * @param courseId of the course
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of session DTOs
+     */
+    @GetMapping("{courseId}/sessions/overview")
+    @EnforceAtLeastStudentInCourse
+    public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        Course course = courseRepository.findById(courseId).orElseThrow();
+        if (user.hasOptedIntoLLMUsage()) {
+            List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
+            return ResponseEntity.ok(irisSessionDTOs);
+        }
+        else {
+            return ResponseEntity.ok(List.of());
+        }
+    }
+
+    /**
+     * GET api/iris/chat/{courseId}/session/{sessionId}: Retrieve an Iris Session by id.
      *
      * @param courseId  of the course
      * @param sessionId of the session
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris sessions for the id or {@code 404 (Not Found)} if no session exists
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the iris session
      */
     @GetMapping("{courseId}/session/{sessionId}")
     @EnforceAtLeastStudentInCourse
@@ -111,28 +266,12 @@ public class IrisChatSessionResource {
         throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }
 
-    /**
-     * GET chat-history/{courseId}/sessions: Retrieve all Iris Sessions for the course and the current user.
-     *
-     * @param courseId of the course
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body a list of the iris sessions for the course or {@code 404 (Not Found)} if no session exists
-     */
-    @GetMapping("{courseId}/sessions")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<List<IrisChatSessionDTO>> getAllSessionsForCourse(@PathVariable Long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findById(courseId).orElseThrow();
-        if (user.hasOptedIntoLLMUsage()) {
-            List<IrisChatSessionDTO> irisSessionDTOs = irisSessionService.getIrisSessionsByCourseAndUserId(course, user.getId());
-            return ResponseEntity.ok(irisSessionDTOs);
-        }
-        else {
-            return ResponseEntity.ok(List.of());
-        }
-    }
+    // -------------------------------------------------------------------------
+    // User-global endpoints (no courseId)
+    // -------------------------------------------------------------------------
 
     /**
-     * GET /api/iris/chat-history/sessions/count : Get the number of sessions and messages for the current user.
+     * GET /api/iris/chat/sessions/count : Get the number of sessions and messages for the current user.
      *
      * @return the {@link ResponseEntity} with status {@code 200 (OK)} and body containing session and message counts
      */
@@ -146,7 +285,7 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * DELETE /api/iris/chat-history/sessions : Delete all Iris chat sessions for the current user.
+     * DELETE /api/iris/chat/sessions : Delete all Iris chat sessions for the current user.
      * Messages and their content are removed via cascade.
      *
      * @return the {@link ResponseEntity} with status {@code 204 (No Content)}
@@ -165,7 +304,7 @@ public class IrisChatSessionResource {
     }
 
     /**
-     * DELETE /api/iris/chat-history/sessions/{sessionId} : Delete a single Iris chat session.
+     * DELETE /api/iris/chat/sessions/{sessionId} : Delete a single Iris chat session.
      * Only the owner of the session can delete it.
      *
      * @param sessionId the ID of the session to delete

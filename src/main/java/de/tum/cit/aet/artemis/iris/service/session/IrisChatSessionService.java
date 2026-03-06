@@ -30,6 +30,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
@@ -62,7 +63,6 @@ import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
-import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -547,36 +547,35 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     // Session creation / retrieval — programming exercise
     // -------------------------------------------------------------------------
 
+    private IrisChatSession getCurrentSessionOrCreateIfNotExistsForExercise(Exercise exercise, User user) {
+        return irisChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
+                .orElseGet(() -> createExerciseSessionInternal(exercise, user));
+    }
+
     /**
      * Gets or creates the current Iris session for the given exercise and user.
      *
-     * @param exercise The programming exercise
+     * @param exercise The exercise
      * @param user     The user
      * @return The current (or newly created) Iris session
      */
-    public IrisChatSession getCurrentSessionOrCreateIfNotExists(ProgrammingExercise exercise, User user) {
+    public IrisChatSession getCurrentSessionOrCreateIfNotExists(Exercise exercise, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember(); // TODO: Course anders bekommen?
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         if (course != null) {
             irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
         }
         return getCurrentSessionOrCreateIfNotExistsForExercise(exercise, user);
     }
 
-    private IrisChatSession getCurrentSessionOrCreateIfNotExistsForExercise(ProgrammingExercise exercise, User user) {
-        return irisChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> createExerciseSessionInternal(exercise, user));
-    }
-
     /**
-     * Creates a new Iris session for the given programming exercise and user.
+     * Creates a new Iris session for the given exercise (any type) and user.
      *
-     * @param exercise The programming exercise
+     * @param exercise The exercise
      * @param user     The user
      * @return The created session
      */
-    // TODO: ungenutzt ???
-    public IrisChatSession createSession(ProgrammingExercise exercise, User user) {
+    public IrisChatSession createSession(Exercise exercise, User user) {
         user.hasOptedIntoLLMUsageElseThrow();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         var course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -586,7 +585,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         return createExerciseSessionInternal(exercise, user);
     }
 
-    private IrisChatSession createExerciseSessionInternal(ProgrammingExercise exercise, User user) {
+    private IrisChatSession createExerciseSessionInternal(Exercise exercise, User user) {
         if (exercise.isExamExercise()) {
             throw new IrisUnsupportedExerciseTypeException("Iris is not supported for exam exercises");
         }
