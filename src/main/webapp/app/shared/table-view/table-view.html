@@ -1,4 +1,4 @@
-<div class="jhi-table-view-container">
+<div class="jhi-table-view-container" [class.jhi-scrollable]="resolvedOptions().scrollable">
     <p-table
         #dt
         [stripedRows]="resolvedOptions().striped"
@@ -19,6 +19,8 @@
         (onRowSelect)="onRowSelect.emit($event.data)"
         [lazy]="resolvedOptions().lazy"
         (onLazyLoad)="handleLazyLoad($event)"
+        [scrollable]="resolvedOptions().scrollable"
+        [scrollHeight]="resolvedOptions().scrollHeight"
     >
         <ng-template #caption>
             <div class="d-flex align-items-center gap-2">

@@ -53,6 +53,10 @@ export interface TableConfig {
     showSearch: boolean;
     /** Translation key for the message shown when the table has no rows. Default: 'artemisApp.dataTable.search.noResults' */
     emptyMessageTranslation: string;
+    /** Enable scrollable mode with fixed headers. Default: false */
+    scrollable: boolean;
+    /** Height of the scrollable data viewport. Only applies when scrollable is true. Accepts any CSS length value (e.g. '65vh', '400px'). Default: undefined */
+    scrollHeight: string | undefined;
 }
 
 /**
@@ -75,6 +79,8 @@ const DEFAULT_TABLE_CONFIG: TableConfig = {
     pageSizeOptions: [10, 20, 50, 100, 200],
     showSearch: true,
     emptyMessageTranslation: 'artemisApp.dataTable.search.noResults',
+    scrollable: false,
+    scrollHeight: undefined,
 };
 
 @Component({
@@ -132,6 +138,8 @@ export class TableViewComponent<T> {
             pageSizeOptions: opts.hidePageSizeOptions ? undefined : (opts.pageSizeOptions ?? DEFAULT_TABLE_CONFIG.pageSizeOptions),
             showSearch: opts.showSearch ?? DEFAULT_TABLE_CONFIG.showSearch,
             emptyMessageTranslation: opts.emptyMessageTranslation ?? DEFAULT_TABLE_CONFIG.emptyMessageTranslation,
+            scrollable: opts.scrollable ?? DEFAULT_TABLE_CONFIG.scrollable,
+            scrollHeight: opts.scrollHeight ?? DEFAULT_TABLE_CONFIG.scrollHeight,
         };
         return tableConfig;
     });

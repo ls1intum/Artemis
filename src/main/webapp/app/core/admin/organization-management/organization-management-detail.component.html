@@ -34,7 +34,7 @@
                 [totalRows]="coursesTotal()"
                 [loading]="coursesLoading()"
                 (onLazyLoad)="loadCourses($event)"
-                [options]="{ striped: true }"
+                [options]="tableOptions"
             />
         </div>
     </div>
@@ -49,7 +49,7 @@
             [loading]="usersLoading()"
             [rowActions]="userActions"
             (onLazyLoad)="loadUsers($event)"
-            [options]="{ striped: true }"
+            [options]="tableOptions"
         />
     </div>
 </div>

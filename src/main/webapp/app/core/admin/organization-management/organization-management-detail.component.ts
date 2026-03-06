@@ -13,7 +13,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -31,6 +31,8 @@ export class OrganizationManagementDetailComponent implements OnInit {
     private readonly organizationService = inject(OrganizationManagementService);
     private readonly alertService = inject(AlertService);
     private readonly route = inject(ActivatedRoute);
+
+    readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: '60vh' };
 
     /** The organization being viewed (metadata only) */
     readonly organization = signal<Organization>(new Organization());
