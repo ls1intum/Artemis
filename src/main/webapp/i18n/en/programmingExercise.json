@@ -138,6 +138,30 @@
             "parameters": "Parameters",
             "dockerImage": "Docker Image",
             "script": "Build script",
+            "buildPhasesEditor": {
+                "title": "Build Phases",
+                "help": "Before a build is executed, the scripts of all phases whose conditions are met are concatenated in order. If no result paths are configured, the script's exit code determines build success. Otherwise, success depends on whether test results are produced.",
+                "addPhase": "Add Phase",
+                "phase": "Phase",
+                "phaseName": "Phase Name",
+                "phaseNamePlaceholder": "e.g. compile",
+                "condition": "Condition",
+                "script": "Script",
+                "scriptHelp": "Enter the commands to execute in this phase of the build.",
+                "resultPaths": "Result Paths",
+                "resultPathsHelp": "Add glob patterns for test result files produced by this phase, for example JUnit XML reports. Configuring result paths also marks this phase as expected to produce tests.",
+                "testsExpected": "Tests are expected for this phase",
+                "noTestsExpected": "Tests are not expected for this phase",
+                "resultPathPlaceholder": "e.g. **/results/*.xml",
+                "addResultPath": "Add Result Path",
+                "moveUp": "Move up",
+                "moveDown": "Move down",
+                "delete": "Delete",
+                "conditions": {
+                    "ALWAYS": "Always",
+                    "AFTER_DUE_DATE": "After due date"
+                }
+            },
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
             "checkoutPath": {
                 "title": "Checkout Path",

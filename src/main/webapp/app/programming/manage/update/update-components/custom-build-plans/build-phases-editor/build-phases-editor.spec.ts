@@ -1,10 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { BuildPhasesEditor } from './build-phases-editor';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective } from 'ng-mocks';
 import { BuildPhaseEditor } from './build-phase/build-phase-editor';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildPhasesEditor', () => {
     setupTestBed({ zoneless: true });
@@ -20,11 +23,11 @@ describe('BuildPhasesEditor', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [BuildPhasesEditor],
-            providers: [],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(BuildPhasesEditor, {
-                remove: { imports: [BuildPhaseEditor] },
-                add: { imports: [MockComponent(BuildPhaseEditor)] },
+                remove: { imports: [BuildPhaseEditor, TranslateDirective] },
+                add: { imports: [MockComponent(BuildPhaseEditor), MockDirective(TranslateDirective)] },
             })
             .compileComponents();
 

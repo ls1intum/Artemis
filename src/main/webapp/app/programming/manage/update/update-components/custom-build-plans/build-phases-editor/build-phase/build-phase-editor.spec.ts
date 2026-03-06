@@ -1,10 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { BuildPhaseEditor } from './build-phase-editor';
 import { BUILD_PHASE_CONDITION, BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { MonacoEditorFitTextComponent } from '../monaco-editor-auto-size/monaco-editor-fit-text.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('BuildPhaseEditor', () => {
     setupTestBed({ zoneless: true });
@@ -22,19 +26,19 @@ describe('BuildPhaseEditor', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [BuildPhaseEditor],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .overrideComponent(BuildPhaseEditor, {
-                remove: { imports: [MonacoEditorFitTextComponent] },
-                add: { imports: [MockComponent(MonacoEditorFitTextComponent)] },
+                remove: { imports: [MonacoEditorFitTextComponent, TranslateDirective, ArtemisTranslatePipe] },
+                add: { imports: [MockComponent(MonacoEditorFitTextComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)] },
             })
             .compileComponents();
 
         fixture = TestBed.createComponent(BuildPhaseEditor);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [...initialPhase.resultPaths] });
-        fixture.componentRef.setInput('isFirst', false);
+        fixture.componentRef.setInput('index', 1);
         fixture.componentRef.setInput('isLast', false);
-        fixture.componentRef.setInput('isOnly', false);
         fixture.detectChanges();
     });
 
@@ -43,8 +47,8 @@ describe('BuildPhaseEditor', () => {
             const options = component.conditionOptions;
 
             expect(options.length).toBe(Object.keys(BUILD_PHASE_CONDITION).length);
-            expect(options).toContainEqual({ value: 'ALWAYS', label: 'always' });
-            expect(options).toContainEqual({ value: 'AFTER_DUE_DATE', label: 'after due date' });
+            expect(options).toContainEqual({ value: 'ALWAYS', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.ALWAYS' });
+            expect(options).toContainEqual({ value: 'AFTER_DUE_DATE', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.AFTER_DUE_DATE' });
         });
     });
 
@@ -200,10 +204,10 @@ describe('BuildPhaseEditor', () => {
 
     describe('input signals', () => {
         it('should reflect isFirst input', () => {
-            fixture.componentRef.setInput('isFirst', true);
+            fixture.componentRef.setInput('index', 0);
             expect(component.isFirst()).toBe(true);
 
-            fixture.componentRef.setInput('isFirst', false);
+            fixture.componentRef.setInput('index', 1);
             expect(component.isFirst()).toBe(false);
         });
 
@@ -216,10 +220,11 @@ describe('BuildPhaseEditor', () => {
         });
 
         it('should reflect isOnly input', () => {
-            fixture.componentRef.setInput('isOnly', true);
+            fixture.componentRef.setInput('index', 0);
+            fixture.componentRef.setInput('isLast', true);
             expect(component.isOnly()).toBe(true);
 
-            fixture.componentRef.setInput('isOnly', false);
+            fixture.componentRef.setInput('isLast', false);
             expect(component.isOnly()).toBe(false);
         });
     });

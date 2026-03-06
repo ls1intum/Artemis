@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, model, output } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 
 import { faArrowDown, faArrowUp, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { BUILD_PHASE_CONDITION, BuildPhase, BuildPhaseCondition } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -12,14 +13,33 @@ import { Card } from 'primeng/card';
 import { Badge } from 'primeng/badge';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { Tooltip } from 'primeng/tooltip';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-build-phase',
-    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent, ButtonLabel, Card, Badge, HelpIconComponent, Tooltip],
+    imports: [
+        FormsModule,
+        Select,
+        InputText,
+        ButtonDirective,
+        ButtonIcon,
+        FaIconComponent,
+        MonacoEditorFitTextComponent,
+        ButtonLabel,
+        Card,
+        Badge,
+        HelpIconComponent,
+        Tooltip,
+        TranslateDirective,
+        ArtemisTranslatePipe,
+    ],
     templateUrl: './build-phase-editor.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class BuildPhaseEditor {
+    private readonly translateService = inject(TranslateService);
+
     protected readonly faPlus = faPlus;
     protected readonly faXmark = faXmark;
     protected readonly faTrash = faTrash;
@@ -39,9 +59,9 @@ export class BuildPhaseEditor {
     readonly moveUp = output<void>();
     readonly moveDown = output<void>();
 
-    readonly conditionOptions = Object.entries(BUILD_PHASE_CONDITION).map(([key, label]) => ({
+    readonly conditionOptions = Object.keys(BUILD_PHASE_CONDITION).map((key) => ({
         value: key as BuildPhaseCondition,
-        label,
+        label: this.translateService.instant(`artemisApp.programmingExercise.buildPhasesEditor.conditions.${key}`) as string,
     }));
 
     updateName(name: string): void {
