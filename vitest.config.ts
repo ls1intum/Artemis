@@ -48,6 +48,7 @@ export default defineConfig({
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
             'src/main/webapp/app/hyperion/**/*.spec.ts', // include hyperion module tests
+            'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.spec.ts', // include build phases editor tests
         ],
         exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
@@ -86,16 +87,17 @@ export default defineConfig({
                 'src/main/webapp/app/exercise/synchronization/**/*.ts', // include exercise synchronization for code coverage
                 'src/main/webapp/app/exercise/review/**/*.ts', // include review module for code coverage
                 'src/main/webapp/app/hyperion/**/*.ts', // include hyperion module for code coverage
+                'src/main/webapp/app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/**/*.ts', // include build phases editor for code coverage
             ],
             exclude: [
-                '**/node_modules/**',   // exclude node_modules with third-party code
-                '**/*.spec.ts',         // exclude test specification files
-                '**/*.route.ts',        // exclude route definition files (not really testable)
-                '**/*.routes.ts',       // exclude route definition files (not really testable)
-                '**/*.model.ts',        // exclude data model files (not really testable)
-                'src/main/webapp/app/core/config/dayjs.ts',             // exclude dayjs configuration file (not really testable)
-                'src/main/webapp/app/core/config/monaco.config.ts',     // exclude monaco configuration file (not really testable)
-                'src/main/webapp/app/core/config/prod.config.ts',       // exclude dayjs configuration file (not really testable)
+                '**/node_modules/**', // exclude node_modules with third-party code
+                '**/*.spec.ts', // exclude test specification files
+                '**/*.route.ts', // exclude route definition files (not really testable)
+                '**/*.routes.ts', // exclude route definition files (not really testable)
+                '**/*.model.ts', // exclude data model files (not really testable)
+                'src/main/webapp/app/core/config/dayjs.ts', // exclude dayjs configuration file (not really testable)
+                'src/main/webapp/app/core/config/monaco.config.ts', // exclude monaco configuration file (not really testable)
+                'src/main/webapp/app/core/config/prod.config.ts', // exclude dayjs configuration file (not really testable)
             ],
             thresholds: {
                 lines: 92.05,
