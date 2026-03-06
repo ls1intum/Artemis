@@ -299,6 +299,8 @@ describe('StudentsRoomDistributionDialogComponent', () => {
         component.pickSelectedRoom({ item: rooms[0] });
         component.pickSelectedRoom({ item: rooms[1] });
 
+        fixture.changeDetectorRef.detectChanges();
+
         component['setRoomAlias']({ target: { value: 'Main Hall' } } as unknown as Event, rooms[0].id);
 
         vi.runAllTimers();
