@@ -35,11 +35,11 @@
             [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
             [course]="course"
             [allowHiddenFiles]="true"
-            [consistencyIssues]="consistencyIssues()"
             [enableExerciseReviewComments]="true"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
             (onCommit)="onCommit()"
+            (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -196,8 +196,8 @@
                                     <fa-icon [icon]="facArtemisIntelligence" />
                                 }
                                 <span class="ms-2" jhiTranslate="artemisApp.programmingExercise.artemisIntelligence.title"></span>
-                                @if (consistencyIssues().length) {
-                                    <p-badge [value]="'' + consistencyIssues().length" severity="warn" class="ms-1" />
+                                @if (sortedIssues().length) {
+                                    <p-badge [value]="'' + sortedIssues().length" severity="warn" class="ms-1" />
                                 }
                             </button>
                             <p-popover #aiMenuPopover [dismissable]="true" styleClass="ai-dropdown-menu p-0">
@@ -222,7 +222,7 @@
                                         </button>
 
                                         <!-- Split Button for Consistency Check if issues exist -->
-                                        @if (consistencyIssues().length) {
+                                        @if (sortedIssues().length) {
                                             <div class="d-flex w-100">
                                                 <button
                                                     class="ai-menu-item flex-grow-1"
@@ -306,7 +306,7 @@
                 }
 
                 <!-- Consistency Issue Navigator Toolbar -->
-                @if (showConsistencyIssuesToolbar() && consistencyIssues().length) {
+                @if (showConsistencyIssuesToolbar() && sortedIssues().length) {
                     <div class="btn-group ms-2">
                         <button
                             pButton
@@ -434,7 +434,6 @@
                         [externalHeight]="true"
                         [enableResize]="false"
                         [showPreview]="false"
-                        [consistencyIssues]="consistencyIssues()"
                         [enableExerciseReviewComments]="true"
                         [isGeneratingOrRefining]="isGeneratingOrRefining()"
                         [mode]="showDiff() ? 'diff' : 'normal'"
@@ -444,6 +443,7 @@
                         (instructionChange)="onInstructionChanged($event)"
                         (onProblemStatementSaved)="onProblemStatementSaved()"
                         (onInlineRefinement)="onInlineRefinement($event)"
+                        (onNavigateToReviewCommentLocation)="onNavigateToReviewCommentLocation($event)"
                     />
                 } @else {
                     <!-- Loading state while waiting for templateParticipation -->
