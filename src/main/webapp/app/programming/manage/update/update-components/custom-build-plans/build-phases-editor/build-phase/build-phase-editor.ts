@@ -10,10 +10,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MonacoEditorFitTextComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/monaco-editor-auto-size/monaco-editor-fit-text.component';
 import { Card } from 'primeng/card';
 import { Badge } from 'primeng/badge';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { Tooltip } from 'primeng/tooltip';
 
 @Component({
     selector: 'jhi-build-phase',
-    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent, ButtonLabel, Card, Badge],
+    imports: [FormsModule, Select, InputText, ButtonDirective, ButtonIcon, FaIconComponent, MonacoEditorFitTextComponent, ButtonLabel, Card, Badge, HelpIconComponent, Tooltip],
     templateUrl: './build-phase-editor.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })

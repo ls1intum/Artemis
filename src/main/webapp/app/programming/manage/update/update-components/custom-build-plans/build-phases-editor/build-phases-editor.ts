@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, model} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, model } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -10,10 +10,11 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
 import { BuildPhaseEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phase/build-phase-editor';
+import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 
 @Component({
     selector: 'jhi-build-phases-editor',
-    imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, SelectModule, TextareaModule, FaIconComponent, BuildPhaseEditor],
+    imports: [CommonModule, FormsModule, ButtonModule, InputTextModule, SelectModule, TextareaModule, FaIconComponent, BuildPhaseEditor, HelpIconComponent],
     templateUrl: './build-phases-editor.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
