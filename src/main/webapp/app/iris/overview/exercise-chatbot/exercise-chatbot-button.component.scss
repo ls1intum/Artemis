@@ -38,7 +38,7 @@
         opacity 300ms ease-out,
         transform 300ms ease-out;
 
-    // Truncate long messages on the inner content div
+    /* Truncate long messages on the inner content div */
     > div {
         display: -webkit-box;
         -webkit-line-clamp: 3;
