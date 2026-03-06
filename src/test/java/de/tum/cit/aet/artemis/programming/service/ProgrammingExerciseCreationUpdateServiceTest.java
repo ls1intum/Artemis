@@ -67,7 +67,6 @@ class ProgrammingExerciseCreationUpdateServiceTest {
     void createProgrammingExercise_emptyRepositoriesAndUnsupportedLanguage_throwsBadRequest() {
         var exercise = createExercise(ProgrammingLanguage.PYTHON);
         when(moduleFeatureService.isHyperionEnabled()).thenReturn(true);
-
         assertThatThrownBy(() -> programmingExerciseCreationUpdateService.createProgrammingExercise(exercise, true)).isInstanceOfSatisfying(BadRequestAlertException.class, ex -> {
             assertThat(ex.getMessage()).isEqualTo("AI generation is only supported for Java");
             assertThat(ex.getErrorKey()).isEqualTo("aiGenerationUnsupportedLanguage");
