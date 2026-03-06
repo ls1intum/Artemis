@@ -63,7 +63,7 @@
             "versionHistory": {
                 "snapshot": {
                     "programmingTitle": "Programmieraufgaben-Metadaten",
-                    "noProgrammingData": "Diese Version enthält keine programmierungs-spezifischen Metadaten.",
+                    "noProgrammingData": "Diese Version enthält keine programmierspezifischen Metadaten.",
                     "emptyValueHint": "In diesem Snapshot nicht verfügbar",
                     "branch": "Branch",
                     "dockerFlags": "Docker-Flags",
@@ -237,9 +237,9 @@
             "projectKey": "Projektschlüssel",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
-            "testsCommitId": "Tests Commit-Id",
-            "templateCommitId": "Template Commit-Id",
-            "solutionCommitId": "Solution Commit-Id",
+            "testsCommitId": "Test-Commit-ID",
+            "templateCommitId": "Vorlagen-Commit-ID",
+            "solutionCommitId": "Lösungs-Commit-ID",
             "theiaImage": {
                 "title": "Konfiguration für Online IDE",
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",

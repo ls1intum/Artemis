@@ -40,7 +40,7 @@
                     <jhi-exercise-version-shared-snapshot-metadata [snapshot]="snapshot" />
                     <jhi-programming-exercise-version-programming-metadata [programmingData]="snapshot.programmingData" />
                 </div>
-            } @else {
+            } @else if (!timelineError() && !snapshotError()) {
                 <p-message severity="info">
                     <ng-template pTemplate>
                         <span jhiTranslate="artemisApp.exercise.versionHistory.snapshot.empty"></span>

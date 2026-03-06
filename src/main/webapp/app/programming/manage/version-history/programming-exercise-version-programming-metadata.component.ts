@@ -120,7 +120,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
                 RepositoryType.SOLUTION,
                 data.solutionParticipation?.id,
             ),
-            this.toRepositoryField('artemisApp.programmingExercise.testRepositoryUri', data.testRepositoryUri, RepositoryType.TESTS, 0),
+            this.toRepositoryField('artemisApp.programmingExercise.testRepositoryUri', data.testRepositoryUri, RepositoryType.TESTS),
             this.toCommitField('artemisApp.programmingExercise.templateCommitId', data.templateParticipation?.commitId, RepositoryType.TEMPLATE),
             this.toCommitField('artemisApp.programmingExercise.solutionCommitId', data.solutionParticipation?.commitId, RepositoryType.SOLUTION),
             this.toCommitField('artemisApp.programmingExercise.testsCommitId', data.testsCommitId, RepositoryType.TESTS),

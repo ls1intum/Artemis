@@ -79,6 +79,19 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         expect(component.snapshotError()).toBe('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
     });
 
+    it('should allow retrying the same version after a failed snapshot fetch', () => {
+        serviceMock.getSnapshot.mockReturnValueOnce(throwError(() => new Error('boom')));
+        fixture.detectChanges();
+
+        // version 9 was auto-selected and failed
+        expect(component.snapshotError()).toBe('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
+        serviceMock.getSnapshot.mockClear();
+
+        // re-selecting the same version should retry
+        component.onSelectVersion(9);
+        expect(serviceMock.getSnapshot).toHaveBeenCalledWith(42, 9);
+    });
+
     it('should set timeline error when version loading fails', () => {
         serviceMock.getVersions.mockReturnValueOnce(throwError(() => new Error('fail')));
         fixture.detectChanges();

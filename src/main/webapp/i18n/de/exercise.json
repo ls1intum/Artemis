@@ -43,9 +43,9 @@
                     "sharedTitle": "Aufgaben-Metadaten"
                 },
                 "errors": {
-                    "invalidExerciseId": "Die Aufgaben-ID konnte nicht ermittelt werden.",
+                    "invalidExerciseId": "Die Seite konnte nicht geladen werden.",
                     "timelineLoadFailed": "Der Versionsverlauf konnte nicht geladen werden.",
-                    "snapshotLoadFailed": "Der Versions-Snapshot konnte nicht geladen werden."
+                    "snapshotLoadFailed": "Die Versionsdaten konnten nicht geladen werden."
                 }
             },
             "import": {

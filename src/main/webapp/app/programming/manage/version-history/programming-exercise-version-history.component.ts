@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ExerciseVersionMetadata } from 'app/exercise/version-history/shared/exercise-version-history.model';
@@ -39,6 +40,7 @@ import { Subscription, finalize } from 'rxjs';
 export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly versionHistoryService = inject(ExerciseVersionHistoryService);
+    private readonly destroyRef = inject(DestroyRef);
 
     /** Subscription for the in-flight snapshot request, cancelled when a new version is selected. */
     private snapshotSubscription?: Subscription;
@@ -90,9 +92,9 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
         this.loadVersions(0, true);
     }
 
-    /** Selects a version and loads its snapshot. No-ops if already selected. */
+    /** Selects a version and loads its snapshot. No-ops if already selected unless the previous fetch failed. */
     onSelectVersion(versionId: number): void {
-        if (this.selectedVersionId() === versionId) {
+        if (this.selectedVersionId() === versionId && (this.isLoadingSnapshot() || this.selectedSnapshot() !== undefined)) {
             return;
         }
 
@@ -136,6 +138,7 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
         this.versionHistoryService
             .getVersions(exerciseId, page, this.pageSize)
             .pipe(
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => {
                     this.isLoadingVersions.set(false);
                     this.isLoadingMoreVersions.set(false);

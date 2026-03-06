@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
+import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
@@ -34,7 +35,7 @@ interface MetadataDateField {
  * and grading instructions.
  *
  * Markdown sections (problem statement, grading instructions) are rendered
- * with PlantUML extension support and injected into the DOM as sanitized HTML.
+ * with task and PlantUML extension support and injected into the DOM as sanitized HTML.
  */
 @Component({
     selector: 'jhi-exercise-version-shared-snapshot-metadata',
@@ -47,6 +48,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     private readonly markdownService = inject(ArtemisMarkdownService);
     private readonly translateService = inject(TranslateService);
     private readonly plantUmlWrapper = inject(ProgrammingExercisePlantUmlExtensionWrapper);
+    private readonly taskWrapper = inject(ProgrammingExerciseTaskExtensionWrapper);
 
     private readonly injectableCallbacks: Array<() => void> = [];
     private readonly injectableContentFoundSubscription: Subscription;
@@ -148,13 +150,13 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
         }, 0);
     }
 
-    /** Renders markdown to sanitized SafeHtml with PlantUML extension support. */
+    /** Renders markdown to sanitized SafeHtml with task and PlantUML extension support. */
     private renderMarkdown(markdown?: string): SafeHtml | undefined {
         if (!markdown?.trim()) {
             return undefined;
         }
 
-        return this.markdownService.safeHtmlForMarkdown(markdown, [this.plantUmlWrapper.getExtension()]);
+        return this.markdownService.safeHtmlForMarkdown(markdown, [this.taskWrapper.getExtension(), this.plantUmlWrapper.getExtension()]);
     }
 
     /** Parses an ISO date string into a dayjs instance, or returns `undefined`. */
