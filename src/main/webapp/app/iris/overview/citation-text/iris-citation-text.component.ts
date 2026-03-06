@@ -33,9 +33,6 @@ export class IrisCitationTextComponent {
         'iris-citation--source': faCircleExclamation, // Unknown source citations
     };
 
-    private readonly citationGroupData = new Map<string, { parsed: IrisCitationParsed[]; metas: Array<IrisCitationMetaDTO | undefined> }>();
-    private groupIdCounter = 0;
-
     readonly text = input.required<string>();
     readonly citationInfo = input<IrisCitationMetaDTO[]>([]);
 
@@ -48,9 +45,6 @@ export class IrisCitationTextComponent {
      * Processes text by applying markdown rendering first, then replacing citation markers with HTML.
      */
     private processText(text: string, citationInfo: IrisCitationMetaDTO[]): string {
-        this.citationGroupData.clear();
-        this.groupIdCounter = 0;
-
         // Apply markdown rendering (this converts markdown syntax to HTML)
         const markdownHtml = htmlForMarkdown(text, [], undefined, undefined, true);
 
@@ -114,12 +108,8 @@ export class IrisCitationTextComponent {
                </span>`
             : '';
 
-        const groupId = String(this.groupIdCounter++);
-        this.citationGroupData.set(groupId, { parsed: parsedIrisCitation, metas: metadata });
-
         return `
-            <span class="${groupClasses}"
-                  data-group-id="${groupId}">
+            <span class="${groupClasses}">
                 <span class="iris-citation ${typeClass}">
                     <span class="iris-citation__icon">${iconSvg}</span>
                     <span class="iris-citation__text">${label}</span>
@@ -228,31 +218,6 @@ export class IrisCitationTextComponent {
     }
 
     /**
-     * Updates the citation bubble icon and keyword to match a different citation.
-     * Used when navigating through citation groups.
-     */
-    private updateCitationBubble(citationGroup: HTMLElement, citation: IrisCitationParsed): void {
-        const bubble = citationGroup.querySelector('.iris-citation') as HTMLElement;
-        if (!bubble) return;
-
-        const iconElement = bubble.querySelector('.iris-citation__icon') as HTMLElement;
-        const textElement = bubble.querySelector('.iris-citation__text') as HTMLElement;
-        if (!iconElement || !textElement) return;
-
-        const newTypeClass = resolveCitationTypeClass(citation);
-        const newLabel = formatCitationLabel(citation);
-        const newIconSvg = this.getIconSvg(newTypeClass);
-
-        iconElement.innerHTML = newIconSvg;
-
-        textElement.innerHTML = newLabel;
-
-        const typeClasses = ['iris-citation--slide', 'iris-citation--video', 'iris-citation--faq', 'iris-citation--source'];
-        typeClasses.forEach((cls) => bubble.classList.remove(cls));
-        bubble.classList.add(newTypeClass);
-    }
-
-    /**
      * Handles navigation button clicks using event delegation.
      */
     @HostListener('click', ['$event'])
@@ -288,17 +253,6 @@ export class IrisCitationTextComponent {
         if (counterDisplay) {
             counterDisplay.textContent = `${newIndex + 1} / ${summaryItems.length}`;
         }
-
-        const activeSummaryItem = summaryItems[newIndex] as HTMLElement;
-        const citationIndex = parseInt(activeSummaryItem.getAttribute('data-citation-index') || '0', 10);
-
-        const groupId = citationGroup.getAttribute('data-group-id');
-        if (groupId !== null) {
-            const citation = this.citationGroupData.get(groupId)?.parsed[citationIndex];
-            if (citation) {
-                this.updateCitationBubble(citationGroup as HTMLElement, citation);
-            }
-        }
     }
 
     /**
@@ -315,24 +269,41 @@ export class IrisCitationTextComponent {
         const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
         if (!summary) return;
 
+        // Different boundaries for horizontal and vertical collision detection
         const bubble = citation.closest('.bubble-left') as HTMLElement | null;
-        const boundary = bubble ?? (citation.closest('jhi-iris-citation-text') as HTMLElement);
+        const messagesDiv = citation.closest('div.messages') as HTMLElement | null;
+        const defaultBoundary = citation.closest('jhi-iris-citation-text') as HTMLElement;
 
-        if (!boundary) return;
+        const horizontalBoundary = bubble ?? defaultBoundary;
+        const verticalBoundary = messagesDiv ?? defaultBoundary;
 
+        if (!horizontalBoundary || !verticalBoundary) return;
+
+        // Reset positioning to get accurate measurements
         citation.style.setProperty('--iris-citation-shift', '0px');
-        const boundaryRect = boundary.getBoundingClientRect();
+        citation.style.setProperty('--iris-citation-vertical-offset', 'calc(-100% - 18px)');
+
+        const horizontalBoundaryRect = horizontalBoundary.getBoundingClientRect();
+        const verticalBoundaryRect = verticalBoundary.getBoundingClientRect();
         const summaryRect = summary.getBoundingClientRect();
 
+        // horizontal collision detection
         let shift = 0;
-        if (summaryRect.left < boundaryRect.left) {
-            shift = boundaryRect.left - summaryRect.left;
-        } else if (summaryRect.right > boundaryRect.right) {
-            shift = boundaryRect.right - summaryRect.right;
+        if (summaryRect.left < horizontalBoundaryRect.left) {
+            shift = horizontalBoundaryRect.left - summaryRect.left;
+        } else if (summaryRect.right > horizontalBoundaryRect.right) {
+            shift = horizontalBoundaryRect.right - summaryRect.right;
         }
-
         if (shift !== 0) {
             citation.style.setProperty('--iris-citation-shift', `${shift}px`);
+        }
+
+        // vertical collision detection
+        if (summaryRect.top < verticalBoundaryRect.top) {
+            citation.style.setProperty('--iris-citation-vertical-offset', '0px');
+            summary.classList.add('iris-citation__summary--flipped');
+        } else {
+            summary.classList.remove('iris-citation__summary--flipped');
         }
     }
 
@@ -349,6 +320,9 @@ export class IrisCitationTextComponent {
         const relatedTarget = event.relatedTarget as HTMLElement | null;
         if (relatedTarget && citation.contains(relatedTarget)) return;
 
-        citation.style.setProperty('--iris-citation-shift', '0px');
+        // Only remove the flipped class - don't reset CSS properties to avoid visual jump during fade-out
+        // Properties will be reset on next mouseover anyway
+        const summary = citation.querySelector('.iris-citation__summary') as HTMLElement | null;
+        summary?.classList.remove('iris-citation__summary--flipped');
     }
 }
