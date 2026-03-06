@@ -23,7 +23,8 @@
             min-width: 0;
         }
 
-        &:hover {
+        &:hover,
+        &:focus-within {
             background-color: var(--iris-accent-background);
             border-radius: 6px;
 
@@ -71,6 +72,10 @@
         .chat-history-text {
             background-color: var(--iris-tertiary-background);
             border-radius: 6px;
+
+            .menu-trigger {
+                display: block;
+            }
         }
     }
 }

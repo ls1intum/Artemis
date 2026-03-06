@@ -14,6 +14,7 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideRouter } from '@angular/router';
+import { LangChangeEvent } from '@ngx-translate/core';
 
 describe('ChatHistoryItemComponent', () => {
     setupTestBed({ zoneless: true });
@@ -351,5 +352,33 @@ describe('ChatHistoryItemComponent', () => {
 
         expect(mockEvent.stopPropagation).toHaveBeenCalled();
         expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
+
+    it('should recompute tooltipText when locale changes', async () => {
+        const session: IrisSessionDTO = {
+            id: 30,
+            title: 'Locale test chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 50,
+            entityName: 'Exercise 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        const translateService = TestBed.inject(TranslateService) as unknown as MockTranslateService;
+        const instantSpy = vi.spyOn(translateService as unknown as TranslateService, 'instant');
+
+        // Record call count before language change
+        const callsBefore = instantSpy.mock.calls.length;
+
+        // Simulate a language change
+        translateService.onLangChangeSubject.next({ lang: 'de', translations: {} } as LangChangeEvent);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        // tooltipText should have been recomputed (instant called again)
+        expect(instantSpy.mock.calls.length).toBeGreaterThan(callsBefore);
     });
 });

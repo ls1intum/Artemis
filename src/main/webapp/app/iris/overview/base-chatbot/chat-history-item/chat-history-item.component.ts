@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, Signal, computed, inject, input, output, viewChild } from '@angular/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { DatePipe, NgClass } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -22,13 +23,17 @@ import { TooltipModule } from 'primeng/tooltip';
 })
 export class ChatHistoryItemComponent {
     private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
 
     session = input.required<IrisSessionDTO>();
     active = input<boolean>(false);
     icon: Signal<IconProp | undefined> = computed(() => this.computeIcon(this.session()));
-    tooltipText: Signal<string | undefined> = computed(() => this.computeTooltipText(this.session()));
+    tooltipText: Signal<string | undefined> = computed(() => {
+        this.currentLocale();
+        return this.computeTooltipText(this.session());
+    });
     ariaLabelText: Signal<string | undefined> = computed(() => this.tooltipText());
     entityRoute: Signal<string | undefined> = computed(() => this.computeEntityRoute(this.session()));
     readonly isNewChat = computed(() => {
