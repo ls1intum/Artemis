@@ -10,7 +10,7 @@ services:
   prometheus:
     container_name: artemis-prometheus
     # TODO: check if we can upgrade to 3.x
-    image: docker.io/prom/prometheus:v2.55.1
+    image: docker.io/prom/prometheus:${PROMETHEUS_VERSION}
     pull_policy: missing
     volumes:
         - ./monitoring/prometheus/:/etc/prometheus/
@@ -27,7 +27,7 @@ services:
   grafana:
     container_name: artemis-grafana
     # TODO: check if we can upgrade to 11.x
-    image: docker.io/grafana/grafana:10.4.14
+    image: docker.io/grafana/grafana:${GRAFANA_VERSION}
     pull_policy: missing
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/

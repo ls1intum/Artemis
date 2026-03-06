@@ -158,8 +158,8 @@ describe('ModelingAssessmentComponent', () => {
             fixture.detectChanges();
             const scoreDisplay = fixture.debugElement.query(By.directive(ScoreDisplayComponent));
             expect(scoreDisplay).not.toBeNull();
-            expect(scoreDisplay.componentInstance.score).toEqual(totalScore);
-            expect(scoreDisplay.componentInstance.maxPoints).toEqual(maxScore);
+            expect(scoreDisplay.componentInstance.score()).toEqual(totalScore);
+            expect(scoreDisplay.componentInstance.maxPoints()).toEqual(maxScore);
         });
 
         it('should not display score if displayPoints wrong', () => {
