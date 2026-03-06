@@ -15,6 +15,7 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { Tooltip } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-build-phase',
@@ -39,6 +40,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 })
 export class BuildPhaseEditor {
     private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     protected readonly faPlus = faPlus;
     protected readonly faXmark = faXmark;
@@ -53,16 +55,24 @@ export class BuildPhaseEditor {
 
     readonly isFirst = computed(() => this.index() === 0);
     readonly isOnly = computed(() => this.isFirst() && this.isLast());
-    readonly testsExpectedForThisPhase = computed(() => !!this.phase().resultPaths?.length);
+
+    readonly testsExpectedHintKey = computed(() => {
+        this.currentLocale();
+        return this.phase().resultPaths?.length
+            ? 'artemisApp.programmingExercise.buildPhasesEditor.testsExpected'
+            : 'artemisApp.programmingExercise.buildPhasesEditor.noTestsExpected';
+    });
+    readonly conditionOptions = computed(() => {
+        this.currentLocale();
+        return Object.keys(BUILD_PHASE_CONDITION).map((key) => ({
+            value: key as BuildPhaseCondition,
+            label: this.translateService.instant(`artemisApp.programmingExercise.buildPhasesEditor.conditions.${key}`) as string,
+        }));
+    });
 
     readonly delete = output<void>();
     readonly moveUp = output<void>();
     readonly moveDown = output<void>();
-
-    readonly conditionOptions = Object.keys(BUILD_PHASE_CONDITION).map((key) => ({
-        value: key as BuildPhaseCondition,
-        label: this.translateService.instant(`artemisApp.programmingExercise.buildPhasesEditor.conditions.${key}`) as string,
-    }));
 
     updateName(name: string): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, name }));

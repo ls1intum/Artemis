@@ -44,7 +44,7 @@ describe('BuildPhaseEditor', () => {
 
     describe('conditionOptions', () => {
         it('should generate options from BUILD_PHASE_CONDITION', () => {
-            const options = component.conditionOptions;
+            const options = component.conditionOptions();
 
             expect(options.length).toBe(Object.keys(BUILD_PHASE_CONDITION).length);
             expect(options).toContainEqual({ value: 'ALWAYS', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.ALWAYS' });

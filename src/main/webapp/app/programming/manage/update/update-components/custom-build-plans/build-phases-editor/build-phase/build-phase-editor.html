@@ -65,7 +65,7 @@
             <div class="d-flex gap-1">
                 <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
             </div>
-            <p-select size="small" [options]="conditionOptions" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+            <p-select size="small" [options]="conditionOptions()" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
         </div>
     </div>
 
@@ -83,12 +83,7 @@
         <div class="d-flex align-items-center">
             <label class="me-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.resultPaths"></label>
             <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.resultPathsHelp" />
-            <span class="ms-2 small text-secondary">{{
-                (testsExpectedForThisPhase()
-                    ? 'artemisApp.programmingExercise.buildPhasesEditor.testsExpected'
-                    : 'artemisApp.programmingExercise.buildPhasesEditor.noTestsExpected'
-                ) | artemisTranslate
-            }}</span>
+            <span class="ms-2 small text-secondary">{{ testsExpectedHintKey() | artemisTranslate }}</span>
         </div>
 
         @for (path of phase().resultPaths; track $index) {
