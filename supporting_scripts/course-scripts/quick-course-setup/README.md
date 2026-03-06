@@ -178,6 +178,31 @@ If you want to delete all the students created by the script:
 python3 delete_students.py
 ```
 
+## Mass Course Generation (2000+ Courses with Unique User Groups)
+
+For large-scale testing scenarios where you need to generate thousands of courses with unique user groups but reuse the same pool of students:
+
+```shell
+python3 mass_course_generation.py
+```
+
+This script:
+- Creates a shared pool of students (e.g., 1500 students)
+- Generates multiple courses (e.g., 2000 courses)
+- Each course has **unique user groups** (e.g., `course1-students`, `course2-students`)
+- All students are registered to each course with their course-specific group
+- Student passwords are set to match their usernames (e.g., `mass_student1` / `mass_student1`)
+
+**Configuration**: Edit `mass_generation_config.ini` to customize:
+- Number of courses to create
+- Number of students per course
+- Course naming conventions
+- Admin credentials and server URLs
+
+**For detailed documentation**, see [MASS_GENERATION_README.md](./MASS_GENERATION_README.md)
+
+**WARNING**: This creates a MASSIVE amount of data (e.g., 3,000,000 registrations for 2000 courses x 1500 students). Only run on local test instances!
+
 ### Dependency management
 
 Find outdated dependencies using the following command:
