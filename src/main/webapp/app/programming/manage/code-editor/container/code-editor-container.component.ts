@@ -28,11 +28,11 @@ import { ConnectionError } from 'app/programming/shared/code-editor/services/cod
 import { Annotation, CodeEditorMonacoComponent } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
@@ -84,7 +84,6 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     readOnlyManualFeedback = input<boolean>(false);
     highlightDifferences = input<boolean>(false);
     disableAutoSave = input<boolean>(false);
-    consistencyIssues = input<ConsistencyIssue[]>([]);
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
@@ -99,6 +98,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     onDiscardSuggestion = output<Feedback>();
     onEditorLoaded = output<void>();
     onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     onCommit = output<void>();
 
     /** Work in Progress: temporary properties needed to get first prototype working */
