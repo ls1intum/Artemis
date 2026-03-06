@@ -354,6 +354,48 @@ describe('ChatHistoryItemComponent', () => {
         expect(component.sessionClicked.emit).not.toHaveBeenCalled();
     });
 
+    it('should not emit sessionClicked when Enter is pressed on entity icon link', async () => {
+        const session: IrisSessionDTO = {
+            id: 21,
+            title: 'Exercise chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 99,
+            entityName: 'Exercise 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        vi.spyOn(component.sessionClicked, 'emit');
+
+        const entityIcon = fixture.debugElement.query(By.css('.related-entity-icon'));
+        entityIcon.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
+
+    it('should not emit sessionClicked when Space is pressed on entity icon link', async () => {
+        const session: IrisSessionDTO = {
+            id: 22,
+            title: 'Exercise chat',
+            creationDate: new Date(),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 99,
+            entityName: 'Exercise 1',
+        };
+
+        fixture.componentRef.setInput('session', session);
+        await fixture.whenStable();
+
+        vi.spyOn(component.sessionClicked, 'emit');
+
+        const entityIcon = fixture.debugElement.query(By.css('.related-entity-icon'));
+        entityIcon.nativeElement.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+
+        expect(component.sessionClicked.emit).not.toHaveBeenCalled();
+    });
+
     it('should recompute tooltipText when locale changes', async () => {
         const session: IrisSessionDTO = {
             id: 30,

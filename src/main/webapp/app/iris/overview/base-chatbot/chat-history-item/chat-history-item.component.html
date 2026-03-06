@@ -28,6 +28,8 @@
             tooltipStyleClass="chat-history-entity-tooltip"
             [attr.aria-label]="ariaLabelText()!"
             (click)="onEntityIconClick($event)"
+            (keydown.enter)="$event.stopPropagation()"
+            (keydown.space)="$event.stopPropagation()"
         >
             <fa-icon [icon]="icon()!" />
         </a>
