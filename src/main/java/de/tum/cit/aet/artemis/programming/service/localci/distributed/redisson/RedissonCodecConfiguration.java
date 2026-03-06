@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.core.config.RedisCondition;
 
@@ -18,7 +19,9 @@ import de.tum.cit.aet.artemis.core.config.RedisCondition;
 public class RedissonCodecConfiguration {
 
     @Bean
-    public RedissonAutoConfigurationCustomizer redissonAutoConfigurationCustomizer(ObjectMapper objectMapper) {
-        return (Config configuration) -> configuration.setCodec(new JsonJacksonCodec(objectMapper));
+    public RedissonAutoConfigurationCustomizer redissonAutoConfigurationCustomizer() {
+        ObjectMapper redissonObjectMapper = new ObjectMapper();
+        redissonObjectMapper.registerModule(new JavaTimeModule());
+        return (Config configuration) -> configuration.setCodec(new JsonJacksonCodec(redissonObjectMapper));
     }
 }

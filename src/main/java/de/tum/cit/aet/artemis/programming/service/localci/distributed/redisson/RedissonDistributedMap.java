@@ -13,6 +13,7 @@ import org.redisson.api.RMap;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RTopic;
 import org.redisson.client.RedisConnectionException;
+import org.redisson.client.RedisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -126,7 +127,27 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
 
     @Override
     public HashMap<K, V> getMapCopy() {
-        return new HashMap<>(map);
+        HashMap<K, V> mapCopy = new HashMap<>();
+
+        for (K key : map.keySet()) {
+            try {
+                V value = map.get(key);
+                if (value != null) {
+                    mapCopy.put(key, value);
+                }
+            }
+            catch (RedisException e) {
+                log.warn("Could not deserialize value for key '{}' in distributed map '{}'. Removing corrupted entry.", key, map.getName(), e);
+                try {
+                    map.fastRemove(key);
+                }
+                catch (Exception removeException) {
+                    log.warn("Failed to remove corrupted key '{}' from distributed map '{}'.", key, map.getName(), removeException);
+                }
+            }
+        }
+
+        return mapCopy;
     }
 
     @Override

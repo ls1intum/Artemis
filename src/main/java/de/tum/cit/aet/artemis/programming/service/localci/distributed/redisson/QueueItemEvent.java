@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class QueueItemEvent<T> {
 
     public enum EventType {
@@ -10,7 +13,8 @@ public class QueueItemEvent<T> {
 
     private final EventType eventType;
 
-    private QueueItemEvent(EventType eventType, T item) {
+    @JsonCreator
+    private QueueItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("item") T item) {
         this.eventType = eventType;
         this.item = item;
     }

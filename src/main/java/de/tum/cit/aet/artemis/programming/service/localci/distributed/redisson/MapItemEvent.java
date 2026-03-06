@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class MapItemEvent<K, V> {
 
     public enum EventType {
@@ -14,7 +17,8 @@ public class MapItemEvent<K, V> {
 
     private final EventType eventType;
 
-    private MapItemEvent(EventType eventType, K key, V value, V oldValue) {
+    @JsonCreator
+    private MapItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("key") K key, @JsonProperty("value") V value, @JsonProperty("oldValue") V oldValue) {
         this.key = key;
         this.value = value;
         this.eventType = eventType;

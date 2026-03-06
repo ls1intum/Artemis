@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * Event class for Redisson set notifications, used for publishing set changes via RTopic.
  *
@@ -15,7 +18,8 @@ public class SetItemEvent<E> {
 
     private final EventType eventType;
 
-    private SetItemEvent(EventType eventType, E item) {
+    @JsonCreator
+    private SetItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("item") E item) {
         this.item = item;
         this.eventType = eventType;
     }
