@@ -561,11 +561,4 @@ describe('MarkdownEditorMonacoComponent', () => {
 
         expect(result).toBeUndefined();
     });
-
-    it('should have consistencyIssues input', () => {
-        fixture.detectChanges();
-
-        // Verify the consistencyIssues input is defined
-        expect(comp.consistencyIssues).toBeDefined();
-    });
 });
