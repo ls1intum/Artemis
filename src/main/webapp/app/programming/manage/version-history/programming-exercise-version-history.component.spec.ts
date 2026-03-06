@@ -72,10 +72,9 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
     });
 
     it('should set error key when snapshot loading fails', () => {
-        serviceMock.getSnapshot.mockReturnValueOnce(throwError(() => new Error('boom')));
+        serviceMock.getSnapshot.mockReturnValue(throwError(() => new Error('boom')));
         fixture.detectChanges();
 
-        component.onSelectVersion(9);
         expect(component.snapshotError()).toBe('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
     });
 
