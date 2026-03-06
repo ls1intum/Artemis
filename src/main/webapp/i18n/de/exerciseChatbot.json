@@ -60,7 +60,10 @@
                 "lectureLabel": "Zugehörige Vorlesung"
             },
             "statusIndicator": {
-                "thinking": "Iris denkt nach"
+                "labels": {
+                    "0": "Iris denkt nach",
+                    "1": "Denkt angestrengt nach"
+                }
             },
             "actions": {
                 "copy": "Kopieren",

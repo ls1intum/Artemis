@@ -60,7 +60,10 @@
                 "lectureLabel": "Related Lecture"
             },
             "statusIndicator": {
-                "thinking": "Iris is thinking"
+                "labels": {
+                    "0": "Iris is thinking",
+                    "1": "Thinking hard"
+                }
             },
             "actions": {
                 "copy": "Copy",

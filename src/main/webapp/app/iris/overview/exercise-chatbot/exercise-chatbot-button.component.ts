@@ -1,17 +1,16 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { ActivatedRoute, Params } from '@angular/router';
 import { IrisChatbotWidgetComponent } from 'app/iris/overview/exercise-chatbot/widget/chatbot-widget.component';
 import { EMPTY, filter, map, of, switchMap } from 'rxjs';
-import { faArrowRight, faChevronDown, faCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircle } from '@fortawesome/free-solid-svg-icons';
 import { IrisLogoLookDirection, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { isTextContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citation-text.util';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
-import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -21,13 +20,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [NgClass, FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe, TranslateDirective],
+    imports: [FaIconComponent, IrisLogoComponent, HtmlForMarkdownPipe, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faArrowRight = faArrowRight;
+    // Must match the number of keys in i18n exerciseChatbot.statusIndicator.labels
+    private static readonly STATUS_LABEL_COUNT = 2;
+    private static readonly STATUS_CYCLE_INTERVAL = 3000;
+    private static readonly SLIDE_ANIMATION_DURATION = 300;
 
     private readonly dialog = inject(MatDialog);
     private readonly overlay = inject(Overlay);
@@ -46,7 +47,6 @@ export class IrisExerciseChatbotButtonComponent {
 
     // UI state as signals for OnPush change detection
     readonly chatOpen = signal(false);
-    readonly isOverflowing = signal(false);
     readonly newIrisMessage = signal<string | undefined>(undefined);
 
     // Convert numNewMessages observable to signal
@@ -56,6 +56,15 @@ export class IrisExerciseChatbotButtonComponent {
     // Convert stages observable to signal for processing indicator
     private readonly currentStages = toSignal(this.chatService.stages, { initialValue: [] as IrisStageDTO[] });
     readonly isProcessing = computed(() => this.currentStages().some((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
+
+    // Status label cycling
+    readonly statusLabelIndex = signal(0);
+    readonly statusLabelAnimState = signal<'slide-in' | 'slide-out'>('slide-in');
+    readonly statusLabelKey = computed(() => 'artemisApp.exerciseChatbot.statusIndicator.labels.' + this.statusLabelIndex());
+    private statusCycleIntervalId: ReturnType<typeof setInterval> | undefined;
+    private slideTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private shuffledLabelOrder: number[] = [];
+    private shuffledPosition = 0;
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -83,7 +92,6 @@ export class IrisExerciseChatbotButtonComponent {
     // Not a signal because it's internal bookkeeping read only with untracked() - no reactivity needed
     private lastShownBubbleMessage: string | undefined;
 
-    readonly chatBubble = viewChild<ElementRef>('chatBubble');
     private readonly shouldReopenChat = toSignal(this.chatService.shouldReopenChat$, { initialValue: false });
 
     constructor() {
@@ -94,6 +102,12 @@ export class IrisExerciseChatbotButtonComponent {
             }
             if (this.bubbleTimeoutId) {
                 clearTimeout(this.bubbleTimeoutId);
+            }
+            if (this.statusCycleIntervalId) {
+                clearInterval(this.statusCycleIntervalId);
+            }
+            if (this.slideTimeoutId) {
+                clearTimeout(this.slideTimeoutId);
             }
         });
 
@@ -134,7 +148,6 @@ export class IrisExerciseChatbotButtonComponent {
             if (message && isChatClosed && message !== this.lastShownBubbleMessage) {
                 this.lastShownBubbleMessage = message;
                 this.newIrisMessage.set(message);
-                setTimeout(() => this.checkOverflow(), 0);
 
                 // Clear any existing timeout
                 if (this.bubbleTimeoutId) {
@@ -144,8 +157,42 @@ export class IrisExerciseChatbotButtonComponent {
                 // Auto-hide the bubble after timeout
                 this.bubbleTimeoutId = setTimeout(() => {
                     this.newIrisMessage.set(undefined);
-                    this.isOverflowing.set(false);
                 }, this.CHAT_BUBBLE_TIMEOUT);
+            }
+        });
+
+        // Cycle status labels while processing
+        effect(() => {
+            const processing = this.isProcessing();
+
+            // Always clean up first to avoid timer leaks on re-runs
+            if (this.statusCycleIntervalId) {
+                clearInterval(this.statusCycleIntervalId);
+                this.statusCycleIntervalId = undefined;
+            }
+            if (this.slideTimeoutId) {
+                clearTimeout(this.slideTimeoutId);
+                this.slideTimeoutId = undefined;
+            }
+
+            if (processing) {
+                this.shuffleLabelOrder();
+                this.shuffledPosition = 0;
+                this.statusLabelIndex.set(this.shuffledLabelOrder[0]);
+                this.statusLabelAnimState.set('slide-in');
+                this.statusCycleIntervalId = setInterval(() => {
+                    // Phase 1: slide out old text
+                    this.statusLabelAnimState.set('slide-out');
+                    this.slideTimeoutId = setTimeout(() => {
+                        // Phase 2: swap text and slide in new text
+                        this.shuffledPosition = (this.shuffledPosition + 1) % IrisExerciseChatbotButtonComponent.STATUS_LABEL_COUNT;
+                        if (this.shuffledPosition === 0) {
+                            this.shuffleLabelOrder();
+                        }
+                        this.statusLabelIndex.set(this.shuffledLabelOrder[this.shuffledPosition]);
+                        this.statusLabelAnimState.set('slide-in');
+                    }, IrisExerciseChatbotButtonComponent.SLIDE_ANIMATION_DURATION);
+                }, IrisExerciseChatbotButtonComponent.STATUS_CYCLE_INTERVAL);
             }
         });
 
@@ -176,22 +223,12 @@ export class IrisExerciseChatbotButtonComponent {
     }
 
     /**
-     * Checks if the chat bubble is overflowing and sets isOverflowing to true if it is.
-     */
-    public checkOverflow() {
-        const bubble = this.chatBubble()?.nativeElement as HTMLElement | undefined;
-        const text = bubble?.querySelector<HTMLElement>('.bubble-text') ?? undefined;
-        this.isOverflowing.set(!!text && text.scrollHeight > text.clientHeight);
-    }
-
-    /**
      * Opens the chat dialog using MatDialog.
      * Sets the configuration options for the dialog, including position, size, and data.
      */
     public openChat() {
         this.chatOpen.set(true);
         this.newIrisMessage.set(undefined);
-        this.isOverflowing.set(false);
         this.lastShownBubbleMessage = undefined;
         this.dialogRef = this.dialog.open(IrisChatbotWidgetComponent, {
             hasBackdrop: false,
@@ -208,5 +245,16 @@ export class IrisExerciseChatbotButtonComponent {
     private handleDialogClose() {
         this.chatOpen.set(false);
         this.newIrisMessage.set(undefined);
+    }
+
+    private shuffleLabelOrder(): void {
+        const lastShown = this.shuffledLabelOrder.length > 0 ? this.shuffledLabelOrder[this.shuffledLabelOrder.length - 1] : -1;
+        do {
+            this.shuffledLabelOrder = Array.from({ length: IrisExerciseChatbotButtonComponent.STATUS_LABEL_COUNT }, (_, i) => i);
+            for (let i = this.shuffledLabelOrder.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.shuffledLabelOrder[i], this.shuffledLabelOrder[j]] = [this.shuffledLabelOrder[j], this.shuffledLabelOrder[i]];
+            }
+        } while (this.shuffledLabelOrder[0] === lastShown && IrisExerciseChatbotButtonComponent.STATUS_LABEL_COUNT > 1);
     }
 }

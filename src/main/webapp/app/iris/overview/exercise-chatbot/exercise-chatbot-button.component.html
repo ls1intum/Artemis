@@ -1,22 +1,17 @@
 @if (!chatOpen()) {
-    <div
-        #chatBubble
-        class="message-bubble"
-        (click)="handleButtonClick()"
-        [ngClass]="{ 'content-overflow': isOverflowing(), 'bubble-visible': newIrisMessage(), 'bubble-hidden': !newIrisMessage() }"
-    >
-        @if (newIrisMessage()) {
-            <div class="bubble-text" [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></div>
-            @if (isOverflowing()) {
-                <div class="read-more">
-                    <fa-icon [icon]="faArrowRight" class="read-more-icon" />
-                </div>
-            }
-        }
-    </div>
+    @if (newIrisMessage()) {
+        <div class="message-bubble" (click)="handleButtonClick()">
+            <div [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></div>
+        </div>
+    }
     @if (isProcessing() && !newIrisMessage()) {
-        <div class="status-indicator" role="status">
-            <span class="sr-only" jhiTranslate="artemisApp.exerciseChatbot.statusIndicator.thinking"></span>
+        <div class="status-indicator" role="status" aria-live="polite">
+            <span
+                class="status-label"
+                [class.slide-out]="statusLabelAnimState() === 'slide-out'"
+                [class.slide-in]="statusLabelAnimState() === 'slide-in'"
+                [jhiTranslate]="statusLabelKey()"
+            ></span>
             <div class="typing-dots" aria-hidden="true">
                 <span class="dot"></span>
                 <span class="dot"></span>
