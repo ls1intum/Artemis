@@ -99,7 +99,7 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         // Submit all 4 exercises
         const exerciseEntries = Object.entries(exercises);
         for (let i = 0; i < exerciseEntries.length; i++) {
-            const [key, exercise] = exerciseEntries[i];
+            const [, exercise] = exerciseEntries[i];
             await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
         }

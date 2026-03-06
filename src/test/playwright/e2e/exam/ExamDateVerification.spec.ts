@@ -1,20 +1,19 @@
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { test } from '../../support/fixtures';
 import { admin, studentOne } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import { Fixtures } from '../../fixtures/fixtures';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.examManagement.id } as any;
 
 test.describe('Exam date verification', { tag: '@fast' }, () => {
-    let course: Course;
     let examTitle: string;
 
-    test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
+    test.beforeEach(async ({ login }) => {
         await login(admin);
         examTitle = 'exam' + generateUUID();
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
     });
 
     test.describe('Exam timing', () => {
@@ -73,10 +72,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await examAPIRequests.generateMissingIndividualExams(exam);
             await examAPIRequests.prepareExerciseStartForExam(exam);
-            await login(studentOne);
-            await page.goto(`/courses/${course.id}/exams`);
-            await courseOverview.openExamsTab();
-            await courseOverview.openExam(exam.title!);
+            await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await page.waitForURL(`**/exams/${exam.id}`);
             await expect(page.getByText(exam.title!).first()).toBeVisible();
             await examStartEnd.startExam();
@@ -129,7 +125,5 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

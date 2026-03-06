@@ -1,8 +1,8 @@
 import { test } from '../../support/fixtures';
 import { admin, instructor, studentOne } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { generateUUID, prepareExam, startAssessing } from '../../support/utils';
+import { SEED_COURSES } from '../../support/seedData';
 import dayjs from 'dayjs';
 import { ExamChecklistItem } from '../../support/pageobjects/exam/ExamDetailsPage';
 import { ExerciseType } from '../../support/constants';
@@ -13,16 +13,9 @@ import { Page } from '@playwright/test';
 import { Commands } from '../../support/commands';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 
+const course = { id: SEED_COURSES.examManagement.id } as any;
+
 test.describe('Exam Checklists', async () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    });
-
     test.describe('Exercise group checks', { tag: '@fast' }, () => {
         test('Instructor adds an exercise group and at least one exercise group check is marked', async ({
             page,
@@ -270,12 +263,10 @@ test.describe('Exam Checklists', async () => {
         },
     );
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });
 
-async function createExam(course: Course, page: Page, customConfig?: any) {
+async function createExam(course: any, page: Page, customConfig?: any) {
     const NUMBER_OF_EXERCISES = 2;
     const EXAM_MAX_POINTS = NUMBER_OF_EXERCISES * 10;
 
@@ -291,7 +282,7 @@ async function createExam(course: Course, page: Page, customConfig?: any) {
     return await examAPIRequests.createExam(examConfig);
 }
 
-async function navigateToExamDetailsPage(page: Page, course: Course, exam: Exam) {
+async function navigateToExamDetailsPage(page: Page, course: any, exam: Exam) {
     await page.goto(`/course-management/${course.id}/exams/${exam.id}`);
 }
 

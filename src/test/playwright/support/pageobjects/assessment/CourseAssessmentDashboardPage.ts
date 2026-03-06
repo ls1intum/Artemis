@@ -13,7 +13,7 @@ export class CourseAssessmentDashboardPage {
     }
 
     async showTheComplaint() {
-        await this.page.locator('#show-complaint').click();
+        await this.page.locator('#show-complaint').first().click();
     }
 
     async clickExerciseDashboardButton(exerciseIndex: number = 0) {

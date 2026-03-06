@@ -1,14 +1,14 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
-import { admin, studentTwo, instructor } from '../../support/users';
+import { admin, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
 import { ProgrammingLanguage } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { SEED_COURSES } from '../../support/seedData';
 
 /**
  * CRITICAL REGRESSION TEST: PlantUML diagram isolation in exam mode.
@@ -43,8 +43,9 @@ const IDENTIFIER_B = 'ClassBeta';
 const IDENTIFIER_C0 = 'ClassGamma';
 const IDENTIFIER_C1 = 'ClassDelta';
 
+const course = { id: SEED_COURSES.examManagement.id } as any;
+
 test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
-    let course: Course;
     let exam: Exam;
     let exerciseA: ProgrammingExercise;
     let exerciseB: ProgrammingExercise;
@@ -52,13 +53,6 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
     let groupTitleA: string;
     let groupTitleB: string;
     let groupTitleC: string;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    });
 
     test.beforeEach('Create exam with 3 programming exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
@@ -208,12 +202,10 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(ids).toContain(`plantUml-${exerciseC.id}-1`);
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });
 
-async function createExam(course: Course, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
+async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
     const defaultExamConfig = {
         course,
         title: 'exam' + generateUUID(),

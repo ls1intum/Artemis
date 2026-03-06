@@ -15,7 +15,9 @@ export class ExamNavigationBar {
      * @param exerciseGroupTitle
      */
     async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
-        await this.page.getByText(exerciseGroupTitle).nth(0).click();
+        const exerciseLink = this.page.getByText(exerciseGroupTitle).nth(0);
+        await exerciseLink.waitFor({ state: 'visible' });
+        await exerciseLink.click();
     }
 
     async openFromOverviewByTitle(exerciseGroupTitle: string) {

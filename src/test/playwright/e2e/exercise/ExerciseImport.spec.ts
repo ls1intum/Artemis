@@ -1,6 +1,5 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -18,28 +17,25 @@ import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
 import { QuizSubmission } from 'app/quiz/shared/entities/quiz-submission.model';
 import { ModelingSubmission } from 'app/modeling/shared/entities/modeling-submission.model';
 import { ProgrammingLanguage, QuizMode } from '../../support/constants';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
+const secondCourse = { id: SEED_COURSES.import.id } as any;
 
 test.describe('Import exercises', () => {
-    let course: Course;
-    let secondCourse: Course;
     let textExercise: TextExercise;
     let multipleChoiceQuizExercise: QuizExercise;
     let shortAnswerQuizExercise: QuizExercise;
     let modelingExercise: ModelingExercise;
     let programmingExercise: ProgrammingExercise;
 
-    test.beforeEach('Setup course with exercises', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Setup exercises', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         textExercise = await exerciseAPIRequests.createTextExercise({ course });
         multipleChoiceQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [multipleChoiceQuizTemplate] });
         shortAnswerQuizExercise = await exerciseAPIRequests.createQuizExercise({ body: { course }, quizQuestions: [shortAnswerQuizTemplate], quizMode: QuizMode.INDIVIDUAL });
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
-        secondCourse = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(secondCourse, studentOne);
-        await courseManagementAPIRequests.addInstructorToCourse(secondCourse, instructor);
     });
 
     test.describe('Imports exercises', () => {
@@ -188,7 +184,7 @@ test.describe('Import exercises', () => {
 
         test(
             'Imports programming exercise',
-            { tag: '@slow' },
+            { tag: '@sequential' },
             async ({ login, page, courseManagementExercises, programmingExerciseCreation, courseOverview, programmingExerciseEditor }) => {
                 await login(instructor, `/course-management/${secondCourse.id}/exercises`);
                 await courseManagementExercises.importProgrammingExercise();
@@ -215,8 +211,5 @@ test.describe('Import exercises', () => {
         );
     });
 
-    test.afterEach('Delete Courses', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-        await courseManagementAPIRequests.deleteCourse(secondCourse, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

@@ -84,11 +84,10 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
         await page.getByRole('button', { name: 'Import competencies' }).click();
         await page.getByRole('link', { name: 'Import from other course' }).click();
 
-        // Select only competency1
-        await page
-            .getByRole('row', { name: '' + competency1.id! + ' ' + competency1.title! })
-            .getByRole('button', { name: 'Select' })
-            .click();
+        // Wait for the competency table to load and select competency1
+        const competencyRow = page.getByRole('row', { name: '' + competency1.id! + ' ' + competency1.title! });
+        await competencyRow.waitFor({ state: 'visible', timeout: 30000 });
+        await competencyRow.getByRole('button', { name: 'Select' }).click();
 
         // Click Import
         await page.getByRole('button', { name: 'Import' }).click();

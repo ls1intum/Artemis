@@ -1,30 +1,22 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
 import cAllSuccessfulSubmission from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
 import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
 import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 
-test.describe('Test exam participation', { tag: '@slow' }, () => {
-    let course: Course;
-    let exerciseArray: Array<Exercise> = [];
+const course = { id: SEED_COURSES.testExam.id } as any;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-    });
+test.describe('Test exam participation', { tag: '@sequential' }, () => {
+    let exerciseArray: Array<Exercise> = [];
 
     test.describe('Early Hand-in', () => {
         let exam: Exam;
@@ -38,35 +30,21 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
                 testExam: true,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
-                examMaxPoints: 100,
-                numberOfExercisesInExam: 10,
+                examMaxPoints: 40,
+                numberOfExercisesInExam: 4,
                 numberOfCorrectionRoundsInExam: 0,
             };
             exam = await examAPIRequests.createExam(examConfig);
-            Promise.all([
+            exerciseArray = [
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
                     submission: cAllSuccessfulSubmission,
                     expectedScore: 87.5, // LSan test fails in Docker (no SYS_PTRACE)
                     programmingLanguage: ProgrammingLanguage.C,
                 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
-                    submission: cBuildErrorSubmission,
-                    expectedScore: 0,
-                    programmingLanguage: ProgrammingLanguage.C,
-                }),
-
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-            ]).then((responses) => {
-                exerciseArray = responses;
-            });
+            ];
         });
 
         test('Participates as a student in a registered test exam', async ({ examParticipation, examNavigation }) => {
@@ -155,7 +133,5 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

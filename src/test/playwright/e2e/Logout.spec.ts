@@ -1,19 +1,16 @@
 import { expect } from '@playwright/test';
 import { test } from '../support/fixtures';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { admin, studentOne, studentTwo } from '../support/users';
+import { SEED_COURSES } from '../support/seedData';
+
+const course = { id: SEED_COURSES.general.id } as any;
 
 test.describe('Logout tests', () => {
-    let course: Course;
     let modelingExercise: ModelingExercise;
 
-    test.beforeEach('Login as admin and create a course with a modeling exercise', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Create a modeling exercise', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
     });
 
@@ -21,7 +18,7 @@ test.describe('Logout tests', () => {
         await login(studentOne);
 
         const exerciseID = modelingExercise.id!;
-        await page.goto(`/courses/${course.id}/exercises`);
+        await page.goto(`/courses/${course.id}/exercises/${exerciseID}`);
         await courseOverview.startExercise(exerciseID);
         await courseOverview.openRunningExercise(exerciseID);
         await modelingExerciseEditor.addComponentToModel(exerciseID, 1);
@@ -41,7 +38,7 @@ test.describe('Logout tests', () => {
         await login(studentTwo);
 
         const exerciseID = modelingExercise.id!;
-        await page.goto(`/courses/${course.id}/exercises`);
+        await page.goto(`/courses/${course.id}/exercises/${exerciseID}`);
         await courseOverview.startExercise(exerciseID);
         await courseOverview.openRunningExercise(exerciseID);
         await modelingExerciseEditor.addComponentToModel(exerciseID, 1);
@@ -58,7 +55,5 @@ test.describe('Logout tests', () => {
         expect(page.url()).not.toEqual(process.env.BASE_URL!);
     });
 
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

@@ -54,6 +54,14 @@ export const SEED_COURSES = {
     programmingManagement: makeSeedCourse(9014, 'e2eprogmgmt', 'E2E Programming Management Course'),
     general: makeSeedCourse(9015, 'e2egeneral', 'E2E General Course'),
     quizAssessment: makeSeedCourse(9016, 'e2equizassess', 'E2E Quiz Assessment Course'),
+    exerciseManagement: makeSeedCourse(9025, 'e2eexercisemgmt', 'E2E Exercise Management Course'),
+    exerciseParticipation: makeSeedCourse(9018, 'e2eexercisepart', 'E2E Exercise Participation Course'),
+    exerciseAssessment: makeSeedCourse(9019, 'e2eexerciseassess', 'E2E Exercise Assessment Course'),
+    atlas1: makeSeedCourse(9020, 'e2eatlas1', 'E2E Atlas Course 1'),
+    atlas2: makeSeedCourse(9021, 'e2eatlas2', 'E2E Atlas Course 2'),
+    lectureManagement: makeSeedCourse(9022, 'e2electuremgmt', 'E2E Lecture Management Course'),
+    examManagement: makeSeedCourse(9023, 'e2eexammgmt', 'E2E Exam Management Course'),
+    testExam: makeSeedCourse(9024, 'e2etestexam', 'E2E Test Exam Course'),
 } as const;
 
 /**
@@ -88,4 +96,12 @@ export const SEED_CHANNELS = {
     programmingManagement: courseChannelIds(14),
     general: courseChannelIds(15),
     quizAssessment: courseChannelIds(16),
+    exerciseManagement: courseChannelIds(25),
+    exerciseParticipation: courseChannelIds(18),
+    exerciseAssessment: courseChannelIds(19),
+    atlas1: courseChannelIds(20),
+    atlas2: courseChannelIds(21),
+    lectureManagement: courseChannelIds(22),
+    examManagement: courseChannelIds(23),
+    testExam: courseChannelIds(24),
 } as const;

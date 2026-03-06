@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { test } from '../../../support/fixtures';
 import { admin } from '../../../support/users';
@@ -7,16 +6,13 @@ import dayjs from 'dayjs';
 import { expect } from '@playwright/test';
 import { ExampleSubmission } from 'app/assessment/shared/entities/example-submission.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('Text exercise management', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-    });
-
     test('Creates a text exercise in the UI', async ({
+        login,
         page,
         navigationBar,
         courseManagement,
@@ -25,7 +21,7 @@ test.describe('Text exercise management', { tag: '@fast' }, () => {
         textExerciseExampleSubmissions,
         textExerciseExampleSubmissionCreation,
     }) => {
-        await page.goto('/');
+        await login(admin);
         await navigationBar.openCourseManagement();
         await courseManagement.openExercisesOfCourse(course.id!);
         await courseManagementExercises.createTextExercise();
@@ -81,7 +77,5 @@ test.describe('Text exercise management', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

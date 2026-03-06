@@ -17,7 +17,7 @@ const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
 const course = { id: SEED_COURSES.examTestRun.id } as any;
 
-test.describe('Exam test run', { tag: '@slow' }, () => {
+test.describe('Exam test run', { tag: '@sequential' }, () => {
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
 
@@ -33,7 +33,7 @@ test.describe('Exam test run', { tag: '@slow' }, () => {
             numberOfExercisesInExam: 4,
         };
         exam = await examAPIRequests.createExam(examConfig);
-        Promise.all([
+        exerciseArray = [
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
                 submission: cBuildErrorSubmission,
@@ -42,9 +42,7 @@ test.describe('Exam test run', { tag: '@slow' }, () => {
             }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-        ]).then((responses) => {
-            exerciseArray = responses;
-        });
+        ];
     });
 
     test('Creates a test run', async ({ login, page, examManagement, examTestRun }) => {

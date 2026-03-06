@@ -1,14 +1,14 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 
-import { admin, instructor } from '../../support/users';
+import { instructor } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
 import { Fixtures } from '../../fixtures/fixtures';
+import { SEED_COURSES } from '../../support/seedData';
 
 // Common primitives
 const dateFormat = 'MMM D, YYYY HH:mm';
@@ -19,15 +19,9 @@ const lectureData = {
     endDate: dayjs().add(1, 'hour'),
 };
 
+const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lectureManagement.title } as any;
+
 test.describe('Lecture management', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    });
-
     test('Creates a lecture', async ({ login, page, lectureManagement, lectureCreation }) => {
         await login(instructor, `/course-management/${course.id}`);
         await lectureManagement.getLectures().click();
@@ -99,7 +93,5 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach(async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

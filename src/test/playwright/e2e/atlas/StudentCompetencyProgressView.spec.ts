@@ -1,43 +1,38 @@
 import { test } from '../../support/fixtures';
-import { admin, studentOne, UserRole } from '../../support/users';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { admin, studentOne } from '../../support/users';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { expect } from '@playwright/test';
 import dayjs from 'dayjs';
 import { Buffer } from 'buffer';
+import { SEED_COURSES } from '../../support/seedData';
+import { generateUUID } from '../../support/utils';
 
 const WAIT_STATE = 'domcontentloaded';
 
+const course = { id: SEED_COURSES.atlas2.id } as any;
+const uid = generateUUID();
+
 test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
-    let course: Course;
     let lecture: Lecture;
-    let nestedCourse: Course;
+    let nestedCourse: any;
 
-    test.beforeEach('Setup course with learning paths enabled', async ({ login, courseManagementAPIRequests, userManagementAPIRequests }) => {
+    test.beforeEach('Setup lecture and learning paths', async ({ login, courseManagementAPIRequests }) => {
         await login(admin);
-        const studentLookup = await userManagementAPIRequests.getUser(studentOne.username);
-        if (!studentLookup.ok()) {
-            const createResponse = await userManagementAPIRequests.createUser(studentOne.username, studentOne.password, UserRole.Student);
-            if (!createResponse.ok()) {
-                const errorBody = await createResponse.text();
-                expect(errorBody).toContain('userExists');
-            }
+        lecture = await courseManagementAPIRequests.createLecture(course, 'Test Lecture ' + uid);
+        try {
+            await courseManagementAPIRequests.enableLearningPaths(course);
+        } catch {
+            // Already enabled from a previous run
         }
-        course = await courseManagementAPIRequests.createCourse();
-        lecture = await courseManagementAPIRequests.createLecture(course, 'Test Lecture');
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.enableLearningPaths(course);
     });
 
-    test.afterEach('Cleanup', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 
     test.describe('Student views their competency progress overview', () => {
         test('Student sees a grid of competencies with initial progress state', async ({ page, login, courseManagementAPIRequests }) => {
             // Preconditions: Create competencies linked to lecture units
-            const competency1 = await courseManagementAPIRequests.createCompetency(course, 'Competency A', 'First competency');
-            const competency2 = await courseManagementAPIRequests.createCompetency(course, 'Competency B', 'Second competency');
+            const competency1 = await courseManagementAPIRequests.createCompetency(course, 'CompA ' + uid, 'First competency');
+            const competency2 = await courseManagementAPIRequests.createCompetency(course, 'CompB ' + uid, 'Second competency');
 
             // Create text units linked to competencies
             await courseManagementAPIRequests.createTextUnit(lecture, 'Text Unit 1', 'Content 1', [{ competency: { id: competency1.id, type: 'competency' }, weight: 1 }]);
@@ -51,12 +46,13 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await page.waitForLoadState(WAIT_STATE);
 
             // Assert: A grid/list of competencies is visible
-            await expect(page.getByText('Competency A')).toBeVisible();
-            await expect(page.getByText('Competency B')).toBeVisible();
+            await expect(page.getByText('CompA ' + uid)).toBeVisible();
+            await expect(page.getByText('CompB ' + uid)).toBeVisible();
 
-            // Assert: Each competency shows competency cards with progress rings
+            // Assert: Each competency shows competency cards with progress rings (at least 2, may have more from previous runs)
             const competencyCards = page.locator('jhi-competency-card');
-            await expect(competencyCards).toHaveCount(2);
+            await expect(competencyCards.first()).toBeVisible();
+            expect(await competencyCards.count()).toBeGreaterThanOrEqual(2);
 
             // Assert: Progress rings are visible (initial state)
             const progressRings = page.locator('jhi-competency-rings');
@@ -71,10 +67,10 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
         test('Student progress increases and mastery is achieved after marking a lecture unit as completed', async ({ page, login, courseManagementAPIRequests }) => {
             // Preconditions: Create competency linked to a single lecture unit
             // Completing this single unit (weight 1) should result in 100% progress (Mastery)
-            const competency = await courseManagementAPIRequests.createCompetency(course, 'Lecture Competency', 'Competency linked to lecture unit');
+            const competency = await courseManagementAPIRequests.createCompetency(course, 'Lecture ' + uid, 'Competency linked to lecture unit');
 
             // Create text unit linked to competency
-            await courseManagementAPIRequests.createTextUnit(lecture, 'Completable Text Unit', 'Read this content to complete', [
+            await courseManagementAPIRequests.createTextUnit(lecture, 'Completable Text Unit ' + uid, 'Read this content to complete', [
                 { competency: { id: competency.id, type: 'competency' }, weight: 1 },
             ]);
 
@@ -130,13 +126,16 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
     test.describe('Judgement of Learning (JoL) rating submission', () => {
         test('Student submits JoL rating via star rating component', async ({ page, login, courseManagementAPIRequests }) => {
             // Enable the student course analytics dashboard so we can access /dashboard
-            const updatedCourse = { ...course, studentCourseAnalyticsDashboardEnabled: true };
+            const courseResponse = await page.request.get(`api/core/courses/${course.id}`);
+            expect(courseResponse.ok()).toBeTruthy();
+            const fullCourse = await courseResponse.json();
+            fullCourse.studentCourseAnalyticsDashboardEnabled = true;
             const updateResponse = await page.request.put(`api/core/courses/${course.id}`, {
                 multipart: {
                     course: {
                         name: 'course',
                         mimeType: 'application/json',
-                        buffer: Buffer.from(JSON.stringify(updatedCourse)),
+                        buffer: Buffer.from(JSON.stringify(fullCourse)),
                     },
                 },
             });
@@ -151,7 +150,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const competencyResponse = await page.request.post(`api/atlas/courses/${course.id}/competencies`, {
                 data: {
                     type: 'competency',
-                    title: 'JoL Competency',
+                    title: 'JoL ' + uid,
                     description: 'Rate your understanding',
                     masteryThreshold: 100,
                     softDueDate: softDueDate,
@@ -161,7 +160,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const competency = await competencyResponse.json();
 
             // Create a text unit linked to competency
-            await courseManagementAPIRequests.createTextUnit(lecture, 'JoL Test Unit', 'Content for JoL testing', [
+            await courseManagementAPIRequests.createTextUnit(lecture, 'JoL Test Unit ' + uid, 'Content for JoL testing', [
                 { competency: { id: competency.id, type: 'competency' }, weight: 1 },
             ]);
 
@@ -214,20 +213,20 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await page.goto(`/courses/${course.id}/dashboard`);
             await page.waitForLoadState(WAIT_STATE);
 
-            // Look for the competency accordion which contains JoL rating
-            const competencyAccordion = page.locator(`#competency-accordion-${competency.id}`);
-            await expect(competencyAccordion).toBeVisible();
+            // Look for the competency accordion button and its parent container
+            const competencyButton = page.locator(`#competency-accordion-${competency.id}`);
+            await expect(competencyButton).toBeVisible();
 
             // Click to expand the accordion
-            await competencyAccordion.click();
+            await competencyButton.click();
 
-            // Wait for accordion body to be visible (indicates it's expanded)
-            const accordionBody = page.locator('.competency-accordion-body-open');
+            // The accordion body is a sibling of the button, find it via the parent container
+            const accordionContainer = competencyButton.locator('..');
+            const accordionBody = accordionContainer.locator('.competency-accordion-body-open');
             await expect(accordionBody).toBeVisible({ timeout: 10000 });
 
             // Check for JoL rating component - should be visible since conditions are met
-            // Wait with longer timeout as data might be loading
-            const jolRatingComponent = page.locator('jhi-judgement-of-learning-rating');
+            const jolRatingComponent = accordionBody.locator('jhi-judgement-of-learning-rating');
             await expect(jolRatingComponent).toBeVisible({ timeout: 10000 });
 
             // Find the star rating component within the JoL component
@@ -256,7 +255,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await page.waitForLoadState(WAIT_STATE);
 
             // Navigate back and check the accordion
-            await competencyAccordion.click();
+            await competencyButton.click();
             await page.waitForLoadState(WAIT_STATE);
 
             // The JoL component should show the submitted rating

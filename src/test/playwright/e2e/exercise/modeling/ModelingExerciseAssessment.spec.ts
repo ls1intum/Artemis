@@ -1,30 +1,25 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne, tutor } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
-import { CourseManagementAPIRequests } from '../../../support/requests/CourseManagementAPIRequests';
 import { ExerciseAPIRequests } from '../../../support/requests/ExerciseAPIRequests';
 import { Commands } from '../../../support/commands';
 import { newBrowserPage } from '../../../support/utils';
+import { SEED_COURSES } from '../../../support/seedData';
 
-test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
-    let course: Course;
+const course = { id: SEED_COURSES.exerciseAssessment.id } as any;
+
+test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
     let modelingExercise: ModelingExercise;
 
     test.beforeAll('Create course and make a submission', async ({ browser }) => {
         const page = await newBrowserPage(browser);
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
         await Commands.login(page, admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-        await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
         await Commands.login(page, studentOne);
         const response = await exerciseAPIRequests.startExerciseParticipation(modelingExercise.id!);
@@ -64,10 +59,12 @@ test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
             await modelingExerciseAssessment.submit();
         });
 
-        test('Student can view the assessment and complain', async ({ login, exerciseAPIRequests, exerciseResult, modelingExerciseFeedback }) => {
+        test('Student can view the assessment and complain', async ({ login, exerciseAPIRequests, courseManagementAPIRequests, exerciseResult, modelingExerciseFeedback }) => {
             await login(admin);
             const response = await exerciseAPIRequests.updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs());
             modelingExercise = await response.json();
+            // Reset complaint limit to avoid "complaint limit reached" on shared seed courses
+            await courseManagementAPIRequests.updateCourseMaxComplaints(course.id, 999);
             await login(studentOne, `/courses/${course.id}/exercises/${modelingExercise.id}`);
             await exerciseResult.shouldShowExerciseTitle(modelingExercise.title!);
             await exerciseResult.shouldShowScore(20);
@@ -85,10 +82,5 @@ test.describe('Modeling Exercise Assessment', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterAll('Delete course', async ({ browser }) => {
-        const context = await browser.newContext();
-        const page = await context.newPage();
-        const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

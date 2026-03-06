@@ -1,31 +1,28 @@
 import { expect, Page } from '@playwright/test';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
-import { CoursesPage } from '../../course/CoursesPage';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 
 export class ProgrammingExerciseOverviewPage {
     private readonly page: Page;
-    private readonly courseList: CoursesPage;
     private readonly courseOverview: CourseOverviewPage;
 
-    constructor(page: Page, courseList: CoursesPage, courseOverview: CourseOverviewPage) {
+    constructor(page: Page, courseOverview: CourseOverviewPage) {
         this.page = page;
-        this.courseList = courseList;
         this.courseOverview = courseOverview;
     }
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+        await resultScore.waitFor({ state: 'visible', timeout: 60000 });
+        await expect(resultScore.getByText(expectedResult)).toBeVisible({ timeout: 60000 });
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
-        await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
-        await this.courseList.openCourse(courseId!);
-        await this.courseOverview.startExercise(exerciseId);
+        await Commands.login(this.page, credentials, `/courses/${courseId}/exercises/${exerciseId}`);
+        const startButton = this.courseOverview.getStartExerciseButton(exerciseId);
+        await Commands.reloadUntilFound(this.page, startButton);
+        await startButton.click();
     }
 
     async openCodeEditor(exerciseId: number) {

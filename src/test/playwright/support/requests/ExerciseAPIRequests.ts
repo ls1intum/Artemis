@@ -312,6 +312,24 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Updates the assessment due date of a file upload exercise to be in the past,
+     * enabling complaints to be filed.
+     */
+    async updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = dayjs()) {
+        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
+        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
+        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
+
+        const updateDto = {
+            ...exercise,
+            releaseDate: newReleaseDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+        };
+        return this.page.request.put(UPLOAD_EXERCISE_BASE, { data: updateDto });
+    }
+
+    /**
      * Makes a file upload exercise submission for the specified exercise ID with the given file.
      *
      * @param exerciseId - The ID of the file upload exercise for which the submission is made.

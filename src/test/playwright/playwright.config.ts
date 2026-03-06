@@ -21,7 +21,7 @@ export default defineConfig({
     fullyParallel: true,
     timeout: (parseNumber(process.env.TEST_TIMEOUT_SECONDS) ?? 3 * 60) * 1000,
     retries: parseNumber(process.env.TEST_RETRIES) ?? 2,
-    workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 3,
+    workers: parseNumber(process.env.TEST_WORKER_PROCESSES) ?? 5,
     /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
         ['list'],
@@ -72,19 +72,19 @@ export default defineConfig({
         {
             name: 'slow-tests',
             grep: /@slow/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
             use: {
                 browserName: 'chromium',
                 viewport: { width: 1920, height: 1080 },
             },
         },
         // Tests with @sequential tag. These tests are triggering programming exercise submissions.
-        // Running only one programming exercise evaluation at a time could make the tests more stable.
-        // Thus, it is recommended to run this project with a single worker.
+        // Running only one programming exercise evaluation at a time makes the tests stable.
         {
             name: 'sequential-tests',
             grep: /@sequential/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
+            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            fullyParallel: false,
             use: {
                 browserName: 'chromium',
                 viewport: { width: 1920, height: 1080 },

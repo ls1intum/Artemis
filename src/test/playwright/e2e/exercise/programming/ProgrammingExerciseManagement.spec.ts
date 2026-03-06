@@ -1,4 +1,3 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import { admin, instructor, studentFour, studentOne, studentThree, studentTwo, tutor } from '../../../support/users';
@@ -6,15 +5,11 @@ import { test } from '../../../support/fixtures';
 import { generateUUID } from '../../../support/utils';
 import { expect } from '@playwright/test';
 import { Exercise, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.programmingManagement.id } as any;
 
 test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-    });
-
     test.describe('Programming exercise creation', () => {
         test('Creates a new programming exercise', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
             await login(admin, '/');
@@ -87,15 +82,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     test.describe('Programming exercise team creation', () => {
         let exercise: ProgrammingExercise;
 
-        test.beforeEach('Add course participants', async ({ login, courseManagementAPIRequests }) => {
-            await login(admin);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-            await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-            await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        });
+        // Users are pre-enrolled via seed data (user_groups.csv)
 
         test.beforeEach('Setup team programming exercise', async ({ login, exerciseAPIRequests }) => {
             await login(admin);
@@ -108,10 +95,8 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             });
         });
 
-        test('Create an exercise team', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
-            await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExercisesOfCourse(course.id!);
+        test('Create an exercise team', async ({ login, page, courseManagementExercises, exerciseTeams, programmingExerciseOverview }) => {
+            await login(instructor, `/course-management/${course.id}/exercises`);
             await courseManagementExercises.openExerciseTeams(exercise.id!);
             await page.getByRole('table').waitFor({ state: 'visible' });
             await exerciseTeams.createTeam();
@@ -143,7 +128,5 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

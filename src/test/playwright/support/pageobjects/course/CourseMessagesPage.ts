@@ -369,12 +369,19 @@ export class CourseMessagesPage {
      * @returns A promise that resolves with the Post object after saving.
      */
     async save(): Promise<Post> {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages`);
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST' && resp.status() === 201,
+        );
         const saveButton = this.page.locator('#save');
         // Wait for the save button to be visible and enabled before clicking
         await saveButton.waitFor({ state: 'visible', timeout: 10000 });
         await expect(saveButton).toBeEnabled({ timeout: 10000 });
         await saveButton.scrollIntoViewIfNeeded();
+        // Dismiss any notification popup overlay that may block the click
+        const notificationOverlay = this.page.locator('.course-notification-popup-overlay-collapse');
+        if (await notificationOverlay.isVisible()) {
+            await notificationOverlay.click();
+        }
         await saveButton.click();
         const response = await responsePromise;
         return response.json();
@@ -457,7 +464,9 @@ export class CourseMessagesPage {
      * Leaves the current group chat.
      */
     async leaveGroupChat() {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/deregister') && resp.status() === 200);
         await this.page.locator('.leave-conversation').click();
+        await responsePromise;
     }
 
     /**
@@ -468,9 +477,9 @@ export class CourseMessagesPage {
     async checkGroupChatExists(name: string, exist: boolean) {
         const groupChat = this.page.getByTitle(name);
         if (exist) {
-            await expect(groupChat).toBeVisible();
+            await expect(groupChat).toBeVisible({ timeout: 15000 });
         } else {
-            await expect(groupChat).toBeHidden();
+            await expect(groupChat).toBeHidden({ timeout: 15000 });
         }
     }
 

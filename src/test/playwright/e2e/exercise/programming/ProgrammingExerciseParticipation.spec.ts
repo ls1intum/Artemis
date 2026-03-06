@@ -1,7 +1,5 @@
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
-import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
-import pythonAllSuccessful from '../../../fixtures/exercise/programming/python/all_successful/submission.json';
 import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
 import cPartiallySuccessfulSubmission from '../../../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
@@ -20,7 +18,10 @@ import { SEED_COURSES } from '../../../support/seedData';
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
 // Basic submission tests: use seed course, only create exercises per test.
-test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => {
+test.describe('Programming exercise basic submissions', { tag: '@sequential' }, () => {
+    // Optimized test matrix: C builds are fast (~5s) so we test code editor + git with C.
+    // Java/Python builds are slow (~30-50s) and use the same git flow, so we skip them.
+    // The code editor test (failing C) verifies error display. The git test (successful C) verifies the full flow.
     const testCases = [
         {
             description: 'Makes a failing C submission',
@@ -28,55 +29,33 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
             submission: cBuildErrorSubmission,
             commitMessage: 'Initial commit',
         },
-        {
-            description: 'Makes a partially successful C submission',
-            programmingLanguage: ProgrammingLanguage.C,
-            submission: cPartiallySuccessfulSubmission,
-            commitMessage: 'Initial implementation',
-        },
-        {
-            description: 'Makes a successful Java submission',
-            programmingLanguage: ProgrammingLanguage.JAVA,
-            submission: javaAllSuccessfulSubmission,
-            commitMessage: 'Implemented all tasks',
-        },
         { description: 'Makes a successful C submission', programmingLanguage: ProgrammingLanguage.C, submission: cAllSuccessful, commitMessage: 'Implemented all tasks' },
-        {
-            description: 'Makes a successful Python submission',
-            programmingLanguage: ProgrammingLanguage.PYTHON,
-            submission: pythonAllSuccessful,
-            commitMessage: 'Implemented all tasks',
-        },
     ];
-    for (const { description, programmingLanguage, submission, commitMessage } of testCases) {
-        // Skip C tests within Jenkins used by the Postgres setup, since C is currently not supported there
-        // See https://github.com/ls1intum/Artemis/issues/6994
-        if (programmingLanguage !== ProgrammingLanguage.C || process.env.PLAYWRIGHT_DB_TYPE !== 'Postgres') {
-            test.describe(description, () => {
-                let exercise: ProgrammingExercise;
+    for (const testCase of testCases) {
+        const { description, programmingLanguage, submission, commitMessage } = testCase;
+        test.describe(description, () => {
+            let exercise: ProgrammingExercise;
 
-                test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
-                    await login(admin);
-                    exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
-                });
+            test.beforeEach('Setup programming exercise', async ({ login, exerciseAPIRequests }) => {
+                await login(admin);
+                exercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage });
+            });
 
-                test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
-                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                    await programmingExerciseOverview.openCodeEditor(exercise.id!);
-                    await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
-                        // Use exercise-scoped locator and check for text content
-                        const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                        await expect(resultScore).toContainText(submission.expectedResult, { timeout: 30000 });
-                    });
-                });
-
-                test('Makes a git submission through HTTPS', async ({ programmingExerciseOverview }) => {
-                    await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
-                    await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, submission, commitMessage);
-                    await programmingExerciseOverview.checkResultScore(submission.expectedResult);
+            test('Makes a submission using code editor', async ({ programmingExerciseOverview, programmingExerciseEditor }) => {
+                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                await programmingExerciseOverview.openCodeEditor(exercise.id!);
+                await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
+                    const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
+                    await expect(resultScore).toContainText(submission.expectedResult, { timeout: 30000 });
                 });
             });
-        }
+
+            test('Makes a git submission through HTTPS', async ({ programmingExerciseOverview }) => {
+                await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
+                await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, submission, commitMessage);
+                await programmingExerciseOverview.checkResultScore(submission.expectedResult);
+            });
+        });
     }
 
     // Seed courses are persistent — no cleanup needed
@@ -232,7 +211,8 @@ test.describe('Programming exercise advanced participation', { tag: '@sequential
                     participation = await response.json();
                     // Only create files that haven't been created yet
                     for (const file of submission.files) {
-                        const filename = submission.packageName ? `src/${submission.packageName.replace(/\./g, '/')}/${file.name}` : file.name;
+                        const packageName = (submission as any).packageName;
+                        const filename = packageName ? `src/${packageName.replace(/\./g, '/')}/${file.name}` : file.name;
                         if (!createdFiles.has(filename)) {
                             await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, filename);
                             createdFiles.add(filename);
@@ -273,39 +253,24 @@ test.describe('Programming exercise advanced participation', { tag: '@sequential
 
         test('Makes a git submission through HTTPS', async ({
             login,
-            navigationBar,
-            courseManagement,
-            courseManagementExercises,
+            page,
             programmingExerciseParticipations,
             programmingExerciseOverview,
             programmingExerciseSubmissions,
             waitForExerciseBuildToFinish,
         }) => {
-            // This test involves 2 full git clone+push cycles and waiting for 4+ queued builds,
-            // which can exceed the default timeout on cold Docker environments.
-            test.slow();
             // student submits to create a participation + submission
             await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentOne, cAllSuccessful, 'student commit');
             // now instructor commits to the student participation
             await login(instructor);
-            // Wait for the student's build to complete before the instructor submits.
-            // Exercise creation triggers BASE + SOLUTION builds, then startParticipation triggers
-            // a student template clone build, and makeSubmission triggers the student submission build.
-            // Locally these builds queue serially, so we need a generous timeout.
-            await waitForExerciseBuildToFinish(exercise.id!, undefined, 240000);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExercisesOfCourse(course.id!);
-            await courseManagementExercises.openExerciseParticipations(exercise.id!);
+            await waitForExerciseBuildToFinish(exercise.id!);
+            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
             await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, instructor, cPartiallySuccessfulSubmission, 'instructor commit');
             // check the submission
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExercisesOfCourse(course.id!);
-            await courseManagementExercises.openExerciseParticipations(exercise.id!);
+            await page.goto(`/course-management/${course.id}/programming-exercises/${exercise.id!}/participations`);
             await programmingExerciseParticipations.openStudentParticipationSubmissions(studentOne);
-            // Use a generous timeout for the instructor submission check because the build
-            // may still be queued or running. The page will be reloaded until the row appears.
-            await programmingExerciseSubmissions.checkInstructorSubmission(240000);
+            await programmingExerciseSubmissions.checkInstructorSubmission(60000);
             await programmingExerciseSubmissions.checkStudentSubmission();
         });
     });

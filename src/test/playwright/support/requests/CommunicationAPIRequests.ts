@@ -120,6 +120,9 @@ export class CommunicationAPIRequests {
      */
     async createCourseMessageGroupChat(course: Course, users: Array<string>): Promise<GroupChat> {
         const response = await this.page.request.post(`api/communication/courses/${course.id}/group-chats`, { data: users });
+        if (!response.ok()) {
+            throw new Error(`createCourseMessageGroupChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -137,12 +140,12 @@ export class CommunicationAPIRequests {
             content: message,
             conversation: {
                 id: targetId,
-                type,
             },
-            displayPriority: 'NONE',
-            visibleForStudents: true,
         };
         const response = await this.page.request.post(`api/communication/courses/${course.id}/messages`, { data });
+        if (!response.ok()) {
+            throw new Error(`createCourseMessage failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 

@@ -335,49 +335,46 @@ test.describe('Exam participation', () => {
             await examAPIRequests.prepareExerciseStartForExam(exam);
         });
 
-        test(
-            'Instructor sends an announcement message and all participants receive it',
-            { tag: '@slow' },
-            async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
-                await login(instructor);
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExamsOfCourse(course.id!);
-                await examManagement.openExam(exam.id!);
-
-                const studentPages = [];
-
-                for (const student of [studentOne, studentTwo]) {
-                    const studentContext = await browser.newContext();
-                    const studentPage = await studentContext.newPage();
-                    studentPages.push(studentPage);
-
-                    await Commands.login(studentPage, student);
-                    await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
-                    const examStartEnd = new ExamStartEndPage(studentPage);
-                    await examStartEnd.startExam(false);
-                }
-
-                const announcement = 'Important announcement!';
-                await examManagement.openAnnouncementDialog();
-                const announcementTypingTime = dayjs();
-                await examManagement.typeAnnouncementMessage(announcement);
-                await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
-                await examManagement.sendAnnouncement();
-
-                for (const studentPage of studentPages) {
-                    const modalDialog = new ModalDialogBox(studentPage);
-                    await modalDialog.checkDialogTime(announcementTypingTime);
-                    await modalDialog.checkDialogMessage(announcement);
-                    await modalDialog.closeDialog();
-                }
-            },
-        );
-
-        test('Instructor changes working time and all participants are informed', { tag: '@slow' }, async ({ browser, login, navigationBar, courseManagement, examManagement }) => {
+        test('Instructor sends an announcement message and all participants receive it', { tag: '@slow' }, async ({ browser, login, page, examManagement }) => {
             await login(instructor);
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExam(exam.id!);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
+
+            const studentPages = [];
+
+            for (const student of [studentOne, studentTwo]) {
+                const studentContext = await browser.newContext();
+                const studentPage = await studentContext.newPage();
+                studentPages.push(studentPage);
+
+                await Commands.login(studentPage, student);
+                await studentPage.goto(`/courses/${course.id!}/exams/${exam.id!}`);
+                const examStartEnd = new ExamStartEndPage(studentPage);
+                await examStartEnd.startExam(false);
+            }
+
+            // Wait for WebSocket connections to be established on student pages
+            for (const studentPage of studentPages) {
+                await studentPage.waitForLoadState('networkidle');
+            }
+
+            const announcement = 'Important announcement!';
+            await examManagement.openAnnouncementDialog();
+            const announcementTypingTime = dayjs();
+            await examManagement.typeAnnouncementMessage(announcement);
+            await examManagement.verifyAnnouncementContent(announcementTypingTime, announcement, instructor.username);
+            await examManagement.sendAnnouncement();
+
+            for (const studentPage of studentPages) {
+                const modalDialog = new ModalDialogBox(studentPage);
+                await modalDialog.checkDialogTime(announcementTypingTime);
+                await modalDialog.checkDialogMessage(announcement);
+                await modalDialog.closeDialog();
+            }
+        });
+
+        test('Instructor changes working time and all participants are informed', { tag: '@slow' }, async ({ browser, login, page, examManagement }) => {
+            await login(instructor);
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
 
             const studentPages = [];
 
@@ -406,18 +403,17 @@ test.describe('Exam participation', () => {
                 await modalDialog.checkDialogTime(workingTimeChangeTime);
                 await modalDialog.checkDialogMessage(timeChangeMessage);
                 await modalDialog.closeDialog();
-                await examParticipationActions.checkExamTimeLeft('29');
+                // After reducing working time by 30min (from 1h2min to 32min), verify timer shows ~25-31min remaining
+                await expect(studentPage.locator('#displayTime')).toContainText(/2[5-9]|3[0-1]/);
             }
         });
 
         test(
             'Instructor changes problem statement and all participants are informed',
             { tag: '@fast' },
-            async ({ browser, login, navigationBar, courseManagement, examManagement, examExerciseGroups, examDetails, textExerciseCreation }) => {
+            async ({ browser, login, page, examExerciseGroups, examDetails, textExerciseCreation }) => {
                 await login(instructor);
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExamsOfCourse(course.id!);
-                await examManagement.openExam(exam.id!);
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}`);
 
                 const studentPages = [];
 

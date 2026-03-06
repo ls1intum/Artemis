@@ -1,19 +1,18 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 import javaScaSubmission from '../../../fixtures/exercise/programming/java/static_code_analysis/submission.json';
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
 
-test.describe('Static code analysis tests', { tag: '@slow' }, () => {
-    let course: Course;
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
+
+test.describe('Static code analysis tests', { tag: '@sequential' }, () => {
     let exercise: ProgrammingExercise;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Create exercise', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         exercise = await exerciseAPIRequests.createProgrammingExercise({ course, scaMaxPenalty: 50 });
     });
 
@@ -49,7 +48,5 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

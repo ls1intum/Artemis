@@ -18,7 +18,7 @@ const complaint = "That feedback wasn't very useful!";
 
 const course = { id: SEED_COURSES.textAssessment.id } as any;
 
-test.describe('Text exercise assessment', { tag: '@fast' }, () => {
+test.describe('Text exercise assessment', { tag: '@slow' }, () => {
     let exercise: TextExercise;
     let dueDate: dayjs.Dayjs;
     let assessmentDueDate: dayjs.Dayjs;
@@ -58,11 +58,14 @@ test.describe('Text exercise assessment', { tag: '@fast' }, () => {
             expect(response.status()).toBe(200);
         });
 
-        test('Student sees feedback after assessment due date and complains', async ({ login, page, exerciseResult, textExerciseFeedback }) => {
+        test('Student sees feedback after assessment due date and complains', async ({ login, page, courseManagementAPIRequests, exerciseResult, textExerciseFeedback }) => {
             const now = dayjs();
             if (now.isBefore(assessmentDueDate)) {
                 await page.waitForTimeout(assessmentDueDate.diff(now, 'ms'));
             }
+            // Reset complaint limit to avoid "complaint limit reached" on shared seed courses
+            await login(admin);
+            await courseManagementAPIRequests.updateCourseMaxComplaints(course.id, 999);
             await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
             const totalPoints = tutorFeedbackPoints + tutorTextFeedbackPoints;
             const percentage = totalPoints * 10;

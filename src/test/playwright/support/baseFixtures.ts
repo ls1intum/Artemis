@@ -6,6 +6,21 @@ const test = baseTest.extend<{
 }>({
     autoTestFixture: [
         async ({ page }: { page: Page }, use: (fixture: string) => Promise<void>) => {
+            // Hide the notification popup overlay that can block clicks in e2e tests.
+            // This runs before every page load to ensure the overlay never intercepts pointer events.
+            await page.addInitScript(() => {
+                const injectStyle = () => {
+                    const style = document.createElement('style');
+                    style.textContent = 'jhi-course-notification-popup-overlay { display: none !important; }';
+                    document.head.appendChild(style);
+                };
+                if (document.head) {
+                    injectStyle();
+                } else {
+                    document.addEventListener('DOMContentLoaded', injectStyle);
+                }
+            });
+
             await Promise.all([
                 page.coverage.startJSCoverage({
                     resetOnNavigation: false,
