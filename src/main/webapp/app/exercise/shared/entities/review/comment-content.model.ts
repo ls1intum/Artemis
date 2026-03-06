@@ -1,13 +1,16 @@
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 
-export type CommentContentType = 'USER' | 'CONSISTENCY_CHECK';
+export enum CommentContentType {
+    USER = 'USER',
+    CONSISTENCY_CHECK = 'CONSISTENCY_CHECK',
+}
 
 export interface UserCommentContent {
-    contentType: 'USER';
+    contentType: CommentContentType.USER;
     text: string;
 }
 
-export interface InlineCodeChangeDTO {
+export interface InlineCodeChange {
     startLine: number;
     endLine: number;
     expectedCode: string;
@@ -15,12 +18,12 @@ export interface InlineCodeChangeDTO {
     applied: boolean;
 }
 
-export interface ConsistencyIssueCommentContentDTO {
-    contentType: 'CONSISTENCY_CHECK';
+export interface ConsistencyIssueCommentContent {
+    contentType: CommentContentType.CONSISTENCY_CHECK;
     severity: ConsistencyIssue.SeverityEnum;
     category: ConsistencyIssue.CategoryEnum;
     text: string;
-    suggestedFix?: InlineCodeChangeDTO;
+    suggestedFix?: InlineCodeChange;
 }
 
-export type CommentContent = UserCommentContent | ConsistencyIssueCommentContentDTO;
+export type CommentContent = UserCommentContent | ConsistencyIssueCommentContent;
