@@ -285,11 +285,12 @@ public class HyperionCodeGenerationExecutionService {
      *
      * @param exercise       the programming exercise
      * @param user           the initiating user
+     * @param courseId       the resolved course id for telemetry attribution
      * @param repositoryType repository type to generate
      * @param publisher      event publisher for websocket updates
      * @return the latest build result or null
      */
-    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher) {
+    public Result generateAndCompileCode(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher) {
         RepositorySetupResult setupResult = setupRepository(exercise, repositoryType);
         if (!setupResult.success()) {
             publisher.error("Repository setup failed");
@@ -309,7 +310,7 @@ public class HyperionCodeGenerationExecutionService {
             for (int i = 0; i < MAX_ITERATIONS; i++) {
                 attemptsUsed = i + 1;
                 String repositoryStructure = repositoryStructureService.getRepositoryStructure(setupResult.repository());
-                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, lastBuildLogs, repositoryStructure, consistencyIssues);
+                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
 
                 if (generatedFiles != null && !generatedFiles.isEmpty()) {
 
@@ -378,7 +379,7 @@ public class HyperionCodeGenerationExecutionService {
      */
     private String buildConsistencyIssuesPrompt(ProgrammingExercise exercise) {
         try {
-            ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exercise);
+            ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exercise.getId());
             if (response == null || response.issues() == null || response.issues().isEmpty()) {
                 return "None";
             }
