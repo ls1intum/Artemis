@@ -26,6 +26,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { TutorialGroupFreePeriodsTableComponent } from './tutorial-group-free-periods-table/tutorial-group-free-periods-table.component';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 @Component({
     selector: 'jhi-tutorial-group-free-periods-table',
@@ -105,7 +106,9 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         configuration.tutorialGroupFreePeriods = [firstOfJanuaryPeriod, secondOfJanuaryPeriod, thirdOfJanuaryPeriod];
 
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        findConfigurationSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        findConfigurationSpy = vi
+            .spyOn(configurationService, 'getOneOfCourse')
+            .mockReturnValue(of(new HttpResponse({ body: tutorialGroupConfigurationDtoFromEntity(configuration) })));
         fixture.detectChanges();
     });
 
