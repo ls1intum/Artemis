@@ -292,7 +292,6 @@ describe('StudentsRoomDistributionDialogComponent', () => {
     });
 
     it('should call updateAliases, close dialog and emit onSave when clicking the update aliases button', () => {
-        vi.useFakeTimers();
         const updateSpy = vi.spyOn(service, 'updateAliases');
         const emitSpy = vi.spyOn(component.onSave, 'emit');
 
@@ -303,20 +302,17 @@ describe('StudentsRoomDistributionDialogComponent', () => {
 
         component['setRoomAlias']({ target: { value: 'Main Hall' } } as unknown as Event, rooms[0].id);
 
-        vi.runAllTimers();
         fixture.changeDetectorRef.detectChanges();
 
         const updateAliasButton = document.body.querySelector('#update-aliases-button') as HTMLButtonElement;
-        expect(updateAliasButton).not.toBeNull();
+        expect(updateAliasButton.disabled).toBe(false);
         dispatchClickEvent(updateAliasButton);
-        vi.runAllTimers();
+
         fixture.changeDetectorRef.detectChanges();
 
         expect(updateSpy).toHaveBeenCalledExactlyOnceWith(course.id, exam.id, { [rooms[0].id]: 'Main Hall' });
         expect(component.dialogVisible()).toBe(false);
         expect(emitSpy).toHaveBeenCalledOnce();
-
-        vi.useRealTimers();
     });
 
     it('should send empty alias map if no aliases are set', () => {

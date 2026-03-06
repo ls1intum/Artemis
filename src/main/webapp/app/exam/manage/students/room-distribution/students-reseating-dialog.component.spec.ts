@@ -121,7 +121,7 @@ describe('StudentsReseatingDialogComponent', () => {
 
     it('should call reseatStudent with correct values', () => {
         vi.spyOn(service, 'loadRoomsUsedInExam').mockReturnValue(of(rooms));
-        const reseatSpy = vi.spyOn(service, 'reseatStudent').mockReturnValue(of());
+        const reseatSpy = vi.spyOn(service, 'reseatStudent');
 
         component.openDialog(examUser);
         fixture.detectChanges();
