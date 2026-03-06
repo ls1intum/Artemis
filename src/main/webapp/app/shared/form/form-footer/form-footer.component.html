@@ -49,12 +49,15 @@
                 pButton
                 type="button"
                 id="generate-with-ai"
+                class="footer-action-button d-flex align-items-center"
                 [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi()"
                 [loading]="isGeneratingWithAi()"
                 size="small"
                 (click)="generateWithAi.emit()"
             >
-                <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
+                @if (!isGeneratingWithAi()) {
+                    <fa-icon [fixedWidth]="true" [icon]="facArtemisIntelligence" class="sm" />
+                }
                 <span class="d-none d-sm-inline" jhiTranslate="artemisApp.programmingExercise.codeGeneration.generateWithAi"></span>
             </button>
         }
@@ -62,12 +65,15 @@
             pButton
             type="button"
             id="save-entity"
+            class="footer-action-button d-flex align-items-center"
             [disabled]="!!invalidReasons().length || isDisabled() || isSaving() || isGeneratingWithAi()"
             [loading]="isSaving()"
             size="small"
             (click)="save.emit()"
         >
-            <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
+            @if (!isSaving()) {
+                <fa-icon [fixedWidth]="true" [icon]="faSave" class="sm" />
+            }
             <span class="d-none d-sm-inline">{{ saveTitle() | artemisTranslate }}</span>
         </button>
     </div>
