@@ -378,7 +378,7 @@ public class HyperionCodeGenerationExecutionService {
      */
     private String buildConsistencyIssuesPrompt(ProgrammingExercise exercise) {
         try {
-            ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exercise);
+            ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exercise.getId());
             if (response == null || response.issues() == null || response.issues().isEmpty()) {
                 return "None";
             }

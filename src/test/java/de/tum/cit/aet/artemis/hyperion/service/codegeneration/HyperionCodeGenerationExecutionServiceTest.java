@@ -235,7 +235,7 @@ class HyperionCodeGenerationExecutionServiceTest {
 
     @Test
     void buildConsistencyIssuesPrompt_withNoIssues_returnsNone() {
-        when(consistencyCheckService.checkConsistency(exercise)).thenReturn(new ConsistencyCheckResponseDTO(Instant.EPOCH, List.of(), null, null, null));
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenReturn(new ConsistencyCheckResponseDTO(Instant.EPOCH, List.of(), null, null, null));
 
         String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
 
@@ -249,7 +249,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         ConsistencyIssueDTO issue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_RETURN_TYPE_MISMATCH, "desc", "fix",
                 List.of(problemStatementLocation, templateLocation));
 
-        when(consistencyCheckService.checkConsistency(exercise)).thenReturn(new ConsistencyCheckResponseDTO(Instant.EPOCH, List.of(issue), null, null, null));
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenReturn(new ConsistencyCheckResponseDTO(Instant.EPOCH, List.of(issue), null, null, null));
 
         String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
 
