@@ -5,9 +5,11 @@
         </div>
     }
     @if (isProcessing() && !newIrisMessage()) {
-        <div class="status-indicator" role="status" aria-live="polite">
+        <div class="status-indicator">
+            <span class="sr-only" role="status" aria-live="polite" jhiTranslate="artemisApp.exerciseChatbot.statusIndicator.processing"></span>
             <span
                 class="status-label"
+                aria-hidden="true"
                 [class.slide-out]="statusLabelAnimState() === 'slide-out'"
                 [class.slide-in]="statusLabelAnimState() === 'slide-in'"
                 [jhiTranslate]="statusLabelKey()"

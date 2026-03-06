@@ -65,6 +65,7 @@ export class IrisExerciseChatbotButtonComponent {
     private slideTimeoutId: ReturnType<typeof setTimeout> | undefined;
     private shuffledLabelOrder: number[] = [];
     private shuffledPosition = 0;
+    private wasProcessing = false;
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -161,21 +162,12 @@ export class IrisExerciseChatbotButtonComponent {
             }
         });
 
-        // Cycle status labels while processing
+        // Cycle status labels while processing (only react to transitions)
         effect(() => {
             const processing = this.isProcessing();
 
-            // Always clean up first to avoid timer leaks on re-runs
-            if (this.statusCycleIntervalId) {
-                clearInterval(this.statusCycleIntervalId);
-                this.statusCycleIntervalId = undefined;
-            }
-            if (this.slideTimeoutId) {
-                clearTimeout(this.slideTimeoutId);
-                this.slideTimeoutId = undefined;
-            }
-
-            if (processing) {
+            if (processing && !this.wasProcessing) {
+                // Transition: not processing → processing — start the cycle
                 this.shuffleLabelOrder();
                 this.shuffledPosition = 0;
                 this.statusLabelIndex.set(this.shuffledLabelOrder[0]);
@@ -193,7 +185,19 @@ export class IrisExerciseChatbotButtonComponent {
                         this.statusLabelAnimState.set('slide-in');
                     }, IrisExerciseChatbotButtonComponent.SLIDE_ANIMATION_DURATION);
                 }, IrisExerciseChatbotButtonComponent.STATUS_CYCLE_INTERVAL);
+            } else if (!processing && this.wasProcessing) {
+                // Transition: processing → not processing — stop the cycle
+                if (this.statusCycleIntervalId) {
+                    clearInterval(this.statusCycleIntervalId);
+                    this.statusCycleIntervalId = undefined;
+                }
+                if (this.slideTimeoutId) {
+                    clearTimeout(this.slideTimeoutId);
+                    this.slideTimeoutId = undefined;
+                }
             }
+
+            this.wasProcessing = processing;
         });
 
         effect(() => {
