@@ -1993,6 +1993,64 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenTextFeedbackRequestedWithIndividualDueDate_usesGradedParticipation() throws Exception {
+        setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
+        // Exercise due date is in the past, but graded participation has individual due date in the future
+        textExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(textExercise);
+
+        var gradedParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        gradedParticipation = participationRepo.save(gradedParticipation);
+        gradedParticipation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+        gradedParticipation = participationRepo.save(gradedParticipation);
+
+        var submission = ParticipationFactory.generateTextSubmission("some text", Language.ENGLISH, true);
+        submission.setParticipation(gradedParticipation);
+        submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("text");
+
+        var responseParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(responseParticipation).isNotNull();
+        assertThat(responseParticipation.getId()).isEqualTo(gradedParticipation.getId());
+        assertThat(responseParticipation.isPracticeMode()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenModelingFeedbackRequestedWithIndividualDueDate_usesGradedParticipation() throws Exception {
+        setupAthenaForExercise(modelingExercise, "module_modeling_test");
+        // Exercise due date is in the past, but graded participation has individual due date in the future
+        modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepository.save(modelingExercise);
+
+        var gradedParticipation = ParticipationFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        gradedParticipation = participationRepo.save(gradedParticipation);
+        gradedParticipation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
+        gradedParticipation = participationRepo.save(gradedParticipation);
+
+        var submission = ParticipationFactory.generateModelingSubmission("some model", true);
+        submission.setParticipation(gradedParticipation);
+        submissionRepository.save(submission);
+        participationUtilService.addResultToSubmission(AssessmentType.MANUAL, ZonedDateTime.now(), submission);
+
+        athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("modeling");
+
+        var responseParticipation = request.putWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class,
+                HttpStatus.OK);
+
+        assertThat(responseParticipation).isNotNull();
+        assertThat(responseParticipation.getId()).isEqualTo(gradedParticipation.getId());
+        assertThat(responseParticipation.isPracticeMode()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenTextFeedbackRequestedAfterDueDate_usePracticeParticipation() throws Exception {
         setupAthenaForExercise(textExercise, ATHENA_MODULE_TEXT_TEST);
         textExercise.setDueDate(ZonedDateTime.now().minusHours(1));

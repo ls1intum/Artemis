@@ -311,9 +311,16 @@ public class ParticipationResource {
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
+        // Determine the effective due date by considering the graded participation's individual due date
+        var optionalGradedParticipation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), false);
+        ZonedDateTime effectiveDueDate = exercise.getDueDate();
+        if (optionalGradedParticipation.isPresent() && optionalGradedParticipation.get().getIndividualDueDate() != null) {
+            effectiveDueDate = optionalGradedParticipation.get().getIndividualDueDate();
+        }
+
         // Allow feedback requests after due date if the student is in practice mode
-        if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate())) {
-            // Check if user has a practice participation — if so, allow it
+        if (effectiveDueDate != null && now().isAfter(effectiveDueDate)) {
+            // Check if user has a practice participation
             boolean hasPracticeParticipation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), true)
                     .isPresent();
             if (!hasPracticeParticipation) {
@@ -327,7 +334,7 @@ public class ParticipationResource {
         // Get and validate participation
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // Use practice participation after due date, graded participation before
-        boolean isPastDueDate = exercise.getDueDate() != null && now().isAfter(exercise.getDueDate());
+        boolean isPastDueDate = effectiveDueDate != null && now().isAfter(effectiveDueDate);
         StudentParticipation participation = (exercise instanceof ProgrammingExercise)
                 ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
                 : studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), isPastDueDate)

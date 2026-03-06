@@ -137,13 +137,6 @@ public class ParticipationService {
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
             optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-            if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
-                // In case there is already a practice participation, set it to inactive
-                optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
-                studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
-
-                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-            }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
                 participation = createNewParticipation(exercise, participant);
