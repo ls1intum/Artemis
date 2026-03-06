@@ -111,7 +111,7 @@ describe('ProgrammingExerciseVersionHistoryComponent', () => {
         expect(component.versions()).toHaveLength(0);
         expect(component.selectedVersionId()).toBeUndefined();
         expect(component.selectedSnapshot()).toBeUndefined();
-        expect(component.hasMore()).toBeFalse();
+        expect(component.hasMore()).toBe(false);
     });
 
     it('should not reload snapshot when selecting the same version', () => {
