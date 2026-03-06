@@ -234,12 +234,7 @@ DISK_USE_WARNING_PERCENTAGE=80
 
 ### Data Persistence
 
-By default, Weaviate data is persisted in `.docker-data/weaviate-data`. You can customize this by setting the `WEAVIATE_VOLUME_MOUNT` environment variable:
-
-```bash
-export WEAVIATE_VOLUME_MOUNT=/path/to/your/data
-docker compose -f weaviate.yml up -d
-```
+Weaviate data is persisted in the named Docker volume `artemis-weaviate`.
 
 <Callout variant={CalloutVariant.warning}>
     <p>Anonymous access is enabled by default for development convenience. For production deployments, configure proper authentication.</p>
