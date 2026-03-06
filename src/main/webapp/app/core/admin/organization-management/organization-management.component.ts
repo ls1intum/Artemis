@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Organization } from 'app/core/shared/entities/organization.model';
@@ -11,7 +11,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
-import { ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
+import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -31,19 +31,21 @@ export class OrganizationManagementComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly alertService = inject(AlertService);
 
-    readonly tableOptions: TableViewOptions = { selectionMode: 'single', striped: true };
+    readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: 'flex' };
 
     organizations = signal<Organization[]>([]);
     totalCount = signal(0);
     isLoading = signal(false);
-    columns: ColumnDef<Organization>[] = [
-        { field: 'id', headerKey: 'global.field.id', sort: true, width: '100px' },
-        { field: 'name', headerKey: 'artemisApp.organizationManagement.name', sort: true, width: '300px' },
+
+    nameColumnTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<Organization> }>>('nameColumn');
+
+    columns = computed<ColumnDef<Organization>[]>(() => [
+        { field: 'name', headerKey: 'artemisApp.organizationManagement.name', sort: true, width: '300px', templateRef: this.nameColumnTemplate() },
         { field: 'shortName', headerKey: 'artemisApp.organizationManagement.shortName', sort: true, width: '150px' },
         { field: 'numberOfUsers', headerKey: 'artemisApp.organizationManagement.users', sort: true, width: '100px' },
         { field: 'numberOfCourses', headerKey: 'artemisApp.organizationManagement.courses', sort: true, width: '100px' },
         { field: 'emailPattern', headerKey: 'artemisApp.organizationManagement.emailPattern', sort: true, width: '200px' },
-    ];
+    ]);
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

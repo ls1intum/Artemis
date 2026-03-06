@@ -38,8 +38,9 @@ public class OrganizationSpecs {
         if (searchTerm == null || searchTerm.isBlank()) {
             return builder.conjunction();
         }
-        String pattern = "%" + searchTerm.trim().toLowerCase(Locale.ROOT) + "%";
-        Predicate[] predicates = Arrays.stream(columns).map(column -> builder.like(builder.lower(from.get(column)), pattern)).toArray(Predicate[]::new);
+        String escaped = searchTerm.trim().toLowerCase(Locale.ROOT).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
+        String pattern = "%" + escaped + "%";
+        Predicate[] predicates = Arrays.stream(columns).map(column -> builder.like(builder.lower(from.get(column)), pattern, '\\')).toArray(Predicate[]::new);
         return builder.or(predicates);
     }
 

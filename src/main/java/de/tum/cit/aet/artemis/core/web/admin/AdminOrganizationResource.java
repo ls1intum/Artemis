@@ -144,7 +144,7 @@ public class AdminOrganizationResource {
         Organization organization = organizationRepository.findByIdElseThrow(organizationId);
         userRepository.removeOrganizationFromUser(user.getId(), organization);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, user.getLogin())).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, "organizationUser", user.getLogin())).build();
     }
 
     /**
