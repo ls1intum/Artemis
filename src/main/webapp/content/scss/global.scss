@@ -1220,3 +1220,18 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         background-color: var(--scrollbar-color);
     }
 }
+
+// About Iris modal backdrop
+.p-dialog-mask.about-iris-dialog {
+    background-color: rgba(0, 0, 0, 0.3);
+}
+
+.about-iris-dialog {
+    .p-dialog-content {
+        border-radius: 1rem;
+        overflow: hidden;
+        background-color: var(--iris-secondary-background);
+        position: relative;
+        padding: 0;
+    }
+}

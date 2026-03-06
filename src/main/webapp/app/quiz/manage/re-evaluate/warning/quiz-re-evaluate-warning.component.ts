@@ -195,7 +195,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
 
     /**
      * 1. We check all ShortAnswer-Question-Elements in case a spot, solution or mapping has changed/was deleted
-     * 2. Set flags based on detected changes to inform the instructor in the UI what his changes have for consequences.
+     * 2. Set flags based on detected changes to inform the instructor in the UI what their changes have for consequences.
      *
      * @param question
      * @param backUpQuestion

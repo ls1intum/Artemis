@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 
 @Component({
     selector: 'jhi-request-feedback-button',
@@ -106,20 +106,20 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     }
 
     async showLLMSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open();
+        const choice = await this.llmModalService.open(this.accountService.userIdentity()?.selectedLLMUsage);
 
         switch (choice) {
-            case 'cloud':
+            case LLMSelectionDecision.CLOUD_AI:
                 this.acceptLLMUsage(LLMSelectionDecision.CLOUD_AI);
                 break;
-            case 'local':
+            case LLMSelectionDecision.LOCAL_AI:
                 this.acceptLLMUsage(LLMSelectionDecision.LOCAL_AI);
                 break;
-            case 'no_ai':
+            case LLMSelectionDecision.NO_AI:
                 // Store that the user actively declined AI usage
                 this.acceptLLMUsage(LLMSelectionDecision.NO_AI);
                 break;
-            case 'none':
+            case LLM_MODAL_DISMISSED:
                 break;
         }
     }

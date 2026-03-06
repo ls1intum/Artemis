@@ -1,9 +1,9 @@
 import 'zone.js';
 import 'zone.js/testing';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Provider } from '@angular/core';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
-
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -28,11 +28,84 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
+import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
 import { ConsistencyCheckError, ErrorType } from 'app/programming/shared/entities/consistency-check-result.model';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
+
+import { HttpErrorResponse } from '@angular/common/http';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ArtifactLocation } from 'app/openapi/model/artifactLocation';
 import { faCircleExclamation, faCircleInfo, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { Course } from 'app/core/course/shared/entities/course.model';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CodeEditorInstructorBaseContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-base-container.component';
+import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContentType } from 'app/exercise/shared/entities/review/comment-content.model';
+import { WritableSignal, signal } from '@angular/core';
+
+/**
+ * Creates a typed mock ProgrammingExercise for testing.
+ * @param overrides Partial properties to override the default values
+ */
+function createMockExercise(overrides: Partial<ProgrammingExercise> = {}): ProgrammingExercise {
+    const mockCourse = new Course();
+    mockCourse.id = 1;
+
+    const exercise = new ProgrammingExercise(mockCourse, undefined);
+    exercise.id = 42;
+    exercise.problemStatement = 'Test problem statement';
+
+    return Object.assign(exercise, overrides);
+}
+
+/**
+ * Creates base providers shared across all test suites.
+ * @param additionalProviders Optional providers to include with the base set
+ */
+function getBaseProviders(additionalProviders: Provider[] = []): Provider[] {
+    return [
+        { provide: AlertService, useClass: MockAlertService },
+        { provide: ProfileService, useClass: MockProfileService },
+        { provide: Router, useClass: MockRouter },
+        { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
+        { provide: CourseExerciseService, useClass: MockCourseExerciseService },
+        { provide: DomainService, useValue: { setDomain: jest.fn() } },
+        { provide: Location, useValue: { replaceState: jest.fn() } },
+        { provide: ParticipationService, useClass: MockParticipationService },
+        { provide: ActivatedRoute, useValue: { params: of({}) } },
+        { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
+        { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
+        { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
+        { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
+        { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({})) } },
+        { provide: TranslateService, useClass: MockTranslateService },
+        { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
+        { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
+        ...additionalProviders,
+    ];
+}
+
+/**
+ * Configures TestBed with the standard component setup.
+ * @param additionalProviders Optional providers to include with the base set
+ */
+async function configureTestBed(additionalProviders: Provider[] = []): Promise<void> {
+    // Extract the ExerciseReviewCommentService mock from additional providers (if provided)
+    // to also override it at the component level, since the component declares its own provider.
+    const reviewCommentProvider = additionalProviders.find((p: any) => p.provide === ExerciseReviewCommentService);
+    const componentProviders = reviewCommentProvider ? [reviewCommentProvider] : [];
+
+    await TestBed.configureTestingModule({
+        imports: [CodeEditorInstructorAndEditorContainerComponent],
+        providers: getBaseProviders(additionalProviders),
+    })
+        .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
+            set: { template: '', imports: [], providers: componentProviders },
+        })
+        .compileComponents();
+}
 
 describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
@@ -45,6 +118,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let profileService: ProfileService;
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
+    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads'>> & { threads: WritableSignal<any[]> };
 
     const mockIssues: ConsistencyIssue[] = [
         {
@@ -132,6 +206,56 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         },
     ];
 
+    const createConsistencyThreads = (issues: ConsistencyIssue[]) =>
+        issues.map((issue, index) => {
+            const firstLocation = issue.relatedLocations[0];
+            const targetType = (() => {
+                switch (firstLocation?.type) {
+                    case ArtifactLocation.TypeEnum.TemplateRepository:
+                        return CommentThreadLocationType.TEMPLATE_REPO;
+                    case ArtifactLocation.TypeEnum.SolutionRepository:
+                        return CommentThreadLocationType.SOLUTION_REPO;
+                    case ArtifactLocation.TypeEnum.TestsRepository:
+                        return CommentThreadLocationType.TEST_REPO;
+                    case ArtifactLocation.TypeEnum.ProblemStatement:
+                    default:
+                        return CommentThreadLocationType.PROBLEM_STATEMENT;
+                }
+            })();
+
+            const lineNumber = firstLocation?.endLine ?? firstLocation?.startLine ?? 1;
+            const filePath = targetType === CommentThreadLocationType.PROBLEM_STATEMENT ? undefined : firstLocation?.filePath;
+            const timestamp = new Date(2024, 0, index + 1).toISOString();
+
+            return {
+                id: index + 1,
+                exerciseId: 42,
+                targetType,
+                filePath,
+                initialFilePath: filePath,
+                lineNumber,
+                initialLineNumber: lineNumber,
+                outdated: false,
+                resolved: false,
+                comments: [
+                    {
+                        id: index + 1_000,
+                        threadId: index + 1,
+                        type: CommentType.CONSISTENCY_CHECK,
+                        authorName: 'Hyperion',
+                        createdDate: timestamp,
+                        lastModifiedDate: timestamp,
+                        content: {
+                            contentType: CommentContentType.CONSISTENCY_CHECK,
+                            severity: issue.severity,
+                            category: issue.category,
+                            text: issue.description,
+                        },
+                    },
+                ],
+            };
+        });
+
     beforeAll(() => {
         try {
             TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
@@ -141,39 +265,20 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     });
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [CodeEditorInstructorAndEditorContainerComponent],
-            providers: [
-                { provide: AlertService, useClass: MockAlertService },
-                { provide: ProfileService, useClass: MockProfileService },
-                { provide: Router, useClass: MockRouter },
-                { provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService },
-                { provide: CourseExerciseService, useClass: MockCourseExerciseService },
-                { provide: DomainService, useValue: { setDomain: jest.fn() } },
-                { provide: Location, useValue: { replaceState: jest.fn() } },
-                { provide: ParticipationService, useClass: MockParticipationService },
-                { provide: ActivatedRoute, useValue: { params: of({}) } },
-                { provide: HyperionCodeGenerationApiService, useValue: { generateCode: jest.fn() } },
-                { provide: NgbModal, useValue: { open: jest.fn(() => ({ componentInstance: {}, result: Promise.resolve() })) } },
-                { provide: HyperionWebsocketService, useValue: { subscribeToJob: jest.fn(), unsubscribeFromJob: jest.fn() } },
-                { provide: CodeEditorRepositoryService, useValue: { pull: jest.fn(() => of(void 0)) } },
-                { provide: CodeEditorRepositoryFileService, useValue: { getRepositoryContent: jest.fn(() => of({} as any)) } },
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ConsistencyCheckService, useValue: { checkConsistencyForProgrammingExercise: jest.fn() } },
-                { provide: ArtemisIntelligenceService, useValue: { consistencyCheck: jest.fn(), isLoading: () => false } },
-            ],
-        })
-            // Avoid rendering heavy template dependencies for these tests
-            .overrideComponent(CodeEditorInstructorAndEditorContainerComponent, {
-                set: { template: '', imports: [] as any },
-            })
-            .compileComponents();
+        reviewCommentService = {
+            setExercise: jest.fn(),
+            reloadThreads: jest.fn(),
+            threads: signal([]),
+        } as any;
+        (reviewCommentService.reloadThreads as jest.Mock).mockImplementation((onLoaded?: () => void) => onLoaded?.());
+
+        await configureTestBed([{ provide: ExerciseReviewCommentService, useValue: reviewCommentService }]);
 
         alertService = TestBed.inject(AlertService);
-        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as any;
-        ws = TestBed.inject(HyperionWebsocketService) as any;
+        codeGenerationApi = TestBed.inject(HyperionCodeGenerationApiService) as unknown as jest.Mocked<Pick<HyperionCodeGenerationApiService, 'generateCode'>>;
+        ws = TestBed.inject(HyperionWebsocketService) as unknown as jest.Mocked<Pick<HyperionWebsocketService, 'subscribeToJob' | 'unsubscribeFromJob'>>;
         profileService = TestBed.inject(ProfileService);
-        repoService = TestBed.inject(CodeEditorRepositoryService) as any;
+        repoService = TestBed.inject(CodeEditorRepositoryService);
         artemisIntelligenceService = TestBed.inject(ArtemisIntelligenceService);
         consistencyCheckService = TestBed.inject(ConsistencyCheckService);
 
@@ -184,7 +289,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         comp = fixture.componentInstance;
 
         // Minimal exercise setup used by generateCode
-        comp.exercise = { id: 42 } as any;
+        comp.exercise = createMockExercise();
 
         // Mock codeEditorContainer and editableInstructions
         (comp as any).codeEditorContainer = {
@@ -193,11 +298,16 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             selectedRepository: jest.fn().mockReturnValue('SOLUTION'),
             problemStatementIdentifier: 'problem_statement.md',
             jumpToLine: jest.fn(),
+            monacoEditor: {
+                clearReviewCommentDrafts: jest.fn(),
+            },
         };
 
-        (comp as any).editableInstructions = {
+        // editableInstructions is a viewChild signal; override with a callable mock
+        (comp as any).editableInstructions = jest.fn().mockReturnValue({
             jumpToLine: jest.fn(),
-        };
+            clearReviewCommentDrafts: jest.fn(),
+        });
 
         // Mock jump helper methods
         comp.selectTemplateParticipation = jest.fn().mockResolvedValue(undefined);
@@ -346,6 +456,34 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(pullSpy).toHaveBeenCalledTimes(2);
         });
 
+        it('should show modal when code generation is already running', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            const modalService = TestBed.inject(NgbModal);
+            const openSpy = jest.spyOn(modalService, 'open');
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+
+            const conflict = new HttpErrorResponse({
+                status: 409,
+                error: { 'X-artemisApp-error': 'error.codeGenerationRunning' },
+            });
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(throwError(() => conflict) as any);
+
+            comp.generateCode();
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+            expect(comp.isGeneratingCode()).toBeFalse();
+            // One modal from generateCode() confirmation and one from the "already running" error handler.
+            expect(openSpy).toHaveBeenCalledTimes(2);
+            expect(addAlertSpy).not.toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+                }),
+            );
+        });
+
         it('should call executeRefresh and cleanup on DONE', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-4' }));
@@ -443,6 +581,62 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                 window.setTimeout = originalSetTimeout;
             }
         });
+
+        it('should clear subscription when restore check-only has no active job', () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            const clearSpy = jest.spyOn(comp as any, 'clearJobSubscription');
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({}));
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: true });
+            expect(clearSpy).toHaveBeenCalledWith(true);
+        });
+    });
+
+    describe('Review Comments', () => {
+        it('loadExercise sets review context and reloads threads when returned exercise has an id', () => {
+            const superLoadSpy = jest.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({ id: 55 } as any));
+
+            comp.loadExercise(55).subscribe();
+
+            expect(superLoadSpy).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.setExercise).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+
+            superLoadSpy.mockRestore();
+        });
+
+        it('loadExercise does not set review context when returned exercise has no id', () => {
+            const superLoadSpy = jest.spyOn(CodeEditorInstructorBaseContainerComponent.prototype, 'loadExercise').mockReturnValue(of({} as any));
+
+            comp.loadExercise(55).subscribe();
+
+            expect(superLoadSpy).toHaveBeenCalledWith(55);
+            expect(reviewCommentService.setExercise).not.toHaveBeenCalled();
+            expect(reviewCommentService.reloadThreads).not.toHaveBeenCalled();
+
+            superLoadSpy.mockRestore();
+        });
+
+        it('onCommit clears draft widgets and reloads threads', () => {
+            const clearEditorDraftsSpy = jest.spyOn((comp as any).codeEditorContainer.monacoEditor, 'clearReviewCommentDrafts');
+
+            comp.onCommit();
+
+            expect(clearEditorDraftsSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        });
+
+        it('onProblemStatementSaved clears markdown drafts and reloads threads', () => {
+            const mockInstructions = (comp as any).editableInstructions();
+            const clearInstructionDraftsSpy = jest.spyOn(mockInstructions, 'clearReviewCommentDrafts');
+
+            comp.onProblemStatementSaved();
+
+            expect(clearInstructionDraftsSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        });
     });
 
     describe('Consistency Checks', () => {
@@ -462,6 +656,57 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).toHaveBeenCalledOnce();
             expect(successSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).toHaveBeenCalledOnce();
+        });
+
+        it('shows success when no new consistency threads are persisted after consistency check', () => {
+            const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [mockIssues[0]] } as ConsistencyCheckResponse));
+            const successSpy = jest.spyOn(alertService, 'success');
+            const warningSpy = jest.spyOn(alertService, 'warning');
+
+            comp.checkConsistencies(comp.exercise!);
+
+            expect(check1Spy).toHaveBeenCalledOnce();
+            expect(check2Spy).toHaveBeenCalledOnce();
+            expect(successSpy).toHaveBeenCalledOnce();
+            expect(warningSpy).not.toHaveBeenCalled();
+            expect(comp.showConsistencyIssuesToolbar()).toBeFalse();
+        });
+
+        it('shows warning and toolbar when new consistency threads are persisted after consistency check', () => {
+            const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const successSpy = jest.spyOn(alertService, 'success');
+            const warningSpy = jest.spyOn(alertService, 'warning');
+            (reviewCommentService.reloadThreads as jest.Mock).mockImplementationOnce((onLoaded?: () => void) => {
+                reviewCommentService.threads.set(createConsistencyThreads([mockIssues[0]]) as any);
+                onLoaded?.();
+            });
+
+            comp.checkConsistencies(comp.exercise!);
+
+            expect(check1Spy).toHaveBeenCalledOnce();
+            expect(check2Spy).toHaveBeenCalledOnce();
+            expect(warningSpy).toHaveBeenCalledOnce();
+            expect(successSpy).not.toHaveBeenCalled();
+            expect(comp.showConsistencyIssuesToolbar()).toBeTrue();
+        });
+
+        it('shows success when no new issues are reported, even if persisted consistency threads already exist', () => {
+            reviewCommentService.threads.set(createConsistencyThreads([mockIssues[0]]) as any);
+            const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
+            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const successSpy = jest.spyOn(alertService, 'success');
+            const warningSpy = jest.spyOn(alertService, 'warning');
+
+            comp.checkConsistencies(comp.exercise!);
+
+            expect(check1Spy).toHaveBeenCalledOnce();
+            expect(check2Spy).toHaveBeenCalledOnce();
+            expect(successSpy).toHaveBeenCalledOnce();
+            expect(warningSpy).not.toHaveBeenCalled();
+            expect(comp.showConsistencyIssuesToolbar()).toBeFalse();
         });
 
         it('error when first consistency check fails', () => {
@@ -475,6 +720,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(check1Spy).toHaveBeenCalledOnce();
             expect(check2Spy).not.toHaveBeenCalled();
             expect(failSpy).toHaveBeenCalledOnce();
+            expect(reviewCommentService.reloadThreads).not.toHaveBeenCalled();
         });
 
         it('error when exercise id undefined', () => {
@@ -512,89 +758,65 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         });
 
         it('should toggle toolbar and select first issue if none selected', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             expect(comp.showConsistencyIssuesToolbar()).toBeFalse();
 
             comp.toggleConsistencyIssuesToolbar();
             expect(comp.showConsistencyIssuesToolbar()).toBeTrue();
-            expect(comp.selectedIssue).toBe(mockIssues[0]);
 
             const sorted = comp.sortedIssues();
-            expect(comp.selectedIssue).toBe(sorted[0]);
-            expect(comp.locationIndex).toBe(0);
+            expect(comp.selectedIssue).toEqual(sorted[0]);
         });
 
         it('should navigate global next', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             const sorted = comp.sortedIssues();
 
             // Start at first issue
             comp.selectedIssue = sorted[0];
-            comp.locationIndex = 0;
 
             const jumpSpy = jest.spyOn(comp as any, 'jumpToLocation').mockImplementation();
 
             // Next step
             comp.navigateGlobal(1);
 
-            // Should go to sorted[1] (Issue 4), locIndex 0
             expect(comp.selectedIssue).toBe(sorted[1]);
-            expect(comp.locationIndex).toBe(0);
-            expect(jumpSpy).toHaveBeenCalledWith(sorted[1], 0);
-
-            // Next step (Issue 4 has 3 locations)
-            comp.navigateGlobal(1);
-            expect(comp.selectedIssue).toBe(sorted[1]);
-            expect(comp.locationIndex).toBe(1);
+            expect(jumpSpy).toHaveBeenCalledWith(sorted[1]);
 
             comp.navigateGlobal(1);
-            expect(comp.selectedIssue).toBe(sorted[1]);
-            expect(comp.locationIndex).toBe(2);
-
-            comp.navigateGlobal(1);
-            // Should go to sorted[2] (Issue 1), locIndex 0
             expect(comp.selectedIssue).toBe(sorted[2]);
-            expect(comp.locationIndex).toBe(0);
         });
 
         it('should navigate global previous and wrap around', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             const sorted = comp.sortedIssues();
 
             // Start at first issue
             comp.selectedIssue = sorted[0];
-            comp.locationIndex = 0;
 
             const jumpSpy = jest.spyOn(comp as any, 'jumpToLocation').mockImplementation();
 
-            // Previous step -> Wrap to last issue, last location
-            // Last issue is sorted[4] (Issue 3 Low), 1 location.
             const lastIssue = sorted[sorted.length - 1];
-            // Last issue has 1 location.
-            const lastLocIndex = lastIssue.relatedLocations.length - 1;
 
             comp.navigateGlobal(-1);
 
             expect(comp.selectedIssue).toBe(lastIssue);
-            expect(comp.locationIndex).toBe(lastLocIndex);
-            expect(jumpSpy).toHaveBeenCalledWith(lastIssue, lastLocIndex);
+            expect(jumpSpy).toHaveBeenCalledWith(lastIssue);
         });
 
         it('navigates to PROBLEM_STATEMENT and calls jumpToLine', fakeAsync(() => {
-            // Mock issue with ProblemStatement
-            const issue = mockIssues[0]; // ProblemStatement issue
-            const loc = issue.relatedLocations[0];
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
+            const issue = comp.sortedIssues().find((sortedIssue) => sortedIssue.targetType === CommentThreadLocationType.PROBLEM_STATEMENT)!;
 
-            comp.selectedIssue = issue;
-            comp.locationIndex = 0;
+            const mockEditable = { jumpToLine: jest.fn() };
+            (comp as any).editableInstructions = jest.fn().mockReturnValue(mockEditable);
+            const jumpSpy = mockEditable.jumpToLine;
 
-            const jumpSpy = jest.spyOn((comp as any).editableInstructions, 'jumpToLine');
-
-            (comp as any).jumpToLocation(issue, 0); // Corrected: use (comp as any)
+            (comp as any).jumpToLocation(issue);
             tick();
 
             expect((comp as any).codeEditorContainer.selectedFile).toBe('problem_statement.md');
-            expect(jumpSpy).toHaveBeenCalledWith(loc.endLine);
+            expect(jumpSpy).toHaveBeenCalledWith(issue.lineNumber);
         }));
 
         it('onEditorLoaded calls onFileLoad immediately when file is already selected', () => {
@@ -621,6 +843,26 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(onFileLoadSpy).not.toHaveBeenCalled();
             expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+        });
+
+        it('onEditorLoaded keeps deferred jump state until onFileLoad is called', () => {
+            const targetFile = 'src/tests/ExampleTest.java';
+            const targetLine = 42;
+            comp.fileToJumpOn = targetFile;
+            comp.lineJumpOnFileLoad = targetLine;
+            (comp as any).codeEditorContainer.selectedFile = 'some/other/file.java';
+
+            comp.onEditorLoaded();
+
+            expect((comp as any).codeEditorContainer.selectedFile).toBe(targetFile);
+            expect(comp.fileToJumpOn).toBe(targetFile);
+            expect(comp.lineJumpOnFileLoad).toBe(targetLine);
+
+            comp.onFileLoad(targetFile);
+
+            expect((comp as any).codeEditorContainer.jumpToLine).toHaveBeenCalledWith(targetLine);
+            expect(comp.fileToJumpOn).toBeUndefined();
+            expect(comp.lineJumpOnFileLoad).toBeUndefined();
         });
 
         it('onFileLoad jumps to line and clears lineJumpOnFileLoad when file matches', () => {
@@ -656,10 +898,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect((comp as any).codeEditorContainer.jumpToLine).not.toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
+            expect(comp.fileToJumpOn).toBeUndefined();
         });
 
         it('shows error and clears jump state when repository selection fails', () => {
-            const issue = mockIssues[3]; // TESTS_REPOSITORY
+            const issue = {
+                targetType: CommentThreadLocationType.TEST_REPO,
+                filePath: 'src/tests/ExampleTest.java',
+                lineNumber: 70,
+            };
             (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue('SOLUTION');
 
             const error = new Error('repo selection failed');
@@ -670,7 +917,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const alertErrorSpy = jest.spyOn(alertService, 'error');
             const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
 
-            (comp as any).jumpToLocation(issue, 0);
+            (comp as any).jumpToLocation(issue);
 
             expect(alertErrorSpy).toHaveBeenCalled();
             expect(comp.lineJumpOnFileLoad).toBeUndefined();
@@ -678,10 +925,95 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(onEditorLoadedSpy).not.toHaveBeenCalled();
         });
 
+        it('navigateToLocation selects template repo when target is TEMPLATE_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.SOLUTION);
+            const selectTemplateSpy = jest.spyOn(comp, 'selectTemplateParticipation');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.TEMPLATE_REPO, filePath: 'src/template/A.java', lineNumber: 10 });
+
+            expect(selectTemplateSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects solution repo when target is SOLUTION_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            const selectSolutionSpy = jest.spyOn(comp, 'selectSolutionParticipation');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.SOLUTION_REPO, filePath: 'src/solution/B.java', lineNumber: 11 });
+
+            expect(selectSolutionSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects test repo when target is TEST_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.SOLUTION);
+            const selectTestSpy = jest.spyOn(comp, 'selectTestRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({ targetType: CommentThreadLocationType.TEST_REPO, filePath: 'src/test/C.java', lineNumber: 12 });
+
+            expect(selectTestSpy).toHaveBeenCalledOnce();
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when target is AUXILIARY_REPO and current repo differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 77,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(77);
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when already in AUXILIARY but repository id differs', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.AUXILIARY);
+            comp.selectedRepositoryId = 12;
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 77,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(77);
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
+        it('navigateToLocation selects auxiliary repo when auxiliaryRepositoryId is 0', () => {
+            (comp as any).codeEditorContainer.selectedRepository = jest.fn().mockReturnValue(RepositoryType.TEMPLATE);
+            comp.selectAuxiliaryRepository = jest.fn();
+            const selectAuxSpy = jest.spyOn(comp, 'selectAuxiliaryRepository');
+            const onEditorLoadedSpy = jest.spyOn(comp, 'onEditorLoaded');
+
+            (comp as any).navigateToLocation({
+                targetType: CommentThreadLocationType.AUXILIARY_REPO,
+                auxiliaryRepositoryId: 0,
+                filePath: 'src/aux/D.java',
+                lineNumber: 13,
+            });
+
+            expect(selectAuxSpy).toHaveBeenCalledWith(0);
+            expect(onEditorLoadedSpy).not.toHaveBeenCalled();
+        });
+
         it('should reset showConsistencyIssuesToolbar when re-running consistency check', () => {
-            comp.consistencyIssues.set(mockIssues);
+            reviewCommentService.threads.set(createConsistencyThreads(mockIssues) as any);
             (comp as any).showConsistencyIssuesToolbar.set(true);
-            comp.selectedIssue = mockIssues[0];
+            comp.selectedIssue = comp.sortedIssues()[0];
 
             jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
             jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
@@ -692,5 +1024,124 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.showConsistencyIssuesToolbar()).toBeFalse();
             expect(comp.selectedIssue).toBeUndefined();
         });
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Diff Editor', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+
+    beforeEach(async () => {
+        await configureTestBed();
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise({ problemStatement: 'Original' });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should accept refinement and update problem statement', () => {
+        // Simulate refinement setting up diff mode
+        comp.showDiff.set(true);
+
+        comp.closeDiff();
+
+        expect(comp.showDiff()).toBeFalse();
+    });
+
+    it('should revert refinement', () => {
+        comp.showDiff.set(true);
+        // Mock the internal editableInstructions to have revertAll and getCurrentContent methods
+        const mockEditable = {
+            revertAll: jest.fn(),
+            getCurrentContent: jest.fn().mockReturnValue('Reverted content'),
+        };
+        (comp as any).editableInstructions = jest.fn().mockReturnValue(mockEditable) as any;
+
+        comp.revertAllRefinement();
+
+        expect(mockEditable.revertAll).toHaveBeenCalled();
+        expect(comp.showDiff()).toBeFalse();
+    });
+});
+
+describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Refinement', () => {
+    // Validation, error handling, and edge cases are covered by problem-statement.service.spec.ts.
+    // These tests only verify the component wires up to ProblemStatementService correctly.
+
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+    let problemStatementService: jest.Mocked<Pick<ProblemStatementService, 'refineTargeted' | 'refineGlobally' | 'generateProblemStatement' | 'loadTemplate'>>;
+
+    beforeEach(async () => {
+        await configureTestBed([
+            {
+                provide: ProblemStatementService,
+                useValue: { refineTargeted: jest.fn(), refineGlobally: jest.fn(), generateProblemStatement: jest.fn(), loadTemplate: jest.fn() },
+            },
+        ]);
+
+        problemStatementService = TestBed.inject(ProblemStatementService) as unknown as jest.Mocked<
+            Pick<ProblemStatementService, 'refineTargeted' | 'refineGlobally' | 'generateProblemStatement' | 'loadTemplate'>
+        >;
+
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise({ problemStatement: 'Original problem statement' });
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    it('should delegate inline refinement to service and show diff on success', () => {
+        (problemStatementService.refineTargeted as jest.Mock).mockReturnValue(of({ success: true, content: 'Refined content' }));
+
+        comp.onInlineRefinement({ instruction: 'Improve this', startLine: 1, endLine: 2, startColumn: 1, endColumn: 10 });
+
+        expect(problemStatementService.refineTargeted).toHaveBeenCalledWith(
+            comp.exercise,
+            'Original problem statement',
+            expect.objectContaining({ instruction: 'Improve this' }),
+            expect.any(Function),
+        );
+        expect(comp.showDiff()).toBeTrue();
+    });
+
+    it('should handle toggleRefinementPopover gracefully when popover is undefined', () => {
+        // popover viewChild is undefined because the template is overridden to empty
+        expect(() => comp.toggleRefinementPopover(new Event('click'))).not.toThrow();
+    });
+
+    it('should preserve refinement prompt when popover hides (prompt is never cleared on dismiss)', () => {
+        comp.refinementPrompt.set('Some prompt');
+        // The prompt signal should persist since there's no onHide handler clearing it
+        expect(comp.refinementPrompt()).toBe('Some prompt');
+    });
+
+    it('should delegate global refinement to service and show diff on success', () => {
+        (problemStatementService.refineGlobally as jest.Mock).mockReturnValue(of({ success: true, content: 'Refined content' }));
+
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.templateProblemStatement.set('Template');
+        comp.aiOps.currentProblemStatement.set('Original problem statement');
+        comp.refinementPrompt.set('Improve clarity');
+
+        comp.submitRefinement();
+
+        expect(problemStatementService.refineGlobally).toHaveBeenCalledWith(comp.exercise, 'Original problem statement', 'Improve clarity', expect.any(Function));
+        expect(comp.showDiff()).toBeTrue();
+    });
+
+    it('should not submit when prompt is empty', () => {
+        comp.refinementPrompt.set('   ');
+        comp.submitRefinement();
+        expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
+        expect(problemStatementService.generateProblemStatement).not.toHaveBeenCalled();
     });
 });

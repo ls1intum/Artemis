@@ -105,6 +105,34 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.immediateReleaseWarning).toBe('');
     });
 
+    it('should set creditChanged as true when only an earlier instruction has changed credits', () => {
+        const instruction1 = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+        const instruction2 = { id: 2, credits: 2, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+        const instruction1Changed = { ...instruction1, credits: 5 } as GradingInstruction;
+
+        const criterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instruction1Changed, instruction2] } as GradingCriterion;
+        const backupCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instruction1, instruction2] } as GradingCriterion;
+
+        exercise.gradingCriteria = [criterion];
+        backupExercise.gradingCriteria = [backupCriterion];
+        updateWarningService.loadExercise(exercise, backupExercise);
+        expect(updateWarningService.creditChanged).toBeTrue();
+    });
+
+    it('should set usageCountChanged as true when only an earlier instruction has changed usage count', () => {
+        const instruction1 = { id: 1, credits: 1, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+        const instruction2 = { id: 2, credits: 2, gradingScale: 'scale', instructionDescription: 'description', feedback: 'feedback', usageCount: 0 } as GradingInstruction;
+        const instruction1Changed = { ...instruction1, usageCount: 3 } as GradingInstruction;
+
+        const criterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instruction1Changed, instruction2] } as GradingCriterion;
+        const backupCriterion = { id: 1, title: 'testCriteria', structuredGradingInstructions: [instruction1, instruction2] } as GradingCriterion;
+
+        exercise.gradingCriteria = [criterion];
+        backupExercise.gradingCriteria = [backupCriterion];
+        updateWarningService.loadExercise(exercise, backupExercise);
+        expect(updateWarningService.usageCountChanged).toBeTrue();
+    });
+
     it('should not check releaseDate but grading criteria in exam', () => {
         exercise.gradingCriteria = [gradingCriterionUsageCountChanged];
         exercise.releaseDate = undefined;
