@@ -28,7 +28,7 @@ public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage)
     public static BuildPlanPhasesDTO fromWindfile(Windfile windfile) {
         List<BuildPhaseDTO> phases = windfile.scriptActions().stream().map(action -> {
             List<String> resultPaths = action.results() != null ? action.results().stream().map(AeolusResult::path).toList() : Collections.emptyList();
-            return new BuildPhaseDTO(action.name(), action.script(), BuildPhaseCondition.ALWAYS, resultPaths);
+            return new BuildPhaseDTO(action.name(), wrapScriptWithWorkdir(action.script(), action.workdir()), BuildPhaseCondition.ALWAYS, resultPaths);
         }).toList();
 
         String dockerImage = null;
@@ -37,6 +37,14 @@ public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage)
         }
 
         return new BuildPlanPhasesDTO(phases, dockerImage);
+    }
+
+    private static String wrapScriptWithWorkdir(String script, String workdir) {
+        if (workdir == null || workdir.isBlank()) {
+            return script;
+        }
+
+        return "ORIGINAL_DIR=\"$(pwd)\"\ncd \"" + workdir + "\"\n" + script + "\ncd \"$ORIGINAL_DIR\"";
     }
 
     public static BuildPlanPhasesDTO deserialize(String json) throws JsonProcessingException {

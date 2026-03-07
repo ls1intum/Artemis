@@ -275,6 +275,16 @@ describe('ProgrammingExercise Custom Build Plan', () => {
             expect(phases[1].name).toBe('clean');
         });
 
+        it('should wrap converted windfile script with workdir cd commands', () => {
+            gradleBuildAction.workdir = '${testWorkingDirectory}';
+            programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
+            programmingExercise.buildConfig!.windfile = windfile;
+
+            comp.ngOnInit();
+
+            expect(comp.buildPlanPhases.phases[0].script).toBe('ORIGINAL_DIR="$(pwd)"\ncd "tests"\n./gradlew clean test\ncd "$ORIGINAL_DIR"');
+        });
+
         it('should use default phases when no configuration exists', () => {
             programmingExercise.buildConfig!.buildPlanConfiguration = undefined;
             programmingExercise.buildConfig!.windfile = undefined;

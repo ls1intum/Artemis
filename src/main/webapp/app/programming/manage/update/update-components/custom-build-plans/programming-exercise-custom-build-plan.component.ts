@@ -185,11 +185,19 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
             .filter((action): action is ScriptAction => 'script' in action && !!action.script)
             .map((action) => ({
                 name: action.name || '',
-                script: this.replacePlaceholders(action.script),
+                script: this.wrapScriptWithWorkdir(action.script, action.workdir),
                 condition: 'ALWAYS' as const,
                 resultPaths: (action.results ?? []).map((r) => r.path).filter((p): p is string => !!p),
             }));
         const dockerImage = windfile.metadata?.docker?.image;
         return { phases, dockerImage };
+    }
+
+    private wrapScriptWithWorkdir(script: string, workdir?: string): string {
+        if (!workdir?.trim()) {
+            return this.replacePlaceholders(script);
+        }
+
+        return this.replacePlaceholders(`ORIGINAL_DIR="$(pwd)"\ncd "${workdir}"\n${script}\ncd "$ORIGINAL_DIR"`);
     }
 }
