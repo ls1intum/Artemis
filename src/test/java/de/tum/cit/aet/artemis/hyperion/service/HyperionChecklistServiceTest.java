@@ -62,7 +62,7 @@ class HyperionChecklistServiceTest {
 
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson)))));
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "JAVA", 1L);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
@@ -77,7 +77,7 @@ class HyperionChecklistServiceTest {
     void analyzeChecklist_handlesFailure() {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("AI error"));
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, 1L);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
@@ -104,7 +104,7 @@ class HyperionChecklistServiceTest {
 
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson)))));
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, null);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, 1L, ChecklistSection.QUALITY).join();
 
