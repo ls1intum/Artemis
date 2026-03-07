@@ -300,7 +300,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             queuedJobs.clear();
             sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
             // Reset pause state to ensure clean state for each test
-            sharedQueueProcessingService.resetPauseState();
+            sharedQueueProcessingService.setPauseState(false);
         }
 
         @AfterEach
@@ -309,7 +309,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             log.info("Clear queued jobs done");
 
             // Reset pause state and init to activate queue listener again
-            sharedQueueProcessingService.resetPauseState();
+            sharedQueueProcessingService.setPauseState(false);
             sharedQueueProcessingService.init();
             log.info("Cleanup queue processing service done");
         }
