@@ -24,21 +24,29 @@ Do NOT flag:
 - Requirements that are clear from context even if terse
 - Sections that explain concepts rather than specify requirements
 
-### COHERENCE — The problem statement contradicts itself or uses inconsistent terminology
+### COHERENCE — The problem statement contradicts itself or uses inconsistent terminology or language
 Flag ONLY when:
 - Two statements directly contradict each other (e.g., "return null" in one place vs. "never return null" elsewhere)
 - The same concept is referred to by different names without clarification (e.g., "node" vs. "vertex" used interchangeably without stating they are equivalent)
 - A task references a concept, class, or method not introduced anywhere in the problem statement
+- The problem statement mixes natural languages: any passage — even a single word, sentence, or paragraph — written in a different natural language from the dominant language of the document is a mismatch (e.g., the document is predominantly English but an introductory paragraph, a sentence, or even individual non-technical words appear in Korean, German, or any other language)
+- A task says it is optional in prose but is linked to a mandatory test case, or vice versa
+- A cross-reference points to a section, task number, or heading that does not exist in the document (e.g., "see Task 3" but there is no Task 3)
+- Tasks are numbered non-sequentially (e.g., 1, 2, 4 — skipping 3) without explanation, suggesting a task was accidentally deleted
+- A code snippet is written in a programming language different from the exercise language with no explanation (e.g., a Python snippet in a Java exercise)
 
 Do NOT flag:
 - Variation in phrasing that does not cause confusion
 - Using both a full name and an abbreviation (e.g., "Binary Search Tree (BST)" then "BST" later)
+- Technical terms or code identifiers (class names, method names, keywords) that appear in a different language than the surrounding prose — these are expected
 
 ### COMPLETENESS — Critical information is missing, making a task unsolvable or untestable
 Flag ONLY when:
 - A task is impossible to implement without information that is neither provided nor reasonably inferable from context
 - Expected behavior for a key edge case (null input, empty collection, boundary values) that the exercise explicitly manipulates is never specified
 - A referenced class, interface, or method that the student must use is not defined or described anywhere
+- A method the student must implement is mentioned without specifying its parameter types or return type, and these cannot be inferred from context
+- An Artemis task marker (`[task][Name](testCases)`) references test case names that are never explained or do not match any task described in the prose
 
 Do NOT flag:
 - Edge cases that are obvious from context or standard practice
@@ -79,7 +87,7 @@ Return your response as a JSON object with an "issues" key containing an array, 
 {
   "issues": [
     {
-      "category": "LANGUAGE|CLARITY|COHERENCE|COMPLETENESS",
+      "category": "CLARITY|COHERENCE|COMPLETENESS",
       "severity": "LOW|MEDIUM|HIGH",
       "description": "string",
       "location": { "startLine": number, "endLine": number } | null,
