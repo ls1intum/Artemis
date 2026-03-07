@@ -372,7 +372,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.ADAPT_DIFFICULTY, "Original problem statement",
                 Map.of("targetDifficulty", "MEDIUM", "currentDifficulty", "EASY", "reasoning", "Exercise is conceptually moderate.", "taskCount", "5", "testCount", "10"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
