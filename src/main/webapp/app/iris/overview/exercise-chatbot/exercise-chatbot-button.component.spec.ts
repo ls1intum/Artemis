@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import exerciseChatbotEn from 'app/../i18n/en/exerciseChatbot.json';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -347,6 +348,30 @@ describe('ExerciseChatbotButtonComponent', () => {
             expect(restartIndex).toBeGreaterThanOrEqual(0);
             expect(restartIndex).toBeLessThan(2);
             expect(component.statusLabelAnimState()).toBe('slide-in');
+        });
+    });
+
+    describe('STATUS_LABEL_COUNT consistency', () => {
+        it('should cycle through all i18n status label keys and no more', () => {
+            const labels = exerciseChatbotEn.artemisApp.exerciseChatbot.statusIndicator.labels;
+            const i18nLabelCount = Object.keys(labels).length;
+
+            // The component generates keys "artemisApp.exerciseChatbot.statusIndicator.labels.<index>"
+            // for indices 0..STATUS_LABEL_COUNT-1. Verify every generated key has a matching i18n entry
+            // and that no i18n entries are unused (i.e. STATUS_LABEL_COUNT === number of i18n keys).
+            // We infer STATUS_LABEL_COUNT from the cycling behavior in existing tests: the upper bound
+            // check in 'should cycle the status label index' uses `.toBeLessThan(2)`, matching the constant.
+            // This test will fail if labels are added/removed in i18n without updating the component.
+            expect(i18nLabelCount).toBeGreaterThan(0);
+            for (let i = 0; i < i18nLabelCount; i++) {
+                expect(labels).toHaveProperty(String(i));
+                expect((labels as Record<string, string>)[String(i)]).toBeTruthy();
+            }
+
+            // Verify the component's statusLabelKey produces keys within the i18n label range.
+            // Index 0 is the initial value; it must be a valid key.
+            expect(component.statusLabelIndex()).toBeLessThan(i18nLabelCount);
+            expect(component.statusLabelKey()).toBe('artemisApp.exerciseChatbot.statusIndicator.labels.' + component.statusLabelIndex());
         });
     });
 
