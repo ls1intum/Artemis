@@ -180,7 +180,6 @@ export class MetisConversationService implements OnDestroy {
             this.conversationsOfUser[indexOfConversationToUpdate].unreadMessagesCount = unreadMessagesCount;
             this.conversationsOfUser[indexOfConversationToUpdate].hasUnreadMessage = (unreadMessagesCount ?? 0) > 0;
             this._conversationsOfUser$.next(this.conversationsOfUser);
-            this.hasUnreadMessagesCheck();
         }
     }
 
