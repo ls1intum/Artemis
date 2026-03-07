@@ -5,5 +5,5 @@ package de.tum.cit.aet.artemis.hyperion.domain;
  */
 public enum QualityIssueCategory {
 
-    LANGUAGE, CLARITY, COHERENCE, COMPLETENESS;
+    CLARITY, COHERENCE, COMPLETENESS;
 }

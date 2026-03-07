@@ -11,8 +11,17 @@ import { BloomRadar } from './bloomRadar';
 import { QualityIssue } from './qualityIssue';
 
 
+/**
+ * Response containing the checklist analysis results
+ */
 export interface ChecklistAnalysisResponse { 
+    /**
+     * Bloom\'s taxonomy radar distribution
+     */
     bloomRadar?: BloomRadar;
+    /**
+     * List of quality issues found in the problem statement
+     */
     qualityIssues?: Array<QualityIssue>;
 }
 

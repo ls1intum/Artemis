@@ -9,10 +9,21 @@
  */
 
 
+/**
+ * Request to analyze a problem statement for quality
+ */
 export interface ChecklistAnalysisRequest { 
+    /**
+     * Problem statement in Markdown format
+     */
     problemStatementMarkdown: string;
-    declaredDifficulty?: string;
+    /**
+     * Programming language, e.g. JAVA, PYTHON
+     */
     language?: string;
+    /**
+     * ID of the exercise
+     */
     exerciseId?: number;
 }
 

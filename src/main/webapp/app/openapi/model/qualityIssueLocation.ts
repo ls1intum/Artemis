@@ -9,8 +9,17 @@
  */
 
 
+/**
+ * Location of a quality issue within the problem statement
+ */
 export interface QualityIssueLocation { 
+    /**
+     * Starting line number (1-indexed)
+     */
     startLine?: number;
+    /**
+     * Ending line number (1-indexed, inclusive)
+     */
     endLine?: number;
 }
 

@@ -10,17 +10,37 @@
 import { QualityIssueLocation } from './qualityIssueLocation';
 
 
+/**
+ * A quality issue found in the problem statement
+ */
 export interface QualityIssue { 
+    /**
+     * Issue category: CLARITY, COHERENCE, or COMPLETENESS
+     */
     category?: QualityIssue.CategoryEnum;
+    /**
+     * Issue severity: LOW, MEDIUM, or HIGH
+     */
     severity?: QualityIssue.SeverityEnum;
+    /**
+     * Description of what is wrong
+     */
     description?: string;
+    /**
+     * Location in the problem statement
+     */
     location?: QualityIssueLocation;
+    /**
+     * Concrete suggestion to fix the issue
+     */
     suggestedFix?: string;
+    /**
+     * How this issue increases extraneous cognitive load
+     */
     impactOnLearners?: string;
 }
 export namespace QualityIssue {
     export const CategoryEnum = {
-        Language: 'LANGUAGE',
         Clarity: 'CLARITY',
         Coherence: 'COHERENCE',
         Completeness: 'COMPLETENESS'

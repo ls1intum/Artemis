@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.8.4
+  version: 9.0.0
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -81,8 +81,81 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}:
+    put:
+      tags: [tutorial-groups-configuration]
+      operationId: update_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
-  : delete:
+  : get:
+      tags: [tutorial-group-free-period]
+      operationId: getOneOfConfiguration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+    put:
+      tags: [tutorial-group-free-period]
+      operationId: update_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+    delete:
       tags: [tutorial-group-free-period]
       operationId: delete_1
       parameters:
@@ -210,6 +283,64 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
+    get:
+      tags: [tutorial-groups-configuration]
+      operationId: getOneOfCourse_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+    post:
+      tags: [tutorial-groups-configuration]
+      operationId: create_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
+    post:
+      tags: [tutorial-group-free-period]
+      operationId: create_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
   /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
       tags: [hyperion-problem-statement]
@@ -569,11 +700,13 @@ components:
         campus: {type: string}
     ChecklistAnalysisRequest:
       type: object
+      description: Request to analyze a problem statement for quality
       properties:
-        problemStatementMarkdown: {type: string, maxLength: 50000, minLength: 0}
-        declaredDifficulty: {type: string, pattern: ^(EASY|MEDIUM|HARD)$}
-        language: {type: string, maxLength: 50, minLength: 0}
-        exerciseId: {type: integer, format: int64}
+        problemStatementMarkdown: {type: string, description: Problem statement in
+            Markdown format, maxLength: 50000, minLength: 0}
+        language: {type: string, description: 'Programming language, e.g. JAVA, PYTHON',
+          maxLength: 50, minLength: 0}
+        exerciseId: {type: integer, format: int64, description: ID of the exercise}
       required: [problemStatementMarkdown]
     ChecklistActionRequest:
       type: object
@@ -591,6 +724,20 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    TutorialGroupConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        tutorialPeriodStartInclusive: {type: string, minLength: 1}
+        tutorialPeriodEndInclusive: {type: string, minLength: 1}
+        useTutorialGroupChannels: {type: boolean}
+        usePublicTutorialGroupChannels: {type: boolean}
+        tutorialGroupFreePeriods:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+          uniqueItems: true
+      required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
+        useTutorialGroupChannels]
     TutorialGroupStatus:
       type: object
       properties:
@@ -603,10 +750,13 @@ components:
             text}
     ChecklistAnalysisResponse:
       type: object
+      description: Response containing the checklist analysis results
       properties:
-        bloomRadar: {$ref: '#/components/schemas/BloomRadar'}
+        bloomRadar: {$ref: '#/components/schemas/BloomRadar', description: Bloom's
+            taxonomy radar distribution}
         qualityIssues:
           type: array
+          description: List of quality issues found in the problem statement
           items: {$ref: '#/components/schemas/QualityIssue'}
     ChecklistActionResponse:
       type: object
@@ -658,13 +808,21 @@ components:
       required: [end, location, start]
     BloomRadar:
       type: object
+      description: Bloom's taxonomy radar distribution with normalized proportions
+        (0.0–1.0, summing to 1.0)
       properties:
-        REMEMBER: {type: number, format: double}
-        UNDERSTAND: {type: number, format: double}
-        APPLY: {type: number, format: double}
-        ANALYZE: {type: number, format: double}
-        EVALUATE: {type: number, format: double}
-        CREATE: {type: number, format: double}
+        REMEMBER: {type: number, format: double, description: Proportion of REMEMBER
+            level (0.0–1.0)}
+        UNDERSTAND: {type: number, format: double, description: Proportion of UNDERSTAND
+            level (0.0–1.0)}
+        APPLY: {type: number, format: double, description: Proportion of APPLY level
+            (0.0–1.0)}
+        ANALYZE: {type: number, format: double, description: Proportion of ANALYZE
+            level (0.0–1.0)}
+        EVALUATE: {type: number, format: double, description: Proportion of EVALUATE
+            level (0.0–1.0)}
+        CREATE: {type: number, format: double, description: Proportion of CREATE level
+            (0.0–1.0)}
     CodeGenerationJobStart:
       type: object
       properties:
@@ -748,6 +906,14 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    TutorialGroupFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     Channel:
       type: object
       properties:
@@ -796,17 +962,22 @@ components:
         isOnline: {type: boolean}
     QualityIssue:
       type: object
+      description: A quality issue found in the problem statement
       properties:
         category:
           type: string
-          enum: [LANGUAGE, CLARITY, COHERENCE, COMPLETENESS]
+          description: 'Issue category: CLARITY, COHERENCE, or COMPLETENESS'
+          enum: [CLARITY, COHERENCE, COMPLETENESS]
         severity:
           type: string
+          description: 'Issue severity: LOW, MEDIUM, or HIGH'
           enum: [LOW, MEDIUM, HIGH]
-        description: {type: string}
-        location: {$ref: '#/components/schemas/QualityIssueLocation'}
-        suggestedFix: {type: string}
-        impactOnLearners: {type: string}
+        description: {type: string, description: Description of what is wrong}
+        location: {$ref: '#/components/schemas/QualityIssueLocation', description: Location
+            in the problem statement}
+        suggestedFix: {type: string, description: Concrete suggestion to fix the issue}
+        impactOnLearners: {type: string, description: How this issue increases extraneous
+            cognitive load}
     Student:
       type: object
       properties:
@@ -853,9 +1024,12 @@ components:
         login: {type: string}
     QualityIssueLocation:
       type: object
+      description: Location of a quality issue within the problem statement
       properties:
-        startLine: {type: integer, format: int32}
-        endLine: {type: integer, format: int32}
+        startLine: {type: integer, format: int32, description: Starting line number
+            (1-indexed)}
+        endLine: {type: integer, format: int32, description: 'Ending line number (1-indexed,
+            inclusive)'}
     TutorialGroupFreePeriodRequest:
       type: object
       properties:
@@ -935,132 +1109,6 @@ components:
         isTeachingAssistant: {type: boolean}
         isStudent: {type: boolean}
         isChannelModerator: {type: boolean}
-        isRequestingUser: {type: boolean}
-    TutorialGroupSessionRequest:
-      type: object
-      properties:
-        date: {type: string, format: date}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string, maxLength: 2000, minLength: 1}
-    StudentExport:
-      type: object
-      properties:
-        registrationNumber: {type: string}
-        firstName: {type: string}
-        lastName: {type: string}
-    ProblemStatementGlobalRefinementRequest:
-      type: object
-      description: Request to refine a problem statement globally using a user prompt
-      properties:
-        problemStatementText: {type: string, description: 'Original problem statement
-            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
-        userPrompt: {type: string, description: User prompt for global refinement,
-          maxLength: 1000, minLength: 1}
-      required: [problemStatementText, userPrompt]
-sChannelModerator: {type: boolean}
-        isRequestingUser: {type: boolean}
-    TutorialGroupSessionRequest:
-      type: object
-      properties:
-        date: {type: string, format: date}
-        startTime: {type: string}
-        endTime: {type: string}
-        location: {type: string, maxLength: 2000, minLength: 1}
-    StudentExport:
-      type: object
-      properties:
-        registrationNumber: {type: string}
-        firstName: {type: string}
-        lastName: {type: string}
-    ProblemStatementGlobalRefinementRequest:
-      type: object
-      description: Request to refine a problem statement globally using a user prompt
-      properties:
-        problemStatementText: {type: string, description: 'Original problem statement
-            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
-        userPrompt: {type: string, description: User prompt for global refinement,
-          maxLength: 1000, minLength: 1}
-      required: [problemStatementText, userPrompt]
-   RewriteFaqRequest:
-      type: object
-      description: Request to rewrite a FAQ
-      properties:
-        faqText:
-          type: string
-          minLength: 1
-      required:
-      - faqText
-    ConversationUser:
-      type: object
-      properties:
-        id:
-          type: integer
-          format: int64
-        login:
-          type: string
-        name:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-        imageUrl:
-          type: string
-        isInstructor:
-          type: boolean
-        isEditor:
-          type: boolean
-        isTeachingAssistant:
-          type: boolean
-        isStudent:
-          type: boolean
-        isChannelModerator:
-          type: boolean
-        isRequestingUser:
-          type: boolean
-    TutorialGroupSessionRequest:
-      type: object
-      properties:
-        date:
-          type: string
-          format: date
-        startTime:
-          type: string
-        endTime:
-          type: string
-        location:
-          type: string
-          maxLength: 2000
-          minLength: 1
-    StudentExport:
-      type: object
-      properties:
-        registrationNumber:
-          type: string
-        firstName:
-          type: string
-        lastName:
-          type: string
-    ProblemStatementGlobalRefinementRequest:
-      type: object
-      description: Request to refine a problem statement globally using a user prompt
-      properties:
-        problemStatementText:
-          type: string
-          description: "Original problem statement text to be refined (max 50,000\
-            \ chars)"
-          maxLength: 50000
-          minLength: 1
-        userPrompt:
-          type: string
-          description: User prompt for global refinement
-          maxLength: 1000
-          minLength: 1
-      required:
-      - problemStatementText
-      - userPrompt
-boolean}
         isRequestingUser: {type: boolean}
     TutorialGroupSessionRequest:
       type: object

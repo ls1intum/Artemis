@@ -454,7 +454,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
-        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"));
@@ -499,7 +499,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         userUtilService.changeUser(TEST_PREFIX + "editor1");
 
-        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"));
@@ -578,7 +578,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
         // Pass the other exercise's ID to the first course's endpoint
-        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + otherExercise.getId() + "}";
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + otherExercise.getId() + "}";
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest());
     }
@@ -604,7 +604,7 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
 
-        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\", \"exerciseId\":" + persistedExerciseId + "}";
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + persistedExerciseId + "}";
 
         request.performMvcRequest(
                 post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
