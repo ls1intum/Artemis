@@ -129,17 +129,11 @@
             background: #fff;
             outline: 1px solid #ccc;
             padding: 0;
-            transition:
-                width 0.2s ease,
-                height 0.2s ease;
 
             canvas {
                 display: block;
                 width: 100%;
                 height: 100%;
-                transition:
-                    width 0.2s ease,
-                    height 0.2s ease;
             }
         }
     }

@@ -43,6 +43,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private viewInitialized = signal<boolean>(false);
     private resizeTimeout: number | undefined;
     private isRendering = false;
+    private resizeObserver: ResizeObserver | undefined;
+    private lastObservedWidth = 0;
+    private isZooming = false;
 
     constructor() {
         // Use legacy build to avoid ES2025 Promise.try compatibility issues
@@ -81,6 +84,26 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const viewerBox = this.pdfViewerBox()?.nativeElement;
         if (viewerBox) {
             viewerBox.addEventListener('scroll', this.updateCurrentPage);
+
+            // Observe container size changes (e.g., when sidebar is collapsed)
+            // Using contentRect.width to detect only container size changes, not content changes
+            this.lastObservedWidth = viewerBox.clientWidth;
+            this.resizeObserver = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    const newWidth = entry.contentRect.width;
+                    const widthDiff = Math.abs(newWidth - this.lastObservedWidth);
+
+                    // Only re-render if:
+                    // 1. We're not currently rendering (avoid interference)
+                    // 2. We're not currently zooming (avoid scrollbar feedback loop)
+                    // 3. Width changed by more than 30px (ignore scrollbar changes, detect real container changes like sidebar collapse)
+                    if (!this.isRendering && !this.isZooming && widthDiff > 30) {
+                        this.lastObservedWidth = newWidth;
+                        this.handleResize();
+                    }
+                }
+            });
+            this.resizeObserver.observe(viewerBox);
         }
     }
 
@@ -90,6 +113,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const viewerBox = this.pdfViewerBox()?.nativeElement;
         if (viewerBox) {
             viewerBox.removeEventListener('scroll', this.updateCurrentPage);
+        }
+
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = undefined;
         }
 
         if (this.resizeTimeout !== undefined) {
@@ -198,23 +226,45 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     zoomIn(): void {
         if (this.zoomLevel() < 3.0) {
             this.zoomLevel.set(Math.min(3.0, this.zoomLevel() + 0.25));
-            this.applyZoomToPages();
-            this.centerHorizontalScroll();
+            this.performZoom();
         }
     }
 
     zoomOut(): void {
         if (this.zoomLevel() > 0.5) {
             this.zoomLevel.set(Math.max(0.5, this.zoomLevel() - 0.25));
-            this.applyZoomToPages();
-            this.centerHorizontalScroll();
+            this.performZoom();
         }
     }
 
     resetZoom(): void {
         this.zoomLevel.set(1.0);
+        this.performZoom();
+    }
+
+    private performZoom(): void {
+        // If currently rendering, wait for it to finish before zooming
+        if (this.isRendering) {
+            setTimeout(() => this.performZoom(), 100);
+            return;
+        }
+
+        // Pause ResizeObserver during zoom to prevent feedback loop from scrollbar changes
+        this.isZooming = true;
+
         this.applyZoomToPages();
         this.centerHorizontalScroll();
+
+        // Resume ResizeObserver after zoom is complete (short delay for scrollbar changes to settle)
+        setTimeout(() => {
+            // Update lastObservedWidth to current state after zoom
+            const viewerBox = this.pdfViewerBox()?.nativeElement;
+            if (viewerBox) {
+                this.lastObservedWidth = viewerBox.clientWidth;
+            }
+
+            this.isZooming = false;
+        }, 100); // Short delay to let scrollbar changes settle
     }
 
     /**
@@ -258,22 +308,26 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
      * This ensures the PDF remains centered horizontally when zoom changes.
      */
     private centerHorizontalScroll(): void {
-        // Use requestAnimationFrame twice to ensure DOM and CSS updates are complete
+        const container = this.pdfViewerBox()?.nativeElement;
+        if (!container) {
+            return;
+        }
+
+        // Use requestAnimationFrame to ensure layout is complete
         requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                const container = this.pdfViewerBox()?.nativeElement;
-                if (container) {
-                    if (this.zoomLevel() <= 1.0) {
-                        // Beim Rauszoomen: Scrollposition auf 0 zurücksetzen
-                        // Damit justify-content: center das PDF zentrieren kann
-                        container.scrollLeft = 0;
-                    } else {
-                        // Beim Reinzoomen: Zur Mitte scrollen für optimale Ansicht
-                        const scrollCenter = (container.scrollWidth - container.clientWidth) / 2;
-                        container.scrollLeft = Math.max(0, scrollCenter);
-                    }
-                }
-            });
+            const zoom = this.zoomLevel();
+            const scrollWidth = container.scrollWidth;
+            const clientWidth = container.clientWidth;
+
+            if (zoom <= 1.0) {
+                // Beim Rauszoomen: Scrollposition auf 0 zurücksetzen
+                // Damit justify-content: center das PDF zentrieren kann
+                container.scrollLeft = 0;
+            } else {
+                // Beim Reinzoomen: Zur Mitte scrollen für optimale Ansicht
+                const scrollCenter = (scrollWidth - clientWidth) / 2;
+                container.scrollLeft = Math.max(0, scrollCenter);
+            }
         });
     }
 
