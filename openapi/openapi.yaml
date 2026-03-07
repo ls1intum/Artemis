@@ -2,7 +2,7 @@ openapi: 3.1.0
 info:
   title: Artemis Application Server API
   contact: {name: Stephan Krusche, email: krusche@tum.de}
-  version: 8.8.4
+  version: 9.0.0
 servers:
 - {url: 'http://localhost:8080', description: Generated server url}
 paths:
@@ -81,8 +81,81 @@ paths:
         schema: {type: integer, format: int64}
       responses:
         '200': {description: OK}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}:
+    put:
+      tags: [tutorial-groups-configuration]
+      operationId: update_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
   ? /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}
-  : delete:
+  : get:
+      tags: [tutorial-group-free-period]
+      operationId: getOneOfConfiguration
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+    put:
+      tags: [tutorial-group-free-period]
+      operationId: update_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupFreePeriodId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+    delete:
       tags: [tutorial-group-free-period]
       operationId: delete_1
       parameters:
@@ -210,6 +283,64 @@ paths:
               schema:
                 type: array
                 items: {$ref: '#/components/schemas/TutorialGroupRegistrationImport'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration:
+    get:
+      tags: [tutorial-groups-configuration]
+      operationId: getOneOfCourse_1
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+    post:
+      tags: [tutorial-groups-configuration]
+      operationId: create_2
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupConfiguration'}
+  /api/tutorialgroup/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods:
+    post:
+      tags: [tutorial-group-free-period]
+      operationId: create_3
+      parameters:
+      - name: courseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: tutorialGroupsConfigurationId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      requestBody:
+        content:
+          application/json:
+            schema: {$ref: '#/components/schemas/TutorialGroupFreePeriodRequest'}
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
   /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
     post:
       tags: [hyperion-problem-statement]
@@ -613,6 +744,20 @@ components:
           additionalProperties: {type: string}
           description: Action-specific context parameters
       required: [actionType, problemStatementMarkdown]
+    TutorialGroupConfiguration:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        tutorialPeriodStartInclusive: {type: string, minLength: 1}
+        tutorialPeriodEndInclusive: {type: string, minLength: 1}
+        useTutorialGroupChannels: {type: boolean}
+        usePublicTutorialGroupChannels: {type: boolean}
+        tutorialGroupFreePeriods:
+          type: array
+          items: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
+          uniqueItems: true
+      required: [tutorialPeriodEndInclusive, tutorialPeriodStartInclusive, usePublicTutorialGroupChannels,
+        useTutorialGroupChannels]
     TutorialGroupStatus:
       type: object
       properties:
@@ -806,6 +951,14 @@ components:
         improved: {type: boolean, description: Whether the text was actually improved,
           example: true}
       required: [improved, rewrittenText]
+    TutorialGroupFreePeriod:
+      type: object
+      properties:
+        id: {type: integer, format: int64}
+        start: {type: string}
+        end: {type: string}
+        reason: {type: string}
+      required: [end, start]
     Channel:
       type: object
       properties:

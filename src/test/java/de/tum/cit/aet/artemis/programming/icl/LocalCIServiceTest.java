@@ -55,8 +55,9 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
 
         // remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
-        // Reset pause state to ensure clean state for each test
-        sharedQueueProcessingService.resetPauseState();
+        // Set pause state to true so that any in-flight scheduled task (cancelled with cancel(false))
+        // that is still executing will return early and not consume queue items
+        sharedQueueProcessingService.setPauseState(true);
     }
 
     @AfterEach
@@ -65,7 +66,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
         processingJobs.clear();
 
         // Reset pause state and init to activate queue listener again
-        sharedQueueProcessingService.resetPauseState();
+        sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
     }
 

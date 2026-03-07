@@ -210,7 +210,6 @@ export class ChecklistPanelComponent {
         this.isLoading.set(true);
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
-            declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
             exerciseId: ex.id,
         };
@@ -297,7 +296,11 @@ export class ChecklistPanelComponent {
 
     qualityScores = computed(() => {
         const issues = this.analysisResult()?.qualityIssues || [];
-        const scores: Record<string, number> = { CLARITY: DEFAULT_QUALITY_SCORE, COHERENCE: DEFAULT_QUALITY_SCORE, COMPLETENESS: DEFAULT_QUALITY_SCORE };
+        const scores: Record<string, number> = {
+            CLARITY: DEFAULT_QUALITY_SCORE,
+            COHERENCE: DEFAULT_QUALITY_SCORE,
+            COMPLETENESS: DEFAULT_QUALITY_SCORE,
+        };
 
         for (const issue of issues) {
             const cat = issue.category?.toUpperCase() || '';
@@ -424,7 +427,6 @@ export class ChecklistPanelComponent {
         const ex = this.exercise();
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
-            declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
             exerciseId: ex.id,
         };
