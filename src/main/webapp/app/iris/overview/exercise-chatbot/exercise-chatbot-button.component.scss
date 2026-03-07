@@ -70,21 +70,6 @@
     pointer-events: none;
 }
 
-.status-indicator-logo {
-    animation: iris-chomp 0.6s ease-in-out infinite;
-}
-
-@keyframes iris-chomp {
-    0%,
-    100% {
-        clip-path: circle(50% at 50% 50%);
-    }
-
-    50% {
-        clip-path: polygon(0% 0%, 50% 0%, 100% 25%, 50% 50%, 100% 75%, 50% 100%, 0% 100%);
-    }
-}
-
 @keyframes slide-up-out {
     0% {
         opacity: 1;
@@ -171,7 +156,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .status-indicator-logo,
     .typing-dots .dot,
     .status-indicator {
         animation: none;

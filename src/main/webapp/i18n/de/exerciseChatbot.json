@@ -63,7 +63,8 @@
                 "labels": {
                     "0": "Iris denkt nach",
                     "1": "Denkt angestrengt nach"
-                }
+                },
+                "processing": "Iris denkt nach"
             },
             "actions": {
                 "copy": "Kopieren",
