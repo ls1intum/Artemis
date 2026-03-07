@@ -38,8 +38,7 @@
         opacity 300ms ease-out,
         transform 300ms ease-out;
 
-    /* Truncate long messages on the inner content div */
-    > div {
+    .preview-text {
         display: -webkit-box;
         -webkit-line-clamp: 3;
         line-clamp: 3;
@@ -67,7 +66,7 @@
 
     bottom: 96px;
     animation: status-bubble-enter 300ms ease-out;
-    pointer-events: none;
+    cursor: pointer;
 }
 
 @keyframes slide-up-out {

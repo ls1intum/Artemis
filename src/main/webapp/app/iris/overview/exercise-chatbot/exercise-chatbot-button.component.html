@@ -1,11 +1,11 @@
 @if (!chatOpen()) {
     @if (newIrisMessage()) {
         <div class="message-bubble" (click)="handleButtonClick()">
-            <div [innerHTML]="newIrisMessage() | htmlForMarkdown: [] : undefined : undefined : true"></div>
+            <span class="preview-text">{{ newIrisMessage() }}</span>
         </div>
     }
     @if (isProcessing() && !newIrisMessage()) {
-        <div class="status-indicator">
+        <div class="status-indicator" (click)="handleButtonClick()">
             <span class="visually-hidden" role="status" aria-live="polite" jhiTranslate="artemisApp.exerciseChatbot.statusIndicator.processing"></span>
             <span
                 class="status-label"
