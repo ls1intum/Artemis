@@ -53,12 +53,16 @@
         aspect-ratio: 16 / 9.3;
         max-height: 80vh;
 
-        background: #f5f5f5;
+        background: #fff;
         border: 1px solid #ddd;
         border-radius: var(--bs-border-radius);
 
         overflow: auto;
         overscroll-behavior: none;
+
+        &.zoomed-out {
+            background: #f5f5f5;
+        }
 
         // Modern scrollbar styling for Firefox
         scrollbar-width: thin;
@@ -97,30 +101,45 @@
     }
 
     .pdf-zoom-wrapper {
-        min-height: 100%;
         display: flex;
-        justify-content: center;
+        justify-content: flex-start; // Default: linksbündig für vollständiges Scrolling
         align-items: flex-start;
+        min-height: 0;
+        height: 100%;
+        font-size: 0;
+    }
+
+    // Nur beim Rauszoomen (≤100%) zentrieren
+    .pdf-viewer-box.zoomed-out .pdf-zoom-wrapper {
+        justify-content: center;
     }
 
     .pdf-pages-container {
-        display: flex;
+        display: inline-flex;
+        vertical-align: top;
         flex-direction: column;
         align-items: center;
-        gap: 30px;
-        max-width: 100%;
-        padding: 20px;
-        transform-origin: top center;
-        transition: transform 0.2s ease;
+
+        // White background when zoomed out to cover top/bottom gray areas
+        .pdf-viewer-box.zoomed-out & {
+            background: #fff;
+        }
 
         .pdf-page {
             background: #fff;
-            border: 1px solid #ccc;
-            max-width: 100%;
+            outline: 1px solid #ccc;
             padding: 0;
+            transition:
+                width 0.2s ease,
+                height 0.2s ease;
 
             canvas {
                 display: block;
+                width: 100%;
+                height: 100%;
+                transition:
+                    width 0.2s ease,
+                    height 0.2s ease;
             }
         }
     }

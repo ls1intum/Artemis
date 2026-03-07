@@ -30,9 +30,9 @@
             </div>
         </div>
     }
-    <div class="pdf-viewer-box" #pdfViewerBox>
-        <div class="pdf-zoom-wrapper" [style.width.%]="wrapperWidth()">
-            <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()" [style.transform]="'scale(' + zoomLevel() + ')'">
+    <div class="pdf-viewer-box" #pdfViewerBox [class.zoomed-out]="zoomLevel() <= 1.0">
+        <div class="pdf-zoom-wrapper">
+            <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()">
                 <!-- Canvas elements will be dynamically inserted here -->
             </div>
         </div>

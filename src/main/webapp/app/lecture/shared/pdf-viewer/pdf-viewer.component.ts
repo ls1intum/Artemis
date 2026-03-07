@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
@@ -32,9 +32,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     isLoading = signal<boolean>(true);
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
-
-    // Computed wrapper width: at least 100%, or more when zoomed in
-    wrapperWidth = computed(() => Math.max(100, this.zoomLevel() * 100));
 
     // Icons
     protected readonly faSearchMinus = faSearchMinus;
@@ -172,8 +169,17 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 await this.renderPage(pageNum, container, targetWidth);
             }
 
-            // Update current page after all pages are rendered
-            setTimeout(() => this.updateCurrentPage(), PdfViewerComponent.DOM_RENDER_DELAY_MS);
+            // Apply initial zoom level (if not 1.0)
+            if (this.zoomLevel() !== 1.0) {
+                setTimeout(() => {
+                    this.applyZoomToPages();
+                    this.updateCurrentPage();
+                }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
+            } else {
+                setTimeout(() => {
+                    this.updateCurrentPage();
+                }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
+            }
         } finally {
             this.isRendering = false;
         }
@@ -181,18 +187,18 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     /**
      * Calculates the target width for PDF pages based on container dimensions.
-     * Uses full available width (accounting for 40px total padding).
+     * Uses full available width.
      */
     private calculateTargetWidth(): number {
         const viewerBoxRef = this.pdfViewerBox();
         const boxWidth = viewerBoxRef?.nativeElement.clientWidth || 800;
-        const availableWidth = boxWidth - 40; // Subtract container padding (20px left + 20px right)
-        return availableWidth;
+        return boxWidth;
     }
 
     zoomIn(): void {
         if (this.zoomLevel() < 3.0) {
             this.zoomLevel.set(Math.min(3.0, this.zoomLevel() + 0.25));
+            this.applyZoomToPages();
             this.centerHorizontalScroll();
         }
     }
@@ -200,12 +206,14 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     zoomOut(): void {
         if (this.zoomLevel() > 0.5) {
             this.zoomLevel.set(Math.max(0.5, this.zoomLevel() - 0.25));
+            this.applyZoomToPages();
             this.centerHorizontalScroll();
         }
     }
 
     resetZoom(): void {
         this.zoomLevel.set(1.0);
+        this.applyZoomToPages();
         this.centerHorizontalScroll();
     }
 
@@ -250,15 +258,57 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
      * This ensures the PDF remains centered horizontally when zoom changes.
      */
     private centerHorizontalScroll(): void {
-        // Wait for the next tick to ensure DOM is updated with new zoom level
-        setTimeout(() => {
-            const container = this.pdfViewerBox()?.nativeElement;
-            if (container) {
-                // Calculate the horizontal center position
-                const scrollCenter = (container.scrollWidth - container.clientWidth) / 2;
-                container.scrollLeft = Math.max(0, scrollCenter);
+        // Use requestAnimationFrame twice to ensure DOM and CSS updates are complete
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const container = this.pdfViewerBox()?.nativeElement;
+                if (container) {
+                    if (this.zoomLevel() <= 1.0) {
+                        // Beim Rauszoomen: Scrollposition auf 0 zurücksetzen
+                        // Damit justify-content: center das PDF zentrieren kann
+                        container.scrollLeft = 0;
+                    } else {
+                        // Beim Reinzoomen: Zur Mitte scrollen für optimale Ansicht
+                        const scrollCenter = (container.scrollWidth - container.clientWidth) / 2;
+                        container.scrollLeft = Math.max(0, scrollCenter);
+                    }
+                }
+            });
+        });
+    }
+
+    /**
+     * Applies current zoom level to page sizes by adjusting CSS dimensions.
+     * This synchronizes the layout space with the visual size.
+     * Canvas pixel data remains unchanged - only display size is adjusted.
+     */
+    private applyZoomToPages(): void {
+        const container = this.pdfContainer()?.nativeElement;
+        if (!container) {
+            return;
+        }
+
+        const zoom = this.zoomLevel();
+        const pages = container.querySelectorAll('.pdf-page');
+
+        pages.forEach((pageElement) => {
+            const page = pageElement as HTMLElement;
+            const canvas = page.querySelector('canvas') as HTMLCanvasElement;
+
+            if (canvas?.dataset.originalWidth && canvas.dataset.originalHeight) {
+                const origWidth = parseFloat(canvas.dataset.originalWidth);
+                const origHeight = parseFloat(canvas.dataset.originalHeight);
+
+                // Scale both canvas CSS size and containing div
+                const scaledWidth = Math.round(origWidth * zoom);
+                const scaledHeight = Math.round(origHeight * zoom);
+
+                canvas.style.width = `${scaledWidth}px`;
+                canvas.style.height = `${scaledHeight}px`;
+                page.style.width = `${scaledWidth}px`;
+                page.style.height = `${scaledHeight}px`;
             }
-        }, 0);
+        });
     }
 
     private handleResize = (): void => {
@@ -348,8 +398,12 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             canvas.width = scaledViewport.width;
 
             // Scale canvas back to CSS pixels for display
-            canvas.style.width = `${scaledViewport.width / pixelRatio}px`;
-            canvas.style.height = `${scaledViewport.height / pixelRatio}px`;
+            canvas.style.width = `${Math.round(scaledViewport.width / pixelRatio)}px`;
+            canvas.style.height = `${Math.round(scaledViewport.height / pixelRatio)}px`;
+
+            // Store original dimensions for zoom calculations
+            canvas.dataset.originalWidth = canvas.style.width.replace('px', '');
+            canvas.dataset.originalHeight = canvas.style.height.replace('px', '');
 
             const renderContext = {
                 canvasContext: context,
@@ -363,6 +417,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             // Only add to DOM after rendering is complete
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page';
+            pageDiv.style.width = canvas.style.width;
+            pageDiv.style.height = canvas.style.height;
             pageDiv.appendChild(canvas);
             container.appendChild(pageDiv);
         } catch {
