@@ -5,8 +5,10 @@ import {
 } from 'app/atlas/manage/import-course-competencies-settings/import-course-competencies-settings.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('ImportCourseCompetenciesSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ImportCourseCompetenciesSettingsComponent;
     let fixture: ComponentFixture<ImportCourseCompetenciesSettingsComponent>;
 
@@ -38,7 +40,7 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.importSettings().importRelations).toBeTrue();
+        expect(component.importSettings().importRelations).toBeTruthy();
     });
 
     test.each(['importRelations', 'importExercises', 'importLectures'])('should toggle import setting', (setting) => {
@@ -49,12 +51,12 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.importSettings()[setting as keyof CourseCompetencyImportSettings]).toBeTrue();
+        expect(component.importSettings()[setting as keyof CourseCompetencyImportSettings]).toBeTruthy();
         importRelationsToggle.click();
 
         fixture.detectChanges();
 
-        expect(component.importSettings()[setting as keyof CourseCompetencyImportSettings]).toBeFalse();
+        expect(component.importSettings()[setting as keyof CourseCompetencyImportSettings]).toBeFalsy();
     });
 
     it('should set reference date', () => {
@@ -63,14 +65,14 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
         const referenceDateTypeSelect = fixture.debugElement.nativeElement.querySelector('#reference-date-type-select');
         fixture.detectChanges();
 
-        expect(referenceDateTypeSelect.disabled).toBeTrue();
+        expect(referenceDateTypeSelect.disabled).toBeTruthy();
 
         const date = new Date(2022, 0, 1);
         const dateEvent = { value: date.toDateString() } as HTMLInputElement;
         component.setReferenceDate(dateEvent);
 
         expect(component.importSettings().referenceDate).toEqual(date);
-        expect(component.importSettings().isReleaseDate).toBeTrue();
+        expect(component.importSettings().isReleaseDate).toBeTruthy();
     });
 
     it('should set reference date type', () => {
@@ -80,12 +82,12 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
         referenceDateTypeSelect.value = 'true';
         referenceDateTypeSelect.dispatchEvent(new Event('change'));
 
-        expect(component.importSettings().isReleaseDate).toBeTrue();
+        expect(component.importSettings().isReleaseDate).toBeTruthy();
 
         referenceDateTypeSelect.value = 'false';
         referenceDateTypeSelect.dispatchEvent(new Event('change'));
 
-        expect(component.importSettings().isReleaseDate).toBeFalse();
+        expect(component.importSettings().isReleaseDate).toBeFalsy();
     });
 
     it('should set reference date when dateEvent is provided', () => {
@@ -94,7 +96,7 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
         component.setReferenceDate(dateEvent);
 
         expect(component.importSettings().referenceDate).toEqual(date);
-        expect(component.importSettings().isReleaseDate).toBeTrue();
+        expect(component.importSettings().isReleaseDate).toBeTruthy();
     });
 
     it('should unset reference date when dateEvent is not provided', () => {
@@ -117,7 +119,7 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
         component.setReferenceDate(dateEvent);
 
         expect(component.importSettings().referenceDate).toEqual(newDate);
-        expect(component.importSettings().isReleaseDate).toBeFalse();
+        expect(component.importSettings().isReleaseDate).toBeFalsy();
     });
 
     it('should set isReleaseDate to true when reference date is set for the first time', () => {
@@ -126,6 +128,6 @@ describe('ImportCourseCompetenciesSettingsComponent', () => {
         component.setReferenceDate(dateEvent);
 
         expect(component.importSettings().referenceDate).toEqual(date);
-        expect(component.importSettings().isReleaseDate).toBeTrue();
+        expect(component.importSettings().isReleaseDate).toBeTruthy();
     });
 });

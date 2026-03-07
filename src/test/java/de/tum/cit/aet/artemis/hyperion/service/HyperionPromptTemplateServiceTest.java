@@ -184,7 +184,7 @@ class HyperionPromptTemplateServiceTest {
         Map<String, String> variables = Map.of("name", "John", "score", "95");
 
         assertThatThrownBy(() -> templateService.render("/nonexistent/template.st", variables)).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to load template");
+                .hasMessageContaining("Failed to load prompt template");
     }
 
     @Test
@@ -192,7 +192,7 @@ class HyperionPromptTemplateServiceTest {
         Map<String, Object> variables = Map.of("exerciseId", 123L, "language", "JAVA", "enabled", true);
 
         assertThatThrownBy(() -> templateService.renderObject("/nonexistent/template.st", variables)).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to load template");
+                .hasMessageContaining("Failed to load prompt template");
     }
 
     @Test
@@ -215,7 +215,7 @@ class HyperionPromptTemplateServiceTest {
 
         // Invalid resource path should throw exception
         assertThatThrownBy(() -> templateService.render("invalid/path/template.txt", variables)).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to load template");
+                .hasMessageContaining("Failed to load prompt template");
     }
 
     @Test
@@ -224,7 +224,7 @@ class HyperionPromptTemplateServiceTest {
 
         // Invalid resource path should throw exception
         assertThatThrownBy(() -> templateService.renderObject("invalid/path/template.txt", variables)).isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Failed to load template");
+                .hasMessageContaining("Failed to load prompt template");
     }
 
     @Test

@@ -1,4 +1,7 @@
-import { Component, ViewChild, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, Injector, OnDestroy, TemplateRef, ViewChild, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
+import { A11yModule } from '@angular/cdk/a11y';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/student/programming-exercise-student-trigger-build-button.component';
 import { CodeEditorContainerComponent } from 'app/programming/manage/code-editor/container/code-editor-container.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
@@ -10,12 +13,16 @@ import { IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/ex
 import {
     faArrowLeft,
     faArrowRight,
+    faBan,
     faCheckDouble,
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
+    faPaperPlane,
     faPlus,
+    faSave,
     faSpinner,
+    faTableColumns,
     faTimes,
     faTimesCircle,
     faTriangleExclamation,
@@ -24,39 +31,64 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../status/programming-exercise-instructor-exercise-status.component';
-import { NgbDropdown, NgbDropdownButtonItem, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
 import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
-import { Subscription, catchError, of, take } from 'rxjs';
+import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
+import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { ConsistencyCheckService } from 'app/programming/manage/consistency-check/consistency-check.service';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ConsistencyCheckError } from 'app/programming/shared/entities/consistency-check-result.model';
-import { ConsistencyCheckResponse } from 'app/openapi/model/consistencyCheckResponse';
 import { HyperionCodeGenerationApiService } from 'app/openapi/api/hyperionCodeGenerationApi.service';
-import { getRepoPath } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
+import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { CommentType } from 'app/exercise/shared/entities/review/comment.model';
+import { CommentContent, CommentContentType, ConsistencyIssueCommentContent } from 'app/exercise/shared/entities/review/comment-content.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { getFirstCommentByCreatedDateThenId } from 'app/exercise/review/review-comment-utils';
+import { ButtonSize } from 'app/shared/components/buttons/button/button.component';
+import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report/git-diff-line-stat/git-diff-line-stat.component';
+import { LineChange } from 'app/programming/shared/utils/diff.utils';
+import { ProblemStatementService } from 'app/programming/manage/services/problem-statement.service';
+import { InlineRefinementEvent, MAX_USER_PROMPT_LENGTH } from 'app/programming/manage/shared/problem-statement.utils';
+import { TooltipModule } from 'primeng/tooltip';
+import { TextareaModule } from 'primeng/textarea';
+import { BadgeModule } from 'primeng/badge';
+import { ButtonModule } from 'primeng/button';
+import { MessageModule } from 'primeng/message';
+import { Popover, PopoverModule } from 'primeng/popover';
 
-const SEVERITY_ORDER = {
-    HIGH: 0,
-    MEDIUM: 1,
-    LOW: 2,
-} as const;
+const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
+    [ConsistencyIssue.SeverityEnum.High]: 0,
+    [ConsistencyIssue.SeverityEnum.Medium]: 1,
+    [ConsistencyIssue.SeverityEnum.Low]: 2,
+};
+
+interface ConsistencyIssueNavigationIssue {
+    threadId: number;
+    targetType: CommentThreadLocationType;
+    filePath?: string;
+    lineNumber?: number;
+    auxiliaryRepositoryId?: number;
+    severity: ConsistencyIssue.SeverityEnum;
+    category: ConsistencyIssue.CategoryEnum;
+}
 
 @Component({
     selector: 'jhi-code-editor-instructor',
     templateUrl: './code-editor-instructor-and-editor-container.component.html',
     styleUrl: 'code-editor-instructor-and-editor-container.scss',
+    // Keep review comment state scoped to each editor container instance.
+    providers: [ExerciseReviewCommentService],
     imports: [
         FaIconComponent,
         TranslateDirective,
@@ -67,48 +99,95 @@ const SEVERITY_ORDER = {
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
-        NgbDropdownButtonItem,
         NgbDropdownItem,
         NgbTooltip,
         UpdatingResultComponent,
         ProgrammingExerciseStudentTriggerBuildButtonComponent,
         ProgrammingExerciseEditableInstructionComponent,
         ProgrammingExerciseInstructionComponent,
+        FormsModule,
+        A11yModule,
+        GitDiffLineStatComponent,
+        TooltipModule,
+        TextareaModule,
+        BadgeModule,
+        ButtonModule,
+        MessageModule,
+        PopoverModule,
     ],
 })
-export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent {
-    @ViewChild(UpdatingResultComponent, { static: false }) resultComp: UpdatingResultComponent;
-    @ViewChild(ProgrammingExerciseEditableInstructionComponent, { static: false }) editableInstructions: ProgrammingExerciseEditableInstructionComponent;
+export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorInstructorBaseContainerComponent implements OnDestroy {
+    @ViewChild('codeGenerationRunningModal', { static: true }) codeGenerationRunningModal: TemplateRef<unknown>;
+    readonly resultComp = viewChild(UpdatingResultComponent);
+    readonly editableInstructions = viewChild(ProgrammingExerciseEditableInstructionComponent);
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    protected readonly MAX_USER_PROMPT_LENGTH = MAX_USER_PROMPT_LENGTH;
     readonly MarkdownEditorHeight = MarkdownEditorHeight;
-    readonly consistencyIssues = signal<ConsistencyIssue[]>([]);
-    readonly sortedIssues = computed(() => [...this.consistencyIssues()].sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity]));
+    readonly sortedIssues = computed(() =>
+        this.exerciseReviewCommentService
+            .threads()
+            .map((thread) => this.mapConsistencyThreadToNavigationIssue(thread))
+            .filter((issue): issue is ConsistencyIssueNavigationIssue => issue !== undefined)
+            .sort(
+                (a, b) =>
+                    (SEVERITY_ORDER[a.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) -
+                        (SEVERITY_ORDER[b.severity] ?? SEVERITY_ORDER[ConsistencyIssue.SeverityEnum.Medium]) || a.threadId - b.threadId,
+            ),
+    );
+
+    /** Shared helper that encapsulates all AI-powered problem statement operations. */
+    readonly aiOps = new ProblemStatementAiOperationsHelper(
+        inject(ProblemStatementService),
+        inject(AlertService),
+        inject(ArtemisIntelligenceService),
+        inject(ProfileService),
+        inject(DestroyRef),
+        inject(Injector),
+    );
+
+    // Delegate signals for template binding compatibility
+    protected readonly allowSplitView = this.aiOps.allowSplitView;
+    protected readonly addedLineCount = this.aiOps.addedLineCount;
+    protected readonly removedLineCount = this.aiOps.removedLineCount;
+    protected readonly isGeneratingOrRefining = this.aiOps.isGeneratingOrRefining;
+    protected readonly isAiApplying = this.aiOps.isAiApplying;
+    readonly showDiff = this.aiOps.showDiff;
+    readonly hyperionEnabled = this.aiOps.hyperionEnabled;
+    protected readonly isPromptNearLimit = this.aiOps.isPromptNearLimit;
+    readonly shouldShowGenerateButton = this.aiOps.shouldShowGenerateButton;
+
+    readonly faTableColumns = faTableColumns;
+    readonly ButtonSize = ButtonSize;
+
+    readonly refinementPopover = viewChild<Popover>('refinementPopover');
+    /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
+    readonly refinementPrompt = this.aiOps.userPrompt;
+    protected readonly faPaperPlane = faPaperPlane;
 
     private consistencyCheckService = inject(ConsistencyCheckService);
     private artemisIntelligenceService = inject(ArtemisIntelligenceService);
-    private profileService = inject(ProfileService);
+    private exerciseReviewCommentService = inject(ExerciseReviewCommentService);
 
     lineJumpOnFileLoad: number | undefined = undefined;
     fileToJumpOn: string | undefined = undefined;
-    selectedIssue: ConsistencyIssue | undefined = undefined;
-    locationIndex: number = 0;
+    selectedIssue: ConsistencyIssueNavigationIssue | undefined = undefined;
 
     // Icons
-    faPlus = faPlus;
-    faTimes = faTimes;
-    faCircleNotch = faCircleNotch;
-    faTimesCircle = faTimesCircle;
-    faArrowLeft = faArrowLeft;
-    faArrowRight = faArrowRight;
-    faCircleExclamation = faCircleExclamation;
-    faTriangleExclamation = faTriangleExclamation;
-    faCircleInfo = faCircleInfo;
+    protected readonly faPlus = faPlus;
+    protected readonly faTimes = faTimes;
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faTimesCircle = faTimesCircle;
+    protected readonly faSave = faSave;
+    protected readonly faBan = faBan;
+    protected readonly faArrowLeft = faArrowLeft;
+    protected readonly faArrowRight = faArrowRight;
+    protected readonly faCircleExclamation = faCircleExclamation;
+    protected readonly faTriangleExclamation = faTriangleExclamation;
+    protected readonly faCircleInfo = faCircleInfo;
 
-    faSpinner = faSpinner;
-    facArtemisIntelligence = facArtemisIntelligence;
-
-    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    protected readonly faSpinner = faSpinner;
+    protected readonly facArtemisIntelligence = facArtemisIntelligence;
 
     protected readonly RepositoryType = RepositoryType;
     protected readonly FeatureToggle = FeatureToggle;
@@ -121,6 +200,68 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     isGeneratingCode = signal(false);
     private jobSubscription?: Subscription;
     private jobTimeoutHandle?: number;
+    private activeJobId?: string;
+    private statusSubscription?: Subscription;
+    private restoreRequestId = 0;
+
+    constructor() {
+        super();
+        this.aiOps.setChangeHandler({
+            onContentChanged: (content, exercise) => {
+                if (this.exercise?.id && exercise?.id && this.exercise.id !== exercise.id) {
+                    return; // Ignore stale async results from a different exercise
+                }
+                this.onInstructionChanged(content);
+            },
+        });
+        effect(() => {
+            if (!this.showConsistencyIssuesToolbar()) {
+                return;
+            }
+
+            const issues = this.sortedIssues();
+            if (!issues.length) {
+                return;
+            }
+
+            const hasValidSelection = this.selectedIssue ? issues.some((issue) => issue.threadId === this.selectedIssue?.threadId) : false;
+            if (hasValidSelection) {
+                return;
+            }
+
+            this.selectedIssue = issues[0];
+            this.jumpToLocation(this.selectedIssue);
+        });
+    }
+
+    override loadExercise(exerciseId: number): Observable<ProgrammingExercise> {
+        return super.loadExercise(exerciseId).pipe(
+            tap((exercise) => {
+                if (exercise.id) {
+                    this.exerciseReviewCommentService.setExercise(exercise.id);
+                    this.exerciseReviewCommentService.reloadThreads();
+                }
+                this.aiOps.loadTemplate(exercise);
+                this.aiOps.currentProblemStatement.set(exercise.problemStatement ?? '');
+            }),
+        );
+    }
+
+    /**
+     * Clears draft widgets and reloads review comment threads after a commit.
+     */
+    onCommit(): void {
+        this.codeEditorContainer?.monacoEditor?.clearReviewCommentDrafts();
+        this.exerciseReviewCommentService.reloadThreads();
+    }
+
+    /**
+     * Clears problem-statement draft widgets and reloads review comment threads after saving.
+     */
+    onProblemStatementSaved(): void {
+        this.editableInstructions()?.clearReviewCommentDrafts();
+        this.exerciseReviewCommentService.reloadThreads();
+    }
 
     /**
      * Starts Hyperion code generation after user confirmation.
@@ -160,8 +301,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }
                 this.subscribeToJob(res.jobId);
             },
-            error: (err) => {
+            error: (error: HttpErrorResponse) => {
                 this.isGeneratingCode.set(false);
+                if (this.isCodeGenerationAlreadyRunning(error)) {
+                    this.openCodeGenerationRunningModal();
+                    return;
+                }
                 this.codeGenAlertService.addAlert({
                     type: AlertType.DANGER,
                     translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
@@ -171,21 +316,83 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    private isCodeGenerationAlreadyRunning(error: HttpErrorResponse): boolean {
+        if (!error || error.status !== 409) {
+            return false;
+        }
+        const payload = typeof error.error === 'object' && error.error !== null ? (error.error as Record<string, unknown>) : {};
+        const errorKey =
+            payload['errorKey'] ?? payload['X-artemisApp-error'] ?? payload['message'] ?? error.headers?.get('X-artemisApp-error') ?? error.headers?.get('X-artemisApp-message');
+        return errorKey === 'codeGenerationRunning' || errorKey === 'error.codeGenerationRunning';
+    }
+
+    private openCodeGenerationRunningModal(): void {
+        this.modalService.open(this.codeGenerationRunningModal, { backdrop: 'static', keyboard: false, size: 'md' });
+    }
+
+    protected override applyDomainChange(domainType: any, domainValue: any) {
+        super.applyDomainChange(domainType, domainValue);
+        this.restoreCodeGenerationState();
+    }
+
+    override ngOnDestroy() {
+        this.clearJobSubscription(true);
+        this.statusSubscription?.unsubscribe();
+        this.aiOps.destroy();
+        super.ngOnDestroy();
+    }
+
+    private restoreCodeGenerationState() {
+        this.restoreRequestId += 1;
+        this.statusSubscription?.unsubscribe();
+        this.statusSubscription = undefined;
+
+        if (!this.hyperionEnabled || !this.exercise?.id) {
+            return;
+        }
+        if (this.isGeneratingCode()) {
+            return;
+        }
+        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
+            return;
+        }
+        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const requestId = this.restoreRequestId;
+        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
+            next: (res) => {
+                if (requestId !== this.restoreRequestId) {
+                    return;
+                }
+                if (res?.jobId) {
+                    this.subscribeToJob(res.jobId);
+                } else {
+                    this.clearJobSubscription(true);
+                }
+            },
+            error: () => {
+                if (requestId !== this.restoreRequestId) {
+                    return;
+                }
+                this.clearJobSubscription(true);
+            },
+        });
+    }
+
     /**
      * Subscribes to job updates, refreshes files on updates, and stops spinner on terminal events.
      * @param jobId job identifier
      */
     private subscribeToJob(jobId: string) {
+        if (this.activeJobId === jobId && this.jobSubscription) {
+            return;
+        }
+        this.clearJobSubscription(false);
+        this.activeJobId = jobId;
         const cleanup = () => {
-            this.isGeneratingCode.set(false);
-            this.hyperionWs.unsubscribeFromJob(jobId);
-            this.jobSubscription?.unsubscribe();
-            if (this.jobTimeoutHandle) {
-                clearTimeout(this.jobTimeoutHandle);
-                this.jobTimeoutHandle = undefined;
-            }
+            this.clearJobSubscription(true);
         };
 
+        this.isGeneratingCode.set(true);
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
             next: (event) => {
                 switch (event.type) {
@@ -258,6 +465,22 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 1_200_000);
     }
 
+    private clearJobSubscription(stopSpinner: boolean) {
+        if (stopSpinner) {
+            this.isGeneratingCode.set(false);
+        }
+        if (this.activeJobId) {
+            this.hyperionWs.unsubscribeFromJob(this.activeJobId);
+            this.activeJobId = undefined;
+        }
+        this.jobSubscription?.unsubscribe();
+        this.jobSubscription = undefined;
+        if (this.jobTimeoutHandle) {
+            clearTimeout(this.jobTimeoutHandle);
+            this.jobTimeoutHandle = undefined;
+        }
+    }
+
     /**
      * Checks whether a consistency check operation is currently running.
      *
@@ -277,10 +500,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param {ProgrammingExercise} exercise - The exercise to check.
      */
     checkConsistencies(exercise: ProgrammingExercise) {
-        // Clear previous consistency issues and reset toolbar state
-        this.consistencyIssues.set([]);
         this.selectedIssue = undefined;
         this.showConsistencyIssuesToolbar.set(false);
+        const existingConsistencyThreadIds = new Set(
+            this.exerciseReviewCommentService
+                .threads()
+                .filter((thread) => this.extractConsistencyIssueContent(thread) !== undefined)
+                .map((thread) => thread.id)
+                .filter((id): id is number => id !== undefined),
+        );
 
         if (!exercise.id) {
             this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
@@ -300,23 +528,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
                 // Now the content is checked
                 this.artemisIntelligenceService.consistencyCheck(exercise.id!).subscribe({
-                    next: (response: ConsistencyCheckResponse) => {
-                        this.consistencyIssues.set(response.issues ?? []);
-
-                        if (this.consistencyIssues().length === 0) {
-                            this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
-                        } else {
+                    next: () => {
+                        this.exerciseReviewCommentService.reloadThreads(() => {
+                            const hasNewPersistedIssues = this.sortedIssues().some((issue) => !existingConsistencyThreadIds.has(issue.threadId));
+                            if (!hasNewPersistedIssues) {
+                                this.alertService.success(this.translateService.instant('artemisApp.hyperion.consistencyCheck.noInconsistencies'));
+                                return;
+                            }
                             this.alertService.warning(this.translateService.instant('artemisApp.hyperion.consistencyCheck.inconsistenciesFoundAlert'));
-                            this.selectedIssue = this.consistencyIssues()[0];
                             this.showConsistencyIssuesToolbar.set(true);
-                        }
+                        });
                     },
                     error: () => {
                         this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
                     },
                 });
             },
-            error: (err) => {
+            error: () => {
                 this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.checkFailedAlert'));
             },
         });
@@ -331,17 +559,66 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A FontAwesome icon representing high, medium, or low severity.
      */
-    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum) {
+    getSeverityIcon(severity: ConsistencyIssue.SeverityEnum | undefined) {
         switch (severity) {
-            case 'HIGH':
+            case ConsistencyIssue.SeverityEnum.High:
                 return this.faCircleExclamation;
-            case 'MEDIUM':
+            case ConsistencyIssue.SeverityEnum.Medium:
                 return this.faTriangleExclamation;
-            case 'LOW':
+            case ConsistencyIssue.SeverityEnum.Low:
                 return this.faCircleInfo;
             default:
                 return this.faCircleInfo;
         }
+    }
+
+    /**
+     * Reverts all changes made during the refinement session and restores the original/snapshot state.
+     * Syncs the reverted content back to the model.
+     */
+    revertAllRefinement(): void {
+        this.aiOps.revertAllChanges(this.exercise, this.editableInstructions());
+    }
+
+    /**
+     * Closes the diff view after syncing the current editor content to the model.
+     */
+    closeDiff(): void {
+        this.aiOps.closeDiffView(this.exercise, this.editableInstructions());
+    }
+
+    /**
+     * Cancels the ongoing problem statement generation or refinement.
+     * Resets all in-progress states.
+     */
+    cancelAiOperation(): void {
+        this.aiOps.cancelAiOperation();
+    }
+
+    /**
+     * Toggles the refinement prompt popover visibility.
+     */
+    toggleRefinementPopover(event: Event, target?: HTMLElement): void {
+        this.refinementPopover()?.toggle(event, target);
+    }
+
+    /**
+     * Submits the full problem statement refinement.
+     * Hides the popover, then delegates to the shared AI operations helper.
+     */
+    submitRefinement(): void {
+        const prompt = this.refinementPrompt().trim();
+        if (!prompt || !this.exercise) return;
+
+        this.refinementPopover()?.hide();
+        this.aiOps.handleProblemStatementAction(this.exercise, this.editableInstructions());
+    }
+
+    /**
+     * Handles inline refinement request from editor selection.
+     */
+    onInlineRefinement(event: InlineRefinementEvent): void {
+        this.aiOps.onInlineRefinement(this.exercise, this.editableInstructions(), event);
     }
 
     /**
@@ -353,50 +630,40 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns
      *          A text color class (`text-danger`, `text-warning`, `text-info`, or `text-secondary`).
      */
-    getSeverityColor(severity: ConsistencyIssue.SeverityEnum) {
+    getSeverityColor(severity: ConsistencyIssue.SeverityEnum | undefined) {
         switch (severity) {
-            case 'HIGH':
+            case ConsistencyIssue.SeverityEnum.High:
                 return 'text-danger';
-            case 'MEDIUM':
+            case ConsistencyIssue.SeverityEnum.Medium:
                 return 'text-warning';
-            case 'LOW':
+            case ConsistencyIssue.SeverityEnum.Low:
                 return 'text-info';
             default:
                 return 'text-secondary';
         }
     }
 
-    readonly totalLocationsCount = computed(() => this.sortedIssues().reduce((acc, issue) => acc + (issue.relatedLocations?.length ?? 0), 0));
+    readonly totalLocationsCount = computed(() => this.sortedIssues().length);
     readonly showConsistencyIssuesToolbar = signal(false);
 
     get currentGlobalIndex(): number {
         const issues = this.sortedIssues();
-        let count = 0;
-        for (const issue of issues) {
-            if (issue === this.selectedIssue) {
-                return count + this.locationIndex + 1; // 1-based
-            }
-            count += issue.relatedLocations?.length ?? 0;
+        if (!this.selectedIssue) {
+            return 0;
         }
-        return 0;
+        const index = issues.findIndex((issue) => issue.threadId === this.selectedIssue?.threadId);
+        return index >= 0 ? index + 1 : 0;
     }
 
     toggleConsistencyIssuesToolbar() {
         this.showConsistencyIssuesToolbar.update((v) => !v);
         const issues = this.sortedIssues();
 
-        // If newly opened
         if (this.showConsistencyIssuesToolbar()) {
-            // Check if selection is invalid (stale issue, issue not in list anymore, or index out of bounds)
-            const isIssueValid = this.selectedIssue && issues.includes(this.selectedIssue);
-            const isIndexValid =
-                this.selectedIssue && this.selectedIssue.relatedLocations && this.locationIndex < this.selectedIssue.relatedLocations.length && this.locationIndex >= 0;
-
-            if ((!isIssueValid || !isIndexValid) && issues.length > 0) {
+            const isIssueValid = this.selectedIssue && issues.some((issue) => issue.threadId === this.selectedIssue?.threadId);
+            if (!isIssueValid && issues.length > 0) {
                 this.selectedIssue = issues[0];
-                this.locationIndex = 0;
-                // Jump to it immediately
-                this.jumpToLocation(this.selectedIssue, 0);
+                this.jumpToLocation(this.selectedIssue);
             }
         }
     }
@@ -407,73 +674,133 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     navigateGlobal(step: number): void {
         const issues = this.sortedIssues();
-        if (!issues.length) return;
+        if (!issues.length) {
+            return;
+        }
 
-        // Flatten all locations
-        const allLocations: { issue: ConsistencyIssue; locIndex: number }[] = [];
-        issues.forEach((issue) => {
-            (issue.relatedLocations || []).forEach((_, idx) => {
-                allLocations.push({ issue, locIndex: idx });
-            });
-        });
-
-        if (allLocations.length === 0) return;
-
-        // Find current index
         let currentIndex = -1;
         if (this.selectedIssue) {
-            currentIndex = allLocations.findIndex((item) => item.issue === this.selectedIssue && item.locIndex === this.locationIndex);
+            currentIndex = issues.findIndex((issue) => issue.threadId === this.selectedIssue?.threadId);
         }
 
-        // Calculate new index
         let newIndex = currentIndex + step;
-        if (newIndex >= allLocations.length) {
-            newIndex = 0; // Wrap to start
+        if (newIndex >= issues.length) {
+            newIndex = 0;
         } else if (newIndex < 0) {
-            newIndex = allLocations.length - 1; // Wrap to end
+            newIndex = issues.length - 1;
         }
 
-        const target = allLocations[newIndex];
-        this.selectedIssue = target.issue;
-        this.locationIndex = target.locIndex;
+        this.selectedIssue = issues[newIndex];
+        this.jumpToLocation(this.selectedIssue);
+    }
 
-        this.jumpToLocation(target.issue, target.locIndex);
+    /**
+     * Navigates to a review-thread location emitted by review comment widgets.
+     */
+    onNavigateToReviewCommentLocation(location: ReviewThreadLocation): void {
+        if (location.threadId !== undefined) {
+            const selectedIssue = this.sortedIssues().find((issue) => issue.threadId === location.threadId);
+            if (selectedIssue) {
+                this.selectedIssue = selectedIssue;
+            }
+        }
+        this.navigateToLocation(location);
     }
 
     /**
      * Helper to perform the actual editor jump.
      */
-    private jumpToLocation(issue: ConsistencyIssue, index: number) {
-        if (!issue.relatedLocations || !issue.relatedLocations[index]) {
-            return;
-        }
-        const location = issue.relatedLocations[index];
+    private jumpToLocation(issue: ConsistencyIssueNavigationIssue) {
+        this.navigateToLocation({
+            targetType: issue.targetType,
+            filePath: issue.filePath,
+            lineNumber: issue.lineNumber,
+            auxiliaryRepositoryId: issue.auxiliaryRepositoryId,
+        });
+    }
 
-        // We can always jump to the problem statement
-        if (location.type === 'PROBLEM_STATEMENT') {
+    private mapConsistencyThreadToNavigationIssue(thread: CommentThread): ConsistencyIssueNavigationIssue | undefined {
+        const content = this.extractConsistencyIssueContent(thread);
+        if (!content) {
+            return undefined;
+        }
+
+        return {
+            threadId: thread.id,
+            targetType: thread.targetType,
+            filePath: thread.filePath ?? thread.initialFilePath ?? undefined,
+            lineNumber: thread.lineNumber ?? thread.initialLineNumber,
+            auxiliaryRepositoryId: thread.auxiliaryRepositoryId,
+            severity: content.severity,
+            category: content.category,
+        };
+    }
+
+    private extractConsistencyIssueContent(thread: CommentThread): ConsistencyIssueCommentContent | undefined {
+        const firstComment = getFirstCommentByCreatedDateThenId(thread.comments);
+        if (!firstComment || firstComment.type !== CommentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+
+        const content = firstComment.content as CommentContent | undefined;
+        if (!content || content.contentType !== CommentContentType.CONSISTENCY_CHECK) {
+            return undefined;
+        }
+
+        return content;
+    }
+
+    private navigateToLocation(location: { targetType: CommentThreadLocationType; filePath?: string; lineNumber?: number; auxiliaryRepositoryId?: number }): void {
+        if (location.targetType === CommentThreadLocationType.PROBLEM_STATEMENT) {
             this.codeEditorContainer.selectedFile = this.codeEditorContainer.problemStatementIdentifier;
-            this.editableInstructions.jumpToLine(location.endLine);
+            if (location.lineNumber !== undefined) {
+                this.editableInstructions()?.jumpToLine(location.lineNumber);
+            }
             return;
         }
 
-        // Set parameters for when fileLoad is called
-        this.lineJumpOnFileLoad = location.endLine;
-        this.fileToJumpOn = getRepoPath(location);
+        if (!location.filePath) {
+            return;
+        }
 
-        // Jump to the right repo
+        this.lineJumpOnFileLoad = location.lineNumber;
+        this.fileToJumpOn = location.filePath;
+
         try {
-            if (location.type === 'TEMPLATE_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TEMPLATE') {
-                this.selectTemplateParticipation();
-                return;
-            } else if (location.type === 'SOLUTION_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'SOLUTION') {
-                this.selectSolutionParticipation();
-                return;
-            } else if (location.type === 'TESTS_REPOSITORY' && this.codeEditorContainer.selectedRepository() !== 'TESTS') {
-                this.selectTestRepository();
-                return;
+            switch (location.targetType) {
+                case CommentThreadLocationType.TEMPLATE_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TEMPLATE) {
+                        this.selectTemplateParticipation();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.SOLUTION_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.SOLUTION) {
+                        this.selectSolutionParticipation();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.TEST_REPO:
+                    if (this.codeEditorContainer.selectedRepository() !== RepositoryType.TESTS) {
+                        this.selectTestRepository();
+                        return;
+                    }
+                    break;
+                case CommentThreadLocationType.AUXILIARY_REPO: {
+                    const auxiliaryRepositoryId = location.auxiliaryRepositoryId;
+                    if (
+                        auxiliaryRepositoryId !== undefined &&
+                        (this.codeEditorContainer.selectedRepository() !== RepositoryType.AUXILIARY || this.selectedRepositoryId !== auxiliaryRepositoryId)
+                    ) {
+                        this.selectAuxiliaryRepository(auxiliaryRepositoryId);
+                        return;
+                    }
+                    break;
+                }
+                default:
             }
-        } catch (error) {
-            this.alertService.error(this.translateService.instant('artemisApp.hyperion.consistencyCheck.navigationFailed'));
+        } catch {
+            this.alertService.error('artemisApp.hyperion.consistencyCheck.navigationFailed');
             this.lineJumpOnFileLoad = undefined;
             this.fileToJumpOn = undefined;
             return;
@@ -510,9 +837,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      *        The name of the file that was just loaded.
      */
     onFileLoad(fileName: string) {
-        if (this.lineJumpOnFileLoad && this.fileToJumpOn === fileName) {
-            this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+        if (this.fileToJumpOn === fileName) {
+            if (this.lineJumpOnFileLoad !== undefined) {
+                this.codeEditorContainer.jumpToLine(this.lineJumpOnFileLoad);
+            }
             this.lineJumpOnFileLoad = undefined;
+            this.fileToJumpOn = undefined;
         }
+    }
+
+    onDiffLineChange(event: { ready: boolean; lineChange: LineChange }): void {
+        this.aiOps.onDiffLineChange(event);
+    }
+
+    override onInstructionChanged(markdown: string) {
+        super.onInstructionChanged(markdown);
+        this.aiOps.currentProblemStatement.set(markdown);
     }
 }

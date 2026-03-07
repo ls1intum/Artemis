@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -7,15 +8,19 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisLogoButtonComponent } from 'app/iris/overview/iris-logo-button/iris-logo-button.component';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseDescriptionFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let courseDescriptionComponentFixture: ComponentFixture<CourseDescriptionFormComponent>;
     let courseDescriptionComponent: CourseDescriptionFormComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule],
-            declarations: [
+            imports: [
+                ReactiveFormsModule,
                 CourseDescriptionFormComponent,
                 MockPipe(ArtemisTranslatePipe),
                 IrisLogoButtonComponent,
@@ -23,6 +28,7 @@ describe('CourseDescriptionFormComponent', () => {
                 MockDirective(FeatureToggleDirective),
                 MockDirective(TranslateDirective),
             ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -32,7 +38,7 @@ describe('CourseDescriptionFormComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -43,14 +49,13 @@ describe('CourseDescriptionFormComponent', () => {
     it('should submit successfully', () => {
         courseDescriptionComponentFixture.detectChanges();
         const description = 'I'.repeat(courseDescriptionComponent['DESCRIPTION_MIN'] + 1);
-        const formSubmittedEmitSpy = jest.spyOn(courseDescriptionComponent.formSubmitted, 'emit');
-        const generateButton = courseDescriptionComponentFixture.debugElement.nativeElement.querySelector('#generateButton > .jhi-btn');
+        const formSubmittedEmitSpy = vi.spyOn(courseDescriptionComponent.formSubmitted, 'emit');
 
         courseDescriptionComponent.courseDescriptionControl.setValue(description);
-        expect(courseDescriptionComponent.isSubmitPossible).toBeTrue();
-        generateButton.click();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeTruthy();
+        courseDescriptionComponent.submitForm();
 
-        expect(courseDescriptionComponent.hasBeenSubmitted).toBeTrue();
+        expect(courseDescriptionComponent.hasBeenSubmitted).toBeTruthy();
         expect(formSubmittedEmitSpy).toHaveBeenCalledOnce();
     });
 
@@ -60,13 +65,13 @@ describe('CourseDescriptionFormComponent', () => {
         const descriptionTooLong = 'I'.repeat(courseDescriptionComponent['DESCRIPTION_MAX'] + 1);
 
         //submit should be disabled at the start due to empty description
-        expect(courseDescriptionComponent.isSubmitPossible).toBeFalse();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeFalsy();
 
         courseDescriptionComponent.courseDescriptionControl.setValue(descriptionTooShort);
-        expect(courseDescriptionComponent.isSubmitPossible).toBeFalse();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeFalsy();
 
         courseDescriptionComponent.courseDescriptionControl.setValue(descriptionTooLong);
-        expect(courseDescriptionComponent.isSubmitPossible).toBeFalse();
+        expect(courseDescriptionComponent.isSubmitPossible).toBeFalsy();
     });
 
     it('should update the description', () => {

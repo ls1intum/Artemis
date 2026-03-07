@@ -7,13 +7,17 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import org.jspecify.annotations.Nullable;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
  * DTO for Atlas Agent chat responses.
- * Contains the agent's message, timestamp, modification flags, and competency preview data.
+ * Contains the agent's message, preview data for competencies and relations, and metadata.
+ * Uses unified array-based approach for both competencies and relations.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AtlasAgentChatResponseDTO(@NotBlank @Size(max = 10000) String message, @NotNull ZonedDateTime timestamp, boolean competenciesModified,
-        List<CompetencyPreviewDTO> competencyPreviews) {
+        @Nullable List<CompetencyPreviewDTO> competencyPreviews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
+        @Nullable RelationGraphPreviewDTO relationGraphPreview) {
 }

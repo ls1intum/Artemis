@@ -1,3 +1,4 @@
+import { Component, NO_ERRORS_SCHEMA } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -13,6 +14,11 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/shared/util/navigation.utils';
 import { provideNoopAnimationsForTests } from 'test/helpers/animations';
+import { LineChartModule } from '@swimlane/ngx-charts';
+
+// Mock the ngx-charts line chart component to avoid SIGSEGV crashes from heavy SVG/d3 rendering in jsdom
+@Component({ selector: 'ngx-charts-line-chart', template: '' })
+class MockLineChartComponent {}
 
 class MockActivatedRoute {
     parent: any;
@@ -52,6 +58,10 @@ describe('ExerciseScoresChartComponent', () => {
                 provideNoopAnimationsForTests(),
             ],
         })
+            .overrideComponent(ExerciseScoresChartComponent, {
+                remove: { imports: [LineChartModule] },
+                add: { imports: [MockLineChartComponent], schemas: [NO_ERRORS_SCHEMA] },
+            })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseScoresChartComponent);

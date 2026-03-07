@@ -8,7 +8,7 @@
             "vcsAccessTokenSettings": "VCS Token",
             "passkeys": "Passkeys",
             "accountInformation": "Account Informationen",
-            "LLMUsage": "LLM Nutzung",
+            "LLMUsage": "KI-Erfahrung",
             "learnerProfile": "Lernprofil",
             "notificationSettings": "Benachrichtigungen",
             "notificationSettingsFilterInfo": "Diese Einstellungen filtern auch die Seitenleiste für Mitteilungen",
@@ -22,10 +22,8 @@
                 "addNewLanguage": "Neue sprachspezifische Einstellungen hinzufügen"
             },
             "LLMUsageSettingsPage": {
-                "externalAccepted": "Du hast die Nutzung von externen LLMs am {{acceptedDate}} akzeptiert.",
-                "externalDeclined": "Du hast die Nutzung von externen LLMs nicht akzeptiert.",
-                "internalAccepted": "Du hast die Nutzung von internen LLMs am {{acceptedDate}} akzeptiert.",
-                "internalDeclined": "Du hast die Nutzung von internen LLMs nicht akzeptiert.",
+                "cloudAccepted": "Du hast Cloud-KI am {{acceptedDate}} ausgewählt.",
+                "onPremiseAccepted": "Du hast lokale KI am {{acceptedDate}} ausgewählt.",
                 "AIDeclined": "Du hast die Nutzung von LLMs am {{acceptedDate}} explizit abgelehnt.",
                 "noAISelected": "Du hast noch keine Entscheidung über die Verwendung von LLMs getroffen.",
                 "chooseAI": "Auswahl ändern"
@@ -147,7 +145,7 @@
                 "editAccountSettings": "Kontoeinstellungen bearbeiten"
             },
             "categories": {
-                "LLMUsage": "LLM-Nutzungseinstellungen",
+                "LLMUsage": "KI-Erfahrungseinstellungen",
                 "NOTIFICATION_SETTINGS": "Benachrichtigungseinstellungen",
                 "SCIENCE_SETTINGS": "Forschungseinstellungen",
                 "SSH_SETTINGS": "SSH Einstellungen",
@@ -226,17 +224,44 @@
             },
             "globalNotificationSettings": {
                 "title": "Benachrichtigungen",
-                "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheitsbezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
+                "description": "Du erhältst E-Mail-Benachrichtigungen für die folgenden sicherheits- und systembezogenen Aktivitäten. Verwalte deine Einstellungen unten.",
                 "options": {
                     "NEW_LOGIN": "Neuer Login",
                     "NEW_PASSKEY_ADDED": "Neuer Passkey hinzugefügt",
                     "VCS_TOKEN_EXPIRED": "VCS-Token abgelaufen",
-                    "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen"
+                    "SSH_KEY_EXPIRED": "SSH-Schlüssel abgelaufen",
+                    "MAINTENANCE": "Geplante Wartungsankündigungen"
                 },
                 "viewPasskeySettings": "Passkey-Einstellungen anzeigen",
                 "viewVcsTokenSettings": "VCS-Token-Einstellungen anzeigen",
                 "viewSshKeySettings": "SSH-Schlüssel-Einstellungen anzeigen",
                 "updateSuccess": "Benachrichtigungseinstellung erfolgreich aktualisiert."
+            },
+            "aiExperience": "KI-Erfahrung",
+            "aiExperienceSettingsPage": {
+                "title": "KI-Erfahrung",
+                "description": "Lege fest, wie Artemis KI einsetzt, um dein Lernen zu unterstützen – einschließlich Iris-Tutorium, automatischem Feedback und weiteren KI-gestützten Funktionen.",
+                "yourAiMode": "Dein KI-Modus",
+                "cloudTitle": "Cloud-KI",
+                "cloudDescription": "Deine KI-Funktionen werden von modernsten LLMs (z.B. GPT-5) auf EU-Servern betrieben. Deine Daten werden sicher verarbeitet und niemals für Training verwendet.",
+                "localTitle": "Lokale KI (Experimentell)",
+                "localDescription": "Deine KI-Funktionen laufen auf Open-Source-LLMs (z.B. Llama), die vollständig auf der Infrastruktur der Universität gehostet werden. Deine Daten verlassen niemals die Server der Universität, aber die Antwortqualität kann geringer sein als bei Cloud-KI.",
+                "noAiTitle": "Keine KI",
+                "noAiDescription": "KI-Funktionen wie Iris-Tutorium, KI-Feedback und intelligente Vorschläge sind deaktiviert. Alle anderen Artemis-Funktionen funktionieren weiterhin normal.",
+                "noSelectionTitle": "Kein KI-Modus ausgewählt",
+                "noSelectionDescription": "Du hast noch keinen KI-Modus gewählt. Wähle, wie Artemis KI nutzt, um dein Lernerlebnis zu unterstützen.",
+                "selectedOn": "Ausgewählt am {{date}}",
+                "changeSelection": "Auswahl ändern",
+                "chooseNow": "Jetzt wählen",
+                "learnMore": "Mehr über deine Optionen erfahren",
+                "dataManagement": "Datenverwaltung",
+                "dataManagementInfo": "Hier kannst du deine gespeicherten KI-Interaktionen einsehen und löschen. Dies umfasst alle Chat-Unterhaltungen mit Iris in allen Kursen, in denen du eingeschrieben bist.",
+                "dataStats": "Du hast derzeit {{sessions}} Chat-Sitzungen mit insgesamt {{messages}} Nachrichten.",
+                "noData": "Du hast noch keine KI-Interaktionen.",
+                "deleteQuestion": "Bist du sicher, dass du alle deine KI-Interaktionen löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.",
+                "deleteSuccess": "Alle KI-Interaktionen wurden erfolgreich gelöscht.",
+                "deleteFailure": "KI-Interaktionen konnten nicht gelöscht werden. Bitte versuche es erneut.",
+                "typeDeleteAllToConfirm": "Zum Bestätigen bitte eingeben"
             },
             "quizTrainingSettings": {
                 "quizTraining": "Quiz Training",

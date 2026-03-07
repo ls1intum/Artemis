@@ -278,9 +278,9 @@ describe('CourseManagementContainerComponent', () => {
         vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
     });
     afterEach(() => {
-        component.ngOnDestroy();
+        component?.ngOnDestroy();
         vi.restoreAllMocks();
-        localStorageService.clear();
+        localStorageService?.clear();
         TestBed.inject(SessionStorageService).clear();
     });
 

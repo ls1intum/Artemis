@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.modeling.apollon;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatIOException;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -54,6 +55,12 @@ class ApollonConversionServiceTest extends AbstractSpringIntegrationIndependentT
     @AfterEach
     void tearDown() throws Exception {
         apollonRequestMockProvider.reset();
+    }
+
+    @Test
+    void testConvertModel_failureThrowsIOException() {
+        apollonRequestMockProvider.mockConvertModel(false, null);
+        assertThatIOException().isThrownBy(() -> apollonConversionService.convertModel("model"));
     }
 
     /**

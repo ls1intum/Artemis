@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
@@ -20,14 +21,11 @@ if (typeof CSS === 'undefined') {
 }
 
 /*
- * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
- * of the full module (editor.main.js) because of a ReferenceError in the language features of Monaco.
- * The following import imports the core features of the monaco editor, but leaves out the language
- * features. It contains an unchecked call to queryCommandSupported, so the function has to be set
- * on the document.
+ * Monaco-editor is mocked via moduleNameMapper in jest.config.js (pointing to mock-monaco-editor.ts)
+ * to avoid loading the heavy real module (~50MB) which causes SIGSEGV crashes in Jest workers.
+ * The queryCommandSupported stub is kept for any remaining code that may call it.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
 
 failOnConsole({
     shouldFailOnWarn: true,
