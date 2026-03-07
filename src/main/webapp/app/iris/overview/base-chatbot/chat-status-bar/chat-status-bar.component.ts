@@ -1,86 +1,112 @@
 import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
-import { faArrowsRotate, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgClass } from '@angular/common';
-
-/**
- * Extended stage type with computed lowercase state for CSS class binding
- */
-interface ProcessedStage extends IrisStageDTO {
-    lowerCaseState?: string;
-}
+import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-chat-status-bar',
     templateUrl: './chat-status-bar.component.html',
     styleUrl: './chat-status-bar.component.scss',
-    imports: [FaIconComponent, NgClass],
+    imports: [FaIconComponent, IrisLogoComponent, TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatStatusBarComponent {
-    // UI state as signals for OnPush change detection
+    private static readonly STATUS_KEYS = [
+        'artemisApp.iris.chatStatus.thinkingHard',
+        'artemisApp.iris.chatStatus.analyzingContext',
+        'artemisApp.iris.chatStatus.craftingResponse',
+        'artemisApp.iris.chatStatus.consultingSources',
+        'artemisApp.iris.chatStatus.almostThere',
+    ];
+    private static readonly CYCLE_INTERVAL = 2500;
+
     readonly open = signal(false);
     readonly activeStage = signal<IrisStageDTO | undefined>(undefined);
-    readonly displayedText = signal<string | undefined>(undefined);
-    readonly displayedSubText = signal<string | undefined>(undefined);
-    readonly style = signal<string | undefined>(undefined);
+    readonly errorMessage = signal<string | undefined>(undefined);
 
-    // Timeout is not a signal since it's not used in the template
-    private styleTimeout: ReturnType<typeof setTimeout> | undefined;
+    readonly currentKeyIndex = signal(0);
+    readonly animToggle = signal(false);
+    readonly currentKey = computed(() => ChatStatusBarComponent.STATUS_KEYS[this.currentKeyIndex()]);
+
+    readonly isError = computed(() => this.activeStage()?.state === IrisStageStateDTO.ERROR);
+
+    private cycleIntervalId: ReturnType<typeof setInterval> | undefined;
+    private shuffledOrder: number[] = [];
+    private shuffledPosition = 0;
 
     stages = input<IrisStageDTO[]>([]);
 
-    // Computed signal that creates copies with lowerCaseState added (avoids mutating input)
-    readonly processedStages = computed<ProcessedStage[]>(() => {
-        return this.stages().map((stage) => ({
-            ...stage,
-            lowerCaseState: stage.state?.toLowerCase(),
-        }));
-    });
-
-    faArrowsRotate = faArrowsRotate;
     faCircleXmark = faCircleXmark;
 
-    protected readonly JSON = JSON;
-    protected readonly IrisStageStateDTO = IrisStageStateDTO;
-
     constructor() {
-        effect((onCleanup) => {
+        // Stage detection effect
+        effect(() => {
             const stages = this.stages();
             const firstUnfinished = stages.find((stage) => !this.isStageFinished(stage));
             if (firstUnfinished) {
-                clearTimeout(this.styleTimeout);
                 this.open.set(true);
-                // Only update style tag if the active stage changed; otherwise the animations are reset on each change
-                if (firstUnfinished.name !== this.activeStage()?.name) {
-                    this.style.set(undefined);
-                    // Use a timeout to let the bar of this stage autofill until 5% in 500ms (using scss)
-                    // This makes it more clear that the stage has started
-                    // After that, change it to 90% to let it slowly fill up using css transition
-                    // Stopping at 90% makes it more clear that the stage is not yet finished
-                    this.styleTimeout = setTimeout(() => this.style.set('transform: scaleX(0.9)'), 500);
-                }
                 this.activeStage.set(firstUnfinished);
-                this.displayedText.set(firstUnfinished.name);
-                this.displayedSubText.set(firstUnfinished.message || undefined);
+                this.errorMessage.set(firstUnfinished.message || firstUnfinished.name);
             } else {
                 this.activeStage.set(undefined);
                 if (this.open()) {
                     this.open.set(false);
-                    this.displayedText.set(undefined);
-                    this.displayedSubText.set(undefined);
+                    this.errorMessage.set(undefined);
                 }
             }
+        });
 
-            // Cleanup timeouts when effect re-runs or component destroys
+        // Cycling message effect
+        effect((onCleanup) => {
+            const isOpen = this.open();
+            const hasError = this.isError();
+
+            if (isOpen && !hasError) {
+                this.shuffleLabelOrder();
+                this.shuffledPosition = 0;
+                this.currentKeyIndex.set(this.shuffledOrder[0]);
+                this.animToggle.set(true);
+
+                this.cycleIntervalId = setInterval(() => {
+                    this.shuffledPosition = (this.shuffledPosition + 1) % ChatStatusBarComponent.STATUS_KEYS.length;
+                    if (this.shuffledPosition === 0) {
+                        this.shuffleLabelOrder();
+                    }
+                    this.currentKeyIndex.set(this.shuffledOrder[this.shuffledPosition]);
+                    this.animToggle.update((v) => !v);
+                }, ChatStatusBarComponent.CYCLE_INTERVAL);
+            } else {
+                clearInterval(this.cycleIntervalId);
+                this.cycleIntervalId = undefined;
+            }
+
             onCleanup(() => {
-                clearTimeout(this.styleTimeout);
+                clearInterval(this.cycleIntervalId);
+                this.cycleIntervalId = undefined;
             });
         });
     }
 
     isStageFinished(stage: IrisStageDTO) {
-        return stage.state === 'DONE' || stage.state === 'SKIPPED';
+        return stage.state === IrisStageStateDTO.DONE || stage.state === IrisStageStateDTO.SKIPPED;
+    }
+
+    private shuffleLabelOrder(): void {
+        const keys = ChatStatusBarComponent.STATUS_KEYS;
+        const lastShown = this.shuffledOrder.length > 0 ? this.shuffledOrder[this.shuffledOrder.length - 1] : -1;
+
+        this.shuffledOrder = keys.map((_, i) => i);
+        // Fisher-Yates shuffle
+        for (let i = this.shuffledOrder.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.shuffledOrder[i], this.shuffledOrder[j]] = [this.shuffledOrder[j], this.shuffledOrder[i]];
+        }
+
+        // Avoid repeating the last shown label at the start of new shuffle
+        if (this.shuffledOrder[0] === lastShown && this.shuffledOrder.length > 1) {
+            [this.shuffledOrder[0], this.shuffledOrder[1]] = [this.shuffledOrder[1], this.shuffledOrder[0]];
+        }
     }
 }

@@ -26,4 +26,25 @@
     &.big {
         max-height: 100px;
     }
+
+    &.spinning {
+        animation: iris-spin 1.5s linear infinite;
+        filter: none;
+    }
+}
+
+@keyframes iris-spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .iris-logo.spinning {
+        animation: none;
+    }
 }

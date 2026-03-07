@@ -252,6 +252,14 @@
                     "deleteFailed": "Failed to delete memory.",
                     "detailsLoadFailed": "Failed to load memory details."
                 }
+            },
+            "chatStatus": {
+                "processing": "Iris is thinking",
+                "thinkingHard": "Thinking hard",
+                "analyzingContext": "Analyzing context",
+                "craftingResponse": "Crafting a response",
+                "consultingSources": "Consulting sources",
+                "almostThere": "Almost there"
             }
         }
     }
