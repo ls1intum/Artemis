@@ -182,6 +182,19 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             return;
         }
 
+        // Save current scroll position as percentage before re-rendering
+        const viewerBox = this.pdfViewerBox()?.nativeElement;
+        let scrollTopPercentage = 0;
+        let scrollLeftPercentage = 0;
+        if (viewerBox) {
+            if (viewerBox.scrollHeight > 0) {
+                scrollTopPercentage = viewerBox.scrollTop / viewerBox.scrollHeight;
+            }
+            if (viewerBox.scrollWidth > 0) {
+                scrollLeftPercentage = viewerBox.scrollLeft / viewerBox.scrollWidth;
+            }
+        }
+
         this.isRendering = true;
 
         try {
@@ -201,10 +214,12 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             if (this.zoomLevel() !== 1.0) {
                 setTimeout(() => {
                     this.applyZoomToPages();
+                    this.restoreScrollPosition(viewerBox, scrollTopPercentage, scrollLeftPercentage);
                     this.updateCurrentPage();
                 }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
             } else {
                 setTimeout(() => {
+                    this.restoreScrollPosition(viewerBox, scrollTopPercentage, scrollLeftPercentage);
                     this.updateCurrentPage();
                 }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
             }
@@ -214,13 +229,28 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     /**
+     * Restores the scroll position after re-rendering based on saved percentages.
+     * This keeps the user's view approximately in the same place after resize.
+     */
+    private restoreScrollPosition(viewerBox: HTMLDivElement | undefined, scrollTopPercentage: number, scrollLeftPercentage: number): void {
+        if (!viewerBox) {
+            return;
+        }
+
+        // Only restore if there was a previous scroll position
+        if (scrollTopPercentage > 0 || scrollLeftPercentage > 0) {
+            viewerBox.scrollTop = scrollTopPercentage * viewerBox.scrollHeight;
+            viewerBox.scrollLeft = scrollLeftPercentage * viewerBox.scrollWidth;
+        }
+    }
+
+    /**
      * Calculates the target width for PDF pages based on container dimensions.
      * Uses full available width.
      */
     private calculateTargetWidth(): number {
         const viewerBoxRef = this.pdfViewerBox();
-        const boxWidth = viewerBoxRef?.nativeElement.clientWidth || 800;
-        return boxWidth;
+        return viewerBoxRef?.nativeElement.clientWidth || 800;
     }
 
     zoomIn(): void {
@@ -444,7 +474,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const context = canvas.getContext('2d');
 
             if (!context) {
-                throw new Error('Could not get 2D context');
+                return;
             }
 
             // Set canvas size in physical pixels
