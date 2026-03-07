@@ -56,10 +56,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
                 await this.makeModelingExerciseSubmission(exerciseID);
                 break;
             case ExerciseType.QUIZ:
-                await this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
+                await this.makeQuizExerciseSubmission(exerciseID);
                 break;
             case ExerciseType.PROGRAMMING:
-                await this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode);
+                await this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.practiceMode, additionalData!.skipBuildResultCheck);
                 break;
         }
     }
@@ -70,7 +70,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await this.page.waitForTimeout(300);
     }
 
-    private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false) {
+    private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
         await this.programmingExerciseEditor.toggleCompressFileTree(exerciseID);
         for (const deleteFile of submission.deleteFiles) {
             await this.programmingExerciseEditor.deleteFile(exerciseID, deleteFile);
@@ -81,7 +81,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
         } else {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
-        await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible();
+        if (!skipBuildResultCheck) {
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible();
+        }
     }
 
     private async makeModelingExerciseSubmission(exerciseID: number) {
@@ -90,9 +92,11 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await this.modelingExerciseEditor.addComponentToModel(exerciseID, 4);
     }
 
-    private async makeQuizExerciseSubmission(exerciseID: number, quizExerciseID: number) {
-        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 0, quizExerciseID);
-        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2, quizExerciseID);
+    private async makeQuizExerciseSubmission(exerciseID: number) {
+        // In exam mode, quiz question elements use the actual DB ID (not index),
+        // so we skip the #question{id} scope and click answer options directly.
+        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 0);
+        await this.quizExerciseMultipleChoice.tickAnswerOption(exerciseID, 2);
     }
 
     async openExam(student: UserCredentials, course: Course, exam: Exam) {

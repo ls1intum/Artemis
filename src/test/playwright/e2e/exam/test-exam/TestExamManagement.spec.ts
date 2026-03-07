@@ -109,5 +109,7 @@ test.describe('Test Exam management', { tag: '@fast' }, () => {
         });
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
+    });
 });

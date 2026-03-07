@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
 import { request } from '@playwright/test';
 import { SSH_KEYS_PATH, SSH_KEY_NAMES } from '../support/pageobjects/exercises/programming/GitClient';
 import { admin, studentOne, studentTwo, studentThree, studentFour, tutor, instructor, UserCredentials } from '../support/users';
@@ -26,7 +27,34 @@ async function globalSetup() {
     // Pre-authenticate all users and cache JWT tokens
     await preAuthenticateUsers();
 
+    // Clean up accumulated test data (group chats, etc.) to prevent limit errors
+    cleanupAccumulatedTestData();
+
     console.log('Global setup completed.');
+}
+
+function cleanupAccumulatedTestData() {
+    try {
+        // Clean up accumulated group chats from previous test runs via PostgreSQL.
+        // Group chats have no delete API, so they accumulate and hit the 50 per-user-per-course limit.
+        const sql = `
+            DELETE FROM conversation_participant WHERE conversation_id IN (
+                SELECT id FROM conversation WHERE discriminator = 'G' AND course_id IN (9003, 9004)
+            );
+            DELETE FROM post WHERE conversation_id IN (
+                SELECT id FROM conversation WHERE discriminator = 'G' AND course_id IN (9003, 9004)
+            );
+            DELETE FROM conversation WHERE discriminator = 'G' AND course_id IN (9003, 9004);
+        `;
+        const result = execSync(`docker exec artemis-postgres psql -U Artemis -d Artemis -c "${sql.replace(/\n/g, ' ')}"`, {
+            timeout: 10000,
+            encoding: 'utf-8',
+        });
+        console.log('Cleaned up accumulated group chats:', result.trim());
+    } catch (error) {
+        // Docker/DB may not be available (e.g., CI with different setup) — skip silently
+        console.log('Skipping DB cleanup (docker exec not available)');
+    }
 }
 
 async function preAuthenticateUsers() {

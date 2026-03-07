@@ -46,7 +46,7 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
         await examCreation.setConfirmationEndText(examData.confirmationEndText);
 
         const examResponse = await examCreation.submit();
-        const exam = await examResponse.json();
+        exam = { ...(await examResponse.json()), course };
         expect(examResponse.status()).toBe(201);
         expect(exam.title).toBe(examData.title);
         expect(exam.testExam).toBe(true);
@@ -82,5 +82,13 @@ test.describe('Test Exam creation/deletion', { tag: '@fast' }, () => {
         });
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exam if exists', async ({ examAPIRequests }) => {
+        if (exam?.id) {
+            try {
+                await examAPIRequests.deleteExam(exam);
+            } catch {
+                // Exam may already be deleted by the test
+            }
+        }
+    });
 });

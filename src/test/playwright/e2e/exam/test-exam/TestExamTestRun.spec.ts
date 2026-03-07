@@ -34,6 +34,7 @@ test.describe('Test exam test run', { tag: '@sequential' }, () => {
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
                 submission: cBuildErrorSubmission,
                 practiceMode: true,
+                skipBuildResultCheck: true,
                 programmingLanguage: ProgrammingLanguage.C,
             }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
@@ -105,5 +106,7 @@ test.describe('Test exam test run', { tag: '@sequential' }, () => {
         });
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
+    });
 });

@@ -160,6 +160,4 @@ test.describe('Exam creation/deletion', { tag: '@fast' }, () => {
             await expect(examManagement.getExamWorkingTime()).toHaveText('4h 0min');
         });
     });
-
-    // Seed courses are persistent — no cleanup needed
 });

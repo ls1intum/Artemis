@@ -10,10 +10,18 @@ const course = { id: SEED_COURSES.examManagement.id } as any;
 
 test.describe('Exam date verification', { tag: '@fast' }, () => {
     let examTitle: string;
+    let exam: any;
 
     test.beforeEach(async ({ login }) => {
         await login(admin);
         examTitle = 'exam' + generateUUID();
+    });
+
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        if (exam) {
+            await examAPIRequests.deleteExam(exam);
+            exam = undefined;
+        }
     });
 
     test.describe('Exam timing', () => {
@@ -25,7 +33,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().add(2, 'days'),
                 endDate: dayjs().add(3, 'days'),
             };
-            await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             await login(studentOne);
             await page.goto(`/courses`);
             await expect(page.getByText(examTitle)).not.toBeVisible();
@@ -41,7 +49,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().add(2, 'days'),
                 endDate: dayjs().add(3, 'days'),
             };
-            const exam = await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             await examAPIRequests.registerStudentForExam(exam, studentOne);
             await login(studentOne);
             await page.goto(`/courses/${course.id}`);
@@ -66,7 +74,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().subtract(2, 'days'),
                 endDate: dayjs().add(3, 'days'),
             };
-            const exam = await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
             await examAPIRequests.registerStudentForExam(exam, studentOne);
@@ -101,7 +109,7 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
                 startDate: dayjs().subtract(2, 'days'),
                 endDate: examEnd,
             };
-            const exam = await examAPIRequests.createExam(examConfig);
+            exam = await examAPIRequests.createExam(examConfig);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             const exercise = await exerciseAPIRequests.createTextExercise({ exerciseGroup });
             await examAPIRequests.registerStudentForExam(exam, studentOne);
@@ -124,6 +132,4 @@ test.describe('Exam date verification', { tag: '@fast' }, () => {
             await examStartEnd.finishExam();
         });
     });
-
-    // Seed courses are persistent — no cleanup needed
 });

@@ -202,7 +202,9 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(ids).toContain(`plantUml-${exerciseC.id}-1`);
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
+    });
 });
 
 async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {

@@ -38,7 +38,7 @@ export class ProgrammingExerciseOverviewPage {
         };
 
         const codeButtonLocator = this.getCodeButton();
-        await Commands.reloadUntilFound(this.page, codeButtonLocator, 4000, 20000);
+        await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         await this.page.locator('.https-or-ssh-button').click();

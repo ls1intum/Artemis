@@ -6,6 +6,7 @@ import { Page, expect } from '@playwright/test';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/assessment/ExerciseAssessmentDashboardPage';
@@ -62,6 +63,13 @@ test.describe('Exam assessment', () => {
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 
     test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
@@ -105,6 +113,13 @@ test.describe('Exam assessment', () => {
         test('Complaints about modeling exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 
     test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
@@ -143,6 +158,13 @@ test.describe('Exam assessment', () => {
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 
     test.describe('Quiz exercise assessment', { tag: '@slow' }, () => {
@@ -175,6 +197,13 @@ test.describe('Exam assessment', () => {
             await examManagement.checkQuizSubmission(course.id!, exam.id!, studentOneName, '[5 / 10 Points] 50%');
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('50%');
+        });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
         });
     });
 });
@@ -216,6 +245,13 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('70%');
             await examParticipation.verifyGradingKeyOnFinalPage('2.0');
+        });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
         });
     });
 });
@@ -286,9 +322,11 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
         const scores = await examAPIRequests.getExamScores(exam);
         await examScores.checkStudentResults(scores.studentResults);
     });
-});
 
-// Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
+    });
+});
 
 async function handleComplaint(
     course: Course,

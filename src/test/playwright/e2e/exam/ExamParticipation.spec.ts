@@ -119,6 +119,10 @@ test.describe('Exam participation', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
+
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 
     test.describe('Early hand-in with continue and reload page', { tag: '@slow' }, () => {
@@ -223,6 +227,10 @@ test.describe('Exam participation', () => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
+
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 
     test.describe('Normal Hand-in', { tag: '@slow' }, () => {
@@ -259,6 +267,10 @@ test.describe('Exam participation', () => {
 
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
+        });
+
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
         });
     });
 
@@ -314,6 +326,10 @@ test.describe('Exam participation', () => {
                     await accountManagementAPIRequests.deleteSshPublicKey();
                 });
             }
+
+            test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+                await examAPIRequests.deleteExam(exam);
+            });
         });
     }
 
@@ -459,9 +475,11 @@ test.describe('Exam participation', () => {
                 }
             },
         );
-    });
 
-    // Seed courses are persistent — no cleanup needed
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
+        });
+    });
 });
 
 async function createExam(course: Course, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {

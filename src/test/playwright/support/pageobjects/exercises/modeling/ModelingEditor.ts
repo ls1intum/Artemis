@@ -11,7 +11,9 @@ export class ModelingEditor {
 
     async addComponentToModel(exerciseID: number, componentNumber: number, x?: number, y?: number) {
         const exerciseElement = getExercise(this.page, exerciseID);
-        const component = exerciseElement.locator('#modeling-editor-sidebar').locator('div').nth(componentNumber);
+        const sidebar = exerciseElement.locator('#modeling-editor-sidebar');
+        await sidebar.waitFor({ state: 'visible' });
+        const component = sidebar.locator('div').nth(componentNumber);
         const targetPosition = x && y ? { x, y } : undefined;
         await component.dragTo(exerciseElement.locator(MODELING_EDITOR_CANVAS), { targetPosition, force: true });
         await exerciseElement.locator(MODELING_EDITOR_CANVAS).dispatchEvent('pointerup');

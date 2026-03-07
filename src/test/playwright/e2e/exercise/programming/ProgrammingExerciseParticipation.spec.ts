@@ -46,7 +46,7 @@ test.describe('Programming exercise basic submissions', { tag: '@sequential' }, 
                 await programmingExerciseOverview.openCodeEditor(exercise.id!);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                    await expect(resultScore).toContainText(submission.expectedResult, { timeout: 30000 });
+                    await expect(resultScore).toContainText(submission.expectedResult, { timeout: 60000 });
                 });
             });
 

@@ -31,7 +31,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
             testExam: true,
             startDate: dayjs().subtract(1, 'day'),
             visibleDate: dayjs().subtract(2, 'days'),
-            workingTime: 5,
+            workingTime: 120,
             examMaxPoints: 10,
             numberOfCorrectionRoundsInExam: 1,
         };
@@ -126,5 +126,7 @@ test.describe('Test Exam - student exams', { tag: '@slow' }, () => {
         }
     }
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
+    });
 });

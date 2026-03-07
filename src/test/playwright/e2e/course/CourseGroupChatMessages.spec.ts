@@ -1,41 +1,52 @@
 import { expect } from '@playwright/test';
 import { test } from '../../support/fixtures';
-import { admin, instructor, studentOne, studentTwo, tutor, users } from '../../support/users';
+import { instructor, studentOne, studentTwo, tutor } from '../../support/users';
 import { GroupChat } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { generateUUID } from '../../support/utils';
 import { SEED_COURSES } from '../../support/seedData';
+import { execSync } from 'child_process';
 
 const course = { id: SEED_COURSES.groupChat1.id } as any;
 
+// User display names are stable across test runs (from seed data)
+const instructorName = 'Instructor User';
+const tutorName = 'Tutor User';
+const studentOneName = 'Student One';
+const studentTwoName = 'Student Two';
+
+/**
+ * Deletes a specific group chat from the database.
+ * Group chats have no REST delete API, so we use SQL via docker exec.
+ */
+function deleteGroupChatFromDB(conversationId: number) {
+    try {
+        const sql = `DELETE FROM conversation_participant WHERE conversation_id = ${conversationId}; DELETE FROM post WHERE conversation_id = ${conversationId}; DELETE FROM conversation WHERE id = ${conversationId};`;
+        execSync(`docker exec artemis-postgres psql -U Artemis -d Artemis -c "${sql}"`, { timeout: 5000, encoding: 'utf-8' });
+    } catch {
+        // DB cleanup not available — non-critical
+    }
+}
+
 test.describe('Group chat messages', { tag: '@fast' }, () => {
-    let instructorName: string;
-    let tutorName: string;
-    let studentOneName: string;
-    let studentTwoName: string;
-
-    test.beforeEach('Get usernames', async ({ login, page }) => {
-        await login(admin);
-        const instructorInfo = await users.getUserInfo(instructor.username, page);
-        instructorName = instructorInfo.name!;
-        const tutorInfo = await users.getUserInfo(tutor.username, page);
-        tutorName = tutorInfo.name!;
-        const studentOneInfo = await users.getUserInfo(studentOne.username, page);
-        studentOneName = studentOneInfo.name!;
-        const studentTwoInfo = await users.getUserInfo(studentTwo.username, page);
-        studentTwoName = studentTwoInfo.name!;
-    });
-
     test.describe('Create group chat', () => {
+        let lastCreatedGroupId: number | undefined;
+
+        test.afterEach(() => {
+            if (lastCreatedGroupId) {
+                deleteGroupChatFromDB(lastCreatedGroupId);
+                lastCreatedGroupId = undefined;
+            }
+        });
+
         test('Instructors should be able to create a group chat', async ({ login, courseMessages }) => {
             await login(instructor, `/courses/${course.id!}/communication`);
             await courseMessages.createGroupChatButton();
             await courseMessages.addUserToGroupChat(studentOne.username);
             await courseMessages.addUserToGroupChat(studentTwo.username);
             const group = await courseMessages.createGroupChat();
-            await courseMessages.listMembersButton(course.id!, group.id!);
-            await courseMessages.checkMemberList(studentOneName);
-            await courseMessages.checkMemberList(studentTwoName);
-            await courseMessages.closeEditPanel();
+            lastCreatedGroupId = group.id!;
+            await courseMessages.checkConversationHeaderContains(studentOneName);
+            await courseMessages.checkConversationHeaderContains(studentTwoName);
         });
 
         test('Tutors should be able to create a group chat', async ({ login, courseMessages }) => {
@@ -44,10 +55,9 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.addUserToGroupChat(studentOne.username);
             await courseMessages.addUserToGroupChat(instructor.username);
             const group = await courseMessages.createGroupChat();
-            await courseMessages.listMembersButton(course.id!, group.id!);
-            await courseMessages.checkMemberList(studentOneName);
-            await courseMessages.checkMemberList(instructorName);
-            await courseMessages.closeEditPanel();
+            lastCreatedGroupId = group.id!;
+            await courseMessages.checkConversationHeaderContains(studentOneName);
+            await courseMessages.checkConversationHeaderContains(instructorName);
         });
 
         test('Students should be able to create a group chat', async ({ login, courseMessages }) => {
@@ -56,10 +66,9 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.addUserToGroupChat(studentTwo.username);
             await courseMessages.addUserToGroupChat(tutor.username);
             const group = await courseMessages.createGroupChat();
-            await courseMessages.listMembersButton(course.id!, group.id!);
-            await courseMessages.checkMemberList(studentTwoName);
-            await courseMessages.checkMemberList(tutorName);
-            await courseMessages.closeEditPanel();
+            lastCreatedGroupId = group.id!;
+            await courseMessages.checkConversationHeaderContains(studentTwoName);
+            await courseMessages.checkConversationHeaderContains(tutorName);
         });
     });
 
@@ -71,26 +80,24 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             groupChat = await communicationAPIRequests.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]);
         });
 
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+
         test('Tutors should be able to add a user to group chat', async ({ login, courseMessages }) => {
-            await login(tutor, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
+            await login(tutor);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.addUserToGroupChatButton();
             await courseMessages.addUserToGroupChat(instructor.username);
             await courseMessages.updateGroupChat();
-
-            await courseMessages.listMembersButton(course.id!, groupChat.id!);
-            await courseMessages.checkMemberList(instructorName);
-            await courseMessages.closeEditPanel();
+            await courseMessages.checkConversationHeaderContains(instructorName);
         });
 
         test('Students should be able to add a user to group chat', async ({ login, courseMessages }) => {
-            await login(studentOne, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
+            await login(studentOne);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.addUserToGroupChatButton();
             await courseMessages.addUserToGroupChat(studentTwo.username);
             await courseMessages.updateGroupChat();
-
-            await courseMessages.listMembersButton(course.id!, groupChat.id!);
-            await courseMessages.checkMemberList(studentTwoName);
-            await courseMessages.closeEditPanel();
+            await courseMessages.checkConversationHeaderContains(studentTwoName);
         });
     });
 
@@ -105,8 +112,11 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await communicationAPIRequests.updateCourseMessageGroupChatName(course, groupChat, groupChatName);
         });
 
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+
         test('Tutors should be able to leave a group chat', async ({ login, courseMessages, page }) => {
-            await login(tutor, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
+            await login(tutor);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.listMembersButton(course.id!, groupChat.id!);
             await courseMessages.openSettingsTab();
             await courseMessages.leaveGroupChat();
@@ -117,7 +127,8 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
         });
 
         test('Students should be able to leave a group chat', async ({ login, courseMessages, page }) => {
-            await login(studentOne, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
+            await login(studentOne);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.listMembersButton(course.id!, groupChat.id!);
             await courseMessages.openSettingsTab();
             await courseMessages.leaveGroupChat();
@@ -136,19 +147,20 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             groupChat = await communicationAPIRequests.createCourseMessageGroupChat(course, [studentOne.username, tutor.username]);
         });
 
-        test('Students should be able to write a message in group chat', async ({ login, courseMessages, page }) => {
-            await login(studentOne, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
-            // Wait for the conversation to be loaded (members button appears when conversation is active)
-            await page.locator('.members').waitFor({ state: 'visible', timeout: 30000 });
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+
+        test('Students should be able to write a message in group chat', async ({ login, courseMessages }) => {
+            await login(studentOne);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             const messageText = 'Student Test Message';
             await courseMessages.writeMessage(messageText);
             const message = await courseMessages.save();
             await courseMessages.checkMessage(message.id!, messageText);
         });
 
-        test('Student should be able to edit a message in group chat', async ({ login, courseMessages, page }) => {
-            await login(studentOne, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
-            await page.locator('.members').waitFor({ state: 'visible', timeout: 30000 });
+        test('Student should be able to edit a message in group chat', async ({ login, courseMessages }) => {
+            await login(studentOne);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             const messageText = 'Student Edit Test Message';
             await courseMessages.writeMessage(messageText);
             const message = await courseMessages.save();
@@ -159,9 +171,9 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.checkMessageEdited(message.id!);
         });
 
-        test('Students should be able to delete a message in group chat', async ({ login, courseMessages, page }) => {
-            await login(studentOne, `/courses/${course.id!}/communication?conversationId=${groupChat.id}`);
-            await page.locator('.members').waitFor({ state: 'visible', timeout: 30000 });
+        test('Students should be able to delete a message in group chat', async ({ login, courseMessages }) => {
+            await login(studentOne);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             const messageText = 'Student Delete Test Message';
             await courseMessages.writeMessage(messageText);
             const message = await courseMessages.save();

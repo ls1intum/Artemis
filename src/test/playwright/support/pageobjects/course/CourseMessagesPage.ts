@@ -370,20 +370,13 @@ export class CourseMessagesPage {
      */
     async save(): Promise<Post> {
         const responsePromise = this.page.waitForResponse(
-            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST' && resp.status() === 201,
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
         );
         const saveButton = this.page.locator('#save');
-        // Wait for the save button to be visible and enabled before clicking
-        await saveButton.waitFor({ state: 'visible', timeout: 10000 });
         await expect(saveButton).toBeEnabled({ timeout: 10000 });
-        await saveButton.scrollIntoViewIfNeeded();
-        // Dismiss any notification popup overlay that may block the click
-        const notificationOverlay = this.page.locator('.course-notification-popup-overlay-collapse');
-        if (await notificationOverlay.isVisible()) {
-            await notificationOverlay.click();
-        }
-        await saveButton.click();
+        await saveButton.click({ timeout: 10000 });
         const response = await responsePromise;
+        expect(response.status()).toBe(201);
         return response.json();
     }
 
@@ -400,19 +393,25 @@ export class CourseMessagesPage {
      * @returns A promise that resolves with the GroupChat object after creation.
      */
     async createGroupChat(): Promise<GroupChat> {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/group-chats`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats') && !resp.url().includes('/register') && resp.request().method() === 'POST');
         await this.page.locator('#submitButton').click();
         const response = await responsePromise;
-        return response.json();
+        const groupChat: GroupChat = await response.json();
+        // Wait for Angular to navigate to the new conversation
+        await this.page.waitForURL(`**/communication?conversationId=${groupChat.id}`, { timeout: 10000 });
+        return groupChat;
     }
 
     /**
      * Updates a group chat's registration status and waits for the response.
      */
     async updateGroupChat() {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/group-chats/*/register`);
-        await this.page.locator('#submitButton').click();
-        await responsePromise;
+        const submitButton = this.page.locator('#submitButton');
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/register') && resp.request().method() === 'POST');
+        await submitButton.click();
+        const response = await responsePromise;
+        expect(response.status()).toBeLessThan(300);
     }
 
     /**
@@ -427,10 +426,14 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Clicks the button to add users to a group chat.
+     * Clicks the button to add users to a group chat and waits for the modal to appear.
      */
     async addUserToGroupChatButton() {
-        await this.page.locator('.addUsers').click();
+        const addUsersBtn = this.page.locator('.addUsers');
+        await addUsersBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await addUsersBtn.click();
+        // Wait for the add-users modal form to render
+        await this.page.locator('#users-selector0-search-input').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
@@ -438,11 +441,70 @@ export class CourseMessagesPage {
      * @param courseID - The ID of the course.
      * @param conversationID - The ID of the conversation.
      */
-    async listMembersButton(courseID: number, conversationID: number) {
-        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
+    /**
+     * Waits for the .members button to become visible, retrying with page reload if needed.
+     * The conversationId URL parameter requires the conversation list to load first;
+     * a reload ensures the query param is re-processed after the list is cached.
+     */
+    /**
+     * Waits for the .members button (indicating a conversation is active).
+     * If the button doesn't appear, expands the Group Chats sidebar section
+     * and clicks the conversation entry, which is more reliable than the
+     * conversationId URL parameter (which has a race condition with the cache).
+     */
+    /**
+     * Waits for a conversation to become active by checking the .members button.
+     * If the URL param approach doesn't work, navigates fresh and retries.
+     */
+    /**
+     * Navigates to a conversation and waits for it to become active.
+     * The conversationId URL param requires the conversations list to be cached first
+     * (Angular race condition), so we wait for the API response, then reload.
+     */
+    async openConversation(courseID: number, conversationID: number) {
+        const url = `/courses/${courseID}/communication?conversationId=${conversationID}`;
         const membersButton = this.page.locator('.members');
-        await membersButton.waitFor({ state: 'visible', timeout: 30000 });
+
+        await this.page.goto(url);
+        try {
+            // Wait for the conversation to activate via URL param
+            await membersButton.waitFor({ state: 'visible', timeout: 8000 });
+            return;
+        } catch {
+            // URL param race condition — try sidebar fallback
+        }
+
+        // Fallback: expand the "Group Chats" sidebar section and click the entry
+        const groupChatsHeader = this.page.locator('[id^="test-accordion-item-header-groupChats"]');
+        if (await groupChatsHeader.isVisible().catch(() => false)) {
+            await groupChatsHeader.click();
+            const container = this.page.locator('div:has(> [id^="test-accordion-item-header-groupChats"])');
+            const sidebarCard = container.locator('#test-sidebar-card-small').first();
+            try {
+                await sidebarCard.waitFor({ state: 'visible', timeout: 3000 });
+                await sidebarCard.click();
+                await membersButton.waitFor({ state: 'visible', timeout: 8000 });
+                return;
+            } catch {
+                // Sidebar approach also failed
+            }
+        }
+
+        // Last resort: reload the page with the conversationId
+        await this.page.goto(url);
+        await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+    }
+
+    async listMembersButton(courseID: number, conversationID: number) {
+        const membersButton = this.page.locator('.members');
+        try {
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+        } catch {
+            await this.openConversation(courseID, conversationID);
+        }
         await membersButton.click();
+        // Wait for the members dialog to render
+        await this.page.locator('jhi-conversation-members').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
@@ -450,7 +512,15 @@ export class CourseMessagesPage {
      * @param name - The name of the member to check for in the list.
      */
     async checkMemberList(name: string) {
-        await expect(this.page.locator('jhi-conversation-members')).toContainText(name);
+        await expect(this.page.locator('jhi-conversation-members')).toContainText(name, { timeout: 15000 });
+    }
+
+    /**
+     * Checks that the conversation header (h4 title) contains the given name.
+     * This is faster and more reliable than opening the member list dialog.
+     */
+    async checkConversationHeaderContains(name: string) {
+        await expect(this.page.locator('h4.d-inline-block')).toContainText(name, { timeout: 10000 });
     }
 
     /**

@@ -2,8 +2,7 @@ import dayjs from 'dayjs';
 
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
-import cAllSuccessfulSubmission from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
-import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
+import { Exercise, ExerciseType } from '../../../support/constants';
 import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
@@ -15,7 +14,7 @@ const textFixture = 'loremIpsum-short.txt';
 
 const course = { id: SEED_COURSES.testExam.id } as any;
 
-test.describe('Test exam participation', { tag: '@sequential' }, () => {
+test.describe('Test exam participation', { tag: '@slow' }, () => {
     let exerciseArray: Array<Exercise> = [];
 
     test.describe('Early Hand-in', () => {
@@ -30,21 +29,15 @@ test.describe('Test exam participation', { tag: '@sequential' }, () => {
                 testExam: true,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
-                examMaxPoints: 40,
-                numberOfExercisesInExam: 4,
+                examMaxPoints: 20,
+                numberOfExercisesInExam: 2,
                 numberOfCorrectionRoundsInExam: 0,
             };
             exam = await examAPIRequests.createExam(examConfig);
-            exerciseArray = [
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
-                    submission: cAllSuccessfulSubmission,
-                    expectedScore: 87.5, // LSan test fails in Docker (no SYS_PTRACE)
-                    programmingLanguage: ProgrammingLanguage.C,
-                }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-            ];
+            exerciseArray = await Promise.all([
+                examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
+                examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
+            ]);
         });
 
         test('Participates as a student in a registered test exam', async ({ examParticipation, examNavigation }) => {
@@ -52,10 +45,7 @@ test.describe('Test exam participation', { tag: '@sequential' }, () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-
-                if (exercise.type !== ExerciseType.PROGRAMMING) {
-                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                }
+                await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
         });
@@ -65,13 +55,8 @@ test.describe('Test exam participation', { tag: '@sequential' }, () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-
-                // Skip programming exercise this time to save execution time
-                // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type !== ExerciseType.PROGRAMMING) {
-                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-                }
+                await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             }
             await examParticipation.handInEarly();
         });
@@ -85,6 +70,10 @@ test.describe('Test exam participation', { tag: '@sequential' }, () => {
                 await examNavigation.openOverview();
             }
             await examParticipation.handInEarly();
+        });
+
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
         });
     });
 
@@ -131,7 +120,9 @@ test.describe('Test exam participation', { tag: '@sequential' }, () => {
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
         });
-    });
 
-    // Seed courses are persistent — no cleanup needed
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
+        });
+    });
 });

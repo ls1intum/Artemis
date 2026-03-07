@@ -16,6 +16,15 @@ import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 const course = { id: SEED_COURSES.examManagement.id } as any;
 
 test.describe('Exam Checklists', async () => {
+    let lastCreatedExam: Exam | undefined;
+
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        if (lastCreatedExam) {
+            await examAPIRequests.deleteExam(lastCreatedExam);
+            lastCreatedExam = undefined;
+        }
+    });
+
     test.describe('Exercise group checks', { tag: '@fast' }, () => {
         test('Instructor adds an exercise group and at least one exercise group check is marked', async ({
             page,
@@ -24,7 +33,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_EXERCISE_GROUP);
@@ -43,7 +52,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.NUMBER_OF_EXERCISE_GROUPS);
@@ -69,7 +78,7 @@ test.describe('Exam Checklists', async () => {
             examExerciseGroups,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
@@ -91,7 +100,7 @@ test.describe('Exam Checklists', async () => {
             examAPIRequests,
             exerciseAPIRequests,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
@@ -113,7 +122,7 @@ test.describe('Exam Checklists', async () => {
             examDetails,
             examExerciseGroupCreation,
         }) => {
-            const exam = await createExam(course, page);
+            const exam = (lastCreatedExam = await createExam(course, page));
             await login(instructor);
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
@@ -133,7 +142,7 @@ test.describe('Exam Checklists', async () => {
     });
 
     test('Instructor registers a student to exam and at least one student check is marked', { tag: '@fast' }, async ({ page, login, examDetails, studentExamManagement }) => {
-        const exam = await createExam(course, page);
+        const exam = (lastCreatedExam = await createExam(course, page));
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
         await examDetails.checkItemUnchecked(ExamChecklistItem.LEAST_ONE_STUDENT);
@@ -147,7 +156,7 @@ test.describe('Exam Checklists', async () => {
         let exam: Exam;
 
         test.beforeEach('Create exam', async ({ page }) => {
-            exam = await createExam(course, page);
+            exam = lastCreatedExam = await createExam(course, page);
         });
 
         test.beforeEach('Add exercise groups and register exam students', async ({ login, examExerciseGroupCreation, examAPIRequests }) => {
@@ -182,7 +191,7 @@ test.describe('Exam Checklists', async () => {
     });
 
     test('Instructor sets the publish results and review dates and the corresponding checks are marked', { tag: '@fast' }, async ({ page, login, examDetails, examCreation }) => {
-        const exam = await createExam(course, page);
+        const exam = (lastCreatedExam = await createExam(course, page));
         await login(instructor);
         await navigateToExamDetailsPage(page, course, exam);
         await examDetails.checkItemUnchecked(ExamChecklistItem.PUBLISHING_DATE_SET);
@@ -246,7 +255,7 @@ test.describe('Exam Checklists', async () => {
                 endDate: dayjs().add(1, 'day'),
                 publishResultsDate: dayjs().add(2, 'day'),
             };
-            const exam = await createExam(course, page, examConfig);
+            const exam = (lastCreatedExam = await createExam(course, page, examConfig));
             for (let i = 0; i < exam.numberOfExercisesInExam!; i++) {
                 await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture: 'loremIpsum-short.txt' });
             }
@@ -262,8 +271,6 @@ test.describe('Exam Checklists', async () => {
             await examDetails.checkItemChecked(ExamChecklistItem.UNSUBMITTED_EXERCISES);
         },
     );
-
-    // Seed courses are persistent — no cleanup needed
 });
 
 async function createExam(course: any, page: Page, customConfig?: any) {

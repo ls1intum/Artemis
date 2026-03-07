@@ -22,6 +22,8 @@ const lectureData = {
 const course = { id: SEED_COURSES.lectureManagement.id, title: SEED_COURSES.lectureManagement.title } as any;
 
 test.describe('Lecture management', { tag: '@fast' }, () => {
+    let lastCreatedLecture: Lecture | undefined;
+
     test('Creates a lecture', async ({ login, page, lectureManagement, lectureCreation }) => {
         await login(instructor, `/course-management/${course.id}`);
         await lectureManagement.getLectures().click();
@@ -32,7 +34,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         await lectureCreation.setStartDate(lectureData.startDate);
         await lectureCreation.setEndDate(lectureData.endDate);
         const lectureResponse = await lectureCreation.save();
-        const lecture: Lecture = await lectureResponse.json();
+        const lecture: Lecture = (lastCreatedLecture = await lectureResponse.json());
         expect(lectureResponse.status()).toBe(201);
         await expect(page).toHaveURL(`/course-management/${course.id}/lectures/${lecture.id}/edit`);
 
@@ -64,7 +66,7 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
 
         test.beforeEach(async ({ login, courseManagementAPIRequests }) => {
             await login(instructor, `/course-management/${course.id}/lectures`);
-            lecture = await courseManagementAPIRequests.createLecture(course);
+            lecture = lastCreatedLecture = await courseManagementAPIRequests.createLecture(course);
         });
 
         test('Deletes an existing lecture', async ({ lectureManagement }) => {
@@ -93,5 +95,14 @@ test.describe('Lecture management', { tag: '@fast' }, () => {
         });
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete lecture', async ({ courseManagementAPIRequests }) => {
+        if (lastCreatedLecture?.id) {
+            try {
+                await courseManagementAPIRequests.deleteLecture(lastCreatedLecture.id);
+            } catch {
+                // Lecture may already be deleted by the test
+            }
+            lastCreatedLecture = undefined;
+        }
+    });
 });

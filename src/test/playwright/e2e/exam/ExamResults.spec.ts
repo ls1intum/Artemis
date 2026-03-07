@@ -210,7 +210,14 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         await examResultsPage.checkGradeSummary(gradeSummary);
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterAll('Delete exam', async ({ browser }) => {
+        const context = await browser.newContext({ ignoreHTTPSErrors: true });
+        const page = await context.newPage();
+        await Commands.login(page, admin);
+        const examAPIRequests = new ExamAPIRequests(page);
+        await examAPIRequests.deleteExam(exam);
+        await page.close();
+    });
 });
 
 async function navigateToExerciseAssessment(page: import('@playwright/test').Page, courseId: number, examId: number, exerciseId: number) {

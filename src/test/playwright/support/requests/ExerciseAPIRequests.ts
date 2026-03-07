@@ -739,6 +739,32 @@ export class ExerciseAPIRequests {
      * @param tutor - The tutor user who is the owner of the team.
      * @returns A Promise<Team> representing the team created.
      */
+    /**
+     * Configures all SCA categories for a programming exercise to be GRADED via API.
+     * This is faster than configuring through the UI.
+     */
+    async configureScaCategoriesViaApi(exerciseId: number) {
+        const MAX_SCA_RETRIES = 20;
+        const SCA_RETRY_DELAY = 3000;
+
+        for (let attempt = 0; attempt < MAX_SCA_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`);
+            const categories = await response.json();
+
+            if (categories.length > 0) {
+                const updatedCategories = categories.map((cat: any) => ({
+                    ...cat,
+                    state: 'GRADED',
+                }));
+                await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`, { data: updatedCategories });
+                return;
+            }
+
+            await this.page.waitForTimeout(SCA_RETRY_DELAY);
+        }
+        throw new Error(`SCA categories not found after ${MAX_SCA_RETRIES} retries`);
+    }
+
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
         const team: Team = {

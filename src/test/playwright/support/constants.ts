@@ -70,6 +70,7 @@ export class AdditionalData {
     expectedScore?: number;
     textFixture?: string;
     practiceMode?: boolean;
+    skipBuildResultCheck?: boolean;
     progExerciseAssessmentType?: ProgrammingExerciseAssessmentType;
     programmingLanguage?: ProgrammingLanguage;
 }
