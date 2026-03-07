@@ -20,7 +20,7 @@ export interface ChecklistAnalysisRequest {
     /**
      * Declared difficulty of the exercise
      */
-    declaredDifficulty?: ChecklistAnalysisRequest.DeclaredDifficultyEnum;
+    declaredDifficulty?: string;
     /**
      * Programming language, e.g. JAVA, PYTHON
      */
@@ -30,13 +30,4 @@ export interface ChecklistAnalysisRequest {
      */
     exerciseId?: number;
 }
-export namespace ChecklistAnalysisRequest {
-    export const DeclaredDifficultyEnum = {
-        Easy: 'EASY',
-        Medium: 'MEDIUM',
-        Hard: 'HARD'
-    } as const;
-    export type DeclaredDifficultyEnum = typeof DeclaredDifficultyEnum[keyof typeof DeclaredDifficultyEnum];
-}
-
 
