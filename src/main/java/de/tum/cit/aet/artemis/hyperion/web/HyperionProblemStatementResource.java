@@ -18,6 +18,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
+import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.dto.ChecklistActionRequestDTO;
@@ -53,9 +54,9 @@ public class HyperionProblemStatementResource {
 
     private final CourseRepository courseRepository;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final HyperionConsistencyCheckService consistencyCheckService;
+
+    private final ExerciseReviewService exerciseReviewService;
 
     private final HyperionProblemStatementRewriteService problemStatementRewriteService;
 
@@ -65,17 +66,20 @@ public class HyperionProblemStatementResource {
 
     private final HyperionProblemStatementRefinementService problemStatementRefinementService;
 
-    public HyperionProblemStatementResource(CourseRepository courseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            HyperionConsistencyCheckService consistencyCheckService, HyperionProblemStatementRewriteService problemStatementRewriteService,
-            HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionChecklistService checklistService,
-            HyperionProblemStatementRefinementService problemStatementRefinementService) {
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public HyperionProblemStatementResource(CourseRepository courseRepository, HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
+            HyperionProblemStatementRewriteService problemStatementRewriteService, HyperionProblemStatementGenerationService problemStatementGenerationService,
+            HyperionChecklistService checklistService, HyperionProblemStatementRefinementService problemStatementRefinementService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.consistencyCheckService = consistencyCheckService;
+        this.exerciseReviewService = exerciseReviewService;
         this.problemStatementRewriteService = problemStatementRewriteService;
         this.problemStatementGenerationService = problemStatementGenerationService;
         this.checklistService = checklistService;
         this.problemStatementRefinementService = problemStatementRefinementService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -89,8 +93,13 @@ public class HyperionProblemStatementResource {
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId) {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var response = consistencyCheckService.checkConsistency(exercise);
+        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId);
+        try {
+            exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+        }
+        catch (RuntimeException ex) {
+            log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+        }
         return ResponseEntity.ok(response);
     }
 

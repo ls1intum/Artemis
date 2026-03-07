@@ -4,8 +4,8 @@
             "consistencyCheck": {
                 "button": "Check Consistency",
                 "issues": "Issues",
-                "noInconsistencies": "No inconsistencies found",
-                "inconsistenciesFoundAlert": "Inconsistencies have been found in this programming exercise",
+                "noInconsistencies": "No new inconsistencies found",
+                "inconsistenciesFoundAlert": "New inconsistencies have been found in this programming exercise",
                 "checkFailedAlert": "The consistency check failed",
                 "issueHeading": "Consistency Issue Found",
                 "navigationFailed": "Failed to jump to the inconsistency",
