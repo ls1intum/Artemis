@@ -170,6 +170,22 @@ export class ChecklistPanelComponent {
         return this.countTasksAndTests(this.effectiveProblemStatement());
     });
 
+    /**
+     * Dynamically computes the difficulty delta from the current declared difficulty and the AI-suggested
+     * difficulty, so the "vs. Declared" display reacts immediately when the instructor changes the exercise
+     * difficulty without requiring a new analysis.
+     */
+    readonly effectiveDelta = computed((): DifficultyAssessment.DeltaEnum => {
+        const suggested = this.analysisResult()?.difficultyAssessment?.suggested;
+        const declared = this.exercise().difficulty;
+        const RANKS: Record<string, number> = { EASY: 1, MEDIUM: 2, HARD: 3 };
+        const s = suggested !== undefined ? RANKS[suggested] : undefined;
+        const d = declared !== undefined ? RANKS[declared] : undefined;
+        if (s === undefined || d === undefined) return DifficultyAssessment.DeltaEnum.Unknown;
+        if (s === d) return DifficultyAssessment.DeltaEnum.Match;
+        return s < d ? DifficultyAssessment.DeltaEnum.Lower : DifficultyAssessment.DeltaEnum.Higher;
+    });
+
     sectionExpanded: Record<ChecklistSectionType, ReturnType<typeof signal<boolean>>> = {
         competencies: signal(true),
         difficulty: signal(true),
@@ -210,6 +226,7 @@ export class ChecklistPanelComponent {
         this.isLoading.set(true);
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
+            declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
             exerciseId: ex.id,
         };
@@ -427,6 +444,7 @@ export class ChecklistPanelComponent {
         const ex = this.exercise();
         const request = {
             problemStatementMarkdown: this.effectiveProblemStatement(),
+            declaredDifficulty: ex.difficulty,
             language: ex.programmingLanguage,
             exerciseId: ex.id,
         };

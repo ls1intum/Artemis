@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripLineNumbers;
+import static de.tum.cit.aet.artemis.hyperion.service.HyperionUtils.stripWrapperMarkers;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -326,6 +329,10 @@ public class HyperionChecklistService {
                 if (result == null || result.isBlank()) {
                     return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
                 }
+
+                // Defensively strip artifacts the LLM may have copied from the prompt template
+                result = stripLineNumbers(result);
+                result = stripWrapperMarkers(result);
 
                 String trimmed = result.trim();
                 boolean changed = !trimmed.equals(request.problemStatementMarkdown().trim());

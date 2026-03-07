@@ -824,6 +824,46 @@ describe('ChecklistPanelComponent', () => {
         });
     });
 
+    describe('effectiveDelta', () => {
+        it('should return MATCH when suggested equals declared difficulty', () => {
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy } }));
+            // exercise.difficulty is EASY (set in beforeEach)
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
+        });
+
+        it('should return HIGHER when suggested is above declared difficulty', () => {
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Hard } }));
+            // exercise.difficulty is EASY
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Higher);
+        });
+
+        it('should return LOWER when suggested is below declared difficulty', () => {
+            const hardExercise = new ProgrammingExercise(undefined, undefined);
+            hardExercise.id = 123;
+            hardExercise.difficulty = DifficultyLevel.HARD;
+            fixture.componentRef.setInput('exercise', hardExercise);
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Easy } }));
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Lower);
+        });
+
+        it('should return UNKNOWN when no analysis result exists', () => {
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Unknown);
+        });
+
+        it('should update reactively when exercise difficulty changes', () => {
+            component.analysisResult.set(Object.assign({}, mockResponse, { difficultyAssessment: { suggested: DifficultyAssessment.SuggestedEnum.Medium } }));
+            // exercise.difficulty is EASY → suggested MEDIUM is HIGHER
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Higher);
+
+            const mediumExercise = new ProgrammingExercise(undefined, undefined);
+            mediumExercise.id = 123;
+            mediumExercise.difficulty = DifficultyLevel.MEDIUM;
+            fixture.componentRef.setInput('exercise', mediumExercise);
+            // Now declared = MEDIUM = suggested → MATCH
+            expect(component.effectiveDelta()).toBe(DifficultyAssessment.DeltaEnum.Match);
+        });
+    });
+
     describe('Problem Statement Change Invalidation', () => {
         it('should mark all sections stale when problem statement changes externally', () => {
             component.analysisResult.set(mockResponse);
