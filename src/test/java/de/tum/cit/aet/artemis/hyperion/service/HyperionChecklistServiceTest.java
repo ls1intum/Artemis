@@ -380,4 +380,20 @@ class HyperionChecklistServiceTest {
         // Summary should reference the target difficulty level
         assertThat(response.summary()).contains("MEDIUM");
     }
+
+    @Test
+    void applyChecklistAction_stripsBeginEndMarkers() {
+        String cleanContent = "The actual problem statement content.";
+        String responseWithMarkers = "--- BEGIN PROBLEM STATEMENT ---\n" + cleanContent + "\n--- END PROBLEM STATEMENT ---";
+        when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMarkers)))));
+
+        var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
+                Map.of("issueDescription", "Vague instructions", "category", "CLARITY"));
+
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+
+        assertThat(response).isNotNull();
+        assertThat(response.applied()).isTrue();
+        assertThat(response.updatedProblemStatement()).isEqualTo(cleanContent);
+    }
 }
