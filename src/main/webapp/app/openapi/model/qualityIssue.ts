@@ -20,6 +20,7 @@ export interface QualityIssue {
 }
 export namespace QualityIssue {
     export const CategoryEnum = {
+        Language: 'LANGUAGE',
         Clarity: 'CLARITY',
         Coherence: 'COHERENCE',
         Completeness: 'COMPLETENESS'

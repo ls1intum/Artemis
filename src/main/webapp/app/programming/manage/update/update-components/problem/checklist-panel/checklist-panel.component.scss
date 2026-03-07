@@ -120,6 +120,11 @@
         margin: 0;
     }
 
+    .category-language {
+        background-color: var(--warn);
+        color: var(--warn-color-text);
+    }
+
     .category-clarity {
         background-color: var(--primary);
         color: var(--primary-color-text);

@@ -163,7 +163,12 @@ export class ChecklistPanelComponent {
     }
 
     private static readonly SEVERITY_TAG_MAP: Record<string, 'danger' | 'warn' | 'info'> = { HIGH: 'danger', MEDIUM: 'warn', LOW: 'info' };
-    private static readonly CATEGORY_COLOR_MAP: Record<string, string> = { CLARITY: 'category-clarity', COHERENCE: 'category-coherence', COMPLETENESS: 'category-completeness' };
+    private static readonly CATEGORY_COLOR_MAP: Record<string, string> = {
+        LANGUAGE: 'category-language',
+        CLARITY: 'category-clarity',
+        COHERENCE: 'category-coherence',
+        COMPLETENESS: 'category-completeness',
+    };
 
     getSeverityTagSeverity(severity: string | undefined): 'danger' | 'warn' | 'info' {
         return ChecklistPanelComponent.SEVERITY_TAG_MAP[severity?.toUpperCase() ?? ''] ?? 'info';
@@ -175,8 +180,9 @@ export class ChecklistPanelComponent {
 
     // Quality radar chart for Clarity, Coherence, Completeness
     private readonly QUALITY_RADAR_RADIUS = 80;
-    private readonly QUALITY_CATEGORIES = ['CLARITY', 'COHERENCE', 'COMPLETENESS'] as const;
+    private readonly QUALITY_CATEGORIES = ['LANGUAGE', 'CLARITY', 'COHERENCE', 'COMPLETENESS'] as const;
     private readonly QUALITY_COLORS: Record<string, string> = {
+        LANGUAGE: 'var(--warn)',
         CLARITY: 'var(--primary)',
         COHERENCE: 'var(--info)',
         COMPLETENESS: 'var(--success)',
@@ -184,7 +190,12 @@ export class ChecklistPanelComponent {
 
     qualityScores = computed(() => {
         const issues = this.analysisResult()?.qualityIssues || [];
-        const scores: Record<string, number> = { CLARITY: DEFAULT_QUALITY_SCORE, COHERENCE: DEFAULT_QUALITY_SCORE, COMPLETENESS: DEFAULT_QUALITY_SCORE };
+        const scores: Record<string, number> = {
+            LANGUAGE: DEFAULT_QUALITY_SCORE,
+            CLARITY: DEFAULT_QUALITY_SCORE,
+            COHERENCE: DEFAULT_QUALITY_SCORE,
+            COMPLETENESS: DEFAULT_QUALITY_SCORE,
+        };
 
         for (const issue of issues) {
             const cat = issue.category?.toUpperCase() || '';

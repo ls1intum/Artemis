@@ -799,7 +799,7 @@ components:
       properties:
         category:
           type: string
-          enum: [CLARITY, COHERENCE, COMPLETENESS]
+          enum: [LANGUAGE, CLARITY, COHERENCE, COMPLETENESS]
         severity:
           type: string
           enum: [LOW, MEDIUM, HIGH]
@@ -935,6 +935,132 @@ components:
         isTeachingAssistant: {type: boolean}
         isStudent: {type: boolean}
         isChannelModerator: {type: boolean}
+        isRequestingUser: {type: boolean}
+    TutorialGroupSessionRequest:
+      type: object
+      properties:
+        date: {type: string, format: date}
+        startTime: {type: string}
+        endTime: {type: string}
+        location: {type: string, maxLength: 2000, minLength: 1}
+    StudentExport:
+      type: object
+      properties:
+        registrationNumber: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+    ProblemStatementGlobalRefinementRequest:
+      type: object
+      description: Request to refine a problem statement globally using a user prompt
+      properties:
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
+        userPrompt: {type: string, description: User prompt for global refinement,
+          maxLength: 1000, minLength: 1}
+      required: [problemStatementText, userPrompt]
+sChannelModerator: {type: boolean}
+        isRequestingUser: {type: boolean}
+    TutorialGroupSessionRequest:
+      type: object
+      properties:
+        date: {type: string, format: date}
+        startTime: {type: string}
+        endTime: {type: string}
+        location: {type: string, maxLength: 2000, minLength: 1}
+    StudentExport:
+      type: object
+      properties:
+        registrationNumber: {type: string}
+        firstName: {type: string}
+        lastName: {type: string}
+    ProblemStatementGlobalRefinementRequest:
+      type: object
+      description: Request to refine a problem statement globally using a user prompt
+      properties:
+        problemStatementText: {type: string, description: 'Original problem statement
+            text to be refined (max 50,000 chars)', maxLength: 50000, minLength: 1}
+        userPrompt: {type: string, description: User prompt for global refinement,
+          maxLength: 1000, minLength: 1}
+      required: [problemStatementText, userPrompt]
+   RewriteFaqRequest:
+      type: object
+      description: Request to rewrite a FAQ
+      properties:
+        faqText:
+          type: string
+          minLength: 1
+      required:
+      - faqText
+    ConversationUser:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        login:
+          type: string
+        name:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        imageUrl:
+          type: string
+        isInstructor:
+          type: boolean
+        isEditor:
+          type: boolean
+        isTeachingAssistant:
+          type: boolean
+        isStudent:
+          type: boolean
+        isChannelModerator:
+          type: boolean
+        isRequestingUser:
+          type: boolean
+    TutorialGroupSessionRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        startTime:
+          type: string
+        endTime:
+          type: string
+        location:
+          type: string
+          maxLength: 2000
+          minLength: 1
+    StudentExport:
+      type: object
+      properties:
+        registrationNumber:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+    ProblemStatementGlobalRefinementRequest:
+      type: object
+      description: Request to refine a problem statement globally using a user prompt
+      properties:
+        problemStatementText:
+          type: string
+          description: "Original problem statement text to be refined (max 50,000\
+            \ chars)"
+          maxLength: 50000
+          minLength: 1
+        userPrompt:
+          type: string
+          description: User prompt for global refinement
+          maxLength: 1000
+          minLength: 1
+      required:
+      - problemStatementText
+      - userPrompt
+boolean}
         isRequestingUser: {type: boolean}
     TutorialGroupSessionRequest:
       type: object
