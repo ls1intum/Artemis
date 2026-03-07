@@ -699,6 +699,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private computeLastReadState(): void {
         this.unreadPosts = this.getUnreadPosts();
         this.unreadPostsCount = this.unreadPosts.length;
+        this.setFirstUnreadPostId();
     }
 
     /**

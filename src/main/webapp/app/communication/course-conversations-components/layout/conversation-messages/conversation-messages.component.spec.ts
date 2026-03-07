@@ -609,7 +609,7 @@ examples.forEach((activeConversation) => {
             expect(unreadPosts).toHaveLength(2);
             expect(unreadPosts.map((p: Post) => p.id)).toEqual([1, 4]);
         });
-        it('should compute unreadPosts, unreadPostsCount, and lastReadPostId correctly', () => {
+        it('should compute unreadPosts, unreadPostsCount, and firstUnreadPostId correctly', () => {
             const lastReadDate = dayjs().subtract(10, 'minutes');
             const currentUser = { id: 99, internal: false };
             const otherUser = { id: 42, internal: false };
@@ -623,8 +623,8 @@ examples.forEach((activeConversation) => {
 
             component.allPosts = [
                 { id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: otherUser } as Post, // read
-                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread
-                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // read
+                { id: 2, creationDate: dayjs().subtract(5, 'minutes'), author: otherUser } as Post, // unread (first)
+                { id: 3, creationDate: dayjs().subtract(3, 'minutes'), author: currentUser } as Post, // excluded (own post)
                 { id: 4, creationDate: dayjs(), author: otherUser } as Post, // unread
             ];
 
@@ -632,6 +632,35 @@ examples.forEach((activeConversation) => {
 
             expect(component.unreadPosts).toHaveLength(2);
             expect(component.unreadPostsCount).toBe(2);
+            expect(component.firstUnreadPostId).toBe(2);
+        });
+
+        it('should call setFirstUnreadPostId inside computeLastReadState', () => {
+            const lastReadDate = dayjs().subtract(10, 'minutes');
+            const currentUser = { id: 99, internal: false };
+            const otherUser = { id: 42, internal: false };
+
+            component._activeConversation = { ...component._activeConversation, lastReadDate };
+            component.currentUser = currentUser;
+            component.allPosts = [{ id: 5, creationDate: dayjs().subtract(2, 'minutes'), author: otherUser } as Post];
+
+            const setFirstUnreadPostIdSpy = jest.spyOn(component as any, 'setFirstUnreadPostId');
+
+            (component as any).computeLastReadState();
+
+            expect(setFirstUnreadPostIdSpy).toHaveBeenCalledOnce();
+            expect(component.firstUnreadPostId).toBe(5);
+        });
+
+        it('should clear firstUnreadPostId when there are no unread posts', () => {
+            component._activeConversation = { ...component._activeConversation, lastReadDate: dayjs() };
+            component.currentUser = { id: 99, internal: false };
+            component.allPosts = [];
+            component.firstUnreadPostId = 42;
+
+            (component as any).computeLastReadState();
+
+            expect(component.firstUnreadPostId).toBeUndefined();
         });
 
         it('should return true if at least one unread post is visible', () => {
