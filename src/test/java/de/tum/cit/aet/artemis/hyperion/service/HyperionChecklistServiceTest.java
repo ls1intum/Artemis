@@ -142,7 +142,7 @@ class HyperionChecklistServiceTest {
             throw new AssertionError("Unexpected prompt: " + text);
         });
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "JAVA", 1L);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", null, "JAVA", 1L);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
@@ -182,7 +182,7 @@ class HyperionChecklistServiceTest {
             throw new AssertionError("Unexpected prompt: " + text);
         });
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, 1L);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, 1L);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
@@ -322,7 +322,7 @@ class HyperionChecklistServiceTest {
 
         when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson)))));
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem", null, null, null);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeSection(request, ChecklistSection.QUALITY, 1L).join();
 
