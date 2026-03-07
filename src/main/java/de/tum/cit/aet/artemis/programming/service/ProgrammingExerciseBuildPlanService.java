@@ -45,8 +45,8 @@ public class ProgrammingExerciseBuildPlanService {
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
     public ProgrammingExerciseBuildPlanService(Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService,
-            ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
+            Optional<ContinuousIntegrationTriggerService> continuousIntegrationTriggerService, ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository,
+            Optional<AeolusTemplateService> aeolusTemplateService, ProfileService profileService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) {
         this.continuousIntegrationService = continuousIntegrationService;
         this.continuousIntegrationTriggerService = continuousIntegrationTriggerService;
@@ -90,7 +90,7 @@ public class ProgrammingExerciseBuildPlanService {
      * <ol>
      * <li>No config exists ({@code null}): loads the default windfile template and converts it to phases format</li>
      * <li>Config exists in legacy Windfile format: converts it to phases format</li>
-     * <li>Config already in phases format:  no change needed</li>
+     * <li>Config already in phases format: no change needed</li>
      * </ol>
      * This normalization is skipped for Jenkins, which uses its own Jenkinsfile-based approach.
      *
@@ -121,7 +121,8 @@ public class ProgrammingExerciseBuildPlanService {
             BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromWindfile(windfile);
             buildConfig.setBuildPlanConfiguration(phases.serialize());
             programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
-        } else {
+        }
+        else {
             log.warn("No windfile for the settings of exercise {}", programmingExercise.getId());
         }
     }

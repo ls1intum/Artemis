@@ -349,8 +349,9 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
      * and extracts result paths only from active phases.
      */
     private BuildConfig getBuildConfigFromPhases(BuildPlanPhasesDTO buildPlanPhasesDTO, ProgrammingExerciseParticipation participation, ProgrammingExercise programmingExercise,
-                                                 ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
-                                                 ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled, DockerRunConfig dockerRunConfig) {
+            ProgrammingExerciseBuildConfig buildConfig, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
+            ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled,
+            DockerRunConfig dockerRunConfig) {
 
         BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhasesDTO, participation);
 

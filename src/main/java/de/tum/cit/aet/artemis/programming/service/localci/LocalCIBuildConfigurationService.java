@@ -71,7 +71,8 @@ public class LocalCIBuildConfigurationService {
             for (BuildPhaseDTO phase : activePhases) {
                 buildScriptBuilder.append(phase.script()).append("\n");
             }
-        } else {
+        }
+        else {
             // else keep the other logic the same
             buildScriptBuilder.append("#!/bin/bash\n");
             buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");

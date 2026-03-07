@@ -155,9 +155,9 @@ public class ProgrammingExerciseGradingService {
      * Fetches and attaches the result's feedback items to it. For programming exercises the test cases are
      * extracted from the feedbacks & the result is updated with the information from the test cases.
      *
-     * @param participation  the participation for which the build was finished
-     * @param requestBody    RequestBody containing the build result and its feedback items
-     * @param testsExpected  whether test results are expected from this build (false for compile-only phases)
+     * @param participation the participation for which the build was finished
+     * @param requestBody   RequestBody containing the build result and its feedback items
+     * @param testsExpected whether test results are expected from this build (false for compile-only phases)
      * @return result after compilation (can only be null in case an error occurs)
      */
     @Nullable
