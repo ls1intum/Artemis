@@ -38,6 +38,8 @@ import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementGenerationService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRefinementService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProblemStatementRewriteService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 
 /**
  * REST controller for Hyperion problem statement features (generation, refinement, rewrite, and consistency check).
@@ -64,9 +66,12 @@ public class HyperionProblemStatementResource {
 
     private final HyperionProblemStatementRefinementService problemStatementRefinementService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public HyperionProblemStatementResource(CourseRepository courseRepository, HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
             HyperionProblemStatementRewriteService problemStatementRewriteService, HyperionProblemStatementGenerationService problemStatementGenerationService,
-            HyperionChecklistService checklistService, HyperionProblemStatementRefinementService problemStatementRefinementService) {
+            HyperionChecklistService checklistService, HyperionProblemStatementRefinementService problemStatementRefinementService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.exerciseReviewService = exerciseReviewService;
@@ -74,6 +79,7 @@ public class HyperionProblemStatementResource {
         this.problemStatementGenerationService = problemStatementGenerationService;
         this.checklistService = checklistService;
         this.problemStatementRefinementService = problemStatementRefinementService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
