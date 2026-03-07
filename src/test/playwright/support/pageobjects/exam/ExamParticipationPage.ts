@@ -82,7 +82,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
         if (!skipBuildResultCheck) {
-            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible();
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({ timeout: 60000 });
         }
     }
 

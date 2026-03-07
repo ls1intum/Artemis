@@ -152,6 +152,12 @@ export class ExerciseAPIRequests {
         return response.json();
     }
 
+    async deleteProgrammingExercise(exerciseId: number) {
+        await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+            params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
+        });
+    }
+
     /**
      * Retrieves the test cases for passed exercise and adjusts their visibility according.
      * <br>

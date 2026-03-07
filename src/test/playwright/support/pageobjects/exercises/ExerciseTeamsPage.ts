@@ -41,20 +41,18 @@ export class ExerciseTeamsPage {
     async setTeamTutor(username: string) {
         const tutorSearchInput = this.page.locator('#owner-search-input');
         const listbox = this.page.getByRole('listbox');
-        // Retry up to 5 times - search autocomplete can be slow under parallel load
-        for (let attempt = 0; attempt < 5; attempt++) {
+        // Retry up to 3 times with shorter timeouts to fit within test timeout
+        for (let attempt = 0; attempt < 3; attempt++) {
             await tutorSearchInput.clear();
-            await this.page.waitForTimeout(300);
-            await tutorSearchInput.pressSequentially(username, { delay: 50 });
+            await tutorSearchInput.fill(username);
             try {
-                await listbox.waitFor({ state: 'visible', timeout: 10000 });
-                // Wait for the specific option to appear
+                await listbox.waitFor({ state: 'visible', timeout: 8000 });
                 const option = listbox.getByText(new RegExp(username, 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
                 await option.click();
                 return;
             } catch {
-                if (attempt === 4) throw new Error(`Tutor search autocomplete did not appear after 5 attempts for '${username}'`);
+                if (attempt === 2) throw new Error(`Tutor search autocomplete did not appear after 3 attempts for '${username}'`);
             }
         }
     }
@@ -65,12 +63,20 @@ export class ExerciseTeamsPage {
      */
     async addStudentToTeam(username: string) {
         const studentSearchInput = this.page.locator('#student-search-input');
-        await studentSearchInput.fill(username);
         const listbox = this.page.getByRole('listbox');
-        await listbox.waitFor({ state: 'visible' });
-        const option = listbox.getByText(new RegExp(username, 'i')).first();
-        await option.waitFor({ state: 'visible', timeout: 5000 });
-        await option.click();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await studentSearchInput.clear();
+            await studentSearchInput.fill(username);
+            try {
+                await listbox.waitFor({ state: 'visible', timeout: 8000 });
+                const option = listbox.getByText(new RegExp(username, 'i')).first();
+                await option.waitFor({ state: 'visible', timeout: 5000 });
+                await option.click();
+                return;
+            } catch {
+                if (attempt === 2) throw new Error(`Student search autocomplete did not appear after 3 attempts for '${username}'`);
+            }
+        }
     }
 
     /**

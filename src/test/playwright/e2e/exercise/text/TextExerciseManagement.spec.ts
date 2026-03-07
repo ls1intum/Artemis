@@ -10,54 +10,67 @@ import { SEED_COURSES } from '../../../support/seedData';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
-test.describe('Text exercise management', { tag: '@fast' }, () => {
-    test('Creates a text exercise in the UI', async ({
-        login,
-        page,
-        navigationBar,
-        courseManagement,
-        courseManagementExercises,
-        textExerciseCreation,
-        textExerciseExampleSubmissions,
-        textExerciseExampleSubmissionCreation,
-    }) => {
-        await login(admin);
-        await navigationBar.openCourseManagement();
-        await courseManagement.openExercisesOfCourse(course.id!);
-        await courseManagementExercises.createTextExercise();
+test.describe('Text exercise management', { tag: '@slow' }, () => {
+    test.describe('Text exercise creation', () => {
+        let createdExerciseId: number | undefined;
 
-        // Fill out text exercise form
-        const exerciseTitle = 'text exercise' + generateUUID();
-        await textExerciseCreation.setTitle(exerciseTitle);
-        await textExerciseCreation.setReleaseDate(dayjs());
-        await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
-        await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
-        await textExerciseCreation.typeMaxPoints(10);
-        const problemStatement = 'This is a problem statement';
-        const exampleSolution = 'E = mc^2';
-        await textExerciseCreation.typeProblemStatement(problemStatement);
-        await textExerciseCreation.typeExampleSolution(exampleSolution);
-        const exerciseCreateResponse = await textExerciseCreation.create();
-        const exercise: TextExercise = await exerciseCreateResponse.json();
+        test('Creates a text exercise in the UI', async ({
+            login,
+            page,
+            navigationBar,
+            courseManagement,
+            courseManagementExercises,
+            textExerciseCreation,
+            textExerciseExampleSubmissions,
+            textExerciseExampleSubmissionCreation,
+        }) => {
+            await login(admin);
+            await navigationBar.openCourseManagement();
+            await courseManagement.openExercisesOfCourse(course.id!);
+            await courseManagementExercises.createTextExercise();
 
-        // Create an example submission
-        await courseManagementExercises.clickExampleSubmissionsButton();
-        await textExerciseExampleSubmissions.clickCreateExampleSubmission();
-        await textExerciseExampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
-        await textExerciseExampleSubmissionCreation.showsProblemStatement(problemStatement);
-        await textExerciseExampleSubmissionCreation.showsExampleSolution(exampleSolution);
-        const submission = 'This is an\nexample\nsubmission';
-        await textExerciseExampleSubmissionCreation.typeExampleSubmission(submission);
+            // Fill out text exercise form
+            const exerciseTitle = 'text exercise' + generateUUID();
+            await textExerciseCreation.setTitle(exerciseTitle);
+            await textExerciseCreation.setReleaseDate(dayjs());
+            await textExerciseCreation.setDueDate(dayjs().add(1, 'days'));
+            await textExerciseCreation.setAssessmentDueDate(dayjs().add(2, 'days'));
+            await textExerciseCreation.typeMaxPoints(10);
+            const problemStatement = 'This is a problem statement';
+            const exampleSolution = 'E = mc^2';
+            await textExerciseCreation.typeProblemStatement(problemStatement);
+            await textExerciseCreation.typeExampleSolution(exampleSolution);
+            const exerciseCreateResponse = await textExerciseCreation.create();
+            const exercise: TextExercise = await exerciseCreateResponse.json();
+            createdExerciseId = exercise.id;
 
-        const submissionCreationResponse = await textExerciseExampleSubmissionCreation.clickCreateNewExampleSubmission();
-        const exampleSubmission: ExampleSubmission = await submissionCreationResponse.json();
-        const textSubmission: TextSubmission = exampleSubmission.submission!;
-        expect(submissionCreationResponse.status()).toBe(200);
-        expect(textSubmission.text).toBe(submission);
+            // Create an example submission
+            await courseManagementExercises.clickExampleSubmissionsButton();
+            await textExerciseExampleSubmissions.clickCreateExampleSubmission();
+            await textExerciseExampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
+            await textExerciseExampleSubmissionCreation.showsProblemStatement(problemStatement);
+            await textExerciseExampleSubmissionCreation.showsExampleSolution(exampleSolution);
+            const submission = 'This is an\nexample\nsubmission';
+            await textExerciseExampleSubmissionCreation.typeExampleSubmission(submission);
 
-        // Make sure text exercise is shown in exercises list
-        await page.goto(`course-management/${course.id}/exercises`);
-        await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
+            const submissionCreationResponse = await textExerciseExampleSubmissionCreation.clickCreateNewExampleSubmission();
+            const exampleSubmission: ExampleSubmission = await submissionCreationResponse.json();
+            const textSubmission: TextSubmission = exampleSubmission.submission!;
+            expect(submissionCreationResponse.status()).toBe(200);
+            expect(textSubmission.text).toBe(submission);
+
+            // Make sure text exercise is shown in exercises list
+            await page.goto(`/course-management/${course.id}/exercises`);
+            await expect(courseManagementExercises.getExercise(exercise.id!)).toBeVisible();
+        });
+
+        test.afterEach('Delete created exercise', async ({ login, exerciseAPIRequests }) => {
+            if (createdExerciseId) {
+                await login(admin);
+                await exerciseAPIRequests.deleteTextExercise(createdExerciseId);
+                createdExerciseId = undefined;
+            }
+        });
     });
 
     test.describe('Text exercise deletion', () => {

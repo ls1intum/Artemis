@@ -3,63 +3,35 @@ import { Locator, Page, expect } from '@playwright/test';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
-import fs from 'fs';
-import path from 'path';
-
-const JWT_TOKENS_PATH = path.join(__dirname, '..', '.auth', 'jwt-tokens.json');
-
-let cachedTokens: Record<string, { value: string; expires: number }> | undefined;
-
-function loadJwtTokens(): Record<string, { value: string; expires: number }> {
-    if (cachedTokens) return cachedTokens;
-    try {
-        const data = fs.readFileSync(JWT_TOKENS_PATH, 'utf-8');
-        cachedTokens = JSON.parse(data);
-        return cachedTokens!;
-    } catch {
-        cachedTokens = {};
-        return cachedTokens;
-    }
-}
 
 /**
  * A class that encapsulates static helper command methods.
  */
 export class Commands {
     /**
-     * Logs in using pre-cached JWT cookie swap (no HTTP call needed).
-     * Falls back to API authentication if no cached token is available.
+     * Logs in via API authentication.
      * @param page - Playwright page object.
      * @param credentials - UserCredentials object containing username and password.
      * @param url - Optional URL to navigate to after successful login.
      */
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
+        await Commands.logout(page);
         const { username, password } = credentials;
-        const tokens = loadJwtTokens();
-        const token = tokens[username];
 
-        if (token && token.expires > Date.now()) {
-            // Zero-cost login: clear old cookie then swap the JWT cookie
-            const baseURL = process.env.BASE_URL ?? 'http://localhost:9000';
-            const domain = new URL(baseURL).hostname;
-            await page.context().clearCookies({ name: 'jwt' });
-            await page.context().addCookies([
-                {
-                    name: 'jwt',
-                    value: token.value,
-                    domain,
-                    path: '/',
-                    httpOnly: true,
-                    secure: false,
+        const jwtCookie = await page
+            .context()
+            .cookies()
+            .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
+        if (!jwtCookie) {
+            const response = await page.request.post(`api/core/public/authenticate`, {
+                data: {
+                    username,
+                    password,
+                    rememberMe: true,
                 },
-            ]);
-        } else {
-            // Fallback: authenticate via API
-            await Commands.logout(page);
-            const response = await page.request.post('api/core/public/authenticate', {
-                data: { username, password, rememberMe: true },
                 failOnStatusCode: false,
             });
+
             expect(response.status()).toBe(200);
 
             const newJwtCookie = await page
@@ -85,21 +57,25 @@ export class Commands {
             try {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
-            } catch (error) {
-                // Check if the page is still open before reloading
+            } catch {
+                // waitFor can fail even when the element is visible (Playwright
+                // timing issue with cookie propagation from page.request). Check
+                // isVisible() as a fallback before reloading.
+                if (await locator.isVisible()) {
+                    return;
+                }
                 if (page.isClosed()) {
                     throw new Error(`Page was closed while waiting for element matching "${locator}"`);
                 }
                 try {
                     await page.reload();
                 } catch (reloadError) {
-                    // If reload fails (e.g., page closed), throw a descriptive error
                     throw new Error(`Failed to reload page while waiting for element: ${reloadError}`);
                 }
             }
         }
 
-        throw new Error(`Timed out finding an element matching the "${locator}" locator`);
+        throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
     };
 
     /**

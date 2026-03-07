@@ -1,0 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+    int unused_x = 42;
+    int unused_y = 99;
+    printf("Hello world!\n");
+    return EXIT_SUCCESS;
+}

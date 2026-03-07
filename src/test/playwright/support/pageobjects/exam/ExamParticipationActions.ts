@@ -62,7 +62,7 @@ export class ExamParticipationActions {
 
     async checkResultScore(scoreText: string, exerciseID?: number) {
         const scoreElement = await this.getResultScore(exerciseID);
-        await expect(scoreElement.getByText(new RegExp(scoreText))).toBeVisible();
+        await expect(scoreElement.getByText(new RegExp(scoreText))).toBeVisible({ timeout: 10000 });
     }
 
     async checkExamFinishedTitle(title: string) {

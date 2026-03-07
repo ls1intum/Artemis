@@ -21,7 +21,9 @@ export class CourseMessagesPage {
      */
     async createChannelButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Create channel' }).click();
+        const createBtn = this.page.locator('button', { hasText: 'Create channel' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
     }
 
     /**
@@ -29,7 +31,11 @@ export class CourseMessagesPage {
      */
     async browseChannelsButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Browse channels' }).click();
+        const browseBtn = this.page.locator('button', { hasText: 'Browse channels' });
+        await browseBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await browseBtn.click();
+        // Wait for the channels overview to load
+        await this.page.locator('.channels-overview').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
@@ -37,7 +43,7 @@ export class CourseMessagesPage {
      * @param name - The name of the channel to check for existence.
      */
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name, { exact: true })).toBeVisible();
+        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name, { exact: true })).toBeVisible({ timeout: 15000 });
     }
 
     /**
@@ -317,8 +323,18 @@ export class CourseMessagesPage {
      */
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
-        await postLocator.locator('.message-container').click({ button: 'right' });
-        await this.page.waitForSelector('.dropdown-menu.show');
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu, with retry if the menu doesn't appear
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
 
         const editButton = postLocator.locator('.dropdown-menu.show .editIcon');
         if (await editButton.isVisible()) {
@@ -340,11 +356,21 @@ export class CourseMessagesPage {
      * @param messageId - The ID of the message to delete.
      */
     async deleteMessage(messageId: number) {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         const postLocator = this.getSinglePost(messageId);
-        await postLocator.locator('.message-container').click({ button: 'right' });
-        await this.page.waitForSelector('.dropdown-menu.show');
+        await postLocator.scrollIntoViewIfNeeded();
 
+        // Right-click to open context menu, with retry if the menu doesn't appear
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         const deleteButton = postLocator.locator('.dropdown-menu.show .deleteIcon');
         if (await deleteButton.isVisible()) {
             await deleteButton.click();
@@ -385,7 +411,9 @@ export class CourseMessagesPage {
      */
     async createGroupChatButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Create group chat' }).click();
+        const createBtn = this.page.locator('button', { hasText: 'Create group chat' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
     }
 
     /**
@@ -419,10 +447,19 @@ export class CourseMessagesPage {
      * @param user - The username of the user to add to the group chat.
      */
     async addUserToGroupChat(user: string) {
-        await this.page.locator('#users-selector0-search-input').fill(user);
+        const searchInput = this.page.locator('#users-selector0-search-input');
         const dropdownItem = this.page.locator('.dropdown-item', { hasText: `(${user})` });
-        await dropdownItem.waitFor({ state: 'visible', timeout: 10000 });
-        await dropdownItem.click();
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await searchInput.clear();
+            await searchInput.fill(user);
+            try {
+                await dropdownItem.waitFor({ state: 'visible', timeout: 8000 });
+                await dropdownItem.click();
+                return;
+            } catch {
+                if (attempt === 2) throw new Error(`User search dropdown did not appear after 3 attempts for '${user}'`);
+            }
+        }
     }
 
     /**
@@ -437,61 +474,34 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Navigates to a specific conversation in a course and opens the member list.
-     * @param courseID - The ID of the course.
-     * @param conversationID - The ID of the conversation.
-     */
-    /**
-     * Waits for the .members button to become visible, retrying with page reload if needed.
-     * The conversationId URL parameter requires the conversation list to load first;
-     * a reload ensures the query param is re-processed after the list is cached.
-     */
-    /**
-     * Waits for the .members button (indicating a conversation is active).
-     * If the button doesn't appear, expands the Group Chats sidebar section
-     * and clicks the conversation entry, which is more reliable than the
-     * conversationId URL parameter (which has a race condition with the cache).
-     */
-    /**
-     * Waits for a conversation to become active by checking the .members button.
-     * If the URL param approach doesn't work, navigates fresh and retries.
-     */
-    /**
      * Navigates to a conversation and waits for it to become active.
-     * The conversationId URL param requires the conversations list to be cached first
-     * (Angular race condition), so we wait for the API response, then reload.
+     * Angular's setActiveConversation() looks up the conversationId in a cached list.
+     * To avoid the race condition where the cache isn't ready, we first navigate
+     * WITHOUT the conversationId param to populate the cache, then navigate WITH it.
      */
     async openConversation(courseID: number, conversationID: number) {
-        const url = `/courses/${courseID}/communication?conversationId=${conversationID}`;
+        const baseUrl = `/courses/${courseID}/communication`;
+        const fullUrl = `${baseUrl}?conversationId=${conversationID}`;
         const membersButton = this.page.locator('.members');
 
-        await this.page.goto(url);
+        // Step 1: Navigate WITHOUT conversationId to let Angular load and cache conversations
+        const conversationsApiPromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('/api/communication/courses/') && resp.url().includes('/conversations') && resp.status() === 200,
+        );
+        await this.page.goto(baseUrl);
+        await conversationsApiPromise.catch(() => {});
+
+        // Step 2: Now navigate WITH conversationId — cache is populated
+        await this.page.goto(fullUrl);
         try {
-            // Wait for the conversation to activate via URL param
-            await membersButton.waitFor({ state: 'visible', timeout: 8000 });
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
             return;
         } catch {
-            // URL param race condition — try sidebar fallback
+            // Still not active — try one more reload
         }
 
-        // Fallback: expand the "Group Chats" sidebar section and click the entry
-        const groupChatsHeader = this.page.locator('[id^="test-accordion-item-header-groupChats"]');
-        if (await groupChatsHeader.isVisible().catch(() => false)) {
-            await groupChatsHeader.click();
-            const container = this.page.locator('div:has(> [id^="test-accordion-item-header-groupChats"])');
-            const sidebarCard = container.locator('#test-sidebar-card-small').first();
-            try {
-                await sidebarCard.waitFor({ state: 'visible', timeout: 3000 });
-                await sidebarCard.click();
-                await membersButton.waitFor({ state: 'visible', timeout: 8000 });
-                return;
-            } catch {
-                // Sidebar approach also failed
-            }
-        }
-
-        // Last resort: reload the page with the conversationId
-        await this.page.goto(url);
+        // Step 3: One more attempt with a fresh reload
+        await this.page.goto(fullUrl);
         await membersButton.waitFor({ state: 'visible', timeout: 10000 });
     }
 

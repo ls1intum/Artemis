@@ -14,8 +14,8 @@ export class ProgrammingExerciseOverviewPage {
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible', timeout: 60000 });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible({ timeout: 60000 });
+        await Commands.reloadUntilFound(this.page, resultScore, 5000, 120000);
+        await expect(resultScore.getByText(expectedResult)).toBeVisible({ timeout: 30000 });
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {

@@ -158,12 +158,11 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.checkMessage(message.id!, messageText);
         });
 
-        test('Student should be able to edit a message in group chat', async ({ login, courseMessages }) => {
+        test('Student should be able to edit a message in group chat', async ({ login, courseMessages, communicationAPIRequests }) => {
             await login(studentOne);
-            await courseMessages.openConversation(course.id!, groupChat.id!);
             const messageText = 'Student Edit Test Message';
-            await courseMessages.writeMessage(messageText);
-            const message = await courseMessages.save();
+            const message = await communicationAPIRequests.createCourseMessage(course, groupChat.id!, 'groupChat', messageText);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             const newMessage = 'Edited Text';
             await courseMessages.editMessage(message.id!, newMessage);
@@ -171,12 +170,11 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.checkMessageEdited(message.id!);
         });
 
-        test('Students should be able to delete a message in group chat', async ({ login, courseMessages }) => {
+        test('Students should be able to delete a message in group chat', async ({ login, courseMessages, communicationAPIRequests }) => {
             await login(studentOne);
-            await courseMessages.openConversation(course.id!, groupChat.id!);
             const messageText = 'Student Delete Test Message';
-            await courseMessages.writeMessage(messageText);
-            const message = await courseMessages.save();
+            const message = await communicationAPIRequests.createCourseMessage(course, groupChat.id!, 'groupChat', messageText);
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
             await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible();

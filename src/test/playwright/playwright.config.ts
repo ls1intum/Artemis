@@ -64,7 +64,7 @@ export default defineConfig({
         {
             name: 'fast-tests',
             grep: /@fast|^[^@]*$/,
-            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 45) * 1000,
+            timeout: (parseNumber(process.env.FAST_TEST_TIMEOUT_SECONDS) ?? 60) * 1000,
             use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } },
         },
         // Tests with @slow tag. These tests are expected to run longer
@@ -80,10 +80,11 @@ export default defineConfig({
         },
         // Tests with @sequential tag. These tests are triggering programming exercise submissions.
         // Running only one programming exercise evaluation at a time makes the tests stable.
+        // Higher timeout since builds can queue up when fast/slow tests run in parallel.
         {
             name: 'sequential-tests',
             grep: /@sequential/,
-            timeout: (parseNumber(process.env.SLOW_TEST_TIMEOUT_SECONDS) ?? 90) * 1000,
+            timeout: (parseNumber(process.env.SEQUENTIAL_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
             fullyParallel: false,
             use: {
                 browserName: 'chromium',

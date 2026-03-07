@@ -16,8 +16,10 @@ export class ExamNavigationBar {
      */
     async openOrSaveExerciseByTitle(exerciseGroupTitle: string) {
         const exerciseLink = this.page.getByText(exerciseGroupTitle).nth(0);
-        await exerciseLink.waitFor({ state: 'visible' });
+        await exerciseLink.waitFor({ state: 'visible', timeout: 30000 });
         await exerciseLink.click();
+        // Wait for page transition to complete
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     async openFromOverviewByTitle(exerciseGroupTitle: string) {

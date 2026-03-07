@@ -11,6 +11,16 @@ const course = { id: SEED_COURSES.programmingManagement.id } as any;
 
 test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
     test.describe('Programming exercise creation', () => {
+        let createdExerciseId: number | undefined;
+
+        test.afterEach('Delete created exercise', async ({ login, exerciseAPIRequests }) => {
+            if (createdExerciseId) {
+                await login(admin);
+                await exerciseAPIRequests.deleteProgrammingExercise(createdExerciseId);
+                createdExerciseId = undefined;
+            }
+        });
+
         test('Creates a new programming exercise', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, programmingExerciseCreation }) => {
             await login(admin, '/');
             await navigationBar.openCourseManagement();
@@ -26,6 +36,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await programmingExerciseCreation.checkAllowOnlineEditor();
             const response = await programmingExerciseCreation.generate();
             const exercise: Exercise = await response.json();
+            createdExerciseId = exercise.id;
             await expect(courseManagementExercises.getExerciseTitle(exerciseTitle)).toBeVisible();
             await page.waitForURL(`**/programming-exercises/${exercise.id}**`);
         });

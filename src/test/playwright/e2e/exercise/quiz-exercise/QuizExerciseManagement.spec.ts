@@ -11,11 +11,22 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
     test.describe('Quiz Exercise Creation', () => {
+        let createdQuizId: number | undefined;
+
         test.beforeEach('Create quiz exercise', async ({ login, courseManagement, courseManagementExercises, quizExerciseCreation }) => {
+            createdQuizId = undefined;
             await login(admin, '/course-management/');
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createQuizExercise();
             await quizExerciseCreation.setTitle('Quiz Exercise ' + generateUUID());
+        });
+
+        test.afterEach('Delete created quiz', async ({ login, exerciseAPIRequests }) => {
+            if (createdQuizId) {
+                await login(admin);
+                await exerciseAPIRequests.deleteQuizExercise(createdQuizId);
+                createdQuizId = undefined;
+            }
         });
 
         test('Creates a Quiz with Multiple Choice', async ({ page, quizExerciseCreation }) => {
@@ -23,6 +34,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             await quizExerciseCreation.addMultipleChoiceQuestion(title);
             const quizResponse = await quizExerciseCreation.saveQuiz();
             const quiz: QuizExercise = await quizResponse.json();
+            createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await expect(page.getByText(title)).toBeVisible();
         });
@@ -35,6 +47,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             await quizExerciseCreation.createAndEditMultipleChoiceQuestionInVisualMode(title, answerOptions);
             const quizResponse = await quizExerciseCreation.saveQuiz();
             const quiz: QuizExercise = await quizResponse.json();
+            createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await expect(page.getByText(title)).toBeVisible();
             for (const answerOption of answerOptions) {
@@ -47,6 +60,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             await quizExerciseCreation.addShortAnswerQuestion(title);
             const quizResponse = await quizExerciseCreation.saveQuiz();
             const quiz: QuizExercise = await quizResponse.json();
+            createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await expect(page.getByText(title)).toBeVisible();
         });
@@ -56,6 +70,7 @@ test.describe('Quiz Exercise Management', { tag: '@fast' }, () => {
             await quizExerciseCreation.addDragAndDropQuestion(quizQuestionTitle);
             const response = await quizExerciseCreation.saveQuiz();
             const quiz = await response.json();
+            createdQuizId = quiz.id;
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await expect(page.getByText(quizQuestionTitle)).toBeVisible();
         });

@@ -82,7 +82,9 @@ test.describe('Competency Import', { tag: '@fast' }, () => {
 
         // Open Import from other course modal
         await page.getByRole('button', { name: 'Import competencies' }).click();
-        await page.getByRole('link', { name: 'Import from other course' }).click();
+        const importLink = page.getByRole('link', { name: 'Import from other course' });
+        await importLink.waitFor({ state: 'visible', timeout: 5000 });
+        await importLink.click();
 
         // Wait for the competency table to load and select competency1
         const competencyRow = page.getByRole('row', { name: '' + competency1.id! + ' ' + competency1.title! });
