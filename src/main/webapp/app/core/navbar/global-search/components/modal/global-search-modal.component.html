@@ -1,0 +1,49 @@
+<p-dialog
+    [visible]="overlay.isOpen()"
+    (visibleChange)="$event ? overlay.open() : overlay.close()"
+    (onHide)="overlay.close()"
+    (onShow)="focusInput()"
+    [modal]="true"
+    [closable]="true"
+    [showHeader]="false"
+    [closeOnEscape]="false"
+    [dismissableMask]="true"
+    [style]="{ width: '100%', 'max-width': '700px', height: '60vh', 'max-height': '600px', 'margin-top': '15vh', overflow: 'hidden', background: 'var(--module-bg)' }"
+    contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
+    position="top"
+    styleClass="global-search-dialog"
+>
+    <!-- Search Input -->
+    <div class="search-input-container d-flex align-items-center p-0 flex-shrink-0">
+        <fa-icon [icon]="faSearch" class="search-icon text-secondary" aria-hidden="true" />
+        <input
+            #searchInput
+            type="text"
+            [placeholder]="'global.search.placeholder' | artemisTranslate"
+            class="search-input border-0 bg-transparent text-body"
+            [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
+        />
+    </div>
+    <!-- Results Area -->
+    <div class="results-container text-center text-secondary">{{ 'global.search.noResultsFound' | artemisTranslate }}</div>
+    <!-- Keyboard hints footer -->
+    <div class="search-footer flex-shrink-0 text-start">
+        <div class="keyboard-hints d-flex align-items-center justify-content-between text-secondary w-100 gap-3">
+            <span class="d-flex align-items-center gap-1">
+                <span class="d-flex align-items-center gap-1">
+                    <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Up arrow">
+                        <fa-icon [icon]="faArrowUp" aria-hidden="true" />
+                    </kbd>
+                    <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Down arrow">
+                        <fa-icon [icon]="faArrowDown" aria-hidden="true" />
+                    </kbd>
+                </span>
+                <span class="ms-2">{{ 'global.search.toNavigate' | artemisTranslate }}</span>
+            </span>
+            <span class="d-flex align-items-center gap-1">
+                <kbd class="key-hint-small d-inline-flex align-items-center font-monospace text-secondary border" aria-label="Escape">ESC</kbd>
+                <span class="ms-2">{{ 'global.search.toClose' | artemisTranslate }}</span>
+            </span>
+        </div>
+    </div>
+</p-dialog>
