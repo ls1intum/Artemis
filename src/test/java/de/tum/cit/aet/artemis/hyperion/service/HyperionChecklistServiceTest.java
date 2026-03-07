@@ -134,7 +134,7 @@ class HyperionChecklistServiceTest {
             throw new AssertionError("Unexpected prompt: " + text);
         });
 
-        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", null, "JAVA", 1L);
+        ChecklistAnalysisRequestDTO request = new ChecklistAnalysisRequestDTO("Problem statement", "EASY", "JAVA", 1L);
 
         ChecklistAnalysisResponseDTO response = hyperionChecklistService.analyzeChecklist(request, 1L).join();
 
