@@ -330,6 +330,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         }));
 
         if (languageChanged) {
+            this.resetBuildOptionSelections();
             // Reset project type when changing programming language as not all programming languages support (the same) project types
             this.programmingExercise.projectType = this.projectTypes?.[0];
             this.selectedProjectTypeValue = this.projectTypes?.[0];
@@ -348,6 +349,10 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         if (!this.staticCodeAnalysisAllowed) {
             this.programmingExercise.staticCodeAnalysisEnabled = false;
             this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        }
+
+        if (!this.sequentialTestRunsAllowed) {
+            this.programmingExercise.buildConfig!.sequentialTestRuns = false;
         }
 
         if (language == ProgrammingLanguage.HASKELL || language == ProgrammingLanguage.OCAML) {
@@ -429,6 +434,8 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             this.selectedProjectTypeValue = type;
             this.programmingExercise.projectType = type;
         }
+
+        this.resetBuildOptionSelections();
     }
 
     /**
@@ -448,6 +455,12 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private disableStaticCodeAnalysis() {
         this.programmingExercise.staticCodeAnalysisEnabled = false;
         this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+    }
+
+    private resetBuildOptionSelections() {
+        this.programmingExercise.staticCodeAnalysisEnabled = false;
+        this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
+        this.programmingExercise.buildConfig!.sequentialTestRuns = false;
     }
 
     /**
