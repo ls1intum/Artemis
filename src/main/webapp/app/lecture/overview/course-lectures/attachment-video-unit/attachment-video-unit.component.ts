@@ -62,12 +62,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
-    readonly isPdf = computed(() => {
+    readonly hasPdf = computed(() => {
         const link = this.lectureUnit().attachment?.link;
-        return link ? link.toLowerCase().endsWith('.pdf') : false;
+        return this.hasAttachment() && link ? link.toLowerCase().endsWith('.pdf') : false;
     });
-
-    readonly hasPdf = computed(() => this.hasAttachment() && this.isPdf());
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -109,6 +107,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             // Reset stale state
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
+            this.revokePdfUrl();
             this.pdfUrl.set(undefined);
 
             const src = this.lectureUnit().videoSource;
@@ -173,7 +172,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private loadPdf(): void {
         this.isPdfLoading.set(true);
 
-        const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
+        const link = this.getAttachmentLink();
 
         if (!link) {
             this.isPdfLoading.set(false);
@@ -198,7 +197,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     ngOnDestroy(): void {
-        // Revoke PDF object URL to prevent memory leak
+        this.revokePdfUrl();
+    }
+
+    private revokePdfUrl(): void {
         const url = this.pdfUrl();
         if (url) {
             URL.revokeObjectURL(url);
@@ -224,13 +226,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     handleDownload() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        // Determine the link based on the availability of a student version
-        const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
+        const link = this.getAttachmentLink();
 
         if (link) {
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
+    }
+
+    private getAttachmentLink(): string | undefined {
+        const attachment = this.lectureUnit().attachment;
+        if (!attachment) {
+            return undefined;
+        }
+        const link = attachment.studentVersion || this.fileService.createStudentLink(attachment.link!);
+        return addPublicFilePrefix(link);
     }
 
     handleOriginalVersion() {

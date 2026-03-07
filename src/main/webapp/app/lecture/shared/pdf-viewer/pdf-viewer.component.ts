@@ -4,8 +4,7 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Dayjs } from 'dayjs/esm';
-import { TranslateService } from '@ngx-translate/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 
@@ -17,6 +16,10 @@ import { faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-sol
     styleUrls: ['./pdf-viewer.component.scss'],
 })
 export class PdfViewerComponent implements AfterViewInit, OnDestroy {
+    private static readonly DOM_RENDER_DELAY_MS = 50;
+    private static readonly PAGE_NAVIGATION_DELAY_MS = 300;
+    private static readonly RESIZE_DEBOUNCE_MS = 300;
+
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
     version = input<number | undefined>(undefined);
@@ -66,7 +69,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
             if (targetPage && loaded && hasPages) {
                 // Delay to ensure DOM is fully rendered
-                setTimeout(() => this.goToPage(targetPage), 300);
+                setTimeout(() => this.goToPage(targetPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
             }
         });
     }
@@ -128,9 +131,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
             await this.renderAllPages();
             this.isLoading.set(false);
-
-            // Initialize current page after rendering
-            setTimeout(() => this.updateCurrentPage(), 50);
         } catch (err) {
             this.error.set(this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.error'));
             this.isLoading.set(false);
@@ -173,7 +173,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             }
 
             // Update current page after all pages are rendered
-            setTimeout(() => this.updateCurrentPage(), 50);
+            setTimeout(() => this.updateCurrentPage(), PdfViewerComponent.DOM_RENDER_DELAY_MS);
         } finally {
             this.isRendering = false;
         }
@@ -262,7 +262,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     private handleResize = (): void => {
-        // Debounce: wait 300ms after last resize before re-rendering
+        // Debounce resize events before re-rendering
         if (this.resizeTimeout !== undefined) {
             clearTimeout(this.resizeTimeout);
         }
@@ -270,7 +270,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             if (this.pdfDocument && !this.isLoading() && !this.error()) {
                 this.renderAllPages();
             }
-        }, 300);
+        }, PdfViewerComponent.RESIZE_DEBOUNCE_MS);
     };
 
     /**
@@ -292,13 +292,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         const pages = container.querySelectorAll('.pdf-page');
         if (pages.length === 0) {
-            return;
-        }
-
-        // Verify we have the expected number of pages before updating
-        const expectedPages = this.totalPages();
-        if (expectedPages > 0 && pages.length !== expectedPages) {
-            // Pages are still being rendered, skip update
             return;
         }
 

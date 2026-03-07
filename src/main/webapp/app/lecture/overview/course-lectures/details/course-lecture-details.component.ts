@@ -122,17 +122,14 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         // Handle query parameters for deep-linking to specific units and pages
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
-            if (params['unit']) {
-                const unitId = Number(params['unit']);
-                if (!isNaN(unitId)) {
-                    this.targetUnitId.set(unitId);
-                }
+            const unitId = Number(params['unit']);
+            if (!isNaN(unitId)) {
+                this.targetUnitId.set(unitId);
             }
-            if (params['page']) {
-                const pageNum = Number(params['page']);
-                if (!isNaN(pageNum) && pageNum > 0) {
-                    this.targetPdfPage.set(pageNum);
-                }
+
+            const pageNum = Number(params['page']);
+            if (!isNaN(pageNum) && pageNum > 0) {
+                this.targetPdfPage.set(pageNum);
             }
         });
     }
@@ -159,10 +156,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
-                            this.hasPdfLectureUnit =
-                                (<AttachmentVideoUnit[]>this.lectureUnits.filter((unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO)).filter(
-                                    (unit) => unit.attachment?.link?.split('.').pop()!.toLocaleLowerCase() === 'pdf',
-                                ).length > 0;
+                            this.hasPdfLectureUnit = this.lectureUnits.some(
+                                (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                            );
                         }
                         if (this.irisEnabled && this.lecture?.course?.id) {
                             this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
