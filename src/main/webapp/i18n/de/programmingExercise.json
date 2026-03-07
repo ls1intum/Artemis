@@ -146,7 +146,7 @@
                 "delete": "Loeschen",
                 "conditions": {
                     "ALWAYS": "Immer",
-                    "AFTER_DUE_DATE": "Nach Abgabedatum"
+                    "AFTER_DUE_DATE": "Nach Abgabefrist"
                 }
             },
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",
