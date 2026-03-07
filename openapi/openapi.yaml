@@ -719,11 +719,8 @@ components:
       properties:
         problemStatementMarkdown: {type: string, description: Problem statement in
             Markdown format, maxLength: 50000, minLength: 0}
-        declaredDifficulty:
-          type: string
-          description: Declared difficulty of the exercise
-          enum: [EASY, MEDIUM, HARD]
-          pattern: ^(EASY|MEDIUM|HARD)$
+        declaredDifficulty: {type: string, description: Declared difficulty of the
+            exercise, maxLength: 20, minLength: 0}
         language: {type: string, description: 'Programming language, e.g. JAVA, PYTHON',
           maxLength: 50, minLength: 0}
         exerciseId: {type: integer, format: int64, description: ID of the exercise}
