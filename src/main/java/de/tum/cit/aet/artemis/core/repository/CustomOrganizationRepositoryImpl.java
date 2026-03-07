@@ -18,6 +18,7 @@ import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -70,8 +71,8 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
 
     /**
      * Executes the paginated organization query.
-     * When {@code withCounts} is {@code true}, LEFT JOINs on users and courses are added and counts
-     * are aggregated via GROUP BY. When {@code false}, those joins are omitted for a simpler and faster query.
+     * When {@code withCounts} is {@code true}, correlated subqueries are added to count users and courses
+     * per organization. When {@code false}, those subqueries are omitted for a simpler and faster query.
      */
     private Page<OrganizationDTO> findOrganizationsPage(Specification<Organization> specification, Pageable pageable, String sortedColumn, SortingOrder sortOrder,
             boolean withCounts) {
@@ -84,13 +85,20 @@ public class CustomOrganizationRepositoryImpl implements CustomOrganizationRepos
         Expression<Long> courseCountExpr;
 
         if (withCounts) {
-            Join<Organization, User> userJoin = root.join(Organization_.USERS, JoinType.LEFT);
-            Join<Organization, Course> courseJoin = root.join(Organization_.COURSES, JoinType.LEFT);
-            userCountExpr = builder.countDistinct(userJoin.get(User_.ID));
-            courseCountExpr = builder.countDistinct(courseJoin.get(Course_.ID));
-            // Group by exactly the non-aggregated selected fields (portable JPQL/Criteria behavior)
-            query.groupBy(root.get(Organization_.ID), root.get(Organization_.NAME), root.get(Organization_.SHORT_NAME), root.get(Organization_.EMAIL_PATTERN),
-                    root.get(Organization_.LOGO_URL));
+            // Correlated subqueries avoid the Cartesian product that dual LEFT JOINs would produce
+            Subquery<Long> userCountSub = query.subquery(Long.class);
+            Root<Organization> ucRoot = userCountSub.from(Organization.class);
+            Join<Organization, User> ucJoin = ucRoot.join(Organization_.USERS, JoinType.LEFT);
+            userCountSub.select(builder.count(ucJoin.get(User_.ID)));
+            userCountSub.where(builder.equal(ucRoot.get(Organization_.ID), root.get(Organization_.ID)));
+            userCountExpr = userCountSub;
+
+            Subquery<Long> courseCountSub = query.subquery(Long.class);
+            Root<Organization> ccRoot = courseCountSub.from(Organization.class);
+            Join<Organization, Course> ccJoin = ccRoot.join(Organization_.COURSES, JoinType.LEFT);
+            courseCountSub.select(builder.count(ccJoin.get(Course_.ID)));
+            courseCountSub.where(builder.equal(ccRoot.get(Organization_.ID), root.get(Organization_.ID)));
+            courseCountExpr = courseCountSub;
         }
         else {
             userCountExpr = builder.nullLiteral(Long.class);
