@@ -366,7 +366,7 @@ Then run the container using the following command and replace `<TAG/VERSION>` a
 docker run \
   -v "$PWD/application-local.yml:/opt/artemis/config/application-local.yml:ro" \
   -e SPRING_CONFIG_ADDITIONAL_LOCATION=file:/opt/artemis/config/ \
-  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local,modeling,text,quiz,apollon \
+  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local,apollon \
   -p 8080:8080 \
   ghcr.io/ls1intum/artemis:<TAG/VERSION>
 ```
