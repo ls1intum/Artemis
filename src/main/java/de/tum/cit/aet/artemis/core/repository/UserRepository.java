@@ -1507,4 +1507,10 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             GROUP BY g
             """)
     List<StudentGroupCountDTO> countUsersByStudentGroupNamesAndUserIds(@Param("studentGroupNames") Set<String> studentGroupNames, @Param("userIds") Set<Long> userIds);
+
+    @Query("SELECT u FROM User u WHERE u.isBot = true AND u.login = :login AND u.deleted = false")
+    Optional<User> findBotByLogin(@Param("login") String login);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.authorities WHERE u.isBot = true AND u.apiKeyHash = :hash AND u.deleted = false")
+    Optional<User> findBotByApiKeyHash(@Param("hash") String hash);
 }
