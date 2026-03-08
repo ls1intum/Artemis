@@ -21,9 +21,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
-import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -70,8 +68,6 @@ public class CourseService {
 
     private final Optional<CompetencyApi> competencyApi;
 
-    private final Optional<CompetencyProgressApi> competencyProgressApi;
-
     private final Optional<PrerequisitesApi> prerequisitesApi;
 
     private final StudentParticipationRepository studentParticipationRepository;
@@ -82,29 +78,24 @@ public class CourseService {
 
     private final Optional<PlagiarismCaseApi> plagiarismCaseApi;
 
-    private final FaqRepository faqRepository;
-
     private final CourseVisibleService courseVisibleService;
 
     public CourseService(Optional<LectureApi> lectureApi, CourseRepository courseRepository, ExerciseService exerciseService, AuthorizationCheckService authCheckService,
-            Optional<CompetencyApi> competencyApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<ExamRepositoryApi> examRepositoryApi,
-            Optional<ExerciseGroupApi> exerciseGroupApi, StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            Optional<TutorialGroupApi> tutorialGroupApi, Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, FaqRepository faqRepository,
-            CourseVisibleService courseVisibleService) {
+            Optional<CompetencyApi> competencyApi, Optional<ExamRepositoryApi> examRepositoryApi, Optional<ExerciseGroupApi> exerciseGroupApi,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, Optional<TutorialGroupApi> tutorialGroupApi,
+            Optional<PlagiarismCaseApi> plagiarismCaseApi, Optional<PrerequisitesApi> prerequisitesApi, CourseVisibleService courseVisibleService) {
         this.lectureApi = lectureApi;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.exerciseGroupApi = exerciseGroupApi;
         this.competencyApi = competencyApi;
-        this.competencyProgressApi = competencyProgressApi;
         this.examRepositoryApi = examRepositoryApi;
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.tutorialGroupApi = tutorialGroupApi;
         this.plagiarismCaseApi = plagiarismCaseApi;
         this.prerequisitesApi = prerequisitesApi;
-        this.faqRepository = faqRepository;
         this.courseVisibleService = courseVisibleService;
     }
 

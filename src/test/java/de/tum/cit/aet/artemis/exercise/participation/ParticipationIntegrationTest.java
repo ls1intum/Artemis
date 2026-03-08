@@ -576,6 +576,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(participation.getStudent()).contains(user);
+
+        List<Submission> submissions = submissionRepository.findAllByParticipationId(participation.getId());
+        assertThat(submissions).hasSize(1);
+        Submission submission = submissions.getFirst();
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        assertThat(submission).isInstanceOf(TextSubmission.class);
+        assertThat(((TextSubmission) submission).getText()).isNull();
     }
 
     @Test
@@ -592,6 +599,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
         assertThat(participation.getStudent()).contains(user);
+
+        List<Submission> submissions = submissionRepository.findAllByParticipationId(participation.getId());
+        assertThat(submissions).hasSize(1);
+        Submission submission = submissions.getFirst();
+        assertThat(submission.getParticipation().getId()).isEqualTo(participation.getId());
+        assertThat(submission).isInstanceOf(ModelingSubmission.class);
+        assertThat(((ModelingSubmission) submission).getModel()).isNull();
     }
 
     @Test
@@ -692,13 +706,12 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
      * Creates a student participation with a real LocalVC repository for the given exercise.
      * The repository is automatically tracked for cleanup in @AfterEach.
      *
-     * @param exercise  the programming exercise
-     * @param userLogin the user login for the participation
-     * @param state     the initialization state for the participation
+     * @param exercise the programming exercise
      * @return the saved participation with a valid repository URI
      */
-    private ProgrammingExerciseStudentParticipation createParticipationWithRepository(ProgrammingExercise exercise, String userLogin, InitializationState state) throws Exception {
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(state, exercise, userUtilService.getUserByLogin(userLogin));
+    private ProgrammingExerciseStudentParticipation createParticipationWithRepository(ProgrammingExercise exercise) throws Exception {
+        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise,
+                userUtilService.getUserByLogin("participationintegrationstudent1"));
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
         return participationRepo.save(participation);
     }
@@ -816,7 +829,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -853,7 +866,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         athenaRequestMockProvider.mockGetFeedbackSuggestionsAndExpect("programming");
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -966,7 +979,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         this.programmingExercise = exerciseRepository.save(programmingExercise);
         this.athenaRequestMockProvider.mockGetFeedbackSuggestionsWithFailure("programming");
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
         Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
@@ -1068,7 +1081,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         var updatedParticipation = request.putWithResponseBody(
                 "/api/exercise/exercises/" + programmingExercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
@@ -1769,7 +1782,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         course.addExercises(programmingExercise);
         course = courseRepository.save(course);
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
@@ -1789,7 +1802,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 
@@ -1810,7 +1823,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
         programmingExercise = exerciseRepository.save(programmingExercise);
 
-        var participation = createParticipationWithRepository(programmingExercise, TEST_PREFIX + "student1", InitializationState.INACTIVE);
+        var participation = createParticipationWithRepository(programmingExercise);
 
         var submission = participationUtilService.addSubmission(participation, new ProgrammingSubmission());
 

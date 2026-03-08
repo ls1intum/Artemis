@@ -65,7 +65,6 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParti
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCodeReviewFeedbackService;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
 import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
@@ -85,8 +84,6 @@ public class ParticipationResource {
     private static final String ENTITY_NAME = "participation";
 
     private final ParticipationService participationService;
-
-    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final AuthorizationCheckService authCheckService;
 
@@ -120,15 +117,14 @@ public class ParticipationResource {
 
     private final ProfileService profileService;
 
-    public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
-            UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository, FeatureToggleService featureToggleService,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
-            ExerciseDateService exerciseDateService, ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService,
-            Optional<TextFeedbackApi> textFeedbackApi, Optional<ModelingFeedbackApi> modelingFeedbackApi, ParticipationAuthorizationService participationAuthorizationService,
-            Optional<StudentExamApi> studentExamApi, ProfileService profileService) {
+    public ParticipationResource(ParticipationService participationService, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
+            FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
+            SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService,
+            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
+            Optional<ModelingFeedbackApi> modelingFeedbackApi, ParticipationAuthorizationService participationAuthorizationService, Optional<StudentExamApi> studentExamApi,
+            ProfileService profileService) {
         this.participationService = participationService;
-        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.authCheckService = authCheckService;
@@ -335,10 +331,9 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         // Use practice participation after due date, graded participation before
         boolean isPastDueDate = effectiveDueDate != null && now().isAfter(effectiveDueDate);
-        StudentParticipation participation = (exercise instanceof ProgrammingExercise)
-                ? programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise, principal.getName())
-                : studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), isPastDueDate)
-                        .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
+        StudentParticipation participation = studentParticipationRepository
+                .findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), isPastDueDate)
+                .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
 
         participationAuthorizationService.checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
