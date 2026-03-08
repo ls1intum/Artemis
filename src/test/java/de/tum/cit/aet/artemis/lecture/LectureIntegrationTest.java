@@ -289,15 +289,17 @@ class LectureIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         AttachmentVideoUnit attachmentVideoUnitWithoutSlides = lectureUtilService.createAttachmentVideoUnitWithoutAttachment(lectureWithSlides);
         lectureUtilService.addLectureUnitsToLecture(lectureWithSlides, List.of(attachmentVideoUnitWithoutSlides));
 
-        List<Lecture> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK, Lecture.class);
+        List<LectureResource.GetLecturesDTO> returnedLectures = request.getList("/api/lecture/courses/" + course1.getId() + "/lectures-with-slides", HttpStatus.OK,
+                LectureResource.GetLecturesDTO.class);
 
         final Lecture finalLectureWithSlides = lectureWithSlides;
-        Lecture filteredLecture = returnedLectures.stream().filter(lecture -> lecture.getId().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
+        LectureResource.GetLecturesDTO filteredLecture = returnedLectures.stream().filter(lecture -> lecture.id().equals(finalLectureWithSlides.getId())).findFirst().orElseThrow();
 
-        assertThat(filteredLecture.getLectureUnits()).hasSize(2);
-        assertThat(filteredLecture.getLectureUnits()).contains(attachmentVideoUnitWithSlides);
-        AttachmentVideoUnit attachmentVideoUnit = (AttachmentVideoUnit) filteredLecture.getLectureUnits().getFirst();
-        assertThat(attachmentVideoUnit.getSlides()).hasSize(numberOfSlides);
+        assertThat(filteredLecture.lectureUnits()).hasSize(2);
+        assertThat(filteredLecture.lectureUnits().stream().map(LectureResource.AttachmentVideoUnitDTO::id).toList()).contains(attachmentVideoUnitWithSlides.getId());
+        LectureResource.AttachmentVideoUnitDTO attachmentVideoUnitDTO = filteredLecture.lectureUnits().stream()
+                .filter(unit -> unit.id().equals(attachmentVideoUnitWithSlides.getId())).findFirst().orElseThrow();
+        assertThat(attachmentVideoUnitDTO.slides()).hasSize(numberOfSlides);
     }
 
     @Test

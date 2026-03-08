@@ -25,6 +25,7 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
+import { tutorialGroupConfigurationDtoFromEntity } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
 
 describe('TutorialGroupsManagementComponent', () => {
     setupTestBed({ zoneless: true });
@@ -82,7 +83,9 @@ describe('TutorialGroupsManagementComponent', () => {
             ),
         );
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
-        getOneOfCourseSpy = vi.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+        getOneOfCourseSpy = vi
+            .spyOn(configurationService, 'getOneOfCourse')
+            .mockReturnValue(of(new HttpResponse({ body: tutorialGroupConfigurationDtoFromEntity(configuration) })));
         fixture.detectChanges();
     });
 
