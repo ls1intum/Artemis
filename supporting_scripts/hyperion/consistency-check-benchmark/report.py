@@ -1,3 +1,4 @@
+import re
 import shutil
 import subprocess
 import os
@@ -164,16 +165,51 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
 
     branch_name = approach_id
 
+    # Replace relative image paths with raw GitHub URLs so they render in the PR body
+    remote_url = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        cwd=pecv_bench_dir,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    # Extract owner/repo from HTTPS or SSH URL
+    match = re.search(r"github\.com[:/](.+?)(?:\.git)?$", remote_url)
+    if match:
+        repo_slug = match.group(1)
+        raw_base = f"https://raw.githubusercontent.com/{repo_slug}/{branch_name}/results/{DATASET_VERSION}/{approach_id}"
+        pr_body = re.sub(
+            r"!\[([^\]]*)\]\((?!https?://)([^)]+)\)",
+            lambda m: f"![{m.group(1)}]({raw_base}/{m.group(2)})",
+            pr_body,
+        )
+
     try:
-        # Create a new branch from current HEAD (already on dataset-extension with results)
-        subprocess.run(
-            ["git", "checkout", "-b", branch_name],
+        # Check if the branch already exists
+        branch_check = subprocess.run(
+            ["git", "branch", "--list", branch_name],
             cwd=pecv_bench_dir,
-            check=True,
             capture_output=True,
             text=True,
         )
-        logging.info(f"Created branch '{branch_name}' in pecv-bench.")
+        if branch_check.stdout.strip():
+            # Branch exists — just switch to it
+            subprocess.run(
+                ["git", "checkout", branch_name],
+                cwd=pecv_bench_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            logging.info(f"Switched to existing branch '{branch_name}'.")
+        else:
+            subprocess.run(
+                ["git", "checkout", "-b", branch_name],
+                cwd=pecv_bench_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            logging.info(f"Created branch '{branch_name}' in pecv-bench.")
 
         # Stage only the results folder for this approach
         subprocess.run(
@@ -184,15 +220,23 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
             text=True,
         )
 
-        # Commit
-        subprocess.run(
-            ["git", "commit", "-m", f"Add results for {approach_id}"],
+        # Commit (skip if nothing new to commit)
+        status = subprocess.run(
+            ["git", "diff", "--cached", "--quiet"],
             cwd=pecv_bench_dir,
-            check=True,
             capture_output=True,
-            text=True,
         )
-        logging.info(f"Committed results for {approach_id}.")
+        if status.returncode != 0:
+            subprocess.run(
+                ["git", "commit", "-m", f"Add results for {approach_id}"],
+                cwd=pecv_bench_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            logging.info(f"Committed results for {approach_id}.")
+        else:
+            logging.info("No new changes to commit — results already committed.")
 
         # Push
         subprocess.run(
@@ -237,6 +281,6 @@ if __name__ == "__main__":
     pecv_bench_dir = get_pecv_bench_dir()
 
     # Set this to the results folder name (ls pecv-bench/results/{DATASET_VERSION}/ to find it)
-    approach_id = "artemis-feature-hyperion-extend_run_pecv_bench_scripts"
+    approach_id = "artemis-feature-hyperion-extend_run_pecv_bench_scripts-009551697f"
 
     create_results_pull_request(pecv_bench_dir, approach_id)
