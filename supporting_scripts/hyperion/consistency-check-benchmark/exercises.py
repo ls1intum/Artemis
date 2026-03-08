@@ -11,7 +11,7 @@ import urllib3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging_config import logging
 
-from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL, login_as_admin
+from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, PECV_BENCH_DATASET_DIR, PECV_BENCH_DATASET_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL, login_as_admin
 from course import get_course_id_request
 
 def get_pecv_bench_dir() -> str:
@@ -87,6 +87,106 @@ def checkout_pecv_bench_dataset_extension_branch(cwd: str) -> None:
             check=True,
         )
     logging.info("Successfully checkout to latest dataset branch.")
+
+def get_pecv_bench_dataset_dir() -> str:
+    """
+    Gets the directory path for pecv-bench-dataset.
+
+    :return: The absolute path to the pecv-bench-dataset directory
+    :rtype: str
+    """
+    logging.info("Getting pecv-bench-dataset directory path...")
+    hyperion_benchmark_workflow_dir = os.path.dirname(os.path.abspath(__file__))
+    pecv_bench_dataset_dir = os.path.join(hyperion_benchmark_workflow_dir, PECV_BENCH_DATASET_DIR)
+    logging.info(f"PECV-bench-dataset directory path: {pecv_bench_dataset_dir}")
+    return pecv_bench_dataset_dir
+
+def clone_pecv_bench_dataset(pecv_bench_dataset_dir: str) -> None:
+    """
+    Clones the PECV-bench-dataset repository if it doesn't exist, or pulls updates if it does.
+
+    After cloning/pulling, merges the dataset folders into the corresponding course folders
+    inside pecv_bench/data/{DATASET_VERSION}/QCSL25/.
+
+    :param str pecv_bench_dataset_dir: The directory where the dataset repository should be cloned
+    :raises SystemExit: if the git command fails
+    """
+    if os.path.exists(pecv_bench_dataset_dir):
+        logging.info(f"Directory {pecv_bench_dataset_dir} already exists. Pulling latest changes.")
+        try:
+            subprocess.run(
+                ["git", "reset", "--hard", "HEAD"],
+                cwd=pecv_bench_dataset_dir,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "clean", "-fd"],
+                cwd=pecv_bench_dataset_dir,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "pull"],
+                cwd=pecv_bench_dataset_dir,
+                check=True,
+            )
+            logging.info("Successfully pulled latest changes for pecv-bench-dataset.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"ERROR: Failed to pull updates for {pecv_bench_dataset_dir}. Error: {e}")
+            sys.exit(1)
+    else:
+        logging.info(f"Cloning repository from {PECV_BENCH_DATASET_URL} into {pecv_bench_dataset_dir}.")
+        try:
+            subprocess.run(
+                ["git", "clone", PECV_BENCH_DATASET_URL, pecv_bench_dataset_dir],
+                check=True,
+            )
+            logging.info("Successfully cloned the pecv-bench-dataset repository.")
+        except subprocess.CalledProcessError as e:
+            logging.error(f"ERROR: Failed to clone repository from {PECV_BENCH_DATASET_URL}. Error: {e}")
+            sys.exit(1)
+
+    _merge_pecv_bench_dataset(pecv_bench_dataset_dir)
+
+def _merge_pecv_bench_dataset(pecv_bench_dataset_dir: str) -> None:
+    """
+    Merges the ``data/`` directory from the cloned PECV-bench-dataset repository
+    into the ``data/`` directory of pecv-bench, preserving the identical path structure.
+
+    The dataset repo is expected to mirror the pecv-bench layout exactly:
+
+    .. code-block:: text
+
+        pecv-bench-dataset/
+        └── data/
+            └── V2/
+                └── QCSL25/
+                    ├── QC01.../
+                    │   └── <exercise-specific subfolders/files>
+                    ├── QC02.../
+                    └── QC03.../
+
+    Every file and folder found under ``pecv-bench-dataset/data/`` is copied into
+    the matching location under ``pecv-bench/data/``, overwriting existing files.
+    This works for any version, course, or exercise added in the future without
+    any script changes.
+
+    :param str pecv_bench_dataset_dir: The path to the cloned pecv-bench-dataset directory
+    """
+    pecv_bench_dir = get_pecv_bench_dir()
+    src_data = os.path.join(pecv_bench_dataset_dir, "data")
+    dst_data = os.path.join(pecv_bench_dir, "data")
+
+    if not os.path.exists(src_data):
+        logging.error(f"No 'data' directory found in pecv-bench-dataset: {src_data}")
+        sys.exit(1)
+
+    if not os.path.exists(dst_data):
+        logging.error(f"No 'data' directory found in pecv-bench: {dst_data}. Ensure pecv-bench is cloned first.")
+        sys.exit(1)
+
+    logging.info(f"Merging {src_data} -> {dst_data}")
+    shutil.copytree(src_data, dst_data, dirs_exist_ok=True)
+    logging.info("Successfully merged pecv-bench-dataset into pecv-bench.")
 
 def install_pecv_bench_dependencies(pecv_bench_dir: str) -> None:
     """
@@ -535,92 +635,13 @@ def import_exercise_variants(session: requests.Session) -> None:
     logging.info(f"Imported {total_variants_imported} programming exercises into course ID {course_id}.")
     logging.error(f"Failed to import {total_variants_failed} programming exercises into course ID {course_id}.")
 
-# ======= TEST FUNCTIONS =======
-def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> None:
-    """
-    Converts a base programming exercise (no variants) into a ZIP file using a random unique ID.
-
-    :param str exercise_path: The path to the base exercise directory on your computer. Should contain solution/, template/, tests/ folders, problem-statement.md and exercise-details.json file.
-    :param int course_id: The ID of the course to which the exercise belongs. Can be obtained via API request (e.g Postman).
-    Or simply calling get_course_id_request function after logging in, which will retrieve the course id based on the course name defined in config.ini.
-
-    :return: None
-    :rtype: None
-    """
-    base_name = os.path.basename(exercise_path)
-    repo_types: List[str] = ["solution", "template", "tests"]
-    config_file: str = "exercise-details.json"
-    variant_id = 0
-    exercise_zip_filename = f"{variant_id}-FullExercise.zip"
-    exercise_zip_path = os.path.join(exercise_path, exercise_zip_filename)
-
-    logging.info(f"Final zip file: {exercise_zip_filename} will be created at {exercise_zip_path}")
-
-    zip_files = []
-    try:
-        for repo_type in repo_types:
-            repo_name = f"{variant_id}-{repo_type}"
-            base_name = os.path.join(exercise_path, repo_name)
-            repo_path = os.path.join(exercise_path, repo_type)
-            if not os.path.exists(repo_path):
-                logging.error(f"Required folder {repo_type} does not exist in {exercise_path}.")
-                continue
-            zip_folder_path = shutil.make_archive(base_name = base_name, format = 'zip', root_dir = repo_path)
-            zip_files.append(zip_folder_path)
-    except Exception as e:
-        logging.exception(f"Error while creating intermediate zip files: {e}")
-        return None
-
-    problem_statement_file_path = os.path.join(exercise_path, "problem-statement.md")
-    problem_statement_content = None
-    if os.path.exists(problem_statement_file_path):
-        problem_statement_content = __read_problem_statement(problem_statement_file_path)
-
-    config_file_path = os.path.join(exercise_path, config_file)
-    try:
-        with open(config_file_path, 'r', encoding='utf-8') as cf:
-            exercise_details: Dict[str, Any] = json.load(cf)
-            exercise_details['id'] = None
-            if problem_statement_content is not None:
-                exercise_details['problemStatement'] = problem_statement_content
-            course_name = ""
-            if 'course' in exercise_details:
-                exercise_details['course']['id'] = course_id
-                course_name = exercise_details['course'].get('shortName', '')
-            exercise_name = exercise_details.get('title', 'Untitled')
-            exercise_details['title'] = f"{variant_id} - {exercise_name}"
-            exercise_details['shortName'] = __sanitize_exercise_name(exercise_name, int(variant_id))
-            exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
-        with open(config_file_path, 'w', encoding='utf-8') as cf:
-            json.dump(exercise_details, cf, indent=4)
-    except Exception as e:
-        logging.error(f"Failed to update config file: {e}")
-        return None
-    zip_files.append(config_file_path)
-
-    with zipfile.ZipFile(exercise_zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-        for file in zip_files:
-            if 'template' in file:
-                new_name = os.path.join(exercise_path, f"{variant_id}-exercise.zip")
-                os.rename(file, new_name)
-                zipf.write(new_name, arcname=f"{variant_id}-exercise.zip")
-                continue
-            arcname = "Exercise-Details.json" if os.path.basename(file).lower() == config_file.lower() else os.path.basename(file)
-            zipf.write(file, arcname=arcname)
-
-    zip_files.append(os.path.join(exercise_path, f"{variant_id}-exercise.zip"))
-    for temp_zip in zip_files:
-        if temp_zip.endswith('.zip') and os.path.exists(temp_zip):
-            os.remove(temp_zip)
-
-# ==============================
 
 if __name__ == "__main__":
-    logging.info("Step 1: Creating session")
-    session = requests.Session()
+    # logging.info("Step 1: Creating session")
+    # session = requests.Session()
 
-    logging.info("Step 2: Logging in as admin")
-    login_as_admin(session=session)
+    # logging.info("Step 2: Logging in as admin")
+    # login_as_admin(session=session)
 
     logging.info("Step 3: getting pecv-bench directory")
     pecv_bench_dir = get_pecv_bench_dir()
@@ -628,19 +649,23 @@ if __name__ == "__main__":
     logging.info("Step 4: cloning pecv-bench repository")
     clone_pecv_bench(pecv_bench_dir)
 
-    logging.info("Step 5: installing pecv-bench dependencies")
-    install_pecv_bench_dependencies(pecv_bench_dir)
+    logging.info("Step 4b: cloning pecv-bench-dataset and merging into pecv-bench")
+    pecv_bench_dataset_dir = get_pecv_bench_dataset_dir()
+    clone_pecv_bench_dataset(pecv_bench_dataset_dir)
 
-    logging.info("Step 6: creating exercise variants")
-    create_exercise_variants_all()
+    # logging.info("Step 5: installing pecv-bench dependencies")
+    # install_pecv_bench_dependencies(pecv_bench_dir)
 
-    logging.info("Step 7: converting variants to zip files")
-    convert_variant_to_zip_all(session=session)
+    # logging.info("Step 6: creating exercise variants")
+    # create_exercise_variants_all()
 
-    #logging.info("Step TEST: converting base exercise to zip file and importing it to Artemis")
-    #test_convert_base_exercise_to_zip(exercise_path="/Users/mkh/Desktop/test_function", course_id=22)
-    #test_import_exercise_base_request()
-    #test_consistency_check()
+    # logging.info("Step 7: converting variants to zip files")
+    # convert_variant_to_zip_all(session=session)
 
-    logging.info("Step 8: importing exercise variants")
-    import_exercise_variants(session=session)
+    # #logging.info("Step TEST: converting base exercise to zip file and importing it to Artemis")
+    # #test_convert_base_exercise_to_zip(exercise_path="/Users/mkh/Desktop/test_function", course_id=22)
+    # #test_import_exercise_base_request()
+    # #test_consistency_check()
+
+    # logging.info("Step 8: importing exercise variants")
+    # import_exercise_variants(session=session)

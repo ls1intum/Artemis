@@ -27,6 +27,8 @@ try:
     IS_LOCAL_COURSE: bool = config.getboolean('PECVCourseSettings', 'is_local_course')
     PECV_BENCH_DIR: str = config.get('PECVCourseSettings', 'pecv_bench_dir', fallback="pecv-bench")
     PECV_BENCH_URL: str = config.get('PECVCourseSettings', 'pecv_bench_url', fallback="https://github.com/ls1intum/PECV-bench.git")
+    PECV_BENCH_DATASET_DIR: str = config.get('PECVCourseSettings', 'pecv_bench_dataset_dir', fallback="pecv-bench-dataset")
+    PECV_BENCH_DATASET_URL: str = config.get('PECVCourseSettings', 'pecv_bench_dataset_url', fallback="git@github.com:ls1intum/PECV-bench-dataset.git")
 
     DATASET_VERSION: str = config.get('PECVExerciseSettings', 'dataset_version', fallback="V1")
     COURSE_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVExerciseSettings', 'course_exercises'))
