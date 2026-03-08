@@ -60,6 +60,9 @@
         overflow: auto;
         overscroll-behavior: none;
 
+        // Prevent content from expanding the box
+        contain: strict;
+
         &.zoomed-out {
             background: #f5f5f5;
         }
@@ -101,6 +104,11 @@
     }
 
     .pdf-zoom-wrapper {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         display: flex;
         justify-content: flex-start; // Default: linksbündig für vollständiges Scrolling
         align-items: flex-start;
