@@ -1,18 +1,11 @@
-import re
+
 import shutil
-import subprocess
-import sys
 import os
 import json
 from typing import Any, Dict, List
 import zipfile
-import requests
-import urllib3
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging_config import logging
-
-from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL, login_as_admin
-from course import get_course_id_request
+from exercises import read_problem_statement, sanitize_exercise_name
 
 # ======= TEST FUNCTIONS =======
 def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> None:
@@ -53,7 +46,7 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
     problem_statement_file_path = os.path.join(exercise_path, "problem-statement.md")
     problem_statement_content = None
     if os.path.exists(problem_statement_file_path):
-        problem_statement_content = __read_problem_statement(problem_statement_file_path)
+        problem_statement_content = read_problem_statement(problem_statement_file_path)
 
     config_file_path = os.path.join(exercise_path, config_file)
     try:
@@ -68,7 +61,7 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
                 course_name = exercise_details['course'].get('shortName', '')
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{variant_id} - {exercise_name}"
-            exercise_details['shortName'] = __sanitize_exercise_name(exercise_name, int(variant_id))
+            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
         with open(config_file_path, 'w', encoding='utf-8') as cf:
             json.dump(exercise_details, cf, indent=4)
@@ -93,3 +86,9 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
             os.remove(temp_zip)
 
 # ==============================
+
+if __name__ == "__main__":
+    # Example usage:
+    exercise_path = "/path/to/base/exercise"
+    course_id = 123
+    test_convert_base_exercise_to_zip(exercise_path, course_id)

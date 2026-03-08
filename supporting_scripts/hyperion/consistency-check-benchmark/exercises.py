@@ -11,7 +11,7 @@ import urllib3
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from logging_config import logging
 
-from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, PECV_BENCH_DATASET_DIR, PECV_BENCH_DATASET_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL, login_as_admin
+from utils import MAX_THREADS, PECV_BENCH_DIR, PECV_BENCH_URL, PECV_BENCH_BRANCH, PECV_BENCH_DATASET_DIR, PECV_BENCH_DATASET_URL, DATASET_VERSION, COURSE_EXERCISES, SERVER_URL, login_as_admin
 from course import get_course_id_request
 
 def get_pecv_bench_dir() -> str:
@@ -79,14 +79,22 @@ def clone_pecv_bench(pecv_bench_dir: str) -> None:
 
 def checkout_pecv_bench_dataset_extension_branch(cwd: str) -> None:
     """
-    Checkout's to the 'dataset-extension' branch in the pecv-bench repository.
+    Checks out the pecv-bench branch configured via ``pecv_bench_branch`` in
+    config.ini (default: ``main``). Must always be defined in config.ini.
     """
-    subprocess.run(
-            ["git", "checkout", "dataset-extension"],
-            cwd=cwd,
-            check=True,
+    try:
+        subprocess.run(
+                ["git", "checkout", PECV_BENCH_BRANCH],
+                cwd=cwd,
+                check=True,
+            )
+        logging.info(f"Successfully checked out branch '{PECV_BENCH_BRANCH}'.")
+    except subprocess.CalledProcessError as e:
+        logging.error(
+            f"Failed to checkout branch '{PECV_BENCH_BRANCH}' in {cwd}. "
+            f"Verify that the branch exists and that 'pecv_bench_branch' in config.ini is correct. Error: {e}"
         )
-    logging.info("Successfully checkout to latest dataset branch.")
+        sys.exit(1)
 
 def get_pecv_bench_dataset_dir() -> str:
     """
@@ -311,7 +319,7 @@ def create_exercise_variants_all() -> None:
             logging.info(f"Creating variants for {DATASET_VERSION}/{course}/{exercise}...")
             create_exercise_variants(DATASET_VERSION, course, exercise, pecv_bench_dir)
 
-def __sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
+def sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
     """
     Sanitizes the exercise name to create a valid short name.
 
@@ -327,7 +335,7 @@ def __sanitize_exercise_name(exercise_name: str, short_name_index: int) -> str:
         valid_short_name = f"A{valid_short_name}"
     return f"{valid_short_name}{short_name_index}"
 
-def __read_problem_statement(p_s_file_path: str) -> str:
+def read_problem_statement(p_s_file_path: str) -> str:
     """
     Reads a markdown file and returns its content as a single string.
 
@@ -397,8 +405,9 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
 
     # Overwrite problem statement, exercise ID, course ID, title and shortName in the config file
     p_s_file_path = os.path.join(variant_path, "problem-statement.md")
+    problem_statement_content = None
     if os.path.exists(p_s_file_path):
-        problem_statement_content = __read_problem_statement(p_s_file_path)
+        problem_statement_content = read_problem_statement(p_s_file_path)
 
     config_file_path = os.path.join(variant_path, config_file)
     try:
@@ -423,7 +432,7 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
             exercise_name = exercise_details.get('title', 'Untitled')
             exercise_details['title'] = f"{variant_id} - {exercise_details.get('title', 'Untitled')}"
 
-            exercise_details['shortName'] = __sanitize_exercise_name(exercise_name, int(variant_id))
+            exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"
 
 
@@ -551,7 +560,7 @@ def import_exercise_variant_request(session: requests.Session,
     body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
     logging.info(f"Multipart form-data body and content type prepared.")
 
-    headers  = {
+    headers = {
         "Content-Type": content_type
         }
 

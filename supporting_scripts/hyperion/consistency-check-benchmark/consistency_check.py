@@ -7,7 +7,7 @@ from logging_config import logging
 from typing import Dict, Any
 from requests import Session
 
-from utils import SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, login_as_admin
+from utils import SERVER_URL, MAX_THREADS, MODEL_NAME, CONSISTENCY_CHECK_EXERCISES, login_as_admin
 from course import get_course_id_request, get_exercise_ids_request
 from exercises import get_pecv_bench_dir
 
@@ -45,9 +45,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
         logging.warning("Failed to determine git branch or commit. Using default approach ID.")
         approach_id = "artemis-default"
 
-    model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
-                                            # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
-                                            # NOTE sprint.ai.mode.chat + spring.ai.azure.openai.chat.options.deployment-name
+    model_name = MODEL_NAME
 
     consistency_check_exercises_dict = {}
     dataset_version = ""

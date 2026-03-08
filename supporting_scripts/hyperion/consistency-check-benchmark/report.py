@@ -4,7 +4,7 @@ import subprocess
 import os
 import sys
 from logging_config import logging
-from utils import REFERENCE, DATASET_VERSION
+from utils import REFERENCE, DATASET_VERSION, PECV_BENCH_BRANCH
 from exercises import get_pecv_bench_dir
 
 def generate_response_file(pecv_bench_dir: str, version: str, approach_id: str) -> None:
@@ -254,8 +254,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
                 "gh", "pr", "create",
                 "--title", branch_name,
                 "--body", pr_body,
-                "--base", "dataset-extension",
-                # "--base", "main",
+                "--base", PECV_BENCH_BRANCH,
             ],
             cwd=pecv_bench_dir,
             check=True,
@@ -274,13 +273,23 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
 
 if __name__ == "__main__":
     # This file can be rerun standalone after run_pecv_bench.py fails on the PR step.
+    #
     # Steps to recover:
-    #   1. Install gh:  brew install gh
-    #   2. Auth gh:     gh auth login
-    #   3. Rerun:       python report.py
+    #   1. Install gh:       brew install gh
+    #   2. Authenticate gh:  gh auth login
+    #   3. Update approach_id below to match your results folder name.
+    #      Find it with:  ls pecv-bench/results/<DATASET_VERSION>/
+    #   4. Rerun:            python report.py
     pecv_bench_dir = get_pecv_bench_dir()
 
-    # Set this to the results folder name (ls pecv-bench/results/{DATASET_VERSION}/ to find it)
-    approach_id = "artemis-feature-hyperion-extend_run_pecv_bench_scripts-009551697f"
+    # >>> UPDATE THIS to your results folder name before rerunning <<<
+    approach_id = "REPLACE_ME"
+
+    if approach_id == "REPLACE_ME":
+        logging.error(
+            "approach_id is not set. Open report.py and set it to your results folder name.\n"
+            f"  Find it with:  ls {os.path.join(pecv_bench_dir, 'results', DATASET_VERSION)}/"
+        )
+        sys.exit(1)
 
     create_results_pull_request(pecv_bench_dir, approach_id)

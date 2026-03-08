@@ -52,4 +52,14 @@ if __name__ == "__main__":
     generate_response_file(pecv_bench_dir, DATASET_VERSION, approach_id)
 
     logging.info("Step 14: Creating pull request with results in pecv-bench")
-    create_results_pull_request(pecv_bench_dir, approach_id)
+    try:
+        create_results_pull_request(pecv_bench_dir, approach_id)
+    except SystemExit:
+        logging.error(
+            "PR creation failed. To retry:\n"
+            "  1. Install gh:       brew install gh\n"
+            "  2. Authenticate gh:  gh auth login\n"
+            f"  3. Open report.py and set approach_id = \"{approach_id}\"\n"
+            "  4. Run:              python report.py"
+        )
+        raise
