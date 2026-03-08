@@ -11,20 +11,16 @@ import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.service.IrisCompetencyGenerationService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.TutorSuggestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.faqingestionwebhook.PyrisFaqIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.lectureingestionwebhook.PyrisLectureIngestionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
+import de.tum.cit.aet.artemis.iris.service.pyris.job.ChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.CompetencyExtractionJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.CourseChatJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.ExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.FaqIngestionWebhookJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.LectureIngestionWebhookJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.PyrisJob;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.pyris.job.TutorSuggestionJob;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTutorSuggestionSessionService;
@@ -55,36 +51,12 @@ public class PyrisStatusUpdateService {
     }
 
     /**
-     * Handles the status update of a programming exercise chat job.
+     * Handles the status update of any Iris chat job (exercise, text exercise, course, or lecture).
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update
      */
-    public void handleStatusUpdate(ExerciseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
-
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
-    }
-
-    /**
-     * Handles the status update of a text exercise chat job.
-     *
-     * @param job          the job that is updated
-     * @param statusUpdate the status update
-     */
-    public void handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
-
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
-    }
-
-    /**
-     * Handles the status update of a course chat job.
-     *
-     * @param job          the job that is updated
-     * @param statusUpdate the status update
-     */
-    public void handleStatusUpdate(CourseChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
+    public void handleStatusUpdate(ChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
         var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
 
         removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
@@ -143,18 +115,6 @@ public class PyrisStatusUpdateService {
         else {
             pyrisJobService.updateJob(job);
         }
-    }
-
-    /**
-     * Handles the status update of a lecture chat job.
-     *
-     * @param job          the job that is updated
-     * @param statusUpdate the status update
-     */
-    public void handleStatusUpdate(LectureChatJob job, PyrisChatStatusUpdateDTO statusUpdate) {
-        var updatedJob = irisChatSessionService.handleStatusUpdate(job, statusUpdate);
-
-        removeJobIfTerminatedElseUpdate(statusUpdate.stages(), updatedJob);
     }
 
     /**
