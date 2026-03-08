@@ -76,7 +76,7 @@ def clone_pecv_bench(pecv_bench_dir: str) -> None:
 def checkout_pecv_bench_benchmark_branch(cwd: str) -> None:
     """
     Checks out the pecv-bench branch configured via ``pecv_bench_branch`` in
-    config.ini (default: ``main``). Must always be defined in config.ini.
+    config.ini (default: ``main``).
     """
     try:
         subprocess.run(
