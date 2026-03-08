@@ -29,6 +29,8 @@ export class TextResultComponent {
         effect(() => {
             const result = this.result();
             if (!result?.submission) {
+                this.submissionText.set('');
+                this.textResults.set([]);
                 return;
             }
 
@@ -82,13 +84,16 @@ export class TextResultComponent {
             return undefined;
         }
 
-        const startIndex = parseInt(feedback.reference, 10);
-        if (!isNaN(startIndex) && startIndex >= 0 && startIndex < this.submissionText().length) {
-            const textBlock = new TextBlock();
-            textBlock.startIndex = startIndex;
-            textBlock.endIndex = startIndex + 1;
-            textBlock.text = this.submissionText().charAt(startIndex);
-            return new TextResultBlock(textBlock, feedback);
+        // Strictly validate numeric reference before parsing
+        if (/^\d+$/.test(feedback.reference)) {
+            const startIndex = parseInt(feedback.reference, 10);
+            if (!isNaN(startIndex) && startIndex >= 0 && startIndex < this.submissionText().length) {
+                const textBlock = new TextBlock();
+                textBlock.startIndex = startIndex;
+                textBlock.endIndex = startIndex + 1;
+                textBlock.text = this.submissionText().charAt(startIndex);
+                return new TextResultBlock(textBlock, feedback);
+            }
         }
 
         const indexOfReference = this.submissionText().indexOf(feedback.reference);

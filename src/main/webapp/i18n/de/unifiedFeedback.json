@@ -2,7 +2,12 @@
     "artemisApp": {
         "feedback": {
             "reference": "Referenz:",
-            "points": "Punkte"
+            "points": "Punkte",
+            "type": {
+                "correct": "Korrekt",
+                "needsRevision": "Überarbeitung erforderlich",
+                "notAttempted": "Nicht versucht"
+            }
         }
     }
 }
