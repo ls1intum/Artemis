@@ -166,7 +166,6 @@ def consistency_check_request(session: requests.Session, server_url: str, exerci
     :return: A dictionary containing consistency issues, or ``None`` if the request failed.
     :rtype: Dict[str, Any] | None
     """
-    #:param str exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
     debug_id = exercise_local_id if exercise_local_id is not None else exercise_server_id
     logging.info(f"[{debug_id}] 		Starting consistency check for programming exercise ID: {debug_id}")
 

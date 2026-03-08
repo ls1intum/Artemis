@@ -46,9 +46,7 @@ def clone_pecv_bench(pecv_bench_dir: str) -> None:
                 ["git", "clean", "-fd"],
                 cwd=pecv_bench_dir,
                 check=True)
-            # ======= DATASET EXTENSION BRANCH ======
-            checkout_pecv_bench_dataset_extension_branch(cwd = pecv_bench_dir)
-            # =======================================
+            checkout_pecv_bench_benchmark_branch(cwd=pecv_bench_dir)
             subprocess.run(
                 ["git", "pull"],
                 cwd=pecv_bench_dir,
@@ -68,16 +66,14 @@ def clone_pecv_bench(pecv_bench_dir: str) -> None:
             )
             logging.info("Successfully cloned the repository.")
 
-            # ====== DATASET EXTENSION BRANCH =======
-            checkout_pecv_bench_dataset_extension_branch(pecv_bench_dir)
-            # =======================================
+            checkout_pecv_bench_benchmark_branch(pecv_bench_dir)
 
         except subprocess.CalledProcessError as e:
             logging.error(f"ERROR: Failed to clone repository from {PECV_BENCH_URL}. Error: {e}")
 
             sys.exit(1)
 
-def checkout_pecv_bench_dataset_extension_branch(cwd: str) -> None:
+def checkout_pecv_bench_benchmark_branch(cwd: str) -> None:
     """
     Checks out the pecv-bench branch configured via ``pecv_bench_branch`` in
     config.ini (default: ``main``). Must always be defined in config.ini.
@@ -339,7 +335,7 @@ def read_problem_statement(p_s_file_path: str) -> str:
     """
     Reads a markdown file and returns its content as a single string.
 
-    :param str ps_path: The path to the markdown file.
+    :param str p_s_file_path: The path to the markdown file.
     :return: The content of the file as a string.
     :rtype: str
     """
