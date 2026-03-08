@@ -40,6 +40,7 @@ import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
+import de.tum.cit.aet.artemis.core.security.filter.BotApiKeyFilter;
 import de.tum.cit.aet.artemis.core.security.filter.SpaWebFilter;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTConfigurer;
 import de.tum.cit.aet.artemis.core.security.jwt.JWTCookieService;
@@ -64,6 +65,8 @@ public class SecurityConfiguration {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfiguration.class);
 
     private final CorsFilter corsFilter;
+
+    private final BotApiKeyFilter botApiKeyFilter;
 
     private final Optional<CustomLti13Configurer> customLti13Configurer;
 
@@ -99,10 +102,11 @@ public class SecurityConfiguration {
         }
     }
 
-    public SecurityConfiguration(CorsFilter corsFilter, Optional<CustomLti13Configurer> customLti13Configurer, Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer,
-            PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider, JWTCookieService jwtCookieService,
-            ModuleFeatureService moduleFeatureService) {
+    public SecurityConfiguration(CorsFilter corsFilter, BotApiKeyFilter botApiKeyFilter, Optional<CustomLti13Configurer> customLti13Configurer,
+            Optional<ArtemisPasskeyWebAuthnConfigurer> passkeyWebAuthnConfigurer, PasswordService passwordService, ProfileService profileService, TokenProvider tokenProvider,
+            JWTCookieService jwtCookieService, ModuleFeatureService moduleFeatureService) {
         this.corsFilter = corsFilter;
+        this.botApiKeyFilter = botApiKeyFilter;
         this.customLti13Configurer = customLti13Configurer;
         this.passkeyWebAuthnConfigurer = passkeyWebAuthnConfigurer;
         this.passwordService = passwordService;
@@ -229,6 +233,8 @@ public class SecurityConfiguration {
             .csrf(CsrfConfigurer::disable)
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+            // Adds a filter for bot API key authentication before the username/password authentication filter.
+            .addFilterBefore(botApiKeyFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
             .exceptionHandling(handler -> handler.authenticationEntryPoint(securityProblemSupport).accessDeniedHandler(securityProblemSupport))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
