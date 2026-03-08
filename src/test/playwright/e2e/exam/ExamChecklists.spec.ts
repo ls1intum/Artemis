@@ -83,7 +83,7 @@ test.describe('Exam Checklists', async () => {
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.EACH_EXERCISE_GROUP_HAS_EXERCISES);
             await examDetails.openExerciseGroups();
             await examExerciseGroups.clickAddExerciseGroup();
@@ -106,13 +106,13 @@ test.describe('Exam Checklists', async () => {
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), textExerciseTemplate);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
             const maxPointsOfFirstExercise = textExerciseTemplate.maxPoints;
             const exerciseTemplate = { ...textExerciseTemplate };
             exerciseTemplate.maxPoints = maxPointsOfFirstExercise - 1;
             await exerciseAPIRequests.createTextExercise({ exerciseGroup }, 'Exercise ' + generateUUID(), exerciseTemplate);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.POINTS_IN_EXERCISE_GROUPS_EQUAL);
         });
 
@@ -127,16 +127,16 @@ test.describe('Exam Checklists', async () => {
             await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, {}, false);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemChecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT);
-            await page.reload();
+            await navigateToExamDetailsPage(page, course, exam);
             await examDetails.checkItemUnchecked(ExamChecklistItem.TOTAL_POINTS_POSSIBLE);
         });
     });

@@ -449,7 +449,8 @@ export class CourseMessagesPage {
      * @param user - The username of the user to add to the group chat.
      */
     async addUserToGroupChat(user: string) {
-        const searchInput = this.page.locator('#users-selector0-search-input');
+        // Use a flexible selector that matches any users-selector search input (the ID suffix is a global counter)
+        const searchInput = this.page.locator('input[id$="-search-input"][id^="users-selector"]');
         const dropdownItem = this.page.locator('.dropdown-item', { hasText: `(${user})` });
         for (let attempt = 0; attempt < 3; attempt++) {
             await searchInput.clear();
@@ -471,39 +472,61 @@ export class CourseMessagesPage {
         const addUsersBtn = this.page.locator('.addUsers');
         await addUsersBtn.waitFor({ state: 'visible', timeout: 10000 });
         await addUsersBtn.click();
-        // Wait for the add-users modal form to render
-        await this.page.locator('#users-selector0-search-input').waitFor({ state: 'visible', timeout: 10000 });
+        // Wait for the add-users modal form to render (use flexible selector for the search input ID)
+        await this.page.locator('input[id$="-search-input"][id^="users-selector"]').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
      * Navigates to a conversation and waits for it to become active.
      * Angular's setActiveConversation() looks up the conversationId in a cached list.
-     * To avoid the race condition where the cache isn't ready, we first navigate
-     * WITHOUT the conversationId param to populate the cache, then navigate WITH it.
+     * If the cache isn't ready when the route first processes, the conversation won't activate.
+     * We handle this by navigating to the full URL, waiting for the conversations API to respond
+     * (which populates the cache), then reloading if the conversation didn't activate.
      */
     async openConversation(courseID: number, conversationID: number) {
-        const baseUrl = `/courses/${courseID}/communication`;
-        const fullUrl = `${baseUrl}?conversationId=${conversationID}`;
+        const fullUrl = `/courses/${courseID}/communication?conversationId=${conversationID}`;
         const membersButton = this.page.locator('.members');
 
-        // Step 1: Navigate WITHOUT conversationId to let Angular load and cache conversations
+        // Attempt 1: Navigate directly to the conversation URL
+        // Set up the response waiter BEFORE navigation so we don't miss the response
         const conversationsApiPromise = this.page.waitForResponse(
-            (resp) => resp.url().includes('/api/communication/courses/') && resp.url().includes('/conversations') && resp.status() === 200,
+            (resp) =>
+                resp.url().includes('/api/communication/courses/') &&
+                resp.url().match(/\/conversations(\?|$)/) !== null &&
+                resp.request().method() === 'GET' &&
+                resp.status() === 200,
         );
-        await this.page.goto(baseUrl);
+        await this.page.goto(fullUrl);
+        // Wait for the conversations list API to complete (cache population)
         await conversationsApiPromise.catch(() => {});
 
-        // Step 2: Now navigate WITH conversationId — cache is populated
-        await this.page.goto(fullUrl);
+        // Check if the conversation became active
         try {
             await membersButton.waitFor({ state: 'visible', timeout: 10000 });
             return;
         } catch {
-            // Still not active — try one more reload
+            // Conversation didn't activate — cache may not have been ready in time
         }
 
-        // Step 3: One more attempt with a fresh reload
+        // Attempt 2: Reload the page so Angular re-processes the route with a populated cache
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        try {
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+            return;
+        } catch {
+            // Still not active
+        }
+
+        // Attempt 3: Full fresh navigation with wait for API
+        const apiPromise2 = this.page.waitForResponse(
+            (resp) =>
+                resp.url().includes('/api/communication/courses/') &&
+                resp.url().match(/\/conversations(\?|$)/) !== null &&
+                resp.request().method() === 'GET' &&
+                resp.status() === 200,
+        );
         await this.page.goto(fullUrl);
+        await apiPromise2.catch(() => {});
         await membersButton.waitFor({ state: 'visible', timeout: 10000 });
     }
 
@@ -539,15 +562,19 @@ export class CourseMessagesPage {
      * Opens the settings tab within the conversation details.
      */
     async openSettingsTab() {
-        await this.page.locator('.settings-tab').click();
+        const settingsTab = this.page.locator('.settings-tab .nav-link');
+        await settingsTab.waitFor({ state: 'visible', timeout: 10000 });
+        await settingsTab.click();
     }
 
     /**
      * Leaves the current group chat.
      */
     async leaveGroupChat() {
+        const leaveButton = this.page.locator('.leave-conversation');
+        await leaveButton.waitFor({ state: 'visible', timeout: 10000 });
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/deregister') && resp.status() === 200);
-        await this.page.locator('.leave-conversation').click();
+        await leaveButton.click();
         await responsePromise;
     }
 

@@ -10,10 +10,29 @@ export class ModelingEditor {
     }
 
     /**
+     * Waits until the __apollonEditor property is available on the given element selector.
+     * The Angular component exposes this after the ApollonEditor is initialized.
+     */
+    private async waitForApollonEditor(selector: string) {
+        await this.page.waitForFunction(
+            (sel) => {
+                const el = document.querySelector(sel);
+                return el && (el as any).__apollonEditor;
+            },
+            selector,
+            { timeout: 30000 },
+        );
+    }
+
+    /**
      * Adds an element to the Apollon model programmatically via the editor's public API.
      * We bypass drag-and-drop because Apollon's SVG canvas has width="0" height="0"
      * on empty diagrams (dimensions come from diagram.bounds in Redux state), and
      * Chromium's renderer crashes when Playwright tries mouse operations on a 0×0 SVG.
+     *
+     * The ApollonEditor instance is exposed on the host DOM element as `__apollonEditor`
+     * by the Angular ModelingEditorComponent. This works in production mode where
+     * `ng.getComponent()` is not available.
      */
     private async addElementViaEditorAPI(editorSelector: string, posX: number, posY: number) {
         await this.page.evaluate(
@@ -21,13 +40,9 @@ export class ModelingEditor {
                 const editorEl = document.querySelector(selector);
                 if (!editorEl) throw new Error(`Modeling editor element not found: ${selector}`);
 
-                const ng = (window as any).ng;
-                if (!ng?.getComponent) throw new Error('Angular debug API (ng.getComponent) not available');
+                const editor = (editorEl as any).__apollonEditor;
+                if (!editor) throw new Error('ApollonEditor instance not found on element.__apollonEditor. The editor may not be initialized yet.');
 
-                const component = ng.getComponent(editorEl);
-                if (!component?.apollonEditor) throw new Error('ApollonEditor instance not found on component');
-
-                const editor = component.apollonEditor;
                 const model = JSON.parse(JSON.stringify(editor.model));
 
                 const id = 'e2e-' + Math.random().toString(36).slice(2, 11);
@@ -73,9 +88,11 @@ export class ModelingEditor {
         await sidebar.waitFor({ state: 'visible' });
         const canvas = exerciseElement.locator(MODELING_EDITOR_CANVAS);
         await canvas.waitFor({ state: 'visible' });
+        const selector = `#exercise-${exerciseID} jhi-modeling-editor`;
+        await this.waitForApollonEditor(selector);
         const posX = x ?? 100 + componentNumber * 250;
         const posY = y ?? 100;
-        await this.addElementViaEditorAPI(`#exercise-${exerciseID} jhi-modeling-editor`, posX, posY);
+        await this.addElementViaEditorAPI(selector, posX, posY);
     }
 
     getModelingCanvas() {
@@ -87,7 +104,9 @@ export class ModelingEditor {
         await sidebar.waitFor({ state: 'visible' });
         const canvas = this.page.locator(MODELING_EDITOR_CANVAS);
         await canvas.waitFor({ state: 'visible' });
-        await this.addElementViaEditorAPI('jhi-modeling-editor', 100 + componentNumber * 250, 100);
+        const selector = 'jhi-modeling-editor';
+        await this.waitForApollonEditor(selector);
+        await this.addElementViaEditorAPI(selector, 100 + componentNumber * 250, 100);
     }
 
     async submit() {

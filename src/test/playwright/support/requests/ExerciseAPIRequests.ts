@@ -771,6 +771,44 @@ export class ExerciseAPIRequests {
         throw new Error(`SCA categories not found after ${MAX_SCA_RETRIES} retries`);
     }
 
+    /**
+     * Waits for the solution build to complete by polling test cases.
+     * Test cases are populated after the solution build finishes.
+     * This is necessary to avoid a race condition where the student build
+     * completes before the solution build, resulting in score=0.
+     */
+    async waitForSolutionBuild(exerciseId: number) {
+        const MAX_RETRIES = 20;
+        const RETRY_DELAY = 3000;
+
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+            const testCases = await response.json();
+
+            if (Array.isArray(testCases) && testCases.length > 0) {
+                return;
+            }
+
+            await this.page.waitForTimeout(RETRY_DELAY);
+        }
+        throw new Error(`Test cases not found after ${MAX_RETRIES} retries — solution build may not have completed`);
+    }
+
+    /**
+     * Sets the weight of specific test cases to 0 so they don't affect scoring.
+     * Useful for tests that fail on certain architectures (e.g., LeakSanitizer on ARM64).
+     */
+    async deactivateTestCases(exerciseId: number, testCaseNames: string[]) {
+        const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+        const testCases = await response.json();
+        const updates = testCases
+            .filter((tc: any) => testCaseNames.includes(tc.testName))
+            .map((tc: any) => ({ id: tc.id, weight: 0, bonusMultiplier: tc.bonusMultiplier, bonusPoints: tc.bonusPoints, visibility: tc.visibility }));
+        if (updates.length > 0) {
+            await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/update-test-cases`, { data: updates });
+        }
+    }
+
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
         const team: Team = {

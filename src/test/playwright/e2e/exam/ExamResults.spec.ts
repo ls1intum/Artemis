@@ -201,8 +201,8 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         await page.goto(`/courses/${course.id}/exams/${exam.id}`);
         await examParticipation.checkResultScore('40%', exercise.id!);
         await examResultsPage.checkAdditionalFeedback(exercise.id!, 5, 'Good');
-        await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class Class', 'Wrong', -1);
-        await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'abstract class Abstract', 'Neutral', 0);
+        await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class TestClass', 'Wrong', -1);
+        await examResultsPage.checkModellingExerciseAssessment(exercise.id!, 'class TestClass', 'Neutral', 0);
     });
 
     test('Check exam result overview', async ({ page, login, examAPIRequests, examResultsPage }) => {

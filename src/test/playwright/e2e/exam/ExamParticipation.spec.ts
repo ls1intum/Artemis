@@ -241,7 +241,7 @@ test.describe('Exam participation', () => {
             exerciseArray = [];
 
             await login(admin);
-            exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(3, 'minutes') });
+            exam = await createExam(course, examAPIRequests, { title: examTitle, endDate: dayjs().add(1, 'minute') });
             const exercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
             exerciseArray.push(exercise);
 

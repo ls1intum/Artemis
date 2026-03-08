@@ -14,13 +14,20 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     test.beforeEach('Create C exercise with SCA, submit via API', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
         exercise = await exerciseAPIRequests.createProgrammingExercise({ course, scaMaxPenalty: 50, programmingLanguage: ProgrammingLanguage.C });
-        // Poll until the template build provides SCA categories (~5-10s for C), then set all to GRADED.
-        // This MUST happen before the student submits, otherwise the score is calculated without SCA penalties.
+        // Wait for both template build (SCA categories) and solution build (test cases).
+        // Both must complete before the student submits to ensure correct score calculation.
         await exerciseAPIRequests.configureScaCategoriesViaApi(exercise.id!);
-        // Now submit the student code — the build will use the configured SCA categories.
+        await exerciseAPIRequests.waitForSolutionBuild(exercise.id!);
+        // Deactivate LeakSanitizer test — it always fails on ARM64 Docker (macOS).
+        // Setting weight=0 excludes it from score calculation.
+        await exerciseAPIRequests.deactivateTestCases(exercise.id!, ['TestOutputLSan']);
+        // Start student participation and submit code with SCA issues.
         await login(studentOne);
         const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const participation = await response.json();
+        // Create sca_issues.c first — it doesn't exist in the template repo,
+        // and the PUT /files endpoint can only update existing files.
+        await exerciseAPIRequests.createProgrammingExerciseFile(participation.id!, 'sca_issues.c');
         await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, cScaSubmission);
     });
 

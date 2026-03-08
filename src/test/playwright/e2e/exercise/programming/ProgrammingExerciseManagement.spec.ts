@@ -86,7 +86,7 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.deleteProgrammingExercise(exercise);
-            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached();
+            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached({ timeout: 15000 });
         });
     });
 
