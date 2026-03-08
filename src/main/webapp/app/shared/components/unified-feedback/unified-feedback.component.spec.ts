@@ -156,6 +156,6 @@ describe('UnifiedFeedbackComponent', () => {
         expect(component.inferredAlertClass()).toBe('alert-warning');
         // verify class applied on host via template binding
         const root = fixture.nativeElement.querySelector('.unified-feedback');
-        expect(root.classList.contains('alert-warning')).toBeTrue();
+        expect(root.classList.contains('alert-warning')).toBeTruthy();
     });
 });
