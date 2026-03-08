@@ -1,4 +1,4 @@
-import { Component, computed, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faCheck, faRedo, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -17,11 +17,14 @@ interface FeedbackTypeConfig {
 
 @Component({
     selector: 'jhi-unified-feedback',
+    standalone: true,
     templateUrl: './unified-feedback.component.html',
     styleUrls: ['./unified-feedback.component.scss'],
     imports: [NgClass, FaIconComponent, TranslateDirective, ArtemisTranslatePipe],
 })
 export class UnifiedFeedbackComponent {
+    private artemisTranslatePipe = inject(ArtemisTranslatePipe);
+
     feedbackContent = input<string>('');
     points = input<number>(0);
     type = input<FeedbackType | undefined>(undefined);
@@ -35,17 +38,17 @@ export class UnifiedFeedbackComponent {
         correct: {
             icon: faCheck,
             alertClass: 'alert-success',
-            defaultTitle: 'Correct',
+            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.correct'),
         },
         needs_revision: {
             icon: faRedo,
             alertClass: 'alert-warning',
-            defaultTitle: 'Needs Revision',
+            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.needsRevision'),
         },
         not_attempted: {
             icon: faTimes,
             alertClass: 'alert-danger',
-            defaultTitle: 'Not Attempted',
+            defaultTitle: this.artemisTranslatePipe.transform('artemisApp.feedback.type.notAttempted'),
         },
     };
 

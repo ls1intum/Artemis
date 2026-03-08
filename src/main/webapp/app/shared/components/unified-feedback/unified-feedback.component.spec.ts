@@ -32,7 +32,7 @@ describe('UnifiedFeedbackComponent', () => {
 
     it('should infer not_attempted type by default when points = 0', () => {
         expect(component.inferredType()).toBe('not_attempted');
-        expect(component.inferredTitle()).toBe('Not Attempted');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.notAttempted');
         expect(component.inferredAlertClass()).toBe('alert-danger');
     });
 
@@ -83,10 +83,10 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('assessmentsNames', undefined as any);
         fixture.componentRef.setInput('points', 0);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('Not Attempted');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.notAttempted');
         fixture.componentRef.setInput('points', 2);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('Correct');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.correct');
     });
 
     it('should use explicit reference when provided', () => {
@@ -136,7 +136,7 @@ describe('UnifiedFeedbackComponent', () => {
         fixture.componentRef.setInput('feedback', { referenceId: 999 } as any);
         fixture.componentRef.setInput('assessmentsNames', { 42: { type: 'Model', name: 'Class Diagram' } } as any);
         fixture.detectChanges();
-        expect(component.inferredTitle()).toBe('Not Attempted');
+        expect(component.inferredTitle()).toBe('artemisApp.feedback.type.notAttempted');
     });
 
     it('should return undefined inferredReference when no mapping and no feedback.reference', () => {
