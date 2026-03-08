@@ -156,7 +156,7 @@ public class CourseNotificationEmailService extends CourseNotificationBroadcastS
      */
     private String renderMarkdown(String preRenderMarkdown) {
         Parser parser = Parser.builder().build();
-        HtmlRenderer renderer = HtmlRenderer.builder()
+        HtmlRenderer renderer = HtmlRenderer.builder().softbreak("<br>")
                 .attributeProviderFactory(attributeContext -> new MarkdownRelativeToAbsolutePathAttributeProvider(artemisServerUrl.toString()))
                 .nodeRendererFactory(new MarkdownImageBlockRendererFactory(artemisServerUrl.toString())).build();
         String renderedHtml = renderer.render(parser.parse(preRenderMarkdown));
