@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusResult;
@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage) {
 
-    private static final ObjectMapper mapper = new ObjectMapper();
+    private static final JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 
     /**
      * Converts a {@link Windfile} into the {@link BuildPlanPhasesDTO} format.

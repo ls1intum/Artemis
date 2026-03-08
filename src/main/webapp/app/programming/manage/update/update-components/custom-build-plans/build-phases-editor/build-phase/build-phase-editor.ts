@@ -56,12 +56,10 @@ export class BuildPhaseEditor {
     readonly isFirst = computed(() => this.index() === 0);
     readonly isOnly = computed(() => this.isFirst() && this.isLast());
 
-    readonly testsExpectedHintKey = computed(() => {
-        this.currentLocale();
-        return this.phase().resultPaths?.length
-            ? 'artemisApp.programmingExercise.buildPhasesEditor.testsExpected'
-            : 'artemisApp.programmingExercise.buildPhasesEditor.noTestsExpected';
-    });
+    readonly testsExpectedHintKey = computed(() =>
+        this.phase().resultPaths?.length ? 'artemisApp.programmingExercise.buildPhasesEditor.testsExpected' : 'artemisApp.programmingExercise.buildPhasesEditor.noTestsExpected',
+    );
+
     readonly conditionOptions = computed(() => {
         this.currentLocale();
         return Object.keys(BUILD_PHASE_CONDITION).map((key) => ({
