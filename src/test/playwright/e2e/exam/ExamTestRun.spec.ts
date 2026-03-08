@@ -17,7 +17,7 @@ const textFixture = 'loremIpsum-short.txt';
 const examTitle = 'exam' + generateUUID();
 const course = { id: SEED_COURSES.examTestRun.id } as any;
 
-test.describe('Exam test run', { tag: '@sequential' }, () => {
+test.describe('Exam test run', { tag: '@slow' }, () => {
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
 

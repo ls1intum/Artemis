@@ -52,7 +52,7 @@ export default defineConfig({
         trace: 'on-first-retry',
         /* Record video for all tests (passed and failed). Videos are saved in test-results folder. */
         video: {
-            mode: 'on',
+            mode: (process.env.PLAYWRIGHT_VIDEO_MODE as 'on' | 'off' | 'on-first-retry' | 'retain-on-failure') || 'on',
             size: { width: 1920, height: 1080 },
         },
         ignoreHTTPSErrors: true,
@@ -78,18 +78,18 @@ export default defineConfig({
                 viewport: { width: 1920, height: 1080 },
             },
         },
-        // Tests with @sequential tag. These tests are triggering programming exercise submissions.
-        // Running only one programming exercise evaluation at a time makes the tests stable.
-        // Higher timeout since builds can queue up when fast/slow tests run in parallel.
-        {
-            name: 'sequential-tests',
-            grep: /@sequential/,
-            timeout: (parseNumber(process.env.SEQUENTIAL_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-            fullyParallel: false,
-            use: {
-                browserName: 'chromium',
-                viewport: { width: 1920, height: 1080 },
-            },
-        },
+        // Sequential tests have been merged into slow-tests. C builds (2-5s) no longer cause
+        // contention even with parallel workers, so the sequential isolation is unnecessary.
+        // Kept commented out for reference in case sequential execution is needed again.
+        // {
+        //     name: 'sequential-tests',
+        //     grep: /@sequential/,
+        //     timeout: (parseNumber(process.env.SEQUENTIAL_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
+        //     fullyParallel: false,
+        //     use: {
+        //         browserName: 'chromium',
+        //         viewport: { width: 1920, height: 1080 },
+        //     },
+        // },
     ],
 });

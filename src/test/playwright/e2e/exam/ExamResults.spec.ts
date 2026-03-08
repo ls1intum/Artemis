@@ -28,7 +28,7 @@ const course = { id: SEED_COURSES.examResults.id } as any;
 
 // All 4 exercise types share a single exam to avoid redundant lifecycle waits.
 // Uses test.describe.serial so that setup (beforeAll) runs once before all tests.
-test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
+test.describe.serial('Exam Results', { tag: '@slow' }, () => {
     let exam: Exam;
     let studentExam: StudentExam;
     let examEndDate: Dayjs;

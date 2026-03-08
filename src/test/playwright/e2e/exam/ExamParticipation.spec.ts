@@ -275,7 +275,7 @@ test.describe('Exam participation', () => {
     });
 
     for (const cloneMethod of [GitCloneMethod.https, GitCloneMethod.httpsWithToken, GitCloneMethod.ssh]) {
-        test.describe('Programming exam with Git submissions', { tag: '@sequential' }, () => {
+        test.describe('Programming exam with Git submissions', { tag: '@slow' }, () => {
             let exam: Exam;
             let programmingExercise: ProgrammingExercise;
 

@@ -18,6 +18,7 @@ set -e
 #   --skip-db           Reuse already-running Postgres
 #   --headed            Run Playwright in headed mode
 #   --ui                Open Playwright UI mode
+#   --no-video          Disable video recording (saves CPU)
 #   --help              Show this help message
 # =============================================================================
 
@@ -44,6 +45,7 @@ while [[ $# -gt 0 ]]; do
         --skip-db) SKIP_DB=true; shift ;;
         --headed) PLAYWRIGHT_EXTRA_ARGS+=("--headed"); shift ;;
         --ui) PLAYWRIGHT_EXTRA_ARGS+=("--ui"); shift ;;
+        --no-video) export PLAYWRIGHT_VIDEO_MODE="off"; shift ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -334,8 +336,9 @@ export TUTOR_GROUP_NAME="tutors"
 export EDITOR_GROUP_NAME="editors"
 export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
-export FAST_SLOW_WORKERS="${FAST_SLOW_WORKERS:-6}"
-export SEQUENTIAL_WORKERS="${SEQUENTIAL_WORKERS:-6}"
+export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-8}}"
+# SEQUENTIAL_WORKERS is no longer used — sequential tests have been merged into slow-tests
+# export SEQUENTIAL_WORKERS="${SEQUENTIAL_WORKERS:-6}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-90}"
@@ -393,44 +396,30 @@ BASE_ARGS+=("${PLAYWRIGHT_EXTRA_ARGS[@]}")
 TEST_START=$(date +%s)
 EXIT_CODE=0
 
-# --- Run fast + slow tests (8 workers by default) ---
-echo -e "${BLUE}Running fast + slow tests with $FAST_SLOW_WORKERS workers...${NC}"
+# --- Run all tests (fast + slow) in a single phase ---
+echo -e "${BLUE}Running all tests with $TEST_WORKERS workers...${NC}"
 export PLAYWRIGHT_TEST_TYPE="parallel"
-FAST_SLOW_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$FAST_SLOW_WORKERS")
-echo "Running: ${FAST_SLOW_CMD[*]}"
+TEST_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
+echo "Running: ${TEST_CMD[*]}"
 echo ""
 
-PHASE1_START=$(date +%s)
 set +e
-"${FAST_SLOW_CMD[@]}"
-FAST_SLOW_EXIT=$?
+"${TEST_CMD[@]}"
+TEST_EXIT=$?
 set -e
-PHASE1_END=$(date +%s)
-PHASE1_DURATION=$((PHASE1_END - PHASE1_START))
 
-if [ $FAST_SLOW_EXIT -ne 0 ]; then
-    EXIT_CODE=$FAST_SLOW_EXIT
+if [ $TEST_EXIT -ne 0 ]; then
+    EXIT_CODE=$TEST_EXIT
 fi
 
-# --- Run sequential tests (2 workers by default) ---
-echo ""
-echo -e "${BLUE}Running sequential tests with $SEQUENTIAL_WORKERS workers...${NC}"
-export PLAYWRIGHT_TEST_TYPE="sequential"
-SEQ_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=sequential-tests --workers="$SEQUENTIAL_WORKERS")
-echo "Running: ${SEQ_CMD[*]}"
-echo ""
-
-PHASE2_START=$(date +%s)
-set +e
-"${SEQ_CMD[@]}"
-SEQ_EXIT=$?
-set -e
-PHASE2_END=$(date +%s)
-PHASE2_DURATION=$((PHASE2_END - PHASE2_START))
-
-if [ $SEQ_EXIT -ne 0 ]; then
-    EXIT_CODE=$SEQ_EXIT
-fi
+# Old two-phase execution (sequential tests merged into slow-tests):
+# PHASE1_START=$(date +%s)
+# FAST_SLOW_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
+# "${FAST_SLOW_CMD[@]}"
+# PHASE1_END=$(date +%s)
+#
+# SEQ_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=sequential-tests --workers="$SEQUENTIAL_WORKERS")
+# "${SEQ_CMD[@]}"
 
 # Stop CPU monitoring
 kill "$CPU_MONITOR_PID" 2>/dev/null || true
@@ -494,10 +483,8 @@ if [ $TOTAL_TESTS -gt 0 ]; then
     [ $TOTAL_SKIPPED -gt 0 ] && echo "  Skipped: $TOTAL_SKIPPED"
     echo "  Total:   $TOTAL_TESTS"
     echo ""
-    echo -e "  ${BLUE}Timing breakdown:${NC}"
-    echo "  Fast+Slow ($FAST_SLOW_WORKERS workers):   $((PHASE1_DURATION / 60))m $((PHASE1_DURATION % 60))s"
-    echo "  Sequential ($SEQUENTIAL_WORKERS workers):  $((PHASE2_DURATION / 60))m $((PHASE2_DURATION % 60))s"
-    echo "  Total:                      ${TEST_MINS}m ${TEST_SECS}s"
+    echo -e "  ${BLUE}Timing:${NC}"
+    echo "  All tests ($TEST_WORKERS workers): ${TEST_MINS}m ${TEST_SECS}s"
     echo -e "${BLUE}----------------------------------------${NC}"
 
     # CPU usage summary from collected samples

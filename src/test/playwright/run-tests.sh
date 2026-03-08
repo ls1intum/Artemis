@@ -70,9 +70,9 @@ if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     echo "--- Running parallel tests ---"
     run_playwright parallel --project=fast-tests --project=slow-tests "${TEST_PATHS[@]}"
 
-    # Run sequential tests
-    echo "--- Running sequential tests ---"
-    run_playwright sequential --project=sequential-tests --workers 1 "${TEST_PATHS[@]}"
+    # Sequential tests have been merged into slow-tests (C builds no longer cause contention)
+    # echo "--- Running sequential tests ---"
+    # run_playwright sequential --project=sequential-tests --workers 1 "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
@@ -80,9 +80,9 @@ else
     echo "--- Running parallel tests ---"
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
 
-    # Run sequential tests
-    echo "--- Running sequential tests ---"
-    run_playwright sequential e2e --project=sequential-tests --workers 1
+    # Sequential tests have been merged into slow-tests (C builds no longer cause contention)
+    # echo "--- Running sequential tests ---"
+    # run_playwright sequential e2e --project=sequential-tests --workers 1
 fi
 
 # Merge reports

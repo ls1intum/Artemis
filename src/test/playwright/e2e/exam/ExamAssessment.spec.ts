@@ -29,7 +29,7 @@ test.beforeAll('Get student name', async ({ browser }) => {
 });
 
 test.describe('Exam assessment', () => {
-    test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
+    test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
         let exam: Exam;
         let examEnd: Dayjs;
 

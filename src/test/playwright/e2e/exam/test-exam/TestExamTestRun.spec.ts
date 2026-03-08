@@ -15,7 +15,7 @@ const examTitle = 'exam' + generateUUID();
 
 const course = { id: SEED_COURSES.testExam.id } as any;
 
-test.describe('Test exam test run', { tag: '@sequential' }, () => {
+test.describe('Test exam test run', { tag: '@slow' }, () => {
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
 

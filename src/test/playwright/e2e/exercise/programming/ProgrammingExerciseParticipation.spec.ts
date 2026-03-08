@@ -18,7 +18,7 @@ import { SEED_COURSES } from '../../../support/seedData';
 const course = { id: SEED_COURSES.programmingParticipation.id } as any;
 
 // Basic submission tests: use seed course, only create exercises per test.
-test.describe('Programming exercise basic submissions', { tag: '@sequential' }, () => {
+test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => {
     // Optimized test matrix: C builds are fast (~5s) so we test code editor + git with C.
     // Java/Python builds are slow (~30-50s) and use the same git flow, so we skip them.
     // The code editor test (failing C) verifies error display. The git test (successful C) verifies the full flow.
@@ -63,7 +63,7 @@ test.describe('Programming exercise basic submissions', { tag: '@sequential' }, 
 
 // Tests that require sequential execution: secure git (shared SSH keys), team exercises
 // (shared repository), and instructor submissions (multiple queued builds).
-test.describe('Programming exercise advanced participation', { tag: '@sequential' }, () => {
+test.describe('Programming exercise advanced participation', { tag: '@slow' }, () => {
     test.describe('Programming exercise participation using secure git', () => {
         let exercise: ProgrammingExercise;
 

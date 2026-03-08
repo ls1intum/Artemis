@@ -187,7 +187,7 @@ test.describe('Import exercises', () => {
             programmingExercise = await exerciseAPIRequests.createProgrammingExercise({ course, programmingLanguage: ProgrammingLanguage.C });
         });
 
-        test('Imports programming exercise', { tag: '@sequential' }, async ({ login, page, courseManagementExercises, programmingExerciseCreation }) => {
+        test('Imports programming exercise', { tag: '@slow' }, async ({ login, page, courseManagementExercises, programmingExerciseCreation }) => {
             await login(instructor, `/course-management/${secondCourse.id}/exercises`);
             await courseManagementExercises.importProgrammingExercise();
             await courseManagementExercises.clickImportExercise(programmingExercise.id!);
