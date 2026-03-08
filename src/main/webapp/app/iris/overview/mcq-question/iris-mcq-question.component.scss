@@ -1,0 +1,127 @@
+.mcq-container {
+    max-width: 500px;
+    padding: 1rem;
+    border-radius: 12px;
+    background: var(--iris-received-message-background);
+    border: 1px solid var(--border-color, #e0e0e0);
+}
+
+.mcq-question {
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.625rem 0.75rem;
+    border: 1.5px solid var(--border-color, #d0d0d0);
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition:
+        border-color 0.15s,
+        background-color 0.15s;
+    font-size: 0.9rem;
+
+    &:hover:not(:disabled) {
+        border-color: var(--primary, #3b82f6);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    &.selected {
+        border-color: var(--primary, #3b82f6);
+        background: rgba(59, 130, 246, 0.1);
+    }
+
+    &.correct {
+        border-color: var(--bs-success, #22c55e);
+        background: rgba(34, 197, 94, 0.1);
+    }
+
+    &.incorrect {
+        border-color: var(--bs-danger, #ef4444);
+        background: rgba(239, 68, 68, 0.1);
+    }
+
+    &:disabled {
+        cursor: default;
+    }
+}
+
+.mcq-option-label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--border-color, #e0e0e0);
+    font-weight: 600;
+    font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.mcq-option-text {
+    flex: 1;
+}
+
+.mcq-submit {
+    width: 100%;
+    padding: 0.5rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--primary, #3b82f6);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+
+    &:hover:not(:disabled) {
+        opacity: 0.9;
+    }
+
+    &:disabled {
+        opacity: 0.5;
+        cursor: default;
+    }
+}
+
+.mcq-feedback {
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+
+    &-correct {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--bs-success, #16a34a);
+    }
+
+    &-incorrect {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--bs-danger, #dc2626);
+    }
+}
+
+.mcq-explanation {
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--text-secondary, #666);
+
+    strong {
+        margin-right: 0.25rem;
+    }
+}
