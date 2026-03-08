@@ -89,6 +89,8 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
 
             for (const sshAlgorithm of [SshEncryptionAlgorithm.rsa, SshEncryptionAlgorithm.ed25519]) {
                 test(`Makes a git submission using SSH with ${sshAlgorithm} key`, async ({ page, programmingExerciseOverview }) => {
+                    // SSH key setup + git clone/push + CI build takes longer under parallel load
+                    test.slow();
                     await programmingExerciseOverview.startParticipation(course.id!, exercise.id!, studentOne);
                     await programmingExerciseOverview.openCloneMenu(GitCloneMethod.ssh);
                     await expect(programmingExerciseOverview.getCloneUrlButton()).toBeDisabled();
