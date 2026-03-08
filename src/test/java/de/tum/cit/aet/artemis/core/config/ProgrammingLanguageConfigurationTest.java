@@ -23,6 +23,8 @@ class ProgrammingLanguageConfigurationTest {
 
     private static final String OVERRIDDEN_IMAGE_NAME = "overridden_image";
 
+    private static final String C_DOCKER_IMAGE = "ls1tum/artemis-c-minimal-docker:v1.0.0";
+
     private static final String FACT_DOCKER_IMAGE = "ls1tum/artemis-fact-minimal-docker:1.1.0";
 
     private Map<String, Map<String, String>> defaultConfig;
@@ -88,6 +90,15 @@ class ProgrammingLanguageConfigurationTest {
         config.setImages(readBuildImagesFromMainApplicationConfig());
 
         assertThat(config.getImage(ProgrammingLanguage.C, Optional.of(ProjectType.FACT))).isEqualTo(FACT_DOCKER_IMAGE);
+    }
+
+    @Test
+    void testProductionConfigContainsDefaultCImage() throws IOException {
+        var config = new ProgrammingLanguageConfiguration();
+        config.setImages(readBuildImagesFromMainApplicationConfig());
+
+        assertThat(config.getImage(ProgrammingLanguage.C, Optional.empty())).isEqualTo(C_DOCKER_IMAGE);
+        assertThat(config.getImage(ProgrammingLanguage.C, Optional.of(ProjectType.GCC))).isEqualTo(C_DOCKER_IMAGE);
     }
 
     @Test

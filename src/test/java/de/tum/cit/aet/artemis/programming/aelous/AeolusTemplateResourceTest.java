@@ -25,6 +25,8 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final String TEST_PREFIX = "aeolusintegration";
 
+    private static final String C_DOCKER_IMAGE = "ls1tum/artemis-c-minimal-docker:v1.0.0";
+
     private static final String FACT_DOCKER_IMAGE = "ls1tum/artemis-fact-minimal-docker:1.1.0";
 
     @Autowired
@@ -180,6 +182,16 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
         assertThat(windfile.metadata().docker()).isNotNull();
         assertThat(windfile.metadata().docker().image()).isEqualTo(FACT_DOCKER_IMAGE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGccTemplateUsesConfiguredDockerImage() throws Exception {
+        String template = request.get("/api/programming/aeolus/templates/C/GCC", HttpStatus.OK, String.class);
+        Windfile windfile = Windfile.deserialize(template);
+
+        assertThat(windfile.metadata().docker()).isNotNull();
+        assertThat(windfile.metadata().docker().image()).isEqualTo(C_DOCKER_IMAGE);
     }
 
     void assertWindfileIsCorrect(Windfile windfile, int expectedScriptActions) {
