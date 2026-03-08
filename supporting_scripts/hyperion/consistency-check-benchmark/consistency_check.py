@@ -65,8 +65,12 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
 
     run_id = f"{model_name}-default"
 
+    succeeded_count = 0
+    failed_count = 0
+    failed_checks: list[str] = []
+
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        futures = []
+        future_to_local_id = {}
 
         for local_id, server_id in exercise_ids_filtered.items():
             exercise_name = local_id.split(':')[0]
@@ -78,7 +82,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
 
             exercise_results_dir = os.path.join(pecv_bench_dir, "results", dataset_version, approach_id, model_name, "cases", course_name, exercise_name)
 
-            futures.append(executor.submit(
+            future = executor.submit(
                 consistency_check_io,
                 session,
                 SERVER_URL,
@@ -88,16 +92,30 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
                 dataset_version,
                 course_name,
                 run_id
-            ))
+            )
+            future_to_local_id[future] = local_id
 
-        for future in as_completed(futures):
+        logging.info(f"Total variants to check: {len(future_to_local_id)}")
+
+        for future in as_completed(future_to_local_id):
+            local_id = future_to_local_id[future]
             try:
                 result = future.result()
-                logging.info(result)
+                if "success" in result:
+                    succeeded_count += 1
+                    logging.info(f"[OK]   {result}")
+                else:
+                    failed_count += 1
+                    failed_checks.append(local_id)
+                    logging.error(f"[FAIL] {result}")
             except Exception as e:
-                logging.exception(f"Thread failed with error: {e}")
+                failed_count += 1
+                failed_checks.append(local_id)
+                logging.exception(f"[FAIL] {local_id} — thread error: {e}")
 
-    logging.info("All consistency checks completed.")
+    logging.info(f"Consistency checks completed: {succeeded_count}/{len(future_to_local_id)} succeeded.")
+    if failed_checks:
+        logging.error(f"Failed consistency checks ({failed_count}):\n" + "\n".join(f"  - {v}" for v in sorted(failed_checks)))
     return approach_id
 
 def consistency_check_io(session: Session, server_url: str, exercise_local_id: str, exercise_server_id: int, exercise_results_dir: str, dataset_version: str, course_name: str, run_id: str) -> str:
