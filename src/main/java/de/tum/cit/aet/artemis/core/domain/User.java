@@ -209,6 +209,14 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "memiris_enabled", nullable = false)
     private boolean memirisEnabled = false;
 
+    @Column(name = "is_bot", nullable = false)
+    private boolean isBot = false;
+
+    @Nullable
+    @JsonIgnore
+    @Column(name = "api_key_hash")
+    private String apiKeyHash;
+
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "user", allowSetters = true)
     @JoinColumn(name = "learner_profile_id")
@@ -552,5 +560,22 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setMemirisEnabled(boolean memirisEnabled) {
         this.memirisEnabled = memirisEnabled;
+    }
+
+    public boolean isBot() {
+        return isBot;
+    }
+
+    public void setIsBot(boolean isBot) {
+        this.isBot = isBot;
+    }
+
+    @Nullable
+    public String getApiKeyHash() {
+        return apiKeyHash;
+    }
+
+    public void setApiKeyHash(@Nullable String apiKeyHash) {
+        this.apiKeyHash = apiKeyHash;
     }
 }
