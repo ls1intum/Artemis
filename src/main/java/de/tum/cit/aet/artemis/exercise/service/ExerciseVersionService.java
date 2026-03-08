@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseVersion;
+import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
 import de.tum.cit.aet.artemis.exercise.dto.synchronization.ExerciseEditorSyncTarget;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ExerciseSnapshotDTO;
 import de.tum.cit.aet.artemis.exercise.dto.versioning.ProgrammingExerciseSnapshotDTO;
@@ -71,10 +73,12 @@ public class ExerciseVersionService {
 
     private final ExerciseReviewService exerciseReviewService;
 
+    private final ApplicationEventPublisher eventPublisher;
+
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewService exerciseReviewService) {
+            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -86,6 +90,7 @@ public class ExerciseVersionService {
         this.exerciseEditorSyncService = exerciseEditorSyncService;
         this.channelRepository = channelRepository;
         this.exerciseReviewService = exerciseReviewService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -162,6 +167,8 @@ public class ExerciseVersionService {
                     log.warn("Could not update review threads for version {}: {}", savedExerciseVersion.getId(), ex.getMessage());
                 }
             });
+            // Publish event to notify listeners (e.g., search indexing services)
+            eventPublisher.publishEvent(new ExerciseVersionCreatedEvent(exercise));
         }
         catch (Exception e) {
             // Intentionally swallowed: exercise version creation is a non-critical side effect
