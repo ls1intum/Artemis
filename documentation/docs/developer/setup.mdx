@@ -207,6 +207,8 @@ artemis:
 
     user-management:
         use-external: true # enables ldap authentication
+        passkey:
+          enabled: true
         password-reset:
             links:
                 en: '<link>'
@@ -242,6 +244,8 @@ artemis:
     tutorialgroup:
       enabled: true
     sharing:
+      enabled: true
+    hyperion:
       enabled: true
 
     athena:
@@ -338,29 +342,31 @@ You can find the latest Artemis Dockerfile at `docker/artemis/Dockerfile`.
 
 <Callout variant={CalloutVariant.info}>
   The Docker image requires several module properties to be explicitly configured. Without them, the server will fail to start with an error such as:
-  ```
-  Property artemis.atlas.enabled not found in Artemis configuration.
-  Make sure to add it to your application.yml-file. Allowed values: true, false
-  ```
+  *Property artemis.atlas.enabled not found in Artemis configuration.
+  Make sure to add it to your application.yml-file.*
 </Callout>
 
 To provide the required configuration, one option is to create an `application-local.yml` and mount it into `/opt/artemis/config/`. Use the properties from [Common Configuration Options](#common-configuration-options) as a base, and add a `spring.datasource` block:
 
 ```yaml
 # application-local.yml
+# ... all other properties from Common Configuration Options
 spring:
     datasource:
+        # If your database is running in another Docker container locally on your machine, replace `<db-host>` with `host.docker.internal` (macOS/Windows) or the host's IP address (Linux).
         url: "jdbc:mysql://<db-host>:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
-# ... all other properties from Common Configuration Options
+        # Depending on your database setup, the following may be required:
+        username: root
+        password: ""
 ```
 
-Then run the container using the following command:
+Then run the container using the following command and replace `<TAG/VERSION>` as described above:
 
 ```bash
 docker run \
   -v "$PWD/application-local.yml:/opt/artemis/config/application-local.yml:ro" \
   -e SPRING_CONFIG_ADDITIONAL_LOCATION=file:/opt/artemis/config/ \
-  -e SPRING_PROFILES_ACTIVE=local \
+  -e SPRING_PROFILES_ACTIVE=dev,artemis,localci,localvc,scheduling,buildagent,core,ldap,local,modeling,text,quiz,apollon \
   -p 8080:8080 \
   ghcr.io/ls1intum/artemis:<TAG/VERSION>
 ```
