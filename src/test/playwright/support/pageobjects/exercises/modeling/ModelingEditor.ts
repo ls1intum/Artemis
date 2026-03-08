@@ -9,25 +9,73 @@ export class ModelingEditor {
         this.page = page;
     }
 
+    /**
+     * Adds an element to the Apollon model programmatically via the editor's public API.
+     * We bypass drag-and-drop because Apollon's SVG canvas has width="0" height="0"
+     * on empty diagrams (dimensions come from diagram.bounds in Redux state), and
+     * Chromium's renderer crashes when Playwright tries mouse operations on a 0×0 SVG.
+     */
+    private async addElementViaEditorAPI(editorSelector: string, posX: number, posY: number) {
+        await this.page.evaluate(
+            ({ selector, x, y }) => {
+                const editorEl = document.querySelector(selector);
+                if (!editorEl) throw new Error(`Modeling editor element not found: ${selector}`);
+
+                const ng = (window as any).ng;
+                if (!ng?.getComponent) throw new Error('Angular debug API (ng.getComponent) not available');
+
+                const component = ng.getComponent(editorEl);
+                if (!component?.apollonEditor) throw new Error('ApollonEditor instance not found on component');
+
+                const editor = component.apollonEditor;
+                const model = JSON.parse(JSON.stringify(editor.model));
+
+                const id = 'e2e-' + Math.random().toString(36).slice(2, 11);
+                const attrId = 'e2e-a-' + Math.random().toString(36).slice(2, 11);
+                const methodId = 'e2e-m-' + Math.random().toString(36).slice(2, 11);
+
+                model.elements[id] = {
+                    id,
+                    name: 'TestClass',
+                    type: 'Class',
+                    owner: null,
+                    bounds: { x, y, width: 200, height: 100 },
+                    attributes: [attrId],
+                    methods: [methodId],
+                };
+                model.elements[attrId] = {
+                    id: attrId,
+                    name: '+ attribute: Type',
+                    type: 'ClassAttribute',
+                    owner: id,
+                    bounds: { x: 0, y: 40, width: 200, height: 30 },
+                };
+                model.elements[methodId] = {
+                    id: methodId,
+                    name: '+ method(): void',
+                    type: 'ClassMethod',
+                    owner: id,
+                    bounds: { x: 0, y: 70, width: 200, height: 30 },
+                };
+                model.interactive.elements[id] = true;
+                model.interactive.elements[attrId] = true;
+                model.interactive.elements[methodId] = true;
+
+                editor.model = model;
+            },
+            { selector: editorSelector, x: posX, y: posY },
+        );
+    }
+
     async addComponentToModel(exerciseID: number, componentNumber: number, x?: number, y?: number) {
         const exerciseElement = getExercise(this.page, exerciseID);
         const sidebar = exerciseElement.locator('#modeling-editor-sidebar');
         await sidebar.waitFor({ state: 'visible' });
         const canvas = exerciseElement.locator(MODELING_EDITOR_CANVAS);
         await canvas.waitFor({ state: 'visible' });
-        // Wait for Apollon to render the SVG canvas with non-zero dimensions
-        await this.page.waitForFunction(
-            (selector: string) => {
-                const el = document.querySelector(selector);
-                return el != null && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
-            },
-            `#exercise-${exerciseID} ${MODELING_EDITOR_CANVAS}`,
-            { timeout: 15000 },
-        );
-        const component = sidebar.locator('div').nth(componentNumber);
-        const targetPosition = x && y ? { x, y } : undefined;
-        await component.dragTo(canvas, { targetPosition, force: true });
-        await canvas.dispatchEvent('pointerup');
+        const posX = x ?? 100 + componentNumber * 250;
+        const posY = y ?? 100;
+        await this.addElementViaEditorAPI(`#exercise-${exerciseID} jhi-modeling-editor`, posX, posY);
     }
 
     getModelingCanvas() {
@@ -39,17 +87,7 @@ export class ModelingEditor {
         await sidebar.waitFor({ state: 'visible' });
         const canvas = this.page.locator(MODELING_EDITOR_CANVAS);
         await canvas.waitFor({ state: 'visible' });
-        await this.page.waitForFunction(
-            (selector: string) => {
-                const el = document.querySelector(selector);
-                return el != null && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
-            },
-            MODELING_EDITOR_CANVAS,
-            { timeout: 15000 },
-        );
-        const sidebarComponent = sidebar.locator('div').nth(componentNumber);
-        await sidebarComponent.dragTo(canvas, { force: true });
-        await canvas.dispatchEvent('pointerup');
+        await this.addElementViaEditorAPI('jhi-modeling-editor', 100 + componentNumber * 250, 100);
     }
 
     async submit() {

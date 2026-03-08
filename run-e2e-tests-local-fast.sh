@@ -354,10 +354,17 @@ PLAYWRIGHT_CMD+=("${PLAYWRIGHT_EXTRA_ARGS[@]}")
 echo "Running: ${PLAYWRIGHT_CMD[*]}"
 echo ""
 
+TEST_START=$(date +%s)
+
 set +e
 "${PLAYWRIGHT_CMD[@]}"
 EXIT_CODE=$?
 set -e
+
+TEST_END=$(date +%s)
+TEST_DURATION=$((TEST_END - TEST_START))
+TEST_MINS=$((TEST_DURATION / 60))
+TEST_SECS=$((TEST_DURATION % 60))
 
 cd ../../..
 
@@ -365,16 +372,6 @@ cd ../../..
 # Step 5: Report results
 # =============================================================================
 REPORT_DIR="src/test/playwright/test-reports"
-
-echo ""
-echo -e "${BLUE}========================================${NC}"
-echo -e "${BLUE}  TEST RESULTS SUMMARY${NC}"
-echo -e "${BLUE}========================================${NC}"
-
-TOTAL_TESTS=0
-TOTAL_FAILURES=0
-TOTAL_ERRORS=0
-TOTAL_SKIPPED=0
 
 XML_FILES=()
 if [ -f "$REPORT_DIR/results.xml" ]; then
@@ -385,13 +382,18 @@ else
     done
 fi
 
+# Parse totals from JUnit XML
+TOTAL_TESTS=0
+TOTAL_FAILURES=0
+TOTAL_ERRORS=0
+TOTAL_SKIPPED=0
+
 for xml_file in "${XML_FILES[@]}"; do
     while IFS= read -r line; do
         tests=$(echo "$line" | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
         failures=$(echo "$line" | grep -o 'failures="[0-9]*"' | grep -o '[0-9]*')
         errors=$(echo "$line" | grep -o 'errors="[0-9]*"' | grep -o '[0-9]*')
         skipped=$(echo "$line" | grep -o 'skipped="[0-9]*"' | grep -o '[0-9]*')
-
         TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
         TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
         TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
@@ -401,41 +403,75 @@ done
 
 TOTAL_PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS - TOTAL_SKIPPED))
 
-if [ $TOTAL_TESTS -gt 0 ]; then
-    echo "  Total:   $TOTAL_TESTS tests"
-    echo "  Passed:  $TOTAL_PASSED"
-    echo "  Failed:  $TOTAL_FAILURES"
-    echo "  Errors:  $TOTAL_ERRORS"
-    echo "  Skipped: $TOTAL_SKIPPED"
-    echo -e "${BLUE}========================================${NC}"
+# Print summary
+echo ""
+echo -e "${BLUE}========================================${NC}"
+if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $EXIT_CODE -eq 0 ]; then
+    echo -e "${GREEN}  ALL TESTS PASSED${NC}"
+else
+    echo -e "${RED}  SOME TESTS FAILED${NC}"
+fi
+echo -e "${BLUE}========================================${NC}"
 
+if [ $TOTAL_TESTS -gt 0 ]; then
+    echo -e "  ${GREEN}Passed:${NC}  $TOTAL_PASSED"
+    [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ] && echo -e "  ${RED}Failed:${NC}  $((TOTAL_FAILURES + TOTAL_ERRORS))" || echo "  Failed:  0"
+    [ $TOTAL_SKIPPED -gt 0 ] && echo "  Skipped: $TOTAL_SKIPPED"
+    echo "  Total:   $TOTAL_TESTS"
+    echo "  Time:    ${TEST_MINS}m ${TEST_SECS}s"
+    echo -e "${BLUE}----------------------------------------${NC}"
+
+    # Show individual failed tests with their names from JUnit XML
     if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ]; then
         echo ""
-        echo -e "${RED}FAILED TESTS:${NC}"
-        echo "-------------"
+        echo -e "${RED}Failed tests:${NC}"
+        FAIL_NAMES=()
         for xml_file in "${XML_FILES[@]}"; do
-            grep '<failure message=' "$xml_file" 2>/dev/null | \
-                sed 's/.*message="\([^"]*\)".*/  - \1/' || true
+            # Extract failed test case names: find <testcase> elements that contain <failure>
+            # Use awk to pair testcase names with failure status
+            while IFS= read -r tc_line; do
+                tc_name=$(echo "$tc_line" | sed -n 's/.*name="\([^"]*\)".*/\1/p')
+                tc_class=$(echo "$tc_line" | sed -n 's/.*classname="\([^"]*\)".*/\1/p')
+                if [ -n "$tc_name" ]; then
+                    echo -e "  ${RED}✗${NC} ${tc_class} > ${tc_name}"
+                    # Collect unique test names for re-run suggestion
+                    FAIL_NAMES+=("$tc_name")
+                fi
+            done < <(
+                # Find testcase elements that have a <failure> child
+                awk '/<testcase / { tc=$0 } /<failure/ && tc { print tc; tc="" }' "$xml_file"
+            )
         done
+
         echo ""
+        # Suggest re-run command for failed tests
+        if [ ${#FAIL_NAMES[@]} -gt 0 ] && [ ${#FAIL_NAMES[@]} -le 5 ]; then
+            # Build a grep pattern from failed test names (escape regex special chars)
+            RERUN_PATTERN=""
+            for name in "${FAIL_NAMES[@]}"; do
+                escaped=$(echo "$name" | sed 's/[.[\*^$()+?{|]/\\&/g')
+                if [ -z "$RERUN_PATTERN" ]; then
+                    RERUN_PATTERN="$escaped"
+                else
+                    RERUN_PATTERN="$RERUN_PATTERN|$escaped"
+                fi
+            done
+            echo -e "${BLUE}Re-run failed tests:${NC}"
+            echo "  ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter \"$RERUN_PATTERN\""
+        fi
+
+        echo ""
+        echo -e "${BLUE}View HTML report:${NC}"
+        echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
     fi
 else
     echo "  No JUnit test results found in $REPORT_DIR"
-    echo -e "${BLUE}========================================${NC}"
-fi
-
-# Print result and re-run hints
-echo ""
-if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -eq 0 ] && [ $EXIT_CODE -eq 0 ]; then
-    echo -e "${GREEN}All tests passed!${NC}"
-else
-    echo -e "${RED}Tests failed!${NC} View HTML report:"
-    echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
+    echo "  Time: ${TEST_MINS}m ${TEST_SECS}s"
 fi
 
 echo ""
 echo -e "${BLUE}Services are still running. Quick re-run:${NC}"
-echo "  ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter \"YourTest\""
+echo "  ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db [--filter \"Test\"]"
 echo ""
 echo -e "${BLUE}To stop all services:${NC}"
 echo "  ./run-e2e-tests-local-fast.sh --stop"
