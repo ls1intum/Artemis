@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.core.config.weaviate;
+package de.tum.cit.aet.artemis.globalsearch.config;
 
 import org.springframework.context.annotation.Condition;
 import org.springframework.context.annotation.ConditionContext;
