@@ -25,6 +25,8 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final String TEST_PREFIX = "aeolusintegration";
 
+    private static final String FACT_DOCKER_IMAGE = "ls1tum/artemis-fact-minimal-docker:1.1.0";
+
     @Autowired
     private UserUtilService userUtilService;
 
@@ -168,6 +170,16 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNonExistingAeolusTemplateFile() throws Exception {
         request.get("/api/programming/aeolus/templates/JAVA/PLAIN_GRADLE?staticAnalysis=true&sequentialRuns=true", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testFactTemplateUsesConfiguredDockerImage() throws Exception {
+        String template = request.get("/api/programming/aeolus/templates/C/FACT", HttpStatus.OK, String.class);
+        Windfile windfile = Windfile.deserialize(template);
+
+        assertThat(windfile.metadata().docker()).isNotNull();
+        assertThat(windfile.metadata().docker().image()).isEqualTo(FACT_DOCKER_IMAGE);
     }
 
     void assertWindfileIsCorrect(Windfile windfile, int expectedScriptActions) {

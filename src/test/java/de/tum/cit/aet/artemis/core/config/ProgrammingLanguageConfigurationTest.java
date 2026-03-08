@@ -3,6 +3,9 @@ package de.tum.cit.aet.artemis.core.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -12,6 +15,7 @@ import java.util.function.Predicate;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.yaml.snakeyaml.Yaml;
 
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
@@ -19,6 +23,8 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 class ProgrammingLanguageConfigurationTest {
 
     private static final String OVERRIDDEN_IMAGE_NAME = "overridden_image";
+
+    private static final String FACT_DOCKER_IMAGE = "ls1tum/artemis-fact-minimal-docker:1.1.0";
 
     private Map<String, Map<String, String>> defaultConfig;
 
@@ -78,6 +84,14 @@ class ProgrammingLanguageConfigurationTest {
     }
 
     @Test
+    void testProductionConfigContainsFactImageOverride() throws IOException {
+        var config = new ProgrammingLanguageConfiguration();
+        config.setImages(readBuildImagesFromMainApplicationConfig());
+
+        assertThat(config.getImage(ProgrammingLanguage.C, Optional.of(ProjectType.FACT))).isEqualTo(FACT_DOCKER_IMAGE);
+    }
+
+    @Test
     void testOverriddenImageConfigurationMaven() {
         defaultConfig.get("java").put("maven", OVERRIDDEN_IMAGE_NAME);
         testOverriddenImageConfiguration(ProgrammingLanguage.JAVA, List.of(ProjectType.MAVEN_MAVEN, ProjectType.PLAIN_MAVEN));
@@ -130,6 +144,18 @@ class ProgrammingLanguageConfigurationTest {
         }
 
         return images;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Map<String, String>> readBuildImagesFromMainApplicationConfig() throws IOException {
+        try (var inputStream = Files.newInputStream(Path.of("src", "main", "resources", "config", "application.yml"))) {
+            Yaml yaml = new Yaml();
+            Map<String, Object> root = yaml.load(inputStream);
+            Map<String, Object> artemis = (Map<String, Object>) root.get("artemis");
+            Map<String, Object> continuousIntegration = (Map<String, Object>) artemis.get("continuous-integration");
+            Map<String, Object> build = (Map<String, Object>) continuousIntegration.get("build");
+            return (Map<String, Map<String, String>>) build.get("images");
+        }
     }
 
     private List<ProgrammingLanguageConfiguration.DockerFlag> getDockerFlags() {

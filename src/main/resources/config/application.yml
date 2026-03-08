@@ -84,7 +84,7 @@ artemis:
                 c:
                     # possible overrides: gcc, fact
                     default: "ls1tum/artemis-c-docker:v1.0.0"
-                    fact: "sharingcodeability/fact:v0.0.5"
+                    fact: "ls1tum/artemis-fact-minimal-docker:1.1.0"
                 haskell:
                     default: "ghcr.io/uni-passau-artemis/artemis-haskell:v22.37.0"
                 vhdl:
