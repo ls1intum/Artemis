@@ -111,9 +111,8 @@ jobs:
 
       - name: Record test start time
         id: test-timer
-        uses: ./.github/actions/wall-clock-timer
-        with:
-          mode: start
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
 
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
         id: run-tests-phase1
@@ -124,10 +123,8 @@ jobs:
       - name: Calculate wall-clock duration
         id: wall-clock
         if: success() || failure()
-        uses: ./.github/actions/wall-clock-timer
-        with:
-          mode: stop
-          start-time: ${{ steps.test-timer.outputs.start }}
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -149,22 +146,23 @@ jobs:
       - name: Extract failed tests
         id: failed-tests
         if: success() || failure()
-        uses: ./.github/actions/extract-failed-tests
-        with:
-          results-xml-path: phase1-test-results/results.xml
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh phase1-test-results/results.xml
 
       - name: Format test results
         id: format-results
         if: success() || failure()
-        uses: ./.github/actions/format-test-results
+        uses: actions/github-script@v8
+        env:
+          INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_PHASE_LABEL: Phase 1
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-phase1.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
         with:
-          summary: ${{ steps.e2e-report.outputs.summary }}
-          wall-clock-duration: ${{ steps.wall-clock.outputs.duration }}
-          failures: ${{ steps.failed-tests.outputs.failures }}
-          phase-label: Phase 1
-          test-outcome: ${{ steps.run-tests-phase1.outcome }}
-          job-status: ${{ job.status }}
-          reporter-failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
+          script: require('./.github/scripts/format-test-results.js')(core);
 
       - name: Find E2E PR comment
         id: find-e2e-comment
@@ -283,9 +281,8 @@ jobs:
 
       - name: Record test start time
         id: test-timer
-        uses: ./.github/actions/wall-clock-timer
-        with:
-          mode: start
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
         id: run-tests-phase2
@@ -296,10 +293,8 @@ jobs:
       - name: Calculate wall-clock duration
         id: wall-clock
         if: success() || failure()
-        uses: ./.github/actions/wall-clock-timer
-        with:
-          mode: stop
-          start-time: ${{ steps.test-timer.outputs.start }}
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -321,22 +316,23 @@ jobs:
       - name: Extract failed tests
         id: failed-tests
         if: success() || failure()
-        uses: ./.github/actions/extract-failed-tests
-        with:
-          results-xml-path: phase2-test-results/results.xml
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh phase2-test-results/results.xml
 
       - name: Format test results
         id: format-results
         if: success() || failure()
-        uses: ./.github/actions/format-test-results
+        uses: actions/github-script@v8
+        env:
+          INPUT_SUMMARY: ${{ steps.e2e-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_PHASE_LABEL: Phase 2
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-phase2.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
         with:
-          summary: ${{ steps.e2e-report.outputs.summary }}
-          wall-clock-duration: ${{ steps.wall-clock.outputs.duration }}
-          failures: ${{ steps.failed-tests.outputs.failures }}
-          phase-label: Phase 2
-          test-outcome: ${{ steps.run-tests-phase2.outcome }}
-          job-status: ${{ job.status }}
-          reporter-failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
+          script: require('./.github/scripts/format-test-results.js')(core);
 
       - name: Find E2E PR comment
         id: find-e2e-comment
@@ -457,9 +453,8 @@ jobs:
 
       - name: Record test start time
         id: test-timer
-        uses: ./.github/actions/wall-clock-timer
-        with:
-          mode: start
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh start
 
       - name: Run E2E Playwright tests (PostgreSQL, Local)
         id: run-tests-all-pr
@@ -470,10 +465,8 @@ jobs:
       - name: Calculate wall-clock duration
         id: wall-clock
         if: success() || failure()
-        uses: ./.github/actions/wall-clock-timer
-        with:
-          mode: stop
-          start-time: ${{ steps.test-timer.outputs.start }}
+        shell: bash
+        run: .github/scripts/wall-clock-timer.sh stop ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -506,21 +499,22 @@ jobs:
       - name: Extract failed tests
         id: failed-tests
         if: success() || failure()
-        uses: ./.github/actions/extract-failed-tests
-        with:
-          results-xml-path: all-test-results/results.xml
+        shell: bash
+        run: .github/scripts/extract-failed-tests.sh all-test-results/results.xml
 
       - name: Format test results
         id: format-results
         if: success() || failure()
-        uses: ./.github/actions/format-test-results
+        uses: actions/github-script@v8
+        env:
+          INPUT_SUMMARY: ${{ steps.test-report.outputs.summary }}
+          INPUT_WALL_CLOCK: ${{ steps.wall-clock.outputs.duration }}
+          INPUT_FAILURES: ${{ steps.failed-tests.outputs.failures }}
+          INPUT_TEST_OUTCOME: ${{ steps.run-tests-all-pr.outcome }}
+          INPUT_JOB_STATUS: ${{ job.status }}
+          INPUT_REPORTER_FAILED: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
         with:
-          summary: ${{ steps.test-report.outputs.summary }}
-          wall-clock-duration: ${{ steps.wall-clock.outputs.duration }}
-          failures: ${{ steps.failed-tests.outputs.failures }}
-          test-outcome: ${{ steps.run-tests-all-pr.outcome }}
-          job-status: ${{ job.status }}
-          reporter-failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
+          script: require('./.github/scripts/format-test-results.js')(core);
 
       - name: Find E2E PR comment
         id: find-e2e-comment
