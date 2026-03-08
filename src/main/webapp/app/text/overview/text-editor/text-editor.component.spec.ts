@@ -38,7 +38,7 @@ import { ResizeableContainerComponent } from 'app/shared/resizeable-container/re
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TeamParticipateInfoBoxComponent } from 'app/exercise/team/team-participate/team-participate-info-box.component';
 import { TeamSubmissionSyncComponent } from 'app/exercise/team-submission-sync/team-submission-sync.component';
-import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
+import { UnifiedFeedbackComponent } from 'app/shared/components/unified-feedback/unified-feedback.component';
 import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
@@ -128,7 +128,7 @@ describe('TextEditorComponent', () => {
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(TeamParticipateInfoBoxComponent),
                 MockComponent(TeamSubmissionSyncComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockDirective(TranslateDirective),
             ],
