@@ -37,8 +37,6 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageSender;
-import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisCourseSettings;
 import de.tum.cit.aet.artemis.iris.domain.settings.event.IrisEventType;
@@ -48,16 +46,9 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
-import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatPipelineExecutionDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.textexercise.PyrisTextExerciseChatStatusUpdateDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisMessageDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
-import de.tum.cit.aet.artemis.iris.service.pyris.job.TextExerciseChatJob;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
@@ -104,8 +95,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final PyrisPipelineService pyrisPipelineService;
 
-    private final PyrisJobService pyrisJobService;
-
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -132,11 +121,11 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             IrisSettingsService irisSettingsService, IrisChatWebsocketService irisChatWebsocketService, AuthorizationCheckService authCheckService,
             IrisSessionRepository irisSessionRepository, IrisChatSessionRepository irisChatSessionRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, PyrisJobService pyrisJobService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ObjectMapper objectMapper, ExerciseRepository exerciseRepository,
-            SubmissionRepository submissionRepository, StudentParticipationRepository studentParticipationRepository, UserRepository userRepository,
-            CourseRepository courseRepository, Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<TextRepositoryApi> textRepositoryApi,
-            IrisCitationService irisCitationService, MessageSource messageSource) {
+            IrisRateLimitService rateLimitService, PyrisPipelineService pyrisPipelineService, ProgrammingExerciseRepository programmingExerciseRepository,
+            ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
+            StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, CourseRepository courseRepository,
+            Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<TextRepositoryApi> textRepositoryApi, IrisCitationService irisCitationService,
+            MessageSource messageSource) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
@@ -146,7 +135,6 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.rateLimitService = rateLimitService;
         this.pyrisPipelineService = pyrisPipelineService;
-        this.pyrisJobService = pyrisJobService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseRepository = exerciseRepository;
         this.submissionRepository = submissionRepository;
@@ -327,8 +315,8 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var actualLatestSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(exercise, actualUser));
 
         var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeExerciseChatPipeline(actualSettings.variant().jsonValue(), actualSettings.customInstructions(), actualLatestSubmission, exercise, chatSession,
-                event, uncommittedFiles);
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.customInstructions(), actualLatestSubmission, exercise, chatSession, event,
+                uncommittedFiles);
     }
 
     private void executeTextExercisePipeline(IrisChatSession session) {
@@ -346,18 +334,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
         var latestSubmission = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
         String latestSubmissionText = latestSubmission instanceof TextSubmission textSubmission ? textSubmission.getText() : null;
-        var chatHistory = chatSession.getMessages().stream().map(PyrisMessageDTO::of).toList();
-        // @formatter:off
-        pyrisPipelineService.executePipeline(
-                "text-exercise-chat",
-                user.getSelectedLLMUsage(),
-                settings.variant().jsonValue(),
-                Optional.empty(),
-                pyrisJobService.createTokenForJob(token -> new TextExerciseChatJob(token, course.getId(), exercise.getId(), chatSession.getId())),
-                dto -> new PyrisTextExerciseChatPipelineExecutionDTO(PyrisTextExerciseDTO.of(exercise), chatSession.getTitle(), chatHistory, new PyrisUserDTO(user),
-                        latestSubmissionText, dto.settings(), dto.initialStages(), settings.customInstructions()),
-                stages -> irisChatWebsocketService.sendMessage(chatSession, null, stages));
-        // @formatter:on
+        pyrisPipelineService.executeChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), exercise, latestSubmissionText, chatSession);
     }
 
     private void executeLecturePipeline(IrisChatSession session) {
@@ -372,7 +349,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
         }
-        pyrisPipelineService.executeLectureChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
+        pyrisPipelineService.executeChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
     }
 
     private void executeCoursePipeline(IrisChatSession session, Object eventObject) {
@@ -382,34 +359,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         if (!settings.enabled()) {
             throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
         }
-        pyrisPipelineService.executeCourseChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, eventObject);
-    }
-
-    // -------------------------------------------------------------------------
-    // Text exercise status update
-    // -------------------------------------------------------------------------
-
-    /**
-     * Handles the status update of a text exercise chat job.
-     *
-     * @param job          The job that is updated
-     * @param statusUpdate The status update
-     * @return The same job that was passed in
-     */
-    public TextExerciseChatJob handleStatusUpdate(TextExerciseChatJob job, PyrisTextExerciseChatStatusUpdateDTO statusUpdate) {
-        var session = (IrisChatSession) irisSessionRepository.findByIdElseThrow(job.sessionId());
-        String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
-        if (statusUpdate.result() != null) {
-            var message = session.newMessage();
-            message.addContent(new IrisTextMessageContent(statusUpdate.result()));
-            var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
-            IrisMessage savedMessage = irisMessageService.saveMessage(message, session, IrisMessageSender.LLM);
-            irisChatWebsocketService.sendMessage(session, savedMessage, statusUpdate.stages(), sessionTitle, citationInfo);
-        }
-        else {
-            irisChatWebsocketService.sendMessage(session, null, statusUpdate.stages(), sessionTitle, null);
-        }
-        return job;
+        pyrisPipelineService.executeChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, eventObject);
     }
 
     // -------------------------------------------------------------------------
