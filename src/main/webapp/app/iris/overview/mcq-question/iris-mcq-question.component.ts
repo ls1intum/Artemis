@@ -1,12 +1,11 @@
 import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
 import { McqData } from 'app/iris/shared/entities/iris-content-type.model';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-iris-mcq-question',
     standalone: true,
-    imports: [ArtemisTranslatePipe, TranslateDirective],
+    imports: [TranslateDirective],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-question.component.html',
     styleUrl: './iris-mcq-question.component.scss',
