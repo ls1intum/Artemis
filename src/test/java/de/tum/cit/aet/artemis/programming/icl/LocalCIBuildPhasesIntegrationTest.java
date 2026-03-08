@@ -31,10 +31,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -69,9 +65,6 @@ import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.Di
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@Execution(ExecutionMode.SAME_THREAD)
-@Isolated
 class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localcibuildphases";
@@ -164,7 +157,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for results and verify: partly successful test results contain 1 passing test
-        localVCLocalCITestService.testLatestSubmission(participation.getId(), null, 1, false);
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), null, 1, false, 30);
     }
 
     @Test
