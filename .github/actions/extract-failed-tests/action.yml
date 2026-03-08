@@ -1,0 +1,42 @@
+name: 'Extract Failed Tests'
+description: 'Parse JUnit XML for failed test case names and durations'
+
+inputs:
+  results-xml-path:
+    description: 'Path to the JUnit XML results file'
+    required: true
+
+outputs:
+  failures:
+    description: 'Multiline string of failures, each formatted as "TestName (Xm Ys)"'
+    value: ${{ steps.parse.outputs.failures }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Parse JUnit XML for failures
+      id: parse
+      shell: bash
+      run: |
+        XML="${{ inputs.results-xml-path }}"
+        if [ ! -f "$XML" ]; then
+          echo "failures=" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        FAILURES=$(python3 -c "
+        import xml.etree.ElementTree as ET
+        tree = ET.parse('$XML')
+        lines = []
+        for tc in tree.iter('testcase'):
+            if tc.find('failure') is not None:
+                name = tc.get('name', 'Unknown')
+                time_s = float(tc.get('time', 0))
+                m, s = divmod(int(time_s), 60)
+                dur = f'{m}m {s}s' if m else f'{s}s'
+                lines.append(f'{name} ({dur})')
+        print('\n'.join(lines))
+        ")
+        EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+        echo "failures<<$EOF" >> $GITHUB_OUTPUT
+        echo "$FAILURES" >> $GITHUB_OUTPUT
+        echo "$EOF" >> $GITHUB_OUTPUT

@@ -111,7 +111,9 @@ jobs:
 
       - name: Record test start time
         id: test-timer
-        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/wall-clock-timer
+        with:
+          mode: start
 
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
         id: run-tests-phase1
@@ -122,20 +124,10 @@ jobs:
       - name: Calculate wall-clock duration
         id: wall-clock
         if: success() || failure()
-        run: |
-          START=${{ steps.test-timer.outputs.start }}
-          END=$(date +%s)
-          ELAPSED=$((END - START))
-          HOURS=$((ELAPSED / 3600))
-          MINUTES=$(( (ELAPSED % 3600) / 60 ))
-          SECONDS=$((ELAPSED % 60))
-          if [ $HOURS -gt 0 ]; then
-            echo "duration=${HOURS}h ${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
-          elif [ $MINUTES -gt 0 ]; then
-            echo "duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
-          else
-            echo "duration=${SECONDS}s" >> $GITHUB_OUTPUT
-          fi
+        uses: ./.github/actions/wall-clock-timer
+        with:
+          mode: stop
+          start-time: ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -157,31 +149,22 @@ jobs:
       - name: Extract failed tests
         id: failed-tests
         if: success() || failure()
-        run: |
-          XML="phase1-test-results/results.xml"
-          if [ ! -f "$XML" ]; then
-            echo "failures=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          # Extract failed testcase names and durations from JUnit XML
-          FAILURES=$(python3 -c "
-          import xml.etree.ElementTree as ET, sys
-          tree = ET.parse('$XML')
-          lines = []
-          for tc in tree.iter('testcase'):
-              if tc.find('failure') is not None:
-                  name = tc.get('name', 'Unknown')
-                  time_s = float(tc.get('time', 0))
-                  m, s = divmod(int(time_s), 60)
-                  dur = f'{m}m {s}s' if m else f'{s}s'
-                  lines.append(f'{name} ({dur})')
-          print('\n'.join(lines))
-          ")
-          # Use delimiter to handle multiline output
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "failures<<$EOF" >> $GITHUB_OUTPUT
-          echo "$FAILURES" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/extract-failed-tests
+        with:
+          results-xml-path: phase1-test-results/results.xml
+
+      - name: Format test results
+        id: format-results
+        if: success() || failure()
+        uses: ./.github/actions/format-test-results
+        with:
+          summary: ${{ steps.e2e-report.outputs.summary }}
+          wall-clock-duration: ${{ steps.wall-clock.outputs.duration }}
+          failures: ${{ steps.failed-tests.outputs.failures }}
+          phase-label: Phase 1
+          test-outcome: ${{ steps.run-tests-phase1.outcome }}
+          job-status: ${{ job.status }}
+          reporter-failed: ${{ steps.run-tests-phase1.outputs.reporter_failed }}
 
       - name: Find E2E PR comment
         id: find-e2e-comment
@@ -198,46 +181,19 @@ jobs:
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const testOutcome = '${{ steps.run-tests-phase1.outcome }}';
-            const jobStatus = '${{ job.status }}';
-            const wallClock = '${{ steps.wall-clock.outputs.duration }}';
-            let summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
-            if (wallClock) {
-              summary = summary.replace(/<td>[^<]*<\/td>(<\/tr><\/table>)/, `<td>${wallClock}</td>$1`);
-            }
-            const reporterFailed = '${{ steps.run-tests-phase1.outputs.reporter_failed }}';
             const relevantTests = `${{ needs.determine-tests.outputs.relevant_tests }}`;
             const remainingTests = `${{ needs.determine-tests.outputs.remaining_tests }}`;
-
-            const failures = `${{ steps.failed-tests.outputs.failures }}`;
-
-            const phase1Emoji = testOutcome === 'success' ? '✅' : '❌';
-            const phase1Status = testOutcome === 'success' ? 'Passed' : 'Failed';
-            const phase1Details = summary || (testOutcome === 'success' ? 'All tests passed' : 'Tests failed');
-
-            let failuresSection = '';
-            if (failures.trim()) {
-              failuresSection = '\n\n<details><summary>❌ Failed Tests (Phase 1)</summary>\n\n';
-              for (const line of failures.trim().split('\n')) {
-                failuresSection += `- \`${line}\`\n`;
-              }
-              failuresSection += '\n</details>\n';
-            }
-
-            let reporterNote = '';
-            if (reporterFailed === 'true') {
-              reporterNote = '\n\n> **Note:** The test reporter (monocart) failed in Phase 1. Test results were not affected, but coverage data may be incomplete.';
-            }
-
-            let infraNote = '';
-            if (testOutcome === 'success' && jobStatus !== 'success') {
-              infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
-            }
+            const emoji = '${{ steps.format-results.outputs.status-emoji }}';
+            const status = '${{ steps.format-results.outputs.status-text }}';
+            const details = `${{ steps.format-results.outputs.details }}`;
+            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
+            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
+            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
 
             let body = `## End-to-End Test Results\n\n`;
             body += `| Phase | Status | Details |\n`;
             body += `|-------|--------|---------|\n`;
-            body += `| **Phase 1** (Relevant) | ${phase1Emoji} ${phase1Status} | ${phase1Details} |\n`;
+            body += `| **Phase 1** (Relevant) | ${emoji} ${status} | ${details} |\n`;
             if (remainingTests) {
               body += `<!-- PHASE2 -->| **Phase 2** (Remaining) | ⏳ Pending... | |<!-- /PHASE2 -->\n`;
             } else {
@@ -327,7 +283,9 @@ jobs:
 
       - name: Record test start time
         id: test-timer
-        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/wall-clock-timer
+        with:
+          mode: start
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
         id: run-tests-phase2
@@ -338,20 +296,10 @@ jobs:
       - name: Calculate wall-clock duration
         id: wall-clock
         if: success() || failure()
-        run: |
-          START=${{ steps.test-timer.outputs.start }}
-          END=$(date +%s)
-          ELAPSED=$((END - START))
-          HOURS=$((ELAPSED / 3600))
-          MINUTES=$(( (ELAPSED % 3600) / 60 ))
-          SECONDS=$((ELAPSED % 60))
-          if [ $HOURS -gt 0 ]; then
-            echo "duration=${HOURS}h ${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
-          elif [ $MINUTES -gt 0 ]; then
-            echo "duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
-          else
-            echo "duration=${SECONDS}s" >> $GITHUB_OUTPUT
-          fi
+        uses: ./.github/actions/wall-clock-timer
+        with:
+          mode: stop
+          start-time: ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -373,29 +321,22 @@ jobs:
       - name: Extract failed tests
         id: failed-tests
         if: success() || failure()
-        run: |
-          XML="phase2-test-results/results.xml"
-          if [ ! -f "$XML" ]; then
-            echo "failures=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          FAILURES=$(python3 -c "
-          import xml.etree.ElementTree as ET, sys
-          tree = ET.parse('$XML')
-          lines = []
-          for tc in tree.iter('testcase'):
-              if tc.find('failure') is not None:
-                  name = tc.get('name', 'Unknown')
-                  time_s = float(tc.get('time', 0))
-                  m, s = divmod(int(time_s), 60)
-                  dur = f'{m}m {s}s' if m else f'{s}s'
-                  lines.append(f'{name} ({dur})')
-          print('\n'.join(lines))
-          ")
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "failures<<$EOF" >> $GITHUB_OUTPUT
-          echo "$FAILURES" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/extract-failed-tests
+        with:
+          results-xml-path: phase2-test-results/results.xml
+
+      - name: Format test results
+        id: format-results
+        if: success() || failure()
+        uses: ./.github/actions/format-test-results
+        with:
+          summary: ${{ steps.e2e-report.outputs.summary }}
+          wall-clock-duration: ${{ steps.wall-clock.outputs.duration }}
+          failures: ${{ steps.failed-tests.outputs.failures }}
+          phase-label: Phase 2
+          test-outcome: ${{ steps.run-tests-phase2.outcome }}
+          job-status: ${{ job.status }}
+          reporter-failed: ${{ steps.run-tests-phase2.outputs.reporter_failed }}
 
       - name: Find E2E PR comment
         id: find-e2e-comment
@@ -413,44 +354,17 @@ jobs:
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const testOutcome = '${{ steps.run-tests-phase2.outcome }}';
-            const jobStatus = '${{ job.status }}';
-            const wallClock = '${{ steps.wall-clock.outputs.duration }}';
-            let summary = `${{ steps.e2e-report.outputs.summary || '' }}`;
-            if (wallClock) {
-              summary = summary.replace(/<td>[^<]*<\/td>(<\/tr><\/table>)/, `<td>${wallClock}</td>$1`);
-            }
-            const reporterFailed = '${{ steps.run-tests-phase2.outputs.reporter_failed }}';
+            const emoji = '${{ steps.format-results.outputs.status-emoji }}';
+            const status = '${{ steps.format-results.outputs.status-text }}';
+            const details = `${{ steps.format-results.outputs.details }}`;
+            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
+            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
+            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
 
-            const failures = `${{ steps.failed-tests.outputs.failures }}`;
+            const phase2Row = `| **Phase 2** (Remaining) | ${emoji} ${status} | ${details} |`;
 
-            const phase2Emoji = testOutcome === 'success' ? '✅' : '❌';
-            const phase2Status = testOutcome === 'success' ? 'Passed' : 'Failed';
-            const phase2Details = summary || (testOutcome === 'success' ? 'All tests passed' : 'Tests failed');
-
-            let failuresSection = '';
-            if (failures.trim()) {
-              failuresSection = '\n<details><summary>❌ Failed Tests (Phase 2)</summary>\n\n';
-              for (const line of failures.trim().split('\n')) {
-                failuresSection += `- \`${line}\`\n`;
-              }
-              failuresSection += '\n</details>';
-            }
-
-            const phase2Row = `| **Phase 2** (Remaining) | ${phase2Emoji} ${phase2Status} | ${phase2Details} |`;
-
-            // Compute Phase 2 notes and pass them as an output so the report-results
-            // job can insert them alongside the overall status in a single replacement.
-            let reporterNote = '';
-            if (reporterFailed === 'true') {
-              reporterNote = '\n\n> **Note:** The test reporter (monocart) failed in Phase 2. Test results were not affected, but coverage data may be incomplete.';
-            }
-
-            let infraNote = '';
-            if (testOutcome === 'success' && jobStatus !== 'success') {
-              infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
-            }
-
+            // Pass Phase 2 notes as output so the report-results job can insert them
+            // alongside the overall status when it replaces <!-- OVERALL -->.
             core.setOutput('phase2_notes', failuresSection + reporterNote + infraNote);
 
             if (existingCommentId) {
@@ -543,7 +457,9 @@ jobs:
 
       - name: Record test start time
         id: test-timer
-        run: echo "start=$(date +%s)" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/wall-clock-timer
+        with:
+          mode: start
 
       - name: Run E2E Playwright tests (PostgreSQL, Local)
         id: run-tests-all-pr
@@ -554,20 +470,10 @@ jobs:
       - name: Calculate wall-clock duration
         id: wall-clock
         if: success() || failure()
-        run: |
-          START=${{ steps.test-timer.outputs.start }}
-          END=$(date +%s)
-          ELAPSED=$((END - START))
-          HOURS=$((ELAPSED / 3600))
-          MINUTES=$(( (ELAPSED % 3600) / 60 ))
-          SECONDS=$((ELAPSED % 60))
-          if [ $HOURS -gt 0 ]; then
-            echo "duration=${HOURS}h ${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
-          elif [ $MINUTES -gt 0 ]; then
-            echo "duration=${MINUTES}m ${SECONDS}s" >> $GITHUB_OUTPUT
-          else
-            echo "duration=${SECONDS}s" >> $GITHUB_OUTPUT
-          fi
+        uses: ./.github/actions/wall-clock-timer
+        with:
+          mode: stop
+          start-time: ${{ steps.test-timer.outputs.start }}
 
       - name: E2E Teardown
         if: success() || failure()
@@ -600,29 +506,21 @@ jobs:
       - name: Extract failed tests
         id: failed-tests
         if: success() || failure()
-        run: |
-          XML="all-test-results/results.xml"
-          if [ ! -f "$XML" ]; then
-            echo "failures=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          FAILURES=$(python3 -c "
-          import xml.etree.ElementTree as ET, sys
-          tree = ET.parse('$XML')
-          lines = []
-          for tc in tree.iter('testcase'):
-              if tc.find('failure') is not None:
-                  name = tc.get('name', 'Unknown')
-                  time_s = float(tc.get('time', 0))
-                  m, s = divmod(int(time_s), 60)
-                  dur = f'{m}m {s}s' if m else f'{s}s'
-                  lines.append(f'{name} ({dur})')
-          print('\n'.join(lines))
-          ")
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
-          echo "failures<<$EOF" >> $GITHUB_OUTPUT
-          echo "$FAILURES" >> $GITHUB_OUTPUT
-          echo "$EOF" >> $GITHUB_OUTPUT
+        uses: ./.github/actions/extract-failed-tests
+        with:
+          results-xml-path: all-test-results/results.xml
+
+      - name: Format test results
+        id: format-results
+        if: success() || failure()
+        uses: ./.github/actions/format-test-results
+        with:
+          summary: ${{ steps.test-report.outputs.summary }}
+          wall-clock-duration: ${{ steps.wall-clock.outputs.duration }}
+          failures: ${{ steps.failed-tests.outputs.failures }}
+          test-outcome: ${{ steps.run-tests-all-pr.outcome }}
+          job-status: ${{ job.status }}
+          reporter-failed: ${{ steps.run-tests-all-pr.outputs.reporter_failed }}
 
       - name: Find E2E PR comment
         id: find-e2e-comment
@@ -639,39 +537,12 @@ jobs:
             if (!prNumber) return;
             const existingCommentId = Number('${{ steps.find-e2e-comment.outputs.comment-id }}') || null;
 
-            const testOutcome = '${{ steps.run-tests-all-pr.outcome }}';
-            const jobStatus = '${{ job.status }}';
-            const wallClock = '${{ steps.wall-clock.outputs.duration }}';
-            let summary = `${{ steps.test-report.outputs.summary || '' }}`;
-            if (wallClock) {
-              summary = summary.replace(/<td>[^<]*<\/td>(<\/tr><\/table>)/, `<td>${wallClock}</td>$1`);
-            }
-            const reporterFailed = '${{ steps.run-tests-all-pr.outputs.reporter_failed }}';
-
-            const failures = `${{ steps.failed-tests.outputs.failures }}`;
-
-            const emoji = testOutcome === 'success' ? '✅' : '❌';
-            const status = testOutcome === 'success' ? 'Passed' : 'Failed';
-            const details = summary || (testOutcome === 'success' ? 'All tests passed' : 'Tests failed');
-
-            let failuresSection = '';
-            if (failures.trim()) {
-              failuresSection = '\n\n<details><summary>❌ Failed Tests</summary>\n\n';
-              for (const line of failures.trim().split('\n')) {
-                failuresSection += `- \`${line}\`\n`;
-              }
-              failuresSection += '\n</details>\n';
-            }
-
-            let reporterNote = '';
-            if (reporterFailed === 'true') {
-              reporterNote = '\n\n> **Note:** The test reporter (monocart) failed. Test results were not affected, but coverage data may be incomplete.';
-            }
-
-            let infraNote = '';
-            if (testOutcome === 'success' && jobStatus !== 'success') {
-              infraNote = '\n\n> ⚠️ **Note:** Tests passed but the job encountered an infrastructure issue (e.g., artifact upload failure). See the workflow run linked below for details.';
-            }
+            const emoji = '${{ steps.format-results.outputs.status-emoji }}';
+            const status = '${{ steps.format-results.outputs.status-text }}';
+            const details = `${{ steps.format-results.outputs.details }}`;
+            const failuresSection = `${{ steps.format-results.outputs.failures-section }}`;
+            const reporterNote = `${{ steps.format-results.outputs.reporter-note }}`;
+            const infraNote = `${{ steps.format-results.outputs.infra-note }}`;
 
             let body = `## End-to-End Test Results\n\n`;
             body += `| Phase | Status | Details |\n`;
