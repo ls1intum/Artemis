@@ -268,8 +268,8 @@ def create_exercise_variants(version: str, course: str, exercise: str, pecv_benc
         raise e
 
     try:
-        exercise_id = ExerciseIdentifier(course=course, exercise=exercise)
-        manager = VariantManager(exercise_id, version=version)
+        exercise_id = ExerciseIdentifier(course=course, exercise=exercise, version=version)
+        manager = VariantManager(exercise_id)
 
         all_variants = manager.list_variants()
 
@@ -279,16 +279,18 @@ def create_exercise_variants(version: str, course: str, exercise: str, pecv_benc
 
         logging.info(f"Found {len(all_variants)} variants. Processing...")
 
+        succeeded = 0
         for variant in all_variants:
             try:
                 # 'variant.variant_id' gets the ID string like "001"
                 manager.materialize_variant(variant.variant_id, force=True)
                 logging.info(f"Generated {variant.variant_id}")
+                succeeded += 1
             except Exception as e:
                 logging.exception(f"Failed to create variant {variant.variant_id}: {e}")
                 continue
 
-        logging.info(f"Successfully created {len(all_variants)} variants.")
+        logging.info(f"Successfully created {succeeded}/{len(all_variants)} variants.")
     except Exception as e:
         logging.exception(f"Critical Error: {e}")
 
@@ -586,14 +588,13 @@ def import_exercise_variants(session: requests.Session) -> None:
         logging.error("Ensure you have run 'create_course_request' successfully first.")
         return
 
-    #TODO improve logging for which exercises failed to import
-    total_variants_imported = 0
-    total_variants_failed = 0
+    imported_count = 0
+    failed_count = 0
+    failed_variant_labels: List[str] = []
 
     logging.info(f"Preparing to import variants for {sum(len(ex) for ex in exercises_to_import.values())} exercises across {len(exercises_to_import)} courses using {MAX_THREADS} threads")
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        futures = []
-        # submit all tasks
+        future_to_variant_label = {}
         for course, exercises in exercises_to_import.items():
             for exercise in exercises:
                 variants_dir = os.path.join(pecv_bench_dir, "data", DATASET_VERSION, course, exercise, "variants")
@@ -601,14 +602,13 @@ def import_exercise_variants(session: requests.Session) -> None:
                     logging.warning(f"Variants folder not found: {variants_dir}")
                     continue
 
-                variants_list_id = os.listdir(variants_dir)
-                for variant_id in variants_list_id:
-                    variant_id_dir = os.path.join(variants_dir, variant_id)
-                    if not os.path.isdir(variant_id_dir):
-                        logging.warning(f"Variant ID directory not found: {variant_id_dir}")
+                for variant_id in os.listdir(variants_dir):
+                    variant_dir = os.path.join(variants_dir, variant_id)
+                    if not os.path.isdir(variant_dir):
+                        logging.warning(f"Variant directory not found: {variant_dir}")
                         continue
 
-                    futures.append(executor.submit(
+                    import_future = executor.submit(
                         import_exercise_variant_request,
                         session,
                         SERVER_URL,
@@ -618,22 +618,30 @@ def import_exercise_variants(session: requests.Session) -> None:
                         course,
                         exercise,
                         variant_id
-                    ))
+                    )
+                    future_to_variant_label[import_future] = f"{course}/{exercise}/{variant_id}"
 
-        for future in as_completed(futures):
+        logging.info(f"Total variants to import: {len(future_to_variant_label)}")
+
+        for import_future in as_completed(future_to_variant_label):
+            variant_label = future_to_variant_label[import_future]
             try:
-                result = future.result()
-                if result:
-                    total_variants_imported += 1
-                    logging.info(f"Imported variant successfully.")
+                success = import_future.result()
+                if success:
+                    imported_count += 1
+                    logging.info(f"[OK]   {variant_label}")
                 else:
-                    total_variants_failed += 1
-                    logging.error(f"Failed to import variant.")
+                    failed_count += 1
+                    failed_variant_labels.append(variant_label)
+                    logging.error(f"[FAIL] {variant_label}")
             except Exception as e:
-                logging.exception(f"Thread failed with error: {e}")
-                return
-    logging.info(f"Imported {total_variants_imported} programming exercises into course ID {course_id}.")
-    logging.error(f"Failed to import {total_variants_failed} programming exercises into course ID {course_id}.")
+                failed_count += 1
+                failed_variant_labels.append(variant_label)
+                logging.exception(f"[FAIL] {variant_label} — thread error: {e}")
+
+    logging.info(f"Imported {imported_count}/{len(future_to_variant_label)} variants into course ID {course_id}.")
+    if failed_variant_labels:
+        logging.error(f"Failed to import {failed_count} variant(s):\n" + "\n".join(f"  - {v}" for v in sorted(failed_variant_labels)))
 
 
 if __name__ == "__main__":

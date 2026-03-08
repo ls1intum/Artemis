@@ -31,14 +31,18 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
         return "Consistency check aborted due to empty PECV-bench directory."
     approach_id = ""
     try:
-        approach_id = subprocess.check_output(
+        branch_name = subprocess.check_output(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
             text=True
         ).strip()
-        # feature/hyperion/run-pecv-bench-in-artemis -> feature-hyperion-run_pecv_bench_in_artemis
-        approach_id = "artemis-" + approach_id.replace("-", "_").replace("/", "-")
+        short_commit = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            text=True
+        ).strip()
+        # feature/hyperion/run-pecv-bench-in-artemis -> artemis-feature-hyperion-run_pecv_bench_in_artemis-abc1234
+        approach_id = "artemis-" + branch_name.replace("-", "_").replace("/", "-") + "-" + short_commit
     except subprocess.CalledProcessError:
-        logging.warning("Failed to determine git branch. Using default approach ID.")
+        logging.warning("Failed to determine git branch or commit. Using default approach ID.")
         approach_id = "artemis-default"
 
     model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
@@ -133,7 +137,7 @@ def consistency_check_io(session: Session, server_url: str, exercise_local_id: s
         logging.exception(f"Failed to write file for {exercise_local_id}: {e}")
         return f"[{exercise_local_id}] error"
 
-def consistency_check_request(session: requests.Session, server_url: str, exercise_server_id: int, exercise_local_id: str| None = None) -> Dict[str, Any] | None:
+def consistency_check_request(session: requests.Session, server_url: str, exercise_server_id: int, exercise_local_id: str | None = None) -> Dict[str, Any] | None:
     """
     Server request, to check the consistency of the programming exercise with Hyperion System.
 
