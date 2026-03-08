@@ -558,7 +558,7 @@ def import_exercise_variant_request(session: requests.Session,
     }
 
     body, content_type = urllib3.filepost.encode_multipart_formdata(files_payload)
-    logging.info(f"Multipart form-data body and content type prepared.")
+    logging.info("Multipart form-data body and content type prepared.")
 
     headers = {
         "Content-Type": content_type

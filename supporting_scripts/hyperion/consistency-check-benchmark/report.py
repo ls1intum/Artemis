@@ -136,7 +136,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
     Creates a branch in the pecv-bench repo, commits the results folder for the given
     approach_id, pushes it, and opens a pull request via GitHub CLI.
 
-    The PR targets the 'dataset-extension' branch and uses report.md as the PR body.
+    The PR targets the branch configured via ``pecv_bench_branch`` in config.ini and uses report.md as the PR body.
 
     This function works on the current state of pecv-bench (which already has uncommitted
     results from the analysis). It creates a new branch from the current HEAD, stages only
@@ -248,7 +248,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
         )
         logging.info(f"Pushed branch '{branch_name}' to origin.")
 
-        # Create PR targeting dataset-extension
+        # Create PR targeting the configured pecv-bench branch
         result = subprocess.run(
             [
                 "gh", "pr", "create",

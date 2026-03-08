@@ -19,7 +19,7 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
     :return: None
     :rtype: None
     """
-    base_name = os.path.basename(exercise_path)
+    base_repo_name = os.path.basename(exercise_path)
     repo_types: List[str] = ["solution", "template", "tests"]
     config_file: str = "exercise-details.json"
     variant_id = 0
@@ -32,12 +32,12 @@ def test_convert_base_exercise_to_zip(exercise_path: str, course_id: int) -> Non
     try:
         for repo_type in repo_types:
             repo_name = f"{variant_id}-{repo_type}"
-            base_name = os.path.join(exercise_path, repo_name)
+            base_repo_name = os.path.join(exercise_path, repo_name)
             repo_path = os.path.join(exercise_path, repo_type)
             if not os.path.exists(repo_path):
                 logging.error(f"Required folder {repo_type} does not exist in {exercise_path}.")
                 continue
-            zip_folder_path = shutil.make_archive(base_name = base_name, format = 'zip', root_dir = repo_path)
+            zip_folder_path = shutil.make_archive(base_name = base_repo_name, format = 'zip', root_dir = repo_path)
             zip_files.append(zip_folder_path)
     except Exception as e:
         logging.exception(f"Error while creating intermediate zip files: {e}")

@@ -47,13 +47,12 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
 
     model_name = MODEL_NAME
 
-    consistency_check_exercises_dict = {}
-    dataset_version = ""
+    # Map exercise name -> (course, version) so the correct version is used per exercise
+    consistency_check_exercises_dict: Dict[str, tuple[str, str]] = {}
     for version, courses in CONSISTENCY_CHECK_EXERCISES.items():
-        dataset_version = version
         for course, exercises in courses.items():
             for exercise in exercises:
-                consistency_check_exercises_dict[exercise] = course
+                consistency_check_exercises_dict[exercise] = (course, version)
                 os.makedirs(os.path.join(pecv_bench_dir, "results", version, approach_id, model_name, "cases", course, exercise), exist_ok=True)
 
     exercise_ids_filtered = {
@@ -72,12 +71,13 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
 
         for local_id, server_id in exercise_ids_filtered.items():
             exercise_name = local_id.split(':')[0]
-            course_name = consistency_check_exercises_dict.get(exercise_name)
+            lookup = consistency_check_exercises_dict.get(exercise_name)
 
-            if course_name is None:
+            if lookup is None:
                 logging.warning(f"Could not find course for exercise {exercise_name}, skipping")
                 continue
 
+            course_name, dataset_version = lookup
             exercise_results_dir = os.path.join(pecv_bench_dir, "results", dataset_version, approach_id, model_name, "cases", course_name, exercise_name)
 
             future = executor.submit(
