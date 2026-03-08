@@ -175,7 +175,7 @@ describe('ModelingSubmissionComponent', () => {
                 MockComponent(TeamSubmissionSyncComponent),
                 MockComponent(ModelingAssessmentComponent),
                 MockComponent(FullscreenComponent),
-                MockComponent(AdditionalFeedbackComponent),
+                MockComponent(UnifiedFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
             ],
