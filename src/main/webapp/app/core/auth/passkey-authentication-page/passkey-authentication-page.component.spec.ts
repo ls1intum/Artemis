@@ -88,15 +88,23 @@ describe('PasskeyAuthenticationPageComponent', () => {
         });
 
         it('should redirect to returnUrl if user is already logged in with passkey', async () => {
-            vi.spyOn(accountService, 'identity').mockResolvedValue({} as User);
             vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
             const navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
+
+            // Mock identity to resolve after allowing the route subscription to fire first
+            vi.spyOn(accountService, 'identity').mockImplementation(() => {
+                return new Promise((resolve) => {
+                    // Use queueMicrotask to allow the route subscription to fire first
+                    queueMicrotask(() => resolve({} as User));
+                });
+            });
 
             // Trigger ngOnInit via detectChanges
             fixture.detectChanges();
 
-            // Wait for all promises to resolve
+            // Wait for all promises and microtasks to resolve
             await fixture.whenStable();
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
             expect(navigateByUrlSpy).toHaveBeenCalledWith('/admin/user-management');
         });

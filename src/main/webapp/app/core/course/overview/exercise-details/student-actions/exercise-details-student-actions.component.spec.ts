@@ -131,6 +131,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING, ExerciseType.TEXT])(
         'should not show the buttons "Team" and "Start exercise" for a team exercise when not assigned to a team yet',
         async (exerciseType: ExerciseType) => {
+            fixture.componentRef.setInput('courseId', 1);
             fixture.componentRef.setInput('exercise', { ...teamExerciseWithoutTeamAssigned, type: exerciseType });
             TestBed.tick();
             fixture.detectChanges();
@@ -147,6 +148,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.TEXT, ExerciseType.MODELING, ExerciseType.FILE_UPLOAD, ExerciseType.PROGRAMMING])(
         'should show the buttons "Team" and "Start exercise" for a team exercise for a student to view their team when assigned to a team',
         async (exerciseType: ExerciseType) => {
+            fixture.componentRef.setInput('courseId', 1);
             fixture.componentRef.setInput('exercise', { ...teamExerciseWithTeamAssigned, type: exerciseType });
             TestBed.tick();
             fixture.detectChanges();
@@ -193,6 +195,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED } as StudentParticipation;
         const participationSubject = new Subject<StudentParticipation>();
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exercise', teamExerciseWithTeamAssigned);
         TestBed.tick();
         startExerciseStub.mockReturnValue(participationSubject);
@@ -233,6 +236,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         } as ProgrammingExercise;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exercise', exerciseData);
         TestBed.tick();
 
@@ -264,6 +268,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         testRunParticipation.repositoryUri = undefined;
         testRunExercise.studentParticipations = [testRunParticipation];
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('examMode', true);
         fixture.componentRef.setInput('exercise', testRunExercise);
         TestBed.tick();
@@ -284,6 +289,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         testRunParticipation.repositoryUri = 'https://clone-me.git';
         testRunExercise.studentParticipations = [testRunParticipation];
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('examMode', true);
         fixture.componentRef.setInput('exercise', testRunExercise);
         TestBed.tick();
@@ -304,6 +310,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const inactiveParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INACTIVE };
         const activeParticipation: ProgrammingExerciseStudentParticipation = { id: 1, initializationState: InitializationState.INITIALIZED };
         const practiceParticipation: ProgrammingExerciseStudentParticipation = { id: 2, testRun: true, initializationState: InitializationState.INACTIVE };
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exercise', { id: 3, studentParticipations: [inactiveParticipation, practiceParticipation] } as ProgrammingExercise);
         TestBed.tick();
         comp.updateParticipations();
@@ -318,6 +325,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it('should show correct buttons in exam mode', async () => {
         const exerciseData = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exerciseData.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exercise', exerciseData);
         fixture.componentRef.setInput('examMode', true);
         TestBed.tick();
@@ -351,6 +359,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         exerciseData.studentParticipations = [
             { initializationState: InitializationState.INITIALIZED, repositoryUri: 'https://clone-me.git' } as ProgrammingExerciseStudentParticipation,
         ];
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exercise', exerciseData);
         fixture.componentRef.setInput('examMode', true);
         TestBed.tick();
@@ -383,6 +392,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
         'should disable start exercise button before start date %s',
         async (type: ExerciseType) => {
+            fixture.componentRef.setInput('courseId', 1);
             fixture.componentRef.setInput('exercise', { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise);
             TestBed.tick();
 
@@ -401,6 +411,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, false],
             [{ type: ExerciseType.TEXT } as TextExercise, false],
         ])('should determine if it is an uninitialized quiz', (exerciseData: Exercise, expected: boolean) => {
+            fixture.componentRef.setInput('courseId', 1);
             fixture.componentRef.setInput('exercise', exerciseData);
             TestBed.tick();
             expect(comp.uninitializedQuiz()).toBe(expected);
@@ -415,6 +426,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             ],
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
         ])('should determine if quiz is not started', (exerciseData: Exercise, expected: boolean) => {
+            fixture.componentRef.setInput('courseId', 1);
             fixture.componentRef.setInput('exercise', exerciseData);
             TestBed.tick();
             expect(comp.quizNotStarted()).toBe(expected);
@@ -425,6 +437,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         const gradedParticipation = { id: 42 };
         const practiceParticipation = { id: 43, testRun: true };
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('exercise', { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise);
         TestBed.tick();
         expect(comp.gradedParticipation()).toEqual(gradedParticipation);
@@ -500,6 +513,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     ])(
         'should show correct open exercise button for text exercises',
         async (exerciseData: Exercise, shouldShowButton: boolean, expectedLabel: string | undefined, shouldBeOutlined: boolean | undefined) => {
+            fixture.componentRef.setInput('courseId', 1);
             fixture.componentRef.setInput('exercise', exerciseData);
             TestBed.tick();
 

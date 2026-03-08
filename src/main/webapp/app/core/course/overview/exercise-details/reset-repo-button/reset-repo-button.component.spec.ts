@@ -74,6 +74,7 @@ describe('JhiResetRepoButtonComponent', () => {
     it('should initialize correctly', () => {
         fixture.componentRef.setInput('exercise', { numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false });
         fixture.componentRef.setInput('participations', [gradedParticipation, practiceParticipation]);
+        fixture.componentRef.setInput('smallButtons', false);
         TestBed.tick();
 
         expect(comp.gradedParticipation()).toEqual(gradedParticipation);
@@ -101,6 +102,7 @@ describe('JhiResetRepoButtonComponent', () => {
     ])('should show button for correct configurations', ({ participations, exercise, shouldShowButton }) => {
         fixture.componentRef.setInput('exercise', exercise as ProgrammingExercise);
         fixture.componentRef.setInput('participations', participations);
+        fixture.componentRef.setInput('smallButtons', false);
 
         TestBed.tick();
         fixture.detectChanges();
@@ -119,6 +121,7 @@ describe('JhiResetRepoButtonComponent', () => {
 
         fixture.componentRef.setInput('participations', participations);
         fixture.componentRef.setInput('exercise', { id: 3 } as ProgrammingExercise);
+        fixture.componentRef.setInput('smallButtons', false);
         TestBed.tick();
 
         resetRepositoryStub.mockReturnValue(resetSubject);

@@ -71,6 +71,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         const participationSubject = new Subject<StudentParticipation>();
 
         fixture.componentRef.setInput('exercise', exercise);
+        fixture.componentRef.setInput('smallButtons', false);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();
@@ -112,6 +113,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         const participationSubject = new Subject<StudentParticipation>();
 
         fixture.componentRef.setInput('exercise', { ...exercise, studentParticipations: [gradedPart] });
+        fixture.componentRef.setInput('smallButtons', false);
 
         fixture.changeDetectorRef.detectChanges();
         await fixture.whenStable();

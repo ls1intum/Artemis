@@ -82,6 +82,7 @@ describe('OpenCodeEditorButtonComponent', () => {
         fixture.componentRef.setInput('participations', participations);
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('courseAndExerciseNavigationUrlSegment', courseAndExerciseNavigationUrlSegment);
+        fixture.componentRef.setInput('smallButtons', false);
         fixture.detectChanges();
     }
 
@@ -249,6 +250,7 @@ describe('OpenCodeEditorButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('courseAndExerciseNavigationUrlSegment', ['courses', '1', 'exercises', '1', 'code-editor']);
+        fixture.componentRef.setInput('smallButtons', false);
         fixture.componentRef.setInput('loading', true);
 
         await vi.advanceTimersByTimeAsync(0);
@@ -287,6 +289,7 @@ describe('OpenCodeEditorButtonComponent', () => {
         fixture.componentRef.setInput('participations', [participation]);
         fixture.componentRef.setInput('exercise', exercise);
         fixture.componentRef.setInput('courseAndExerciseNavigationUrlSegment', ['courses', '1', 'exercises', '1', 'code-editor']);
+        fixture.componentRef.setInput('smallButtons', false);
         fixture.componentRef.setInput('hideLabelMobile', true);
 
         await vi.advanceTimersByTimeAsync(0);
