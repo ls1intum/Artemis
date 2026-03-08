@@ -207,6 +207,8 @@ if [ "$SKIP_SERVER" = false ]; then
     export ARTEMIS_VERSIONCONTROL_PASSWORD="artemis_admin"
     export ARTEMIS_CONTINUOUSINTEGRATION_EMPTYCOMMITNECESSARY="true"
     export ARTEMIS_CONTINUOUSINTEGRATION_ARTEMISAUTHENTICATIONTOKENVALUE="demo"
+    # Use minimal C Docker image for faster E2E builds (~2s vs ~5s)
+    export ARTEMIS_CONTINUOUSINTEGRATION_BUILD_IMAGES_C_DEFAULT="ls1tum/artemis-c-minimal-docker:1.0.0"
 
     # Auto-detect Docker socket path (Docker Desktop on macOS uses ~/.docker/run/docker.sock)
     if [ -S "/var/run/docker.sock" ]; then
