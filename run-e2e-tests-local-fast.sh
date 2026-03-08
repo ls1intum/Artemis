@@ -171,11 +171,14 @@ else
 fi
 
 # =============================================================================
-# Step 2: Server
+# Step 2: Start server and client (in parallel)
 # =============================================================================
+NEED_WAIT_SERVER=false
+NEED_WAIT_CLIENT=false
+
 if [ "$SKIP_SERVER" = false ]; then
     echo ""
-    echo -e "${BLUE}Step 2: Starting server (bootRun)...${NC}"
+    echo -e "${BLUE}Step 2a: Starting server (bootRun)...${NC}"
 
     # Kill stale server from previous run
     if [ -f "$LOCAL_DIR/server.pid" ]; then
@@ -233,8 +236,47 @@ if [ "$SKIP_SERVER" = false ]; then
     SERVER_PID=$!
     echo "$SERVER_PID" > "$LOCAL_DIR/server.pid"
     echo "Server starting (PID $SERVER_PID), log: $LOCAL_DIR/server.log"
+    NEED_WAIT_SERVER=true
+else
+    echo ""
+    echo -e "${YELLOW}Step 2a: Skipping server (--skip-server)${NC}"
+    if ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
+        echo -e "${RED}WARNING: Server does not appear to be running at http://localhost:8080${NC}"
+    fi
+fi
 
-    # Wait for server health endpoint
+if [ "$SKIP_CLIENT" = false ]; then
+    echo ""
+    echo -e "${BLUE}Step 2b: Starting client (npm start)...${NC}"
+
+    # Kill stale client from previous run
+    if [ -f "$LOCAL_DIR/client.pid" ]; then
+        OLD_PID=$(cat "$LOCAL_DIR/client.pid")
+        if kill -0 "$OLD_PID" 2>/dev/null; then
+            echo "Killing stale client (PID $OLD_PID)..."
+            kill_tree "$OLD_PID"
+            sleep 2
+        fi
+    fi
+
+    npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    CLIENT_PID=$!
+    echo "$CLIENT_PID" > "$LOCAL_DIR/client.pid"
+    echo "Client starting (PID $CLIENT_PID), log: $LOCAL_DIR/client.log"
+    NEED_WAIT_CLIENT=true
+else
+    echo ""
+    echo -e "${YELLOW}Step 2b: Skipping client (--skip-client)${NC}"
+    if ! curl -sf http://localhost:9000 >/dev/null 2>&1; then
+        echo -e "${RED}WARNING: Client does not appear to be running at http://localhost:9000${NC}"
+    fi
+fi
+
+# =============================================================================
+# Step 3: Wait for server and client to be ready
+# =============================================================================
+if [ "$NEED_WAIT_SERVER" = true ]; then
+    echo ""
     echo "Waiting for server to be ready (this may take a few minutes on first run)..."
     TIMEOUT=300
     ELAPSED=0
@@ -253,37 +295,9 @@ if [ "$SKIP_SERVER" = false ]; then
         ELAPSED=$((ELAPSED + 5))
     done
     echo -e "${GREEN}Server ready (${ELAPSED}s)${NC}"
-else
-    echo ""
-    echo -e "${YELLOW}Step 2: Skipping server (--skip-server)${NC}"
-    if ! curl -sf http://localhost:8080/management/health >/dev/null 2>&1; then
-        echo -e "${RED}WARNING: Server does not appear to be running at http://localhost:8080${NC}"
-    fi
 fi
 
-# =============================================================================
-# Step 3: Client
-# =============================================================================
-if [ "$SKIP_CLIENT" = false ]; then
-    echo ""
-    echo -e "${BLUE}Step 3: Starting client (npm start)...${NC}"
-
-    # Kill stale client from previous run
-    if [ -f "$LOCAL_DIR/client.pid" ]; then
-        OLD_PID=$(cat "$LOCAL_DIR/client.pid")
-        if kill -0 "$OLD_PID" 2>/dev/null; then
-            echo "Killing stale client (PID $OLD_PID)..."
-            kill_tree "$OLD_PID"
-            sleep 2
-        fi
-    fi
-
-    npm start > "$LOCAL_DIR/client.log" 2>&1 &
-    CLIENT_PID=$!
-    echo "$CLIENT_PID" > "$LOCAL_DIR/client.pid"
-    echo "Client starting (PID $CLIENT_PID), log: $LOCAL_DIR/client.log"
-
-    # Wait for client to serve
+if [ "$NEED_WAIT_CLIENT" = true ]; then
     echo "Waiting for client to be ready..."
     TIMEOUT=120
     ELAPSED=0
@@ -302,16 +316,10 @@ if [ "$SKIP_CLIENT" = false ]; then
         ELAPSED=$((ELAPSED + 3))
     done
     echo -e "${GREEN}Client ready (${ELAPSED}s)${NC}"
-else
-    echo ""
-    echo -e "${YELLOW}Step 3: Skipping client (--skip-client)${NC}"
-    if ! curl -sf http://localhost:9000 >/dev/null 2>&1; then
-        echo -e "${RED}WARNING: Client does not appear to be running at http://localhost:9000${NC}"
-    fi
 fi
 
 # =============================================================================
-# Step 4: Playwright tests
+# Step 4: Run Playwright tests
 # =============================================================================
 echo ""
 echo -e "${BLUE}Step 4: Running Playwright tests...${NC}"
