@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="20260308022448-add-is-bot-column" author="eltoukhi">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="jhi_user" columnName="is_bot"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="jhi_user">
+            <column name="is_bot" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="20260308022448-add-api-key-hash-column" author="eltoukhi">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="jhi_user" columnName="api_key_hash"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="jhi_user">
+            <column name="api_key_hash" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+        <createIndex tableName="jhi_user" indexName="idx_user_api_key_hash">
+            <column name="api_key_hash"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="20260308022448-add-bot-check-constraint" author="eltoukhi">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sqlCheck expectedResult="1">
+                    SELECT COUNT(*) FROM information_schema.TABLE_CONSTRAINTS
+                    WHERE CONSTRAINT_NAME = 'chk_api_key_hash_requires_bot'
+                    AND TABLE_NAME = 'jhi_user'
+                </sqlCheck>
+            </not>
+        </preConditions>
+        <sql>
+            ALTER TABLE jhi_user ADD CONSTRAINT chk_api_key_hash_requires_bot
+            CHECK (api_key_hash IS NULL OR is_bot = true)
+        </sql>
+    </changeSet>
+
+</databaseChangeLog>
