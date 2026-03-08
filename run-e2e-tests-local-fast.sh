@@ -334,7 +334,8 @@ export TUTOR_GROUP_NAME="tutors"
 export EDITOR_GROUP_NAME="editors"
 export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
-export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-5}"
+export FAST_SLOW_WORKERS="${FAST_SLOW_WORKERS:-6}"
+export SEQUENTIAL_WORKERS="${SEQUENTIAL_WORKERS:-6}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-90}"
@@ -350,24 +351,90 @@ npm run playwright:setup-local 2>/dev/null
 # Clean stale reports
 rm -f test-reports/results*.xml
 
-# Build test command
-PLAYWRIGHT_CMD=(npx playwright test e2e)
+# =============================================================================
+# CPU monitoring: sample every 2s to a CSV file for post-run analysis
+# =============================================================================
+CPU_LOG="$(cd ../../.. && pwd)/$LOCAL_DIR/cpu-usage.csv"
+echo "timestamp,cpu_user,cpu_sys,cpu_idle,load_avg_1m,load_avg_5m,load_avg_15m" > "$CPU_LOG"
 
+sample_cpu() {
+    while true; do
+        # macOS: top -l1 gives CPU percentages; sysctl gives load averages
+        if [[ "$(uname)" == "Darwin" ]]; then
+            CPU_LINE=$(top -l1 -n0 2>/dev/null | grep "CPU usage")
+            CPU_USER=$(echo "$CPU_LINE" | sed -n 's/.*: \([0-9.]*\)% user.*/\1/p')
+            CPU_SYS=$(echo "$CPU_LINE" | sed -n 's/.*, \([0-9.]*\)% sys.*/\1/p')
+            CPU_IDLE=$(echo "$CPU_LINE" | sed -n 's/.*, \([0-9.]*\)% idle.*/\1/p')
+            LOAD=$(sysctl -n vm.loadavg 2>/dev/null | tr -d '{}' | xargs)
+            LOAD_1=$(echo "$LOAD" | awk '{print $1}')
+            LOAD_5=$(echo "$LOAD" | awk '{print $2}')
+            LOAD_15=$(echo "$LOAD" | awk '{print $3}')
+        else
+            # Linux: /proc/stat based
+            read -r CPU_USER CPU_SYS CPU_IDLE <<< $(top -bn1 2>/dev/null | grep "Cpu(s)" | awk '{print $2, $4, $8}' | tr -d '%,')
+            read -r LOAD_1 LOAD_5 LOAD_15 _ < /proc/loadavg
+        fi
+        echo "$(date +%H:%M:%S),${CPU_USER:-0},${CPU_SYS:-0},${CPU_IDLE:-0},${LOAD_1:-0},${LOAD_5:-0},${LOAD_15:-0}" >> "$CPU_LOG"
+        sleep 2
+    done
+}
+
+# Start CPU sampler in background
+sample_cpu &
+CPU_MONITOR_PID=$!
+
+# Build base Playwright args
+BASE_ARGS=(e2e)
 if [ -n "$TEST_FILTER" ]; then
-    PLAYWRIGHT_CMD+=(--grep "$TEST_FILTER")
+    BASE_ARGS+=(--grep "$TEST_FILTER")
 fi
-
-PLAYWRIGHT_CMD+=("${PLAYWRIGHT_EXTRA_ARGS[@]}")
-
-echo "Running: ${PLAYWRIGHT_CMD[*]}"
-echo ""
+BASE_ARGS+=("${PLAYWRIGHT_EXTRA_ARGS[@]}")
 
 TEST_START=$(date +%s)
+EXIT_CODE=0
 
+# --- Run fast + slow tests (8 workers by default) ---
+echo -e "${BLUE}Running fast + slow tests with $FAST_SLOW_WORKERS workers...${NC}"
+export PLAYWRIGHT_TEST_TYPE="parallel"
+FAST_SLOW_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$FAST_SLOW_WORKERS")
+echo "Running: ${FAST_SLOW_CMD[*]}"
+echo ""
+
+PHASE1_START=$(date +%s)
 set +e
-"${PLAYWRIGHT_CMD[@]}"
-EXIT_CODE=$?
+"${FAST_SLOW_CMD[@]}"
+FAST_SLOW_EXIT=$?
 set -e
+PHASE1_END=$(date +%s)
+PHASE1_DURATION=$((PHASE1_END - PHASE1_START))
+
+if [ $FAST_SLOW_EXIT -ne 0 ]; then
+    EXIT_CODE=$FAST_SLOW_EXIT
+fi
+
+# --- Run sequential tests (2 workers by default) ---
+echo ""
+echo -e "${BLUE}Running sequential tests with $SEQUENTIAL_WORKERS workers...${NC}"
+export PLAYWRIGHT_TEST_TYPE="sequential"
+SEQ_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=sequential-tests --workers="$SEQUENTIAL_WORKERS")
+echo "Running: ${SEQ_CMD[*]}"
+echo ""
+
+PHASE2_START=$(date +%s)
+set +e
+"${SEQ_CMD[@]}"
+SEQ_EXIT=$?
+set -e
+PHASE2_END=$(date +%s)
+PHASE2_DURATION=$((PHASE2_END - PHASE2_START))
+
+if [ $SEQ_EXIT -ne 0 ]; then
+    EXIT_CODE=$SEQ_EXIT
+fi
+
+# Stop CPU monitoring
+kill "$CPU_MONITOR_PID" 2>/dev/null || true
+wait "$CPU_MONITOR_PID" 2>/dev/null || true
 
 TEST_END=$(date +%s)
 TEST_DURATION=$((TEST_END - TEST_START))
@@ -426,8 +493,53 @@ if [ $TOTAL_TESTS -gt 0 ]; then
     [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ] && echo -e "  ${RED}Failed:${NC}  $((TOTAL_FAILURES + TOTAL_ERRORS))" || echo "  Failed:  0"
     [ $TOTAL_SKIPPED -gt 0 ] && echo "  Skipped: $TOTAL_SKIPPED"
     echo "  Total:   $TOTAL_TESTS"
-    echo "  Time:    ${TEST_MINS}m ${TEST_SECS}s"
+    echo ""
+    echo -e "  ${BLUE}Timing breakdown:${NC}"
+    echo "  Fast+Slow ($FAST_SLOW_WORKERS workers):   $((PHASE1_DURATION / 60))m $((PHASE1_DURATION % 60))s"
+    echo "  Sequential ($SEQUENTIAL_WORKERS workers):  $((PHASE2_DURATION / 60))m $((PHASE2_DURATION % 60))s"
+    echo "  Total:                      ${TEST_MINS}m ${TEST_SECS}s"
     echo -e "${BLUE}----------------------------------------${NC}"
+
+    # CPU usage summary from collected samples
+    if [ -f "$LOCAL_DIR/cpu-usage.csv" ] && [ "$(wc -l < "$LOCAL_DIR/cpu-usage.csv")" -gt 1 ]; then
+        echo ""
+        echo -e "${BLUE}  CPU Usage Summary:${NC}"
+        awk -F',' 'NR>1 {
+            n++; u+=$2; s+=$3; i+=$4; l1+=$5
+            if ($2+$3 > max_used) max_used=$2+$3
+            if ($4 < min_idle || NR==2) min_idle=$4
+        } END {
+            if (n>0) {
+                printf "  Avg CPU used:   %.1f%% (user: %.1f%%, sys: %.1f%%)\n", (u+s)/n, u/n, s/n
+                printf "  Avg CPU idle:   %.1f%%\n", i/n
+                printf "  Peak CPU used:  %.1f%% (min idle: %.1f%%)\n", max_used, min_idle
+                printf "  Avg load (1m):  %.2f\n", l1/n
+                printf "  Samples:        %d (every 2s)\n", n
+            }
+        }' "$LOCAL_DIR/cpu-usage.csv"
+
+        # Parallelization headroom analysis
+        NPROC=$(sysctl -n hw.ncpu 2>/dev/null || nproc 2>/dev/null || echo 8)
+        echo ""
+        echo -e "  ${BLUE}Parallelization analysis (${NPROC} CPU cores):${NC}"
+        awk -F',' -v cores="$NPROC" 'NR>1 {
+            n++; i+=$4
+        } END {
+            if (n>0) {
+                avg_idle=i/n
+                if (avg_idle > 40) {
+                    printf "  ✓ Significant headroom (%.0f%% idle) — try more workers\n", avg_idle
+                } else if (avg_idle > 20) {
+                    printf "  ~ Moderate headroom (%.0f%% idle) — a few more workers may help\n", avg_idle
+                } else {
+                    printf "  ✗ CPU mostly saturated (%.0f%% idle) — more workers unlikely to help\n", avg_idle
+                }
+            }
+        }' "$LOCAL_DIR/cpu-usage.csv"
+
+        echo ""
+        echo -e "  ${BLUE}Full CPU log:${NC} $LOCAL_DIR/cpu-usage.csv"
+    fi
 
     # Show individual failed tests with their names from JUnit XML
     if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ]; then
