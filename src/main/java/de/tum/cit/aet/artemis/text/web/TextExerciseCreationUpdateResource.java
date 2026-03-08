@@ -221,6 +221,7 @@ public class TextExerciseCreationUpdateResource {
         competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(textExerciseBeforeUpdate, Optional.of(textExercise)));
 
         exerciseVersionService.createExerciseVersion(updatedTextExercise);
+
         return ResponseEntity.ok(updatedTextExercise);
     }
 
