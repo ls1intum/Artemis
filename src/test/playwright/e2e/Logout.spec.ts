@@ -55,5 +55,8 @@ test.describe('Logout tests', () => {
         expect(page.url()).not.toEqual(process.env.BASE_URL!);
     });
 
-    // Seed courses are persistent — no cleanup needed
+    test.afterEach('Delete exercise to prevent DB accumulation', async ({ login, exerciseAPIRequests }) => {
+        await login(admin);
+        await exerciseAPIRequests.deleteModelingExercise(modelingExercise.id!);
+    });
 });

@@ -77,7 +77,7 @@ test.describe('Exam assessment', () => {
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(20, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page);
         });
@@ -127,7 +127,7 @@ test.describe('Exam assessment', () => {
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(20, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page, 2);
         });
@@ -173,7 +173,7 @@ test.describe('Exam assessment', () => {
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(15, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             resultDate = examEnd.add(5, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.QUIZ, page);
@@ -214,7 +214,7 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
         let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(20, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page);
         });
@@ -268,7 +268,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(30, 'seconds'),
+            endDate: dayjs().add(45, 'seconds'),
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
         };

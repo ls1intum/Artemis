@@ -43,8 +43,10 @@ test.describe.serial('Exam Results', { tag: '@sequential' }, () => {
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
 
-        // Allow enough time for student to submit all 4 exercises before exam ends
-        examEndDate = dayjs().add(45, 'seconds');
+        // Allow enough time for 4 exercise groups to be created (including C programming
+        // build ~10-20s) AND for the student to submit all 4 exercises in the next beforeAll.
+        // The third beforeAll waits for this date + grace period before assessing.
+        examEndDate = dayjs().add(2, 'minutes');
         const examConfig = {
             course,
             title: 'exam' + generateUUID(),
