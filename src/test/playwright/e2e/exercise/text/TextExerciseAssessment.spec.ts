@@ -25,10 +25,11 @@ test.describe('Text exercise assessment', { tag: '@slow' }, () => {
     test.beforeAll('Create exercise and make a submission', async ({ browser }) => {
         const context = await browser.newContext({ ignoreHTTPSErrors: true });
         const page = await context.newPage();
-        dueDate = dayjs().add(5, 'seconds');
-        assessmentDueDate = dueDate.add(5, 'seconds');
         const exerciseAPIRequests = new ExerciseAPIRequests(page);
         await Commands.login(page, admin);
+        // Initialize deadlines after login so the short windows aren't consumed by setup
+        dueDate = dayjs().add(5, 'seconds');
+        assessmentDueDate = dueDate.add(5, 'seconds');
         exercise = await exerciseAPIRequests.createTextExerciseWithDates({ course }, dayjs(), dueDate, assessmentDueDate);
         await Commands.login(page, studentOne);
         await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
