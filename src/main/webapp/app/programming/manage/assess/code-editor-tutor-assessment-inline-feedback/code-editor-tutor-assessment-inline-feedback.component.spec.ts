@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { MockModule, MockProvider } from 'ng-mocks';
+import { MockTranslateService } from '../../../../../test/helpers/mocks/service/mock-translate.service';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
 import { Feedback, FeedbackType, NON_GRADED_FEEDBACK_SUGGESTION_IDENTIFIER } from 'app/assessment/shared/entities/feedback.model';
 import { GradingInstruction } from 'app/exercise/structured-grading-criterion/grading-instruction.model';
@@ -18,7 +19,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbTooltipModule), TranslateModule.forRoot()],
-            providers: [MockProvider(StructuredGradingCriterionService)],
+            providers: [MockProvider(StructuredGradingCriterionService), { provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()
             .then(() => {
@@ -165,7 +166,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         const titleElement = fixture.debugElement.query(By.css('.unified-feedback-title')).nativeElement;
-        expect(titleElement.textContent.trim()).toBe('Not Attempted');
+        expect(titleElement.textContent.trim()).toBe('artemisApp.feedback.type.notAttempted');
         // Reference is hidden via [showReference]="false"
         expect(fixture.debugElement.query(By.css('.unified-feedback-reference'))).toBeNull();
         // Icon should be present regardless of type
@@ -189,7 +190,7 @@ describe('CodeEditorTutorAssessmentInlineFeedbackComponent', () => {
         fixture.detectChanges();
 
         const titleElement = fixture.debugElement.query(By.css('.unified-feedback-title')).nativeElement;
-        expect(titleElement.textContent.trim()).toBe('Correct');
+        expect(titleElement.textContent.trim()).toBe('artemisApp.feedback.type.correct');
         // Reference is hidden via [showReference]="false"
         expect(fixture.debugElement.query(By.css('.unified-feedback-reference'))).toBeNull();
         // Icon should be present regardless of type
