@@ -4,9 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -148,7 +147,11 @@ class ProgrammingLanguageConfigurationTest {
 
     @SuppressWarnings("unchecked")
     private Map<String, Map<String, String>> readBuildImagesFromMainApplicationConfig() throws IOException {
-        try (var inputStream = Files.newInputStream(Path.of("src", "main", "resources", "config", "application.yml"))) {
+        var mainApplicationConfig = Collections.list(ProgrammingLanguageConfigurationTest.class.getClassLoader().getResources("config/application.yml")).stream()
+                .filter(resource -> resource.toString().contains("/build/resources/main/config/application.yml")).findFirst()
+                .orElseThrow(() -> new IOException("Could not find main config/application.yml on the classpath"));
+
+        try (var inputStream = mainApplicationConfig.openStream()) {
             Yaml yaml = new Yaml();
             Map<String, Object> root = yaml.load(inputStream);
             Map<String, Object> artemis = (Map<String, Object>) root.get("artemis");
