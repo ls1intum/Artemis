@@ -93,7 +93,7 @@ test.describe('Quiz Exercise Participation', { tag: '@fast' }, () => {
             courseOverview,
             quizExerciseParticipation,
         }) => {
-            await login(instructor);
+            await login(instructor, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             const quizBatch = await quizExerciseOverview.addQuizBatch(quizExercise.id!);

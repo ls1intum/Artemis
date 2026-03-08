@@ -12,7 +12,7 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('File upload exercise management', { tag: '@fast' }, () => {
     test('Creates a file upload exercise in the UI', async ({ login, page, navigationBar, courseManagement, courseManagementExercises, fileUploadExerciseCreation }) => {
-        await login(admin);
+        await login(admin, '/');
         await navigationBar.openCourseManagement();
         await courseManagement.openExercisesOfCourse(course.id!);
         await courseManagementExercises.createFileUploadExercise();

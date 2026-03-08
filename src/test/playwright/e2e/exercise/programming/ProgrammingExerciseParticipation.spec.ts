@@ -78,7 +78,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             await programmingExerciseOverview.checkResultScore(cAllSuccessful.expectedResult);
         });
 
-        test.describe('Programming exercise participation using SSH', () => {
+        test.describe.serial('Programming exercise participation using SSH', () => {
             // Clean up SSH keys before each test to ensure clean state
             // This is defensive - the afterEach should clean up, but if it fails or
             // there's server-side caching, this ensures we start with no SSH key
@@ -225,7 +225,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             });
 
             test('Instructor checks the participation', async ({ login, navigationBar, courseManagement, courseManagementExercises, programmingExerciseParticipations }) => {
-                await login(instructor);
+                await login(instructor, '/');
                 await navigationBar.openCourseManagement();
                 await courseManagement.openExercisesOfCourse(course.id!);
                 await courseManagementExercises.openExerciseParticipations(exercise.id!);

@@ -24,7 +24,7 @@ test.describe('Text exercise management', { tag: '@slow' }, () => {
             textExerciseExampleSubmissions,
             textExerciseExampleSubmissionCreation,
         }) => {
-            await login(admin);
+            await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createTextExercise();
