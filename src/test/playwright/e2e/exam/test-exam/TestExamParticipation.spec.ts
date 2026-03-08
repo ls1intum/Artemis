@@ -34,10 +34,9 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
                 numberOfCorrectionRoundsInExam: 0,
             };
             exam = await examAPIRequests.createExam(examConfig);
-            exerciseArray = await Promise.all([
-                examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-            ]);
+            const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
+            exerciseArray = [textExercise, quizExercise];
         });
 
         test('Participates as a student in a registered test exam', async ({ examParticipation, examNavigation }) => {

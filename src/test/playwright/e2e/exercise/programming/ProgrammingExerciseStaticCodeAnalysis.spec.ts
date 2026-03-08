@@ -14,16 +14,14 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     test.beforeEach('Create C exercise with SCA, submit via API', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
         exercise = await exerciseAPIRequests.createProgrammingExercise({ course, scaMaxPenalty: 50, programmingLanguage: ProgrammingLanguage.C });
-        // Submit BEFORE configuring SCA categories. The student build starts processing
-        // while we wait for the template build to finish (needed for SCA categories).
-        // SCA categories only affect how feedback is displayed, not the build itself.
+        // Poll until the template build provides SCA categories (~5-10s for C), then set all to GRADED.
+        // This MUST happen before the student submits, otherwise the score is calculated without SCA penalties.
+        await exerciseAPIRequests.configureScaCategoriesViaApi(exercise.id!);
+        // Now submit the student code — the build will use the configured SCA categories.
         await login(studentOne);
         const response = await exerciseAPIRequests.startExerciseParticipation(exercise.id!);
         const participation = await response.json();
         await exerciseAPIRequests.makeProgrammingExerciseSubmission(participation.id!, cScaSubmission);
-        // Poll until the template build provides SCA categories (~5-10s for C), then set all to GRADED.
-        await login(admin);
-        await exerciseAPIRequests.configureScaCategoriesViaApi(exercise.id!);
     });
 
     test.afterEach('Delete exercise to prevent DB accumulation', async ({ login, exerciseAPIRequests }) => {
@@ -35,8 +33,7 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         const resultScore = page.locator('#exercise-headers-information').locator('#result-score');
         const expectedScore = resultScore.getByText(cScaSubmission.expectedResult);
-        // C builds complete in 2-5s. The student build was submitted before SCA polling,
-        // so it should be done by now. Use a 45s timeout to stay within the 90s @slow budget.
+        // C builds complete in 2-5s. Use a 45s timeout to stay within the 90s @slow budget.
         await Commands.reloadUntilFound(page, expectedScore, 5000, 45000);
         await resultScore.click();
         await programmingExerciseScaFeedback.shouldShowPointChart();

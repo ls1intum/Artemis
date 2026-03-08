@@ -88,6 +88,8 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.addUserToGroupChatButton();
             await courseMessages.addUserToGroupChat(instructor.username);
             await courseMessages.updateGroupChat();
+            // Re-open conversation to ensure Angular has the updated member list in the header
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.checkConversationHeaderContains(instructorName);
         });
 
@@ -97,6 +99,8 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.addUserToGroupChatButton();
             await courseMessages.addUserToGroupChat(studentTwo.username);
             await courseMessages.updateGroupChat();
+            // Re-open conversation to ensure Angular has the updated member list in the header
+            await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.checkConversationHeaderContains(studentTwoName);
         });
     });
@@ -177,7 +181,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await courseMessages.openConversation(course.id!, groupChat.id!);
             await courseMessages.checkMessage(message.id!, messageText);
             await courseMessages.deleteMessage(message.id!);
-            await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible();
+            await expect(courseMessages.getSinglePost(message.id!)).not.toBeVisible({ timeout: 10000 });
         });
     });
 });

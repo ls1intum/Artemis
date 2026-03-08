@@ -440,6 +440,8 @@ export class CourseMessagesPage {
         await submitButton.click();
         const response = await responsePromise;
         expect(response.status()).toBeLessThan(300);
+        // Wait for Angular to process the response and update the conversation header
+        await this.page.waitForTimeout(500);
     }
 
     /**

@@ -13,10 +13,21 @@ export class ModelingEditor {
         const exerciseElement = getExercise(this.page, exerciseID);
         const sidebar = exerciseElement.locator('#modeling-editor-sidebar');
         await sidebar.waitFor({ state: 'visible' });
+        const canvas = exerciseElement.locator(MODELING_EDITOR_CANVAS);
+        await canvas.waitFor({ state: 'visible' });
+        // Wait for Apollon to render the SVG canvas with non-zero dimensions
+        await this.page.waitForFunction(
+            (selector: string) => {
+                const el = document.querySelector(selector);
+                return el != null && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
+            },
+            `#exercise-${exerciseID} ${MODELING_EDITOR_CANVAS}`,
+            { timeout: 15000 },
+        );
         const component = sidebar.locator('div').nth(componentNumber);
         const targetPosition = x && y ? { x, y } : undefined;
-        await component.dragTo(exerciseElement.locator(MODELING_EDITOR_CANVAS), { targetPosition, force: true });
-        await exerciseElement.locator(MODELING_EDITOR_CANVAS).dispatchEvent('pointerup');
+        await component.dragTo(canvas, { targetPosition, force: true });
+        await canvas.dispatchEvent('pointerup');
     }
 
     getModelingCanvas() {
@@ -24,9 +35,21 @@ export class ModelingEditor {
     }
 
     async addComponentToExampleSolutionModel(componentNumber: number) {
-        const sidebarComponent = this.page.locator('#modeling-editor-sidebar').locator('div').nth(componentNumber);
-        await sidebarComponent.dragTo(this.page.locator(MODELING_EDITOR_CANVAS), { force: true });
-        await this.page.locator(MODELING_EDITOR_CANVAS).dispatchEvent('pointerup');
+        const sidebar = this.page.locator('#modeling-editor-sidebar');
+        await sidebar.waitFor({ state: 'visible' });
+        const canvas = this.page.locator(MODELING_EDITOR_CANVAS);
+        await canvas.waitFor({ state: 'visible' });
+        await this.page.waitForFunction(
+            (selector: string) => {
+                const el = document.querySelector(selector);
+                return el != null && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
+            },
+            MODELING_EDITOR_CANVAS,
+            { timeout: 15000 },
+        );
+        const sidebarComponent = sidebar.locator('div').nth(componentNumber);
+        await sidebarComponent.dragTo(canvas, { force: true });
+        await canvas.dispatchEvent('pointerup');
     }
 
     async submit() {
