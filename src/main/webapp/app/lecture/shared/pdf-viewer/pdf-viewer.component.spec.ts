@@ -162,7 +162,7 @@ describe('PdfViewerComponent', () => {
     describe('PDF loading', () => {
         it('should set error when loading fails', async () => {
             mockGetDocument.mockReturnValue({
-                promise: Promise.reject(new Error('Load failed')),
+                promise: new Promise((_, reject) => setTimeout(() => reject(new Error('Load failed')), 0)),
             });
 
             fixture.detectChanges();
@@ -274,6 +274,8 @@ describe('PdfViewerComponent', () => {
                 scrollLeft: 0,
                 scrollHeight: 1000,
                 scrollWidth: 800,
+                clientHeight: 0,
+                clientWidth: 0,
             } as HTMLDivElement;
 
             component['restoreScrollPosition'](mockViewerBox, 0.5, 0.25);

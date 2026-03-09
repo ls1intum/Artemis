@@ -568,9 +568,11 @@ describe('AttachmentVideoUnitComponent', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
 
             // Clean up any pending requests first
-            httpMock.match(() => true).forEach((req) => {
-                req.flush(new Blob());
-            });
+            httpMock
+                .match(() => true)
+                .forEach((req) => {
+                    req.flush(new Blob());
+                });
 
             expect(() => component.ngOnDestroy()).not.toThrow();
         });
