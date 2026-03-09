@@ -282,13 +282,48 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         // Pause ResizeObserver during zoom to prevent feedback loop from scrollbar changes
         this.isZooming = true;
 
+        // Save current scroll position before zoom
+        const viewerBox = this.pdfViewerBox()?.nativeElement;
+        const oldScrollLeft = viewerBox?.scrollLeft ?? 0;
+        const oldScrollTop = viewerBox?.scrollTop ?? 0;
+        const oldScrollWidth = viewerBox?.scrollWidth ?? 0;
+        const oldScrollHeight = viewerBox?.scrollHeight ?? 0;
+        const clientWidth = viewerBox?.clientWidth ?? 0;
+        const clientHeight = viewerBox?.clientHeight ?? 0;
+
+        // Calculate the center point of the visible area (horizontal center, vertical top)
+        const centerXRatio = oldScrollWidth > 0 ? (oldScrollLeft + clientWidth / 2) / oldScrollWidth : 0.5;
+        const topYRatio = oldScrollHeight > 0 ? oldScrollTop / oldScrollHeight : 0;
+
         this.applyZoomToPages();
-        this.centerHorizontalScroll();
+
+        // Restore scroll position to keep the same center point visible
+        requestAnimationFrame(() => {
+            if (!viewerBox) {
+                return;
+            }
+
+            const newScrollWidth = viewerBox.scrollWidth;
+            const newScrollHeight = viewerBox.scrollHeight;
+
+            // Calculate new scroll position to keep the same center point
+            let newScrollLeft = centerXRatio * newScrollWidth - clientWidth / 2;
+            let newScrollTop = topYRatio * newScrollHeight;
+
+            // Clamp to valid scroll range
+            const maxScrollLeft = Math.max(0, newScrollWidth - clientWidth);
+            const maxScrollTop = Math.max(0, newScrollHeight - clientHeight);
+
+            newScrollLeft = Math.max(0, Math.min(maxScrollLeft, newScrollLeft));
+            newScrollTop = Math.max(0, Math.min(maxScrollTop, newScrollTop));
+
+            viewerBox.scrollLeft = newScrollLeft;
+            viewerBox.scrollTop = newScrollTop;
+        });
 
         // Resume ResizeObserver after zoom is complete (short delay for scrollbar changes to settle)
         setTimeout(() => {
             // Update lastObservedWidth to current state after zoom
-            const viewerBox = this.pdfViewerBox()?.nativeElement;
             if (viewerBox) {
                 this.lastObservedWidth = viewerBox.clientWidth;
             }
@@ -331,34 +366,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
 
         this.currentPage.set(pageNumber);
-    }
-
-    /**
-     * Centers the horizontal scroll position after zooming.
-     * This ensures the PDF remains centered horizontally when zoom changes.
-     */
-    private centerHorizontalScroll(): void {
-        const container = this.pdfViewerBox()?.nativeElement;
-        if (!container) {
-            return;
-        }
-
-        // Use requestAnimationFrame to ensure layout is complete
-        requestAnimationFrame(() => {
-            const zoom = this.zoomLevel();
-            const scrollWidth = container.scrollWidth;
-            const clientWidth = container.clientWidth;
-
-            if (zoom <= 1.0) {
-                // Beim Rauszoomen: Scrollposition auf 0 zurücksetzen
-                // Damit justify-content: center das PDF zentrieren kann
-                container.scrollLeft = 0;
-            } else {
-                // Beim Reinzoomen: Zur Mitte scrollen für optimale Ansicht
-                const scrollCenter = (scrollWidth - clientWidth) / 2;
-                container.scrollLeft = Math.max(0, scrollCenter);
-            }
-        });
     }
 
     /**
