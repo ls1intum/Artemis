@@ -18,152 +18,191 @@
             "getInTouch": "Get in touch",
             "usedBy": "Trusted by Premier Academic Institutions and Educators"
         },
-        "showcase": {
+        "narrative": {
             "heading": "Platform Features",
-            "iris": {
-                "navLabel": "AI Tutor",
-                "badge": "Iris",
-                "title": "Your Personal AI Tutor",
-                "description": "Context-aware AI assistant that reads your code, understands your errors, and guides you to the solution without giving away the answer.",
-                "bullets": {
-                    "0": "Five specialized assistance modes for different learning contexts",
-                    "1": "Proactive support when build and test feedback indicates the student is stuck",
-                    "2": "Persistent support experience across sessions"
-                }
+            "contents": {
+                "ai": "AI",
+                "assessment": "Assessment",
+                "platform": "Platform"
             },
-            "atlas": {
-                "navLabel": "Learning Paths",
-                "badge": "Atlas",
-                "title": "Adaptive Learning Paths",
-                "description": "Personalized competency tracking that helps students understand where they stand and what to focus on next.",
-                "bullets": {
-                    "0": "Fine-grained learning objectives linked to exercises and lectures",
-                    "1": "Visual progress dashboards for students and instructors",
-                    "2": "Automatic recommendations based on individual performance"
-                }
-            },
-            "athena": {
-                "navLabel": "AI Assessment",
-                "badge": "Athena",
-                "title": "AI-Powered Assessment",
-                "description": "Machine learning models that analyze submissions and suggest feedback, reducing grading time while maintaining quality.",
-                "bullets": {
-                    "0": "Automatic feedback suggestions for text and modeling exercises",
-                    "1": "Consistency checks across grading teams",
-                    "2": "Continuous learning from instructor corrections"
-                }
-            },
-            "programming": {
-                "navLabel": "Programming",
-                "badge": "Exercises",
-                "title": "Programming Exercises",
-                "description": "Integrated development environment with built-in Git hosting, continuous integration, and automated feedback for multiple programming languages.",
-                "imageAlt": "Artemis Editor View",
-                "bullets": {
-                    "0": "Built-in Git and CI — no external services required",
-                    "1": "Instant feedback through test results and static code analysis",
-                    "2": "Support for Java, Python, C, Kotlin, Swift, and more"
-                }
-            },
-            "exams": {
-                "navLabel": "Exams",
-                "badge": "Exam Mode",
-                "title": "Comprehensive Exam Mode",
-                "description": "Conduct secure online exams with exercise variants, integrated plagiarism detection, and structured grading workflows.",
-                "imageAlt": "Artemis Exam Dashboard",
-                "bullets": {
-                    "0": "Unique exam variants per student with randomized exercise order",
-                    "1": "Built-in plagiarism detection and test runs",
-                    "2": "Detailed statistics and student review process"
-                }
-            },
-            "hyperion": {
-                "navLabel": "AI Generation",
-                "badge": "Hyperion",
-                "title": "AI Exercise Generation",
-                "description": "Generate and refine exercises using large language models, turning ideas into complete, deployable assignments in minutes.",
-                "bullets": {
-                    "0": "Create programming exercises from natural language descriptions",
-                    "1": "Automatic test case and solution generation",
-                    "2": "Iterative refinement with instructor feedback"
-                }
-            },
-            "communication": {
-                "navLabel": "Communication",
-                "badge": "Messaging",
-                "title": "Real-Time Communication",
-                "description": "Course-wide channels, exercise-specific discussions, and direct messaging keep students and instructors connected.",
-                "bullets": {
-                    "0": "Dedicated channels per lecture, exercise, and exam",
-                    "1": "Announcements with push notifications",
-                    "2": "Threaded discussions with reactions and mentions"
-                }
-            },
-            "more": {
-                "title": "And Much More",
-                "plagiarism": {
-                    "title": "Plagiarism Detection",
-                    "description": "Integrated JPlag-based detection for code, text, and modeling submissions."
+            "chapters": {
+                "ai": {
+                    "eyebrow": "Chapter 1",
+                    "title": "AI That Supports Learning And Teaching",
+                    "description": "Artemis integrates AI across the entire teaching workflow —<br/>from personalized tutoring and competency tracking to automated assessment and exercise generation."
                 },
-                "modeling": {
-                    "title": "UML Modeling",
-                    "description": "Interactive diagram exercises with automatic assessment and visual feedback."
+                "assessment": {
+                    "eyebrow": "Chapter 2",
+                    "title": "Assessment That Works In Real Courses",
+                    "description": "From programming exercises with built-in CI to secure online exams, Artemis covers the full assessment surface area of technical courses."
+                },
+                "platform": {
+                    "eyebrow": "Chapter 3",
+                    "title": "Course Delivery, Integrity, And Scale",
+                    "description": "Artemis goes beyond assignments with integrated lecture delivery, real-time communication, plagiarism detection, and learning analytics."
+                }
+            },
+            "sections": {
+                "iris": {
+                    "navLabel": "AI Tutor",
+                    "badge": "Iris",
+                    "title": "Your Personal AI Tutor",
+                    "description": "Context-aware AI assistant that reads your code, understands your errors, and guides you to the solution without giving away the answer.",
+                    "bullets": {
+                        "0": "Five specialized assistance modes for different learning contexts",
+                        "1": "Proactive support when build and test feedback indicates the student is stuck",
+                        "2": "Persistent support experience across sessions"
+                    }
+                },
+                "atlas": {
+                    "navLabel": "Learning Paths",
+                    "badge": "Atlas",
+                    "title": "Adaptive Learning Paths",
+                    "description": "Personalized competency tracking that helps students understand where they stand and what to focus on next.",
+                    "bullets": {
+                        "0": "Fine-grained learning objectives linked to exercises and lectures",
+                        "1": "Visual progress dashboards for students and instructors",
+                        "2": "Automatic recommendations based on individual performance"
+                    }
+                },
+                "athena": {
+                    "navLabel": "AI Assessment",
+                    "badge": "Athena",
+                    "title": "AI-Powered Assessment",
+                    "description": "Machine learning models that analyze submissions and suggest feedback, reducing grading time while maintaining quality.",
+                    "bullets": {
+                        "0": "Automatic feedback suggestions for text and modeling exercises",
+                        "1": "Consistency checks across grading teams",
+                        "2": "Continuous learning from instructor corrections"
+                    }
+                },
+                "hyperion": {
+                    "navLabel": "AI Generation",
+                    "badge": "Hyperion",
+                    "title": "AI Exercise Generation",
+                    "description": "Generate and refine exercises using large language models, turning ideas into complete, deployable assignments in minutes.",
+                    "bullets": {
+                        "0": "Create programming exercises from natural language descriptions",
+                        "1": "Automatic test case and solution generation",
+                        "2": "Iterative refinement with instructor feedback"
+                    }
+                },
+                "programming": {
+                    "navLabel": "Programming",
+                    "badge": "Exercises",
+                    "title": "Programming Exercises",
+                    "description": "Integrated development environment with built-in Git hosting, continuous integration, and automated feedback for multiple programming languages.",
+                    "imageAlt": "Artemis Editor View",
+                    "bullets": {
+                        "0": "Built-in Git and CI — no external services required",
+                        "1": "Instant feedback through test results and static code analysis",
+                        "2": "Support for Java, Python, C, Kotlin, Swift, and more"
+                    },
+                    "cards": {
+                        "git": {
+                            "title": "Artemis Git",
+                            "description": "Built-in Git hosting provisions starter, solution, and student repositories with access rules applied automatically."
+                        },
+                        "ci": {
+                            "title": "Artemis CI",
+                            "description": "Continuous integration pipelines run directly in Artemis, delivering automated feedback without managing external servers."
+                        },
+                        "batteries": {
+                            "title": "Batteries Included",
+                            "description": "No external CI/CD integrations are needed or supported; set up courses in minutes with everything running inside Artemis."
+                        }
+                    },
+                    "programmingLanguages": "Works with all programming languages, such as"
                 },
                 "quiz": {
+                    "navLabel": "Quiz",
+                    "badge": "Exercises",
                     "title": "Quiz Exercises",
-                    "description": "Multiple-choice, drag-and-drop, and short-answer quizzes with instant grading."
+                    "description": "Versatile quiz engine supporting multiple question formats with instant automated grading and detailed result analytics.",
+                    "bullets": {
+                        "0": "Multiple-choice, drag-and-drop, and short-answer question types",
+                        "1": "Live quizzes with real-time participation tracking",
+                        "2": "Automatic grading with configurable scoring rules"
+                    }
+                },
+                "modeling": {
+                    "navLabel": "Modeling & Text",
+                    "badge": "Exercises",
+                    "title": "Modeling & Text Exercises",
+                    "description": "Interactive diagram exercises and free-text submissions with AI-assisted semi-automatic assessment.",
+                    "bullets": {
+                        "0": "UML diagram editor with automatic layout and visual feedback",
+                        "1": "Free-text exercises with NLP-powered feedback suggestions",
+                        "2": "Semi-automatic assessment learns from instructor corrections"
+                    }
+                },
+                "exams": {
+                    "navLabel": "Exams",
+                    "badge": "Exam Mode",
+                    "title": "Comprehensive Exam Mode",
+                    "description": "Conduct secure online exams with exercise variants, integrated plagiarism detection, and structured grading workflows.",
+                    "imageAlt": "Artemis Exam Dashboard",
+                    "bullets": {
+                        "0": "Unique exam variants per student with randomized exercise order",
+                        "1": "Built-in plagiarism detection and test runs",
+                        "2": "Detailed statistics and student review process"
+                    },
+                    "statsImageAlt": "Artemis Exam Statistics",
+                    "assessmentImageAlt": "Artemis Exam Assessment",
+                    "statistics": {
+                        "title": "Statistics",
+                        "description": "Evaluate exam outcomes using detailed statistics generated by Artemis, including performance metrics and exercise difficulty analysis.",
+                        "usingMetrics": "Review the students' performance using various metrics such as average, median, and standard deviation.",
+                        "studentFeedback": "Review the students' perceived difficulty of every exercise to improve exams in the future."
+                    },
+                    "automaticAssessment": {
+                        "title": "Machine-learning Assisted Assessment",
+                        "description": "Artemis supports correction with automatic and semi-automatic assessments for various exercise types.",
+                        "automate": "For quiz exercises, you may specify the correct solution in advance. After conducting an exam, you can prompt Artemis to automatically evaluate all submissions.",
+                        "quality": "For text and modeling exercises, you can activate automatic correction suggestions. Artemis uses machine learning to identify similar elements across submissions."
+                    }
                 },
                 "lectures": {
+                    "navLabel": "Lectures",
+                    "badge": "Teaching",
                     "title": "Lecture Integration",
-                    "description": "Upload slides, embed videos, and link learning units to exercises and competencies."
+                    "description": "Deliver structured course content with slides, videos, and learning units linked to exercises and competencies.",
+                    "bullets": {
+                        "0": "Upload lecture slides and embed video content",
+                        "1": "Organize content into learning units with clear objectives",
+                        "2": "Link units to exercises and competencies for a connected learning experience"
+                    }
                 },
-                "analytics": {
-                    "title": "Learning Analytics",
-                    "description": "Detailed insights into student performance, engagement, and course-wide trends."
+                "communication": {
+                    "navLabel": "Communication",
+                    "badge": "Messaging",
+                    "title": "Real-Time Communication",
+                    "description": "Course-wide channels, exercise-specific discussions, and direct messaging keep students and instructors connected.",
+                    "bullets": {
+                        "0": "Dedicated channels per lecture, exercise, and exam",
+                        "1": "Announcements with push notifications",
+                        "2": "Threaded discussions with reactions and mentions"
+                    }
                 },
-                "tutorials": {
-                    "title": "Tutorial Groups",
-                    "description": "Organize students into tutorial groups with dedicated tutors and scheduling."
-                },
-                "opensource": {
-                    "title": "Open Source & Scalable",
-                    "description": "Community-driven and free to use, scaling to courses with thousands of students."
-                }
-            }
-        },
-        "programmingExercises": {
-            "integration": {
-                "cards": {
-                    "git": {
-                        "title": "Artemis Git",
-                        "description": "Built-in Git hosting provisions starter, solution, and student repositories with access rules applied automatically."
+                "integrity": {
+                    "navLabel": "Integrity & Analytics",
+                    "badge": "Platform",
+                    "title": "Academic Integrity & Learning Analytics",
+                    "description": "Comprehensive tools for maintaining academic standards and understanding student learning patterns at scale.",
+                    "bullets": {
+                        "0": "Integrated JPlag-based plagiarism detection for code, text, and modeling",
+                        "1": "Detailed insights into student performance, engagement, and course-wide trends",
+                        "2": "Data-driven feedback to improve teaching and course design"
                     },
-                    "ci": {
-                        "title": "Artemis CI",
-                        "description": "Continuous integration pipelines run directly in Artemis, delivering automated feedback without managing external servers."
+                    "plagiarism": {
+                        "title": "Plagiarism Detection",
+                        "description": "Integrated JPlag-based detection for code, text, and modeling submissions with similarity analysis and side-by-side comparison."
                     },
-                    "batteries": {
-                        "title": "Batteries Included",
-                        "description": "No external CI/CD integrations are needed or supported; set up courses in minutes with everything running inside Artemis."
+                    "analytics": {
+                        "title": "Learning Analytics",
+                        "description": "Detailed dashboards showing student performance, engagement patterns, and course-wide trends to inform teaching decisions."
                     }
                 }
-            },
-            "programmingLanguages": "Works with all programming languages, such as"
-        },
-        "examMode": {
-            "statsImageAlt": "Artemis Exam Statistics",
-            "assessmentImageAlt": "Artemis Exam Assessment",
-            "statistics": {
-                "title": "Statistics",
-                "description": "You can evaluate the exam outcome using the statistics generated by Artemis.",
-                "usingMetrics": "Review the students' performance using various metrics such as average, median, and standard deviation.",
-                "studentFeedback": "Review the students' perceived difficulty of every exercise to improve exams in the future."
-            },
-            "automaticAssessment": {
-                "title": "Machine-learning Assisted Assessment",
-                "description": "Artemis supports correction with automatic and semi-automatic assessments for various exercise types.",
-                "automate": "For quiz exercises, you may specify the correct solution in advance. After conducting an exam, you can prompt Artemis to automatically evaluate all submissions.",
-                "quality": "For text and modeling exercises, you can activate automatic correction suggestions. Artemis uses machine learning to identify similar elements across submissions."
             }
         },
         "cta": {

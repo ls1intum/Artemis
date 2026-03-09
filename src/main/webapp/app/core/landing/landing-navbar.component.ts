@@ -19,7 +19,13 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 
                 <!-- Desktop nav -->
                 <div class="landing-links">
-                    <span class="landing-link" (click)="scrollTo('features')" jhiTranslate="landing.navbar.features"></span>
+                    <button class="landing-link dropdown-trigger" (click)="toggleFeaturesMenu($event)">
+                        <span jhiTranslate="landing.navbar.features"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                    <p-menu #featuresMenu [model]="featuresMenuItems" [popup]="true" appendTo="body" styleClass="landing-docs-menu" />
                     <button class="landing-link dropdown-trigger" (click)="toggleDocsMenu($event)">
                         <span jhiTranslate="landing.navbar.documentation"></span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -55,7 +61,22 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             <!-- Mobile menu -->
             @if (menuOpen()) {
                 <div class="mobile-menu">
-                    <span class="mobile-link" (click)="scrollTo('features'); closeMenu()" jhiTranslate="landing.navbar.features"></span>
+                    <div class="mobile-docs">
+                        <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.features"></span>
+                        <div class="mobile-docs-links">
+                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-iris'); closeMenu()" jhiTranslate="landing.narrative.chapters.ai.title"></span>
+                            <span
+                                class="mobile-link mobile-doc-item"
+                                (click)="scrollTo('feature-programming'); closeMenu()"
+                                jhiTranslate="landing.narrative.chapters.assessment.title"
+                            ></span>
+                            <span
+                                class="mobile-link mobile-doc-item"
+                                (click)="scrollTo('feature-lectures'); closeMenu()"
+                                jhiTranslate="landing.narrative.chapters.platform.title"
+                            ></span>
+                        </div>
+                    </div>
                     <div class="mobile-docs">
                         <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.documentation"></span>
                         <div class="mobile-docs-links">
@@ -313,11 +334,18 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class LandingNavbarComponent {
     private readonly router = inject(Router);
     private readonly translateService = inject(TranslateService);
+    private readonly featuresMenu = viewChild<Menu>('featuresMenu');
     private readonly docsMenu = viewChild<Menu>('docsMenu');
 
     menuOpen = signal(false);
     currentLang = signal(inject(TranslateService).currentLang || 'en');
     isEnglish = computed(() => this.currentLang() === 'en');
+
+    featuresMenuItems: MenuItem[] = [
+        { label: 'AI & Learning', command: () => this.scrollTo('feature-iris') },
+        { label: 'Assessment & Exams', command: () => this.scrollTo('feature-programming') },
+        { label: 'Platform & Delivery', command: () => this.scrollTo('feature-lectures') },
+    ];
 
     docsMenuItems: MenuItem[] = [
         { label: 'Student', url: 'https://docs.artemis.tum.de/user/student-guides/intro', target: '_blank' },
@@ -332,6 +360,10 @@ export class LandingNavbarComponent {
 
     closeMenu(): void {
         this.menuOpen.set(false);
+    }
+
+    toggleFeaturesMenu(event: Event): void {
+        this.featuresMenu()?.toggle(event);
     }
 
     toggleDocsMenu(event: Event): void {
