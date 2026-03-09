@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 // Mock pdfjs-dist BEFORE importing the component
-vi.mock('pdfjs-dist', () => {
+vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => {
     return {
         __esModule: true,
         GlobalWorkerOptions: {
@@ -568,7 +568,9 @@ describe('AttachmentVideoUnitComponent', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
 
             // Clean up any pending requests first
-            httpMock.match(() => true).forEach((req) => req.flush(new Blob()));
+            httpMock.match(() => true).forEach((req) => {
+                req.flush(new Blob());
+            });
 
             expect(() => component.ngOnDestroy()).not.toThrow();
         });
