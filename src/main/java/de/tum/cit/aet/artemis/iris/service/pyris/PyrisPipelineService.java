@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisEventDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.tutorsuggestion.PyrisTutorSuggestionPipelineExecutionDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
-import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExtendedCourseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisPostDTO;
@@ -354,7 +353,7 @@ public class PyrisPipelineService {
                     executionDto.settings(),
                     executionDto.initialStages(),
                     customInstructions,
-                    PyrisExtendedCourseDTO.of(fullCourse),
+                    PyrisCourseDTO.of(fullCourse),
                     null,
                     null,
                     null,
@@ -418,20 +417,6 @@ public class PyrisPipelineService {
         // @formatter:on
     }
 
-    /**
-     * Execute the course chat pipeline for the given session.
-     * It provides specific data for the course chat pipeline, including:
-     * - The full course with the participation of the student
-     * - The metrics of the student in the course
-     * - The competency JoL if this is due to a JoL set event
-     * <p>
-     *
-     * @param variant            the variant of the pipeline
-     * @param customInstructions the custom instructions for the pipeline
-     * @param session            the chat session
-     * @param object             if this function triggers a pipeline execution due to a specific event, this object is the event payload
-     * @see PyrisPipelineService#executePipeline for more details on the pipeline execution process.
-     */
     /**
      * Execute the chat pipeline for a course chat session.
      *
