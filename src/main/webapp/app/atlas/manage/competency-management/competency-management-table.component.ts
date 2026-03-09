@@ -32,6 +32,7 @@ import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 @Component({
     selector: 'jhi-competency-management-table',
     templateUrl: './competency-management-table.component.html',
+    styleUrl: './competency-management-table.component.scss',
     imports: [
         NgbDropdown,
         NgbDropdownMenu,
