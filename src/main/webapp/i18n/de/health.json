@@ -8,7 +8,12 @@
             "properties": "Properties",
             "name": "Name",
             "value": "Wert",
-            "error": "Error"
+            "error": "Error",
+            "jobs": "Jobs:",
+            "running": "Laufend:",
+            "version": "Version:",
+            "started": "Gestartet:",
+            "noBuildAgents": "Keine Build Agents gemeldet."
         },
         "indicator": {
             "clientConfigServer": "Client Config Server",

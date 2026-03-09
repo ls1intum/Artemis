@@ -17,9 +17,11 @@ import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model'
 import { Router } from '@angular/router';
 import { captureException } from '@sentry/angular';
 import dayjs from 'dayjs/esm';
+import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { IrisMessageContentDTO } from 'app/iris/shared/entities/iris-message-content-dto.model';
 import { randomInt } from 'app/shared/util/utils';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 
 export enum ChatServiceMode {
     TEXT_EXERCISE = 'TEXT_EXERCISE_CHAT',
@@ -86,6 +88,7 @@ export class IrisChatService implements OnDestroy {
     numNewMessages: BehaviorSubject<number> = new BehaviorSubject(0);
     stages: BehaviorSubject<IrisStageDTO[]> = new BehaviorSubject([]);
     suggestions: BehaviorSubject<string[]> = new BehaviorSubject([]);
+    citationInfo: BehaviorSubject<IrisCitationMetaDTO[]> = new BehaviorSubject([]);
     error: BehaviorSubject<IrisErrorMessageKey | undefined> = new BehaviorSubject(undefined);
     chatSessions: BehaviorSubject<IrisSessionDTO[]> = new BehaviorSubject([]);
 
@@ -98,7 +101,10 @@ export class IrisChatService implements OnDestroy {
 
     private sessionCreationIdentifier?: string;
 
-    hasJustAcceptedExternalLLMUsage = false;
+    private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
+    public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
+
+    hasJustAcceptedLLMUsage = false;
 
     /**
      * This property should only be used internally in {@link getCourseId()} and {@link setCourseId()}.
@@ -168,7 +174,12 @@ export class IrisChatService implements OnDestroy {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
-        if (requiresAcceptance === false || this.accountService.userIdentity()?.externalLLMUsageAccepted || this.hasJustAcceptedExternalLLMUsage) {
+        if (
+            requiresAcceptance === false ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.LOCAL_AI ||
+            this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
+            this.hasJustAcceptedLLMUsage
+        ) {
             this.getCurrentSessionOrCreate().subscribe({
                 ...this.handleNewSession(),
                 complete: () => this.loadChatSessions(),
@@ -283,12 +294,32 @@ export class IrisChatService implements OnDestroy {
         this.newIrisMessage.next(undefined);
     }
 
-    public updateExternalLLMUsageConsent(accepted: boolean): void {
+    public updateLLMUsageConsent(accepted: LLMSelectionDecision): void {
+        if (accepted === LLMSelectionDecision.NO_AI) {
+            this.hasJustAcceptedLLMUsage = false;
+            this.acceptSubscription?.unsubscribe();
+            this.userService.updateLLMSelectionDecision(accepted).subscribe({
+                next: () => {
+                    this.accountService.setUserLLMSelectionDecision(accepted);
+                    this.close();
+                },
+                error: () => {
+                    this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+                    this.close();
+                },
+            });
+            return;
+        }
         this.acceptSubscription?.unsubscribe();
-        this.acceptSubscription = this.userService.updateExternalLLMUsageConsent(accepted).subscribe(() => {
-            this.hasJustAcceptedExternalLLMUsage = accepted;
-            this.accountService.setUserAcceptedExternalLLMUsage(accepted);
-            this.closeAndStart();
+        this.acceptSubscription = this.userService.updateLLMSelectionDecision(accepted).subscribe({
+            next: () => {
+                this.hasJustAcceptedLLMUsage = true;
+                this.accountService.setUserLLMSelectionDecision(accepted);
+                this.closeAndStart();
+            },
+            error: () => {
+                this.error.next(IrisErrorMessageKey.TECHNICAL_ERROR_RESPONSE);
+            },
         });
     }
 
@@ -364,6 +395,7 @@ export class IrisChatService implements OnDestroy {
                 this.addLatestEmptySessionToChatSessions(newIrisSession);
 
                 this.sessionId = newIrisSession.id;
+                this.citationInfo.next(newIrisSession.citationInfo || []);
                 this.messages.next(newIrisSession.messages || []);
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
                 this.irisWebsocketService.subscribeToSession(this.sessionId).subscribe((message) => this.handleWebsocketMessage(message));
@@ -410,6 +442,10 @@ export class IrisChatService implements OnDestroy {
             const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, title: payload.sessionTitle } : session));
             this.chatSessions.next(updatedSessions);
         }
+        if (payload.citationInfo?.length) {
+            const merged = this.mergeCitationInfo(this.citationInfo.getValue(), payload.citationInfo);
+            this.citationInfo.next(merged);
+        }
         switch (payload.type) {
             case IrisChatWebsocketPayloadType.MESSAGE:
                 if (payload.message?.sender === IrisSender.LLM) {
@@ -444,6 +480,7 @@ export class IrisChatService implements OnDestroy {
             this.messages.next([]);
             this.stages.next([]);
             this.suggestions.next([]);
+            this.citationInfo.next([]);
             this.numNewMessages.next(0);
             this.newIrisMessage.next(undefined);
         }
@@ -586,6 +623,10 @@ export class IrisChatService implements OnDestroy {
         return this.stages.asObservable();
     }
 
+    public currentCitationInfo(): Observable<IrisCitationMetaDTO[]> {
+        return this.citationInfo.asObservable();
+    }
+
     public currentError(): Observable<IrisErrorMessageKey | undefined> {
         return this.error.asObservable();
     }
@@ -618,6 +659,17 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    private mergeCitationInfo(existing: IrisCitationMetaDTO[], incoming: IrisCitationMetaDTO[]): IrisCitationMetaDTO[] {
+        const merged = new Map<number, IrisCitationMetaDTO>();
+        existing.forEach((citation) => {
+            merged.set(citation.entityId, citation);
+        });
+        incoming.forEach((citation) => {
+            merged.set(citation.entityId, citation);
+        });
+        return Array.from(merged.values());
+    }
+
     public currentNumNewMessages(): Observable<number> {
         return this.numNewMessages.asObservable();
     }
@@ -628,5 +680,39 @@ export class IrisChatService implements OnDestroy {
 
     public availableChatSessions(): Observable<IrisSessionDTO[]> {
         return this.chatSessions.asObservable();
+    }
+
+    /**
+     * Deletes a single chat session by ID.
+     * Removes it from the local session list and switches to another session if the deleted one was active.
+     * @param sessionId the ID of the session to delete
+     */
+    public deleteSession(sessionId: number): Observable<void> {
+        return this.irisChatHttpService.deleteSession(sessionId).pipe(
+            tap(() => {
+                const currentSessions = this.chatSessions.getValue().filter((s) => s.id !== sessionId);
+                if (this.latestStartedSession?.id === sessionId) {
+                    this.latestStartedSession = undefined;
+                }
+                this.chatSessions.next(currentSessions);
+
+                if (this.sessionId === sessionId) {
+                    this.close();
+                    if (currentSessions.length > 0) {
+                        this.switchToSession(currentSessions[0]);
+                    }
+                    // When no sessions remain, just stay in the closed state.
+                    // The user can start a new session manually via the "New chat" button.
+                }
+            }),
+            map(() => undefined),
+        );
+    }
+
+    /**
+     * Sets whether the chat should reopen after being closed by LLM selection modal.
+     */
+    public setShouldReopenChat(value: boolean): void {
+        this.shouldReopenChatSubject.next(value);
     }
 }

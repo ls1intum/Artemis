@@ -27,6 +27,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
+import com.hazelcast.spring.HazelcastObjectExtractionConfiguration;
+
 import de.tum.cit.aet.artemis.core.PrintStartupBeansEvent;
 import de.tum.cit.aet.artemis.core.config.ArtemisCompatibleVersionsConfiguration;
 import de.tum.cit.aet.artemis.core.config.ArtemisConfigHelper;
@@ -39,7 +41,9 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
-@SpringBootApplication
+// Exclude HazelcastObjectExtractionConfiguration due to incompatibility with custom Hazelcast configuration
+// See: https://github.com/hazelcast/hazelcast/issues/26553
+@SpringBootApplication(exclude = HazelcastObjectExtractionConfiguration.class)
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
         ArtemisCompatibleVersionsConfiguration.class })
 public class ArtemisApp {

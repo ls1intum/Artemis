@@ -56,7 +56,7 @@
             },
             "refresh": {
                 "refreshFilesDescription": "Refresh all files. This will overwrite all unsaved changes.",
-                "performRefresh": "Refresh files",
+                "performRefresh": "Refresh",
                 "refreshExplanationShort": "Refresh and load all files from your repository.",
                 "refreshExplanationLong": "You have unsaved or uncommitted changes in the online editor. When you click the button below, these changes will be reset and overwritten with the last commit on the repository server. This can not be undone!"
             },
@@ -114,13 +114,13 @@
                 "totalTestsPassing": "{{passedTests}} of {{totalTests}} tests passing"
             },
             "repoSelect": {
-                "assignmentRepo": "Assignment Repository",
-                "createAssignmentRepo": "Create Assignment Repository",
+                "assignmentRepo": "Assignment Repo",
+                "createAssignmentRepo": "Create Assignment Repo",
                 "createAssignmentRepoDisabledTooltip": "The Assignment Repository cannot be created for exam exercises. Please use the test run feature to try out the exercise.",
-                "deleteAssignmentRepo": "Delete Assignment Repository",
-                "templateRepo": "Template Repository",
-                "solutionRepo": "Solution Repository",
-                "testRepo": "Test Repository",
+                "deleteAssignmentRepo": "Delete Assignment Repo",
+                "templateRepo": "Template Repo",
+                "solutionRepo": "Solution Repo",
+                "testRepo": "Test Repo",
                 "loadingExercise": "Loading Exercise",
                 "solutionWarning": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository.",
                 "solutionSuccess": "The Solution Repository fulfills all test cases.",
@@ -130,6 +130,7 @@
                 "templateInfo": "No result found for the Template Repository.",
                 "exerciseHasNoIssues": "No issues were identified in the repositories."
             },
+            "repo": "Repo",
             "switchEditors": "Switch code editor"
         }
     }

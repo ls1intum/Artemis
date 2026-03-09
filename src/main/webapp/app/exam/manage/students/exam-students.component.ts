@@ -14,7 +14,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faChair, faCheck, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
+import { faChair, faCheck, faFileExport, faInfoCircle, faPlus, faThLarge, faTimes, faUpload, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -27,6 +27,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/students/room-distribution/students-room-distribution-dialog.component';
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
+import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -41,6 +42,7 @@ const cssClasses = {
     imports: [
         TranslateDirective,
         UsersImportButtonComponent,
+        StudentsExportDialogComponent,
         StudentsUploadImagesButtonComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
@@ -99,6 +101,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faTimes = faTimes;
     protected readonly faThLarge = faThLarge;
     protected readonly faChair = faChair;
+    protected readonly faFileExport = faFileExport;
 
     ngOnInit() {
         this.isLoading = true;

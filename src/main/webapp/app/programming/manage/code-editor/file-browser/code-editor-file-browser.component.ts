@@ -1,4 +1,5 @@
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, OnInit, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, DestroyRef, ElementRef, OnDestroy, OnInit, ViewChild, computed, effect, inject, input, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subscription, of, throwError } from 'rxjs';
 import { catchError, finalize, map as rxMap, switchMap, tap } from 'rxjs/operators';
@@ -36,6 +37,7 @@ import { CodeEditorRepositoryFileService, CodeEditorRepositoryService } from 'ap
 import {
     CommitState,
     CreateFileChange,
+    DeleteFileChange,
     EditorState,
     FileBadge,
     FileBadgeType,
@@ -48,6 +50,7 @@ import {
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { CodeEditorConflictStateService } from 'app/programming/shared/code-editor/services/code-editor-conflict-state.service';
 import { findItemInList } from 'app/programming/shared/code-editor/treeview/helpers/tree-view-helper';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 export type InteractableEvent = {
     // Click event object; contains target information
@@ -81,12 +84,13 @@ export interface FileTreeItem extends TreeItem<string> {
         ArtemisTranslatePipe,
     ],
 })
-export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IFileDeleteDelegate {
+export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, OnDestroy, IFileDeleteDelegate {
     modalService = inject(NgbModal);
     private repositoryFileService = inject(CodeEditorRepositoryFileService);
     private repositoryService = inject(CodeEditorRepositoryService);
     private fileService = inject(CodeEditorFileService);
     private conflictService = inject(CodeEditorConflictStateService);
+    private destroyRef = inject(DestroyRef);
     CommitState = CommitState;
     FileType = FileType;
     constructor() {
@@ -144,9 +148,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
     allowHiddenFiles = input<boolean>(false);
 
     isProblemStatementVisible = input<boolean>(true);
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     onToggleCollapse = output<InteractableEvent>();
-    onFileChange = output<[string[], FileChange]>();
+    onFileChange = output<[string[], FileChange, boolean?]>();
     selectedFileChange = output<string | undefined>();
     commitStateChange = output<CommitState>();
     onError = output<string>();
@@ -229,6 +234,10 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
         }
     }
 
+    ngOnDestroy(): void {
+        this.conflictSubscription?.unsubscribe();
+    }
+
     /**
      * After the view was initialized, we create an interact.js resizable object,
      * designate the edges which can be used to resize the target element and set min and max values.
@@ -303,6 +312,7 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
                     this.isLoadingFiles = false;
                     this.changeDetectorRef.markForCheck();
                 }),
+                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
                 error: (error: Error) => {
@@ -329,22 +339,37 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
         );
     };
 
-    handleFileChange(fileChange: FileChange) {
+    /**
+     * Apply a file-tree change to the in-memory repository map and rebuild the tree view.
+     *
+     * @param fileChange The change to apply (create / rename / delete).
+     * @param isRemote   True when the change originates from a remote peer via the sync service.
+     *                   Forwarded as the optional third element of the onFileChange tuple so that
+     *                   the container can suppress side-effects that are only appropriate for
+     *                   local operations (e.g. auto-selecting a newly created file).
+     */
+    handleFileChange(fileChange: FileChange, isRemote = false) {
         if (fileChange instanceof CreateFileChange) {
             this.repositoryFiles = { ...this.repositoryFiles, [fileChange.fileName]: fileChange.fileType };
         } else {
             this.repositoryFiles = this.fileService.updateFileReferences(this.repositoryFiles, fileChange);
         }
         this.setupTreeview();
-        this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange]);
+        this.onFileChange.emit([Object.keys(this.repositoryFiles), fileChange, isRemote]);
     }
 
     /**
-     * Emmiter function for when a file was deleted; notifies the parent component
+     * Emitter function for when a file was deleted; notifies the parent component.
+     * Called after the server-side delete succeeds. handleFileChange() is a synchronous
+     * in-memory update (repositoryFiles map + tree rebuild) that cannot fail, so the
+     * subsequent emitFileDeleted() call is always reached safely.
      * @param fileChange
      */
     onFileDeleted(fileChange: FileChange) {
         this.handleFileChange(fileChange);
+        if (fileChange instanceof DeleteFileChange) {
+            this.fileSyncService()?.emitFileDeleted(fileChange.fileName, this.toSyncFileType(fileChange.fileType));
+        }
     }
 
     /**
@@ -522,13 +547,16 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
             return;
         }
 
-        this.renameFile(filePath, newFileName).subscribe({
-            next: () => {
-                this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
-                this.renamingFile = undefined;
-            },
-            error: () => this.onError.emit('fileOperationFailed'),
-        });
+        this.renameFile(filePath, newFileName)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.handleFileChange(new RenameFileChange(fileType, filePath, newFilePath));
+                    this.fileSyncService()?.emitFileRenamed(filePath, newFilePath, this.toSyncFileType(fileType));
+                    this.renamingFile = undefined;
+                },
+                error: () => this.onError.emit('fileOperationFailed'),
+            });
     }
 
     /**
@@ -572,21 +600,27 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
 
         const file = folderPath ? `${folderPath}/${fileName}` : fileName;
         if (fileType === FileType.FILE) {
-            this.createFile(file).subscribe({
-                next: () => {
-                    this.handleFileChange(new CreateFileChange(FileType.FILE, file));
-                    this.creatingFile = undefined;
-                },
-                error: () => this.onError.emit('fileOperationFailed'),
-            });
+            this.createFile(file)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.handleFileChange(new CreateFileChange(FileType.FILE, file));
+                        this.fileSyncService()?.emitFileCreated(file, 'FILE');
+                        this.creatingFile = undefined;
+                    },
+                    error: () => this.onError.emit('fileOperationFailed'),
+                });
         } else {
-            this.createFolder(file).subscribe({
-                next: () => {
-                    this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
-                    this.creatingFile = undefined;
-                },
-                error: () => this.onError.emit('fileOperationFailed'),
-            });
+            this.createFolder(file)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
+                    next: () => {
+                        this.handleFileChange(new CreateFileChange(FileType.FOLDER, file));
+                        this.fileSyncService()?.emitFileCreated(file, 'FOLDER');
+                        this.creatingFile = undefined;
+                    },
+                    error: () => this.onError.emit('fileOperationFailed'),
+                });
         }
     }
 
@@ -711,5 +745,9 @@ export class CodeEditorFileBrowserComponent implements OnInit, AfterViewInit, IF
             }
         }
         return Array.from(folderBadgesMap.entries()).map(([type, count]) => new FileBadge(type, count));
+    }
+
+    private toSyncFileType(type: FileType): 'FILE' | 'FOLDER' {
+        return type === FileType.FILE ? 'FILE' : 'FOLDER';
     }
 }

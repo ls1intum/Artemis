@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.En
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTextExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.repository.IrisTextExerciseChatSessionRepository;
+import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.AbstractIrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisTextExerciseChatSessionService;
@@ -54,9 +55,11 @@ public class IrisTextExerciseChatSessionResource {
 
     private final MessageSource messageSource;
 
+    private final IrisCitationService irisCitationService;
+
     protected IrisTextExerciseChatSessionResource(IrisTextExerciseChatSessionRepository irisTextExerciseChatSessionRepository, UserRepository userRepository,
             Optional<TextRepositoryApi> textRepositoryApi, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
-            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, MessageSource messageSource) {
+            IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, MessageSource messageSource, IrisCitationService irisCitationService) {
         this.irisTextExerciseChatSessionRepository = irisTextExerciseChatSessionRepository;
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
@@ -64,6 +67,7 @@ public class IrisTextExerciseChatSessionResource {
         this.textRepositoryApi = textRepositoryApi;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
         this.messageSource = messageSource;
+        this.irisCitationService = irisCitationService;
     }
 
     /**
@@ -86,6 +90,7 @@ public class IrisTextExerciseChatSessionResource {
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
+            irisCitationService.enrichSessionWithCitationInfo(session);
             return ResponseEntity.ok(session);
         }
 
@@ -108,7 +113,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(textExercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var session = new IrisTextExerciseChatSession(textExercise, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
@@ -132,7 +137,7 @@ public class IrisTextExerciseChatSessionResource {
 
         irisSettingsService.ensureEnabledForCourseOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember());
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        user.hasAcceptedExternalLLMUsageElseThrow();
+        user.hasOptedIntoLLMUsageElseThrow();
 
         var sessions = irisTextExerciseChatSessionRepository.findByExerciseIdAndUserIdElseThrow(exercise.getId(), user.getId());
         // TODO: Discuss this with the team: should we filter out sessions where the user does not have access, or throw an exception?
