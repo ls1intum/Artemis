@@ -15,6 +15,7 @@ import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { QuizQuestion, QuizQuestionType } from 'app/quiz/shared/entities/quiz-question.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { Exercise, IncludedInOverallScore, ValidationReason } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -47,6 +48,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DifficultyPickerComponent } from 'app/exercise/difficulty-picker/difficulty-picker.component';
 import { CompetencySelectionComponent } from 'app/atlas/shared/competency-selection/competency-selection.component';
 import { CalendarService } from 'app/core/calendar/shared/service/calendar.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { ButtonModule } from 'primeng/button';
+import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation-modal.component';
+import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
+import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -73,6 +81,8 @@ import { CalendarService } from 'app/core/calendar/shared/service/calendar.servi
         NgClass,
         JsonPipe,
         ArtemisTranslatePipe,
+        ButtonModule,
+        QuizAiGenerationModalComponent,
     ],
 })
 export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective implements OnInit, OnChanges, ComponentCanDeactivate {
@@ -88,8 +98,11 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
+    private profileService = inject(ProfileService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
+    hyperionEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+    aiGenerationModalVisible = false;
 
     course?: Course;
     exerciseGroup?: ExerciseGroup;
@@ -285,6 +298,29 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
 
         this.cacheValidation();
+    }
+
+    openAiGenerationModal(): void {
+        this.aiGenerationModalVisible = true;
+    }
+
+    canShowAiGenerationButton(): boolean {
+        return !!this.hyperionEnabled && !this.isImport && !this.isExamMode && !!this.courseId && !!this.quizExercise?.isEditable;
+    }
+
+    appendAiGeneratedQuestions(generatedQuestions: GeneratedQuestion[]): void {
+        if (!generatedQuestions.length) {
+            return;
+        }
+
+        const existingQuestions = this.quizExercise.quizQuestions ?? [];
+        const existingQuestionCount = existingQuestions.length;
+        const mappedQuestions = generatedQuestions.map((generatedQuestion, index) =>
+            this.convertGeneratedQuestionToQuizQuestion(generatedQuestion, existingQuestionCount + index + 1),
+        );
+        // Reassign the array to ensure OnPush children receive a new input reference.
+        this.quizExercise.quizQuestions = [...existingQuestions, ...mappedQuestions];
+        this.handleQuestionChanged();
     }
 
     /**
@@ -661,6 +697,29 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
 
     handleQuestionChanged() {
         this.cacheValidation();
+    }
+
+    private convertGeneratedQuestionToQuizQuestion(generatedQuestion: GeneratedQuestion, questionNumber: number): MultipleChoiceQuestion {
+        const question = new MultipleChoiceQuestion();
+        question.title = generatedQuestion.title || `AI Question ${questionNumber}`;
+        question.text = generatedQuestion.questionText;
+        question.points = 1;
+        question.randomizeOrder = true;
+        question.scoringType = ScoringType.ALL_OR_NOTHING;
+        question.singleChoice = this.isSingleChoiceType(generatedQuestion.type);
+        question.answerOptions = generatedQuestion.options.map((generatedOption) => {
+            const answerOption = new AnswerOption();
+            answerOption.text = generatedOption.text;
+            answerOption.isCorrect = generatedOption.correct;
+            answerOption.question = question;
+            return answerOption;
+        });
+        question.hasCorrectOption = question.answerOptions.some((answerOption) => !!answerOption.isCorrect);
+        return question;
+    }
+
+    private isSingleChoiceType(type: GeneratedQuestionType): boolean {
+        return type === 'single-choice' || type === 'true-false';
     }
 
     /**
