@@ -74,6 +74,11 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('Results rendering', () => {
+        beforeEach(() => {
+            // A non-empty query is required to reach the results branch in the template
+            fixture.componentRef.setInput('searchQuery', 'angular');
+        });
+
         it('should show results when lectureResults is populated', () => {
             (component as any).isLoading.set(false);
             (component as any).lectureResults.set([mockResult]);
@@ -119,7 +124,6 @@ describe('GlobalSearchLectureResultsComponent', () => {
         });
 
         it('should show no-results message when results are empty and not loading', () => {
-            fixture.componentRef.setInput('searchQuery', 'angular');
             (component as any).isLoading.set(false);
             (component as any).lectureResults.set([]);
             fixture.detectChanges();

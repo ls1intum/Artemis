@@ -16,6 +16,7 @@ import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('GlobalSearchModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -47,6 +48,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: OsDetectorService, useValue: mockOsDetectorService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
 
