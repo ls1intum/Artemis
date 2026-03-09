@@ -69,11 +69,12 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         effect(() => {
             const targetPage = this.initialPage();
             const loaded = !this.isLoading();
-            const hasPages = this.totalPages() > 0;
+            const totalPages = this.totalPages();
 
-            if (targetPage && loaded && hasPages) {
-                // DOM render delay
-                setTimeout(() => this.goToPage(targetPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
+            if (targetPage && loaded && totalPages > 0) {
+                // Clamp to valid page range
+                const validPage = Math.max(1, Math.min(targetPage, totalPages));
+                setTimeout(() => this.goToPage(validPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
             }
         });
     }

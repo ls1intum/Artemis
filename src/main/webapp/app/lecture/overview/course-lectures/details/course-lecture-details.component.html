@@ -74,8 +74,8 @@
                                         <jhi-attachment-video-unit
                                             [courseId]="courseId!"
                                             [lectureUnit]="lectureUnit"
-                                            [initiallyExpanded]="lectureUnit.id === targetUnitId()"
-                                            [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
+                                            [initiallyExpanded]="isTargetUnit()(lectureUnit.id)"
+                                            [targetPdfPage]="getTargetPdfPage()(lectureUnit.id)"
                                             (onCompletion)="completeLectureUnit($event)"
                                         />
                                     }
@@ -83,7 +83,7 @@
                                         <jhi-text-unit
                                             [courseId]="courseId!"
                                             [lectureUnit]="lectureUnit"
-                                            [initiallyExpanded]="lectureUnit.id === targetUnitId()"
+                                            [initiallyExpanded]="isTargetUnit()(lectureUnit.id)"
                                             (onCompletion)="completeLectureUnit($event)"
                                         />
                                     }
@@ -91,7 +91,7 @@
                                         <jhi-online-unit
                                             [courseId]="courseId!"
                                             [lectureUnit]="lectureUnit"
-                                            [initiallyExpanded]="lectureUnit.id === targetUnitId()"
+                                            [initiallyExpanded]="isTargetUnit()(lectureUnit.id)"
                                             (onCompletion)="completeLectureUnit($event)"
                                         />
                                     }

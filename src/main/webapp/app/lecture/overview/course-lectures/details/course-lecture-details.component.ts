@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -96,9 +96,21 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
-    // Deep-linking state for targeting specific units and PDF pages
+    // Deep-linking: target unit and PDF page from URL query params (?unit=X&page=Y)
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
+
+    // Computed helpers to check if a unit is the deep-link target
+    readonly isTargetUnit = computed(() => {
+        const targetId = this.targetUnitId();
+        return (unitId: number | undefined) => unitId === targetId;
+    });
+
+    readonly getTargetPdfPage = computed(() => {
+        const targetId = this.targetUnitId();
+        const targetPage = this.targetPdfPage();
+        return (unitId: number | undefined) => (unitId === targetId ? targetPage : undefined);
+    });
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
@@ -120,15 +132,15 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // Handle query parameters for deep-linking to specific units and pages
+        // Deep-linking: parse and validate query parameters
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const unitId = Number(params['unit']);
-            if (!isNaN(unitId)) {
+            if (Number.isInteger(unitId) && unitId > 0) {
                 this.targetUnitId.set(unitId);
             }
 
             const pageNum = Number(params['page']);
-            if (!isNaN(pageNum) && pageNum > 0) {
+            if (Number.isInteger(pageNum) && pageNum > 0) {
                 this.targetPdfPage.set(pageNum);
             }
         });

@@ -18,6 +18,9 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
     styleUrl: './lecture-unit.component.scss',
 })
 export class LectureUnitComponent implements OnInit {
+    // Delay to allow async content (PDFs, videos) to render before scrolling
+    private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
+
     private router = inject(Router);
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
@@ -56,8 +59,6 @@ export class LectureUnitComponent implements OnInit {
             this.isCollapsed.set(false);
             this.onCollapse.emit(false);
 
-            // Scroll into view after content is rendered and loaded
-            // Use a delay to ensure async content (PDF, video) has time to render
             afterNextRender(
                 () => {
                     setTimeout(() => {
@@ -65,7 +66,7 @@ export class LectureUnitComponent implements OnInit {
                             behavior: 'smooth',
                             block: 'start',
                         });
-                    }, 500);
+                    }, LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
                 },
                 { injector: this.injector },
             );

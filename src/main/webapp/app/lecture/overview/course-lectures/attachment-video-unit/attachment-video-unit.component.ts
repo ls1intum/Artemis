@@ -88,16 +88,23 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return undefined;
     }
 
+    private logUnitOpenedEvent(): void {
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+    }
+
+    private clearLoadedContent(): void {
+        this.transcriptSegments.set([]);
+        this.playlistUrl.set(undefined);
+        this.revokePdfUrl();
+        this.pdfUrl.set(undefined);
+    }
+
     override toggleCollapse(isCollapsed: boolean): void {
         super.toggleCollapse(isCollapsed);
 
         if (!isCollapsed) {
-            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
-
-            this.transcriptSegments.set([]);
-            this.playlistUrl.set(undefined);
-            this.revokePdfUrl();
-            this.pdfUrl.set(undefined);
+            this.logUnitOpenedEvent();
+            this.clearLoadedContent();
 
             const src = this.lectureUnit().videoSource;
 
@@ -205,7 +212,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /** Downloads student version if available, otherwise instructor version. */
     handleDownload() {
-        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+        this.logUnitOpenedEvent();
 
         const link = this.getAttachmentLink();
 
@@ -225,7 +232,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     handleOriginalVersion() {
-        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+        this.logUnitOpenedEvent();
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
 
