@@ -316,16 +316,14 @@ public class ParticipationResource {
         ZonedDateTime currentTime = now();
 
         // Allow feedback requests after due date if the student is in practice mode
+        Optional<StudentParticipation> optionalPracticeParticipation = Optional.empty();
         if (effectiveDueDate != null && currentTime.isAfter(effectiveDueDate)) {
-            // Practice mode is not supported for team exercises, so there is no practice participation to check
+            // Practice mode is not supported for team exercises, so only check for practice participation in individual mode
             if (!exercise.isTeamMode()) {
-                boolean hasPracticeParticipation = studentParticipationRepository
-                        .findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), true).isPresent();
-                if (!hasPracticeParticipation) {
-                    throw new BadRequestAlertException("The due date is over", "participation", "dueDateOver.feedbackRequestAfterDueDate", true);
-                }
+                optionalPracticeParticipation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(),
+                        true);
             }
-            else {
+            if (exercise.isTeamMode() || optionalPracticeParticipation.isEmpty()) {
                 throw new BadRequestAlertException("The due date is over", "participation", "dueDateOver.feedbackRequestAfterDueDate", true);
             }
         }
@@ -339,9 +337,8 @@ public class ParticipationResource {
         boolean isPastDueDate = !exercise.isTeamMode() && effectiveDueDate != null && currentTime.isAfter(effectiveDueDate);
         StudentParticipation participation;
         if (isPastDueDate) {
-            // Past due date only applies to non-team exercises, so we can use the student login lookup for practice participation
-            participation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), true)
-                    .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
+            // Past due date only applies to non-team exercises; reuse the already-fetched practice participation
+            participation = optionalPracticeParticipation.orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
         }
         else {
             // Graded participation: supports both individual and team-mode exercises
