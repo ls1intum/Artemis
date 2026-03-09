@@ -40,17 +40,14 @@ export class ExerciseTeamsPage {
      */
     private async searchAndSelect(inputLocator: ReturnType<Page['locator']>, username: string, role: string) {
         const listbox = this.page.getByRole('listbox');
-        // Ensure no stale listbox from a previous search is visible
-        await listbox.waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
         for (let attempt = 0; attempt < 3; attempt++) {
+            await inputLocator.clear();
             await inputLocator.fill(username);
             try {
                 await listbox.waitFor({ state: 'visible', timeout: 8000 });
-                const option = listbox.getByText(new RegExp(`\\(${username}\\)`, 'i')).first();
+                const option = listbox.getByText(new RegExp(username, 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
                 await option.click();
-                // Wait for listbox to close after selection before returning
-                await listbox.waitFor({ state: 'hidden', timeout: 5000 });
                 return;
             } catch {
                 if (attempt === 2) throw new Error(`${role} search autocomplete did not appear after 3 attempts for '${username}'`);
