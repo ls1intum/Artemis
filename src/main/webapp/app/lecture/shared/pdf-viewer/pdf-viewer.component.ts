@@ -196,8 +196,20 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const targetWidth = this.calculateTargetWidth();
             const numPages = this.pdfDocument.numPages;
 
+            let pagesSucceeded = 0;
+
             for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                await this.renderPage(pageNum, container, targetWidth);
+                const success = await this.renderPage(pageNum, container, targetWidth);
+                if (success) {
+                    pagesSucceeded++;
+                }
+            }
+
+            // If no pages rendered successfully, set error state
+            if (pagesSucceeded === 0) {
+                this.error.set('error');
+                this.isRendering = false;
+                return;
             }
 
             setTimeout(() => {
@@ -413,9 +425,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         this.currentPage.set(visiblePageNum);
     };
 
-    private async renderPage(pageNum: number, container: HTMLDivElement, targetWidth: number): Promise<void> {
+    private async renderPage(pageNum: number, container: HTMLDivElement, targetWidth: number): Promise<boolean> {
         if (!this.pdfDocument) {
-            return;
+            return false;
         }
 
         try {
@@ -433,7 +445,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const context = canvas.getContext('2d');
 
             if (!context) {
-                return;
+                console.error(`Failed to get 2D context for PDF page ${pageNum}`);
+                return false;
             }
 
             // Set canvas size in physical pixels
@@ -464,8 +477,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             pageDiv.style.height = canvas.style.height;
             pageDiv.appendChild(canvas);
             container.appendChild(pageDiv);
-        } catch {
-            // Silently skip pages that fail to render
+
+            return true;
+        } catch (error) {
+            console.error(`Failed to render PDF page ${pageNum}:`, error);
+            return false;
         }
     }
 }
