@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * Supported language options for AI quiz question generation.
  */
-public enum QuizQuestionGenerationLanguageDTO {
+public enum QuizQuestionGenerationLanguage {
 
     EN("en"), DE("de");
 
     private final String value;
 
-    QuizQuestionGenerationLanguageDTO(String value) {
+    QuizQuestionGenerationLanguage(String value) {
         this.value = value;
     }
 
@@ -28,8 +28,8 @@ public enum QuizQuestionGenerationLanguageDTO {
      * @return matching language enum
      */
     @JsonCreator
-    public static QuizQuestionGenerationLanguageDTO fromValue(String value) {
-        for (QuizQuestionGenerationLanguageDTO language : values()) {
+    public static QuizQuestionGenerationLanguage fromValue(String value) {
+        for (QuizQuestionGenerationLanguage language : values()) {
             if (language.value.equalsIgnoreCase(value)) {
                 return language;
             }

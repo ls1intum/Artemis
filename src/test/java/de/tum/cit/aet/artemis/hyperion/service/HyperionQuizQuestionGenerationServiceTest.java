@@ -22,10 +22,10 @@ import org.springframework.ai.chat.prompt.Prompt;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorAlertException;
-import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguageDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationLanguage;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
-import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationTypeDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
 
 class HyperionQuizQuestionGenerationServiceTest {
 
@@ -72,13 +72,13 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Software Engineering");
         course.setDescription("SE basics");
 
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguageDTO.EN,
-                Set.of(QuizQuestionGenerationTypeDTO.SINGLE_CHOICE), 1, 50);
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguage.EN,
+                Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
 
         QuizQuestionGenerationResponseDTO response = service.generateQuizQuestions(course, request);
 
         assertThat(response.questions()).hasSize(1);
-        assertThat(response.questions().getFirst().type()).isEqualTo(QuizQuestionGenerationTypeDTO.SINGLE_CHOICE);
+        assertThat(response.questions().getFirst().type()).isEqualTo(QuizQuestionGenerationType.SINGLE_CHOICE);
         assertThat(response.questions().getFirst().title()).isEqualTo("HTTP Methods");
         assertThat(response.questions().getFirst().options()).hasSize(3);
     }
@@ -91,8 +91,8 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Software Engineering");
         course.setDescription("SE basics");
 
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguageDTO.EN,
-                Set.of(QuizQuestionGenerationTypeDTO.SINGLE_CHOICE), 1, 50);
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguage.EN,
+                Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
 
         assertThatThrownBy(() -> serviceWithNullClient.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
                 .hasMessageContaining("AI chat client is not configured");
@@ -120,8 +120,8 @@ class HyperionQuizQuestionGenerationServiceTest {
         Course course = new Course();
         course.setTitle("Software Engineering");
 
-        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguageDTO.EN,
-                Set.of(QuizQuestionGenerationTypeDTO.SINGLE_CHOICE), 1, 50);
+        QuizQuestionGenerationRequestDTO request = new QuizQuestionGenerationRequestDTO("HTTP", "", QuizQuestionGenerationLanguage.EN,
+                Set.of(QuizQuestionGenerationType.SINGLE_CHOICE), 1, 50);
 
         assertThatThrownBy(() -> service.generateQuizQuestions(course, request)).isInstanceOf(InternalServerErrorAlertException.class).hasMessageContaining("type is invalid");
     }

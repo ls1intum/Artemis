@@ -6,13 +6,13 @@ import com.fasterxml.jackson.annotation.JsonValue;
 /**
  * Supported quiz question types for AI generation.
  */
-public enum QuizQuestionGenerationTypeDTO {
+public enum QuizQuestionGenerationType {
 
     SINGLE_CHOICE("single-choice"), MULTIPLE_CHOICE("multiple-choice"), TRUE_FALSE("true-false");
 
     private final String value;
 
-    QuizQuestionGenerationTypeDTO(String value) {
+    QuizQuestionGenerationType(String value) {
         this.value = value;
     }
 
@@ -28,8 +28,8 @@ public enum QuizQuestionGenerationTypeDTO {
      * @return matching question type enum
      */
     @JsonCreator
-    public static QuizQuestionGenerationTypeDTO fromValue(String value) {
-        for (QuizQuestionGenerationTypeDTO type : values()) {
+    public static QuizQuestionGenerationType fromValue(String value) {
+        for (QuizQuestionGenerationType type : values()) {
             if (type.value.equalsIgnoreCase(value)) {
                 return type;
             }
