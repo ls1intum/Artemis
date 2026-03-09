@@ -94,6 +94,15 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
     }
 
+    private String getRpId() throws Exception {
+        java.net.URL url = new java.net.URI(serverUrl).toURL();
+        return url.getHost();
+    }
+
+    private String getOrigin() {
+        return serverUrl;
+    }
+
     // ==================== PasskeyResource Tests (CRUD Operations) ====================
 
     @Nested
@@ -188,8 +197,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testUpdatePasskeyLabel_NotFound() throws Exception {
-            User student2 = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
-            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(student2);
+            User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
@@ -648,15 +657,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     @Nested
     class FullPasskeyRegistrationE2ETests {
 
-        private String getRpId() throws Exception {
-            java.net.URL url = new java.net.URI(serverUrl).toURL();
-            return url.getHost();
-        }
-
-        private String getOrigin() {
-            return serverUrl;
-        }
-
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testFullPasskeyRegistration_Success() throws Exception {
@@ -740,15 +740,6 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
      */
     @Nested
     class FullPasskeyAuthenticationE2ETests {
-
-        private String getRpId() throws Exception {
-            java.net.URL url = new java.net.URI(serverUrl).toURL();
-            return url.getHost();
-        }
-
-        private String getOrigin() {
-            return serverUrl;
-        }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
