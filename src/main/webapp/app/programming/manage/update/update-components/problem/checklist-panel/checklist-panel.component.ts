@@ -242,7 +242,6 @@ export class ChecklistPanelComponent {
                     // New analysis results invalidate previous linking state
                     this.linkedCompetencyTitles.set(new Set());
                     this.createdCompetencyTitles.set(new Set());
-                    this.competencyLinksChange.emit([]);
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
@@ -464,7 +463,6 @@ export class ChecklistPanelComponent {
                     if (section === 'competencies') {
                         this.linkedCompetencyTitles.set(new Set());
                         this.createdCompetencyTitles.set(new Set());
-                        this.competencyLinksChange.emit([]);
                     }
                     this.updateSet(this.staleSections, section, 'delete');
                     this.updateSet(this.sectionLoading, section, 'delete');
