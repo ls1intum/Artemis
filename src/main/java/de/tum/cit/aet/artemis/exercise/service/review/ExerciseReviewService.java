@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -713,11 +714,14 @@ public class ExerciseReviewService {
     }
 
     /**
-     * Container for a newly created thread and its initial comment.
+     * Creates a new thread group for one consistency issue.
      *
-     * @param thread  the created thread
-     * @param comment the created initial comment
+     * @param exercise the owning exercise
+     * @return the new unsaved thread group
      */
-    public record ThreadCreationResult(CommentThread thread, Comment comment) {
+    private CommentThreadGroup createConsistencyCheckGroup(Exercise exercise) {
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        return group;
     }
 }
