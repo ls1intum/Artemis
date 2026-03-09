@@ -35,10 +35,10 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
         TranslateDirective,
         ArtemisTranslatePipe,
     ],
-    templateUrl: './build-phase-editor.html',
+    templateUrl: './build-phase-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class BuildPhaseEditor {
+export class BuildPhaseEditorComponent {
     private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 

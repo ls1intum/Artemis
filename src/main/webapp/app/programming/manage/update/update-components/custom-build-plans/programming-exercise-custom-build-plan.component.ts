@@ -7,7 +7,7 @@ import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
-import { BuildPhasesEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ScriptAction } from 'app/programming/shared/entities/build.action';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
@@ -16,7 +16,7 @@ import { WindFile } from 'app/programming/shared/entities/wind.file';
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditor],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
 export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
     private aeolusService = inject(AeolusService);

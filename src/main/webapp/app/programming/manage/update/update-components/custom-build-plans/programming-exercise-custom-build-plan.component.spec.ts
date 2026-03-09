@@ -20,7 +20,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeService } from 'app/core/theme/shared/theme.service';
 import { MockThemeService } from 'test/helpers/mocks/service/mock-theme.service';
-import { BuildPhasesEditor } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -76,10 +76,10 @@ describe('ProgrammingExercise Custom Build Plan', () => {
             ],
         })
             .overrideComponent(ProgrammingExerciseCustomBuildPlanComponent, {
-                remove: { imports: [BuildPhasesEditor, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, TranslateDirective] },
+                remove: { imports: [BuildPhasesEditorComponent, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, TranslateDirective] },
                 add: {
                     imports: [
-                        MockComponent(BuildPhasesEditor),
+                        MockComponent(BuildPhasesEditorComponent),
                         MockComponent(HelpIconComponent),
                         MockComponent(ProgrammingExerciseBuildConfigurationComponent),
                         MockDirective(TranslateDirective),

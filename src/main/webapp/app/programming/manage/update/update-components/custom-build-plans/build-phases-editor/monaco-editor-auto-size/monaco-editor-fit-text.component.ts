@@ -3,7 +3,7 @@ import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.co
 
 @Component({
     selector: 'jhi-monaco-editor-fit-text',
-    templateUrl: './monaco-editor-fit-text.html',
+    templateUrl: './monaco-editor-fit-text.component.html',
     imports: [MonacoEditorComponent],
 })
 export class MonacoEditorFitTextComponent {
