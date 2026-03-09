@@ -444,7 +444,6 @@ public class PyrisPipelineService {
      * @param courseId  the id of the course
      * @param studentId the id of the student
      */
-    // TODO: Was ist mit K ?
     private Course loadCourseWithParticipationOfStudent(long courseId, long studentId) {
         Course course = courseLoadService.loadCourseWithExercisesLecturesLectureUnitsCompetenciesPrerequisitesAndExams(courseId);
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(studentId,
@@ -453,7 +452,7 @@ public class PyrisPipelineService {
         Map<Long, Set<StudentParticipation>> participationMap = new HashMap<>();
         for (StudentParticipation participation : participations) {
             Long exerciseId = participation.getExercise().getId();
-            participationMap.computeIfAbsent(exerciseId, k -> new HashSet<>()).add(participation);
+            participationMap.computeIfAbsent(exerciseId, _ -> new HashSet<>()).add(participation);
         }
 
         course.getExercises().forEach(exercise -> {
