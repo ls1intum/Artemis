@@ -225,6 +225,9 @@
                 "title": "Presentation",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
             },
+            "codeEditorSync": {
+                "newCommitAlert": "New commit detected — A new commit was pushed to this repository. Save and submit your changes first, then refresh the page to load the latest version."
+            },
             "metadataSync": {
                 "conflictTitle": "Exercise metadata conflicts",
                 "conflictIntro": "A new exercise version was saved while you were editing. Select which incoming values to apply.",

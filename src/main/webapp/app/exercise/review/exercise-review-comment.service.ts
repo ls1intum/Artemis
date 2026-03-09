@@ -64,8 +64,10 @@ export class ExerciseReviewCommentService implements OnDestroy {
 
     /**
      * Reloads threads for the active exercise context.
+     *
+     * @param onLoaded Optional callback invoked after threads were successfully reloaded.
      */
-    reloadThreads(): void {
+    reloadThreads(onLoaded?: () => void): void {
         const exerciseId = this.activeExerciseId;
         if (!exerciseId) {
             this.threads.set([]);
@@ -83,6 +85,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
                 this.pendingSyncUpdates = [];
                 this.isReloading = false;
                 this.ensureSynchronizationSubscription(exerciseId);
+                onLoaded?.();
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId || this.reloadSequence !== reloadId) {

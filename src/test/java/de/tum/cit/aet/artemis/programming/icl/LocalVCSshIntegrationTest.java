@@ -14,7 +14,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -190,21 +189,24 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession}.
      */
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
-        var serverSessions = sshServer.getActiveSessions();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
+
+        // Capture baseline session count BEFORE connecting, scoped to the test user to avoid flakiness under parallel runs
+        var baselineServerSessions = sshServer.getActiveSessions();
+        long baselineAttachedSessionCount = baselineServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
 
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
 
         ClientSession clientSession = connect(client, user, keyPair);
-        int numberOfSessions = serverSessions.size();
 
-        serverSessions = sshServer.getActiveSessions();
-        var attachedServerSessions = serverSessions.stream().filter(Objects::nonNull).count();
+        // Get current session count AFTER connecting, scoped to the test user
+        var currentServerSessions = sshServer.getActiveSessions();
+        var attachedServerSessions = currentServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineAttachedSessionCount + 1);
         return client;
     }
 
