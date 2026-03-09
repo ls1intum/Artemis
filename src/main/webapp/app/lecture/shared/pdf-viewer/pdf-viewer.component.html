@@ -12,16 +12,16 @@
     @if (!isLoading() && !error()) {
         <div class="pdf-toolbar">
             <div class="toolbar-left">
-                <button class="btn btn-link" (click)="zoomOut()" [disabled]="zoomLevel() <= 0.5">
+                <p-button [text]="true" severity="secondary" (click)="zoomOut()" [disabled]="zoomLevel() <= 0.5">
                     <fa-icon [icon]="faSearchMinus" />
-                </button>
-                <button class="btn btn-link" (click)="zoomIn()" [disabled]="zoomLevel() >= 3.0">
+                </p-button>
+                <p-button [text]="true" severity="secondary" (click)="zoomIn()" [disabled]="zoomLevel() >= 3.0">
                     <fa-icon [icon]="faSearchPlus" />
-                </button>
+                </p-button>
                 <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-                <button class="btn btn-link" (click)="resetZoom()">
+                <p-button [text]="true" severity="secondary" (click)="resetZoom()">
                     <fa-icon [icon]="faRotateLeft" />
-                </button>
+                </p-button>
             </div>
             <div class="toolbar-right">
                 <span class="page-info">{{ currentPage() }}/{{ totalPages() }}</span>

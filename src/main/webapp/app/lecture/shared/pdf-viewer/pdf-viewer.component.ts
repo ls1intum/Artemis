@@ -1,5 +1,4 @@
 import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
-import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
@@ -8,11 +7,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
+import { ButtonModule } from 'primeng/button';
 
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [CommonModule, FontAwesomeModule, TranslateModule, ArtemisDatePipe, TranslateDirective],
+    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, TranslateDirective, ButtonModule],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
 })
