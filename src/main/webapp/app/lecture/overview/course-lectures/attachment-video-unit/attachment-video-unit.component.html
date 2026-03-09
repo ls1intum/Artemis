@@ -44,9 +44,7 @@
     @if (hasPdf()) {
         @if (isPdfLoading()) {
             <div class="d-flex justify-content-center p-3">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loading">Loading PDF...</span>
-                </div>
+                <div class="spinner-border" role="status"></div>
             </div>
         } @else if (pdfUrl()) {
             <jhi-pdf-viewer
