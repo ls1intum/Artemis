@@ -115,7 +115,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         if (this.resizeObserver) {
             this.resizeObserver.disconnect();
-            this.resizeObserver = undefined;
         }
 
         if (this.resizeTimeout !== undefined) {
@@ -124,7 +123,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         if (this.pdfDocument) {
             this.pdfDocument.destroy();
-            this.pdfDocument = undefined;
         }
     }
 
@@ -199,18 +197,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 await this.renderPage(pageNum, container, targetWidth);
             }
 
-            if (this.zoomLevel() !== 1.0) {
-                setTimeout(() => {
+            setTimeout(() => {
+                if (this.zoomLevel() !== 1.0) {
                     this.applyZoomToPages();
-                    this.restoreScrollPosition(viewerBox, scrollTopPercentage, scrollLeftPercentage);
-                    this.updateCurrentPage();
-                }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
-            } else {
-                setTimeout(() => {
-                    this.restoreScrollPosition(viewerBox, scrollTopPercentage, scrollLeftPercentage);
-                    this.updateCurrentPage();
-                }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
-            }
+                }
+                this.restoreScrollPosition(viewerBox, scrollTopPercentage, scrollLeftPercentage);
+                this.updateCurrentPage();
+            }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
         } finally {
             this.isRendering = false;
         }
@@ -352,16 +345,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const canvas = page.querySelector('canvas') as HTMLCanvasElement;
 
             if (canvas?.dataset.originalWidth && canvas.dataset.originalHeight) {
-                const origWidth = parseFloat(canvas.dataset.originalWidth);
-                const origHeight = parseFloat(canvas.dataset.originalHeight);
-
-                const scaledWidth = Math.round(origWidth * zoom);
-                const scaledHeight = Math.round(origHeight * zoom);
-
-                canvas.style.width = `${scaledWidth}px`;
-                canvas.style.height = `${scaledHeight}px`;
-                page.style.width = `${scaledWidth}px`;
-                page.style.height = `${scaledHeight}px`;
+                canvas.style.width = `${Math.round(parseFloat(canvas.dataset.originalWidth) * zoom)}px`;
+                canvas.style.height = `${Math.round(parseFloat(canvas.dataset.originalHeight) * zoom)}px`;
+                page.style.width = canvas.style.width;
+                page.style.height = canvas.style.height;
             }
         });
     }

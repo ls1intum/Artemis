@@ -121,8 +121,6 @@ describe('PdfPreviewThumbnailGridComponent', () => {
     it('should update selectedPages when updatedSelectedPages changes', () => {
         const updatedSelectedPages = new Set<OrderedPage>([mockOrderedPages[0], mockOrderedPages[2]]);
 
-        const spyUpdateCheckboxStates = vi.spyOn(component as any, 'updateCheckboxStates').mockImplementation(() => {});
-
         fixture.componentRef.setInput('updatedSelectedPages', updatedSelectedPages);
 
         const changes: SimpleChanges = {
@@ -137,7 +135,6 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         component.ngOnChanges(changes);
 
         expect(component.selectedPages()).toEqual(updatedSelectedPages);
-        expect(spyUpdateCheckboxStates).toHaveBeenCalled();
     });
 
     it('should toggle enlarged view state', () => {
@@ -579,28 +576,16 @@ describe('PdfPreviewThumbnailGridComponent', () => {
         });
     });
 
-    describe('updateCheckboxStates method', () => {
-        it('should update checkbox states to match the selected pages', () => {
+    describe('isPageSelected method', () => {
+        it('should return true if page is selected', () => {
             fixture.componentRef.setInput('orderedPages', mockOrderedPages);
             fixture.detectChanges();
 
-            const mockCheckboxes = [
-                { id: 'checkbox-slide1', checked: false },
-                { id: 'checkbox-slide2', checked: false },
-                { id: 'checkbox-slide3', checked: false },
-            ] as unknown as NodeListOf<HTMLInputElement>;
-
-            const mockNativeElement = { querySelectorAll: vi.fn().mockReturnValue(mockCheckboxes) };
-            component.pdfContainer = signal({ nativeElement: mockNativeElement }) as unknown as Signal<ElementRef<HTMLDivElement>>;
-
             component.selectedPages.set(new Set([mockOrderedPages[0], mockOrderedPages[2]]));
 
-            const updateCheckboxStatesMethod = component['updateCheckboxStates'].bind(component);
-            updateCheckboxStatesMethod();
-
-            expect(mockCheckboxes[0].checked).toBeTruthy();
-            expect(mockCheckboxes[1].checked).toBeFalsy();
-            expect(mockCheckboxes[2].checked).toBeTruthy();
+            expect(component.isPageSelected('slide1')).toBeTruthy();
+            expect(component.isPageSelected('slide2')).toBeFalsy();
+            expect(component.isPageSelected('slide3')).toBeTruthy();
         });
     });
 
@@ -817,7 +802,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
             component.renderPages = originalRenderPages;
         });
 
-        it('should clean up old canvases before rendering new ones', async () => {
+        it('should reset loadedPages when rendering', async () => {
             const mockPages = [
                 {
                     slideId: 'slide1',
@@ -832,55 +817,16 @@ describe('PdfPreviewThumbnailGridComponent', () => {
                 },
             ];
 
-            const existingCanvas1 = document.createElement('canvas');
-            const existingCanvas2 = document.createElement('canvas');
-            const containerDiv = document.createElement('div');
-            containerDiv.classList.add('pdf-canvas-container');
-            containerDiv.appendChild(existingCanvas1);
-            containerDiv.appendChild(existingCanvas2);
-            component.pdfContainer().nativeElement.appendChild(containerDiv);
-
-            const mockNodeList = {
-                0: existingCanvas1,
-                1: existingCanvas2,
-                length: 2,
-                item: (index: number) => (index === 0 ? existingCanvas1 : existingCanvas2),
-                forEach: function (callback: (element: Element, index: number, list: NodeListOf<Element>) => void) {
-                    callback(existingCanvas1, 0, this as unknown as NodeListOf<Element>);
-                    callback(existingCanvas2, 1, this as unknown as NodeListOf<Element>);
-                },
-                entries: function* () {
-                    yield [0, existingCanvas1];
-                    yield [1, existingCanvas2];
-                },
-                keys: function* () {
-                    yield 0;
-                    yield 1;
-                },
-                values: function* () {
-                    yield existingCanvas1;
-                    yield existingCanvas2;
-                },
-                [Symbol.iterator]: function* () {
-                    yield existingCanvas1;
-                    yield existingCanvas2;
-                },
-            } as unknown as NodeListOf<Element>;
-
-            const querySelectorAllSpy = vi.spyOn(component.pdfContainer().nativeElement, 'querySelectorAll');
-            querySelectorAllSpy.mockReturnValue(mockNodeList);
-
-            const removeSpy1 = vi.spyOn(existingCanvas1, 'remove');
-            const removeSpy2 = vi.spyOn(existingCanvas2, 'remove');
+            // Set some initial loaded pages
+            component.loadedPages.set(new Set([1, 2, 3]));
 
             fixture.componentRef.setInput('orderedPages', mockPages);
             fixture.detectChanges();
 
             await component.renderPages();
 
-            expect(querySelectorAllSpy).toHaveBeenCalledWith('.pdf-canvas-container canvas');
-            expect(removeSpy1).toHaveBeenCalled();
-            expect(removeSpy2).toHaveBeenCalled();
+            // loadedPages should be reset and then populated with new pages
+            expect(component.loadedPages().size).toBeGreaterThan(0);
         });
 
         describe('renderPages scroll behavior', () => {

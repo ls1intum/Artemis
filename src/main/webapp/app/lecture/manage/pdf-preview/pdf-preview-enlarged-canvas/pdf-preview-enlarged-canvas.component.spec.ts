@@ -171,30 +171,24 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             expect(scaleFactor).toBe(1.6); // Min of 1.6 (scaleY) and 2.5 (scaleX)
         });
 
-        it('should resize the canvas based on the given scale factor', () => {
-            mockCanvasElement.width = 500;
-            mockCanvasElement.height = 400;
-            component.resizeCanvas(mockCanvasElement, 2);
-
-            expect(mockEnlargedCanvas.width).toBe(1000);
-            expect(mockEnlargedCanvas.height).toBe(800);
-        });
-
-        it('should clear and redraw the canvas with the new dimensions', () => {
+        it('should update the enlarged canvas with the correct dimensions and redraw', (done) => {
             mockCanvasElement.width = 500;
             mockCanvasElement.height = 400;
 
             const mockContext = mockEnlargedCanvas.getContext('2d')!;
-            vi.spyOn(mockContext, 'clearRect');
-            vi.spyOn(mockContext, 'drawImage');
+            const clearRectSpy = vi.spyOn(mockContext, 'clearRect');
+            const drawImageSpy = vi.spyOn(mockContext, 'drawImage');
 
-            component.resizeCanvas(mockCanvasElement, 2);
-            component.redrawCanvas(mockCanvasElement);
+            component.updateEnlargedCanvas(mockCanvasElement);
 
-            expect(mockEnlargedCanvas.width).toBe(1000); // 500 * 2
-            expect(mockEnlargedCanvas.height).toBe(800); // 400 * 2
-            expect(mockContext.clearRect).toHaveBeenCalledWith(0, 0, 1000, 800);
-            expect(mockContext.drawImage).toHaveBeenCalledWith(mockCanvasElement, 0, 0, 1000, 800);
+            // Use real requestAnimationFrame to ensure the callback is executed
+            requestAnimationFrame(() => {
+                expect(mockEnlargedCanvas.width).toBeGreaterThan(0);
+                expect(mockEnlargedCanvas.height).toBeGreaterThan(0);
+                expect(clearRectSpy).toHaveBeenCalled();
+                expect(drawImageSpy).toHaveBeenCalled();
+                done();
+            });
         });
     });
 

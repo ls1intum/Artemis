@@ -37,7 +37,13 @@
                             <span>{{ getPageOrder(page.slideId) }}</span>
                         </span>
                         @if (loadedPages().has(page.order)) {
-                            <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
+                            <input
+                                type="checkbox"
+                                [id]="'checkbox-' + page.slideId"
+                                [checked]="isPageSelected(page.slideId)"
+                                (click)="$event.stopPropagation()"
+                                (change)="togglePageSelection(page.slideId, $event)"
+                            />
                         }
                         <button
                             [id]="'hide-show-button-' + page.slideId"
@@ -74,7 +80,7 @@
                                     </h5>
                                     <p>
                                         <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                        @if (hiddenPages()[activeButtonPage()?.slideId!]?.date!.isSame(FOREVER, 'day')) {
+                                        @if (!hiddenPages()[activeButtonPage()?.slideId!]?.date) {
                                             <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                         } @else {
                                             <span>
@@ -121,7 +127,13 @@
                             <span>{{ getPageOrder(page.slideId) }}</span>
                         </span>
                         @if (loadedPages().has(page.order)) {
-                            <input type="checkbox" [id]="'checkbox-' + page.slideId" (click)="$event.stopPropagation()" (change)="togglePageSelection(page.slideId, $event)" />
+                            <input
+                                type="checkbox"
+                                [id]="'checkbox-' + page.slideId"
+                                [checked]="isPageSelected(page.slideId)"
+                                (click)="$event.stopPropagation()"
+                                (change)="togglePageSelection(page.slideId, $event)"
+                            />
                         }
                     </div>
                 }
