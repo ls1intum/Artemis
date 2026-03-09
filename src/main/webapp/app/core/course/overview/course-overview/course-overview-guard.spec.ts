@@ -151,7 +151,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeTrue();
+            expect(resultValue).toBe(true);
         });
 
         it('should return true if type is faq and course has faqEnabled', () => {

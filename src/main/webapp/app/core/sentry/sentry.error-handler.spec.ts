@@ -121,7 +121,7 @@ describe('SentryErrorHandler', () => {
             const tracesSampler = callArgs.tracesSampler;
 
             // Test time API endpoint - should return 0
-            expect(tracesSampler({ name: 'api/core/public/time', inheritOrSampleWith: vi.fn() })).toBe(0.0);
+            expect(tracesSampler({ name: '/api/public/time', inheritOrSampleWith: vi.fn() })).toBe(0.0);
 
             // Test iris status endpoint - should return 0.001
             expect(tracesSampler({ name: 'api/iris/status', inheritOrSampleWith: vi.fn() })).toBe(0.001);
