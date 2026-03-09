@@ -162,12 +162,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
-                        if (this.lectureUnits?.length) {
-                            // Check if PDF attachments exist in lecture units
-                            this.hasPdfLectureUnit = this.lectureUnits.some(
-                                (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
-                            );
-                        }
+                        // Check if PDF attachments exist in lecture units
+                        this.hasPdfLectureUnit = this.lectureUnits.some(
+                            (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
+                        );
                         if (this.irisEnabled && this.lecture?.course?.id) {
                             this.irisSettingsService.getCourseSettingsWithRateLimit(this.lecture.course.id).subscribe((response) => {
                                 this.irisSettings = response;
