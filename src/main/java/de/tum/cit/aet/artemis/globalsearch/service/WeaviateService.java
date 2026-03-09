@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.globalsearch.service;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.io.IOException;
 import java.util.Map;
 
@@ -9,6 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
@@ -18,6 +22,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviatePropertyDefinit
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateReferenceDefinition;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
@@ -41,10 +46,13 @@ public class WeaviateService {
 
     private final String vectorizerModule;
 
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties) {
+    private final boolean isTestProfile;
+
+    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
         this.client = client;
         this.collectionPrefix = properties.collectionPrefix();
         this.vectorizerModule = properties.vectorizerModule();
+        this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 
     /**
@@ -90,8 +98,8 @@ public class WeaviateService {
 
             client.collections.create(collectionName, collection -> {
                 // Configure vectorizer based on deployment setup
-                // - "none": Use self-provided vectors (docker/weaviate.yml)
-                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (docker/weaviate-embeddings.yml)
+                // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
+                // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
                 switch (vectorizerModule) {
                     case WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS -> {
                         log.debug("Configuring collection '{}' with text2vec-transformers vectorizer", collectionName);
@@ -125,6 +133,17 @@ public class WeaviateService {
         catch (IOException e) {
             log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
             throw new WeaviateException("Failed to create collection: " + collectionName, e);
+        }
+        catch (WeaviateApiException e) {
+            // In test environments, multiple Spring contexts may share one Weaviate instance,
+            // causing a race condition between the exists() check and create() call.
+            if (isTestProfile && e.getMessage() != null && e.getMessage().contains("already exists")) {
+                log.debug("Collection '{}' was created concurrently (test environment), ignoring", collectionName);
+            }
+            else {
+                log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
+                throw new WeaviateException("Failed to create collection: " + collectionName, e);
+            }
         }
     }
 

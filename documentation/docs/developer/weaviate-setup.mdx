@@ -60,13 +60,19 @@ For semantic search with automatic embedding generation using the `embeddinggemm
 # Set your Hugging Face token (required for gated model access)
 export HF_TOKEN=your_huggingface_token
 
-# First-time setup: Build the transformer image (downloads the model, ~1.2GB)
+# First-time setup: Build the transformer image (downloads the model, ~1.2GB) - this might take several minutes
 # The token is passed securely using Docker BuildKit secrets
 docker compose -f weaviate-embeddings.yml build
 
 # Start the services
 docker compose -f weaviate-embeddings.yml up -d
 ```
+
+<Callout variant={CalloutVariant.danger}>
+  In the current version we do not support authenticated access to Weaviate (see `docker/weaviate/embeddings.env`).
+  This means that if you enable the embedding model, anyone with access to your machine could potentially query Weaviate and generate embeddings.
+  For local development this is usually not a concern, but be cautious when running this setup on shared or public machines.
+</Callout>
 
 <Callout variant={CalloutVariant.warning}>
   <p>The <code>embeddinggemma-300m</code> model is a gated model. You must accept the license agreement on Hugging Face
@@ -118,6 +124,7 @@ docker compose -f weaviate-embeddings.yml down
 ## Embedding Model Configuration
 
 When using `weaviate-embeddings.yml`, Weaviate automatically generates embeddings using the `embeddinggemma-300m` model from Google.
+See [Setup with Local Embeddings](#setup-with-local-embeddings-recommended-for-global-search) for more details.
 
 ### About embeddinggemma-300m
 
@@ -129,6 +136,10 @@ When using `weaviate-embeddings.yml`, Weaviate automatically generates embedding
 | Output Dimensions | 768 (supports Matryoshka truncation: 512, 256, 128)     |
 | Precision         | float32 or bfloat16 (NOT float16)                       |
 | Memory Usage      | ~1.2GB (can run under 200MB RAM with quantization)      |
+
+See the [Hugging Face model page](https://huggingface.co/google/embeddinggemma-300m) for more details.
+We referred to [this overview](https://huggingface.co/spaces/mteb/leaderboard) for our selection.
+You can choose a different model, depending on the specific requirements of your use case (e.g., smaller models for faster performance, or larger models for better accuracy).
 
 ### GPU Support
 
@@ -158,15 +169,14 @@ By default, the embedding model runs on CPU. To enable GPU acceleration:
 
 ### Choosing Between Configurations
 
-| Use Case                                      | Command                                              |
-|-----------------------------------------------|------------------------------------------------------|
-| Development without semantic search           | `docker compose -f weaviate.yml up -d`               |
-| Pyris/Iris integration (external embeddings)  | `docker compose -f weaviate.yml up -d`               |
-| Global search with automatic embeddings       | `docker compose -f weaviate-embeddings.yml up -d`    |
-| Testing semantic search locally               | `docker compose -f weaviate-embeddings.yml up -d`    |
+| Use Case                                                            | Command                                           |
+|---------------------------------------------------------------------|---------------------------------------------------|
+| Development without semantic search                                 | `docker compose -f weaviate.yml up -d`            |
+| Global search with semantic search (automatic embedding generation) | `docker compose -f weaviate-embeddings.yml up -d` |
 
 <Callout variant={CalloutVariant.info}>
-  <p>Remember to run all commands from the <code>docker</code> directory. For <code>weaviate-embeddings.yml</code>, ensure you have completed the prerequisites (accept model license, set <code>HF_TOKEN</code>) and built the image first.</p>
+  Remember to run all commands from the <code>docker</code> directory.
+  For <code>weaviate-embeddings.yml</code>, ensure you have completed the prerequisites (accept model license, set <code>HF_TOKEN</code>) and built the image first.
 </Callout>
 
 ---
@@ -210,26 +220,21 @@ DISK_USE_WARNING_PERCENTAGE=80
 
 ### Configuration Options
 
-| Variable                                  | Default                        | Description                                              |
-|-------------------------------------------|--------------------------------|----------------------------------------------------------|
-| `QUERY_DEFAULTS_LIMIT`                    | 25                             | Default limit for query results                          |
-| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                           | Allow anonymous access (development only)                |
-| `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate              | Path for data persistence inside container               |
-| `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers   | Default vectorizer module                                |
-| `ENABLE_MODULES`                          | (empty) / text2vec-transformers| Modules to enable                                        |
-| `TRANSFORMERS_INFERENCE_API`              | http://t2v-transformers:8080   | URL of the transformer inference service (embeddings only)|
-| `CLUSTER_HOSTNAME`                        | artemis                        | Hostname for the Weaviate cluster node                   |
-| `LIMIT_RESOURCES`                         | true                           | Enable resource limiting                                 |
-| `DISK_USE_WARNING_PERCENTAGE`             | 80                             | Warn when disk usage exceeds this percentage             |
+| Variable                                  | Default                         | Description                                                                       |
+|-------------------------------------------|---------------------------------|-----------------------------------------------------------------------------------|
+| `QUERY_DEFAULTS_LIMIT`                    | 25                              | Default limit for query results                                                   |
+| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                            | Allow anonymous access (development only - we do not support an auth version yet) |
+| `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate               | Path for data persistence inside container                                        |
+| `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers    | Default vectorizer module                                                         |
+| `ENABLE_MODULES`                          | (empty) / text2vec-transformers | Modules to enable                                                                 |
+| `TRANSFORMERS_INFERENCE_API`              | http://t2v-transformers:8080    | URL of the transformer inference service (embeddings only)                        |
+| `CLUSTER_HOSTNAME`                        | artemis                         | Hostname for the Weaviate cluster node                                            |
+| `LIMIT_RESOURCES`                         | true                            | Enable resource limiting                                                          |
+| `DISK_USE_WARNING_PERCENTAGE`             | 80                              | Warn when disk usage exceeds this percentage                                      |
 
 ### Data Persistence
 
-By default, Weaviate data is persisted in `.docker-data/weaviate-data`. You can customize this by setting the `WEAVIATE_VOLUME_MOUNT` environment variable:
-
-```bash
-export WEAVIATE_VOLUME_MOUNT=/path/to/your/data
-docker compose -f weaviate.yml up -d
-```
+Weaviate data is persisted in the named Docker volume `artemis-weaviate`.
 
 <Callout variant={CalloutVariant.warning}>
     <p>Anonymous access is enabled by default for development convenience. For production deployments, configure proper authentication.</p>
@@ -268,7 +273,8 @@ The `vectorizer-module` setting determines how vectors (embeddings) are generate
   - You want Weaviate to automatically generate embeddings for text content
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The <code>vectorizer-module</code> setting must match your Docker setup. Using <code>text2vec-transformers</code> requires the transformer service from <code>weaviate-embeddings.yml</code> to be running, otherwise collection creation will fail.</p>
+  The <code>vectorizer-module</code> setting must match your Docker setup.
+  Using <code>text2vec-transformers</code> requires the transformer service from <code>weaviate-embeddings.yml</code> to be running, otherwise collection creation will fail.
 </Callout>
 
 Ensure that Weaviate is running before starting Artemis.
@@ -360,15 +366,15 @@ curl http://localhost:8001/v1/objects?class=Test | jq '.objects[0].vector'
 To completely reset Weaviate data:
 
 ```bash
-# For basic setup
-docker compose -f weaviate.yml down
-rm -rf .docker-data/weaviate-data
-docker compose -f weaviate.yml up -d
-
 # For embeddings setup
-docker compose -f weaviate-embeddings.yml down
-rm -rf .docker-data/weaviate-data
+docker compose -f weaviate-embeddings.yml down -v
 docker compose -f weaviate-embeddings.yml up -d
+```
+
+```bash
+# For basic setup without embeddings (no semantic search)
+docker compose -f weaviate.yml down -v
+docker compose -f weaviate.yml up -d
 ```
 
 <Callout variant={CalloutVariant.warning}>
