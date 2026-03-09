@@ -11,6 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { findParamInRouteHierarchy } from 'app/shared/util/navigation.utils';
 import { booleanLabel } from 'app/exercise/version-history/shared/version-history.utils';
+import dayjs from 'dayjs/esm';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonModule } from 'primeng/button';
@@ -145,7 +146,10 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             ),
             this.toTextField('artemisApp.programmingExercise.submissionPolicy.submissionLimitTitle', data.submissionPolicy?.submissionLimit),
             this.toTextField('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.detailLabel', data.submissionPolicy?.exceedingPenalty),
-            this.toTextField('artemisApp.programmingExercise.versionHistory.snapshot.postDueDateHandling', data.buildAndTestStudentSubmissionsAfterDueDate),
+            this.toTextField(
+                'artemisApp.programmingExercise.versionHistory.snapshot.postDueDateHandling',
+                data.buildAndTestStudentSubmissionsAfterDueDate ? dayjs(data.buildAndTestStudentSubmissionsAfterDueDate).format('MMM D, YYYY HH:mm') : undefined,
+            ),
         ];
     });
 

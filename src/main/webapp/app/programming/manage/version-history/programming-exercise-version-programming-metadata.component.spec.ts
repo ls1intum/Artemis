@@ -122,11 +122,17 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
     });
 
     it('should show dash placeholder for missing values', () => {
-        const field = component.languageFields().find((f) => f.isEmpty);
-        if (field) {
-            expect(field.displayValue).toBe('-');
-        }
-        // Explicitly check a field we know has a value
+        fixture.componentRef.setInput('programmingData', {
+            programmingLanguage: 'JAVA',
+            projectType: undefined,
+        });
+        fixture.detectChanges();
+
+        const emptyField = component.languageFields().find((f) => f.translatedLabel.includes('projectType'));
+        expect(emptyField).toBeDefined();
+        expect(emptyField!.isEmpty).toBeTruthy();
+        expect(emptyField!.displayValue).toBe('-');
+
         const javaField = component.languageFields().find((f) => f.displayValue === 'JAVA');
         expect(javaField).toBeDefined();
         expect(javaField!.isEmpty).toBeFalsy();
