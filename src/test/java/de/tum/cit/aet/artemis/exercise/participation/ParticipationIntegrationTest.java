@@ -1901,7 +1901,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         submission.setSubmitted(true);
         submissionRepository.save(submission);
 
-        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/request-feedback", null, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

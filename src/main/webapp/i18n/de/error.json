@@ -119,8 +119,10 @@
             "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt den Übungsmodus nicht.",
             "notAvailableInExam": "Der Übungsmodus ist für Klausuraufgaben nicht verfügbar.",
             "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen noch nicht unterstützt.",
-            "programmingExercisesDisabled": "Die Funktion für Programmieraufgaben ist deaktiviert.",
-            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben erfordert ein aktives Athena-Profil.",
+            "programmingExercisesDisabled": "Der Übungsmodus für Programmieraufgaben ist derzeit nicht verfügbar.",
+            "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
+            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben ist derzeit nicht verfügbar.",
+            "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv.",
             "feedbackRequestAfterDueDate": "Die Abgabefrist ist abgelaufen. Starte eine Übungsteilnahme, um nach der Frist Feedback anzufordern."
         },
         "teamExercise": {

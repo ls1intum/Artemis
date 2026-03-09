@@ -308,18 +308,24 @@ public class ParticipationResource {
             throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
         }
         // Determine the effective due date by considering the graded participation's individual due date
-        var optionalGradedParticipation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), false);
+        var optionalGradedParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
         ZonedDateTime effectiveDueDate = exercise.getDueDate();
         if (optionalGradedParticipation.isPresent() && optionalGradedParticipation.get().getIndividualDueDate() != null) {
             effectiveDueDate = optionalGradedParticipation.get().getIndividualDueDate();
         }
+        ZonedDateTime currentTime = now();
 
         // Allow feedback requests after due date if the student is in practice mode
-        if (effectiveDueDate != null && now().isAfter(effectiveDueDate)) {
-            // Check if user has a practice participation
-            boolean hasPracticeParticipation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), true)
-                    .isPresent();
-            if (!hasPracticeParticipation) {
+        if (effectiveDueDate != null && currentTime.isAfter(effectiveDueDate)) {
+            // Practice mode is not supported for team exercises, so there is no practice participation to check
+            if (!exercise.isTeamMode()) {
+                boolean hasPracticeParticipation = studentParticipationRepository
+                        .findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), true).isPresent();
+                if (!hasPracticeParticipation) {
+                    throw new BadRequestAlertException("The due date is over", "participation", "dueDateOver.feedbackRequestAfterDueDate", true);
+                }
+            }
+            else {
                 throw new BadRequestAlertException("The due date is over", "participation", "dueDateOver.feedbackRequestAfterDueDate", true);
             }
         }
@@ -329,11 +335,18 @@ public class ParticipationResource {
 
         // Get and validate participation
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        // Use practice participation after due date, graded participation before
-        boolean isPastDueDate = effectiveDueDate != null && now().isAfter(effectiveDueDate);
-        StudentParticipation participation = studentParticipationRepository
-                .findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), isPastDueDate)
-                .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
+        // Use practice participation after due date, graded participation before; team exercises never have practice participations
+        boolean isPastDueDate = !exercise.isTeamMode() && effectiveDueDate != null && currentTime.isAfter(effectiveDueDate);
+        StudentParticipation participation;
+        if (isPastDueDate) {
+            // Past due date only applies to non-team exercises, so we can use the student login lookup for practice participation
+            participation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(), true)
+                    .orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
+        }
+        else {
+            // Graded participation: supports both individual and team-mode exercises
+            participation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, principal.getName());
+        }
 
         participationAuthorizationService.checkAccessPermissionOwner(participation, user);
         participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
@@ -353,7 +366,7 @@ public class ParticipationResource {
 
         // Check if feedback has already been requested
         var latestResult = participation.findLatestResult();
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(now())) {
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(currentTime)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "feedbackRequestAlreadySent", true);
         }
 

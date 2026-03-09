@@ -119,8 +119,10 @@
             "unsupportedExerciseType": "This exercise type does not support practice mode.",
             "notAvailableInExam": "Practice mode is not available for exam exercises.",
             "notSupportedForTeams": "Practice mode is not yet supported for team exercises.",
-            "programmingExercisesDisabled": "The feature for programming exercises is disabled.",
-            "athenaProfileRequired": "Practice mode for text and modeling exercises requires the Athena profile to be active.",
+            "programmingExercisesDisabled": "Practice mode for programming exercises is currently unavailable.",
+            "programmingExercisesDisabled_detail": "The programming exercises feature toggle is disabled.",
+            "athenaProfileRequired": "Practice mode for text and modeling exercises is currently unavailable.",
+            "athenaProfileRequired_detail": "The Athena profile is not active.",
             "feedbackRequestAfterDueDate": "The due date has passed. Start a practice participation to request feedback after the deadline."
         },
         "teamExercise": {
