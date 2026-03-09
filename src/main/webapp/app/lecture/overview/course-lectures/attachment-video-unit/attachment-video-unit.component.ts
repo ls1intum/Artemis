@@ -155,9 +155,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.currentLoadSession++;
             // Clear loaded content and reset state
             this.clearLoadedContent();
-            this.playlistUrl.set(undefined);
-            this.pdfUrl.set(undefined);
-            this.pdfLoadError.set(false);
             this.isLoading.set(false);
             this.isPdfLoading.set(false);
         }
