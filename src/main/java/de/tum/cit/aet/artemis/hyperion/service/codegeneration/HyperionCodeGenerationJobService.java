@@ -57,14 +57,15 @@ public class HyperionCodeGenerationJobService {
      *
      * @param user           the requesting user
      * @param exercise       the target exercise
+     * @param courseId       resolved course id for telemetry attribution
      * @param repositoryType the target repository type
      * @return the created job id
      */
-    public String startJob(User user, ProgrammingExercise exercise, RepositoryType repositoryType) {
+    public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType) {
         JobClaim claim = claimJob(user.getLogin(), exercise.getId(), repositoryType);
         if (claim.started()) {
             String jobId = claim.job().jobId();
-            taskService.runJobAsync(jobId, user, exercise, repositoryType, () -> clearJob(exercise.getId(), jobId));
+            taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, () -> clearJob(exercise.getId(), jobId));
         }
         return claim.job().jobId();
     }
