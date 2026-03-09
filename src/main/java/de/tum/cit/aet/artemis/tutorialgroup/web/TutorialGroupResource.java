@@ -63,6 +63,7 @@ import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
+import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastTutorInCourse;
@@ -333,13 +334,12 @@ public class TutorialGroupResource {
     }
 
     @PostMapping("courses/{courseId}/tutorial-groups/v2")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> createV2(@PathVariable Long courseId, @RequestBody @Valid CreateAndUpdateTutorialGroupDTO createTutorialGroupDTO) {
         log.debug("REST request to create TutorialGroup: {} in course: {}", createTutorialGroupDTO, courseId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         if (tutorialGroupRepository.existsByTitleAndCourse(createTutorialGroupDTO.title(), course)) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
@@ -391,11 +391,10 @@ public class TutorialGroupResource {
      * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.info("REST request to delete a TutorialGroup: {} of course: {}", tutorialGroupId, courseId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
         checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
         tutorialGroupChannelManagementService.deleteTutorialGroupChannel(tutorialGroupFromDatabase.getId());
         // Sessions are deleted via cascade (CascadeType.REMOVE on TutorialGroup.tutorialGroupSessions)
@@ -518,7 +517,7 @@ public class TutorialGroupResource {
     }
 
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/v2")
-    @EnforceAtLeastInstructor
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> updateV2(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestBody @Valid CreateAndUpdateTutorialGroupDTO updateTutorialGroupDTO) {
         log.debug("REST request to update TutorialGroup : {}", updateTutorialGroupDTO);
@@ -529,8 +528,6 @@ public class TutorialGroupResource {
         }
 
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
-
         User oldTutor = tutorialGroup.getTeachingAssistant();
         User newTutor = userRepository.findByIdElseThrow(updateTutorialGroupDTO.tutorId());
 

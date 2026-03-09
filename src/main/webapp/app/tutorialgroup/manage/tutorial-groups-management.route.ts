@@ -1,7 +1,7 @@
 /**
  * parent 'course-management/:courseId/tutorial-groups'
  */
-import { IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
+import { IS_AT_LEAST_EDITOR, IS_AT_LEAST_INSTRUCTOR, IS_AT_LEAST_TUTOR } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 
 import { Routes } from '@angular/router';
@@ -53,7 +53,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: 'create',
         loadComponent: () => import('app/tutorialgroup/manage/tutorial-create-container/tutorial-create-container.component').then((m) => m.TutorialCreateContainerComponent),
         data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.pages.createOrEditTutorialGroup.title.create',
         },
         canActivate: [UserRouteAccessService],
@@ -62,7 +62,7 @@ export const tutorialGroupManagementRoutes: Routes = [
         path: ':tutorialGroupId/edit',
         loadComponent: () => import('app/tutorialgroup/manage/tutorial-edit-container/tutorial-edit-container.component').then((m) => m.TutorialEditContainerComponent),
         data: {
-            authorities: IS_AT_LEAST_INSTRUCTOR,
+            authorities: IS_AT_LEAST_EDITOR,
             pageTitle: 'artemisApp.pages.createOrEditTutorialGroup.title.edit',
         },
         canActivate: [UserRouteAccessService],

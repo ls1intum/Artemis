@@ -59,6 +59,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     courseId: number;
     course: Course;
     isAtLeastInstructor = false;
+    isAtLeastEditor = false;
 
     configuration: TutorialGroupsConfiguration;
 
@@ -77,6 +78,7 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
                 this.course = course;
                 this.courseId = course.id!;
                 this.isAtLeastInstructor = course.isAtLeastInstructor;
+                this.isAtLeastEditor = course.isAtLeastEditor;
                 this.loadTutorialGroups();
             }
         });

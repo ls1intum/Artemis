@@ -137,7 +137,7 @@ export class TutorialGroupDetailComponent {
     activatedRoute = inject(ActivatedRoute);
     course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDTO>();
-    allowManagementActions = input<boolean>(false);
+    componentDisplayedInManagement = input<boolean>(false);
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().tutorImageUrl));
@@ -159,6 +159,9 @@ export class TutorialGroupDetailComponent {
     cancelSessionButtonTooltipLabel = computed(() => this.computeCancelSessionButtonTooltipLabel());
     activateSessionButtonTooltipLabel = computed(() => this.computeActivateSessionButtonTooltipLabel());
     deleteSessionButtonTooltipLabel = computed(() => this.computeDeleteSessionButtonTooltipLabel());
+    loggedInUserIsAtLeastEditor = computed(() => this.accountService.isAtLeastEditorInCourse(this.course()));
+    loggedInUserIsAtLeastInstructor = computed(() => this.accountService.isAtLeastInstructorInCourse(this.course()));
+    loggedInUserIsAtLeastTutorOfGroup = computed(() => this.tutorialGroup().tutorLogin === this.accountService.userIdentity()?.login || this.loggedInUserIsAtLeastEditor());
     onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
     onCancelSession = output<ModifyTutorialGroupSessionEvent>();
     onUpdateSession = output<UpdateTutorialGroupSessionEvent>();

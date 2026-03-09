@@ -5,7 +5,7 @@
         <jhi-course-tutorial-group-detail
             [tutorialGroup]="groupToPass"
             [course]="courseToPass"
-            [allowManagementActions]="true"
+            [componentDisplayedInManagement]="true"
             (onDeleteSession)="deleteSession($event)"
             (onDeleteGroup)="deleteGroup($event)"
             (onCancelSession)="cancelSession($event)"
