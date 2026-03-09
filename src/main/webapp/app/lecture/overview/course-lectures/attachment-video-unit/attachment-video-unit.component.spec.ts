@@ -126,9 +126,8 @@ describe('AttachmentVideoUnitComponent', () => {
     });
 
     it('should get file name', () => {
-        const getFileNameSpy = vi.spyOn(component, 'getFileName');
         fixture.detectChanges();
-        expect(getFileNameSpy).toHaveReturnedWith('test.pdf');
+        expect(component.getFileName()).toBe('test.pdf');
     });
 
     it('should handle download', () => {
