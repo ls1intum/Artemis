@@ -20,8 +20,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                 <!-- Desktop nav -->
                 <div class="landing-links">
                     <span class="landing-link" (click)="scrollTo('features')" jhiTranslate="landing.navbar.features"></span>
-                    <span class="landing-link" (click)="scrollTo('programming-exercises')" jhiTranslate="landing.navbar.programmingExercises"></span>
-                    <span class="landing-link" (click)="scrollTo('exams')" jhiTranslate="landing.navbar.exams"></span>
                     <button class="landing-link dropdown-trigger" (click)="toggleDocsMenu($event)">
                         <span jhiTranslate="landing.navbar.documentation"></span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -58,8 +56,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             @if (menuOpen()) {
                 <div class="mobile-menu">
                     <span class="mobile-link" (click)="scrollTo('features'); closeMenu()" jhiTranslate="landing.navbar.features"></span>
-                    <span class="mobile-link" (click)="scrollTo('programming-exercises'); closeMenu()" jhiTranslate="landing.navbar.programmingExercises"></span>
-                    <span class="mobile-link" (click)="scrollTo('exams'); closeMenu()" jhiTranslate="landing.navbar.exams"></span>
                     <div class="mobile-docs">
                         <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.documentation"></span>
                         <div class="mobile-docs-links">
