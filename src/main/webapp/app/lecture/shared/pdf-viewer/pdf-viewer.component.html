@@ -30,7 +30,7 @@
             </div>
         </div>
     }
-    <div class="pdf-viewer-box" #pdfViewerBox [class.zoomed-out]="zoomLevel() <= 1.0">
+    <div class="pdf-viewer-box hide-scrollbar-unless-scrolling" #pdfViewerBox [class.zoomed-out]="zoomLevel() <= 1.0">
         <div class="pdf-zoom-wrapper">
             <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error()">
                 <!-- Canvas elements will be dynamically inserted here -->
