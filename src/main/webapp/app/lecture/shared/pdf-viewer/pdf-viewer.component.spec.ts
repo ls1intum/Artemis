@@ -3,6 +3,9 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfViewerComponent } from './pdf-viewer.component';
 import { TranslateService } from '@ngx-translate/core';
+import { MockDirective } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 // Mock pdfjs-dist
 vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => {
@@ -21,12 +24,10 @@ describe('PdfViewerComponent', () => {
     let mockTranslateService: any;
 
     beforeEach(async () => {
-        mockTranslateService = {
-            instant: vi.fn((key: string) => key),
-        };
+        mockTranslateService = new MockTranslateService();
 
         await TestBed.configureTestingModule({
-            imports: [PdfViewerComponent],
+            imports: [PdfViewerComponent, MockDirective(TranslateDirective)],
             providers: [{ provide: TranslateService, useValue: mockTranslateService }],
         }).compileComponents();
 

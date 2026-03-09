@@ -50,7 +50,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly httpClient = inject(HttpClient);
 
-    // Deep-linking: target PDF page to jump to
     targetPdfPage = input<number | undefined>(undefined);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
@@ -70,25 +69,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
-    /**
-     * Return the URL of the video source
-     */
     readonly videoUrl = computed(() => this.computeVideoUrl());
 
-    /**
-     * Computes the video URL based on the video source.
-     * Returns undefined if the source is invalid or doesn't match the allow list.
-     */
     private computeVideoUrl(): string | undefined {
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
         }
-        // Check if it matches the allow list (e.g., TUM Live URLs)
         if (this.videoUrlAllowList.some((r) => r.test(source))) {
             return source;
         }
-        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
         if (urlParser) {
             const parsed = urlParser.parse(source);
             if (parsed) {
@@ -104,7 +94,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (!isCollapsed) {
             this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-            // Reset stale state
             this.transcriptSegments.set([]);
             this.playlistUrl.set(undefined);
             this.revokePdfUrl();
@@ -112,7 +101,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             const src = this.lectureUnit().videoSource;
 
-            // Handle video
             if (src) {
                 this.isLoading.set(true);
 
@@ -136,7 +124,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.isLoading.set(false);
             }
 
-            // Handle PDF
             if (this.hasPdf()) {
                 this.loadPdf();
             }
@@ -153,7 +140,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     if (!dto || !dto.segments) {
                         return [];
                     }
-                    // Filter and map to ensure all required fields are present
+                    // Filter segments with required fields
                     return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
                 takeUntilDestroyed(this.destroyRef),
@@ -207,9 +194,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    /**
-     * Returns the name of the attachment file (including its file extension)
-     */
     getFileName(): string {
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
@@ -219,10 +203,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return '';
     }
 
-    /**
-     * Downloads the file as the student version if available, otherwise the instructor version
-     * If it is not the student view, it always downloads the original version
-     */
+    /** Downloads student version if available, otherwise instructor version. */
     handleDownload() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
@@ -262,9 +243,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return !!this.lectureUnit().videoSource;
     }
 
-    /**
-     * Returns the matching icon for the file extension of the attachment
-     */
     getAttachmentIcon(): IconDefinition {
         if (this.hasVideo()) {
             return faFileVideo;
