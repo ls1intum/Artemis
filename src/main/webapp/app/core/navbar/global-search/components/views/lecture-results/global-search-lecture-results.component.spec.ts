@@ -119,12 +119,14 @@ describe('GlobalSearchLectureResultsComponent', () => {
         });
 
         it('should show no-results message when results are empty and not loading', () => {
+            fixture.componentRef.setInput('searchQuery', 'angular');
             (component as any).isLoading.set(false);
             (component as any).lectureResults.set([]);
             fixture.detectChanges();
 
             const emptyMessage = fixture.nativeElement.querySelector('.d-block.text-secondary.text-center.py-5');
             expect(emptyMessage).toBeTruthy();
+            expect(emptyMessage.textContent).not.toContain('searchLectureContentHint');
         });
     });
 

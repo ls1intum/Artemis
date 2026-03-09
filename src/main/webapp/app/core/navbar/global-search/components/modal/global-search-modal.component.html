@@ -1,8 +1,8 @@
 <p-dialog
     [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
-    (visibleChange)="$event ? overlay.open() : overlay.close()"
-    (onHide)="overlay.close()"
+    (visibleChange)="$event ? overlay.open() : resetState()"
+    (onHide)="resetState()"
     (onShow)="focusInput()"
     [modal]="true"
     [closable]="true"

@@ -57,7 +57,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
             )
             .subscribe(() => {
                 if (this.overlay.isOpen()) {
-                    this.overlay.close();
+                    this.resetState();
                 }
             });
     }
@@ -88,7 +88,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 if (this.currentView() !== SearchView.Navigation) {
                     this.navigateTo(SearchView.Navigation);
                 } else {
-                    this.overlay.close();
+                    this.resetState();
                 }
                 break;
             case 'ArrowDown':
@@ -104,6 +104,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     private isToggleShortcut(event: KeyboardEvent): boolean {
         return event.key.toLowerCase() === 'k' && this.osDetector.isActionKey(event) && this.accountService.isAuthenticated() && !event.repeat;
+    }
+
+    protected resetState(): void {
+        this.overlay.close();
+        this.currentView.set(SearchView.Navigation);
+        this.selectedIndex.set(-1);
     }
 
     protected navigateTo(view: SearchView) {

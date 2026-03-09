@@ -63,6 +63,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
+        if (idx < 0) return;
         if (this.irisEnabled && idx === 0) {
             event.preventDefault();
             this.viewSelected.emit(SearchView.Lecture);
