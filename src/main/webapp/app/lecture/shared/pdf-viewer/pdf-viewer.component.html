@@ -1,14 +1,12 @@
 <div class="pdf-viewer-container">
     @if (isLoading()) {
         <div class="d-flex justify-content-center p-3">
-            <div class="spinner-border" role="status">
-                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loading">Loading PDF...</span>
-            </div>
+            <div class="spinner-border text-primary" role="status"></div>
         </div>
     }
     @if (error()) {
-        <div class="alert alert-danger" role="alert">
-            {{ error() }}
+        <div class="d-flex justify-content-center p-3">
+            <fa-icon [icon]="faExclamationTriangle" size="3x" class="text-warning" />
         </div>
     }
     @if (!isLoading() && !error()) {

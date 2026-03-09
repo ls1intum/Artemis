@@ -7,7 +7,7 @@ import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-pdf-viewer',
@@ -43,6 +43,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     protected readonly faSearchMinus = faSearchMinus;
     protected readonly faSearchPlus = faSearchPlus;
     protected readonly faRotateLeft = faRotateLeft;
+    protected readonly faExclamationTriangle = faExclamationTriangle;
 
     private pdfDocument: PDFDocumentProxy | undefined;
     private readonly translateService = inject(TranslateService);
@@ -139,14 +140,14 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             this.totalPages.set(numPages);
 
             if (numPages === 0) {
-                this.error.set(this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.noPages'));
+                this.error.set('error');
                 this.isLoading.set(false);
                 return;
             }
 
             const containerRef = this.pdfContainer();
             if (!containerRef) {
-                this.error.set(this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.error'));
+                this.error.set('error');
                 this.isLoading.set(false);
                 return;
             }
@@ -154,7 +155,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             await this.renderAllPages();
             this.isLoading.set(false);
         } catch (err) {
-            this.error.set(this.translateService.instant('artemisApp.attachmentVideoUnit.pdfViewer.error'));
+            this.error.set('error');
             this.isLoading.set(false);
         }
     }
