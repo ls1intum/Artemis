@@ -367,15 +367,13 @@ To completely reset Weaviate data:
 
 ```bash
 # For embeddings setup
-docker compose -f weaviate-embeddings.yml down
-rm -rf .docker-data/weaviate-data
+docker compose -f weaviate-embeddings.yml down -v
 docker compose -f weaviate-embeddings.yml up -d
 ```
 
 ```bash
 # For basic setup without embeddings (no semantic search)
-docker compose -f weaviate.yml down
-rm -rf .docker-data/weaviate-data
+docker compose -f weaviate.yml down -v
 docker compose -f weaviate.yml up -d
 ```
 
