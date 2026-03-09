@@ -52,7 +52,7 @@ class HyperionCodeGenerationTaskServiceTest {
     void runJobAsync_sendsStartedAndRunsCleanup() {
         Runnable cleanup = mock(Runnable.class);
 
-        service.runJobAsync("job-1", user, exercise, RepositoryType.SOLUTION, cleanup);
+        service.runJobAsync("job-1", user, exercise, 1L, RepositoryType.SOLUTION, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-1"), payloadCaptor.capture());
@@ -62,16 +62,16 @@ class HyperionCodeGenerationTaskServiceTest {
         assertThat(payload.exerciseId()).isEqualTo(7L);
         assertThat(payload.repositoryType()).isEqualTo(RepositoryType.SOLUTION);
         assertThat(payload.message()).isEqualTo("Started");
-        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(RepositoryType.SOLUTION), any(HyperionCodeGenerationEventPublisher.class));
+        verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.SOLUTION), any(HyperionCodeGenerationEventPublisher.class));
         verify(cleanup).run();
     }
 
     @Test
     void runJobAsync_whenExecutionFails_sendsErrorAndRunsCleanup() {
         Runnable cleanup = mock(Runnable.class);
-        doThrow(new RuntimeException("boom")).when(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(RepositoryType.TEMPLATE), any());
+        doThrow(new RuntimeException("boom")).when(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TEMPLATE), any());
 
-        service.runJobAsync("job-2", user, exercise, RepositoryType.TEMPLATE, cleanup);
+        service.runJobAsync("job-2", user, exercise, 1L, RepositoryType.TEMPLATE, cleanup);
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket, times(2)).send(eq("student1"), eq("code-generation/jobs/job-2"), payloadCaptor.capture());
