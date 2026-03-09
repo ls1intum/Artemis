@@ -177,11 +177,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         let scrollTopPercentage = 0;
         let scrollLeftPercentage = 0;
         if (viewerBox) {
-            if (viewerBox.scrollHeight > 0) {
-                scrollTopPercentage = viewerBox.scrollTop / viewerBox.scrollHeight;
+            const scrollableHeight = viewerBox.scrollHeight - viewerBox.clientHeight;
+            const scrollableWidth = viewerBox.scrollWidth - viewerBox.clientWidth;
+            if (scrollableHeight > 0) {
+                scrollTopPercentage = viewerBox.scrollTop / scrollableHeight;
             }
-            if (viewerBox.scrollWidth > 0) {
-                scrollLeftPercentage = viewerBox.scrollLeft / viewerBox.scrollWidth;
+            if (scrollableWidth > 0) {
+                scrollLeftPercentage = viewerBox.scrollLeft / scrollableWidth;
             }
         }
 
@@ -216,8 +218,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
 
         if (scrollTopPercentage > 0 || scrollLeftPercentage > 0) {
-            viewerBox.scrollTop = scrollTopPercentage * viewerBox.scrollHeight;
-            viewerBox.scrollLeft = scrollLeftPercentage * viewerBox.scrollWidth;
+            const scrollableHeight = viewerBox.scrollHeight - viewerBox.clientHeight;
+            const scrollableWidth = viewerBox.scrollWidth - viewerBox.clientWidth;
+
+            if (scrollableHeight > 0) {
+                viewerBox.scrollTop = scrollTopPercentage * scrollableHeight;
+            }
+            if (scrollableWidth > 0) {
+                viewerBox.scrollLeft = scrollLeftPercentage * scrollableWidth;
+            }
         }
     }
 
