@@ -19,21 +19,28 @@ plugins {
     id "com.github.andygoossens.modernizer" version "${modernizer_plugin_version}"
     id "com.github.ben-manes.versions" version "0.53.0"
     id "com.github.node-gradle.node" version "${gradle_node_plugin_version}"
-    id "com.google.cloud.tools.jib" version "3.5.2"
-    id "com.gorylenko.gradle-git-properties" version "2.5.4"
+    id "com.google.cloud.tools.jib" version "3.5.3"
+    id "com.gorylenko.gradle-git-properties" version "2.5.7"
     id "io.spring.dependency-management" version "1.1.7"
     id "nebula.lint" version "21.1.3"
     id "org.liquibase.gradle" version "${liquibase_plugin_version}"
     id "org.owasp.dependencycheck" version "12.2.0"
     id "org.springframework.boot" version "${spring_boot_version}"
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
-    id "org.openapi.generator" version "7.19.0"
+    id "org.openapi.generator" version "7.20.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.1.0"
+    id "org.cyclonedx.bom" version "3.2.0"
+}
+
+// Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
+apply from: 'gradle/env.gradle'
+envProperties.each { key, value ->
+    // Convert UPPER_CASE to lower_case to match gradle.properties convention
+    ext.set(key.toLowerCase(), value)
 }
 
 group = "de.tum.cit.aet.artemis"
-version = "8.8.4"
+version = "9.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 java {
@@ -43,7 +50,7 @@ java {
 }
 
 wrapper {
-    gradleVersion = "9.3.0"
+    gradleVersion = "9.3.1"
 }
 
 node {
@@ -133,6 +140,8 @@ configurations.configureEach {
 
     exclude group: "org.testcontainers", module: "mariadb"
     exclude group: "org.testcontainers", module: "mssqlserver"
+    exclude group: "org.testcontainers", module: "testcontainers-mariadb"
+    exclude group: "org.testcontainers", module: "testcontainers-mssqlserver"
 
     exclude group: "jakarta.ws.rs", module: "jsr311-api"
 
@@ -193,7 +202,7 @@ dependencies {
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
 
     implementation "jakarta.ws.rs:jakarta.ws.rs-api:4.0.0"
-    implementation "org.glassfish.jersey.core:jersey-common:4.0.1"
+    implementation "org.glassfish.jersey.core:jersey-common:4.0.2"
 
     implementation "de.jplag:jplag:${jplag_version}"
 
@@ -247,7 +256,7 @@ dependencies {
     implementation "org.apache.sshd:sshd-sftp:${sshd_version}"
 
     // Allows generating UML diagrams from text descriptions in problem statement markdown files for programming exercises
-    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.1"
+    implementation "net.sourceforge.plantuml:plantuml-mit:1.2026.2"
 
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
     implementation("org.yaml:snakeyaml") {
@@ -269,7 +278,7 @@ dependencies {
 
     implementation "org.jsoup:jsoup:1.22.1"
     // needed by e.g. spring security saml2, we explicitly use the newest version to avoid security vulnerabilities
-    implementation "commons-codec:commons-codec:1.20.0"
+    implementation "commons-codec:commons-codec:1.21.0"
 
     implementation "com.vdurmont:semver4j:3.1.0"
 
@@ -290,11 +299,11 @@ dependencies {
     // required for exposing LLM traces to Langfuse
     implementation "io.micrometer:micrometer-tracing-bridge-otel:${micrometer_tracing_version}"
     // no need to specify version for opentelemetry as above micrometer tracing already brings in a compatible OpenTelemetry version
-    // Gradle will align the exporter to that version automatically, we should stick to 1.49.0 and not use a newer version because of compatibility issues
+    // NOTE: Gradle will align the exporter to that version automatically, we should stick to 1.49.0 and not use a newer version because of compatibility issues
     implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
     // Prometheus requires the protobuf-java dependency, but we explicitly use the latest version to avoid security vulnerabilities
-    implementation "com.google.protobuf:protobuf-java:4.33.4"
+    implementation "com.google.protobuf:protobuf-java:4.34.0"
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
 
@@ -302,7 +311,7 @@ dependencies {
     implementation "com.fasterxml.jackson.core:jackson-core:${fasterxml_version}"
     // Contains standard Jackson annotations
     // TODO: use ${fasterxml_version} again when they release a new jackson-annotations version with correct semantic versioning
-    implementation "com.fasterxml.jackson.core:jackson-annotations:2.20"
+    implementation "com.fasterxml.jackson.core:jackson-annotations:2.21"
     // Implements data-binding (and object serialization) support
     implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
     // Support for "Java 8 Dates"
@@ -359,9 +368,9 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-oauth2-resource-server"
     implementation "org.springframework.boot:spring-boot-starter-oauth2-client"
 
-    implementation "org.springframework.data:spring-data-jpa:3.5.8"
-    implementation "org.springframework.data:spring-data-ldap:3.5.8"
-    implementation "org.springframework.ldap:spring-ldap-core:3.3.5"
+    implementation "org.springframework.data:spring-data-jpa:3.5.9"
+    implementation "org.springframework.data:spring-data-ldap:3.5.9"
+    implementation "org.springframework.ldap:spring-ldap-core:3.3.6"
 
     implementation "org.springframework.cloud:spring-cloud-starter-netflix-eureka-client:${spring_cloud_version}"
     implementation "org.springframework.cloud:spring-cloud-starter-config:${spring_cloud_version}"
@@ -375,13 +384,13 @@ dependencies {
     implementation "org.springframework.retry:spring-retry:2.0.12"
 
     // passkey functionality to simplify login
-    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.11.2.RELEASE"
-    implementation "com.webauthn4j:webauthn4j-core:0.30.2.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-spring-security-core:0.12.0.RELEASE"
+    implementation "com.webauthn4j:webauthn4j-core:0.31.1.RELEASE"
 
     implementation "org.springframework.security:spring-security-messaging"
     implementation "org.springframework.security:spring-security-ldap"
     // use newest version of nimbus-jose-jwt to avoid security issues through outdated dependencies
-    implementation "com.nimbusds:nimbus-jose-jwt:10.7"
+    implementation "com.nimbusds:nimbus-jose-jwt:10.8"
 
     // Nullable annotations for improved static analysis
     implementation "org.jspecify:jspecify:1.0.0"
@@ -414,15 +423,15 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk18on:1.83"
 
     // required for database connections
-    implementation "com.mysql:mysql-connector-j:${mysql_version}"
-    implementation "org.postgresql:postgresql:42.7.9"
+    implementation "com.mysql:mysql-connector-j:${mysql_connector_version}"
+    implementation "org.postgresql:postgresql:42.7.10"
 
     implementation "org.zalando:problem-spring-web:0.29.1"
     implementation "org.zalando:jackson-datatype-problem:0.27.1"
     // Required by JPlag
     implementation "com.ibm.icu:icu4j-charset:78.2"
     // Required by exam session service
-    implementation "com.github.seancfoley:ipaddress:5.5.1"
+    implementation "com.github.seancfoley:ipaddress:5.6.1"
 
     // used for testing and Java Template Upgrade Service
     implementation "org.apache.maven:maven-model:3.9.12"
@@ -430,7 +439,7 @@ dependencies {
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.27.1"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
-    implementation "net.lingala.zip4j:zip4j:2.11.5"
+    implementation "net.lingala.zip4j:zip4j:2.11.6"
 
     // use newest version of guava to avoid security issues through outdated dependencies
     implementation "com.google.guava:guava:33.5.0-jre"
@@ -444,7 +453,7 @@ dependencies {
     checkstyle "org.apache.commons:commons-lang3:${commons_lang3_version}"
     checkstyle "org.apache.commons:commons-text:${commons_text_version}"
 
-    implementation "com.google.errorprone:error_prone_annotations:2.46.0"
+    implementation "com.google.errorprone:error_prone_annotations:2.48.0"
     // needed for OpenAPI generation
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.15"
 
@@ -489,11 +498,11 @@ dependencies {
     testImplementation "io.github.classgraph:classgraph:4.8.184"
     testImplementation "org.awaitility:awaitility:4.3.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
-    testImplementation "org.gradle:gradle-tooling-api:9.3.0"
-    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.4"
+    testImplementation "org.gradle:gradle-tooling-api:9.3.1"
+    testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.5"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
-    testImplementation "org.testcontainers:weaviate:1.21.4"
+    testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.8"
     testImplementation "com.tngtech.archunit:archunit:1.4.1"
     testImplementation "org.skyscreamer:jsonassert:1.5.3"
@@ -522,7 +531,26 @@ apply from: "gradle/openapi.gradle"
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:18.1.0"
+        // BOM uses 3-part versions (e.g. 18.1.0); POSTGRES_VERSION from .env may be 2-part (e.g. 18.1)
+        def pgVersion = findProperty('postgres_version') ?: '18.1'
+        def bomVersion = pgVersion.count('.') < 2 ? "${pgVersion}.0" : pgVersion
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:${bomVersion}"
+        mavenBom "org.testcontainers:testcontainers-bom:${testcontainers_version}"
+    }
+}
+
+// Testcontainers 2.0 renamed modules with a "testcontainers-" prefix.
+// Redirect old artifact names (used by Zonky and Spring Boot BOM) to the new ones.
+configurations.matching { it.name != 'mockitoAgent' }.configureEach {
+    resolutionStrategy {
+        dependencySubstitution {
+            substitute module("org.testcontainers:mysql") using module("org.testcontainers:testcontainers-mysql:${testcontainers_version}")
+            substitute module("org.testcontainers:postgresql") using module("org.testcontainers:testcontainers-postgresql:${testcontainers_version}")
+            substitute module("org.testcontainers:jdbc") using module("org.testcontainers:testcontainers-jdbc:${testcontainers_version}")
+            substitute module("org.testcontainers:database-commons") using module("org.testcontainers:testcontainers-database-commons:${testcontainers_version}")
+            substitute module("org.testcontainers:weaviate") using module("org.testcontainers:testcontainers-weaviate:${testcontainers_version}")
+            substitute module("org.testcontainers:testcontainers") using module("org.testcontainers:testcontainers:${testcontainers_version}")
+        }
     }
 }
 
@@ -590,10 +618,10 @@ tasks.register('checkAccessDocs', JavaExec) {
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
 // 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew test -x webapp
-// 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
-// 2c) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
-// 2d) Execute tests with Postgres container:       SPRING_PROFILES_INCLUDE=postgres ./gradlew test -x webapp
-// 2e) Execute tests with MySQL container:          SPRING_PROFILES_INCLUDE=mysql ./gradlew test -x webapp
+// 2b) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
+// 2c) Execute tests with Postgres test container:  ./gradlew testPostgres -x webapp  (requires Docker)
+// 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
+// 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
 // 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
