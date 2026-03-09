@@ -221,7 +221,10 @@
             "pdfViewer": {
                 "loadingPdf": "PDF wird geladen...",
                 "loadFailed": "PDF konnte nicht geladen werden",
-                "loadFailedDetail": "Das PDF-Dokument konnte nicht geladen werden. Bitte versuche es erneut oder kontaktiere den Support, falls das Problem weiterhin besteht."
+                "loadFailedDetail": "Das PDF-Dokument konnte nicht geladen werden. Bitte versuche es erneut.",
+                "zoomOut": "Verkleinern",
+                "zoomIn": "Vergrößern",
+                "resetZoom": "Zoom zurücksetzen"
             }
         },
         "exerciseUnit": {

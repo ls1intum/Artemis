@@ -16,14 +16,31 @@
     @if (!isLoading() && !error()) {
         <div class="pdf-toolbar">
             <div class="toolbar-left">
-                <p-button [text]="true" severity="secondary" (click)="zoomOut()" [disabled]="zoomLevel() <= 0.5">
+                <p-button
+                    [text]="true"
+                    severity="secondary"
+                    (click)="zoomOut()"
+                    [disabled]="zoomLevel() <= 0.5"
+                    [attr.aria-label]="'artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
+                >
                     <fa-icon [icon]="faSearchMinus" />
                 </p-button>
-                <p-button [text]="true" severity="secondary" (click)="zoomIn()" [disabled]="zoomLevel() >= 3.0">
+                <p-button
+                    [text]="true"
+                    severity="secondary"
+                    (click)="zoomIn()"
+                    [disabled]="zoomLevel() >= 3.0"
+                    [attr.aria-label]="'artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
+                >
                     <fa-icon [icon]="faSearchPlus" />
                 </p-button>
                 <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-                <p-button [text]="true" severity="secondary" (click)="resetZoom()">
+                <p-button
+                    [text]="true"
+                    severity="secondary"
+                    (click)="resetZoom()"
+                    [attr.aria-label]="'artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.resetZoom' | artemisTranslate"
+                >
                     <fa-icon [icon]="faRotateLeft" />
                 </p-button>
             </div>
