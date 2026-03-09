@@ -35,6 +35,7 @@
             [selectedAuxiliaryRepositoryId]="selectedRepository === RepositoryType.AUXILIARY ? selectedRepositoryId : undefined"
             [course]="course"
             [allowHiddenFiles]="true"
+            [fileSyncService]="fileSyncService"
             [enableExerciseReviewComments]="true"
             (onFileLoad)="onFileLoad($event)"
             (onEditorLoaded)="onEditorLoaded()"
