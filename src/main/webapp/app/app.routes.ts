@@ -19,7 +19,7 @@ const routes: Routes = [
             pageTitle: 'landing.hero.title',
             showSkeleton: false,
         },
-        canMatch: [
+        canActivate: [
             (): Promise<boolean | UrlTree> => {
                 const accountService = inject(AccountService);
                 const router = inject(Router);

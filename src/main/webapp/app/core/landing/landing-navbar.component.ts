@@ -68,6 +68,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             display: flex;
             align-items: center;
             justify-content: space-between;
+            position: relative;
         }
 
         .nav-brand {
@@ -91,6 +92,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         .nav-links {
             display: flex;
             gap: 2rem;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
         }
 
         .nav-link {

@@ -1100,6 +1100,10 @@ Course Info Bar
 
 body.transparent-background {
     background: transparent;
+
+    .page-wrapper {
+        background-color: transparent;
+    }
 }
 
 .tooltip-wide .tooltip-inner {
