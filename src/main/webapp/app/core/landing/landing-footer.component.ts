@@ -23,7 +23,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     `,
     styles: `
         .landing-footer {
-            margin: 5rem 0;
+            margin: 5rem 0 0;
+            padding-bottom: 2rem;
             text-align: center;
         }
 

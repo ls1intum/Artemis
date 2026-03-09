@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal, viewChild } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
@@ -8,20 +8,20 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-landing-navbar',
     standalone: true,
-    imports: [RouterLink, TranslateDirective, MenuModule],
+    imports: [TranslateDirective, MenuModule],
     template: `
         <nav class="landing-nav">
             <div class="nav-container">
-                <a routerLink="/" class="nav-brand">
+                <span class="nav-brand" (click)="scrollTo('top')">
                     <img src="content/images/landing/logo.png" alt="Artemis" class="nav-logo" />
                     <span class="nav-brand-text">Artemis</span>
-                </a>
+                </span>
 
                 <!-- Desktop nav -->
                 <div class="landing-links">
-                    <a href="#features" class="landing-link" jhiTranslate="landing.navbar.features"></a>
-                    <a href="#programming-exercises" class="landing-link" jhiTranslate="landing.navbar.programmingExercises"></a>
-                    <a href="#exams" class="landing-link" jhiTranslate="landing.navbar.exams"></a>
+                    <span class="landing-link" (click)="scrollTo('features')" jhiTranslate="landing.navbar.features"></span>
+                    <span class="landing-link" (click)="scrollTo('programming-exercises')" jhiTranslate="landing.navbar.programmingExercises"></span>
+                    <span class="landing-link" (click)="scrollTo('exams')" jhiTranslate="landing.navbar.exams"></span>
                     <button class="landing-link dropdown-trigger" (click)="toggleDocsMenu($event)">
                         <span jhiTranslate="landing.navbar.documentation"></span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -37,7 +37,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                         <span class="lang-sep">/</span>
                         <button class="lang-btn" [class.active]="!isEnglish()" (click)="changeLanguage('de')">DE</button>
                     </div>
-                    <a routerLink="/sign-in" class="sign-in-btn" jhiTranslate="landing.navbar.signIn"></a>
+                    <button class="sign-in-btn" (click)="navigateToSignIn()" jhiTranslate="landing.navbar.signIn"></button>
                     <!-- Hamburger -->
                     <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Toggle navigation menu">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -57,9 +57,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             <!-- Mobile menu -->
             @if (menuOpen()) {
                 <div class="mobile-menu">
-                    <a href="#features" class="mobile-link" (click)="closeMenu()" jhiTranslate="landing.navbar.features"></a>
-                    <a href="#programming-exercises" class="mobile-link" (click)="closeMenu()" jhiTranslate="landing.navbar.programmingExercises"></a>
-                    <a href="#exams" class="mobile-link" (click)="closeMenu()" jhiTranslate="landing.navbar.exams"></a>
+                    <span class="mobile-link" (click)="scrollTo('features'); closeMenu()" jhiTranslate="landing.navbar.features"></span>
+                    <span class="mobile-link" (click)="scrollTo('programming-exercises'); closeMenu()" jhiTranslate="landing.navbar.programmingExercises"></span>
+                    <span class="mobile-link" (click)="scrollTo('exams'); closeMenu()" jhiTranslate="landing.navbar.exams"></span>
                     <div class="mobile-docs">
                         <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.documentation"></span>
                         <div class="mobile-docs-links">
@@ -102,7 +102,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                         <span class="lang-sep">/</span>
                         <button class="lang-btn" [class.active]="!isEnglish()" (click)="changeLanguage('de')">DE</button>
                     </div>
-                    <a routerLink="/sign-in" class="mobile-link sign-in" (click)="closeMenu()" jhiTranslate="landing.navbar.signIn"></a>
+                    <button class="mobile-link sign-in" (click)="navigateToSignIn(); closeMenu()" jhiTranslate="landing.navbar.signIn"></button>
                 </div>
             }
         </nav>
@@ -132,8 +132,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            text-decoration: none;
             color: white;
+            cursor: pointer;
         }
 
         .nav-logo {
@@ -159,6 +159,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             text-decoration: none;
             font-size: 0.875rem;
             font-weight: 500;
+            cursor: pointer;
             transition: color 0.2s;
 
             &:hover {
@@ -224,17 +225,15 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             background: white;
             color: black;
             padding: 0.5rem 1rem;
+            border: none;
             border-radius: 0.375rem;
             font-weight: 600;
             font-size: 0.875rem;
-            text-decoration: none;
-            transition:
-                background 0.2s,
-                transform 0.2s;
+            cursor: pointer;
+            transition: background 0.2s;
 
             &:hover {
                 background: #e2e8f0;
-                transform: translateY(-1px);
             }
         }
 
@@ -316,6 +315,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     `,
 })
 export class LandingNavbarComponent {
+    private readonly router = inject(Router);
     private readonly translateService = inject(TranslateService);
     private readonly docsMenu = viewChild<Menu>('docsMenu');
 
@@ -340,6 +340,25 @@ export class LandingNavbarComponent {
 
     toggleDocsMenu(event: Event): void {
         this.docsMenu()?.toggle(event);
+    }
+
+    scrollTo(id: string): void {
+        const scrollContainer = document.querySelector('.page-wrapper');
+        if (!scrollContainer) return;
+        if (id === 'top') {
+            scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+            return;
+        }
+        const element = document.getElementById(id);
+        if (element) {
+            const navbarHeight = 180;
+            const top = element.getBoundingClientRect().top + scrollContainer.scrollTop - navbarHeight;
+            scrollContainer.scrollTo({ top, behavior: 'smooth' });
+        }
+    }
+
+    navigateToSignIn(): void {
+        this.router.navigateByUrl('/sign-in');
     }
 
     changeLanguage(lang: string): void {
