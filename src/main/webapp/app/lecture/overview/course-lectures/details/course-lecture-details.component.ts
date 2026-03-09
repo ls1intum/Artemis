@@ -135,14 +135,10 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
         // Deep-linking: parse and validate query parameters
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const unitId = Number(params['unit']);
-            if (Number.isInteger(unitId) && unitId > 0) {
-                this.targetUnitId.set(unitId);
-            }
+            this.targetUnitId.set(Number.isInteger(unitId) && unitId > 0 ? unitId : undefined);
 
             const pageNum = Number(params['page']);
-            if (Number.isInteger(pageNum) && pageNum > 0) {
-                this.targetPdfPage.set(pageNum);
-            }
+            this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
         });
     }
 
