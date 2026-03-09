@@ -51,7 +51,17 @@ export class ProgrammingExerciseOverviewPage {
 
     async copyCloneUrl() {
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-        await this.getCloneUrlButton().click();
+        const button = this.getCloneUrlButton();
+        // The copy button lives inside the Code popover (autoClose='outside').
+        // Under load, the ngbDropdown closing after auth method selection can race
+        // with the popover's outside-click detection, causing the popover to close.
+        // If that happens, re-open it — the auth method is persisted in localStorage.
+        if (!(await button.isVisible())) {
+            await this.getCodeButton().click();
+        }
+        // Wait for the button to be enabled — starts disabled until VCS access token loads
+        await expect(button).toBeEnabled({ timeout: 10000 });
+        await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
         });
