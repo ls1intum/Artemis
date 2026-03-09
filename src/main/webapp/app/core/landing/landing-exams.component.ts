@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
 
 @Component({
     selector: 'jhi-landing-exams',
     standalone: true,
-    imports: [TranslateDirective, VisibleOnScrollDirective],
+    imports: [TranslateDirective, ArtemisTranslatePipe, VisibleOnScrollDirective],
     template: `
         <section class="exams-section">
             <div class="container" jhiVisibleOnScroll>
@@ -15,7 +16,7 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
                 </div>
 
                 <div class="hero-image-wrapper">
-                    <img src="content/images/landing/exam-participate.png" [alt]="'landing.examMode.imageAlt'" class="hero-image" loading="eager" />
+                    <img src="content/images/landing/exam-participate.png" [alt]="'landing.examMode.imageAlt' | artemisTranslate" class="hero-image" loading="lazy" />
                 </div>
 
                 <p class="description" jhiTranslate="landing.examMode.description"></p>
@@ -24,7 +25,7 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
             <!-- Statistics -->
             <div class="split-section" jhiVisibleOnScroll>
                 <div class="split-image">
-                    <img src="content/images/landing/exam-stats.jpg" [alt]="'landing.examMode.statsImageAlt'" loading="eager" />
+                    <img src="content/images/landing/exam-stats.jpg" [alt]="'landing.examMode.statsImageAlt' | artemisTranslate" loading="lazy" />
                 </div>
                 <div class="split-text">
                     <h3 class="split-title" jhiTranslate="landing.examMode.statistics.title"></h3>
@@ -47,7 +48,7 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
                     </ul>
                 </div>
                 <div class="split-image">
-                    <img src="content/images/landing/exam-assessment.png" [alt]="'landing.examMode.assessmentImageAlt'" loading="eager" />
+                    <img src="content/images/landing/exam-assessment.png" [alt]="'landing.examMode.assessmentImageAlt' | artemisTranslate" loading="lazy" />
                 </div>
             </div>
         </section>

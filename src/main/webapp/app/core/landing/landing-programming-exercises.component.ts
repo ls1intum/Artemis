@@ -1,12 +1,13 @@
 import { Component, inject } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
 
 @Component({
     selector: 'jhi-landing-programming-exercises',
     standalone: true,
-    imports: [TranslateDirective, VisibleOnScrollDirective],
+    imports: [TranslateDirective, ArtemisTranslatePipe, VisibleOnScrollDirective],
     template: `
         <section class="programming-section">
             <!-- Header + Screenshot -->
@@ -17,7 +18,7 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
                 </div>
 
                 <div class="hero-image-wrapper">
-                    <img src="content/images/landing/editor.png" [alt]="'landing.programmingExercises.imageAlt'" class="hero-image" loading="eager" />
+                    <img src="content/images/landing/editor.png" [alt]="'landing.programmingExercises.imageAlt' | artemisTranslate" class="hero-image" loading="lazy" />
                 </div>
 
                 <p class="description" jhiTranslate="landing.programmingExercises.description"></p>

@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                 <div class="nav-right">
                     <a routerLink="/sign-in" class="sign-in-btn" jhiTranslate="landing.navbar.signIn"></a>
                     <!-- Hamburger -->
-                    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()">
+                    <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Toggle navigation menu">
                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             @if (!menuOpen()) {
                                 <line x1="3" y1="6" x2="21" y2="6" />

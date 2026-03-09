@@ -86,7 +86,7 @@ public class SAML2Configuration {
             )
             // Processes the RelyingPartyRegistrationRepository Bean and installs the filters for SAML2
             // Redirect back to the root
-            .saml2Login((config) -> config.defaultSuccessUrl("/", true));
+            .saml2Login((config) -> config.defaultSuccessUrl("/sign-in", true));
         // @formatter:on
 
         return http.build();

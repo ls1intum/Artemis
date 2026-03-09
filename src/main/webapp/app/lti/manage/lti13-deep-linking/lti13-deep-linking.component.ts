@@ -5,6 +5,7 @@ import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { faExclamationTriangle, faSort, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { HttpClient, HttpParams } from '@angular/common/http';
+import { filter, take } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -116,11 +117,12 @@ export class Lti13DeepLinkingComponent implements OnInit {
      */
     redirectUserToLoginThenTargetLink(currentLink: string): void {
         this.router.navigate(['/sign-in']).then(() => {
-            this.accountService.getAuthenticationState().subscribe((user) => {
-                if (user) {
+            this.accountService
+                .getAuthenticationState()
+                .pipe(filter(Boolean), take(1))
+                .subscribe((user) => {
                     window.location.replace(currentLink);
-                }
-            });
+                });
         });
     }
 
