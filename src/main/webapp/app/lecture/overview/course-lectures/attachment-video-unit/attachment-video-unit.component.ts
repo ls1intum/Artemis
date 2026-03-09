@@ -33,9 +33,10 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
 import { map } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent],
+    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -58,6 +59,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
+    readonly pdfLoadError = signal<boolean>(false);
 
     private currentLoadSession = 0;
 
@@ -99,6 +101,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.playlistUrl.set(undefined);
         this.revokePdfUrl();
         this.pdfUrl.set(undefined);
+        this.pdfLoadError.set(false);
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
@@ -154,6 +157,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.clearLoadedContent();
             this.playlistUrl.set(undefined);
             this.pdfUrl.set(undefined);
+            this.pdfLoadError.set(false);
             this.isLoading.set(false);
             this.isPdfLoading.set(false);
         }
@@ -195,10 +199,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private loadPdf(sessionToken: number): void {
         this.isPdfLoading.set(true);
+        this.pdfLoadError.set(false);
 
         const link = this.getAttachmentLink();
 
         if (!link) {
+            this.pdfLoadError.set(true);
             this.isPdfLoading.set(false);
             return;
         }
@@ -214,6 +220,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     }
                     if (blob) {
                         this.pdfUrl.set(URL.createObjectURL(blob));
+                        this.pdfLoadError.set(false);
                     }
                     this.isPdfLoading.set(false);
                 },
@@ -223,6 +230,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                         return;
                     }
                     this.pdfUrl.set(undefined);
+                    this.pdfLoadError.set(true);
                     this.isPdfLoading.set(false);
                 },
             });
