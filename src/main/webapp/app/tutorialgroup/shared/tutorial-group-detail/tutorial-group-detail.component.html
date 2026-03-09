@@ -195,7 +195,7 @@
     <div class="list-controls-row">
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
         <div class="spacer"></div>
-        @if (componentDisplayedInManagement()) {
+        @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
             <button
                 pButton
                 class="p-button-primary p-button-sm"
@@ -222,7 +222,7 @@
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.location"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
-                    @if (componentDisplayedInManagement()) {
+                    @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
                         <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.actions"></th>
                     }
                 </tr>
@@ -263,7 +263,7 @@
                             />
                         </td>
                         <td>{{ session.attendance }}</td>
-                        @if (componentDisplayedInManagement()) {
+                        @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
                             <td>
                                 <div class="session-actions">
                                     @if (!session.isCancelled) {

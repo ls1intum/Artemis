@@ -18,7 +18,8 @@ import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupSessionResource;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupCancelExplanationDTO;
 
 class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -463,16 +464,15 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
-    private TutorialGroupSessionResource.TutorialGroupSessionRequestDTO createSessionDTO(LocalDate date) {
-        return new TutorialGroupSessionResource.TutorialGroupSessionRequestDTO(date, LocalTime.of(defaultSessionStartHour, 0, 0), LocalTime.of(defaultSessionEndHour, 0, 0),
-                "LoremIpsum");
+    private CreateOrUpdateTutorialGroupSessionDTO createSessionDTO(LocalDate date) {
+        return new CreateOrUpdateTutorialGroupSessionDTO(date, LocalTime.of(defaultSessionStartHour, 0, 0), LocalTime.of(defaultSessionEndHour, 0, 0), "LoremIpsum", null);
     }
 
-    private TutorialGroupSessionResource.TutorialGroupSessionRequestDTO createSessionDTO(LocalDate date, LocalTime startTime, LocalTime endTime) {
-        return new TutorialGroupSessionResource.TutorialGroupSessionRequestDTO(date, startTime, endTime, "LoremIpsum");
+    private CreateOrUpdateTutorialGroupSessionDTO createSessionDTO(LocalDate date, LocalTime startTime, LocalTime endTime) {
+        return new CreateOrUpdateTutorialGroupSessionDTO(date, startTime, endTime, "LoremIpsum", null);
     }
 
-    private void assertSessionCreatedCorrectlyFromDTO(TutorialGroupSession session, TutorialGroupSessionResource.TutorialGroupSessionRequestDTO dto) {
+    private void assertSessionCreatedCorrectlyFromDTO(TutorialGroupSession session, CreateOrUpdateTutorialGroupSessionDTO dto) {
         assertThat(session.getStart()).isEqualTo(ZonedDateTime.of(dto.date(), dto.startTime(), ZoneId.of(this.exampleTimeZone)));
         assertThat(session.getEnd()).isEqualTo(ZonedDateTime.of(dto.date(), dto.endTime(), ZoneId.of(this.exampleTimeZone)));
         assertThat(session.getLocation()).isEqualTo(dto.location());
@@ -526,7 +526,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
         assertIndividualSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId);
-        var statusDTO = new TutorialGroupSessionResource.TutorialGroupStatusDTO("Holiday");
+        var statusDTO = new TutorialGroupCancelExplanationDTO("Holiday");
         // when
         request.postWithoutLocation(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()) + "/cancel", statusDTO, HttpStatus.OK, null);
         // then
@@ -541,7 +541,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, FIRST_AUGUST_MONDAY_00_00);
         assertIndividualSessionIsActiveOnDate(firstAugustMondaySession, FIRST_AUGUST_MONDAY_00_00, exampleTutorialGroupId);
-        var statusDTO = new TutorialGroupSessionResource.TutorialGroupStatusDTO("Holiday");
+        var statusDTO = new TutorialGroupCancelExplanationDTO("Holiday");
         // when
         request.postWithoutLocation(getSessionsPathOfTutorialGroup(exampleTutorialGroupId, firstAugustMondaySession.getId()) + "/cancel", statusDTO, HttpStatus.FORBIDDEN, null);
 

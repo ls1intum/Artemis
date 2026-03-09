@@ -1,4 +1,4 @@
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -17,31 +17,16 @@ export class TutorialGroupSessionService {
 
     private resourceURL = 'api/tutorialgroup';
 
-    getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
-        return this.httpClient
-            .get<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
-    }
-
     update(courseId: number, tutorialGroupId: number, sessionId: number, updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO): Observable<void> {
         return this.httpClient.put<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, updateTutorialGroupSessionDTO);
     }
 
-    updateAttendanceCount(courseId: number, tutorialGroupId: number, sessionId: number, attendanceCount: number | undefined): Observable<EntityResponseType> {
-        let params = new HttpParams();
-        if (attendanceCount !== undefined && attendanceCount !== null) {
-            params = params.append('attendanceCount', attendanceCount.toString());
-        }
-        return this.httpClient
-            .patch<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, null, {
-                observe: 'response',
-                params,
-            })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
-    }
-
     create(courseId: number, tutorialGroupId: number, createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO): Observable<TutorialGroupSessionDTO> {
         return this.httpClient.post<TutorialGroupSessionDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, createTutorialGroupSessionDTO);
+    }
+
+    delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
+        return this.tutorialGroupSessionApiService.deleteSession(courseId, tutorialGroupId, sessionId, 'response');
     }
 
     cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<EntityResponseType> {
@@ -58,10 +43,6 @@ export class TutorialGroupSessionService {
         return this.httpClient
             .post<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/activate`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
-    }
-
-    delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupSessionApiService.deleteSession(courseId, tutorialGroupId, sessionId, 'response');
     }
 
     convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {

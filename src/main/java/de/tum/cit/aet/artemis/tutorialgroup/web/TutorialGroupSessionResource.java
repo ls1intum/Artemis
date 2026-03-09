@@ -1,57 +1,44 @@
 package de.tum.cit.aet.artemis.tutorialgroup.web;
 
-import static de.tum.cit.aet.artemis.core.util.DateUtil.interpretInTimeZone;
 import static de.tum.cit.aet.artemis.tutorialgroup.service.TutorialGroupScheduleService.updateStatusAndFreePeriod;
 
 import java.net.URISyntaxException;
-import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Size;
 import jakarta.ws.rs.BadRequestException;
 
-import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
-import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.util.Pair;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupCancelExplanationDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
@@ -105,29 +92,6 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * GET /courses/{courseId}/tutorial-groups/:tutorialGroupId/sessions/:sessionId : get the tutorial group session with the given id.
-     *
-     * @param courseId        the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId the id of the tutorial group to which the session belongs to
-     * @param sessionId       the id of the session to retrieve
-     * @return ResponseEntity with status 200 (OK) and with body the tutorial group session
-     */
-    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
-    @EnforceAtLeastStudentInCourse
-    public ResponseEntity<TutorialGroupSession> getOneOfTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
-        log.debug("REST request to get session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        var session = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        Course course = session.getTutorialGroup().getCourse();
-        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        checkEntityIdMatchesPathIds(session, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        if (!tutorialGroupService.userHasManagingRightsForTutorialGroup(session.getTutorialGroup(), user, isAdminOrInstructor)) {
-            session.hidePrivacySensitiveInformation();
-        }
-        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(session));
-    }
-
-    /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : Updates an existing tutorial group session
      *
      * @param courseId                the id of the course to which the tutorial group belongs to
@@ -139,16 +103,20 @@ public class TutorialGroupSessionResource {
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
+            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can update sessions.");
+        }
+
         tutorialGroupSessionDTO.validityCheck();
 
         var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-
-        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
-        tutorialGroupService.checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(sessionToUpdate.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
-                userAndIsAdminOrInstructorPair.second());
+        checkIfSessionMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
         TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
         var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
@@ -157,7 +125,7 @@ public class TutorialGroupSessionResource {
         sessionToUpdate.setLocation(updatedSession.getLocation());
         sessionToUpdate.setAttendanceCount(updatedSession.getAttendanceCount());
 
-        isValidTutorialGroupSession(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
+        checkForOverlapWithOtherSessions(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
 
         // if the session belongs to a schedule we have to cut the connection to mark that it does not follow the schedule anymore
         if (sessionToUpdate.getTutorialGroupSchedule() != null) {
@@ -176,37 +144,41 @@ public class TutorialGroupSessionResource {
         return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
     }
 
-    private Pair<User, Boolean> getUserAndCheckWhetherTheyAreAdminOrInstructor(long courseId) {
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        return new Pair<>(user, isAdminOrInstructor);
-    }
-
     /**
-     * PATCH /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/attendance-count : Updates the attendance count of a tutorial group session
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
      *
-     * @param courseId        the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId the id of the tutorial group to which the session belongs to
-     * @param sessionId       the id of the session to update
-     * @param attendanceCount the new attendance count, can be null
-     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
+     * @param courseId                the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
+     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
+     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
-    @PatchMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestParam(required = false) @Min(0) @Max(3000) Integer attendanceCount) {
-        log.debug("REST request to update attendance count of session: {} of tutorial group: {} of course {} to {}", sessionId, tutorialGroupId, courseId, attendanceCount);
-        var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+    public ResponseEntity<TutorialGroupSessionDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
+        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can create sessions.");
+        }
 
-        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
-        tutorialGroupService.checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(sessionToUpdate.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
-                userAndIsAdminOrInstructorPair.second());
+        tutorialGroupSessionDTO.validityCheck();
 
-        sessionToUpdate.setAttendanceCount(attendanceCount);
-        var result = tutorialGroupSessionRepository.save(sessionToUpdate);
-        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
+        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
+        newSession.setTutorialGroup(tutorialGroup);
+        checkIfSessionMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
+        checkForOverlapWithOtherSessions(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
+
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
+                newSession.getStart(), newSession.getEnd());
+        updateStatusAndFreePeriod(newSession, overlappingPeriodOptional);
+        newSession = tutorialGroupSessionRepository.save(newSession);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(TutorialGroupSessionDTO.from(newSession, tutorialGroup.getTutorialGroupSchedule()));
     }
 
     /**
@@ -219,90 +191,55 @@ public class TutorialGroupSessionResource {
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
+    public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
-        var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkEntityIdMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can delete sessions.");
+        }
 
-        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
-        tutorialGroupService.checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(sessionFromDatabase.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
-                userAndIsAdminOrInstructorPair.second());
+        var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkIfSessionMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
         tutorialGroupSessionRepository.deleteById(sessionId);
         return ResponseEntity.noContent().build();
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
-     *
-     * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
-     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
-     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
-     */
-    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
-    @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSessionDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody @Valid TutorialGroupSessionRequestDTO tutorialGroupSessionDTO) {
-        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
-        tutorialGroupSessionDTO.validityCheck();
-
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
-        tutorialGroupService.checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(tutorialGroup, userAndIsAdminOrInstructorPair.first(),
-                userAndIsAdminOrInstructorPair.second());
-
-        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
-        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
-        newSession.setTutorialGroup(tutorialGroup);
-        checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
-        isValidTutorialGroupSession(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
-
-        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
-                newSession.getStart(), newSession.getEnd());
-        updateStatusAndFreePeriod(newSession, overlappingPeriodOptional);
-        newSession = tutorialGroupSessionRepository.save(newSession);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(TutorialGroupSessionDTO.from(newSession, tutorialGroup.getTutorialGroupSchedule()));
-    }
-
-    private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
-        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
-        var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
-        if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
-        }
-
-        return configuration;
-    }
-
-    /**
      * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/cancel : cancel a tutorial group session.
      *
-     * @param courseId               the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId        the id of the tutorial group to which the session belongs to
-     * @param sessionId              the id of the session to cancel
-     * @param tutorialGroupStatusDTO DTO containing the explanation for the cancellation
+     * @param courseId                          the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId                   the id of the tutorial group to which the session belongs to
+     * @param sessionId                         the id of the session to cancel
+     * @param tutorialGroupCancelExplanationDTO DTO containing the explanation for the cancellation
      * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestBody TutorialGroupStatusDTO tutorialGroupStatusDTO) throws URISyntaxException {
+            @RequestBody TutorialGroupCancelExplanationDTO tutorialGroupCancelExplanationDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can cancel sessions.");
+        }
+
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToCancel.getTutorialGroupFreePeriod() != null) {
             throw new BadRequestException("You can not cancel a session that is cancelled by a overlapping with a free period");
         }
-        checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
-
-        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
-        tutorialGroupService.checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(sessionToCancel.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
-                userAndIsAdminOrInstructorPair.second());
+        checkIfSessionMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
 
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
-        if (tutorialGroupStatusDTO != null && tutorialGroupStatusDTO.status_explanation() != null && !tutorialGroupStatusDTO.status_explanation().trim().isEmpty()) {
-            sessionToCancel.setStatusExplanation(tutorialGroupStatusDTO.status_explanation().trim());
+        if (tutorialGroupCancelExplanationDTO != null && tutorialGroupCancelExplanationDTO.status_explanation() != null
+                && !tutorialGroupCancelExplanationDTO.status_explanation().trim().isEmpty()) {
+            sessionToCancel.setStatusExplanation(tutorialGroupCancelExplanationDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
         return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToCancel));
@@ -320,15 +257,19 @@ public class TutorialGroupSessionResource {
     @EnforceAtLeastTutor
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can activate sessions.");
+        }
+
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
             throw new BadRequestException("You can not activate a session that is cancelled by a overlapping with a free period");
         }
-        checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-
-        Pair<User, Boolean> userAndIsAdminOrInstructorPair = getUserAndCheckWhetherTheyAreAdminOrInstructor(courseId);
-        tutorialGroupService.checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(sessionToActivate.getTutorialGroup(), userAndIsAdminOrInstructorPair.first(),
-                userAndIsAdminOrInstructorPair.second());
+        checkIfSessionMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
 
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
@@ -336,7 +277,7 @@ public class TutorialGroupSessionResource {
         return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToActivate));
     }
 
-    private void checkEntityIdMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {
+    private void checkIfSessionMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {
         sessionId.ifPresent(sessionIdValue -> {
             if (!tutorialGroupSession.getId().equals(sessionIdValue)) {
                 throw new BadRequestAlertException("The session id in the path does not match the id in the tutorial group session", ENTITY_NAME, "sessionIdMismatch");
@@ -355,10 +296,6 @@ public class TutorialGroupSessionResource {
         });
     }
 
-    private void isValidTutorialGroupSession(TutorialGroupSession tutorialGroupSession, ZoneId zoneId) {
-        this.checkForOverlapWithOtherSessions(tutorialGroupSession, zoneId);
-    }
-
     private void checkForOverlapWithOtherSessions(TutorialGroupSession session, ZoneId zoneId) {
         var overlappingSessions = tutorialGroupSessionRepository.findOverlappingInSameTutorialGroup(session.getTutorialGroup(), session.getStart(), session.getEnd()).stream()
                 .filter(overlappingSession -> !overlappingSession.getId().equals(session.getId())).collect(Collectors.toSet());
@@ -367,41 +304,12 @@ public class TutorialGroupSessionResource {
         }
     }
 
-    /**
-     * DTO used to send the status explanation when i.g. cancelling a tutorial group session
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupStatusDTO(String status_explanation) {
-    }
-
-    /**
-     * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
-     */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record TutorialGroupSessionRequestDTO(@NonNull LocalDate date, @NonNull LocalTime startTime, @NonNull LocalTime endTime, @Size(min = 1, max = 2000) String location,
-            @Nullable Integer attendance) {
-
-        public void validityCheck() {
-            if (startTime.isAfter(endTime)) {
-                throw new BadRequestAlertException("The start time must be before the end time", ENTITY_NAME, "startTimeAfterEndTime");
-            }
+    private TutorialGroupsConfiguration validateTutorialGroupConfiguration(@PathVariable Long courseId) {
+        var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
+        var configuration = configurationOptional.orElseThrow(() -> new BadRequestException("The course has no tutorial groups configuration"));
+        if (configuration.getCourse().getTimeZone() == null) {
+            throw new BadRequestException("The course has no time zone");
         }
-
-        /**
-         * Convert the DTO to a TutorialGroupSession object
-         *
-         * @param tutorialGroupsConfiguration the tutorial groups configuration to use for the conversion (needed for the time zone)
-         * @return the converted TutorialGroupSession object
-         */
-        public TutorialGroupSession toEntity(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-            TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
-            tutorialGroupSession.setStart(interpretInTimeZone(date, startTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
-            tutorialGroupSession.setEnd(interpretInTimeZone(date, endTime, tutorialGroupsConfiguration.getCourse().getTimeZone()));
-            tutorialGroupSession.setLocation(location);
-            tutorialGroupSession.setAttendanceCount(attendance);
-            return tutorialGroupSession;
-        }
-
+        return configuration;
     }
-
 }
