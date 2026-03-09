@@ -129,7 +129,7 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         // Explicitly check a field we know has a value
         const javaField = component.languageFields().find((f) => f.displayValue === 'JAVA');
         expect(javaField).toBeDefined();
-        expect(javaField!.isEmpty).toBe(false);
+        expect(javaField!.isEmpty).toBeFalsy();
     });
 
     it('should detect empty values correctly via isEmpty', () => {
@@ -142,10 +142,10 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
 
         const fields = component.languageFields();
         const langField = fields.find((f) => f.displayValue === 'JAVA');
-        expect(langField!.isEmpty).toBe(false);
+        expect(langField!.isEmpty).toBeFalsy();
 
         const projectTypeField = fields.find((f) => f.translatedLabel.includes('projectType'));
-        expect(projectTypeField!.isEmpty).toBe(true);
+        expect(projectTypeField!.isEmpty).toBeTruthy();
     });
 });
 
