@@ -124,6 +124,12 @@ describe('PdfPreviewDateBoxComponent', () => {
     });
 
     describe('Date Formatting', () => {
+        it('should format date correctly', () => {
+            const testDate = new Date(2024, 0, 15, 14, 30); // Jan 15, 2024, 14:30
+            const formatted = component.formatDate(testDate);
+            expect(formatted).toBe('2024-01-15T14:30');
+        });
+
         it('should format due date correctly', () => {
             const testDate = dayjs('2024-01-15T14:30');
             const formatted = component.formatDueDate(testDate);
@@ -167,7 +173,7 @@ describe('PdfPreviewDateBoxComponent', () => {
             hiddenPagesOutputSpy = vi.spyOn(component.hiddenPagesOutput, 'emit');
         });
 
-        it('should emit hidden pages with undefined date when hide forever is selected', () => {
+        it('should emit hidden pages with forever date when hide forever is selected', () => {
             component.hideForever.set(true);
             fixture.componentRef.setInput('selectedPages', mockSelectedPages);
             component.onSubmit();
@@ -175,12 +181,12 @@ describe('PdfPreviewDateBoxComponent', () => {
             expect(hiddenPagesOutputSpy).toHaveBeenCalledWith([
                 {
                     slideId: '1',
-                    date: undefined,
+                    date: dayjs('9999-12-31'),
                     exerciseId: undefined,
                 },
                 {
                     slideId: '2',
-                    date: undefined,
+                    date: dayjs('9999-12-31'),
                     exerciseId: undefined,
                 },
             ]);

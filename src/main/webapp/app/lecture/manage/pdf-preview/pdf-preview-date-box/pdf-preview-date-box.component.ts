@@ -16,6 +16,8 @@ interface CategorizedExercise {
     exercises: Exercise[];
 }
 
+const FOREVER = dayjs('9999-12-31');
+
 @Component({
     selector: 'jhi-pdf-preview-date-box-component',
     templateUrl: './pdf-preview-date-box.component.html',
@@ -31,7 +33,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     // Signals
     calendarSelected = signal<boolean>(false);
     exerciseSelected = signal<boolean>(false);
-    defaultDate = signal<string>(dayjs(new Date()).format('YYYY-MM-DDTHH:mm'));
+    defaultDate = signal<string>(this.formatDate(new Date()));
     exercises = signal<Exercise[]>([]);
     categorizedExercises = signal<CategorizedExercise[]>([]);
     hideForever = signal<boolean>(false);
@@ -42,12 +44,18 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     selectionCancelledOutput = output<boolean>();
 
     // Computed properties
-    pagesDisplay = computed(() =>
-        this.selectedPages()
+    pagesDisplay = computed(() => {
+        const pages = this.selectedPages();
+
+        if (pages.length === 1) {
+            return `${pages[0].order}`;
+        }
+
+        return pages
             .map((p) => p.order)
             .sort()
-            .join(', '),
-    );
+            .join(', ');
+    });
     isMultiplePages = computed(() => this.selectedPages().length > 1);
     isSubmitDisabled = computed(() => {
         return !this.hideForever() && !this.calendarSelected() && !this.selectedExercise();
@@ -108,6 +116,16 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     }
 
     /**
+     * Formats a given `Date` object into a string in the format `YYYY-MM-DDTHH:mm`.
+     *
+     * @param date - The `Date` object to format.
+     * @returns A formatted string representing the date and time.
+     */
+    formatDate(date: Date): string {
+        return dayjs(date).format('YYYY-MM-DDTHH:mm');
+    }
+
+    /**
      * Format a date object to a string for display
      */
     formatDueDate(date: dayjs.Dayjs): string {
@@ -139,7 +157,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
     /**
      * Determines the selected date based on the current user selection.
      *
-     * - If the "hide forever" option is enabled, returns undefined to represent no expiry date.
+     * - If the "hide forever" option is enabled, returns a date representing the distant future.
      * - If the calendar is selected, returns the default date from the calendar.
      * - If an exercise is selected and it has a due date, returns the due date of the selected exercise.
      * - Otherwise, returns undefined.
@@ -148,7 +166,7 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      */
     getSelectedDate(): dayjs.Dayjs | undefined {
         if (this.hideForever()) {
-            return undefined;
+            return FOREVER;
         } else if (this.calendarSelected()) {
             return dayjs(this.defaultDate());
         } else if (this.exerciseSelected() && this.selectedExercise()) {
@@ -161,15 +179,12 @@ export class PdfPreviewDateBoxComponent implements OnInit {
      * Submit the selected date option
      */
     onSubmit(): void {
-        // Check if any valid option is selected
-        if (!this.hideForever() && !this.calendarSelected() && !this.selectedExercise()) {
-            return;
-        }
-
         const now = dayjs();
         const selectedDate = this.getSelectedDate();
 
-        if (selectedDate && selectedDate.isBefore(now)) {
+        if (!selectedDate) return;
+
+        if (selectedDate !== FOREVER && selectedDate.isBefore(now)) {
             this.alertService.error('artemisApp.attachment.pdfPreview.dateBox.dateError');
             return;
         }

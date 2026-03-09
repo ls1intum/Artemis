@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { AttachmentService } from 'app/lecture/manage/services/attachment.service';
 import { Attachment } from 'app/lecture/shared/entities/attachment.model';
@@ -6,7 +6,7 @@ import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/at
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { faCancel, faExclamationCircle, faEye, faEyeSlash, faFileImport, faSave, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
@@ -52,13 +52,13 @@ export interface OrderedPage {
 
 export interface HiddenPage {
     slideId: string;
-    date: dayjs.Dayjs | undefined;
+    date: dayjs.Dayjs;
     exerciseId: number | undefined;
 }
 
 export interface HiddenPageMap {
     [slideId: string]: {
-        date: dayjs.Dayjs | undefined;
+        date: dayjs.Dayjs;
         exerciseId: number | undefined;
     };
 }
@@ -87,7 +87,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     attachmentSub: Subscription;
     attachmentVideoUnitSub: Subscription;
 
+    FOREVER = dayjs('9999-12-31');
+
     protected readonly ButtonType = ButtonType;
+    protected readonly Object = Object;
+    protected readonly Array = Array;
 
     courseId: number;
 
@@ -127,7 +131,6 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             .filter((page) => this.hiddenPages()[page.slideId])
             .sort((a, b) => a.order - b.order);
     });
-    selectedPagesArray = computed(() => Array.from(this.selectedPages()));
 
     // Injected services
     private readonly route = inject(ActivatedRoute);
@@ -136,6 +139,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
     private readonly lectureUnitService = inject(LectureUnitService);
     private readonly alertService = inject(AlertService);
     private readonly router = inject(Router);
+
+    dialogErrorSource = new Subject<string>();
+    dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
     protected readonly faCancel = faCancel;
@@ -345,7 +351,11 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
     }
 
-    constructor() {}
+    constructor() {
+        effect(() => {
+            this.hiddenPagesChanged();
+        });
+    }
 
     /**
      * Triggers the file input to select files.
@@ -374,7 +384,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         return Object.entries(this.hiddenPages()).map(([slideId, pageData]) => ({
             slideId,
             date: pageData.date,
-            exerciseId: pageData.exerciseId,
+            exerciseId: pageData.exerciseId ?? undefined,
         }));
     }
 
@@ -502,8 +512,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         });
 
         const reorderEntries = Array.from(slideToPageMap.entries()).map(([slideId, originalIndex]) => ({
-            slideId,
-            originalIndex,
+            slideId: slideId,
+            originalIndex: originalIndex,
             targetOrder: slideToOrderMap.get(slideId) || Number.MAX_SAFE_INTEGER,
         }));
 
@@ -549,8 +559,9 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
      */
     private async createPdfFile(pdfDoc: PDFDocument, fileName: string, isStudentVersion: boolean = false): Promise<File> {
         const pdfBytes = await pdfDoc.save();
+        const arrayBuffer = pdfBytes.slice(0, pdfBytes.byteLength).buffer;
         const suffix = isStudentVersion ? '_student' : '';
-        return new File([pdfBytes.buffer as ArrayBuffer], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
+        return new File([arrayBuffer], `${fileName}${suffix}.pdf`, { type: 'application/pdf' });
     }
 
     /**
@@ -770,6 +781,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.attachmentService.delete(this.attachment()!.id!).subscribe({
                 next: () => {
                     this.navigateToCourseManagement();
+                    this.dialogErrorSource.next('');
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -779,6 +791,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.lectureUnitService.delete(this.attachmentVideoUnit()!.id!, this.attachmentVideoUnit()!.lecture!.id!).subscribe({
                 next: () => {
                     this.navigateToCourseManagement();
+                    this.dialogErrorSource.next('');
                 },
                 error: (error) => {
                     this.alertService.error('artemisApp.attachment.pdfPreview.attachmentUpdateError', { error: error.message });
@@ -841,6 +854,7 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
             this.alertService.error('artemisApp.attachment.pdfPreview.pageDeleteError', { error: error.message });
         } finally {
             this.isPdfLoading.set(false);
+            this.dialogErrorSource.next('');
         }
     }
 
@@ -950,8 +964,8 @@ export class PdfPreviewComponent implements OnInit, OnDestroy {
         const invalidPageOrders: number[] = [];
 
         for (const [slideId, pageData] of Object.entries(hiddenPagesMap)) {
-            // Check if the date is in the past (undefined means forever, which is valid)
-            if (pageData.date && pageData.date.isBefore(now)) {
+            // Check if the date is in the past
+            if (pageData.date.isBefore(now)) {
                 const pageOrder = slideIdToOrderMap.get(slideId);
                 if (pageOrder !== undefined) {
                     invalidPageOrders.push(pageOrder);

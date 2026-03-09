@@ -176,6 +176,8 @@ describe('PdfPreviewComponent', () => {
         component.fileInput = signal(mockInput as unknown as ElementRef<HTMLInputElement>);
         component.showPopover = signal({} as NgbPopover);
 
+        vi.spyOn(component.dialogErrorSource, 'next');
+
         global.URL.createObjectURL = vi.fn().mockReturnValue('blob-url');
         global.URL.revokeObjectURL = vi.fn();
 
@@ -712,6 +714,7 @@ describe('PdfPreviewComponent', () => {
 
             expect(attachmentServiceMock.delete).toHaveBeenCalledWith(1);
             expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 3, 'lectures', 2, 'attachments']);
+            expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
         });
 
         it('should delete the attachment video unit and navigate to unit management on success', () => {
@@ -723,6 +726,7 @@ describe('PdfPreviewComponent', () => {
 
             expect(lectureUnitServiceMock.delete).toHaveBeenCalledWith(4, 5);
             expect(routerNavigateSpy).toHaveBeenCalledWith(['course-management', 6, 'lectures', 5, 'unit-management']);
+            expect(component.dialogErrorSource.next).toHaveBeenCalledWith('');
         });
 
         it('should handle error when deletion of attachment fails', () => {
@@ -1716,9 +1720,11 @@ describe('PdfPreviewComponent', () => {
             expect(alertServiceMock.error).not.toHaveBeenCalled();
         });
 
-        it('should return true when hidden pages have no expiry date', () => {
+        it('should return true when hidden pages use FOREVER date', () => {
+            const FOREVER = dayjs('9999-12-31');
+
             component.hiddenPages.set({
-                slide1: { date: undefined, exerciseId: undefined },
+                slide1: { date: FOREVER, exerciseId: undefined },
             });
 
             const result = component['validateHiddenSlidesDates']();

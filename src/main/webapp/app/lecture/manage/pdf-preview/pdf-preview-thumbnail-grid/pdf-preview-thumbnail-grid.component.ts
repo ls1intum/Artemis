@@ -8,10 +8,10 @@ import { PdfPreviewEnlargedCanvasComponent } from 'app/lecture/manage/pdf-previe
 import { faEye, faEyeSlash, faGripLines } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PdfPreviewDateBoxComponent } from 'app/lecture/manage/pdf-preview/pdf-preview-date-box/pdf-preview-date-box.component';
+import dayjs from 'dayjs/esm';
 import { HiddenPage, HiddenPageMap, OrderedPage } from 'app/lecture/manage/pdf-preview/pdf-preview.component';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-pdf-preview-thumbnail-grid-component',
@@ -21,8 +21,8 @@ import dayjs from 'dayjs/esm';
 })
 export class PdfPreviewThumbnailGridComponent implements OnChanges {
     pdfContainer = viewChild.required<ElementRef<HTMLDivElement>>('pdfContainer');
-    pdfViewerWrapper = viewChild<ElementRef<HTMLDivElement>>('pdfViewerWrapper');
-    pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
+
+    FOREVER = dayjs('9999-12-31');
 
     // Inputs
     courseId = input<number>();
@@ -83,6 +83,7 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
         }
         if (changes['updatedSelectedPages']) {
             this.selectedPages.set(new Set(this.updatedSelectedPages()!));
+            this.updateCheckboxStates();
         }
     }
 
@@ -92,6 +93,14 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     async renderPages(): Promise<void> {
         const pages = this.orderedPages();
         try {
+            const containerEl = this.pdfContainer().nativeElement;
+            const canvases = containerEl.querySelectorAll('.pdf-canvas-container canvas');
+            canvases.forEach((canvas: HTMLCanvasElement) => {
+                if (canvas.parentNode) {
+                    this.renderer.removeChild(canvas.parentNode, canvas);
+                }
+            });
+
             this.loadedPages.set(new Set());
 
             for (let i = 0; i < pages.length; i++) {
@@ -251,12 +260,18 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
     }
 
     /**
-     * Checks if a page is currently selected
-     * @param slideId The ID of the slide to check
-     * @returns True if the page is in the selected pages set
+     * Updates checkbox states to match the current selection model
      */
-    isPageSelected(slideId: string): boolean {
-        return Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
+    private updateCheckboxStates(): void {
+        const checkboxes = this.pdfContainer()?.nativeElement.querySelectorAll('input[type="checkbox"]');
+
+        checkboxes.forEach((checkbox: HTMLInputElement) => {
+            const match = checkbox.id.match(/checkbox-(.+)/);
+            if (match) {
+                const slideId = match[1];
+                checkbox.checked = Array.from(this.selectedPages()).some((page) => page.slideId === slideId);
+            }
+        });
     }
 
     /**
@@ -299,33 +314,5 @@ export class PdfPreviewThumbnailGridComponent implements OnChanges {
      */
     findPageBySlideId(slideId: string): OrderedPage | undefined {
         return this.orderedPages().find((page) => page.slideId === slideId);
-    }
-
-    /**
-     * Seeks to a specific page in the PDF by scrolling to it.
-     * Similar to the video player's seekTo(seconds) method.
-     *
-     * @param pageNumber The page number to seek to (1-indexed)
-     */
-    seekTo(pageNumber: number): void {
-        const containerEl = this.pdfContainer()?.nativeElement;
-        if (!containerEl || pageNumber < 1 || pageNumber > this.orderedPages().length) {
-            return;
-        }
-
-        // Find the page by its order number
-        const targetPage = this.orderedPages().find((page) => page.order === pageNumber);
-        if (!targetPage) {
-            return;
-        }
-
-        // Scroll to the page element
-        const pageElement = containerEl.querySelector(`#pdf-page-${targetPage.slideId}`) as HTMLElement | null;
-        if (pageElement) {
-            pageElement.scrollIntoView({
-                behavior: 'smooth',
-                block: 'nearest',
-            });
-        }
     }
 }

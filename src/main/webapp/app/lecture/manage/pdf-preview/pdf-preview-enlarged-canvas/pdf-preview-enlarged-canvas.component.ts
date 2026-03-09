@@ -76,13 +76,16 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     displayEnlargedCanvas(originalCanvas: HTMLCanvasElement) {
         this.isEnlargedCanvasLoading.set(true);
         this.toggleBodyScroll(true);
-        this.updateEnlargedCanvas(originalCanvas);
+        setTimeout(() => {
+            this.updateEnlargedCanvas(originalCanvas);
+        }, 500);
     }
 
     /**
      * Updates the enlarged canvas dimensions to optimize PDF page display within the current viewport.
      * This method dynamically adjusts the size, position, and scale of the canvas to maintain the aspect ratio,
      * ensuring the content is centered and displayed appropriately within the available space.
+     * It is called within an animation frame to synchronize updates with the browser's render cycle for smooth visuals.
      *
      * @param originalCanvas - The source canvas element used to extract image data for resizing and redrawing.
      */
@@ -92,15 +95,8 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
             this.adjustPdfContainerSize(isVertical);
 
             const scaleFactor = this.calculateScaleFactor(originalCanvas);
-
-            const enlargedCanvas = this.enlargedCanvas().nativeElement;
-            enlargedCanvas.width = originalCanvas.width * scaleFactor;
-            enlargedCanvas.height = originalCanvas.height * scaleFactor;
-
-            const context = enlargedCanvas.getContext('2d')!;
-            context.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
-            context.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
-
+            this.resizeCanvas(originalCanvas, scaleFactor);
+            this.redrawCanvas(originalCanvas);
             this.isEnlargedCanvasLoading.set(false);
         });
     }
@@ -133,6 +129,33 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     }
 
     /**
+     * Resizes the canvas according to the computed scale factor.
+     * This method updates the dimensions of the enlarged canvas element to ensure that the entire PDF page
+     * is visible and properly scaled within the viewer.
+     *
+     * @param originalCanvas - The canvas element from which the image is scaled.
+     * @param scaleFactor - The factor by which the canvas is resized.
+     */
+    resizeCanvas(originalCanvas: HTMLCanvasElement, scaleFactor: number): void {
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
+        enlargedCanvas.width = originalCanvas.width * scaleFactor;
+        enlargedCanvas.height = originalCanvas.height * scaleFactor;
+    }
+
+    /**
+     * Redraws the original canvas content onto the enlarged canvas at the updated scale.
+     * This method ensures that the image is rendered clearly and correctly positioned on the enlarged canvas.
+     *
+     * @param originalCanvas - The original canvas containing the image to be redrawn.
+     */
+    redrawCanvas(originalCanvas: HTMLCanvasElement): void {
+        const enlargedCanvas = this.enlargedCanvas().nativeElement;
+        const context = enlargedCanvas.getContext('2d');
+        context!.clearRect(0, 0, enlargedCanvas.width, enlargedCanvas.height);
+        context!.drawImage(originalCanvas, 0, 0, enlargedCanvas.width, enlargedCanvas.height);
+    }
+
+    /**
      * Adjusts the size of the PDF container based on whether the enlarged view is active or not.
      * If the enlarged view is active, the container's size is reduced to focus on the enlarged content.
      * If the enlarged view is closed, the container returns to its original size.
@@ -159,10 +182,11 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     /**
      * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
      */
-    closeEnlargedView() {
+    closeEnlargedView(event: MouseEvent) {
         this.isEnlargedViewOutput.emit(false);
         this.adjustPdfContainerSize(false);
         this.toggleBodyScroll(false);
+        event.stopPropagation();
     }
 
     /**
@@ -174,7 +198,7 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
         const enlargedCanvas = this.enlargedCanvas().nativeElement;
 
         if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
-            this.closeEnlargedView();
+            this.closeEnlargedView(event);
         }
     }
 

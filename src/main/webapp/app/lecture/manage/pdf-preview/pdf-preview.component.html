@@ -53,7 +53,7 @@
                                         <div class="page-info mb-2">
                                             <strong>Page {{ page.order }}:</strong>
                                             <span jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.hiddenUntil"></span>
-                                            @if (!hiddenPages()[page.slideId]?.date) {
+                                            @if (hiddenPages()[page.slideId]!.date!.isSame(FOREVER, 'day')) {
                                                 <span class="text-muted" jhiTranslate="artemisApp.attachment.pdfPreview.thumbnailGrid.forever"></span>
                                             } @else {
                                                 <span>
@@ -84,7 +84,7 @@
                     <ng-template #hidePageBox>
                         <jhi-pdf-preview-date-box-component
                             [courseId]="courseId"
-                            [selectedPages]="selectedPagesArray()"
+                            [selectedPages]="Array.from(selectedPages())"
                             (hiddenPagesOutput)="hidePages($event); hidePopover.close()"
                             (selectionCancelledOutput)="hidePopover.close()"
                         />
@@ -98,6 +98,7 @@
                     [renderButtonText]="false"
                     [deleteQuestion]="allPagesSelected() ? 'artemisApp.attachment.pdfPreview.deleteAllPagesQuestion' : 'artemisApp.attachment.pdfPreview.deletePagesQuestion'"
                     (delete)="allPagesSelected() ? deleteAttachmentFile() : deleteSelectedSlides()"
+                    [dialogError]="dialogError$"
                     [disabled]="isPdfLoading() || selectedPages().size === 0"
                     aria-label="Delete selected pages"
                 >
