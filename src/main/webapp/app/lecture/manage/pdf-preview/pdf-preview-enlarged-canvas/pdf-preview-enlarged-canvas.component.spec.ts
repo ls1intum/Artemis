@@ -171,7 +171,7 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             expect(scaleFactor).toBe(1.6); // Min of 1.6 (scaleY) and 2.5 (scaleX)
         });
 
-        it('should update the enlarged canvas with the correct dimensions and redraw', (done) => {
+        it('should update the enlarged canvas with the correct dimensions and redraw', () => {
             mockCanvasElement.width = 500;
             mockCanvasElement.height = 400;
 
@@ -179,16 +179,19 @@ describe('PdfPreviewEnlargedCanvasComponent', () => {
             const clearRectSpy = vi.spyOn(mockContext, 'clearRect');
             const drawImageSpy = vi.spyOn(mockContext, 'drawImage');
 
+            // Mock requestAnimationFrame to execute callback immediately
+            const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb: FrameRequestCallback) => {
+                cb(0);
+                return 0;
+            });
+
             component.updateEnlargedCanvas(mockCanvasElement);
 
-            // Use real requestAnimationFrame to ensure the callback is executed
-            requestAnimationFrame(() => {
-                expect(mockEnlargedCanvas.width).toBeGreaterThan(0);
-                expect(mockEnlargedCanvas.height).toBeGreaterThan(0);
-                expect(clearRectSpy).toHaveBeenCalled();
-                expect(drawImageSpy).toHaveBeenCalled();
-                done();
-            });
+            expect(mockEnlargedCanvas.width).toBeGreaterThan(0);
+            expect(mockEnlargedCanvas.height).toBeGreaterThan(0);
+            expect(clearRectSpy).toHaveBeenCalled();
+            expect(drawImageSpy).toHaveBeenCalled();
+            expect(rafSpy).toHaveBeenCalled();
         });
     });
 

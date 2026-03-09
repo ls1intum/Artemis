@@ -416,8 +416,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
             expect(emittedValue).toBeDefined();
             expect(emittedValue[hiddenPage.slideId]).toBeDefined();
-            expect(emittedValue[hiddenPage.slideId].date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
-            expect(emittedValue[hiddenPage.slideId].exerciseId).toBeUndefined();
+            expect(emittedValue[hiddenPage.slideId]?.date.isSame(dayjs(hiddenPage.date))).toBeTruthy();
+            expect(emittedValue[hiddenPage.slideId]?.exerciseId).toBeUndefined();
         });
 
         it('should update hiddenPages with multiple pages and emit the change', () => {
@@ -452,7 +452,7 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
             expect(Object.keys(component.hiddenPages())).toHaveLength(3);
             expect(component.hiddenPages()['slide1']).toBeDefined();
-            expect(component.hiddenPages()['slide1'].date.isSame(dayjs('2024-01-01'))).toBeTruthy();
+            expect(component.hiddenPages()['slide1']?.date.isSame(dayjs('2024-01-01'))).toBeTruthy();
         });
 
         it('should overwrite existing page data if same slideId is received', () => {
@@ -477,8 +477,8 @@ describe('PdfPreviewThumbnailGridComponent', () => {
 
             expect(Object.keys(emittedValue)).toHaveLength(1);
             expect(emittedValue['slide1']).toBeDefined();
-            expect(emittedValue['slide1'].date.isSame(dayjs('2024-02-01'))).toBeTruthy();
-            expect(emittedValue['slide1'].exerciseId).toBe(789);
+            expect(emittedValue['slide1']?.date.isSame(dayjs('2024-02-01'))).toBeTruthy();
+            expect(emittedValue['slide1']?.exerciseId).toBe(789);
 
             expect(emitSpy).toHaveBeenCalled();
         });
