@@ -9,13 +9,10 @@
  */
 
 
-/**
- * Response containing rewritten FAQ
- */
-export interface RewriteFaqResponse { 
-    rewrittenText: string;
-    inconsistencies: Array<string>;
-    suggestions: Array<string>;
-    improvement: string;
+export interface TutorialGroupFreePeriod { 
+    id?: number;
+    start: string;
+    end: string;
+    reason?: string;
 }
 
