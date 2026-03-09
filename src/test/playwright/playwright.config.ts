@@ -26,21 +26,25 @@ export default defineConfig({
     reporter: [
         ['list'],
         ['junit', { outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/results-${process.env.PLAYWRIGHT_TEST_TYPE}.xml` : './test-reports/results.xml' }],
-        [
-            'monocart-reporter',
-            {
-                outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
-                coverage: {
-                    reports: ['lcov', 'json'],
-                    filter: {
-                        '**/src/**': true,
-                        '**/node_modules/**': false,
-                        client: false,
-                        '**/**': true,
-                    },
-                },
-            },
-        ],
+        ...(process.env.PLAYWRIGHT_COVERAGE !== 'off'
+            ? [
+                  [
+                      'monocart-reporter' as const,
+                      {
+                          outputFile: process.env.PLAYWRIGHT_TEST_TYPE ? `./test-reports/monocart-report-${process.env.PLAYWRIGHT_TEST_TYPE}` : './test-reports/monocart-report',
+                          coverage: {
+                              reports: ['lcov', 'json'],
+                              filter: {
+                                  '**/src/**': true,
+                                  '**/node_modules/**': false,
+                                  client: false,
+                                  '**/**': true,
+                              },
+                          },
+                      },
+                  ],
+              ]
+            : []),
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),
 

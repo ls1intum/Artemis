@@ -18,7 +18,8 @@ set -e
 #   --skip-db           Reuse already-running Postgres
 #   --headed            Run Playwright in headed mode
 #   --ui                Open Playwright UI mode
-#   --no-video          Disable video recording (saves CPU)
+#   --video             Enable video recording (off by default to save CPU)
+#   --coverage          Enable coverage collection (off by default, requires extra memory)
 #   --help              Show this help message
 # =============================================================================
 
@@ -36,6 +37,8 @@ SKIP_CLIENT=false
 SKIP_DB=false
 TEST_FILTER=""
 PLAYWRIGHT_EXTRA_ARGS=()
+export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
+export PLAYWRIGHT_COVERAGE="${PLAYWRIGHT_COVERAGE:-off}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -45,7 +48,8 @@ while [[ $# -gt 0 ]]; do
         --skip-db) SKIP_DB=true; shift ;;
         --headed) PLAYWRIGHT_EXTRA_ARGS+=("--headed"); shift ;;
         --ui) PLAYWRIGHT_EXTRA_ARGS+=("--ui"); shift ;;
-        --no-video) export PLAYWRIGHT_VIDEO_MODE="off"; shift ;;
+        --video) unset PLAYWRIGHT_VIDEO_MODE; shift ;;
+        --coverage) unset PLAYWRIGHT_COVERAGE; export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"; shift ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -353,8 +357,9 @@ cd src/test/playwright
 # Install Chromium if needed
 npm run playwright:setup-local 2>/dev/null
 
-# Clean stale reports
+# Clean stale reports and coverage cache
 rm -f test-reports/results*.xml
+rm -rf test-reports/monocart-report*/
 
 # =============================================================================
 # CPU monitoring: sample every 2s to a CSV file for post-run analysis
