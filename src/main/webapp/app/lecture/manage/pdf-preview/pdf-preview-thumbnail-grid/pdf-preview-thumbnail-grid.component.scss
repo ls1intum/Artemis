@@ -13,7 +13,7 @@
     width: 100%;
     height: 500px; // Fixed height - shows about half a page, requires scrolling
 
-    background: #fff; // White background for PDF viewing
+    background: var(--white); // White background for PDF viewing
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     box-shadow: 0 2px 5px var(--pdf-preview-pdf-container-shadow);

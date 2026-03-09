@@ -2,7 +2,7 @@
     .attachment-info {
         margin-top: 8px;
         font-size: 13px;
-        color: #6c757d;
+        color: var(--gray-600);
     }
 
     .pdf-toolbar {
@@ -11,7 +11,7 @@
         justify-content: space-between;
         margin-bottom: 8px;
         font-size: 13px;
-        color: #6c757d;
+        color: var(--gray-600);
 
         .toolbar-left {
             display: flex;
@@ -27,16 +27,16 @@
         .zoom-level,
         .page-info {
             font-size: 13px;
-            color: #6c757d;
+            color: var(--gray-600);
         }
 
         button {
             padding: 0;
-            color: #6c757d;
+            color: var(--gray-600);
             font-size: 16px;
 
             &:hover:not(:disabled) {
-                color: #495057;
+                color: var(--gray-700);
             }
 
             &:disabled {
@@ -53,8 +53,8 @@
         aspect-ratio: 16 / 9.3;
         max-height: 80vh;
 
-        background: #f5f5f5;
-        border: 1px solid #ddd;
+        background: var(--body-bg);
+        border: 1px solid var(--border-color);
         border-radius: var(--bs-border-radius);
 
         overflow: auto;
@@ -96,8 +96,8 @@
         gap: 10px;
 
         .pdf-page {
-            background: #fff;
-            outline: 1px solid #ccc;
+            background: var(--white);
+            outline: 1px solid var(--artemis-pre-border);
             padding: 0;
             margin-bottom: 0;
 
