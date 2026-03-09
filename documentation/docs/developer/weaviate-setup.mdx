@@ -296,11 +296,14 @@ Alternatively, you can enable Weaviate via:
 
 ### Port Conflicts
 
-If port 8001 or 50051 is already in use, create or edit `docker/.env` (which is gitignored) and set custom ports:
+If port 8001 or 50051 is already in use, create or edit `docker/.env` (which is gitignored) and set custom ports,
+
+You can also define a custom Weaviate version if needed, but make sure to use a compatible version with the embedding model and the [java client used in Artemis](https://docs.weaviate.io/weaviate/release-notes).
 
 ```bash
 WEAVIATE_REST_PORT=8002
 WEAVIATE_GRPC_PORT=50052
+WEAVIATE_SERVER_VERSION=1.34.14
 ```
 
 Remember to update the Pyris configuration accordingly.
