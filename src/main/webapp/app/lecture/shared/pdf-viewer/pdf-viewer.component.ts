@@ -1,10 +1,10 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Dayjs } from 'dayjs/esm';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
@@ -46,7 +46,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     protected readonly faExclamationTriangle = faExclamationTriangle;
 
     private pdfDocument: PDFDocumentProxy | undefined;
-    private readonly translateService = inject(TranslateService);
     private viewInitialized = signal<boolean>(false);
     private resizeTimeout: number | undefined;
     private isRendering = false;
