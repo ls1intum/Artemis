@@ -53,6 +53,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private viewInitialized = signal<boolean>(false);
     private resizeTimeout: number | undefined;
     private pageNavTimeoutId: number | undefined;
+    private zoomRetryTimeoutId: number | undefined;
     private isRendering = false;
     private resizeObserver: ResizeObserver | undefined;
     private lastObservedWidth = 0;
@@ -136,6 +137,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         if (this.pageNavTimeoutId !== undefined) {
             clearTimeout(this.pageNavTimeoutId);
             this.pageNavTimeoutId = undefined;
+        }
+
+        if (this.zoomRetryTimeoutId !== undefined) {
+            clearTimeout(this.zoomRetryTimeoutId);
+            this.zoomRetryTimeoutId = undefined;
         }
 
         if (this.pdfDocument) {
@@ -285,8 +291,18 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private performZoom(): void {
         // Wait for rendering to complete
         if (this.isRendering) {
-            setTimeout(() => this.performZoom(), PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
+            // Clear any previous retry timeout
+            if (this.zoomRetryTimeoutId !== undefined) {
+                clearTimeout(this.zoomRetryTimeoutId);
+            }
+            this.zoomRetryTimeoutId = window.setTimeout(() => this.performZoom(), PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
             return;
+        }
+
+        // Clear retry timeout since we're proceeding with zoom
+        if (this.zoomRetryTimeoutId !== undefined) {
+            clearTimeout(this.zoomRetryTimeoutId);
+            this.zoomRetryTimeoutId = undefined;
         }
 
         // Pause observer to prevent scrollbar feedback loop

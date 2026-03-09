@@ -2,8 +2,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PdfViewerComponent } from './pdf-viewer.component';
-import { MockDirective } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import dayjs from 'dayjs/esm';
 
@@ -46,7 +47,7 @@ describe('PdfViewerComponent', () => {
         mockGetDocument.mockClear();
 
         await TestBed.configureTestingModule({
-            imports: [PdfViewerComponent, MockDirective(TranslateDirective)],
+            imports: [PdfViewerComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PdfViewerComponent);
@@ -161,8 +162,12 @@ describe('PdfViewerComponent', () => {
 
     describe('PDF loading', () => {
         it('should set error when loading fails', async () => {
+            const rejectedPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Load failed')), 0));
+            // Consume the rejection to prevent unhandled rejection warnings
+            rejectedPromise.catch(() => {});
+
             mockGetDocument.mockReturnValue({
-                promise: new Promise((_, reject) => setTimeout(() => reject(new Error('Load failed')), 0)),
+                promise: rejectedPromise,
             });
 
             fixture.detectChanges();

@@ -77,14 +77,13 @@
         right: 0;
         bottom: 0;
         display: flex;
-        justify-content: flex-start; // Default: linksbündig für vollständiges Scrolling
+        justify-content: flex-start;
         align-items: flex-start;
         min-height: 0;
         height: 100%;
         font-size: 0;
     }
 
-    // Nur beim Rauszoomen (≤100%) zentrieren
     .pdf-viewer-box.zoomed-out .pdf-zoom-wrapper {
         justify-content: center;
     }
