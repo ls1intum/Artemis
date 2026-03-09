@@ -1,28 +1,26 @@
 import { Component, ElementRef, Injector, OnDestroy, afterNextRender, effect, inject, signal, viewChildren } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
 import { LandingChapterIntroComponent } from './landing-chapter-intro.component';
 import { LandingFeatureSectionComponent } from './landing-feature-section.component';
-import { LandingGlowbarComponent } from './landing-glowbar.component';
 import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './landing-feature-data';
+import { LandingGlowbarComponent } from './landing-glowbar.component';
 
 @Component({
     selector: 'jhi-landing-feature-narrative',
     standalone: true,
-    imports: [TranslateDirective, ArtemisTranslatePipe, VisibleOnScrollDirective, LandingChapterIntroComponent, LandingFeatureSectionComponent, LandingGlowbarComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, LandingChapterIntroComponent, LandingFeatureSectionComponent, LandingGlowbarComponent],
     template: `
         <section class="feature-narrative" aria-labelledby="feature-narrative-heading">
             <h2 id="feature-narrative-heading" class="visually-hidden" jhiTranslate="landing.narrative.heading"></h2>
 
             <div class="narrative-shell">
-                <!-- Desktop sticky rail -->
                 <aside class="narrative-rail" [attr.aria-label]="'landing.narrative.heading' | artemisTranslate">
                     <nav class="rail-nav">
                         @for (chapter of chapters; track chapter.id) {
                             <div class="rail-chapter">
                                 <span class="rail-chapter-label" [jhiTranslate]="'landing.narrative.contents.' + chapter.id"></span>
-                                @for (sectionId of chapter.sectionIds; track sectionId; let j = $index) {
+                                @for (sectionId of chapter.sectionIds; track sectionId) {
                                     <button
                                         type="button"
                                         class="rail-item"
@@ -39,9 +37,7 @@ import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './lan
                     </nav>
                 </aside>
 
-                <!-- Main content -->
                 <div class="narrative-main">
-                    <!-- Chapter 1: AI -->
                     <jhi-landing-chapter-intro chapterId="ai" />
                     @for (section of aiSections; track section.id) {
                         <jhi-landing-feature-section #sectionEl [section]="section" [attr.data-section-id]="section.id" />
@@ -49,7 +45,6 @@ import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './lan
 
                     <jhi-landing-glowbar />
 
-                    <!-- Chapter 2: Assessment -->
                     <jhi-landing-chapter-intro chapterId="assessment" />
                     @for (section of assessmentSections; track section.id) {
                         <jhi-landing-feature-section #sectionEl [section]="section" [attr.data-section-id]="section.id" />
@@ -57,7 +52,6 @@ import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './lan
 
                     <jhi-landing-glowbar />
 
-                    <!-- Chapter 3: Platform -->
                     <jhi-landing-chapter-intro chapterId="platform" />
                     @for (section of platformSections; track section.id) {
                         <jhi-landing-feature-section #sectionEl [section]="section" [attr.data-section-id]="section.id" />
@@ -72,30 +66,33 @@ import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './lan
         }
 
         .feature-narrative {
+            --narrative-rail-width: 190px;
+            --narrative-rail-gap: clamp(2rem, 4vw, 4.5rem);
             position: relative;
             margin: 0 auto;
             padding: 0 2rem;
         }
 
         .narrative-shell {
+            display: grid;
+            grid-template-columns: var(--narrative-rail-width) minmax(0, 1fr);
+            gap: var(--narrative-rail-gap);
             max-width: 1280px;
             margin: 0 auto;
-            position: relative;
         }
 
         .narrative-rail {
             position: sticky;
-            top: max(6rem, 30vh);
+            top: 7rem;
             z-index: 10;
-            width: 180px;
-            float: left;
-            margin-left: -210px;
+            align-self: start;
         }
 
         .rail-nav {
             display: flex;
             flex-direction: column;
             gap: 1.25rem;
+            padding: 1rem 1rem 1rem 0;
         }
 
         .rail-chapter {
@@ -161,19 +158,29 @@ import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './lan
 
         .narrative-main {
             min-width: 0;
+            overflow: visible;
 
             jhi-landing-glowbar {
                 display: block;
                 width: 100vw;
-                position: relative;
-                left: 50%;
-                transform: translateX(-50%);
+                max-width: none;
+                margin-left: calc(50% - 50vw - ((var(--narrative-rail-width) + var(--narrative-rail-gap)) / 2));
             }
         }
 
         @media (max-width: 1024px) {
+            .narrative-shell {
+                grid-template-columns: 1fr;
+            }
+
             .narrative-rail {
                 display: none;
+            }
+
+            .narrative-main {
+                jhi-landing-glowbar {
+                    margin-left: calc(50% - 50vw);
+                }
             }
         }
 
@@ -197,9 +204,9 @@ export class LandingFeatureNarrativeComponent implements OnDestroy {
 
     readonly chapters = LANDING_CHAPTERS;
     readonly allSections = LANDING_SECTIONS;
-    readonly aiSections: LandingFeatureSection[] = this.allSections.filter((s) => s.chapterId === 'ai');
-    readonly assessmentSections: LandingFeatureSection[] = this.allSections.filter((s) => s.chapterId === 'assessment');
-    readonly platformSections: LandingFeatureSection[] = this.allSections.filter((s) => s.chapterId === 'platform');
+    readonly aiSections: LandingFeatureSection[] = this.allSections.filter((section) => section.chapterId === 'ai');
+    readonly assessmentSections: LandingFeatureSection[] = this.allSections.filter((section) => section.chapterId === 'assessment');
+    readonly platformSections: LandingFeatureSection[] = this.allSections.filter((section) => section.chapterId === 'platform');
 
     constructor() {
         effect((onCleanup) => {
@@ -266,12 +273,12 @@ export class LandingFeatureNarrativeComponent implements OnDestroy {
     }
 
     scrollToSection(sectionId: string): void {
-        const el = this.host.nativeElement.querySelector(`[data-section-id="${sectionId}"]`);
+        const element = this.host.nativeElement.querySelector(`[data-section-id="${sectionId}"]`);
         const container = this.host.nativeElement.closest('.page-wrapper');
-        if (!(el instanceof HTMLElement) || !(container instanceof HTMLElement)) return;
+        if (!(element instanceof HTMLElement) || !(container instanceof HTMLElement)) return;
 
         const topOffset = 96;
-        const top = el.getBoundingClientRect().top + container.scrollTop - topOffset;
+        const top = element.getBoundingClientRect().top + container.scrollTop - topOffset;
         container.scrollTo({ top, behavior: this.reducedMotion ? 'instant' : 'smooth' });
     }
 

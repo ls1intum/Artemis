@@ -27,19 +27,53 @@
             },
             "chapters": {
                 "ai": {
-                    "eyebrow": "Chapter 1",
+                    "eyebrow": "AI Features",
                     "title": "AI That Supports Learning And Teaching",
                     "description": "Artemis integrates AI across the entire teaching workflow —<br/>from personalized tutoring and competency tracking to automated assessment and exercise generation."
                 },
                 "assessment": {
-                    "eyebrow": "Chapter 2",
+                    "eyebrow": "Assessment",
                     "title": "Assessment That Works In Real Courses",
                     "description": "From programming exercises with built-in CI to secure online exams, Artemis covers the full assessment surface area of technical courses."
                 },
                 "platform": {
-                    "eyebrow": "Chapter 3",
+                    "eyebrow": "Course Delivery",
                     "title": "Course Delivery, Integrity, And Scale",
                     "description": "Artemis goes beyond assignments with integrated lecture delivery, real-time communication, plagiarism detection, and learning analytics."
+                }
+            },
+            "summary": {
+                "eyebrow": "Artemis At A Glance",
+                "heading": "One platform for teaching, assessment, and academic integrity",
+                "description": "Artemis combines AI-assisted learning, scalable assessment workflows, integrated teaching tools, and course operations in a single system for modern technical education.",
+                "groups": {
+                    "ai": {
+                        "title": "AI",
+                        "description": "Personalized guidance, competency tracking, automated assessment support, and exercise generation."
+                    },
+                    "assessment": {
+                        "title": "Assessment",
+                        "description": "From programming and quiz exercises to modeling, text, and secure online exams."
+                    },
+                    "teaching": {
+                        "title": "Teaching",
+                        "description": "Lecture content, communication, and guided support throughout the course."
+                    },
+                    "platform": {
+                        "title": "Platform",
+                        "description": "Integrity, scale, and open infrastructure for running large technical courses."
+                    }
+                },
+                "items": {
+                    "tutorials": {
+                        "title": "Tutorial Groups"
+                    },
+                    "opensource": {
+                        "title": "Open Source Platform"
+                    },
+                    "scalability": {
+                        "title": "Built To Scale"
+                    }
                 }
             },
             "sections": {

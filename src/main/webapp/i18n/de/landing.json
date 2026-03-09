@@ -27,19 +27,53 @@
             },
             "chapters": {
                 "ai": {
-                    "eyebrow": "Kapitel 1",
+                    "eyebrow": "KI-Features",
                     "title": "KI, die Lernen und Lehren unterstützt",
                     "description": "Artemis integriert KI über den gesamten Lehrworkflow —<br/>von personalisiertem Tutoring und Kompetenzverfolgung bis hin zu automatisierter Bewertung und Aufgabengenerierung."
                 },
                 "assessment": {
-                    "eyebrow": "Kapitel 2",
+                    "eyebrow": "Bewertung",
                     "title": "Bewertung, die in echten Kursen funktioniert",
                     "description": "Von Programmieraufgaben mit integrierter CI bis hin zu sicheren Online-Klausuren — Artemis deckt die gesamte Bewertungsfläche technischer Kurse ab."
                 },
                 "platform": {
-                    "eyebrow": "Kapitel 3",
+                    "eyebrow": "Kursdurchführung",
                     "title": "Kursdurchführung, Integrität und Skalierung",
                     "description": "Artemis geht über Aufgaben hinaus mit integrierter Vorlesungsverwaltung, Echtzeit-Kommunikation, Plagiatserkennung und Lernanalysen."
+                }
+            },
+            "summary": {
+                "eyebrow": "Artemis im Überblick",
+                "heading": "Eine Plattform für Lehre, Bewertung und akademische Integrität",
+                "description": "Artemis vereint KI-gestütztes Lernen, skalierbare Bewertungsworkflows, integrierte Lehrwerkzeuge und Kursbetrieb in einem System für moderne technische Lehre.",
+                "groups": {
+                    "ai": {
+                        "title": "KI",
+                        "description": "Personalisierte Unterstützung, Kompetenzverfolgung, automatisierte Bewertungshilfe und Aufgabengenerierung."
+                    },
+                    "assessment": {
+                        "title": "Bewertung",
+                        "description": "Von Programmier- und Quizaufgaben bis hin zu Modellierungs-, Text- und sicheren Online-Klausuren."
+                    },
+                    "teaching": {
+                        "title": "Lehre",
+                        "description": "Vorlesungsinhalte, Kommunikation und begleitende Unterstützung über den gesamten Kurs hinweg."
+                    },
+                    "platform": {
+                        "title": "Plattform",
+                        "description": "Integrität, Skalierung und offene Infrastruktur für große technische Lehrveranstaltungen."
+                    }
+                },
+                "items": {
+                    "tutorials": {
+                        "title": "Tutorien"
+                    },
+                    "opensource": {
+                        "title": "Open-Source-Plattform"
+                    },
+                    "scalability": {
+                        "title": "Für Skalierung gebaut"
+                    }
                 }
             },
             "sections": {
