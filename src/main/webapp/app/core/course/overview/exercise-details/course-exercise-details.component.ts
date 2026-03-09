@@ -441,7 +441,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             )
             .subscribe((teamAssignment) => {
                 if (this.exercise && teamAssignment.studentParticipations) {
-                    this.exercise = { ...this.exercise!, studentAssignedTeamId: teamAssignment.teamId };
+                    this.exercise = { ...this.exercise!, studentAssignedTeamId: teamAssignment.teamId, studentParticipations: teamAssignment.studentParticipations };
                     this.mergeResultsAndSubmissionsForParticipations();
                 }
             });
