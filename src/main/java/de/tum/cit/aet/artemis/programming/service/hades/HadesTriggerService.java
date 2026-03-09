@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.core.exception.ContinuousIntegrationException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
@@ -23,10 +22,9 @@ import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTrig
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.RepositoryDTO;
 
 /**
- * Implementation of ContinuousIntegrationTriggerService for external CI
- * connectors.
- * This service generates build scripts using existing templates and sends them
- * to the external connector.
+ * Implementation of ContinuousIntegrationTriggerService for Hades.
+ * This service converts ProgrammingExerciseParticipation to BuildTriggerRequestDTO and
+ * sends the build request to HadesService.
  */
 
 @Service
@@ -46,7 +44,6 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
     }
 
     @Override
-    @Transactional(readOnly = true)
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
         try {
             log.debug("Triggering build for participation {} via external CI connector", participation.getId());
@@ -58,9 +55,9 @@ public class HadesTriggerService implements ContinuousIntegrationTriggerService 
             ProgrammingExerciseBuildConfig buildConfig = programmingExerciseBuildConfigRepository.findByIdElseThrow(exerciseID);
             String buildScript = buildConfig.getBuildScript();
 
-            // Create the submission and test repository DTO
-            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString(), null, null, null);
-            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri(), null, null, null);
+            // Create the submission repository DTO
+            var exerciseRepository = new RepositoryDTO(participation.getVcsRepositoryUri().getURI().toString().replace("localhost", "192.168.0.112"), null, null, null);
+            var testRepository = new RepositoryDTO(participation.getProgrammingExercise().getTestRepositoryUri().replace("localhost", "192.168.0.112"), null, null, null);
 
             // Choose if script is bash or groovy: Hades should use a Bash script
             String scriptType = BuildTriggerRequestDTO.ScriptType.SHELL.getValue();

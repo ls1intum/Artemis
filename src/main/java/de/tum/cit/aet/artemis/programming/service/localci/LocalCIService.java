@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.StatelessCIService;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
 
 /**
- * Implementation of ContinuousIntegrationService for local CI. Contains methods for communication with the local CI system.
+ * Implementation of StatelessCIService for local CI. Contains methods for communication with the local CI system.
  * Note: Because the ContinuousIntegrationSystem was designed with Jenkins integration in mind, some methods here are not
  * needed and thus contain an empty implementation.
  */
@@ -75,7 +75,7 @@ public class LocalCIService implements StatelessCIService {
         return new ConnectorHealth(true, Map.of("buildAgents", buildAgentsSummary));
     }
 
-    // This method is temporary, for an adaptation to the new-result endpoint
+    // This method is temporary, for an adaptation to the programming-exercises/new-result endpoint
     // TODO: remove after endpoint handling is refactored.
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
@@ -84,7 +84,6 @@ public class LocalCIService implements StatelessCIService {
 
     @Override
     public UUID build(BuildTriggerRequestDTO buildTriggerRequestDTO) throws ContinuousIntegrationException {
-        // Not necessary for LocalCI as the trigger is handled by the trigger service directly
         throw new UnsupportedOperationException("Unimplemented method 'build'");
     }
 }

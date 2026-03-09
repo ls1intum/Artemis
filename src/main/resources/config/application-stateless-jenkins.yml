@@ -18,12 +18,10 @@ artemis:
     enabled: false
   continuous-integration:
     artemis-authentication-token-value: superduperlongtestingsecrettoken
+    url: http://localhost:8081
 
   # Jenkins connector microservice configuration
   jenkins-connector:
-    # URL where the jenkins-connector microservice is running
-    url: http://localhost:8081
-
     # Optional: timeout settings for API calls to the connector
     # timeout: 30000  # milliseconds
 

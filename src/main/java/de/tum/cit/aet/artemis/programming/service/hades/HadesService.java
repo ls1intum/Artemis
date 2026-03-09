@@ -20,7 +20,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import de.tum.cit.aet.artemis.core.config.ProgrammingLanguageConfiguration;
@@ -34,6 +33,10 @@ import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildJobDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildResponseDTO;
 import de.tum.cit.aet.artemis.programming.service.hades.dto.HadesBuildStepDTO;
 import de.tum.cit.aet.artemis.programming.service.jenkinsstateless.dto.BuildTriggerRequestDTO;
+
+/**
+ * Implementation of StatelessCIService for Hades. Contains methods to communicate with Hades.
+ */
 
 @Service
 @Profile(PROFILE_HADES)
@@ -89,9 +92,11 @@ public class HadesService implements StatelessCIService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO: fetch from HadesLogManager
-        // Hades only supports running, succeeded and failed.
-        return null;
+        // For stateless CI, we cannot track individual build statuses by participation, look at StatelessJenkinsCIService for complete breakdown.
+        // Hades currently supports running, succeeded and failed.
+        log.debug("getBuildStatus called for participation {}, but stateless CI doesn't track individual build statuses", participation.getId());
+        // Return INACTIVE for now.
+        return BuildStatus.INACTIVE;
     }
 
     @Override
@@ -142,14 +147,14 @@ public class HadesService implements StatelessCIService {
         return health;
     }
 
-    // This method is temporary, for an adaptation to the new-result endpoint
+    // This method is temporary, for an adaptation to the programming-exercises/new-result endpoint
     // TODO: remove after endpoint handling is refactored.
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
         return "";
     }
 
-    private HadesBuildJobDTO convertToHadesBuildJobDTO(BuildTriggerRequestDTO buildTriggerRequestDTO) throws JsonProcessingException {
+    private HadesBuildJobDTO convertToHadesBuildJobDTO(BuildTriggerRequestDTO buildTriggerRequestDTO) {
         var metadata = new HashMap<String, String>();
         var steps = new ArrayList<HadesBuildStepDTO>();
 

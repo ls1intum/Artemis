@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeature;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingLanguageFeatureService;
 
 /**
- * Sets the features provided for the different programming languages when using Hades, the exteral CI system.
+ * Sets the features provided for the different programming languages when using Hades.
  * Mirrored from LocalCIProgrammingLanguageFeatureService.
  */
 @Lazy

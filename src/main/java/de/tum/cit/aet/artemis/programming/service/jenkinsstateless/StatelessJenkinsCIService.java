@@ -35,7 +35,7 @@ public class StatelessJenkinsCIService implements StatelessCIService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${artemis.external-ci.url:http://localhost:8081}")
+    @Value("${artemis.jenkins-connector.url:http://localhost:8081}")
     private String jenkinsConnectorBaseUrl;
 
     public StatelessJenkinsCIService(RestTemplate restTemplate) {
@@ -64,7 +64,7 @@ public class StatelessJenkinsCIService implements StatelessCIService {
         }
     }
 
-    // This method is temporary, for an adaptation to the new-result endpoint
+    // This method is temporary, for an adaptation to the programming-exercises/new-result endpoint
     // TODO: remove after endpoint handling is refactored.
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
