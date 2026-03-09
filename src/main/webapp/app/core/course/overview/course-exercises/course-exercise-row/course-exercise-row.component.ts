@@ -114,6 +114,7 @@ export class CourseExerciseRowComponent implements OnInit {
                     const participation = this.participationService.getSpecificStudentParticipation(updatedParticipations, false);
                     this._gradedStudentParticipation.set(participation);
                     this._dueDate.set(getExerciseDueDate(exerciseValue, participation));
+                    this._enrichedExercise.update((current) => (current ? { ...current, studentParticipations: updatedParticipations } : current));
                 }
             });
     }
