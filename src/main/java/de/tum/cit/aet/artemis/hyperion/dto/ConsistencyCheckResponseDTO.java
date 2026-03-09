@@ -12,7 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * DTO for consistency check responses.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Response containing consistency check results")
 public record ConsistencyCheckResponseDTO(
 
