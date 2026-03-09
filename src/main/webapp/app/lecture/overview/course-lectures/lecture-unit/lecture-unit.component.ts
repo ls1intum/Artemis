@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, OnInit, afterNextRender, computed, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -17,13 +17,14 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
     templateUrl: './lecture-unit.component.html',
     styleUrl: './lecture-unit.component.scss',
 })
-export class LectureUnitComponent implements OnInit {
+export class LectureUnitComponent implements OnDestroy {
     // Delay to allow async content (PDFs, videos) to render before scrolling
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
 
     private router = inject(Router);
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
+    private scrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     protected faDownload = faDownload;
     protected faCheckCircle = faCheckCircle;
@@ -52,24 +53,45 @@ export class LectureUnitComponent implements OnInit {
     readonly isVisibleToStudents = computed(() => this.lectureUnit().visibleToStudents);
     readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
 
-    ngOnInit(): void {
-        // If initially expanded, trigger the collapse toggle to load content and scroll into view
-        if (this.initiallyExpanded()) {
-            // Set collapsed state and emit event so parent components can load content
-            this.isCollapsed.set(false);
-            this.onCollapse.emit(false);
+    constructor() {
+        // Watch initiallyExpanded signal and trigger expansion/scroll when it becomes true
+        effect(
+            (onCleanup) => {
+                if (this.initiallyExpanded()) {
+                    // Set collapsed state and emit event so parent components can load content
+                    this.isCollapsed.set(false);
+                    this.onCollapse.emit(false);
 
-            afterNextRender(
-                () => {
-                    setTimeout(() => {
-                        this.elementRef.nativeElement.scrollIntoView?.({
-                            behavior: 'smooth',
-                            block: 'start',
-                        });
-                    }, LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
-                },
-                { injector: this.injector },
-            );
+                    afterNextRender(
+                        () => {
+                            this.scrollTimeoutId = setTimeout(() => {
+                                this.elementRef.nativeElement.scrollIntoView?.({
+                                    behavior: 'smooth',
+                                    block: 'start',
+                                });
+                            }, LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
+                        },
+                        { injector: this.injector },
+                    );
+                }
+
+                // Cleanup: clear timeout if effect re-runs or component is destroyed
+                onCleanup(() => {
+                    if (this.scrollTimeoutId !== undefined) {
+                        clearTimeout(this.scrollTimeoutId);
+                        this.scrollTimeoutId = undefined;
+                    }
+                });
+            },
+            { injector: this.injector },
+        );
+    }
+
+    ngOnDestroy(): void {
+        // Clear any outstanding scroll timeout to avoid callbacks after destruction
+        if (this.scrollTimeoutId !== undefined) {
+            clearTimeout(this.scrollTimeoutId);
+            this.scrollTimeoutId = undefined;
         }
     }
 
