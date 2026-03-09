@@ -53,6 +53,7 @@ describe('ReviewCommentWidgetManager', () => {
     const createThreadRef = () => {
         const instance: any = {
             onToggleCollapse: { subscribe: vi.fn((cb) => (instance._onToggleCollapse = cb)) },
+            onNavigateToLocation: { subscribe: vi.fn((cb) => (instance._onNavigateToLocation = cb)) },
             hideAllCommentMenus: vi.fn(),
         };
         return {

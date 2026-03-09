@@ -37,6 +37,7 @@ import { LoadingNotificationComponent } from 'app/core/loading-notification/load
 import { SystemNotificationComponent } from 'app/core/notification/system-notification/system-notification.component';
 import { EntityTitleService, EntityType } from 'app/core/navbar/entity-title.service';
 import { ServerAdministrationComponent } from 'app/core/navbar/server-administration/server-administration.component';
+import { GlobalSearchNavbarComponent } from 'app/core/navbar/global-search/components/global-search-navbar.component';
 
 @Component({
     selector: 'jhi-navbar',
@@ -64,6 +65,7 @@ import { ServerAdministrationComponent } from 'app/core/navbar/server-administra
         // NOTE: this is actually used in the html template, otherwise *jhiHasAnyAuthority would not work
         HasAnyAuthorityDirective,
         ServerAdministrationComponent,
+        GlobalSearchNavbarComponent,
     ],
 })
 export class NavbarComponent implements OnInit, OnDestroy {
@@ -121,6 +123,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     localCIActive = false;
     ltiEnabled: boolean;
     standardizedCompetenciesEnabled = false;
+    globalSearchEnabled = false;
     agentName?: string;
     isExamStarted = false;
 
@@ -130,6 +133,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     examTitle?: string;
 
     private standardizedCompetencySubscription: Subscription;
+    private globalSearchSubscription: Subscription;
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
     private queryParamsSubscription: Subscription;
@@ -195,6 +199,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.standardizedCompetenciesEnabled = isActive;
         });
 
+        this.globalSearchSubscription = this.featureToggleService.getFeatureToggleActive(FeatureToggle.GlobalSearch).subscribe((isActive) => {
+            this.globalSearchEnabled = isActive;
+        });
+
         // The current user is needed to hide menu items for not logged-in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
@@ -232,6 +240,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         if (this.standardizedCompetencySubscription) {
             this.standardizedCompetencySubscription.unsubscribe();
         }
+        this.globalSearchSubscription?.unsubscribe();
         this.queryParamsSubscription?.unsubscribe();
         this.examStartedSubscription?.unsubscribe();
     }
