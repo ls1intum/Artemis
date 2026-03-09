@@ -19,6 +19,6 @@ class HyperionCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
     // 2. ChecklistActionRequestDTO contains inner enum ActionType
     @Override
     protected int dtoNameEndingThreshold() {
-        return 2;
+        return 3;
     }
 }

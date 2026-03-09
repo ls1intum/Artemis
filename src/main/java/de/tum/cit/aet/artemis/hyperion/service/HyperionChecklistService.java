@@ -376,7 +376,11 @@ public class HyperionChecklistService {
                 observation.error(e);
                 return ChecklistActionResponseDTO.failed(request.problemStatementMarkdown());
             }
-        }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).doOnError(observation::error).doFinally(signal -> observation.stop()).toFuture();
+        }).subscribeOn(Schedulers.boundedElastic()).timeout(ANALYSIS_TIMEOUT).onErrorResume(e -> {
+            log.warn("Failed to apply checklist action", e);
+            observation.error(e);
+            return Mono.just(ChecklistActionResponseDTO.failed(request.problemStatementMarkdown()));
+        }).doFinally(signal -> observation.stop()).toFuture();
     }
 
     /** Builds action-specific instructions for the AI prompt based on action type and pre-sanitized context. */
