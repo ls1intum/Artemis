@@ -58,7 +58,7 @@ export class TutorialEditContainerComponent {
         const tutorialGroupId = updateTutorialGroupEvent.tutorialGroupId;
         const updateTutorialGroupDTO = updateTutorialGroupEvent.updateTutorialGroupDTO;
         this.tutorialGroupsService
-            .updateV2(courseId, tutorialGroupId, updateTutorialGroupDTO)
+            .update(courseId, tutorialGroupId, updateTutorialGroupDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {

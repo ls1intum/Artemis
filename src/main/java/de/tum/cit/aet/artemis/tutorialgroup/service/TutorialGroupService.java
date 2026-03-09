@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.tutorialgroup.service;
 
-import static de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS;
 import static jakarta.persistence.Persistence.getPersistenceUtil;
 
 import java.io.IOException;
@@ -21,6 +20,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
+import de.tum.cit.aet.artemis.tutorialgroup.api.TutorialGroupRegistrationApi;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -57,14 +58,14 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegistrationImportDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupImportErrors;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource.TutorialGroupRegistrationImportDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -89,10 +90,12 @@ public class TutorialGroupService {
 
     private final OneToOneChatRepository oneToOneChatRepository;
 
+    private final TutorialGroupRegistrationApi tutorialGroupRegistrationApi;
+
     public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
             UserRepository userRepository, TutorialGroupSessionRepository tutorialGroupSessionRepository,
             TutorialGroupChannelManagementService tutorialGroupChannelManagementService, ConversationDTOService conversationDTOService,
-            CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository) {
+            CourseNotificationService courseNotificationService, OneToOneChatRepository oneToOneChatRepository, TutorialGroupRegistrationApi tutorialGroupRegistrationApi) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
@@ -101,6 +104,7 @@ public class TutorialGroupService {
         this.conversationDTOService = conversationDTOService;
         this.courseNotificationService = courseNotificationService;
         this.oneToOneChatRepository = oneToOneChatRepository;
+        this.tutorialGroupRegistrationApi = tutorialGroupRegistrationApi;
     }
 
     /**
@@ -448,8 +452,8 @@ public class TutorialGroupService {
 
         for (var userToRegistration : userToRegistrations.entrySet()) {
             if (userToRegistration.getValue().size() > 1) {
-                failedRegistrations.addAll(
-                        userToRegistration.getValue().stream().map(registration -> registration.withImportResult(false, MULTIPLE_REGISTRATIONS)).collect(Collectors.toSet()));
+                failedRegistrations.addAll(userToRegistration.getValue().stream()
+                        .map(registration -> registration.withImportResult(false, TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS)).collect(Collectors.toSet()));
             }
             else {
                 uniqueRegistrationsWithMatchingUsers.put(userToRegistration.getValue().iterator().next(), userToRegistration.getKey());
@@ -990,5 +994,24 @@ public class TutorialGroupService {
     public Set<CalendarEventDTO> getCalendarEventDTOsFromTutorialsGroups(long userId, long courseId) {
         Set<Long> tutorialGroupIds = tutorialGroupRepository.findTutorialGroupIdsWhereUserParticipatesForCourseId(courseId, userId);
         return tutorialGroupSessionRepository.getCalendarEventDTOsFromActiveSessionsForTutorialGroupIds(tutorialGroupIds);
+    }
+
+    /**
+     * Identifies users who should be notified about changes in a tutorial group.
+     * This method collects a set of users who need to be notified, including:
+     * - All instructors registered to the tutorial group
+     * - The teaching assistant of the group (if one exists)
+     * Only users with a valid email address are included in the final set.
+     *
+     * @param tutorialGroup the tutorial group for which to find users to notify
+     * @return a set of users who should receive notifications, filtered to include only those with valid email addresses
+     */
+    public Set<User> findUsersToNotify(TutorialGroup tutorialGroup) {
+        var potentiallyInterestedUsers = tutorialGroupRegistrationApi.findAllByTutorialGroupAndType(tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION).stream()
+                .map(TutorialGroupRegistration::getStudent);
+        if (tutorialGroup.getTeachingAssistant() != null) {
+            potentiallyInterestedUsers = Stream.concat(potentiallyInterestedUsers, Stream.of(tutorialGroup.getTeachingAssistant()));
+        }
+        return potentiallyInterestedUsers.filter(user -> StringUtils.hasText(user.getEmail())).collect(Collectors.toSet());
     }
 }

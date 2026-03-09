@@ -43,7 +43,7 @@ export class TutorialCreateContainerComponent {
         const courseId = createTutorialGroupEvent.courseId;
         const createTutorialGroupDTO = createTutorialGroupEvent.createTutorialGroupDTO;
         this.tutorialGroupsService
-            .createV2(courseId, createTutorialGroupDTO)
+            .create(courseId, createTutorialGroupDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
