@@ -83,7 +83,7 @@ artemis:
                     default: "ls1tum/artemis-python-docker:v1.1.0"
                 c:
                     # possible overrides: gcc, fact
-                    default: "ls1tum/artemis-c-minimal-docker:v1.0.0"
+                    default: "ls1tum/artemis-c-minimal-docker:1.0.0"
                     fact: "ls1tum/artemis-fact-minimal-docker:1.1.0"
                 haskell:
                     default: "ghcr.io/uni-passau-artemis/artemis-haskell:v22.37.0"

@@ -25,7 +25,7 @@ class AeolusTemplateResourceTest extends AbstractSpringIntegrationLocalCILocalVC
 
     private static final String TEST_PREFIX = "aeolusintegration";
 
-    private static final String C_DOCKER_IMAGE = "ls1tum/artemis-c-minimal-docker:v1.0.0";
+    private static final String C_DOCKER_IMAGE = "ls1tum/artemis-c-minimal-docker:1.0.0";
 
     private static final String FACT_DOCKER_IMAGE = "ls1tum/artemis-fact-minimal-docker:1.1.0";
 
