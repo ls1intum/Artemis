@@ -82,8 +82,7 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost,
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
-            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme,
-            @Value("${artemis.weaviate.vectorizer-module:" + VECTORIZER_NONE + "}") String weaviateVectorizerModule) {
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
