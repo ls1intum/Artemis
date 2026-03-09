@@ -21,7 +21,8 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, "https", TEST_COLLECTION_PREFIX);
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "test-host", 443, 50051, "https", TEST_COLLECTION_PREFIX,
+                WeaviateConfigurationProperties.VECTORIZER_NONE);
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -37,7 +38,8 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientCreationNonSecure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", TEST_COLLECTION_PREFIX);
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "localhost", 8001, 50051, "http", TEST_COLLECTION_PREFIX,
+                WeaviateConfigurationProperties.VECTORIZER_NONE);
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
@@ -53,7 +55,8 @@ class WeaviateClientConfigurationTest {
 
     @Test
     void testWeaviateClientConfigurationFailure() {
-        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http", TEST_COLLECTION_PREFIX);
+        WeaviateConfigurationProperties properties = new WeaviateConfigurationProperties(true, "invalid-host", 8001, 50051, "http", TEST_COLLECTION_PREFIX,
+                WeaviateConfigurationProperties.VECTORIZER_NONE);
 
         WeaviateClientConfiguration config = new WeaviateClientConfiguration(properties);
 
