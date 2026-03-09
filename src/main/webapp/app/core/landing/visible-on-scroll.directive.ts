@@ -11,6 +11,7 @@ export class VisibleOnScrollDirective implements OnInit, OnDestroy {
     threshold = input<number>(0.15);
 
     ngOnInit(): void {
+        const root = this.el.nativeElement.closest('.page-wrapper');
         this.observer = new IntersectionObserver(
             (entries) => {
                 for (const entry of entries) {
@@ -20,7 +21,7 @@ export class VisibleOnScrollDirective implements OnInit, OnDestroy {
                     }
                 }
             },
-            { threshold: this.threshold() },
+            { root, threshold: this.threshold() },
         );
         this.observer.observe(this.el.nativeElement);
     }
