@@ -227,7 +227,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (!attachment) {
             return undefined;
         }
-        const link = attachment.studentVersion || this.fileService.createStudentLink(attachment.link!);
+        const link = attachment.studentVersion ?? (attachment.link ? this.fileService.createStudentLink(attachment.link) : undefined);
+        return link ? addPublicFilePrefix(link) : undefined;
         return addPublicFilePrefix(link);
     }
 
