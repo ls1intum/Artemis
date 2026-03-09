@@ -52,6 +52,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private pdfDocument: PDFDocumentProxy | undefined;
     private viewInitialized = signal<boolean>(false);
     private resizeTimeout: number | undefined;
+    private pageNavTimeoutId: number | undefined;
     private isRendering = false;
     private resizeObserver: ResizeObserver | undefined;
     private lastObservedWidth = 0;
@@ -76,9 +77,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const totalPages = this.totalPages();
 
             if (targetPage && loaded && totalPages > 0) {
+                // Clear any previous timeout before scheduling a new one
+                if (this.pageNavTimeoutId !== undefined) {
+                    clearTimeout(this.pageNavTimeoutId);
+                    this.pageNavTimeoutId = undefined;
+                }
+
                 // Clamp to valid page range
                 const validPage = Math.max(1, Math.min(targetPage, totalPages));
-                setTimeout(() => this.goToPage(validPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
+                this.pageNavTimeoutId = window.setTimeout(() => this.goToPage(validPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
             }
         });
     }
@@ -124,6 +131,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         if (this.resizeTimeout !== undefined) {
             clearTimeout(this.resizeTimeout);
+        }
+
+        if (this.pageNavTimeoutId !== undefined) {
+            clearTimeout(this.pageNavTimeoutId);
+            this.pageNavTimeoutId = undefined;
         }
 
         if (this.pdfDocument) {
