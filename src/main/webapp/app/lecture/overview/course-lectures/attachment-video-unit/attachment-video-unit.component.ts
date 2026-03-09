@@ -59,6 +59,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
 
+    private currentLoadSession = 0;
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     readonly hasPdf = computed(() => {
@@ -106,6 +108,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.logUnitOpenedEvent();
             this.clearLoadedContent();
 
+            // Rotate session token to invalidate any pending async operations
+            const sessionToken = ++this.currentLoadSession;
+
             const src = this.lectureUnit().videoSource;
 
             if (src) {
@@ -116,13 +121,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     .pipe(takeUntilDestroyed(this.destroyRef))
                     .subscribe({
                         next: (resolvedUrl) => {
+                            // Only update state if this is still the active session
+                            if (sessionToken !== this.currentLoadSession) {
+                                return;
+                            }
                             if (resolvedUrl) {
                                 this.playlistUrl.set(resolvedUrl);
-                                this.fetchTranscript();
+                                this.fetchTranscript(sessionToken);
                             }
                             this.isLoading.set(false);
                         },
                         error: () => {
+                            // Only update state if this is still the active session
+                            if (sessionToken !== this.currentLoadSession) {
+                                return;
+                            }
                             this.playlistUrl.set(undefined);
                             this.isLoading.set(false);
                         },
@@ -132,12 +145,21 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
 
             if (this.hasPdf()) {
-                this.loadPdf();
+                this.loadPdf(sessionToken);
             }
+        } else {
+            // Invalidate any pending async operations by rotating the session token
+            this.currentLoadSession++;
+            // Clear loaded content and reset state
+            this.clearLoadedContent();
+            this.playlistUrl.set(undefined);
+            this.pdfUrl.set(undefined);
+            this.isLoading.set(false);
+            this.isPdfLoading.set(false);
         }
     }
 
-    private fetchTranscript(): void {
+    private fetchTranscript(sessionToken: number): void {
         const id = this.lectureUnit().id!;
 
         this.lectureTranscriptionService
@@ -154,16 +176,24 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             )
             .subscribe({
                 next: (segments) => {
+                    // Only update state if this is still the active session
+                    if (sessionToken !== this.currentLoadSession) {
+                        return;
+                    }
                     this.transcriptSegments.set(segments);
                 },
                 error: () => {
+                    // Only update state if this is still the active session
+                    if (sessionToken !== this.currentLoadSession) {
+                        return;
+                    }
                     // Failed to fetch transcript, video player will work without it
                     this.transcriptSegments.set([]);
                 },
             });
     }
 
-    private loadPdf(): void {
+    private loadPdf(sessionToken: number): void {
         this.isPdfLoading.set(true);
 
         const link = this.getAttachmentLink();
@@ -178,12 +208,20 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (blob) => {
+                    // Only update state if this is still the active session
+                    if (sessionToken !== this.currentLoadSession) {
+                        return;
+                    }
                     if (blob) {
                         this.pdfUrl.set(URL.createObjectURL(blob));
                     }
                     this.isPdfLoading.set(false);
                 },
                 error: () => {
+                    // Only update state if this is still the active session
+                    if (sessionToken !== this.currentLoadSession) {
+                        return;
+                    }
                     this.pdfUrl.set(undefined);
                     this.isPdfLoading.set(false);
                 },
@@ -229,7 +267,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
         const link = attachment.studentVersion ?? (attachment.link ? this.fileService.createStudentLink(attachment.link) : undefined);
         return link ? addPublicFilePrefix(link) : undefined;
-        return addPublicFilePrefix(link);
     }
 
     handleOriginalVersion() {
