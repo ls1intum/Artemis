@@ -1,12 +1,16 @@
 <div class="pdf-viewer-container">
     @if (isLoading()) {
         <div class="d-flex justify-content-center p-3">
-            <div class="spinner-border text-primary" role="status"></div>
+            <div class="spinner-border text-primary" role="status" aria-live="polite">
+                <span class="visually-hidden" jhiTranslate="artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
+            </div>
         </div>
     }
     @if (error()) {
-        <div class="d-flex justify-content-center p-3">
+        <div class="d-flex flex-column align-items-center p-3" role="alert">
             <fa-icon [icon]="faExclamationTriangle" size="3x" class="text-warning" />
+            <span class="mt-2" jhiTranslate="artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.loadFailed"></span>
+            <span class="visually-hidden" jhiTranslate="artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.loadFailedDetail"></span>
         </div>
     }
     @if (!isLoading() && !error()) {
