@@ -342,7 +342,7 @@ export TUTOR_GROUP_NAME="tutors"
 export EDITOR_GROUP_NAME="editors"
 export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
-export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-8}}"
+export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-6}}"
 # SEQUENTIAL_WORKERS is no longer used — sequential tests have been merged into slow-tests
 # export SEQUENTIAL_WORKERS="${SEQUENTIAL_WORKERS:-6}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
