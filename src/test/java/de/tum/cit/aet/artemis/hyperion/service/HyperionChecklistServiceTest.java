@@ -390,7 +390,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
                 Map.of("issueDescription", "Vague instructions", "category", "CLARITY"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
