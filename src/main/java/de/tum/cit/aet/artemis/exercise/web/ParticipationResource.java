@@ -218,10 +218,10 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "dueDateOver.notSupportedForTeams");
         }
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
-            throw new BadRequestAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
+            throw new AccessForbiddenAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
         }
         if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !profileService.isProfileActive(PROFILE_ATHENA)) {
-            throw new BadRequestAlertException("Practice mode for text and modeling exercises requires the Athena profile", ENTITY_NAME, "dueDateOver.athenaProfileRequired");
+            throw new AccessForbiddenAlertException("Practice mode for text and modeling exercises requires the Athena profile", ENTITY_NAME, "dueDateOver.athenaProfileRequired");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
                 || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
@@ -366,7 +366,8 @@ public class ParticipationResource {
 
         // Check if feedback has already been requested
         var latestResult = participation.findLatestResult();
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate().isAfter(currentTime)) {
+        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate() != null
+                && latestResult.getCompletionDate().isAfter(currentTime)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "feedbackRequestAlreadySent", true);
         }
 
