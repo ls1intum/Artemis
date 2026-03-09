@@ -6,12 +6,13 @@ import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [CommonModule, FontAwesomeModule, TranslateModule, ArtemisDatePipe],
+    imports: [CommonModule, FontAwesomeModule, TranslateModule, ArtemisDatePipe, TranslateDirective],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
 })
