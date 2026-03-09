@@ -31,11 +31,10 @@ import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
-import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { Subscription } from 'rxjs';
 import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
-import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
     FileBrowser,
