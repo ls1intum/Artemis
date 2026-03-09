@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, ViewChild, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, OnDestroy, ViewChild, effect, inject, input, output } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { isEmpty as _isEmpty, fromPairs, toPairs, uniq } from 'lodash-es';
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
@@ -32,6 +32,9 @@ import { editor } from 'monaco-editor';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
+import { Subscription } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
 import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 
 export enum CollapsableCodeEditorElement {
@@ -55,7 +58,7 @@ export enum CollapsableCodeEditorElement {
         KeysPipe,
     ],
 })
-export class CodeEditorContainerComponent implements ComponentCanDeactivate {
+export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnDestroy {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private fileService = inject(CodeEditorFileService);
@@ -87,6 +90,7 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
     isProblemStatementVisible = input<boolean>(true);
     course = input<Course | undefined>();
     selectedRepository = input<RepositoryType>();
+    fileSyncService = input<CodeEditorFileSyncService | undefined>();
     enableExerciseReviewComments = input<boolean>(false);
     selectedAuxiliaryRepositoryId = input<number | undefined>();
 
@@ -134,12 +138,27 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
 
     errorFiles: string[] = [];
     annotations: Array<Annotation> = [];
+
+    private fileTreeChangeSubscription?: Subscription;
+
     constructor() {
         this.initializeProperties();
 
         effect(() => {
             this.updateFileBadges();
         });
+
+        effect(() => {
+            const syncService = this.fileSyncService();
+            this.fileTreeChangeSubscription?.unsubscribe();
+            if (syncService) {
+                this.fileTreeChangeSubscription = syncService.fileTreeChange$.subscribe((event) => this.handleRemoteFileTreeEvent(event));
+            }
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.fileTreeChangeSubscription?.unsubscribe();
     }
 
     get unsavedFiles() {
@@ -258,13 +277,14 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
      * Also, all references to a file need to be updated in case of rename,
      * in case of delete make sure to also remove all sub entities (files in folder).
      */
-    onFileChange<F extends FileChange>([, fileChange]: [string[], F]) {
+    onFileChange<F extends FileChange>([, fileChange, isRemote]: [string[], F, boolean?]) {
         if (fileChange instanceof CreateFileChange) {
-            // Select newly created file
-            if (fileChange.fileType === FileType.FILE) {
+            // Select newly created file, but only for local operations — remote creates must not
+            // hijack the local user's current selection.
+            if (fileChange.fileType === FileType.FILE && !isRemote) {
                 this.selectedFile = fileChange.fileName;
-                this.commitState = CommitState.UNCOMMITTED_CHANGES;
             }
+            this.commitState = CommitState.UNCOMMITTED_CHANGES;
         } else if (fileChange instanceof RenameFileChange || fileChange instanceof DeleteFileChange) {
             // Guard against PROBLEM_STATEMENT file operations - only allow FILE and FOLDER
             if (fileChange.fileType !== FileType.FILE && fileChange.fileType !== FileType.FOLDER) {
@@ -281,6 +301,39 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate {
         this.monacoEditor?.onFileChange(fileChange);
 
         this.onFileChanged.emit();
+    }
+
+    /**
+     * Handle remote file tree change events from the sync service.
+     * Delegates to fileBrowser.handleFileChange() which updates repositoryFiles, rebuilds
+     * the tree view, and emits onFileChange — mirroring the local file operation flow exactly.
+     *
+     * If fileBrowser is not yet rendered (e.g. during initial load), the event is safely
+     * ignored. This is acceptable because the file browser fetches the full file list from
+     * the server on initialization, so it will already reflect the current state.
+     *
+     * This follows the same pattern as {@link ProblemStatementSyncService}, where the sync
+     * service emits events and the consuming component handles them if ready, gracefully
+     * skipping events that arrive before the UI is initialized.
+     */
+    private handleRemoteFileTreeEvent(event: FileCreatedEvent | FileDeletedEvent | FileRenamedEvent): void {
+        switch (event.eventType) {
+            case ExerciseEditorSyncEventType.FILE_CREATED:
+                // isRemote=true: prevents the container from auto-selecting the new file,
+                // which would hijack the local user's current editor selection.
+                this.fileBrowser?.handleFileChange(new CreateFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                break;
+            case ExerciseEditorSyncEventType.FILE_DELETED:
+                this.fileBrowser?.handleFileChange(new DeleteFileChange(this.mapFileType(event.fileType), event.filePath), true);
+                break;
+            case ExerciseEditorSyncEventType.FILE_RENAMED:
+                this.fileBrowser?.handleFileChange(new RenameFileChange(this.mapFileType(event.fileType), event.oldPath, event.newPath), true);
+                break;
+        }
+    }
+
+    private mapFileType(type: 'FILE' | 'FOLDER'): FileType {
+        return type === 'FILE' ? FileType.FILE : FileType.FOLDER;
     }
 
     /**
