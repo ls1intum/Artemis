@@ -73,16 +73,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
 
+    /**
+     * Return the URL of the video source
+     */
     readonly videoUrl = computed(() => this.computeVideoUrl());
 
+    /**
+     * Computes the video URL based on the video source.
+     * Returns undefined if the source is invalid or doesn't match the allow list.
+     */
     private computeVideoUrl(): string | undefined {
         const source = this.lectureUnit().videoSource;
         if (!source) {
             return undefined;
         }
+        // Check if it matches the allow list (e.g., TUM Live URLs)
         if (this.videoUrlAllowList.some((r) => r.test(source))) {
             return source;
         }
+        // Check if urlParser can parse it (e.g., YouTube, Vimeo, etc.)
         if (urlParser) {
             const parsed = urlParser.parse(source);
             if (parsed) {
@@ -244,6 +253,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
+    /**
+     * Returns the name of the attachment file (including its file extension)
+     */
     getFileName(): string {
         if (this.lectureUnit().attachment?.link) {
             const link = this.lectureUnit().attachment!.link!;
@@ -293,6 +305,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return !!this.lectureUnit().videoSource;
     }
 
+    /**
+     * Returns the matching icon for the file extension of the attachment
+     */
     getAttachmentIcon(): IconDefinition {
         if (this.hasVideo()) {
             return faFileVideo;
