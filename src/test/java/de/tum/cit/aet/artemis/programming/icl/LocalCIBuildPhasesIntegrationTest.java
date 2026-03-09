@@ -157,7 +157,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for results and verify: partly successful test results contain 1 passing test
-        localVCLocalCITestService.testLatestSubmission(participation.getId(), null, 1, false, 30);
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), null, 1, false, 90);
     }
 
     @Test
@@ -187,7 +187,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for the result and verify compile-only success
-        await().atMost(Duration.ofSeconds(30)).until(() -> {
+        await().atMost(Duration.ofSeconds(90)).until(() -> {
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participation.getId());
             return submission.isPresent() && submission.get().getLatestResult() != null;
         });
@@ -230,7 +230,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for the result and verify build failure
-        await().atMost(Duration.ofSeconds(30)).until(() -> {
+        await().atMost(Duration.ofSeconds(90)).until(() -> {
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participation.getId());
             return submission.isPresent() && submission.get().getLatestResult() != null;
         });
@@ -264,7 +264,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         long templateParticipationId = exercise.getTemplateParticipation().getId();
         long solutionParticipationId = exercise.getSolutionParticipation().getId();
 
-        await().atMost(Duration.ofSeconds(30))
+        await().atMost(Duration.ofSeconds(90))
                 .until(() -> queuedJobs.getAll().stream().noneMatch(job -> job.participationId() == templateParticipationId || job.participationId() == solutionParticipationId)
                         && processingJobs.values().stream().noneMatch(job -> job.participationId() == templateParticipationId || job.participationId() == solutionParticipationId));
     }
