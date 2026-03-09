@@ -45,8 +45,8 @@
                     [ngbPopover]="hiddenPages()[page.slideId] ? showPageBox : hidePageBox"
                     #popover="ngbPopover"
                     [autoClose]="'outside'"
-                    placement="right auto"
-                    container="body"
+                    [placement]="'right auto'"
+                    [container]="'body'"
                     (shown)="isPopoverOpen.set(true)"
                     (hidden)="activeButtonPage.set(undefined); isPopoverOpen.set(false)"
                 >
