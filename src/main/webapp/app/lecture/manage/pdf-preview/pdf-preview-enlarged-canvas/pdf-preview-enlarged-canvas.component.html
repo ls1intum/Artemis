@@ -7,7 +7,7 @@
         </div>
     }
     <canvas #enlargedCanvas></canvas>
-    <button class="btn btn-close" (click)="closeEnlargedView($event)"></button>
+    <button class="btn btn-close" (click)="closeEnlargedView()"></button>
     @if (currentPage() !== 1) {
         <button class="btn btn-secondary nav-button left" (click)="handleNavigation('prev', $event)" aria-label="Previous page">←</button>
     }

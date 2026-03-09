@@ -159,7 +159,7 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
     /**
      * Closes the enlarged view of the PDF and re-enables scrolling in the PDF container.
      */
-    closeEnlargedView(event: MouseEvent) {
+    closeEnlargedView() {
         this.isEnlargedViewOutput.emit(false);
         this.adjustPdfContainerSize(false);
         this.toggleBodyScroll(false);
@@ -174,7 +174,7 @@ export class PdfPreviewEnlargedCanvasComponent implements OnInit, AfterViewInit 
         const enlargedCanvas = this.enlargedCanvas().nativeElement;
 
         if (target.classList.contains('enlarged-container') && target !== enlargedCanvas) {
-            this.closeEnlargedView(event);
+            this.closeEnlargedView();
         }
     }
 
