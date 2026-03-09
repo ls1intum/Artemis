@@ -1,10 +1,11 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, input, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, computed, effect, input, signal, viewChild } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
 import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
@@ -12,7 +13,7 @@ import { ButtonModule } from 'primeng/button';
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, TranslateDirective, ButtonModule],
+    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, ButtonModule],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
 })
@@ -39,6 +40,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     isLoading = signal<boolean>(true);
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
+
+    // Show toolbar when PDF is loaded, regardless of individual page errors
+    showToolbar = computed(() => !this.isLoading() && this.totalPages() > 0);
 
     protected readonly faSearchMinus = faSearchMinus;
     protected readonly faSearchPlus = faSearchPlus;
@@ -445,7 +449,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const context = canvas.getContext('2d');
 
             if (!context) {
-                console.error(`Failed to get 2D context for PDF page ${pageNum}`);
                 return false;
             }
 
@@ -480,7 +483,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
             return true;
         } catch (error) {
-            console.error(`Failed to render PDF page ${pageNum}:`, error);
             return false;
         }
     }

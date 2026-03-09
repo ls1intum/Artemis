@@ -13,7 +13,7 @@
             <span class="visually-hidden" jhiTranslate="artemisApp.lectureUnit.attachmentVideoUnit.pdfViewer.loadFailedDetail"></span>
         </div>
     }
-    @if (!isLoading() && !error()) {
+    @if (showToolbar()) {
         <div class="pdf-toolbar">
             <div class="toolbar-left">
                 <p-button
@@ -25,6 +25,7 @@
                 >
                     <fa-icon [icon]="faSearchMinus" />
                 </p-button>
+                <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
                 <p-button
                     [text]="true"
                     severity="secondary"
@@ -34,7 +35,6 @@
                 >
                     <fa-icon [icon]="faSearchPlus" />
                 </p-button>
-                <span class="zoom-level">{{ (zoomLevel() * 100).toFixed(0) }}%</span>
                 <p-button
                     [text]="true"
                     severity="secondary"

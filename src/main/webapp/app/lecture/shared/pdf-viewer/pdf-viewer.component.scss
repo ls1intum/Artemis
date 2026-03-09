@@ -9,19 +9,20 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        margin-bottom: 8px;
+        margin-bottom: 0;
         font-size: 13px;
         color: var(--gray-600);
 
         .toolbar-left {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0;
         }
 
         .toolbar-right {
             display: flex;
             align-items: center;
+            padding-right: 4px;
         }
 
         .zoom-level,
