@@ -4,6 +4,11 @@
             "features": "Features",
             "programmingExercises": "Programmieraufgaben",
             "exams": "Klausuren",
+            "documentation": "Dokumentation",
+            "docStudent": "Student",
+            "docInstructor": "Instructor",
+            "docAdmin": "Admin",
+            "docDeveloper": "Developer",
             "signIn": "Anmelden"
         },
         "hero": {

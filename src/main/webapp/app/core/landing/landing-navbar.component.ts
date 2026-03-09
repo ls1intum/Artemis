@@ -1,11 +1,14 @@
-import { Component, signal } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { MenuItem } from 'primeng/api';
+import { Menu, MenuModule } from 'primeng/menu';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-landing-navbar',
     standalone: true,
-    imports: [RouterLink, TranslateDirective],
+    imports: [RouterLink, TranslateDirective, MenuModule],
     template: `
         <nav class="landing-nav">
             <div class="nav-container">
@@ -15,13 +18,25 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                 </a>
 
                 <!-- Desktop nav -->
-                <div class="nav-links">
-                    <a href="#features" class="nav-link" jhiTranslate="landing.navbar.features"></a>
-                    <a href="#programming-exercises" class="nav-link" jhiTranslate="landing.navbar.programmingExercises"></a>
-                    <a href="#exams" class="nav-link" jhiTranslate="landing.navbar.exams"></a>
+                <div class="landing-links">
+                    <a href="#features" class="landing-link" jhiTranslate="landing.navbar.features"></a>
+                    <a href="#programming-exercises" class="landing-link" jhiTranslate="landing.navbar.programmingExercises"></a>
+                    <a href="#exams" class="landing-link" jhiTranslate="landing.navbar.exams"></a>
+                    <button class="landing-link dropdown-trigger" (click)="toggleDocsMenu($event)">
+                        <span jhiTranslate="landing.navbar.documentation"></span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                    </button>
+                    <p-menu #docsMenu [model]="docsMenuItems" [popup]="true" appendTo="body" styleClass="landing-docs-menu" />
                 </div>
 
                 <div class="nav-right">
+                    <div class="lang-switch">
+                        <button class="lang-btn" [class.active]="isEnglish()" (click)="changeLanguage('en')">EN</button>
+                        <span class="lang-sep">/</span>
+                        <button class="lang-btn" [class.active]="!isEnglish()" (click)="changeLanguage('de')">DE</button>
+                    </div>
                     <a routerLink="/sign-in" class="sign-in-btn" jhiTranslate="landing.navbar.signIn"></a>
                     <!-- Hamburger -->
                     <button class="hamburger" (click)="toggleMenu()" [attr.aria-expanded]="menuOpen()" aria-label="Toggle navigation menu">
@@ -45,6 +60,48 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                     <a href="#features" class="mobile-link" (click)="closeMenu()" jhiTranslate="landing.navbar.features"></a>
                     <a href="#programming-exercises" class="mobile-link" (click)="closeMenu()" jhiTranslate="landing.navbar.programmingExercises"></a>
                     <a href="#exams" class="mobile-link" (click)="closeMenu()" jhiTranslate="landing.navbar.exams"></a>
+                    <div class="mobile-docs">
+                        <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.documentation"></span>
+                        <div class="mobile-docs-links">
+                            <a
+                                href="https://docs.artemis.tum.de/user/student-guides/intro"
+                                target="_blank"
+                                rel="noopener"
+                                class="mobile-link mobile-doc-item"
+                                (click)="closeMenu()"
+                                jhiTranslate="landing.navbar.docStudent"
+                            ></a>
+                            <a
+                                href="https://docs.artemis.tum.de/user/instructor-guides/intro"
+                                target="_blank"
+                                rel="noopener"
+                                class="mobile-link mobile-doc-item"
+                                (click)="closeMenu()"
+                                jhiTranslate="landing.navbar.docInstructor"
+                            ></a>
+                            <a
+                                href="https://docs.artemis.tum.de/admin/intro"
+                                target="_blank"
+                                rel="noopener"
+                                class="mobile-link mobile-doc-item"
+                                (click)="closeMenu()"
+                                jhiTranslate="landing.navbar.docAdmin"
+                            ></a>
+                            <a
+                                href="https://docs.artemis.tum.de/dev/intro"
+                                target="_blank"
+                                rel="noopener"
+                                class="mobile-link mobile-doc-item"
+                                (click)="closeMenu()"
+                                jhiTranslate="landing.navbar.docDeveloper"
+                            ></a>
+                        </div>
+                    </div>
+                    <div class="mobile-link mobile-lang">
+                        <button class="lang-btn" [class.active]="isEnglish()" (click)="changeLanguage('en')">EN</button>
+                        <span class="lang-sep">/</span>
+                        <button class="lang-btn" [class.active]="!isEnglish()" (click)="changeLanguage('de')">DE</button>
+                    </div>
                     <a routerLink="/sign-in" class="mobile-link sign-in" (click)="closeMenu()" jhiTranslate="landing.navbar.signIn"></a>
                 </div>
             }
@@ -89,7 +146,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             font-weight: 700;
         }
 
-        .nav-links {
+        .landing-links {
             display: flex;
             gap: 2rem;
             position: absolute;
@@ -97,7 +154,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             transform: translateX(-50%);
         }
 
-        .nav-link {
+        .landing-link {
             color: #94a3b8;
             text-decoration: none;
             font-size: 0.875rem;
@@ -109,10 +166,58 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             }
         }
 
+        .dropdown-trigger {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+        }
+
         .nav-right {
             display: flex;
             align-items: center;
             gap: 0.75rem;
+        }
+
+        .lang-switch {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .lang-btn {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0;
+            transition: color 0.2s;
+
+            &:hover {
+                color: #94a3b8;
+            }
+
+            &.active {
+                color: white;
+                font-weight: 700;
+            }
+        }
+
+        .lang-sep {
+            color: #475569;
+            font-size: 0.8125rem;
+        }
+
+        .mobile-lang {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            border-bottom: none;
         }
 
         .sign-in-btn {
@@ -169,12 +274,34 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             }
         }
 
+        .mobile-docs {
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .mobile-docs-label {
+            border-bottom: none;
+            padding-bottom: 0.25rem;
+        }
+
+        .mobile-docs-links {
+            padding-left: 1rem;
+        }
+
+        .mobile-doc-item {
+            border-bottom: none;
+            padding: 0.5rem 0;
+        }
+
         @media (max-width: 768px) {
-            .nav-links {
+            .landing-links {
                 display: none;
             }
 
             .sign-in-btn {
+                display: none;
+            }
+
+            .lang-switch {
                 display: none;
             }
 
@@ -189,7 +316,19 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     `,
 })
 export class LandingNavbarComponent {
+    private readonly translateService = inject(TranslateService);
+    private readonly docsMenu = viewChild<Menu>('docsMenu');
+
     menuOpen = signal(false);
+    currentLang = signal(inject(TranslateService).currentLang || 'en');
+    isEnglish = computed(() => this.currentLang() === 'en');
+
+    docsMenuItems: MenuItem[] = [
+        { label: 'Student', url: 'https://docs.artemis.tum.de/user/student-guides/intro', target: '_blank' },
+        { label: 'Instructor', url: 'https://docs.artemis.tum.de/user/instructor-guides/intro', target: '_blank' },
+        { label: 'Admin', url: 'https://docs.artemis.tum.de/admin/intro', target: '_blank' },
+        { label: 'Developer', url: 'https://docs.artemis.tum.de/dev/intro', target: '_blank' },
+    ];
 
     toggleMenu(): void {
         this.menuOpen.update((v) => !v);
@@ -197,5 +336,14 @@ export class LandingNavbarComponent {
 
     closeMenu(): void {
         this.menuOpen.set(false);
+    }
+
+    toggleDocsMenu(event: Event): void {
+        this.docsMenu()?.toggle(event);
+    }
+
+    changeLanguage(lang: string): void {
+        this.translateService.use(lang);
+        this.currentLang.set(lang);
     }
 }

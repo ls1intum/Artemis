@@ -1239,3 +1239,33 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
         padding: 0;
     }
 }
+
+// Landing page documentation dropdown (PrimeNG Menu appended to body)
+.landing-docs-menu.p-menu {
+    background: #0f172a;
+    border: 1px solid #1e293b;
+    border-radius: 0.5rem;
+    padding: 0.375rem;
+    min-width: 140px;
+
+    .p-menuitem-link {
+        color: #94a3b8;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        padding: 0.5rem 0.75rem;
+        border-radius: 0.25rem;
+        text-decoration: none;
+        transition:
+            color 0.2s,
+            background 0.2s;
+
+        &:hover {
+            color: white;
+            background: rgba(255, 255, 255, 0.08);
+        }
+    }
+
+    .p-menuitem-text {
+        color: inherit;
+    }
+}
