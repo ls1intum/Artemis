@@ -432,21 +432,21 @@ describe('AttachmentVideoUnitComponent', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/document.pdf';
             fixture.detectChanges();
 
-            expect(component.isPdf()).toBe(true);
+            expect(component.hasPdf()).toBe(true);
         });
 
         it('isPdf: returns false for non-PDF file extensions', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/document.docx';
             fixture.detectChanges();
 
-            expect(component.isPdf()).toBe(false);
+            expect(component.hasPdf()).toBe(false);
         });
 
         it('isPdf: handles uppercase PDF extension', () => {
             component.lectureUnit().attachment!.link = '/path/to/file/document.PDF';
             fixture.detectChanges();
 
-            expect(component.isPdf()).toBe(true);
+            expect(component.hasPdf()).toBe(true);
         });
 
         it('hasPdf: returns true when has attachment and is PDF', () => {
