@@ -12,7 +12,7 @@
                     <tr
                         jhiSort
                         [predicate]="predicate()"
-                        (predicateChange)="predicate.set($event)"
+                        (predicateChange)="predicate.set($event!)"
                         [ascending]="reverse()"
                         (ascendingChange)="reverse.set($event)"
                         (sortChange)="transition()"
