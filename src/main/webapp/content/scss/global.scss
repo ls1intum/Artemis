@@ -1246,7 +1246,8 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     border: 1px solid #1e293b;
     border-radius: 0.5rem;
     padding: 0.375rem;
-    min-width: 140px;
+    min-width: 200px;
+    white-space: nowrap;
 
     .p-menuitem-link {
         color: #94a3b8;

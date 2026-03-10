@@ -64,17 +64,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                     <div class="mobile-docs">
                         <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.features"></span>
                         <div class="mobile-docs-links">
-                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-iris'); closeMenu()" jhiTranslate="landing.narrative.chapters.ai.title"></span>
-                            <span
-                                class="mobile-link mobile-doc-item"
-                                (click)="scrollTo('feature-programming'); closeMenu()"
-                                jhiTranslate="landing.narrative.chapters.assessment.title"
-                            ></span>
-                            <span
-                                class="mobile-link mobile-doc-item"
-                                (click)="scrollTo('feature-lectures'); closeMenu()"
-                                jhiTranslate="landing.narrative.chapters.platform.title"
-                            ></span>
+                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-iris'); closeMenu()" jhiTranslate="landing.navbar.chapterAI"></span>
+                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-programming'); closeMenu()" jhiTranslate="landing.navbar.chapterAssessment"></span>
+                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-lectures'); closeMenu()" jhiTranslate="landing.navbar.chapterPlatform"></span>
                         </div>
                     </div>
                     <div class="mobile-docs">
@@ -343,9 +335,9 @@ export class LandingNavbarComponent {
 
     get featuresMenuItems(): MenuItem[] {
         return [
-            { label: this.translateService.instant('landing.narrative.chapters.ai.title'), command: () => this.scrollTo('feature-iris') },
-            { label: this.translateService.instant('landing.narrative.chapters.assessment.title'), command: () => this.scrollTo('feature-programming') },
-            { label: this.translateService.instant('landing.narrative.chapters.platform.title'), command: () => this.scrollTo('feature-lectures') },
+            { label: this.translateService.instant('landing.navbar.chapterAI'), command: () => this.scrollTo('feature-iris') },
+            { label: this.translateService.instant('landing.navbar.chapterAssessment'), command: () => this.scrollTo('feature-programming') },
+            { label: this.translateService.instant('landing.navbar.chapterPlatform'), command: () => this.scrollTo('feature-lectures') },
         ];
     }
 

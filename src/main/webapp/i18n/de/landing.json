@@ -7,7 +7,10 @@
             "docInstructor": "Instructor",
             "docAdmin": "Admin",
             "docDeveloper": "Developer",
-            "signIn": "Anmelden"
+            "signIn": "Anmelden",
+            "chapterAI": "KI & Lernen",
+            "chapterAssessment": "Übungen & Klausuren",
+            "chapterPlatform": "Plattform & Lehre"
         },
         "hero": {
             "title": "Interaktives Lernen",
