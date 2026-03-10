@@ -175,7 +175,7 @@ Not all templates support the same feature set. The table below provides an over
 
 **L** = Local CI, **J** = Jenkins
 
-| No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](#configure-static-code-analysis) | [Plagiarism Check](../plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
+| No. | Language   | [Sequential Test Runs](#sequential-test-runs) | [Static Code Analysis](#configure-static-code-analysis) | [Plagiarism Check](../assessment-grading/plagiarism-check) | [Package Name](#package-name) | Project Type           | [Solution Repository Checkout](#solution-repository-checkout) | [Auxiliary Repositories](#auxiliary-repositories) |
 |:---:|:-----------|:---------------------------------------------:|:-------------------------------------------------------:|:---------------------------------------:|:-----------------------------:|:-----------------------|:-------------------------------------------------------------:|:-------------------------------------------------:|
 |  1  | Java       |                       ✅                       |                            ✅                            |                    ✅                    |               ✅               | Gradle, Maven, DejaGnu |                               ❌                               |                  L: ✅<br />J: ❌                   |
 |  2  | Python     |                L: ✅<br />J: ❌                 |                     L: ✅<br />J: ❌                      |                    ✅                    |               ❌               | n/a                    |                               ❌                               |                  L: ✅<br />J: ❌                   |
@@ -587,7 +587,7 @@ You can also use a custom Docker image. Make sure to:
 
 ### Edit Repositories Checkout Paths (Optional)
 
-**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 Preconfigured checkout paths usually don't need changes.
 
@@ -613,7 +613,7 @@ Update the build script accordingly (see the [Adapt Build Script](#adapt-build-s
 
 ### Edit Maximum Build Duration (Optional)
 
-**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 The default maximum build duration (120 seconds) usually doesn't need changes.
 
@@ -623,7 +623,7 @@ Use the slider to adjust the time limit for build plan execution:
 
 ### Edit Container Configuration (Optional)
 
-**Only available with [Integrated Code Lifecycle](/instructor/integrated-code-lifecycle)**
+**Only available with [Integrated Code Lifecycle](/instructor/integrations/integrated-code-lifecycle)**
 
 In most cases, the default container configuration does not need to be changed.
 
@@ -2121,4 +2121,4 @@ For custom test case feedback, create a `customFeedbacks` folder at workspace to
 
 ## Integrated Code Lifecycle
 
-The Artemis Integrated Code Lifecycle allows using programming exercises fully integrated within Artemis, without external tools. Find more information in the [Integrated Code Lifecycle documentation](/instructor/integrated-code-lifecycle).
+The Artemis Integrated Code Lifecycle allows using programming exercises fully integrated within Artemis, without external tools. Find more information in the [Integrated Code Lifecycle documentation](/instructor/integrations/integrated-code-lifecycle).
