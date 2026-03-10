@@ -17,8 +17,9 @@ import java.security.spec.ECGenParameterSpec;
 import java.util.Base64;
 import java.util.List;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,7 +44,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  * @see <a href="https://www.w3.org/TR/webauthn-2/">WebAuthn Level 2 Specification</a>
  */
-@Service
+@Lazy
+@Component
 @Profile(SPRING_PROFILE_TEST)
 public class WebAuthnClientSimulator {
 
