@@ -94,6 +94,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/account/**',   // core account module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/navbar/global-search/**', // global search uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/modeling/**',       // modeling module uses Vitest (see vitest.config.ts)
@@ -108,6 +109,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',           // inline-refinement-button uses Vitest (see vitest.config.ts)
@@ -120,6 +122,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/core/account/',      // core account module uses Vitest
         '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
+        '<rootDir>/src/main/webapp/app/core/navbar/global-search/', // global search uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
         '<rootDir>/src/main/webapp/app/modeling/',          // modeling module uses Vitest
@@ -139,6 +142,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
@@ -175,6 +179,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
         '<rootDir>/src/main/webapp/app/core/account/',  // core account module
         '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
+        '<rootDir>/src/main/webapp/app/core/navbar/global-search/', // global search
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
         '<rootDir>/src/main/webapp/app/modeling/',      // modeling module
@@ -193,6 +198,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',               // migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
         '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module
     ],
     testTimeout: 3000,
