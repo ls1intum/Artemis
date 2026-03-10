@@ -6,9 +6,9 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -29,12 +29,8 @@ class BuildPhaseEvaluationServiceTest {
     @Mock
     private ProgrammingExerciseParticipation participation;
 
+    @InjectMocks
     private BuildPhaseEvaluationService buildPhaseEvaluationService;
-
-    @BeforeEach
-    void setUp() {
-        buildPhaseEvaluationService = new BuildPhaseEvaluationService(exerciseDateService);
-    }
 
     @Test
     void testAllAlwaysPhases_allActive() {
@@ -199,8 +195,6 @@ class BuildPhaseEvaluationServiceTest {
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
     }
 
-    // --- Template participation tests ---
-
     @Test
     void testTemplateParticipation_beforeDueDate_allPhasesActive() {
         // Template participations should always run all phases so instructors get full feedback
@@ -216,8 +210,6 @@ class BuildPhaseEvaluationServiceTest {
         assertThat(result.activePhases()).containsExactly(compile, test);
         assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
     }
-
-    // --- Solution participation tests ---
 
     @Test
     void testSolutionParticipation_beforeDueDate_allPhasesActive() {
