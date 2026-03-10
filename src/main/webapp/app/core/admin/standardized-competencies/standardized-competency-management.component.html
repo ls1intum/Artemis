@@ -38,35 +38,37 @@
         />
         <jhi-button [btnSize]="ButtonSize.SMALL" [icon]="faMaximize" (onClick)="tree?.expandAll()" tooltip="artemisApp.standardizedCompetency.manage.expandButtonTooltip" />
     </div>
-    @if (dataSource.data?.length) {
+    @if (dataSource.data?.length || selectedKnowledgeArea() || selectedCompetency()) {
         <div class="split-container">
-            <div class="tree-panel">
-                <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100" [dataSource]="dataSource">
-                    <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
-                        <div class="d-flex align-items-center">
-                            <fa-icon
-                                class="clickable"
-                                size="sm"
-                                [icon]="faEye"
-                                [fixedWidth]="true"
-                                (click)="selectKnowledgeArea(knowledgeArea)"
-                                [ngbTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
-                            />
-                        </div>
-                    </ng-template>
-                    <ng-template let-competency="competency" #competencyTemplate>
-                        <div class="d-flex align-items-center clickable" (click)="selectCompetency(competency)">
-                            <fa-icon
-                                class="me-2"
-                                [icon]="getIcon(competency.taxonomy)"
-                                [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
-                                [fixedWidth]="true"
-                            />
-                            <h6 class="mb-0">{{ competency.title }}</h6>
-                        </div>
-                    </ng-template>
-                </jhi-knowledge-area-tree>
-            </div>
+            @if (dataSource.data?.length) {
+                <div class="tree-panel">
+                    <jhi-knowledge-area-tree class="d-flex flex-grow-1 h-100" [dataSource]="dataSource">
+                        <ng-template let-knowledgeArea="knowledgeArea" #knowledgeAreaTemplate>
+                            <div class="d-flex align-items-center">
+                                <fa-icon
+                                    class="clickable"
+                                    size="sm"
+                                    [icon]="faEye"
+                                    [fixedWidth]="true"
+                                    (click)="selectKnowledgeArea(knowledgeArea)"
+                                    [ngbTooltip]="'artemisApp.knowledgeArea.manage.detailsTooltip' | artemisTranslate"
+                                />
+                            </div>
+                        </ng-template>
+                        <ng-template let-competency="competency" #competencyTemplate>
+                            <div class="d-flex align-items-center clickable" (click)="selectCompetency(competency)">
+                                <fa-icon
+                                    class="me-2"
+                                    [icon]="getIcon(competency.taxonomy)"
+                                    [ngbTooltip]="'artemisApp.courseCompetency.taxonomies.' + (competency.taxonomy ?? 'none') | artemisTranslate"
+                                    [fixedWidth]="true"
+                                />
+                                <h6 class="mb-0">{{ competency.title }}</h6>
+                            </div>
+                        </ng-template>
+                    </jhi-knowledge-area-tree>
+                </div>
+            }
             @if (selectedCompetency(); as competency) {
                 <div class="sc-detail-panel" [style.width.px]="detailPanelWidth()">
                     <div class="draggable-left">
