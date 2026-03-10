@@ -44,6 +44,7 @@
             "searchLectureContentDescription": "Semantische Suche durch Transkripte und Materialien",
             "searchLectureContentHint": "Tippe, um Vorlesungstranskripte und Materialien zu durchsuchen",
             "lectureResultsAriaLabel": "Vorlesungsergebnisse",
+            "lectureSearchError": "Suche fehlgeschlagen. Bitte versuche es erneut.",
             "arrowUpAriaLabel": "Pfeil nach oben",
             "arrowDownAriaLabel": "Pfeil nach unten",
             "pageAbbreviation": "S."

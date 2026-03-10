@@ -21,6 +21,8 @@
         }
     } @else if (!searchQuery().trim()) {
         <span class="d-block text-secondary text-center py-5">{{ 'global.search.searchLectureContentHint' | artemisTranslate }}</span>
+    } @else if (hasError()) {
+        <span class="d-block text-secondary text-center py-5">{{ 'global.search.lectureSearchError' | artemisTranslate }}</span>
     } @else if (lectureResults().length === 0) {
         <span class="d-block text-secondary text-center py-5">{{ 'global.search.noResultsFound' | artemisTranslate }}</span>
     } @else {

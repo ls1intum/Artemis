@@ -249,7 +249,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
             expect(mockSearchService.search).not.toHaveBeenCalled();
         });
 
-        it('should show empty results when the search service errors', () => {
+        it('should show empty results and set hasError when the search service errors', () => {
             mockSearchService.search.mockReturnValue(throwError(() => new Error('Server error')));
 
             pipelineFixture.componentRef.setInput('searchQuery', 'bad query');
@@ -260,6 +260,11 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
             expect((pipelineComponent as any).lectureResults()).toEqual([]);
             expect((pipelineComponent as any).isLoading()).toBe(false);
+            expect((pipelineComponent as any).hasError()).toBe(true);
+
+            const errorMessage = pipelineFixture.nativeElement.querySelector('.d-block.text-secondary.text-center.py-5');
+            expect(errorMessage).toBeTruthy();
+            expect(errorMessage.textContent).not.toContain('noResultsFound');
         });
     });
 });

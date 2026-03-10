@@ -44,6 +44,7 @@
             "searchLectureContentDescription": "Deep semantic search through transcripts and materials",
             "searchLectureContentHint": "Type to search through lecture transcripts and materials",
             "lectureResultsAriaLabel": "Lecture search results",
+            "lectureSearchError": "Search failed. Please try again.",
             "arrowUpAriaLabel": "Up arrow",
             "arrowDownAriaLabel": "Down arrow",
             "pageAbbreviation": "pg."
