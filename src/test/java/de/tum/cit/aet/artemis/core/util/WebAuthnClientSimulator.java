@@ -4,7 +4,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -16,15 +15,12 @@ import java.security.interfaces.ECPrivateKey;
 import java.security.interfaces.ECPublicKey;
 import java.security.spec.ECGenParameterSpec;
 import java.util.Base64;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.cbor.CBORFactory;
 
 /**
  * Simulates WebAuthn client (browser) operations for integration testing.
@@ -71,8 +67,6 @@ public class WebAuthnClientSimulator {
     private static final byte FLAG_ATTESTED_CREDENTIAL_DATA = 0x40;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
-
-    private final ObjectMapper cborMapper = new ObjectMapper(new CBORFactory());
 
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -229,9 +223,7 @@ public class WebAuthnClientSimulator {
      * @return base64url-encoded user ID
      */
     public String encodeUserHandle(Long userId) {
-        ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
-        buffer.putLong(userId);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(buffer.array());
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(userId.toString().getBytes(StandardCharsets.UTF_8));
     }
 
     /**
@@ -334,20 +326,56 @@ public class WebAuthnClientSimulator {
      * CBOR structure:
      * {
      * "fmt": "none",
-     * "authData": <authenticatorData>,
+     * "authData": &lt;authenticatorData&gt;,
      * "attStmt": {}
      * }
      * </p>
-     * Uses Jackson CBOR for encoding since the keys are all strings.
+     * Uses manual CBOR encoding to avoid an external CBOR library dependency.
      */
     private byte[] createAttestationObject(byte[] authenticatorData) throws IOException {
-        // Using LinkedHashMap to preserve key order (important for some implementations)
-        Map<String, Object> attestationObject = new LinkedHashMap<>();
-        attestationObject.put("fmt", "none");
-        attestationObject.put("authData", authenticatorData);
-        attestationObject.put("attStmt", new LinkedHashMap<>()); // Empty map
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        return cborMapper.writeValueAsBytes(attestationObject);
+        // CBOR map with 3 items (major type 5, additional info 3)
+        baos.write(0xA3);
+
+        writeCborTextString(baos, "fmt");
+        writeCborTextString(baos, "none");
+
+        writeCborTextString(baos, "authData");
+        writeCborByteString(baos, authenticatorData);
+
+        writeCborTextString(baos, "attStmt");
+        baos.write(0xA0); // empty map
+
+        return baos.toByteArray();
+    }
+
+    private void writeCborTextString(ByteArrayOutputStream baos, String text) throws IOException {
+        byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length < 24) {
+            baos.write(0x60 | bytes.length); // major type 3 (text string)
+        }
+        else {
+            baos.write(0x78); // major type 3, 1-byte length follows
+            baos.write(bytes.length);
+        }
+        baos.write(bytes);
+    }
+
+    private void writeCborByteString(ByteArrayOutputStream baos, byte[] data) throws IOException {
+        if (data.length < 24) {
+            baos.write(0x40 | data.length); // major type 2 (byte string)
+        }
+        else if (data.length <= 0xFF) {
+            baos.write(0x58); // major type 2, 1-byte length follows
+            baos.write(data.length);
+        }
+        else {
+            baos.write(0x59); // major type 2, 2-byte length follows
+            baos.write((data.length >> 8) & 0xFF);
+            baos.write(data.length & 0xFF);
+        }
+        baos.write(data);
     }
 
     /**
