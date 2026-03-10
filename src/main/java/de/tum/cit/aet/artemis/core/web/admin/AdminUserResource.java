@@ -1,11 +1,13 @@
 package de.tum.cit.aet.artemis.core.web.admin;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.DEFAULT_LANGUAGE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
 import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +26,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -295,12 +298,43 @@ public class AdminUserResource {
         log.debug("REST request to import {} users to Artemis (createInternalUsers: {})", userDtos.size(), createInternalUsers);
         List<StudentDTO> failedStudentsDtos;
         if (createInternalUsers) {
-            failedStudentsDtos = userService.importUsersAsInternalUsers(userDtos);
+            failedStudentsDtos = importUsersAsInternalUsers(userDtos);
         }
         else {
             failedStudentsDtos = userService.importUsers(userDtos);
         }
         return ResponseEntity.ok().body(failedStudentsDtos);
+    }
+
+    /**
+     * Imports users from the given list. For each user, it first tries to find the user in the database or LDAP.
+     * If the user is not found, it creates a new internal user with the provided data.
+     *
+     * @param userDtos the list of users to import, each containing at least a login and optionally a password
+     * @return a list of users that could not be imported due to errors (e.g., missing login)
+     */
+    private List<StudentDTO> importUsersAsInternalUsers(List<StudentDTO> userDtos) {
+        List<StudentDTO> failedUsers = new ArrayList<>();
+        for (var userDto : userDtos) {
+            var optionalStudent = userService.findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
+            if (optionalStudent.isEmpty()) {
+                if (!StringUtils.hasText(userDto.login())) {
+                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
+                    continue;
+                }
+                try {
+                    String normalizedPassword = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
+                    userCreationService.createUser(userDto.login(), normalizedPassword, null, userDto.firstName() != null ? userDto.firstName() : "",
+                            userDto.lastName() != null ? userDto.lastName() : "", userDto.email() != null ? userDto.email() : userDto.login() + "@invalid",
+                            userDto.registrationNumber(), "", DEFAULT_LANGUAGE, true);
+                }
+                catch (Exception ex) {
+                    log.warn("Failed to create internal user with login '{}': {}", userDto.login(), ex.getMessage());
+                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
+                }
+            }
+        }
+        return failedUsers;
     }
 
     /**
