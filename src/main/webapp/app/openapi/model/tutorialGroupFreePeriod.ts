@@ -11,8 +11,8 @@
 
 export interface TutorialGroupFreePeriod { 
     id?: number;
-    start: string;
-    end: string;
+    start?: string;
+    end?: string;
     reason?: string;
 }
 

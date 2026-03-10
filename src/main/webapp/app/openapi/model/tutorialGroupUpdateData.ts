@@ -12,12 +12,12 @@ import { TeachingAssistant } from './teachingAssistant';
 
 
 export interface TutorialGroupUpdateData { 
-    id?: number;
-    title?: string;
+    id: number;
+    title: string;
     teachingAssistant?: TeachingAssistant;
     additionalInformation?: string;
     capacity?: number;
-    isOnline?: boolean;
+    isOnline: boolean;
     language?: string;
     campus?: string;
     tutorialGroupSchedule?: TutorialGroupSchedule;

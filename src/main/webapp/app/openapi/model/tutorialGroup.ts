@@ -12,11 +12,11 @@ import { TeachingAssistant } from './teachingAssistant';
 
 export interface TutorialGroup { 
     id?: number;
-    title?: string;
+    title: string;
     teachingAssistant?: TeachingAssistant;
     additionalInformation?: string;
     capacity?: number;
-    isOnline?: boolean;
+    isOnline: boolean;
     language?: string;
     campus?: string;
 }

@@ -461,6 +461,19 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_withoutTitle_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroup = new java.util.HashMap<>();
+        tutorialGroup.put("isOnline", false);
+        tutorialGroup.put("capacity", 15);
+        tutorialGroup.put("language", Language.ENGLISH.name());
+        tutorialGroup.put("campus", "Garching");
+        tutorialGroup.put("teachingAssistant", Map.of("login", testPrefix + "tutor1"));
+
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
         var existingTitle = tutorialGroupTestRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         // given

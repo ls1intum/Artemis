@@ -10,12 +10,13 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO.TeachingAssistantDTO;
 
 /**
  * DTO for updating tutorial groups. Builds on the create DTO data with schedule information.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupUpdateDataDTO(@NotNull Long id, @NotBlank @Size(max = 19) String title, TutorialGroupDTO.TeachingAssistantDTO teachingAssistant,
+public record TutorialGroupUpdateDataDTO(@NotNull Long id, @NotBlank @Size(max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
         @Nullable String additionalInformation, @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus,
         @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule) {
 
