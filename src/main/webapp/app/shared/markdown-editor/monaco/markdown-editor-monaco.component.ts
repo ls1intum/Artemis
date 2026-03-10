@@ -24,6 +24,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+import { EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
@@ -673,7 +674,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.markdownChange.emit(event.text);
     }
 
-    onSelectionChanged(selection: { isEmpty: boolean } | undefined): void {
+    onSelectionChanged(selection: EditorRange | undefined): void {
         if (!selection.isEmpty === this.showTextStyleActions() && selection.isEmpty === this.showNonTextStyleActions()) {
             return;
         }
