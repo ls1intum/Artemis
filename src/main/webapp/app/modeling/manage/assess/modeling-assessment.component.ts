@@ -183,6 +183,10 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
     generateFeedbackFromAssessment(assessments: Assessment[]): Feedback[] {
         const newElementFeedback = new Map();
         for (const assessment of assessments) {
+            // Apollon stores the GradingInstruction flat on dropInfo (not nested under dropInfo.instruction)
+            // Support both: dropInfo.instruction (expected shape) and dropInfo directly (actual Apollon shape)
+            const dropInfo = assessment.dropInfo as any;
+            const instruction = dropInfo?.instruction ?? (dropInfo?.id ? dropInfo : undefined);
             let feedback = this.elementFeedback.get(assessment.modelElementId);
             if (feedback) {
                 if (feedback.credits !== assessment.score && feedback.gradingInstruction) {
@@ -190,8 +194,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 }
                 feedback.credits = assessment.score;
                 feedback.text = assessment.feedback;
-                if (assessment.dropInfo && (assessment.dropInfo as any).instruction?.id) {
-                    feedback.gradingInstruction = (assessment.dropInfo as any).instruction;
+                if (instruction?.id) {
+                    feedback.gradingInstruction = instruction;
                 }
                 if (feedback.gradingInstruction && assessment.dropInfo == undefined) {
                     feedback.gradingInstruction = undefined;
@@ -383,12 +387,9 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private calculateDropInfo(feedback: Feedback) {
         if (feedback.gradingInstruction) {
-            const dropInfo = <DropInfo>{};
-            dropInfo.instruction = feedback.gradingInstruction;
-            dropInfo.removeMessage = this.artemisTranslatePipe.transform('artemisApp.assessment.messages.removeAssessmentInstructionLink');
-            dropInfo.tooltipMessage = this.artemisTranslatePipe.transform('artemisApp.exercise.assessmentInstruction') + feedback!.gradingInstruction!.instructionDescription;
-            dropInfo.feedbackHint = this.artemisTranslatePipe.transform('artemisApp.assessment.feedbackHint');
-            return dropInfo;
+            // Apollon stores and emits dropInfo as a flat object (the GradingInstruction itself),
+            // not nested under dropInfo.instruction — so we pass the instruction directly as dropInfo.
+            return feedback.gradingInstruction;
         }
 
         return undefined;
