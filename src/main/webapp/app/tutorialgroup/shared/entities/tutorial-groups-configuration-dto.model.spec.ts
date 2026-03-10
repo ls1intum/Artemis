@@ -48,14 +48,14 @@ describe('TutorialGroupConfigurationDTO mapping', () => {
         });
 
         it('shouldMapNestedFreePeriodsWhenEntityContainsFreePeriods', () => {
+            const entity = new TutorialGroupsConfiguration();
             const freePeriod = {
                 id: 1,
                 start: dayjs.utc('2024-01-10T10:00:00Z'),
                 end: dayjs.utc('2024-01-10T12:00:00Z'),
                 reason: 'Holiday',
+                tutorialGroupConfiguration: entity,
             };
-
-            const entity = new TutorialGroupsConfiguration();
             entity.tutorialGroupFreePeriods = [freePeriod as any];
 
             const dto = tutorialGroupConfigurationDtoFromEntity(entity);

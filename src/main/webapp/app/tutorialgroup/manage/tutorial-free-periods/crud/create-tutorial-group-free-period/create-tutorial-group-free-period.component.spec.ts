@@ -10,7 +10,6 @@ import { CreateTutorialGroupFreePeriodComponent } from 'app/tutorialgroup/manage
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import {
-    formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriodDTO,
     tutorialGroupFreePeriodDTOToEntity,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
@@ -77,8 +76,15 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
         sessionForm.formSubmitted.emit(formData);
 
+        const passedDto = createStub.mock.calls[0][2];
         expect(createStub).toHaveBeenCalledOnce();
-        expect(createStub).toHaveBeenCalledWith(course.id!, configurationId, formDataToTutorialGroupFreePeriodDTO(formData, configurationId));
+        expect(createStub.mock.calls[0][0]).toBe(course.id);
+        expect(createStub.mock.calls[0][1]).toBe(configurationId);
+        expect(passedDto).toEqual({
+            startDate: CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(formData.startDate, formData.startTime, undefined).toISOString(),
+            endDate: CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(formData.endDate, formData.endTime, formData.startDate).toISOString(),
+            reason: formData.reason,
+        });
         expect(freePeriodCreatedSpy).toHaveBeenCalledOnce();
         expect(component.dialogVisible()).toBe(false);
     });

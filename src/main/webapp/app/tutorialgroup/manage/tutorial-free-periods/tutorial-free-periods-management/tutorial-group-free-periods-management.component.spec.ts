@@ -103,6 +103,11 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         });
 
         configuration = generateExampleTutorialGroupsConfiguration({});
+
+        firstOfJanuaryPeriod.tutorialGroupConfiguration = configuration;
+        secondOfJanuaryPeriod.tutorialGroupConfiguration = configuration;
+        thirdOfJanuaryPeriod.tutorialGroupConfiguration = configuration;
+
         configuration.tutorialGroupFreePeriods = [firstOfJanuaryPeriod, secondOfJanuaryPeriod, thirdOfJanuaryPeriod];
 
         configurationService = TestBed.inject(TutorialGroupsConfigurationService);
@@ -134,7 +139,9 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     });
 
     it('should load all free periods and sort by start date descending', () => {
-        expect(component.tutorialGroupFreePeriods).toEqual([thirdOfJanuaryPeriod, secondOfJanuaryPeriod, firstOfJanuaryPeriod]);
+        expect(component.tutorialGroupFreePeriods).toHaveLength(3);
+        expect(component.tutorialGroupFreePeriods.map((period) => period.id)).toEqual([3, 2, 1]);
+        expect(component.tutorialGroupFreePeriods.map((period) => period.reason)).toEqual(['Third of January', 'Second of January', 'First of January']);
         expect(findConfigurationSpy).toHaveBeenCalledOnce();
         expect(findConfigurationSpy).toHaveBeenCalledWith(courseId);
     });
