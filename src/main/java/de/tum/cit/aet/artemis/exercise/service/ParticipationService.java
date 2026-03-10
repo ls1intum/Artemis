@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
@@ -48,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Participation.
@@ -136,7 +138,19 @@ public class ParticipationService {
 
         // All other cases, i.e. normal exercises, and regular exam exercises
         else {
-            optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+            if (exercise instanceof QuizExercise) {
+                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+            }
+            else {
+                optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
+            }
+            if (optionalStudentParticipation.isPresent() && optionalStudentParticipation.get().isPracticeMode() && exercise.isCourseExercise()) {
+                // In case there is already a practice participation, set it to inactive
+                optionalStudentParticipation.get().setInitializationState(InitializationState.INACTIVE);
+                studentParticipationRepository.saveAndFlush(optionalStudentParticipation.get());
+
+                optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+            }
             // Check if participation already exists
             if (optionalStudentParticipation.isEmpty()) {
                 participation = createNewParticipation(exercise, participant);
@@ -277,7 +291,7 @@ public class ParticipationService {
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
         if (exercise instanceof FileUploadExercise) {
-            throw new IllegalStateException("File upload exercises do not support practice mode at the moment.");
+            throw new IllegalStateException("File upload exercises do not support practice mode.");
         }
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
@@ -321,8 +335,9 @@ public class ParticipationService {
             if (participation.getInitializationDate() == null) {
                 participation.setInitializationDate(ZonedDateTime.now());
             }
-            // Initialize a submission for text and modeling exercises
-            if (!(exercise instanceof QuizExercise) && !submissionRepository.existsByParticipationId(participation.getId())) {
+
+            boolean isTextOrModelingExercise = exercise instanceof TextExercise || exercise instanceof ModelingExercise;
+            if (isTextOrModelingExercise && !submissionRepository.existsByParticipationId(participation.getId())) {
                 submissionRepository.initializeSubmission(participation, exercise, null);
             }
         }

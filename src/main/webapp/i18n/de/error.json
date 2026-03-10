@@ -118,12 +118,20 @@
             "participationInPracticeMode": "Das Abgabedatum der Übung ist bereits abgelaufen, eine reguläre Teilnahme an der Übung ist nicht mehr möglich. Du kannst den Übungsmodus verwenden, um die Übung zu lösen.",
             "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt den Übungsmodus nicht.",
             "notAvailableInExam": "Der Übungsmodus ist für Klausuraufgaben nicht verfügbar.",
-            "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen noch nicht unterstützt.",
-            "programmingExercisesDisabled": "Der Übungsmodus für Programmieraufgaben ist derzeit nicht verfügbar.",
+            "notSupportedForTeams": "Der Übungsmodus wird für Teamübungen nicht unterstützt.",
+            "programmingExercisesDisabled": "Der Übungsmodus für Programmieraufgaben ist deaktiviert.",
             "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
-            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben ist derzeit nicht verfügbar.",
+            "athenaProfileRequired": "Der Übungsmodus für Text- und Modellierungsaufgaben ist nicht verfügbar.",
             "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv.",
             "feedbackRequestAfterDueDate": "Die Abgabefrist ist abgelaufen. Starte eine Übungsteilnahme, um nach der Frist Feedback anzufordern."
+        },
+        "feedbackRequest": {
+            "notAvailableInExam": "Feedback-Anfragen sind für Klausuraufgaben nicht verfügbar.",
+            "unsupportedExerciseType": "Dieser Aufgabentyp unterstützt keine Feedback-Anfragen.",
+            "programmingExercisesDisabled": "Feedback-Anfragen für Programmieraufgaben sind deaktiviert.",
+            "programmingExercisesDisabled_detail": "Die Funktion für Programmieraufgaben ist deaktiviert.",
+            "athenaProfileRequired": "Feedback-Anfragen für Text- und Modellierungsaufgaben sind nicht verfügbar.",
+            "athenaProfileRequired_detail": "Das Athena-Profil ist nicht aktiv."
         },
         "teamExercise": {
             "cannotStart": "Teamübung kann nicht ohne zugewiesenes Team gestartet werden."

@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
@@ -30,6 +29,8 @@ import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
+import de.tum.cit.aet.artemis.core.exception.NotImplementedAlertException;
+import de.tum.cit.aet.artemis.core.exception.ServiceUnavailableAlertException;
 import de.tum.cit.aet.artemis.core.exception.VersionControlException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -54,20 +55,16 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDateService;
+import de.tum.cit.aet.artemis.exercise.service.FeedbackRequestService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.modeling.api.ModelingFeedbackApi;
-import de.tum.cit.aet.artemis.modeling.config.ModelingApiNotPresentException;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseCodeReviewFeedbackService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
-import de.tum.cit.aet.artemis.text.api.TextFeedbackApi;
-import de.tum.cit.aet.artemis.text.config.TextApiNotPresentException;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -91,13 +88,7 @@ public class ParticipationResource {
 
     private final ExerciseDateService exerciseDateService;
 
-    private final ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService;
-
-    private final Optional<ModelingFeedbackApi> modelingFeedbackApi;
-
     private final ParticipationAuthorizationService participationAuthorizationService;
-
-    private final Optional<TextFeedbackApi> textFeedbackApi;
 
     private final Optional<StudentExamApi> studentExamApi;
 
@@ -117,13 +108,13 @@ public class ParticipationResource {
 
     private final ProfileService profileService;
 
+    private final FeedbackRequestService feedbackRequestService;
+
     public ParticipationResource(ParticipationService participationService, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             AuthorizationCheckService authCheckService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository, TeamRepository teamRepository,
             FeatureToggleService featureToggleService, ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService,
-            ProgrammingExerciseCodeReviewFeedbackService programmingExerciseCodeReviewFeedbackService, Optional<TextFeedbackApi> textFeedbackApi,
-            Optional<ModelingFeedbackApi> modelingFeedbackApi, ParticipationAuthorizationService participationAuthorizationService, Optional<StudentExamApi> studentExamApi,
-            ProfileService profileService) {
+            SubmissionRepository submissionRepository, ExerciseDateService exerciseDateService, ParticipationAuthorizationService participationAuthorizationService,
+            Optional<StudentExamApi> studentExamApi, ProfileService profileService, FeedbackRequestService feedbackRequestService) {
         this.participationService = participationService;
         this.exerciseRepository = exerciseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -135,12 +126,10 @@ public class ParticipationResource {
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseDateService = exerciseDateService;
-        this.programmingExerciseCodeReviewFeedbackService = programmingExerciseCodeReviewFeedbackService;
-        this.textFeedbackApi = textFeedbackApi;
-        this.modelingFeedbackApi = modelingFeedbackApi;
         this.participationAuthorizationService = participationAuthorizationService;
         this.studentExamApi = studentExamApi;
         this.profileService = profileService;
+        this.feedbackRequestService = feedbackRequestService;
     }
 
     /**
@@ -212,16 +201,17 @@ public class ParticipationResource {
             throw new BadRequestAlertException("The practice mode cannot be used in an exam", ENTITY_NAME, "dueDateOver.notAvailableInExam");
         }
         if (exercise instanceof FileUploadExercise) {
-            throw new BadRequestAlertException("Unsupported exercise type", "participation", "dueDateOver.unsupportedExerciseType");
+            throw new NotImplementedAlertException("Unsupported exercise type", "participation", "dueDateOver.unsupportedExerciseType");
         }
         if (exercise.isTeamMode()) {
-            throw new BadRequestAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "dueDateOver.notSupportedForTeams");
+            throw new NotImplementedAlertException("The practice mode is not yet supported for team exercises", ENTITY_NAME, "dueDateOver.notSupportedForTeams");
         }
         if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
-            throw new AccessForbiddenAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
+            throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "dueDateOver.programmingExercisesDisabled");
         }
         if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !profileService.isProfileActive(PROFILE_ATHENA)) {
-            throw new AccessForbiddenAlertException("Practice mode for text and modeling exercises requires the Athena profile", ENTITY_NAME, "dueDateOver.athenaProfileRequired");
+            throw new ServiceUnavailableAlertException("Practice mode for text and modeling exercises requires the Athena profile", ENTITY_NAME,
+                    "dueDateOver.athenaProfileRequired");
         }
         if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
                 || (optionalGradedStudentParticipation.isPresent() && exerciseDateService.isBeforeDueDate(optionalGradedStudentParticipation.get()))) {
@@ -285,70 +275,38 @@ public class ParticipationResource {
      * PUT exercises/:exerciseId/request-feedback: Requests feedback for the latest participation
      *
      * @param exerciseId of the exercise for which to resume participation
-     * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK)
      */
-    @PutMapping("exercises/{exerciseId}/request-feedback")
+    @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
-    public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
-        log.debug("REST request for feedback request: {}", exerciseId);
-
+    public ResponseEntity<StudentParticipation> requestFeedback(@PathVariable Long exerciseId, @PathVariable Long participationId) {
+        log.debug("REST request to request feedback for exercise {} and participation {}", exerciseId, participationId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
+        participationAuthorizationService.checkAccessPermissionOwner(participation, user);
+
+        if (exercise.isExamExercise()) {
+            throw new BadRequestAlertException("Not intended for the use in exams", ENTITY_NAME, "feedbackRequest.notAvailableInExam");
+        }
 
         if (exercise instanceof QuizExercise || exercise instanceof FileUploadExercise) {
-            throw new BadRequestAlertException("Unsupported exercise type", "participation", "dueDateOver.unsupportedExerciseType");
+            throw new BadRequestAlertException("Unsupported exercise type", ENTITY_NAME, "feedbackRequest.unsupportedExerciseType");
         }
 
-        return handleExerciseFeedbackRequest(exercise, principal);
-    }
+        if (exercise instanceof ProgrammingExercise && !featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises)) {
+            throw new ServiceUnavailableAlertException("The feature for programming exercises is disabled", ENTITY_NAME, "feedbackRequest.programmingExercisesDisabled");
+        }
 
-    private ResponseEntity<StudentParticipation> handleExerciseFeedbackRequest(Exercise exercise, Principal principal) {
-        // Validate exercise and timing
-        if (exercise.isExamExercise()) {
-            throw new BadRequestAlertException("Not intended for the use in exams", "participation", "preconditions not met");
+        if ((exercise instanceof TextExercise || exercise instanceof ModelingExercise) && !profileService.isProfileActive(PROFILE_ATHENA)) {
+            throw new ServiceUnavailableAlertException("Feedback requests for text and modeling exercises require the Athena profile", ENTITY_NAME,
+                    "feedbackRequest.athenaProfileRequired");
         }
-        // Determine the effective due date by considering the graded participation's individual due date
-        var optionalGradedParticipation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, principal.getName());
-        ZonedDateTime effectiveDueDate = exercise.getDueDate();
-        if (optionalGradedParticipation.isPresent() && optionalGradedParticipation.get().getIndividualDueDate() != null) {
-            effectiveDueDate = optionalGradedParticipation.get().getIndividualDueDate();
-        }
-        ZonedDateTime currentTime = now();
 
-        // Allow feedback requests after due date if the student is in practice mode
-        Optional<StudentParticipation> optionalPracticeParticipation = Optional.empty();
-        if (effectiveDueDate != null && currentTime.isAfter(effectiveDueDate)) {
-            // Practice mode is not supported for team exercises, so only check for practice participation in individual mode
-            if (!exercise.isTeamMode()) {
-                optionalPracticeParticipation = studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), principal.getName(),
-                        true);
-            }
-            if (exercise.isTeamMode() || optionalPracticeParticipation.isEmpty()) {
-                throw new BadRequestAlertException("The due date is over", "participation", "dueDateOver.feedbackRequestAfterDueDate", true);
-            }
-        }
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
 
-        // Get and validate participation
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        // Use practice participation after due date, graded participation before; team exercises never have practice participations
-        boolean isPastDueDate = !exercise.isTeamMode() && effectiveDueDate != null && currentTime.isAfter(effectiveDueDate);
-        StudentParticipation participation;
-        if (isPastDueDate) {
-            // Past due date only applies to non-team exercises; reuse the already-fetched practice participation
-            participation = optionalPracticeParticipation.orElseThrow(() -> new BadRequestAlertException("Submission not found", "participation", "noSubmissionExists", true));
-        }
-        else {
-            // Graded participation: supports both individual and team-mode exercises
-            participation = participationService.findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(exercise, principal.getName());
-        }
-
-        participationAuthorizationService.checkAccessPermissionOwner(participation, user);
-        participation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
-
-        // Check submission requirements
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
             boolean hasSubmittedOnce = submissionRepository.findAllByParticipationId(participation.getId()).stream().anyMatch(Submission::isSubmitted);
             if (!hasSubmittedOnce) {
@@ -361,30 +319,14 @@ public class ParticipationResource {
             }
         }
 
-        // Check if feedback has already been requested
         var latestResult = participation.findLatestResult();
-        if (latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate() != null
-                && latestResult.getCompletionDate().isAfter(currentTime)) {
+        boolean hasFeedbackBeenRequested = latestResult != null && latestResult.getAssessmentType() == AssessmentType.AUTOMATIC_ATHENA && latestResult.getCompletionDate() != null
+                && latestResult.getCompletionDate().isAfter(now());
+        if (hasFeedbackBeenRequested) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "feedbackRequestAlreadySent", true);
         }
 
-        // Process feedback request
-        StudentParticipation updatedParticipation = null;
-        switch (exercise) {
-            case TextExercise textExercise -> {
-                TextFeedbackApi api = textFeedbackApi.orElseThrow(() -> new TextApiNotPresentException(TextFeedbackApi.class));
-                updatedParticipation = api.handleNonGradedFeedbackRequest(participation, textExercise);
-            }
-            case ModelingExercise modelingExercise -> {
-                ModelingFeedbackApi api = modelingFeedbackApi.orElseThrow(() -> new ModelingApiNotPresentException(ModelingFeedbackApi.class));
-                updatedParticipation = api.handleNonGradedFeedbackRequest(participation, modelingExercise);
-            }
-            case ProgrammingExercise programmingExercise -> updatedParticipation = programmingExerciseCodeReviewFeedbackService.handleNonGradedFeedbackRequest(exercise.getId(),
-                    (ProgrammingExerciseStudentParticipation) participation, programmingExercise);
-            default -> {
-            }
-        }
-
+        StudentParticipation updatedParticipation = feedbackRequestService.processFeedbackRequest(exercise, participation);
         return ResponseEntity.ok().body(updatedParticipation);
     }
 
