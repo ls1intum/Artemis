@@ -564,7 +564,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
             this.showTextStyleActions.set(false);
         }
 
-        // Set up selection change listener for inline comments/refinement
+        // Set up selection change listener for inline comments/refinement and hiding/showing actions in communication mode
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
             if (this.isInCommunication()) {
                 this.updateEditorActionsVisibility(selection);
