@@ -9,7 +9,17 @@
  */
 
 
-export interface CodeGenerationJobStartDTO { 
-    jobId: string;
+/**
+ * One generated answer option
+ */
+export interface GeneratedQuizAnswerOption { 
+    /**
+     * Answer option text
+     */
+    text: string;
+    /**
+     * Whether this option is correct
+     */
+    correct?: boolean;
 }
 
