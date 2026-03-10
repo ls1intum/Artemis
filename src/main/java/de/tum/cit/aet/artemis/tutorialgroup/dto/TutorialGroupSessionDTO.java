@@ -14,7 +14,6 @@ import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
@@ -28,8 +27,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, TutorialGroupSessionStatus status,
         @Size(min = 1, max = 256) String statusExplanation, @NotNull @Size(max = 2000) String location, @Max(3000) Integer attendanceCount, TutorialGroupScheduleDTO schedule,
         TutorialGroupFreePeriodDTO freePeriod) {
-
-    private static final String ENTITY_NAME = "tutorialGroupSession";
 
     /**
      * DTO representing the tutorial group schedule a session originates from.
@@ -92,7 +89,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
         Objects.requireNonNull(session, "Tutorial group session must be set");
         Objects.requireNonNull(courseZone, "Course time zone must be set");
         if (session.getStart().isAfter(session.getEnd())) {
-            throw new BadRequestAlertException("The session start date must be before the end date.", ENTITY_NAME, "startDateAfterEndDate");
+            throw new IllegalStateException("The session start date must be before the end date.");
         }
         LocalDateTime start = session.getStart().withZoneSameInstant(courseZone).toLocalDateTime();
         LocalDateTime end = session.getEnd().withZoneSameInstant(courseZone).toLocalDateTime();

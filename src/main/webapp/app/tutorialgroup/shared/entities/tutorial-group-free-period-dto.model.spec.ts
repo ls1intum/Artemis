@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import dayjs from 'dayjs/esm';
 import * as dateUtils from 'app/shared/util/date.utils';
 
@@ -23,7 +23,7 @@ describe('TutorialGroupFreePeriodDTO', () => {
                 start: dayjs.utc('2024-01-10T10:00:00Z'),
                 end: dayjs.utc('2024-01-10T12:00:00Z'),
                 reason: 'Holiday',
-                tutorialGroupConfiguration: { id: 1 } as TutorialGroupsConfiguration,
+                tutorialGroupsConfiguration: { id: 1 } as TutorialGroupsConfiguration,
             };
 
             const dto = entityToTutorialGroupFreePeriodDTO(entity)!;
