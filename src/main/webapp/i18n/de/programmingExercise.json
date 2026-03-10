@@ -12,6 +12,12 @@
                 "switchToAdvancedMode": "Zum erweiterten Modus wechseln",
                 "advancedModeTooltip": "Der erweiterte Modus bietet erweiterte Konfigurationsmöglichkeiten."
             },
+            "problemStatementGlobalRefinementRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
+            "problemStatementGenerationRequest": {
+                "userPrompt": "Eingabeaufforderung"
+            },
             "created": "Programmieraufgabe erstellt mit Titel {{ param }}",
             "updated": "Programmieraufgabe aktualisiert mit Titel {{ param }}",
             "deleted": "Programmieraufgabe gelöscht mit Titel {{ param }}",
@@ -240,16 +246,49 @@
                 "testCaseCommand": "Testfall einfügen",
                 "tasksOfExercise": "Teilaufgaben:",
                 "generationAssistance": "Entwurf der Problemstellung erstellen",
+                "refinementAssistance": "Problemstellung verfeinern",
                 "generateDraftDescription": "Verwende dieses Feld, um die Aufgabenbeschreibung zu entwerfen oder die aktuelle Formulierung zu verfeinern. Deine Eingaben steuern sowohl die Problemstellung als auch die Lernziele. Sei konkret zu Anforderungen, Konzepten und Randbedingungen.",
                 "yourRequirements": "Deine Anforderungen",
                 "examplePlaceholder": "Beispiel: Erstelle eine Java-Übung zur Implementierung eines binären Suchbaums mit Insert-, Delete- und Search-Operationen. Studierende sollen Verständnis für Baumtraversal und rekursive Algorithmen demonstrieren.",
                 "generationSuccess": "Aufgabenstellung wurde erfolgreich generiert.",
-                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut."
+                "generationError": "Fehler beim Generieren der Aufgabenstellung. Bitte versuche es erneut.",
+                "refinementSuccess": "Aufgabenstellung wurde erfolgreich verfeinert.",
+                "refinementError": "Fehler beim Verfeinern der Aufgabenstellung. Bitte versuche es erneut.",
+                "cannotRefineEmpty": "Eine leere Aufgabenstellung kann nicht verfeinert werden. Bitte f\u00fcge zuerst Inhalt hinzu.",
+                "problemStatementTooLong": "Die Aufgabenstellung ist zu lang zum Verfeinern. Bitte kürze den Inhalt und versuche es erneut.",
+                "reviewChanges": "KI-Vorschläge prüfen",
+                "reviewChangesDescription": "Die KI hat die unten gezeigten Änderungen vorgeschlagen. Grün markierte Zeilen werden hinzugefügt; rot markierte Zeilen werden entfernt.",
+                "revertAll": "Alle verwerfen",
+                "revertAllTooltip": "Alle KI-Vorschläge ablehnen und die ursprüngliche Aufgabenstellung wiederherstellen.",
+                "doneReviewing": "Übernehmen & Speichern",
+                "doneReviewingTooltip": "Alle KI-Vorschläge annehmen und auf die Aufgabenstellung anwenden.",
+                "diffView": {
+                    "originalLabel": "Dein Original",
+                    "suggestionLabel": "KI-Vorschlag",
+                    "unifiedHint": "→ rot markiert wird entfernt, grün markiert wird hinzugefügt →"
+                },
+                "aiRefining": "KI aktualisiert die Aufgabenstellung...",
+                "generate": "Generieren",
+                "refine": "Verfeinern",
+                "inlineRefinement": {
+                    "placeholder": "Beschreibe, was geändert werden soll...",
+                    "triggerButton": "Auswahl verfeinern",
+                    "submitTooltip": "Verfeinerungsanweisung absenden",
+                    "success": "Ausgewählter Abschnitt wurde erfolgreich verfeinert.",
+                    "error": "Fehler beim Verfeinern des ausgewählten Abschnitts. Bitte versuche es erneut.",
+                    "emptyStatementError": "Eine leere Aufgabenstellung kann nicht verfeinert werden.",
+                    "close": "Schließen",
+                    "instructionTooLong": "Die Verfeinerungsanweisung ist zu lang. Bitte kürze sie und versuche es erneut."
+                },
+                "diffLineStatTooltip": "Zeilen, die durch die KI-Verfeinerung hinzugefügt und entfernt wurden."
             },
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
+                "generateWithAi": "Mit KI generieren",
                 "generating": "Generiere...",
+                "runningTitle": "Code-Generierung läuft",
+                "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
                 "description": "Generiere Lösung, Template und Test-Code mit KI",
                 "tooltip": "KI Code-Generierung - Generiere Lösung, Template und Test-Code",
                 "confirmTitle": "Code-Generierung bestätigen",
@@ -781,6 +820,35 @@
                 "error": {
                     "export": "Kann Aufgabe nicht exportieren: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Checkliste für Lehrende",
+                "analyze": "Problemstellung analysieren",
+                "analyzing": "Analysiere...",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen zu suchen.",
+                "quality": {
+                    "title": "Qualitätsprobleme",
+                    "empty": "Keine Qualitätsprobleme gefunden.",
+                    "fix": "Beheben",
+                    "suggestedFix": "Vorgeschlagene Lösung:",
+                    "fixAll": "Alle Probleme beheben",
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "fixSelected": "Ausgewählte beheben",
+                    "discardIssue": "Dieses Problem verwerfen",
+                    "discarded": "Problem verworfen.",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discardedMultiple": "Ausgewählte Probleme verworfen.",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
+                },
+                "actions": {
+                    "success": "Problemstellung erfolgreich aktualisiert.",
+                    "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
+                    "noChanges": "Keine Änderungen für diese Aktion nötig."
+                },
+                "outdated": "Veraltet",
+                "reanalyze": "Erneut analysieren"
             }
         },
         "error": {

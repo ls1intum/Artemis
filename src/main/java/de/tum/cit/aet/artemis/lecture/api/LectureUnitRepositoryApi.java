@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.lecture.api;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -61,6 +62,10 @@ public class LectureUnitRepositoryApi extends AbstractLectureApi {
 
     public LectureUnit findByIdElseThrow(long lectureUnitId) {
         return lectureUnitRepository.findByIdElseThrow(lectureUnitId);
+    }
+
+    public List<LectureUnit> findAllByIdsWithLecture(Collection<Long> ids) {
+        return lectureUnitRepository.findAllByIdsWithLecture(ids);
     }
 
     public LectureUnit save(LectureUnit lectureUnit) {

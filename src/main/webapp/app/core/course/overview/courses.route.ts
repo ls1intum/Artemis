@@ -10,6 +10,7 @@ import { LectureGuard } from 'app/lecture/shared/lecture-guard.service';
 
 export enum CourseOverviewRoutePath {
     DASHBOARD = 'dashboard',
+    IRIS = 'iris',
     EXERCISES = 'exercises',
     EXAMS = 'exams',
     COMPETENCIES = 'competencies',
@@ -228,6 +229,18 @@ export const courseRoutes: Routes = [
                 data: {
                     authorities: IS_AT_LEAST_STUDENT,
                     pageTitle: 'overview.dashboard',
+                    hasSidebar: true,
+                },
+                canActivate: [UserRouteAccessService, CourseOverviewGuard],
+            },
+            {
+                path: CourseOverviewRoutePath.IRIS,
+                pathMatch: 'full',
+                loadComponent: () => import('app/iris/overview/course-iris/course-iris.component').then((m) => m.CourseIrisComponent),
+                data: {
+                    authorities: IS_AT_LEAST_STUDENT,
+                    pageTitle: 'overview.iris',
+                    hasSidebar: true,
                 },
                 canActivate: [UserRouteAccessService, CourseOverviewGuard],
             },

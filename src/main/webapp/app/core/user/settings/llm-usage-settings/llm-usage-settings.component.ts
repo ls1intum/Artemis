@@ -4,7 +4,7 @@ import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { LLMSelectionDecision } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 
 @Component({
@@ -25,25 +25,10 @@ export class LlmUsageSettingsComponent implements OnInit {
     }
 
     async openSelectionModal(): Promise<void> {
-        const choice = await this.llmModalService.open();
+        const choice = await this.llmModalService.open(this.currentLLMSelectionDecision());
 
-        if (choice) {
-            // Map the Choice to the Enum
-            let decision: LLMSelectionDecision;
-            switch (choice) {
-                case 'cloud':
-                    decision = LLMSelectionDecision.CLOUD_AI;
-                    this.updateLLMSelectionDecision(decision);
-                    break;
-                case 'local':
-                    decision = LLMSelectionDecision.LOCAL_AI;
-                    this.updateLLMSelectionDecision(decision);
-                    break;
-                case 'no_ai':
-                    decision = LLMSelectionDecision.NO_AI;
-                    this.updateLLMSelectionDecision(decision);
-                    break;
-            }
+        if (choice && choice !== LLM_MODAL_DISMISSED) {
+            this.updateLLMSelectionDecision(choice);
         }
     }
 

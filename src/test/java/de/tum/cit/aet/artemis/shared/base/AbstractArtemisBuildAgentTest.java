@@ -111,9 +111,18 @@ public abstract class AbstractArtemisBuildAgentTest {
         doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
         dockerClient = dockerClientMock;
 
+        // Mark Docker as available for tests. This must be set via spy (doReturn) rather than
+        // setDockerAvailable() because openBuildAgentServices() — called both here and during
+        // resume in integration tests — probes the real Docker daemon which is not available in CI.
+        // Using doReturn ensures the spy always returns true regardless of probe results.
+        doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
+
         // Ensure build executor is initialized before each test to prevent flaky tests
-        // caused by previous tests calling closeBuildAgentServices() (e.g., during pause/resume)
+        // caused by previous tests calling closeBuildAgentServices() (e.g., during pause/resume).
         buildAgentConfiguration.openBuildAgentServices();
+
+        // Re-apply the mock Docker client after openBuildAgentServices() creates a new real one
+        doReturn(dockerClientMock).when(buildAgentConfiguration).getDockerClient();
     }
 
     protected void mockBuildJobGitService() {

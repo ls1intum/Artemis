@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import '@angular/localize/init';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LearningPathsTableComponent } from 'app/atlas/manage/learning-paths-table/learning-paths-table.component';
@@ -12,14 +13,18 @@ import { LearningPathInformationDTO } from 'app/atlas/shared/entities/learning-p
 import { SearchResult, SearchTermPageableSearch } from 'app/shared/table/pageable-table';
 import { By } from '@angular/platform-browser';
 import { ScienceService } from 'app/shared/science/science.service';
-import { MockProvider } from 'ng-mocks';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { NgbHighlight, NgbPagination, NgbPaginationModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LearningPathsTableComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: LearningPathsTableComponent;
     let fixture: ComponentFixture<LearningPathsTableComponent>;
     let learningPathApiService: LearningPathApiService;
     let alertService: AlertService;
-    let getLearningPathInformationSpy: jest.SpyInstance;
+    let getLearningPathInformationSpy: ReturnType<typeof vi.spyOn>;
 
     const courseId = 1;
 
@@ -49,12 +54,17 @@ describe('LearningPathsTableComponent', () => {
                 { provide: AlertService, useClass: MockAlertService },
                 MockProvider(ScienceService),
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(LearningPathsTableComponent, {
+                remove: { imports: [NgbPaginationModule, NgbTypeaheadModule, FontAwesomeModule] },
+                add: { imports: [MockComponent(NgbPagination), MockComponent(NgbHighlight), MockComponent(FaIconComponent)] },
+            })
+            .compileComponents();
 
         learningPathApiService = TestBed.inject(LearningPathApiService);
         alertService = TestBed.inject(AlertService);
 
-        getLearningPathInformationSpy = jest.spyOn(learningPathApiService, 'getLearningPathInformation').mockResolvedValue(searchResults);
+        getLearningPathInformationSpy = vi.spyOn(learningPathApiService, 'getLearningPathInformation').mockResolvedValue(searchResults);
 
         fixture = TestBed.createComponent(LearningPathsTableComponent);
         component = fixture.componentInstance;
@@ -62,7 +72,7 @@ describe('LearningPathsTableComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load learning paths', async () => {
@@ -81,7 +91,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should open competency graph modal', async () => {
         const learningPathId = 1;
-        const openCompetencyGraphSpy = jest.spyOn(component, 'openCompetencyGraph');
+        const openCompetencyGraphSpy = vi.spyOn(component, 'openCompetencyGraph');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -93,8 +103,8 @@ describe('LearningPathsTableComponent', () => {
     });
 
     it('should change page', async () => {
-        const onPageChangeSpy = jest.spyOn(component, 'setPage');
-        const getAverageProgressSpy = jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue({ averageProgress: 42, courseId: 1, totalStudents: 5 });
+        const onPageChangeSpy = vi.spyOn(component, 'setPage');
+        const getAverageProgressSpy = vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue({ averageProgress: 42, courseId: 1, totalStudents: 5 });
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -124,7 +134,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should show error message when loading learning paths fails', async () => {
         getLearningPathInformationSpy.mockRejectedValue(new Error('Error loading learning paths'));
-        const alertServiceErrorSpy = jest.spyOn(alertService, 'addAlert');
+        const alertServiceErrorSpy = vi.spyOn(alertService, 'addAlert');
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -134,7 +144,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should format average progress to 2 decimal places', async () => {
         const mockAverageProgress = { averageProgress: 42.567, courseId: 1, totalStudents: 5 };
-        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+        vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -145,7 +155,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should handle undefined average progress in formatted property', async () => {
         const error = new Error('Error loading average progress');
-        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
+        vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockRejectedValue(error);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -156,7 +166,7 @@ describe('LearningPathsTableComponent', () => {
 
     it('should format whole numbers with 2 decimal places', async () => {
         const mockAverageProgress = { averageProgress: 50.0, courseId: 1, totalStudents: 5 };
-        jest.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
+        vi.spyOn(learningPathApiService, 'getAverageProgressForCourse').mockResolvedValue(mockAverageProgress);
 
         fixture.detectChanges();
         await fixture.whenStable();
@@ -165,7 +175,7 @@ describe('LearningPathsTableComponent', () => {
     });
 
     it('should set isLoading correctly', async () => {
-        const isLoadingSpy = jest.spyOn(component.isLoading, 'set');
+        const isLoadingSpy = vi.spyOn(component.isLoading, 'set');
 
         fixture.detectChanges();
         await fixture.whenStable();

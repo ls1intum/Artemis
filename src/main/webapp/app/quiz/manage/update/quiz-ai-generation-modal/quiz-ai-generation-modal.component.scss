@@ -1,0 +1,164 @@
+.quiz-ai-generation-modal .quiz-ai-generation-layout {
+    display: grid;
+    grid-template-columns: minmax(18rem, 23rem) 1fr;
+    gap: 1rem;
+    min-height: 33rem;
+}
+
+.quiz-ai-generation-modal .quiz-ai-generation-configuration {
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    background: var(--surface-card);
+    padding: 1rem;
+    max-height: 62vh;
+    overflow-y: auto;
+}
+
+.quiz-ai-generation-modal .quiz-ai-generation-preview {
+    border: 1px solid var(--surface-border);
+    border-radius: 0.75rem;
+    background: var(--surface-card);
+    padding: 1rem;
+    max-height: 62vh;
+    overflow-y: auto;
+}
+
+.quiz-ai-generation-modal .section-title {
+    color: var(--text-color);
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+}
+
+.quiz-ai-generation-modal .field-group {
+    margin-bottom: 1rem;
+}
+
+.quiz-ai-generation-modal .field-label {
+    display: inline-block;
+    color: var(--text-color);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.quiz-ai-generation-modal .label-with-help {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.quiz-ai-generation-modal .selection-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.quiz-ai-generation-modal .selection-button {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.35rem;
+    min-width: 8.5rem;
+}
+
+.quiz-ai-generation-modal .selection-button-active {
+    box-shadow: inset 0 0 0 1px var(--primary-color);
+}
+
+.quiz-ai-generation-modal .selection-button.p-button {
+    background: var(--bs-body-bg) !important;
+    border: 1px solid var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.quiz-ai-generation-modal .selection-button.selection-button-active.p-button {
+    background: var(--bs-body-bg) !important;
+    border: 1px solid var(--bs-primary) !important;
+    color: var(--bs-body-color) !important;
+    box-shadow: inset 0 0 0 1px var(--bs-primary) !important;
+}
+
+.quiz-ai-generation-modal .selection-button.p-button .p-button-label,
+.quiz-ai-generation-modal .selection-button.p-button span {
+    color: inherit !important;
+}
+
+.quiz-ai-generation-modal .selection-button.p-button:hover {
+    background: var(--bs-body-bg) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.quiz-ai-generation-modal .selection-button.selection-button-active.p-button:hover {
+    background: var(--bs-body-bg) !important;
+    border-color: var(--bs-primary) !important;
+    color: var(--bs-body-color) !important;
+}
+
+.quiz-ai-generation-modal .difficulty-field {
+    margin-top: 1.2rem;
+}
+
+.quiz-ai-generation-modal .difficulty-labels {
+    color: var(--text-color-secondary);
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-top: 0.5rem;
+}
+
+.quiz-ai-generation-modal .generate-button .p-button-label {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.quiz-ai-generation-modal .generate-loading-label {
+    align-items: center;
+    display: inline-flex;
+    justify-content: center;
+    min-height: 1.25rem;
+}
+
+.quiz-ai-generation-modal .loading-dots {
+    display: inline-block;
+    text-align: left;
+    width: 1.8rem;
+}
+
+.quiz-ai-generation-modal .preview-header {
+    align-items: center;
+    border-bottom: 1px solid var(--surface-border);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+}
+
+.quiz-ai-generation-modal .preview-count {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.quiz-ai-generation-modal .preview-empty {
+    border: 1px dashed var(--surface-border);
+    border-radius: 0.75rem;
+    color: var(--text-color-secondary);
+    padding: 1.25rem;
+}
+
+.quiz-ai-generation-modal .question-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+@media (max-width: 992px) {
+    .quiz-ai-generation-modal .quiz-ai-generation-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+.quiz-ai-generation-tooltip {
+    z-index: 2000 !important;
+}

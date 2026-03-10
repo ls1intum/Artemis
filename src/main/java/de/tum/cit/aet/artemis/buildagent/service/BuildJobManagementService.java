@@ -360,9 +360,8 @@ public class BuildJobManagementService {
                 return future.get(buildJobTimeoutSeconds, TimeUnit.SECONDS);
             }
             catch (Exception ex) {
-                Throwable cause = ex.getCause();
-                if (cause != null && DockerUtil.isDockerNotAvailable(cause)) {
-                    log.error("Cannot connect to Docker Host. Make sure Docker is running and configured properly! {}", cause.getMessage());
+                if (DockerUtil.isDockerNotAvailable(ex)) {
+                    log.warn("Docker is not available. Build job {} cannot be executed.", buildJobItem.id());
                     throw new CompletionException(ex);
                 }
                 // RejectedExecutionException is thrown if the queue size limit (defined in "artemis.continuous-integration.queue-size-limit") is reached.

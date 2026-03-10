@@ -100,18 +100,18 @@ jobs:
           TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
 
           echo "Executing tests for modules: $CHANGED_MODULES"
-          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" | tee tests.log
+          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" 2>&1 | tee tests.log
           exit 0
         fi
 
         echo "Executing all tests"
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification 2>&1 | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification 2>&1 | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v6
@@ -120,7 +120,33 @@ jobs:
         path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
-      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
+      # DataExportResourceIntegrationTest has a parameterized test with a FAILED enum and needs to be excluded, as it is not an actual test failure
+      run: |
+        FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || true)
+        if [ -n "$FAILED_TESTS" ]; then
+          echo "$FAILED_TESTS"
+          exit 1
+        else
+          echo "No failed tests."
+        fi
+    - name: Print JaCoCo coverage violations
+      if: failure()
+      run: |
+        VIOLATIONS=$(grep "Rule violated for bundle" tests.log || true)
+        if [ -n "$VIOLATIONS" ]; then
+          # Extract failing module names from Gradle task failure messages
+          MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' tests.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+          echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
+          echo ""
+          echo "$VIOLATIONS"
+          echo ""
+          if [ -n "$MODULES" ]; then
+            echo "If this is not related to your PR, adjust the thresholds for module(s) [$MODULES] in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          else
+            echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
+          fi
+          exit 1
+        fi
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:

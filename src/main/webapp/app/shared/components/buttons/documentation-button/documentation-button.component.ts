@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { faCircleInfo } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -37,7 +37,7 @@ export type DocumentationType = keyof typeof DocumentationLinks;
     selector: 'jhi-documentation-button',
     styleUrls: ['./documentation-button.component.scss'],
     template: `
-        <a class="text-primary documentation-button ms-1" href="{{ BASE_URL + DocumentationLinks[this.type] }}" target="_blank" rel="noopener noreferrer">
+        <a class="text-primary documentation-button ms-1" href="{{ BASE_URL + DocumentationLinks[this.type()] }}" target="_blank" rel="noopener noreferrer">
             <fa-icon [icon]="faCircleInfo" ngbTooltip="{{ getTooltipForType() }}" />
         </a>
     `,
@@ -50,10 +50,10 @@ export class DocumentationButtonComponent {
     readonly faCircleInfo = faCircleInfo;
     readonly DocumentationLinks = DocumentationLinks;
 
-    @Input() type: DocumentationType;
+    readonly type = input.required<DocumentationType>();
 
     getTooltipForType() {
-        const typeKey = 'artemisApp.documentationLinks.' + this.type.toLowerCase();
+        const typeKey = 'artemisApp.documentationLinks.' + this.type().toLowerCase();
         return this.translateService.instant('artemisApp.documentationLinks.prefix') + this.translateService.instant(typeKey);
     }
 }
