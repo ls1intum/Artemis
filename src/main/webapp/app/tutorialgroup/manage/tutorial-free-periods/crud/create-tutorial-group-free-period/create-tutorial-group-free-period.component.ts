@@ -12,7 +12,7 @@ import { TutorialGroupFreePeriodFormComponent } from '../tutorial-free-period-fo
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupFreePeriodRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
@@ -29,16 +29,14 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     readonly dialogVisible = signal<boolean>(false);
     readonly freePeriodCreated = output<void>();
 
-    tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO;
+    tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodRequestDTO;
     isLoading = false;
 
     readonly tutorialGroupConfigurationId = input.required<number>();
     readonly course = input.required<Course>();
 
     open(): void {
-        this.tutorialGroupFreePeriodToCreate = {
-            tutorialGroupConfigurationId: this.tutorialGroupConfigurationId(),
-        } as TutorialGroupFreePeriodDTO;
+        this.tutorialGroupFreePeriodToCreate = {} as TutorialGroupFreePeriodRequestDTO;
         this.dialogVisible.set(true);
     }
 
@@ -49,8 +47,12 @@ export class CreateTutorialGroupFreePeriodComponent implements OnDestroy {
     createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { startDate, endDate, startTime, endTime, reason } = formData;
 
-        this.tutorialGroupFreePeriodToCreate.start = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined).toISOString();
-        this.tutorialGroupFreePeriodToCreate.end = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate).toISOString();
+        this.tutorialGroupFreePeriodToCreate.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(
+            startDate,
+            startTime,
+            undefined,
+        ).toISOString();
+        this.tutorialGroupFreePeriodToCreate.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate).toISOString();
         this.tutorialGroupFreePeriodToCreate.reason = reason;
         this.isLoading = true;
         this.tutorialGroupFreePeriodService

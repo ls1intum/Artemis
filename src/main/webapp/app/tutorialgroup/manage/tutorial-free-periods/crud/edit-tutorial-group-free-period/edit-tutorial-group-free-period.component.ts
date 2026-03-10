@@ -16,7 +16,7 @@ import { captureException } from '@sentry/angular';
 import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupFreePeriodRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
@@ -86,11 +86,10 @@ export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     updateTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { startDate, endDate, startTime, endTime, reason } = formData;
 
-        const tutorialGroupFreePeriodDto: TutorialGroupFreePeriodDTO = {} as TutorialGroupFreePeriodDTO;
-        tutorialGroupFreePeriodDto.start = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined).toISOString();
-        tutorialGroupFreePeriodDto.end = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate).toISOString();
+        const tutorialGroupFreePeriodDto: TutorialGroupFreePeriodRequestDTO = {} as TutorialGroupFreePeriodRequestDTO;
+        tutorialGroupFreePeriodDto.startDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(startDate, startTime, undefined).toISOString();
+        tutorialGroupFreePeriodDto.endDate = CreateTutorialGroupFreePeriodComponent.combineDateAndTimeWithAlternativeDate(endDate, endTime, startDate).toISOString();
         tutorialGroupFreePeriodDto.reason = reason;
-        tutorialGroupFreePeriodDto.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration().id!;
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
             .update(this.course().id!, this.tutorialGroupsConfiguration().id!, this.tutorialGroupFreePeriod().id!, tutorialGroupFreePeriodDto)
