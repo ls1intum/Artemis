@@ -148,15 +148,16 @@ public class ExerciseReviewService {
      *
      * @param exerciseId the programming exercise id that owns the review comments
      * @param issues     the newly detected consistency issues to persist as review comments
+     * @return the persisted consistency-check threads created from the given issues
      */
-    public void createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
+    public List<CommentThread> createConsistencyCheckThreads(long exerciseId, List<ConsistencyIssueDTO> issues) {
         Exercise exercise = exerciseRepository.findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("Exercise is not a programming exercise", THREAD_ENTITY_NAME, "exerciseNotProgramming");
         }
 
         if (issues == null || issues.isEmpty()) {
-            return;
+            return List.of();
         }
 
         ConsistencyTargetRepositoryUris repositoryUrisByTarget = exerciseReviewRepositoryService.resolveTargetRepositoryUris(exerciseId);
@@ -165,6 +166,7 @@ public class ExerciseReviewService {
 
         List<CommentThread> threadsToPersist = new ArrayList<>();
         List<CommentThreadGroup> groupsToPersist = new ArrayList<>();
+        List<CommentThread> createdThreads = new ArrayList<>();
         for (ConsistencyIssueDTO issue : issues) {
             Optional<String> validationError = ExerciseReviewValidationUtil.validateConsistencyIssue(issue);
             if (validationError.isPresent()) {
@@ -190,6 +192,7 @@ public class ExerciseReviewService {
                 }
                 group.setThreads(groupedThreads);
                 groupsToPersist.add(group);
+                createdThreads.addAll(groupedThreads);
                 continue;
             }
 
@@ -198,6 +201,7 @@ public class ExerciseReviewService {
                 Comment comment = buildConsistencyCheckComment(thread, issue);
                 thread.getComments().add(comment);
                 threadsToPersist.add(thread);
+                createdThreads.add(thread);
             }
         }
 
@@ -210,6 +214,7 @@ public class ExerciseReviewService {
             // Grouped threads are persisted via CommentThreadGroup save with cascade.
             commentThreadRepository.saveAll(threadsToPersist);
         }
+        return List.copyOf(createdThreads);
     }
 
     /**
@@ -359,14 +364,15 @@ public class ExerciseReviewService {
      *
      * @param previousSnapshot the previous exercise snapshot
      * @param currentSnapshot  the current exercise snapshot
+     * @return the threads that were modified and persisted
      */
-    public void updateThreadsForVersionChange(ExerciseSnapshotDTO previousSnapshot, ExerciseSnapshotDTO currentSnapshot) {
+    public List<CommentThread> updateThreadsForVersionChange(ExerciseSnapshotDTO previousSnapshot, ExerciseSnapshotDTO currentSnapshot) {
         if (previousSnapshot == null || currentSnapshot == null) {
-            return;
+            return List.of();
         }
 
         if (!Objects.equals(previousSnapshot.id(), currentSnapshot.id())) {
-            return;
+            return List.of();
         }
 
         ProgrammingExerciseSnapshotDTO previousProgramming = previousSnapshot.programmingData();
@@ -375,7 +381,7 @@ public class ExerciseReviewService {
 
         List<CommentThread> threads = commentThreadRepository.findByExerciseIdAndOutdatedFalseAndLineNumberIsNotNull(currentSnapshot.id());
         if (threads.isEmpty()) {
-            return;
+            return List.of();
         }
 
         Set<CommentThread> modifiedThreads = new HashSet<>();
@@ -440,6 +446,7 @@ public class ExerciseReviewService {
         if (!modifiedThreads.isEmpty()) {
             commentThreadRepository.saveAll(modifiedThreads);
         }
+        return List.copyOf(modifiedThreads);
     }
 
     /**
