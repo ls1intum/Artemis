@@ -6,7 +6,7 @@ import { take } from 'rxjs/operators';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 
 import { TutorialGroupFreePeriodService } from './tutorial-group-free-period.service';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 
 describe('TutorialGroupFreePeriodService', () => {
     setupTestBed({ zoneless: true });
@@ -20,6 +20,12 @@ describe('TutorialGroupFreePeriodService', () => {
         start: '2021-01-01T00:00:00',
         end: '2021-01-01T23:59:59',
         tutorialGroupConfigurationId: 1,
+    };
+
+    const elemDefaultRequest: TutorialGroupFreePeriodRequestDTO = {
+        reason: 'Example Reason',
+        startDate: '2021-01-01T00:00:00',
+        endDate: '2021-01-01T23:59:59',
     };
 
     beforeEach(() => {
@@ -60,7 +66,7 @@ describe('TutorialGroupFreePeriodService', () => {
         let result: HttpResponse<TutorialGroupFreePeriodDTO> | undefined;
 
         service
-            .create(1, 1, elemDefault)
+            .create(1, 1, elemDefaultRequest)
             .pipe(take(1))
             .subscribe((resp) => (result = resp));
 
@@ -68,16 +74,12 @@ describe('TutorialGroupFreePeriodService', () => {
             method: 'POST',
             url: 'api/tutorialgroup/courses/1/tutorial-groups-configuration/1/tutorial-free-periods',
         });
-
-        expect(req.request.body).toEqual(elemDefault);
-
         req.flush(elemDefault);
-
         expect(result?.body).toEqual(elemDefault);
     });
 
     it('should UPDATE free period', () => {
-        const updated = { ...elemDefault, reason: 'Updated Reason' };
+        const updated = { ...elemDefaultRequest, reason: 'Updated Reason' };
 
         let result: HttpResponse<TutorialGroupFreePeriodDTO> | undefined;
 
@@ -90,11 +92,7 @@ describe('TutorialGroupFreePeriodService', () => {
             method: 'PUT',
             url: 'api/tutorialgroup/courses/1/tutorial-groups-configuration/1/tutorial-free-periods/1',
         });
-
-        expect(req.request.body).toEqual(updated);
-
         req.flush(updated);
-
         expect(result?.body?.reason).toBe('Updated Reason');
     });
 

@@ -21,7 +21,7 @@ import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker'
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupFreePeriodsManagementComponent } from 'app/tutorialgroup/manage/tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-periods-management.component';
-import { TutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 import { TutorialGroupFreePeriod } from 'app/tutorialgroup/shared/entities/tutorial-group-free-day.model';
 
 describe('EditTutorialGroupFreePeriodComponent', () => {
@@ -87,16 +87,20 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should send PUT request upon form submission and close dialog', () => {
-        const changedPeriod: TutorialGroupFreePeriodDTO = {
-            id: examplePeriod.id,
-            start: examplePeriod.start!.toISOString(),
-            end: examplePeriod.end!.toISOString(),
+        const changedPeriod: TutorialGroupFreePeriodRequestDTO = {
+            startDate: examplePeriod.start!.toISOString(),
+            endDate: examplePeriod.end!.toISOString(),
             reason: 'Changed',
-            tutorialGroupConfigurationId: exampleConfiguration.id!,
         };
 
         const updateResponse: HttpResponse<TutorialGroupFreePeriodDTO> = new HttpResponse({
-            body: changedPeriod,
+            body: {
+                id: examplePeriod.id,
+                start: changedPeriod.startDate,
+                end: changedPeriod.endDate,
+                reason: changedPeriod.reason,
+                tutorialGroupConfigurationId: exampleConfiguration.id!,
+            },
             status: 200,
         });
 
@@ -119,11 +123,11 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(args[1]).toBe(exampleConfiguration.id);
         expect(args[2]).toBe(examplePeriod.id);
 
-        const passedDto = updatedStub.mock.calls[0][3] as TutorialGroupFreePeriodDTO;
+        const passedDto = updatedStub.mock.calls[0][3] as TutorialGroupFreePeriodRequestDTO;
 
         expect(passedDto.reason).toBe('Changed');
-        expect(dayjs(passedDto.start).toDate().getTime()).toBe(formData.startDate.getTime());
-        expect(passedDto.end).toBeDefined();
+        expect(dayjs(passedDto.startDate).toDate().getTime()).toBe(formData.startDate.getTime());
+        expect(passedDto.endDate).toBeDefined();
         expect(freePeriodUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.dialogVisible()).toBe(false);
     });
