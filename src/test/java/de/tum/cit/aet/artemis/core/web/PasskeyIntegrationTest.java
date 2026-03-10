@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.core.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.anonymous;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -26,6 +27,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.PasskeyCredential;
@@ -145,7 +147,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
+        @WithAnonymousUser
         void testGetPasskeys_AccessDeniedForAnonymous() throws Exception {
             request.getList("/api/core/passkey/user", HttpStatus.FORBIDDEN, PasskeyDTO.class);
         }
@@ -173,7 +175,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
+        @WithAnonymousUser
         void testUpdatePasskeyLabel_AccessDeniedBecauseOfRole() throws Exception {
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
@@ -241,7 +243,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "ANONYMOUS")
+        @WithAnonymousUser
         void testDeletePasskey_AccessDeniedForAnonymous() throws Exception {
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
@@ -331,27 +333,33 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         void testUpdatePasskeyApproval_CannotRevokeInternalAdminPasskeyApproval() throws Exception {
             when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
 
-            // Set up internal admin username
+            // Set up internal admin username, capturing original value for restoration
             String internalAdminLogin = "artemis_admin";
             Object passkeyResource = applicationContext.getBean("passkeyResource");
-            ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", Optional.of(internalAdminLogin));
+            Object originalAdminUsername = ReflectionTestUtils.getField(passkeyResource, "artemisInternalAdminUsername");
+            try {
+                ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", Optional.of(internalAdminLogin));
 
-            // Create internal admin user and passkey
-            User internalAdminUser = userUtilService.createAndSaveUser(internalAdminLogin);
-            PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(internalAdminUser);
+                // Create internal admin user and passkey
+                User internalAdminUser = userUtilService.createAndSaveUser(internalAdminLogin);
+                PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(internalAdminUser);
 
-            // Approve the passkey first
-            existingCredential.setSuperAdminApproved(true);
-            passkeyCredentialsRepository.save(existingCredential);
+                // Approve the passkey first
+                existingCredential.setSuperAdminApproved(true);
+                passkeyCredentialsRepository.save(existingCredential);
 
-            // Try to revoke approval - should fail with specific error
-            request.putAndExpectError("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
-                    "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
+                // Try to revoke approval - should fail with specific error
+                request.putAndExpectError("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", false, HttpStatus.BAD_REQUEST,
+                        "passkeyAuth.cannotRevokeInternalAdminPasskeyApproval");
 
-            // Verify the approval was not revoked
-            PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
-                    .orElseThrow(() -> new IllegalStateException("Credential not found"));
-            assertThat(credentialInDatabase.isSuperAdminApproved()).isTrue();
+                // Verify the approval was not revoked
+                PasskeyCredential credentialInDatabase = passkeyCredentialsRepository.findByCredentialId(existingCredential.getCredentialId())
+                        .orElseThrow(() -> new IllegalStateException("Credential not found"));
+                assertThat(credentialInDatabase.isSuperAdminApproved()).isTrue();
+            }
+            finally {
+                ReflectionTestUtils.setField(passkeyResource, "artemisInternalAdminUsername", originalAdminUsername);
+            }
         }
     }
 
@@ -490,14 +498,14 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/register/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                     .andReturn().getResponse();
 
-            String responseBody = response.getContentAsString();
+            JsonNode parsedResponse = objectMapper.readTree(response.getContentAsString());
 
             // Verify the response contains expected WebAuthn registration options fields
-            assertThat(responseBody).contains("challenge");
-            assertThat(responseBody).contains("rp");
-            assertThat(responseBody).contains("user");
-            assertThat(responseBody).contains("pubKeyCredParams");
-            assertThat(responseBody).contains("timeout");
+            assertThat(parsedResponse.has("challenge")).isTrue();
+            assertThat(parsedResponse.has("rp")).isTrue();
+            assertThat(parsedResponse.has("user")).isTrue();
+            assertThat(parsedResponse.has("pubKeyCredParams")).isTrue();
+            assertThat(parsedResponse.has("timeout")).isTrue();
         }
 
         @Test
@@ -533,12 +541,12 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                     .andReturn().getResponse();
 
-            String responseBody = response.getContentAsString();
+            JsonNode parsedResponse = objectMapper.readTree(response.getContentAsString());
 
             // Verify the response contains expected WebAuthn authentication options fields
-            assertThat(responseBody).contains("challenge");
-            assertThat(responseBody).contains("timeout");
-            assertThat(responseBody).contains("rpId");
+            assertThat(parsedResponse.has("challenge")).isTrue();
+            assertThat(parsedResponse.has("timeout")).isTrue();
+            assertThat(parsedResponse.has("rpId")).isTrue();
         }
 
         @Test
@@ -547,11 +555,11 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             MockHttpServletResponse response = request.performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON)).andExpect(status().isOk())
                     .andReturn().getResponse();
 
-            String responseBody = response.getContentAsString();
+            JsonNode parsedResponse = objectMapper.readTree(response.getContentAsString());
 
-            assertThat(responseBody).contains("challenge");
-            assertThat(responseBody).contains("timeout");
-            assertThat(responseBody).contains("rpId");
+            assertThat(parsedResponse.has("challenge")).isTrue();
+            assertThat(parsedResponse.has("timeout")).isTrue();
+            assertThat(parsedResponse.has("rpId")).isTrue();
         }
     }
 
@@ -774,8 +782,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // The session is required because the challenge is stored in the session and validated on login
             MockHttpSession authSession = new MockHttpSession();
             MockHttpServletResponse authOptionsResponse = request
-                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).session(authSession)).andExpect(status().isOk()).andReturn()
-                    .getResponse();
+                    .performMvcRequest(post("/webauthn/authenticate/options").contentType(MediaType.APPLICATION_JSON).session(authSession).with(anonymous()))
+                    .andExpect(status().isOk()).andReturn().getResponse();
 
             Map<String, Object> authOptions = objectMapper.readValue(authOptionsResponse.getContentAsString(), new TypeReference<>() {
             });
@@ -789,8 +797,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             // Step 4: Submit authentication (using the same session that has the challenge stored)
             // We need to set the requestedSessionId so the server can retrieve the stored challenge
             String authRequestBody = objectMapper.writeValueAsString(authResponse);
-            MockHttpServletResponse loginResponse = request
-                    .performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).session(authSession).with(mockRequest -> {
+            MockHttpServletResponse loginResponse = request.performMvcRequest(
+                    post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(authRequestBody).session(authSession).with(anonymous()).with(mockRequest -> {
                         mockRequest.setRequestedSessionId(authSession.getId());
                         return mockRequest;
                     })).andExpect(status().isOk()).andReturn().getResponse();
@@ -824,7 +832,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             // Try to authenticate with unregistered credential
             AuthenticationResponse authResponse = webAuthnClientSimulator.createAuthenticationResponse(unregisteredAuthenticator, (String) authOptions.get("challenge"), origin,
-                    rpId, "dummyUserHandle");
+                    rpId, webAuthnClientSimulator.encodeUserHandle(999999L));
 
             // Authentication should fail (using same session with requestedSessionId set)
             request.performMvcRequest(post("/login/webauthn").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(authResponse)).session(authSession)
