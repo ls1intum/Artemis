@@ -82,7 +82,7 @@ public class HyperionProblemStatementResource {
     public HyperionProblemStatementResource(CourseRepository courseRepository, HyperionConsistencyCheckService consistencyCheckService, ExerciseReviewService exerciseReviewService,
             ExerciseEditorSyncService exerciseEditorSyncService, HyperionProblemStatementRewriteService problemStatementRewriteService,
             HyperionProblemStatementGenerationService problemStatementGenerationService, HyperionChecklistService checklistService,
-            HyperionProblemStatementRefinementService problemStatementRefinementService) {
+            HyperionProblemStatementRefinementService problemStatementRefinementService, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.courseRepository = courseRepository;
         this.consistencyCheckService = consistencyCheckService;
         this.exerciseReviewService = exerciseReviewService;
