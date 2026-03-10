@@ -136,7 +136,7 @@ public class TutorialGroupsConfigurationResource {
         if (updatedTutorialGroupConfigurationDto.id() == null) {
             throw new BadRequestAlertException("A tutorial group cannot be updated without an id", ENTITY_NAME, "idNull");
         }
-        if (!updatedTutorialGroupConfigurationDto.id().equals(tutorialGroupsConfigurationId)) {
+        if (!Objects.equals(updatedTutorialGroupConfigurationDto.id(), tutorialGroupsConfigurationId)) {
             throw new BadRequestAlertException("The tutorialGroupConfigurationId in the path does not match the id in the tutorial group configuration", ENTITY_NAME,
                     "tutorialGroupConfigurationIdMismatch");
         }
