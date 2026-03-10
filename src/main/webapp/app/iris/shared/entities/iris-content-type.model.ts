@@ -21,11 +21,27 @@ export interface McqOption {
     correct: boolean;
 }
 
-export interface McqData {
-    type: 'mcq';
+export interface McqQuestionData {
     question: string;
     options: McqOption[];
     explanation: string;
+}
+
+export interface McqData extends McqQuestionData {
+    type: 'mcq';
+    response?: McqResponseData;
+}
+
+export interface McqSetData {
+    type: 'mcq-set';
+    questions: McqQuestionData[];
+    responses?: McqResponseData[];
+}
+
+export interface McqResponseData {
+    selectedIndex: number;
+    submitted: boolean;
+    questionIndex?: number;
 }
 
 export class IrisJsonMessageContent extends IrisMessageContent {
@@ -63,6 +79,24 @@ export function getMcqData(content: IrisMessageContent): McqData | undefined {
     const attrs = content.attributes;
     if (attrs?.['type'] === 'mcq') {
         return attrs as unknown as McqData;
+    }
+    return undefined;
+}
+
+export function isMcqSetContent(content: IrisMessageContent): boolean {
+    if (!isJsonContent(content)) {
+        return false;
+    }
+    return content.attributes?.['type'] === 'mcq-set';
+}
+
+export function getMcqSetData(content: IrisMessageContent): McqSetData | undefined {
+    if (!isJsonContent(content)) {
+        return undefined;
+    }
+    const attrs = content.attributes;
+    if (attrs?.['type'] === 'mcq-set') {
+        return attrs as unknown as McqSetData;
     }
     return undefined;
 }
