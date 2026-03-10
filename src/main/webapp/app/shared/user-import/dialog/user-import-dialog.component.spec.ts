@@ -1,6 +1,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { By } from '@angular/platform-browser';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -23,7 +24,7 @@ import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { DialogModule } from 'primeng/dialog';
 import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { User } from 'app/core/user/user.model';
-import { CheckboxModule } from 'primeng/checkbox';
+import { Checkbox } from 'primeng/checkbox';
 
 describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -36,6 +37,15 @@ describe('UsersImportDialogComponent', () => {
     const exam: Exam = { course, id: 2, title: 'Exam Title' };
 
     const testDir = path.join(process.cwd(), 'src', 'test', 'javascript', 'spec', 'helpers', 'sample', 'user-import');
+
+    beforeAll(() => {
+        try {
+            TestBed.initTestEnvironment(BrowserTestingModule, platformBrowserTesting());
+        } catch (error) {
+            // The environment is already initialized when running through the Angular CLI test harness.
+        }
+    });
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [FormsModule, FaIconComponent, UsersImportDialogComponent],
@@ -59,7 +69,7 @@ describe('UsersImportDialogComponent', () => {
                         MockComponent(HelpIconComponent),
                         FaIconComponent,
                         DialogModule,
-                        CheckboxModule,
+                        MockComponent(Checkbox),
                     ],
                 },
             })

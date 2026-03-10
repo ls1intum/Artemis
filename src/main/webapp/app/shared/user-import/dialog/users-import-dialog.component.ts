@@ -21,7 +21,7 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CheckboxModule } from 'primeng/checkbox';
+import { Checkbox } from 'primeng/checkbox';
 import { PrimeTemplate } from 'primeng/api';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
@@ -42,7 +42,7 @@ interface CsvUser {
     templateUrl: './users-import-dialog.component.html',
     styleUrls: ['./users-import-dialog.component.scss'],
     encapsulation: ViewEncapsulation.None,
-    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, CheckboxModule, ArtemisTranslatePipe, PrimeTemplate],
+    imports: [FormsModule, TranslateDirective, FaIconComponent, HelpIconComponent, DialogModule, Checkbox, ArtemisTranslatePipe, PrimeTemplate],
 })
 export class UsersImportDialogComponent implements OnDestroy {
     private alertService = inject(AlertService);
