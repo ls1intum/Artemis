@@ -237,6 +237,7 @@ public class TutorialGroupsConfigurationResource {
             }
         });
     }
+
     private static void checkCourseTimeZone(Course course) {
         if (course.getTimeZone() == null) {
             throw new BadRequestAlertException("The course has no configured time zone.", ENTITY_NAME, "courseHasNoTimeZone");

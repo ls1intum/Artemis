@@ -23,6 +23,7 @@ model/consistencyCheckResponse.ts
 model/consistencyIssue.ts
 model/conversationUser.ts
 model/costs.ts
+model/course.ts
 model/difficultyAssessment.ts
 model/examSeat.ts
 model/generatedQuizAnswerOption.ts
@@ -53,10 +54,17 @@ model/tutorialGroupDetailSession.ts
 model/tutorialGroupExport.ts
 model/tutorialGroupFreePeriod.ts
 model/tutorialGroupFreePeriodRequest.ts
+model/tutorialGroupRegistration.ts
 model/tutorialGroupRegistrationImport.ts
+model/tutorialGroupResponse.ts
+model/tutorialGroupSchedule.ts
+model/tutorialGroupSession.ts
 model/tutorialGroupSessionRequest.ts
+model/tutorialGroupSessionSchedule.ts
 model/tutorialGroupStatus.ts
 model/tutorialGroupUpdate.ts
+model/tutorialGroupUpdateData.ts
+model/user.ts
 param.ts
 provide-api.ts
 query.params.ts
