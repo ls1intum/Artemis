@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core';
-import { McqData } from 'app/iris/shared/entities/iris-content-type.model';
+import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
+import { McqData, McqQuestionData } from 'app/iris/shared/entities/iris-content-type.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
@@ -11,16 +11,47 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     styleUrl: './iris-mcq-question.component.scss',
 })
 export class IrisMcqQuestionComponent {
-    mcqData = input.required<McqData>();
+    mcqData = input.required<McqData | McqQuestionData>();
+
+    // Optional inputs for pre-populated state from carousel parent
+    initialSelectedIndex = input<number | undefined>(undefined);
+    initialSubmitted = input<boolean>(false);
+
+    // Output event for carousel parent
+    answerChanged = output<{ selectedIndex: number | undefined; submitted: boolean }>();
 
     selectedIndex = signal<number | undefined>(undefined);
     submitted = signal(false);
+
+    constructor() {
+        // Restore state from carousel parent inputs
+        effect(() => {
+            const idx = this.initialSelectedIndex();
+            const sub = this.initialSubmitted();
+            if (idx !== undefined) {
+                this.selectedIndex.set(idx);
+            }
+            if (sub) {
+                this.submitted.set(true);
+            }
+        });
+
+        // Restore state from persisted response on standalone MCQ
+        effect(() => {
+            const data = this.mcqData();
+            if ('response' in data && data.response) {
+                this.selectedIndex.set(data.response.selectedIndex);
+                this.submitted.set(data.response.submitted);
+            }
+        });
+    }
 
     selectOption(index: number): void {
         if (this.submitted()) {
             return;
         }
         this.selectedIndex.set(index);
+        this.answerChanged.emit({ selectedIndex: index, submitted: false });
     }
 
     submit(): void {
@@ -28,6 +59,7 @@ export class IrisMcqQuestionComponent {
             return;
         }
         this.submitted.set(true);
+        this.answerChanged.emit({ selectedIndex: this.selectedIndex(), submitted: true });
     }
 
     optionLabel(index: number): string {

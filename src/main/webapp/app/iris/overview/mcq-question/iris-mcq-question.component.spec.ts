@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -182,5 +182,52 @@ describe('IrisMcqQuestionComponent', () => {
 
         component.selectOption(0);
         expect(component.selectedIndex()).toBe(1);
+    });
+
+    it('should emit answerChanged on option select', () => {
+        const el = render();
+        const spy = vi.fn();
+        component.answerChanged.subscribe(spy);
+
+        const options = el.querySelectorAll('.mcq-option');
+        (options[2] as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(spy).toHaveBeenCalledWith({ selectedIndex: 2, submitted: false });
+    });
+
+    it('should emit answerChanged on submit', () => {
+        const el = render();
+        const spy = vi.fn();
+        component.answerChanged.subscribe(spy);
+
+        const options = el.querySelectorAll('.mcq-option');
+        (options[1] as HTMLButtonElement).click();
+        fixture.detectChanges();
+        (el.querySelector('.mcq-submit') as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(spy).toHaveBeenCalledWith({ selectedIndex: 1, submitted: true });
+    });
+
+    it('should restore state from initialSelectedIndex and initialSubmitted', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 2);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBe(2);
+        expect(component.submitted()).toBe(true);
+    });
+
+    it('should restore state from persisted response in mcqData', () => {
+        const mcqWithResponse: McqData = {
+            ...sampleMcq,
+            response: { selectedIndex: 0, submitted: true },
+        };
+        render(mcqWithResponse);
+
+        expect(component.selectedIndex()).toBe(0);
+        expect(component.submitted()).toBe(true);
     });
 });
