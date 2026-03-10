@@ -36,6 +36,7 @@ const sidebars: SidebarsConfig = {
         'tutorial-groups',
         'plagiarism-check',
         'courses',
+        'import-from-course',
         'exports',
         'grading',
         'integrated-code-lifecycle',
