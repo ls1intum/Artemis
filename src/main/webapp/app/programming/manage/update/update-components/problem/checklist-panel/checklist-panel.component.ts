@@ -77,6 +77,8 @@ const SECTION_TO_API: Record<ChecklistSectionType, 'COMPETENCIES' | 'DIFFICULTY'
 
 /** Default quality score before penalties are applied. */
 const DEFAULT_QUALITY_SCORE = 1.0;
+/** Minimum confidence score (inclusive) for a competency to receive MEDIUM link weight. */
+const CONFIDENCE_MEDIUM_THRESHOLD = 0.7;
 /** Penalty subtracted per HIGH-severity quality issue. */
 const PENALTY_HIGH = 0.3;
 /** Penalty subtracted per MEDIUM-severity quality issue. */
@@ -242,6 +244,7 @@ export class ChecklistPanelComponent {
                     // New analysis results invalidate previous linking state
                     this.linkedCompetencyTitles.set(new Set());
                     this.createdCompetencyTitles.set(new Set());
+                    this.competencyLinksChange.emit([]);
                 },
                 error: () => {
                     this.alertService.error('artemisApp.programmingExercise.instructorChecklist.actions.error');
@@ -463,6 +466,7 @@ export class ChecklistPanelComponent {
                     if (section === 'competencies') {
                         this.linkedCompetencyTitles.set(new Set());
                         this.createdCompetencyTitles.set(new Set());
+                        this.competencyLinksChange.emit([]);
                     }
                     this.updateSet(this.staleSections, section, 'delete');
                     this.updateSet(this.sectionLoading, section, 'delete');
@@ -854,7 +858,7 @@ export class ChecklistPanelComponent {
         if (comp.isLikelyPrimary) {
             return HIGH_COMPETENCY_LINK_WEIGHT;
         }
-        if (comp.confidence != null && comp.confidence >= 0.7) {
+        if (comp.confidence != null && comp.confidence >= CONFIDENCE_MEDIUM_THRESHOLD) {
             return MEDIUM_COMPETENCY_LINK_WEIGHT;
         }
         return LOW_COMPETENCY_LINK_WEIGHT;
