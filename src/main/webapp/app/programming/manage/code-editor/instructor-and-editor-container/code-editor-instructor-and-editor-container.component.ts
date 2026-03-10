@@ -34,7 +34,7 @@ import { ProgrammingExerciseInstructorExerciseStatusComponent } from '../../stat
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { CodeGenerationRequestDTO } from 'app/openapi/model/codeGenerationRequestDTO';
+import { CodeGenerationRequest } from 'app/openapi/model/codeGenerationRequest';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -287,9 +287,15 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private startCodeGeneration() {
         this.isGeneratingCode.set(true);
-        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
+        if (!repositoryType) {
+            this.isGeneratingCode.set(false);
+            this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' });
+            return;
+        }
+        const request = this.createCodeGenerationRequest(repositoryType);
         const exerciseId = this.exercise!.id!;
-        this.hyperionCodeGenerationApi.generateCode(exerciseId, { repositoryType }).subscribe({
+        this.hyperionCodeGenerationApi.generateCode(exerciseId, request).subscribe({
             next: (res) => {
                 if (!res?.jobId) {
                     this.isGeneratingCode.set(false);
@@ -356,9 +362,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
             return;
         }
-        const repositoryType = this.selectedRepository as CodeGenerationRequestDTO.RepositoryTypeEnum;
+        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
+        if (!repositoryType) {
+            return;
+        }
+        const request = this.createCodeGenerationRequest(repositoryType, true);
         const requestId = this.restoreRequestId;
-        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, { repositoryType, checkOnly: true }).subscribe({
+        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({
             next: (res) => {
                 if (requestId !== this.restoreRequestId) {
                     return;
@@ -376,6 +386,24 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.clearJobSubscription(true);
             },
         });
+    }
+
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): RepositoryType | undefined {
+        switch (repositoryType) {
+            case RepositoryType.TEMPLATE:
+                return RepositoryType.TEMPLATE;
+            case RepositoryType.SOLUTION:
+                return RepositoryType.SOLUTION;
+            case RepositoryType.TESTS:
+                return RepositoryType.TESTS;
+            default:
+                return undefined;
+        }
+    }
+
+    private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false): CodeGenerationRequest {
+        // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
+        return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
     }
 
     /**
