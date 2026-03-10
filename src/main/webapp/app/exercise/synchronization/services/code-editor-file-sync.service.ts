@@ -109,7 +109,7 @@ export class CodeEditorFileSyncService {
     // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private fileTreeChangeSubject = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
     private stateReplacedSubject = new Subject<{ filePath: string } & FileSyncState>();
-    private initialSyncFinalizedSubject = new Subject<{ filePath: string }>();
+    private initialSyncFinalizedSubject = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
 
     /**
      * Stream emitting file tree changes (create/delete/rename) from remote peers.
@@ -128,10 +128,16 @@ export class CodeEditorFileSyncService {
     }
 
     /**
-     * Stream emitting file paths when their initial synchronization finalized.
-     * Consumers can use this to defer editor widget placement until file content is stable.
+     * Stream emitted once per file when initial synchronization finalized.
+     *
+     * `contentDivergedFromFallback` indicates whether the finalized shared content differs from
+     * the initial fallback content loaded from the server for this file. Consumers can use this
+     * to decide whether the file should be marked as dirty after bootstrap.
+     *
+     * `finalContent` is the finalized shared text after applying winner-response/fallback and all
+     * buffered updates.
      */
-    get initialSyncFinalized$(): Observable<{ filePath: string }> {
+    get initialSyncFinalized$(): Observable<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }> {
         return this.initialSyncFinalizedSubject.asObservable();
     }
 
@@ -552,8 +558,10 @@ export class CodeEditorFileSyncService {
             });
         }
         this.flushQueuedFullContentRequests(entry, entry.filePath);
+        const finalContent = entry.text.toString();
+        const contentDivergedFromFallback = finalContent !== entry.fallbackInitialContent;
         entry.awaitingInitialSync = false;
-        this.initialSyncFinalizedSubject.next({ filePath: entry.filePath });
+        this.initialSyncFinalizedSubject.next({ filePath: entry.filePath, contentDivergedFromFallback, finalContent });
         if (entry.pendingInitialSync.timeoutId) {
             clearTimeout(entry.pendingInitialSync.timeoutId);
         }

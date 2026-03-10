@@ -152,8 +152,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private pendingReviewRenderFile?: string;
     private fileSyncReadySubscription?: Subscription;
     private fileSyncStateReplacedSubscription?: Subscription;
-    private suppressDirtySignalAfterStateReplace = new Set<string>();
-    private suppressDirtySignalAfterInitialSyncFinalize = new Set<string>();
+    private suppressNextDirtySignal = new Set<string>();
     private dirtySignalSuppressedDuringInitialSync = new Set<string>();
 
     constructor() {
@@ -196,7 +195,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             if (!syncService) {
                 return;
             }
-            this.fileSyncReadySubscription = syncService.initialSyncFinalized$.subscribe(({ filePath }) => this.onFileInitialSyncFinalized(filePath));
+            this.fileSyncReadySubscription = syncService.initialSyncFinalized$.subscribe((event) => this.onFileInitialSyncFinalized(event));
             this.fileSyncStateReplacedSubscription = syncService.stateReplaced$.subscribe(({ filePath }) => this.onFileSyncStateReplaced(filePath));
         });
 
@@ -568,8 +567,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     }
 
     private onFileSyncStateReplaced(filePath: string): void {
-        this.suppressDirtySignalAfterStateReplace.add(filePath);
-        this.suppressDirtySignalAfterInitialSyncFinalize.delete(filePath);
+        this.suppressNextDirtySignal.add(filePath);
         this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
         if (!this.enableExerciseReviewComments() || !isReviewCommentsSupportedRepository(this.selectedRepository()) || this.selectedFile() !== filePath) {
             return;
@@ -578,24 +576,48 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         this.tryRenderPendingReviewCommentWidgets(filePath);
     }
 
-    private onFileInitialSyncFinalized(filePath: string): void {
+    private onFileInitialSyncFinalized({
+        filePath,
+        contentDivergedFromFallback,
+        finalContent,
+    }: {
+        filePath: string;
+        contentDivergedFromFallback: boolean;
+        finalContent: string;
+    }): void {
         // During file bootstrap we clear the model and then hydrate from synced Yjs content.
         // The clear step is suppressed while awaitingInitialSync=true; suppress one additional
         // post-finalize change so hydration does not mark the file as locally dirty.
         if (this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
-            this.suppressDirtySignalAfterInitialSyncFinalize.add(filePath);
+            this.suppressNextDirtySignal.add(filePath);
+        }
+        // If finalized shared content diverged from the initial server fallback, we surface this
+        // as unsubmitted work in this window as well.
+        if (contentDivergedFromFallback) {
+            this.emitDirtySignalFromInitialSync(filePath, finalContent);
         }
         this.tryRenderPendingReviewCommentWidgets(filePath);
     }
 
-    private shouldSuppressDirtySignal(filePath: string): boolean {
-        if (this.suppressDirtySignalAfterStateReplace.has(filePath)) {
-            this.suppressDirtySignalAfterStateReplace.delete(filePath);
-            return true;
+    private emitDirtySignalFromInitialSync(filePath: string, syncedContent: string): void {
+        const fileSession = this.fileSession();
+        const fileState = fileSession[filePath];
+        if (fileState && fileState.code !== syncedContent) {
+            this.fileSession.set({
+                ...fileSession,
+                [filePath]: {
+                    ...fileState,
+                    code: syncedContent,
+                },
+            });
         }
-        if (this.suppressDirtySignalAfterInitialSyncFinalize.has(filePath)) {
-            this.suppressDirtySignalAfterInitialSyncFinalize.delete(filePath);
+        this.onFileContentChange.emit({ fileName: filePath, text: syncedContent });
+    }
+
+    private shouldSuppressDirtySignal(filePath: string): boolean {
+        if (this.suppressNextDirtySignal.has(filePath)) {
+            this.suppressNextDirtySignal.delete(filePath);
             return true;
         }
         const syncService = this.fileSyncService();
