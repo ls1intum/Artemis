@@ -45,6 +45,7 @@ import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mc
 import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
@@ -127,6 +128,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected llmModalService = inject(LLMSelectionModalService);
     private readonly destroyRef = inject(DestroyRef);
     private readonly clipboard = inject(Clipboard);
+    private readonly irisChatHttpService = inject(IrisChatHttpService);
 
     // Icons
     protected readonly faPaperPlane = faPaperPlane;
@@ -478,12 +480,26 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
     }
 
-    onMcqAnswerChanged(_message: IrisMessage, _event: { selectedIndex: number | undefined; submitted: boolean }): void {
-        // Persistence will be wired in a later commit
+    onMcqAnswerChanged(message: IrisMessage, event: { selectedIndex: number | undefined; submitted: boolean }): void {
+        if (!event.submitted || event.selectedIndex === undefined || !message.id) {
+            return;
+        }
+        const sessionId = this.currentSessionId();
+        if (!sessionId) {
+            return;
+        }
+        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, { selectedIndex: event.selectedIndex, submitted: true }).subscribe();
     }
 
-    onMcqResponseSaved(_message: IrisMessage, _response: McqResponseData): void {
-        // Persistence will be wired in a later commit
+    onMcqResponseSaved(message: IrisMessage, response: McqResponseData): void {
+        if (!response.submitted || !message.id) {
+            return;
+        }
+        const sessionId = this.currentSessionId();
+        if (!sessionId) {
+            return;
+        }
+        this.irisChatHttpService.saveMcqResponse(sessionId, message.id, response).subscribe();
     }
 
     copyMessage(message: IrisMessage, messageIndex?: number) {

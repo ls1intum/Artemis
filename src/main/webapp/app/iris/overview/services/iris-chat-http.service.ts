@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map, tap } from 'rxjs/operators';
+import { McqResponseData } from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
@@ -95,6 +96,16 @@ export class IrisChatHttpService {
      */
     rateMessage(sessionId: number, messageId: number, helpful: boolean): Response<IrisMessage> {
         return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
+    }
+
+    /**
+     * Saves the user's MCQ answer selection for persistence across page reloads
+     * @param sessionId of the session
+     * @param messageId of the message containing the MCQ
+     * @param response the user's answer selection
+     */
+    saveMcqResponse(sessionId: number, messageId: number, response: McqResponseData): Response<void> {
+        return this.httpClient.put<void>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/mcq-response`, response, { observe: 'response' });
     }
 
     getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {
