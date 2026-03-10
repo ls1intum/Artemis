@@ -45,10 +45,20 @@ export function getTextContent(content: IrisMessageContent) {
     }
 }
 
+/**
+ * Type guard that checks whether the given message content is JSON content.
+ * @param content the message content to check
+ * @returns true if the content is an IrisJsonMessageContent
+ */
 export function isJsonContent(content: IrisMessageContent): content is IrisJsonMessageContent {
     return content.type === IrisMessageContentType.JSON;
 }
 
+/**
+ * Checks whether the given message content represents an MCQ (multiple-choice question).
+ * @param content the message content to check
+ * @returns true if the content is JSON content with type 'mcq'
+ */
 export function isMcqContent(content: IrisMessageContent): boolean {
     if (!isJsonContent(content)) {
         return false;
@@ -56,6 +66,11 @@ export function isMcqContent(content: IrisMessageContent): boolean {
     return content.attributes?.['type'] === 'mcq';
 }
 
+/**
+ * Extracts typed McqData from a message content if it represents an MCQ.
+ * @param content the message content to extract from
+ * @returns the McqData if the content is an MCQ, undefined otherwise
+ */
 export function getMcqData(content: IrisMessageContent): McqData | undefined {
     if (!isJsonContent(content)) {
         return undefined;
