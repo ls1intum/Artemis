@@ -84,13 +84,13 @@ export const generateExampleTutorialGroupSessionDTO = ({
  * @returns form data suitable for the session form component
  */
 export const tutorialGroupSessionDtoToFormData = (dto: TutorialGroupSessionDTO, tz: string): TutorialGroupSessionFormData => {
-    const start = dayjs(dto.startDate).tz(tz);
-    const end = dayjs(dto.endDate).tz(tz);
+    const start = dto.startDate ? dayjs.tz(dto.startDate, tz) : undefined;
+    const end = dto.endDate ? dayjs.tz(dto.endDate, tz) : undefined;
 
     return {
-        date: start.toDate(),
-        startTime: start.format('HH:mm'),
-        endTime: end.format('HH:mm'),
+        date: start?.toDate(),
+        startTime: start?.format('HH:mm'),
+        endTime: end?.format('HH:mm'),
         location: dto.location,
     };
 };
