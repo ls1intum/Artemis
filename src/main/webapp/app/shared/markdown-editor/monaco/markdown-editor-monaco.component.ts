@@ -537,7 +537,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         }
         if (this.isInCommunication()) {
             this.showTextStyleActions.set(false);
-            this.selectionChangeListener = this.monacoEditor.onDidChangeTextSelection((selection) => this.onSelectionChanged(selection));
+            this.selectionChangeListener = this.monacoEditor.onSelectionChange((selection) => this.onSelectionChanged(selection));
         }
         this.renderEditorWidgets();
         this.updateReviewCommentButton();
