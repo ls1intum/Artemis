@@ -345,6 +345,32 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.fileSession()[filePath]?.code).toBe('remote unsaved content');
     });
 
+    it('should not emit dirty signal when initial sync finalizes without divergence', () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        const onFileContentChangeSpy = jest.fn();
+        comp.onFileContentChange.subscribe(onFileContentChangeSpy);
+
+        comp.fileSession.set({
+            [filePath]: { code: 'server content', cursor: { lineNumber: 1, column: 1 }, loadingError: false, scrollTop: 0 },
+        });
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.detectChanges();
+
+        initialSyncFinalized$.next({ filePath, contentDivergedFromFallback: false, finalContent: 'server content' });
+
+        expect(onFileContentChangeSpy).not.toHaveBeenCalled();
+    });
+
     it('should load a selected file if it is not present yet', async () => {
         const fileToLoad = { fileName: 'file-to-load', fileContent: 'some code' };
         const loadedFileSubject = new BehaviorSubject(fileToLoad);

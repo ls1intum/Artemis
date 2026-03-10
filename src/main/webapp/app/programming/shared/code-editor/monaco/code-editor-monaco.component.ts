@@ -566,6 +566,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         this.renderReviewCommentWidgets();
     }
 
+    /**
+     * Handles late leader replacement for an already opened file.
+     *
+     * The replacement updates model content via the binding and must not be interpreted as a
+     * local user edit, so the next dirty signal for this file is suppressed.
+     */
     private onFileSyncStateReplaced(filePath: string): void {
         this.suppressNextDirtySignal.add(filePath);
         this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
@@ -576,6 +582,13 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         this.tryRenderPendingReviewCommentWidgets(filePath);
     }
 
+    /**
+     * Handles the explicit "initial sync finalized" event for a file.
+     *
+     * During bootstrap, one hydration-related model update is still suppressed. If the finalized
+     * shared content diverged from the initial fallback server content, we then emit an explicit
+     * dirty signal so the parent container marks the file as unsubmitted.
+     */
     private onFileInitialSyncFinalized({
         filePath,
         contentDivergedFromFallback,
@@ -600,6 +613,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         this.tryRenderPendingReviewCommentWidgets(filePath);
     }
 
+    /**
+     * Emits a dirty signal after initial sync divergence was detected.
+     *
+     * Also updates cached file-session text so local editor state stays aligned with the content
+     * emitted to the parent container.
+     */
     private emitDirtySignalFromInitialSync(filePath: string, syncedContent: string): void {
         const fileSession = this.fileSession();
         const fileState = fileSession[filePath];
@@ -615,6 +634,13 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         this.onFileContentChange.emit({ fileName: filePath, text: syncedContent });
     }
 
+    /**
+     * Decides whether the current text-change event should be treated as local dirty input.
+     *
+     * Suppresses:
+     * - the next change after state replacement/finalize handoff,
+     * - any change while initial sync is still pending.
+     */
     private shouldSuppressDirtySignal(filePath: string): boolean {
         if (this.suppressNextDirtySignal.has(filePath)) {
             this.suppressNextDirtySignal.delete(filePath);

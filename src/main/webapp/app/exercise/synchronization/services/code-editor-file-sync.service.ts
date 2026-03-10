@@ -524,6 +524,18 @@ export class CodeEditorFileSyncService {
         this.replaceDocumentWithRemoteState(entry, entry.filePath, update, message.leaderTimestamp, message.sessionId);
     }
 
+    /**
+     * Finalize a file's bootstrap sync phase.
+     *
+     * Resolution order:
+     * 1) apply winning full-content response (if any),
+     * 2) otherwise seed fallback server content,
+     * 3) replay buffered incremental updates.
+     *
+     * After finalization, emits:
+     * - `contentDivergedFromFallback`: whether finalized shared content differs from fallback,
+     * - `finalContent`: finalized shared text.
+     */
     private finalizeInitialSync(entry: FileSyncEntry): void {
         if (!entry.pendingInitialSync) {
             return;
