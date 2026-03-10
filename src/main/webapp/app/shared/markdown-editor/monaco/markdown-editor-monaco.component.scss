@@ -16,6 +16,20 @@
         border: 1px solid var(--border-color);
     }
 
+    // Ensure the NgbNavOutlet tab-content and active pane properly fill the remaining
+    // wrapper height so that the Monaco editor container has a definite CSS height.
+    // Without this, layout() auto-sizing reads 0 height after tab switches.
+    > .tab-content {
+        min-height: 0;
+
+        // ::ng-deep is needed because .tab-pane elements are rendered by NgbNavOutlet,
+        // not by this component's template, so they lack the encapsulation attribute.
+        /* stylelint-disable-next-line selector-pseudo-element-no-unknown */
+        ::ng-deep > .tab-pane.active {
+            height: 100%;
+        }
+    }
+
     .md-resize-icon {
         color: var(--md-resize-icon-color);
     }

@@ -308,7 +308,7 @@
                 </ng-container>
             }
         </nav>
-        <div [ngbNavOutlet]="nav"></div>
+        <div [ngbNavOutlet]="nav" class="flex-grow-1 overflow-hidden"></div>
     </div>
     @if (enableResize && inEditMode) {
         <div #resizePlaceholder [style.cursor]="isResizing ? 'ns-resize' : undefined" class="d-flex justify-content-center resize-placeholder">
