@@ -223,8 +223,14 @@
                                         }
                                         @if (message.sender === IrisSender.LLM) {
                                             <div style="width: fit-content; position: relative">
-                                                @if (isMcqContent(content)) {
-                                                    <jhi-iris-mcq-question [mcqData]="getMcqData(content)!" />
+                                                @if (isMcqSetContent(content)) {
+                                                    <jhi-iris-mcq-carousel
+                                                        [mcqSetData]="getMcqSetData(content)!"
+                                                        [messageId]="message.id"
+                                                        (responseSaved)="onMcqResponseSaved(message, $event)"
+                                                    />
+                                                } @else if (isMcqContent(content)) {
+                                                    <jhi-iris-mcq-question [mcqData]="getMcqData(content)!" (answerChanged)="onMcqAnswerChanged(message, $event)" />
                                                 } @else if (content.type === IrisMessageContentType.TEXT) {
                                                     <div class="bubble-left">
                                                         <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />

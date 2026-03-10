@@ -29,8 +29,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisMessageContent, IrisMessageContentType, IrisTextMessageContent, McqData, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
+import {
+    IrisMessageContent,
+    IrisMessageContentType,
+    IrisTextMessageContent,
+    McqData,
+    McqResponseData,
+    McqSetData,
+    getMcqData,
+    getMcqSetData,
+    isMcqContent,
+    isMcqSetContent,
+} from 'app/iris/shared/entities/iris-content-type.model';
 import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
+import { IrisMcqCarouselComponent } from 'app/iris/overview/mcq-question/iris-mcq-carousel.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
@@ -91,6 +103,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         SearchFilterComponent,
         IrisCitationTextComponent,
         IrisMcqQuestionComponent,
+        IrisMcqCarouselComponent,
         ConfirmDialogModule,
     ],
     providers: [ConfirmationService],
@@ -142,7 +155,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // MCQ helpers
     protected readonly isMcqContent = isMcqContent;
+    protected readonly isMcqSetContent = isMcqSetContent;
     protected readonly getMcqData = (content: IrisMessageContent): McqData | undefined => getMcqData(content);
+    protected readonly getMcqSetData = (content: IrisMessageContent): McqSetData | undefined => getMcqSetData(content);
 
     // Observable-derived signals (using toSignal for reactive state)
     private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
@@ -461,6 +476,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         message.helpful = !!helpful;
         this.chatService.rateMessage(message, helpful).pipe(takeUntilDestroyed(this.destroyRef)).subscribe();
+    }
+
+    onMcqAnswerChanged(_message: IrisMessage, _event: { selectedIndex: number | undefined; submitted: boolean }): void {
+        // Persistence will be wired in a later commit
+    }
+
+    onMcqResponseSaved(_message: IrisMessage, _response: McqResponseData): void {
+        // Persistence will be wired in a later commit
     }
 
     copyMessage(message: IrisMessage, messageIndex?: number) {
