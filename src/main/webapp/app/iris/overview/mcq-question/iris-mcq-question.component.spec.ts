@@ -230,4 +230,81 @@ describe('IrisMcqQuestionComponent', () => {
         expect(component.selectedIndex()).toBe(0);
         expect(component.submitted()).toBe(true);
     });
+
+    it('should reset submitted state when initialSubmitted changes to false', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 1);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        expect(component.submitted()).toBe(true);
+        expect(component.selectedIndex()).toBe(1);
+
+        // Simulate navigating to an unanswered question in the carousel
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        expect(component.submitted()).toBe(false);
+        expect(component.selectedIndex()).toBeUndefined();
+    });
+
+    it('should reset selectedIndex when initialSelectedIndex changes to undefined', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 2);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBe(2);
+
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBeUndefined();
+    });
+
+    it('should show submit button and hide feedback after resetting from submitted state', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 1);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        const el = fixture.nativeElement as HTMLElement;
+        expect(el.querySelector('.mcq-submit')).toBeFalsy();
+        expect(el.querySelector('.mcq-feedback')).toBeTruthy();
+
+        // Navigate to unanswered question
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        expect(el.querySelector('.mcq-submit')).toBeTruthy();
+        expect(el.querySelector('.mcq-feedback')).toBeFalsy();
+        expect(el.querySelector('.mcq-explanation')).toBeFalsy();
+    });
+
+    it('should allow interaction after resetting from submitted state', () => {
+        fixture.componentRef.setInput('mcqData', sampleMcq);
+        fixture.componentRef.setInput('initialSelectedIndex', 1);
+        fixture.componentRef.setInput('initialSubmitted', true);
+        fixture.detectChanges();
+
+        // Navigate to unanswered question
+        fixture.componentRef.setInput('initialSelectedIndex', undefined);
+        fixture.componentRef.setInput('initialSubmitted', false);
+        fixture.detectChanges();
+
+        // Should be able to select and submit
+        const el = fixture.nativeElement as HTMLElement;
+        const options = el.querySelectorAll('.mcq-option');
+        options.forEach((option) => {
+            expect((option as HTMLButtonElement).disabled).toBe(false);
+        });
+
+        (options[0] as HTMLButtonElement).click();
+        fixture.detectChanges();
+
+        expect(component.selectedIndex()).toBe(0);
+        expect(component.submitted()).toBe(false);
+    });
 });

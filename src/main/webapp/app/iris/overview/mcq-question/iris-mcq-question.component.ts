@@ -28,12 +28,8 @@ export class IrisMcqQuestionComponent {
         effect(() => {
             const idx = this.initialSelectedIndex();
             const sub = this.initialSubmitted();
-            if (idx !== undefined) {
-                this.selectedIndex.set(idx);
-            }
-            if (sub) {
-                this.submitted.set(true);
-            }
+            this.selectedIndex.set(idx);
+            this.submitted.set(sub);
         });
 
         // Restore state from persisted response on standalone MCQ
