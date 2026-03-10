@@ -883,7 +883,9 @@ export class ChecklistPanelComponent {
                     .split(',')
                     .map((t) => t.trim())
                     .filter(Boolean)
-                    .forEach((t) => testNames.add(t));
+                    .forEach((t) => {
+                        testNames.add(t);
+                    });
             }
         }
 
