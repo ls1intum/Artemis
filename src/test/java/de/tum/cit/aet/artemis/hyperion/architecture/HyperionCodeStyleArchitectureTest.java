@@ -14,9 +14,13 @@ class HyperionCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
         return 0;
     }
 
-    // return 1 as HyperionCodeGenerationEventDTO uses ENUMs inside as part of the data transfer
+    // Threshold is 4:
+    // 1. HyperionCodeGenerationEventDTO contains inner enum Type
+    // 2. ChecklistActionRequestDTO contains inner enum ActionType
+    // 3. QuizQuestionGenerationLanguage enum in dto package
+    // 4. QuizQuestionGenerationType enum in dto package
     @Override
     protected int dtoNameEndingThreshold() {
-        return 3;
+        return 4;
     }
 }
