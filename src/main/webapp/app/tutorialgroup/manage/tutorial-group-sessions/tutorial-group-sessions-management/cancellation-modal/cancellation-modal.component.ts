@@ -69,7 +69,7 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
             return '';
         }
         return (
-            dayjs(tutorialGroupSession.startDate).tz(this.course().timeZone).format('LLLL') + ' - ' + dayjs(tutorialGroupSession.endDate).tz(this.course().timeZone).format('LT')
+            dayjs.tz(tutorialGroupSession.startDate, this.course().timeZone).format('LLLL') + ' - ' + dayjs.tz(tutorialGroupSession.endDate, this.course().timeZone).format('LT')
         );
     }
 
