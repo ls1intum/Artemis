@@ -567,7 +567,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Set up selection change listener for inline comments/refinement
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
             if (this.isInCommunication()) {
-                this.onSelectionChanged(selection);
+                this.updateEditorActionsVisibility(selection);
             }
             if (selection) {
                 // Get selected text for inline refinement
@@ -674,12 +674,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.markdownChange.emit(event.text);
     }
 
-    onSelectionChanged(selection: EditorRange | undefined): void {
-        if (!selection.isEmpty === this.showTextStyleActions() && selection.isEmpty === this.showNonTextStyleActions()) {
+    /**
+     * Hides actions that are not applicable in the given context, and shows actions that can be used.
+     * @param selection Currently selected text
+     */
+    updateEditorActionsVisibility(selection: EditorRange | undefined): void {
+        const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
+        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
             return;
         }
-        this.showTextStyleActions.set(!selection.isEmpty);
-        this.showNonTextStyleActions.set(selection.isEmpty);
+        this.showTextStyleActions.set(!isEmpty);
+        this.showNonTextStyleActions.set(isEmpty);
     }
 
     /**

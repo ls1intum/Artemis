@@ -518,7 +518,7 @@ describe('MarkdownEditorMonacoComponent', () => {
         jest.spyOn(comp, 'isInCommunication').mockReturnValue(true);
         fixture.detectChanges();
 
-        comp.onSelectionChanged({ isEmpty: false });
+        comp.updateEditorActionsVisibility({ startLineNumber: 1, endLineNumber: 1, startColumn: 10, endColumn: 20 });
 
         expect(comp.showTextStyleActions()).toBeTrue();
         expect(comp.showNonTextStyleActions()).toBeFalse();

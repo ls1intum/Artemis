@@ -426,7 +426,7 @@ describe('MonacoEditorComponent', () => {
         const listenerStub = jest.fn();
         fixture.detectChanges();
         comp.setText('hallo welt, hello world');
-        const disposable = comp.onDidChangeTextSelection(listenerStub);
+        const disposable = comp.onSelectionChange(listenerStub);
         comp.setSelection({ startLineNumber: 1, startColumn: 1, endLineNumber: 1, endColumn: 10 });
         expect(listenerStub).toHaveBeenCalled();
         disposable.dispose();
