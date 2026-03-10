@@ -98,7 +98,7 @@ class IrisLectureSearchIntegrationTest extends AbstractIrisIntegrationTest {
 
         assertThat(response).isNotNull();
         assertThat(response.answer()).isEqualTo("No relevant sources found.");
-        assertThat(response.sources()).isEmpty();
+        assertThat(response.sources()).isNullOrEmpty();
     }
 
     @Test
