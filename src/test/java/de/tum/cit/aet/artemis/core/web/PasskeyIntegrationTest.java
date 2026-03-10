@@ -84,16 +84,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
     @AfterEach
     void cleanupPasskeys() {
-        // Clean up only passkey credentials created for test users to avoid interfering with other tests
-        User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
-        User student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElse(null);
-
-        if (student1 != null) {
-            passkeyCredentialsRepository.deleteAll(passkeyCredentialsRepository.findByUser(student1.getId()));
-        }
-        if (student2 != null) {
-            passkeyCredentialsRepository.deleteAll(passkeyCredentialsRepository.findByUser(student2.getId()));
-        }
+        // Clean up passkey credentials for all test users to avoid interfering with other tests
+        userTestRepository.findAllByUserPrefix(TEST_PREFIX).forEach(user -> passkeyCredentialsRepository.deleteAll(passkeyCredentialsRepository.findByUser(user.getId())));
     }
 
     private String getRpId() throws Exception {
@@ -387,8 +379,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
-            assertThat(passkeys).isNotEmpty();
-            assertThat(passkeys).hasSizeGreaterThanOrEqualTo(2);
+            assertThat(passkeys).hasSize(2);
 
             PasskeyAdminDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
             assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());
