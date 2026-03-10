@@ -141,7 +141,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithAnonymousUser
         void testGetPasskeys_AccessDeniedForAnonymous() throws Exception {
-            request.getList("/api/core/passkey/user", HttpStatus.FORBIDDEN, PasskeyDTO.class);
+            request.getList("/api/core/passkey/user", HttpStatus.UNAUTHORIZED, PasskeyDTO.class);
         }
     }
 
@@ -174,7 +174,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
-            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.FORBIDDEN);
+            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.UNAUTHORIZED);
         }
 
         @Test
@@ -240,7 +240,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.FORBIDDEN);
+            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.UNAUTHORIZED);
         }
 
         @Test
@@ -281,10 +281,10 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         }
 
         @Test
-        @WithMockUser(username = "admin", roles = "ADMIN")
+        @WithMockUser(username = TEST_PREFIX + "adminapproval", roles = "ADMIN")
         void testUpdatePasskeyApproval_AccessDeniedBecauseNotSuperAdmin() throws Exception {
             when(passkeyAuthenticationService.isAuthenticatedWithSuperAdminApprovedPasskey()).thenReturn(true);
-            User user = userUtilService.getUserByLogin("admin");
+            User user = userUtilService.createAndSaveUser(TEST_PREFIX + "adminapproval");
             PasskeyCredential existingCredential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
             request.put("/api/core/passkey/" + existingCredential.getCredentialId() + "/approval", true, HttpStatus.FORBIDDEN);
