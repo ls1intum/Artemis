@@ -20,6 +20,7 @@ const Image = ({
                    style,
                    hideBorder,
                    caption,
+                   inline,
                    ...rest
                }: {
     src: string | React.ComponentType<React.SVGProps<SVGSVGElement>>;
@@ -28,6 +29,7 @@ const Image = ({
     style?: React.CSSProperties;
     hideBorder?: boolean;
     caption?: string;
+    inline?: boolean;
 }): React.ReactElement => {
     const sizeStyles: Record<ImageSize, React.CSSProperties> = {
         [ImageSize.small]: { maxWidth: '300px' },
@@ -40,11 +42,12 @@ const Image = ({
         width: 'auto',
         height: 'auto',
         objectFit: 'contain',
-        border: hideBorder ? 'none' : '1px solid var(--ifm-color-emphasis-300)',
-        borderRadius: '8px',
+        border: (hideBorder || inline) ? 'none' : '1px solid var(--ifm-color-emphasis-300)',
+        borderRadius: inline ? '0' : '8px',
         margin: '0',
-        padding: '0.5rem', // Internal padding around the image
-        display: 'block', // Prevents extra space below the image
+        padding: inline ? '0 0.25rem' : '0.5rem',
+        display: inline ? 'inline' : 'block',
+        verticalAlign: inline ? 'middle' : undefined,
         imageRendering: '-webkit-optimize-contrast',
         backfaceVisibility: 'hidden', // Prevents blurry rendering in some browsers
         transform: 'translateZ(0)', // Forces GPU acceleration for sharper rendering
@@ -61,6 +64,10 @@ const Image = ({
         const SvgComponent = src as React.FC<React.SVGProps<SVGSVGElement>>;
         return <SvgComponent role="img" aria-label={alt} style={combinedImageStyles} />;
     };
+
+    if (inline) {
+        return renderImage();
+    }
 
     return (
         <figure style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.125rem', margin: '1.5rem 0', width: 'fit-content' }}>
