@@ -1,19 +1,18 @@
 ---
-id: notifications
 title: Notifications
 sidebar_label: Notifications
 ---
 
-import Image, {ImageSize} from "../../src/components/Image/Image";
-import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
-import notificationWebImg from "./assets/notifications/notification-web.png";
-import notificationGeneralImg from "./assets/notifications/notification-general.png";
-import notificationEmailImg from "./assets/notifications/notification-email.png";
-import userSettingsImg from "./assets/notifications/user-settings.png";
-import securityNotificationsImg from "./assets/notifications/notification-security.png";
-import notificationPushImg from "./assets/notifications/notification-push.png";
-import notificationSettingsImg from "./assets/notifications/notification-settings.png";
+import notificationWebImg from "../assets/notifications/notification-web.png";
+import notificationGeneralImg from "../assets/notifications/notification-general.png";
+import notificationEmailImg from "../assets/notifications/notification-email.png";
+import userSettingsImg from "../assets/notifications/user-settings.png";
+import securityNotificationsImg from "../assets/notifications/notification-security.png";
+import notificationPushImg from "../assets/notifications/notification-push.png";
+import notificationSettingsImg from "../assets/notifications/notification-settings.png";
 
 # Notifications
 
@@ -48,6 +47,7 @@ In addition to course-specific notifications, Artemis can send email alerts for 
 * **New Passkey Added** – Alerts you when a new passkey is registered.
 * **VCS Token Expired** – Informs you when your VCS (Version Control System) token expires.
 * **SSH Key Expired** – Warns you when your SSH key is no longer valid.
+* **Maintenance** – Notifies you about scheduled system maintenance windows.
 
 These notifications are enabled by default to protect your account. You can manage your preferences under:
 
@@ -95,7 +95,7 @@ The table below shows all supported notification types and which channels they s
 | **Communication Notifications** ||||
 | NewPostNotification | X | X |  |
 | NewAnswerNotification | X | X |  |
-| NewMentionNotification | X | X |  |
+| NewMentionNotification | X | X | X |
 | NewAnnouncementNotification | X | X | X |
 | AddedToChannelNotification | X | X |  |
 | RemovedFromChannelNotification | X | X |  |
@@ -104,8 +104,8 @@ The table below shows all supported notification types and which channels they s
 | NewExerciseNotification | X | X | X |
 | ExerciseOpenForPracticeNotification | X | X | X |
 | ExerciseAssessedNotification | X | X | X |
-| ExerciseUpdatedNotification | X | X |  |
-| QuizExerciseStartedNotification | X | X |  |
+| ExerciseUpdatedNotification | X | X | X |
+| QuizExerciseStartedNotification | X | X | X |
 | AttachmentChangedNotification | X | X |  |
 | NewManualFeedbackRequestNotification | X | X |  |
 | DuplicateTestCaseNotification | X | X | X |
