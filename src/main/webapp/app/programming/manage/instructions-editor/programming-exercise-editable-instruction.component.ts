@@ -116,6 +116,7 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
     private suppressUnsavedForNextProblemStatementChange = false;
+    private dirtySignalSuppressedDuringInitialSync = false;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -283,6 +284,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
                 this.suppressUnsavedForNextProblemStatementChange = false;
             } else if (this.shouldMarkProblemStatementAsUnsaved()) {
                 this.unsavedChanges = true;
+            } else {
+                this.dirtySignalSuppressedDuringInitialSync = true;
             }
             // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
@@ -524,13 +527,21 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
             return;
         }
         this.teardownProblemStatementSync();
+        this.suppressUnsavedForNextProblemStatementChange = false;
+        this.dirtySignalSuppressedDuringInitialSync = false;
         this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
-        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(({ contentChangedDuringFinalize }) => {
-            if (contentChangedDuringFinalize) {
-                this.suppressUnsavedForNextProblemStatementChange = true;
-            }
-        });
+        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(
+            ({ contentChangedDuringFinalize, contentDivergedFromFallback }) => {
+                if (contentChangedDuringFinalize && this.dirtySignalSuppressedDuringInitialSync) {
+                    this.suppressUnsavedForNextProblemStatementChange = true;
+                }
+                if (contentDivergedFromFallback) {
+                    this.unsavedChanges = true;
+                }
+                this.dirtySignalSuppressedDuringInitialSync = false;
+            },
+        );
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
@@ -552,6 +563,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.problemStatementBinding = undefined;
         this.problemStatementBindingDestroyed = false;
         this.problemStatementSyncState = undefined;
+        this.suppressUnsavedForNextProblemStatementChange = false;
+        this.dirtySignalSuppressedDuringInitialSync = false;
         this.problemStatementSyncService.reset();
     }
 

@@ -31,6 +31,12 @@ export type ProblemStatementSyncState = {
     awareness: Awareness;
 };
 
+export type ProblemStatementInitialSyncFinalizedEvent = {
+    contentChangedDuringFinalize: boolean;
+    contentDivergedFromFallback: boolean;
+    finalContent: string;
+};
+
 enum ProblemStatementSyncOrigin {
     Remote = 'remote',
     Seed = 'seed',
@@ -66,7 +72,7 @@ export class ProblemStatementSyncService {
     // individual component lifecycles. Completing it on reset() would prevent subsequent init()
     // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private stateReplacedSubject = new Subject<ProblemStatementSyncState>();
-    private initialSyncFinalizedSubject = new Subject<{ contentChangedDuringFinalize: boolean }>();
+    private initialSyncFinalizedSubject = new Subject<ProblemStatementInitialSyncFinalizedEvent>();
     // Track initial leader selection and buffer updates until we seed the doc.
     private pendingInitialSync?: {
         requestId: string;
@@ -87,9 +93,13 @@ export class ProblemStatementSyncService {
 
     /**
      * Stream emitting when initial synchronization finalizes.
-     * Carries whether finalize applied content that changed the local Y.Text.
+     *
+     * `contentChangedDuringFinalize` indicates whether finalize changed local Y.Text compared
+     * to its pre-finalize value.
+     * `contentDivergedFromFallback` indicates whether finalized shared content differs from the
+     * server fallback used during initialization. `finalContent` carries the finalized text.
      */
-    get initialSyncFinalized$(): Observable<{ contentChangedDuringFinalize: boolean }> {
+    get initialSyncFinalized$(): Observable<ProblemStatementInitialSyncFinalizedEvent> {
         return this.initialSyncFinalizedSubject.asObservable();
     }
 
@@ -377,9 +387,11 @@ export class ProblemStatementSyncService {
         // because even tho we sent the "seed" update, remote might have initialized with their own seed already
         // this ensures that remote will replace their seed with our seed
         this.flushQueuedFullContentRequests();
-        const textAfterFinalize = this.yText?.toString() ?? '';
-        this.initialSyncFinalizedSubject.next({ contentChangedDuringFinalize: textBeforeFinalize !== textAfterFinalize });
+        const finalContent = this.yText?.toString() ?? '';
+        const contentChangedDuringFinalize = textBeforeFinalize !== finalContent;
+        const contentDivergedFromFallback = finalContent !== this.fallbackInitialContent;
         this.awaitingInitialSync = false;
+        this.initialSyncFinalizedSubject.next({ contentChangedDuringFinalize, contentDivergedFromFallback, finalContent });
         if (this.pendingInitialSync.timeoutId) {
             clearTimeout(this.pendingInitialSync.timeoutId);
         }

@@ -83,7 +83,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     const yText = yDoc.getText('problem-statement');
     const yAwareness = {} as any;
     const stateReplaced$ = new Subject<{ doc: Y.Doc; text: Y.Text; awareness: any }>();
-    const initialSyncFinalized$ = new Subject<{ contentChangedDuringFinalize: boolean }>();
+    const initialSyncFinalized$ = new Subject<{ contentChangedDuringFinalize: boolean; contentDivergedFromFallback: boolean; finalContent: string }>();
     const problemStatementSyncServiceMock = {
         init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
         reset: jest.fn(),
@@ -220,7 +220,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
     });
 
-    it('does not emit unsaved flag for initial sync finalize hydration change', fakeAsync(() => {
+    it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', fakeAsync(() => {
         const hasUnsavedSpy = jest.fn();
         const instructionChangeSpy = jest.fn();
         comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
@@ -241,12 +241,72 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         comp.ngAfterViewInit();
         tick();
 
-        initialSyncFinalized$.next({ contentChangedDuringFinalize: true });
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(true);
+        comp.updateProblemStatement('changed-during-sync');
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(false);
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'changed-after-finalize' });
         comp.updateProblemStatement('changed-after-finalize');
 
         expect(hasUnsavedSpy).not.toHaveBeenCalled();
         expect(comp.unsavedChangesValue).toBeFalse();
         expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
+    }));
+
+    it('does not suppress first user edit after finalize when no bootstrap change was suppressed', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'first-user-edit-after-finalize' });
+        comp.updateProblemStatement('first-user-edit-after-finalize');
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue).toBeTrue();
+    }));
+
+    it('marks unsaved when finalized sync content diverges from fallback', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'saved-server-content' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({
+            contentChangedDuringFinalize: true,
+            contentDivergedFromFallback: true,
+            finalContent: 'remote-unsaved-content',
+        });
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue).toBeTrue();
     }));
 
     it('should reset sync service on component destroy', () => {

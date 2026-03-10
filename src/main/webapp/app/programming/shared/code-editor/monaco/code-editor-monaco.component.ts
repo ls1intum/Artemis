@@ -113,13 +113,15 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly newFeedbackLines = signal<number[]>([]);
     readonly binaryFileSelected = signal<boolean>(false);
     readonly fileSession = signal<FileSession>({});
+    readonly selectedFileAwaitingInitialSync = signal<boolean>(false);
     readonly editorLocked = computed<boolean>(
         () =>
             this.disableActions() ||
             this.isTutorAssessment() ||
             this.commitState() === CommitState.CONFLICT ||
             !this.selectedFile() ||
-            !!this.fileSession()[this.selectedFile()!]?.loadingError,
+            !!this.fileSession()[this.selectedFile()!]?.loadingError ||
+            this.selectedFileAwaitingInitialSync(),
     );
 
     readonly feedbackInternal = signal<Feedback[]>([]);
@@ -193,6 +195,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.fileSyncStateReplacedSubscription?.unsubscribe();
             this.fileSyncStateReplacedSubscription = undefined;
             if (!syncService) {
+                this.selectedFileAwaitingInitialSync.set(false);
                 return;
             }
             this.fileSyncReadySubscription = syncService.initialSyncFinalized$.subscribe((event) => this.onFileInitialSyncFinalized(event));
@@ -232,9 +235,12 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.renderFeedbackWidgets();
             // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
             this.updateEditorInteractionMode();
+            this.beginSelectedFileInitialSyncGuard();
             this.onFileLoad.emit(this.selectedFile()!);
             this.pendingReviewRenderFile = this.selectedFile()!;
             this.tryRenderPendingReviewCommentWidgets(this.selectedFile()!);
+        } else if (changes.selectedFile && !this.selectedFile()) {
+            this.selectedFileAwaitingInitialSync.set(false);
         }
 
         if (changes.feedbacks) {
@@ -573,8 +579,11 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      * local user edit, so the next dirty signal for this file is suppressed.
      */
     private onFileSyncStateReplaced(filePath: string): void {
-        this.suppressNextDirtySignal.add(filePath);
-        this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
+        if (this.selectedFile() === filePath) {
+            this.suppressNextDirtySignal.add(filePath);
+            this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
+            this.selectedFileAwaitingInitialSync.set(false);
+        }
         if (!this.enableExerciseReviewComments() || !isReviewCommentsSupportedRepository(this.selectedRepository()) || this.selectedFile() !== filePath) {
             return;
         }
@@ -598,12 +607,16 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
         contentDivergedFromFallback: boolean;
         finalContent: string;
     }): void {
+        const isSelectedFile = this.selectedFile() === filePath;
         // During file bootstrap we clear the model and then hydrate from synced Yjs content.
         // The clear step is suppressed while awaitingInitialSync=true; suppress one additional
         // post-finalize change so hydration does not mark the file as locally dirty.
-        if (this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
+        if (isSelectedFile && this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
             this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
             this.suppressNextDirtySignal.add(filePath);
+        }
+        if (isSelectedFile) {
+            this.selectedFileAwaitingInitialSync.set(false);
         }
         // If finalized shared content diverged from the initial server fallback, we surface this
         // as unsubmitted work in this window as well.
@@ -611,6 +624,20 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.emitDirtySignalFromInitialSync(filePath, finalContent);
         }
         this.tryRenderPendingReviewCommentWidgets(filePath);
+    }
+
+    /**
+     * Puts the selected Monaco file into a temporary read-only mode while collaborative
+     * initial sync bootstraps. This avoids local user edits during the short unstable window
+     * before we know the finalized shared content.
+     */
+    private beginSelectedFileInitialSyncGuard(): void {
+        const syncService = this.fileSyncService();
+        if (!syncService?.isInitialized()) {
+            this.selectedFileAwaitingInitialSync.set(false);
+            return;
+        }
+        this.selectedFileAwaitingInitialSync.set(true);
     }
 
     /**
