@@ -140,12 +140,10 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
     }
 
     /**
-     * Returns the current docker image from buildPlanPhases.
+     * Stores the selected Docker image alongside the current phase configuration.
+     *
+     * @param dockerImage the selected Docker image
      */
-    get currentDockerImage(): string | undefined {
-        return this.buildPlanPhases.dockerImage;
-    }
-
     setDockerImage(dockerImage: string) {
         this.buildPlanPhases = { ...this.buildPlanPhases, dockerImage: dockerImage.trim() };
     }

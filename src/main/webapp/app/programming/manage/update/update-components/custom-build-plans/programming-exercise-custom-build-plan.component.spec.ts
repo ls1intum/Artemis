@@ -319,18 +319,6 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         });
     });
 
-    describe('currentDockerImage', () => {
-        it('should return docker image from buildPlanPhases', () => {
-            comp.buildPlanPhases = { phases: [], dockerImage: 'my-docker-image' };
-            expect(comp.currentDockerImage).toBe('my-docker-image');
-        });
-
-        it('should return undefined when no docker image is set', () => {
-            comp.buildPlanPhases = { phases: [] };
-            expect(comp.currentDockerImage).toBeUndefined();
-        });
-    });
-
     describe('setDockerImage', () => {
         it('should update dockerImage in buildPlanPhases', () => {
             comp.buildPlanPhases = { phases: [], dockerImage: 'old-image' };

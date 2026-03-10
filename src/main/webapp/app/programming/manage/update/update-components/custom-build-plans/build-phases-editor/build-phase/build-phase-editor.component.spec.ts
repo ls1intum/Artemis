@@ -43,7 +43,7 @@ describe('BuildPhaseEditorComponent', () => {
         fixture.detectChanges();
     });
 
-    const getPhaseNameInput = () => fixture.debugElement.nativeElement.querySelector('#phase-name-input') as HTMLInputElement;
+    const getPhaseNameInput = () => fixture.debugElement.nativeElement.querySelector('#phase-name-input-1') as HTMLInputElement;
     const getScriptEditor = () => fixture.debugElement.query(By.css('[data-testid="script-editor"]'));
     const getResultPathInput = (index: number) => fixture.debugElement.nativeElement.querySelector(`[data-testid="result-path-input-${index}"]`) as HTMLInputElement | null;
     const getMoveUpButton = () => fixture.debugElement.nativeElement.querySelector('#move-up-button') as HTMLButtonElement;

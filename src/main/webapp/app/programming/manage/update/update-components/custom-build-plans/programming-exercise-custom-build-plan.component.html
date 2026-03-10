@@ -5,10 +5,10 @@
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip" />
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
-        @if (currentDockerImage) {
+        @if (buildPlanPhases.dockerImage) {
             <jhi-programming-exercise-build-configuration
                 [programmingExercise]="programmingExercise"
-                [dockerImage]="currentDockerImage"
+                [dockerImage]="buildPlanPhases.dockerImage"
                 (dockerImageChange)="setDockerImage($event)"
                 [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
                 (timeoutChange)="setTimeout($event)"

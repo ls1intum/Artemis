@@ -38,6 +38,9 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
     templateUrl: './build-phase-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Edits a single build phase (name, condition, script, result paths).
+ */
 export class BuildPhaseEditorComponent {
     private readonly translateService = inject(TranslateService);
     private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -72,18 +75,39 @@ export class BuildPhaseEditorComponent {
     readonly moveUp = output<void>();
     readonly moveDown = output<void>();
 
+    /**
+     * Updates the phase name.
+     *
+     * @param name the new phase name
+     */
     updateName(name: string): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, name }));
     }
 
+    /**
+     * Updates the phase script.
+     *
+     * @param script the new script content
+     */
     updateScript(script: string): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, script }));
     }
 
+    /**
+     * Updates the execution condition for the phase.
+     *
+     * @param condition the selected execution condition
+     */
     updateCondition(condition: BuildPhaseCondition): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, condition }));
     }
 
+    /**
+     * Replaces a single result path entry.
+     *
+     * @param index the index of the result path to update
+     * @param value the new glob pattern
+     */
     updateResultPath(index: number, value: string): void {
         this.phase.update((oldPhase) => {
             const resultPaths = [...(oldPhase.resultPaths ?? [])];
@@ -92,10 +116,18 @@ export class BuildPhaseEditorComponent {
         });
     }
 
+    /**
+     * Appends an empty result path entry.
+     */
     addResultPath(): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, resultPaths: [...(oldPhase.resultPaths ?? []), ''] }));
     }
 
+    /**
+     * Removes the result path at the provided index.
+     *
+     * @param deleteIndex the index of the result path to remove
+     */
     deleteResultPath(deleteIndex: number): void {
         this.phase.update((oldPhase) => ({
             ...oldPhase,

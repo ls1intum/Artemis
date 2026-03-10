@@ -54,9 +54,9 @@
     <!-- Phase controls row -->
     <div class="d-flex align-items-start gap-2 mb-2">
         <div class="d-flex flex-column gap-1">
-            <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
+            <label [for]="'phase-name-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
             <input
-                id="phase-name-input"
+                [id]="'phase-name-input-' + index()"
                 pInputText
                 pSize="small"
                 [ngModel]="phase().name"
@@ -67,9 +67,17 @@
 
         <div class="d-flex flex-column gap-1">
             <div class="d-flex gap-1">
-                <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
+                <label [for]="'phase-condition-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.condition"></label>
             </div>
-            <p-select size="small" [options]="conditionOptions()" optionLabel="label" optionValue="value" [ngModel]="phase().condition" (ngModelChange)="updateCondition($event)" />
+            <p-select
+                [inputId]="'phase-condition-input-' + index()"
+                size="small"
+                [options]="conditionOptions()"
+                optionLabel="label"
+                optionValue="value"
+                [ngModel]="phase().condition"
+                (ngModelChange)="updateCondition($event)"
+            />
         </div>
     </div>
 

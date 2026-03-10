@@ -14,6 +14,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     templateUrl: './build-phases-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
+/**
+ * Manages the ordered list of editable build phases.
+ */
 export class BuildPhasesEditorComponent {
     protected readonly faPlus = faPlus;
 
@@ -21,6 +24,9 @@ export class BuildPhasesEditorComponent {
 
     readonly phaseCount = computed(() => this.phases().length);
 
+    /**
+     * Appends a new phase with default values.
+     */
     addPhase() {
         this.phases.update((phases) => [
             ...phases,
@@ -33,14 +39,30 @@ export class BuildPhasesEditorComponent {
         ]);
     }
 
+    /**
+     * Removes the phase at the provided index.
+     *
+     * @param index the index of the phase to remove
+     */
     deletePhase(index: number) {
         this.phases.update((phases) => phases.filter((_, i) => i !== index));
     }
 
+    /**
+     * Replaces the phase at the provided index.
+     *
+     * @param index the index of the phase to update
+     * @param updated the updated phase content
+     */
     updatePhase(index: number, updated: BuildPhase) {
         this.phases.update((phases) => phases.map((p, i) => (i === index ? updated : p)));
     }
 
+    /**
+     * Moves a phase one position upward.
+     *
+     * @param index the index of the phase to move
+     */
     moveUp(index: number) {
         if (index === 0) return;
         this.phases.update((phases) => {
@@ -50,6 +72,11 @@ export class BuildPhasesEditorComponent {
         });
     }
 
+    /**
+     * Moves a phase one position downward.
+     *
+     * @param index the index of the phase to move
+     */
     moveDown(index: number) {
         this.phases.update((phases) => {
             if (index === phases.length - 1) return phases;
