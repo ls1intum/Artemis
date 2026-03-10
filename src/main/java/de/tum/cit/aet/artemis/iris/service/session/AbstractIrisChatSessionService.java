@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.service.session;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.springframework.context.MessageSource;
@@ -222,9 +223,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         return updatedJob.get();
     }
 
+    private static final Set<String> MCQ_CONTENT_TYPES = Set.of("mcq", "mcq-set");
+
     /**
      * Parses the result string from the LLM response.
-     * If the result is a valid JSON object with a "type" field equal to "mcq", it is stored as JSON content.
+     * If the result is a valid JSON object with a "type" field matching a known MCQ type, it is stored as JSON content.
      * Otherwise, it is stored as plain text content.
      *
      * @param result The result string from the LLM
@@ -235,7 +238,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && "mcq".equals(jsonNode.get("type").asText())) {
+                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
                     return new IrisJsonMessageContent(jsonNode);
                 }
             }
