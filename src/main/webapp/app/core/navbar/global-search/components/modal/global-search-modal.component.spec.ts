@@ -39,6 +39,8 @@ describe('GlobalSearchModalComponent', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        // jsdom does not implement scrollIntoView; stub it to avoid errors from child-component scroll effects
+        Element.prototype.scrollIntoView = vi.fn();
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
