@@ -8,7 +8,9 @@ import {
     ExerciseEditorSyncEventType,
     ExerciseEditorSyncService,
     ExerciseEditorSyncTarget,
+    repositoryTypeToSyncTarget,
 } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ConnectionState, WebsocketService } from 'app/shared/service/websocket.service';
 import { BrowserFingerprintService } from 'app/core/account/fingerprint/browser-fingerprint.service';
 
@@ -252,7 +254,7 @@ describe('ExerciseEditorSyncService', () => {
 
         service.connect(5);
         service.subscribeToUpdates().subscribe({
-            next: (message) => received.push(message),
+            next: (message: ExerciseEditorSyncEvent) => received.push(message),
             complete: () => (completed = true),
         });
 
@@ -319,14 +321,14 @@ describe('ExerciseEditorSyncService', () => {
         const firstReceived: ExerciseEditorSyncEvent[] = [];
         let firstCompleted = false;
         service.subscribeToUpdates().subscribe({
-            next: (message) => firstReceived.push(message),
+            next: (message: ExerciseEditorSyncEvent) => firstReceived.push(message),
             complete: () => (firstCompleted = true),
         });
 
         // Connecting to a different exercise tears down the previous connection
         service.connect(6);
         const secondReceived: ExerciseEditorSyncEvent[] = [];
-        service.subscribeToUpdates().subscribe((message) => secondReceived.push(message));
+        service.subscribeToUpdates().subscribe((message: ExerciseEditorSyncEvent) => secondReceived.push(message));
 
         expect(firstCompleted).toBe(true);
         expect(websocketService.subscribe).toHaveBeenNthCalledWith(1, '/topic/exercises/5/synchronization');
@@ -446,5 +448,31 @@ describe('ExerciseEditorSyncService', () => {
 
             expect(() => service.sendSynchronizationUpdate(5, message)).toThrow('Cannot send synchronization message: not connected to websocket topic');
         });
+    });
+});
+
+describe('repositoryTypeToSyncTarget', () => {
+    it('maps TEMPLATE to TEMPLATE_REPOSITORY', () => {
+        expect(repositoryTypeToSyncTarget(RepositoryType.TEMPLATE)).toBe(ExerciseEditorSyncTarget.TEMPLATE_REPOSITORY);
+    });
+
+    it('maps SOLUTION to SOLUTION_REPOSITORY', () => {
+        expect(repositoryTypeToSyncTarget(RepositoryType.SOLUTION)).toBe(ExerciseEditorSyncTarget.SOLUTION_REPOSITORY);
+    });
+
+    it('maps TESTS to TESTS_REPOSITORY', () => {
+        expect(repositoryTypeToSyncTarget(RepositoryType.TESTS)).toBe(ExerciseEditorSyncTarget.TESTS_REPOSITORY);
+    });
+
+    it('maps AUXILIARY to AUXILIARY_REPOSITORY', () => {
+        expect(repositoryTypeToSyncTarget(RepositoryType.AUXILIARY)).toBe(ExerciseEditorSyncTarget.AUXILIARY_REPOSITORY);
+    });
+
+    it('returns undefined for ASSIGNMENT', () => {
+        expect(repositoryTypeToSyncTarget(RepositoryType.ASSIGNMENT)).toBeUndefined();
+    });
+
+    it('returns undefined for USER', () => {
+        expect(repositoryTypeToSyncTarget(RepositoryType.USER)).toBeUndefined();
     });
 });

@@ -63,6 +63,7 @@ const {
 } = require('./tsconfig.json');
 
 module.exports = {
+    testEnvironment: 'jsdom',
     testEnvironmentOptions: {
         url: 'https://artemis.fake/test',
         globalsCleanup: 'on',
@@ -93,6 +94,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/account/**',   // core account module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/admin/**',     // core admin module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/core/navbar/global-search/**', // global search uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/lecture/**',        // lecture module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/modeling/**',       // modeling module uses Vitest (see vitest.config.ts)
@@ -103,8 +105,15 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/course/manage/**', // core course manage module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/synchronization/**', // exercise synchronization module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exercise/review/**', // review comment module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/**', // checklist-panel uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts', // problem-statement service uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',     // problem-statement utils uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',           // inline-refinement-button uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/hyperion/**',                                              // hyperion module uses Vitest (see vitest.config.ts)
     ],
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/core/config/prod.config.ts',
@@ -113,6 +122,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
         '<rootDir>/src/main/webapp/app/core/account/',      // core account module uses Vitest
         '<rootDir>/src/main/webapp/app/core/admin/',        // core admin module uses Vitest
+        '<rootDir>/src/main/webapp/app/core/navbar/global-search/', // global search uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/lecture/',           // lecture module uses Vitest
         '<rootDir>/src/main/webapp/app/modeling/',          // modeling module uses Vitest
@@ -123,18 +133,26 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module uses Vitest
+        '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons', // buttons module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.ts',
+        '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.ts',
+        '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module uses Vitest
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module uses Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel uses Vitest
+        '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module uses Vitest
     ],
     // Global coverage thresholds for Jest. Modules using Vitest (e.g., fileupload) have their own
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 89.3,
+            statements: 88.7,
             branches: 73.5,
-            functions: 83.3,
-            lines: 89.3,
+            functions: 82.34,
+            lines: 88.85,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -161,6 +179,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
         '<rootDir>/src/main/webapp/app/core/account/',  // core account module
         '<rootDir>/src/main/webapp/app/core/admin/',    // core admin module
+        '<rootDir>/src/main/webapp/app/core/navbar/global-search/', // global search
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/lecture/',       // lecture module
         '<rootDir>/src/main/webapp/app/modeling/',      // modeling module
@@ -171,9 +190,16 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module
         '<rootDir>/src/main/webapp/app/core/course/manage/', // core course manage module
+        '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
+        '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
+        '<rootDir>/src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts',    // migrated to Vitest
+        '<rootDir>/src/main/webapp/app/shared/monaco-editor/inline-refinement-button/',               // migrated to Vitest
         '<rootDir>/src/main/webapp/app/exercise/synchronization/', // exercise synchronization module
         '<rootDir>/src/main/webapp/app/exercise/review/', // review comment module
+        '<rootDir>/src/main/webapp/app/programming/manage/update/update-components/problem/checklist-panel/', // checklist-panel (vitest)
+        '<rootDir>/src/main/webapp/app/hyperion/',         // hyperion module
     ],
     testTimeout: 3000,
     testMatch: [
