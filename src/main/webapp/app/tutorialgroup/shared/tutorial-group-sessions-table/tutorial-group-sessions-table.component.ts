@@ -108,7 +108,7 @@ export class TutorialGroupSessionsTableComponent {
         const now = this.getCurrentDate();
 
         for (const session of sessions) {
-            const end = session.endDate ? dayjs(session.endDate) : undefined;
+            const end = session.endDate ? dayjs.tz(session.endDate, this.timeZone()!) : undefined;
 
             if (end && end.isBefore(now)) {
                 past.push(session);
