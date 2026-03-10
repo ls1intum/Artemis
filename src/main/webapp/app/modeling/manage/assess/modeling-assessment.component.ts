@@ -70,7 +70,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         effect(() => {
             const incoming = this.resultFeedbacks();
 
-            if (!incoming) {
+            if (!incoming || !this.apollonEditor) {
                 return;
             }
 
@@ -113,6 +113,8 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
         if (elementCounts) {
             await this.updateElementCounts(elementCounts);
         }
+        // Ensure assessments are added after editor initialization
+        await this.updateApollonAssessments(this.referencedFeedbacks);
         await this.applyStateConfiguration();
         this.setupInteract();
     }
