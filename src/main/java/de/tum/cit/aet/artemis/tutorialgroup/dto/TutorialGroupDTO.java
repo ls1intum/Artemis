@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import org.jspecify.annotations.Nullable;
@@ -22,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupDTO(@Nullable Long id, @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant, @Nullable String additionalInformation,
-        @Nullable Integer capacity, @Nullable Boolean isOnline, @Nullable String language, @Nullable String campus) {
+        @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus) {
 
     /**
      * Minimal DTO for the teaching assistant, only containing the login needed to look up the user.

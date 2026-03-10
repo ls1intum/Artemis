@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -270,6 +271,32 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOneOfCourse_asInstructor_shouldIncludeRequiredFieldsAndOmitNullableFieldsWhenUnset() throws Exception {
+        var tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), null, null, null, null, null, null, Set.of());
+
+        var responseBody = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroup.getId(), HttpStatus.OK, String.class);
+        var tutorialGroupResponse = request.getObjectMapper().readTree(responseBody);
+
+        assertThat(tutorialGroupResponse.hasNonNull("id")).isTrue();
+        assertThat(tutorialGroupResponse.hasNonNull("title")).isTrue();
+        assertThat(tutorialGroupResponse.path("title").asText()).isEqualTo(tutorialGroup.getTitle());
+        assertThat(tutorialGroupResponse.path("course").hasNonNull("id")).isTrue();
+        assertThat(tutorialGroupResponse.has("additionalInformation")).isFalse();
+        assertThat(tutorialGroupResponse.has("capacity")).isFalse();
+        assertThat(tutorialGroupResponse.has("campus")).isFalse();
+        assertThat(tutorialGroupResponse.has("language")).isFalse();
+        assertThat(tutorialGroupResponse.has("isOnline")).isFalse();
+        assertThat(tutorialGroupResponse.has("teachingAssistant")).isFalse();
+        assertThat(tutorialGroupResponse.has("tutorialGroupSchedule")).isFalse();
+        assertThat(tutorialGroupResponse.has("tutorialGroupSessions")).isFalse();
+        assertThat(tutorialGroupResponse.has("registrations")).isFalse();
+        assertThat(tutorialGroupResponse.has("channel")).isFalse();
+        assertThat(tutorialGroupResponse.has("nextSession")).isFalse();
+        assertThat(tutorialGroupResponse.has("averageAttendance")).isFalse();
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
@@ -421,6 +448,19 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_withoutIsOnline_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroup = new java.util.HashMap<>();
+        tutorialGroup.put("title", generateRandomTitle());
+        tutorialGroup.put("capacity", 15);
+        tutorialGroup.put("language", Language.ENGLISH.name());
+        tutorialGroup.put("campus", "Garching");
+        tutorialGroup.put("teachingAssistant", Map.of("login", testPrefix + "tutor1"));
+
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroup, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
         var existingTitle = tutorialGroupTestRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         // given
@@ -482,6 +522,62 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertThat(updatedTutorialGroup.title()).isEqualTo(newRandomTitle);
         asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroupTestRepository.findByIdElseThrow(updatedTutorialGroup.id()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withMissingTitle_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("isOnline", false);
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withOnlyRequiredFields_shouldSucceed() throws Exception {
+        var existingTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
+
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("title", existingTutorialGroup.getTitle());
+        tutorialGroupUpdateData.put("isOnline", existingTutorialGroup.getIsOnline());
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate,
+                TutorialGroupResponseDTO.class, HttpStatus.OK);
+
+        assertThat(updatedTutorialGroup.id()).isEqualTo(exampleOneTutorialGroupId);
+        assertThat(updatedTutorialGroup.title()).isEqualTo(existingTutorialGroup.getTitle());
+        assertThat(updatedTutorialGroup.isOnline()).isEqualTo(existingTutorialGroup.getIsOnline());
+        assertThat(updatedTutorialGroup.teachingAssistant()).isNull();
+        assertThat(updatedTutorialGroup.additionalInformation()).isNull();
+        assertThat(updatedTutorialGroup.capacity()).isNull();
+        assertThat(updatedTutorialGroup.language()).isNull();
+        assertThat(updatedTutorialGroup.campus()).isNull();
+        assertThat(updatedTutorialGroup.tutorialGroupSchedule()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withMissingIsOnline_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("title", generateRandomTitle());
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
     }
 
     @Test

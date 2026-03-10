@@ -1,5 +1,9 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -11,8 +15,9 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
  * DTO for updating tutorial groups. Builds on the create DTO data with schedule information.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupUpdateDataDTO(@Nullable Long id, String title, TutorialGroupDTO.TeachingAssistantDTO teachingAssistant, @Nullable String additionalInformation,
-        @Nullable Integer capacity, @Nullable Boolean isOnline, @Nullable String language, @Nullable String campus, @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule) {
+public record TutorialGroupUpdateDataDTO(@NotNull Long id, @NotBlank @Size(max = 19) String title, TutorialGroupDTO.TeachingAssistantDTO teachingAssistant,
+        @Nullable String additionalInformation, @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus,
+        @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule) {
 
     public TutorialGroupDTO toTutorialGroupDTO() {
         return new TutorialGroupDTO(id, title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus);
