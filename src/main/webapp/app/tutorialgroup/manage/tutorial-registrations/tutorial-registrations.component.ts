@@ -55,6 +55,8 @@ export class TutorialRegistrationsComponent {
     filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
     searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
     searchString = signal('');
+    loggedInUserIsAtLeastTutorOfGroup = input.required<boolean>();
+    loggedInUserIsAtLeastInstructorInCourse = input.required<boolean>();
 
     exportRegisteredStudents() {
         const registeredStudents = this.registeredStudents();

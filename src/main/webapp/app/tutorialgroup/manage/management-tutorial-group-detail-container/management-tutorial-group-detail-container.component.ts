@@ -1,6 +1,5 @@
-import { Component, DestroyRef, Signal, effect, inject, signal } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { catchError, map, of } from 'rxjs';
+import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
+import { catchError, of } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
@@ -15,10 +14,13 @@ import {
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
-import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getRouteData } from 'app/shared/route/getRouteData';
+import { TutorialGroupSharedStateService } from 'app/tutorialgroup/manage/service/tutorial-group-shared-state.service';
+import { AccountService } from 'app/core/auth/account.service';
+import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
+import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-management-tutorial-group-detail-container',
@@ -29,23 +31,31 @@ export class ManagementTutorialGroupDetailContainerComponent {
     private destroyRef = inject(DestroyRef);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private tutorialGroupService = inject(TutorialGroupService);
+    private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
+    private accountService = inject(AccountService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
 
     isLoading = signal(false);
-    tutorialGroup = this.tutorialGroupService.tutorialGroup;
-    course = this.getCourseSignal();
+    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
+    isMessagingEnabled = computed(() => this.computeIfMessagingEnabled());
+    loggedInUserIsAtLeastTutorOfGroup = computed(() => this.computeIfLoggedInUserIsAtLeastTutorOfGroup());
+    loggedInUserIsAtLeastEditorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastEditorInCourse());
+    loggedInUserIsAtLeastInstructorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastInstructorInCourse());
 
     constructor() {
+        const course = getRouteData<Course>(this.route, 'course');
+        this.tutorialGroupSharedStateService.course.set(course);
+
         effect(() => {
-            const courseId = this.course()?.id;
+            const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
             if (courseId && tutorialGroupId) {
-                this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+                this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
             }
         });
     }
@@ -85,7 +95,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -105,7 +115,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -126,7 +136,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -146,7 +156,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -174,7 +184,27 @@ export class ManagementTutorialGroupDetailContainerComponent {
             });
     }
 
-    private getCourseSignal(): Signal<Course | undefined> {
-        return toSignal(this.route.data.pipe(map((data) => data['course'] as Course | undefined)), { initialValue: undefined });
+    private computeIfMessagingEnabled(): boolean | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        return isMessagingEnabled(course);
+    }
+
+    private computeIfLoggedInUserIsAtLeastTutorOfGroup(): boolean | undefined {
+        const tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup();
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!tutorialGroup || !course) return undefined;
+        return tutorialGroup.tutorLogin === this.accountService.userIdentity()?.login || this.accountService.isAtLeastEditorInCourse(course);
+    }
+
+    private computeIfLoggedInUserIsAtLeastEditorInCourse(): boolean | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!course) return undefined;
+        return this.accountService.isAtLeastEditorInCourse(course);
+    }
+
+    private computeIfLoggedInUserIsAtLeastInstructorInCourse(): boolean | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!course) return undefined;
+        return this.accountService.isAtLeastInstructorInCourse(course);
     }
 }

@@ -1,6 +1,6 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
+import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';

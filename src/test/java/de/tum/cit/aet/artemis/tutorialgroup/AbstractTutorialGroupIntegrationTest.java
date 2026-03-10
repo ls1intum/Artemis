@@ -45,6 +45,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.OldCreateTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupUpdateDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -54,7 +55,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistr
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupScheduleTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupTestRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupUtilService;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 
 public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
@@ -320,7 +320,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         // Then update the tutorial group to add the schedule
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
         persistedTutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
+        var updateDTO = new TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
         request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroup.class, HttpStatus.OK);
 
         var newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);

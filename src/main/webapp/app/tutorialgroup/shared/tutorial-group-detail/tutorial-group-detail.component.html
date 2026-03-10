@@ -12,7 +12,7 @@
                 data-testid="tutorial-lecture-link"
             ></a>
         }
-        @if (messagingEnabled()) {
+        @if (isMessagingEnabled()) {
             @let chatLink = tutorChatLink();
             @if (chatLink) {
                 <a
@@ -43,7 +43,7 @@
                     data-testid="group-channel-link"
                 ></a>
             }
-            @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
+            @if (componentDisplayedInManagement()) {
                 <a
                     [routerLink]="['registrations']"
                     pButton
@@ -51,10 +51,10 @@
                     data-testid="registrations-link"
                     jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"
                 ></a>
-                @if (loggedInUserIsAtLeastEditor()) {
+                @if (loggedInUserIsAtLeastEditorInCourse()) {
                     <a [routerLink]="['edit']" pButton class="p-button-primary p-button-sm" data-testid="edit-button" jhiTranslate="entity.action.edit"></a>
                 }
-                @if (loggedInUserIsAtLeastInstructor()) {
+                @if (loggedInUserIsAtLeastInstructorInCourse()) {
                     <button
                         pButton
                         severity="danger"

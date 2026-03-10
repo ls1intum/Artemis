@@ -1,14 +1,14 @@
 import { Component, DestroyRef, computed, effect, inject, signal } from '@angular/core';
 import { TutorialGroupScheduleDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
+import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupTutorService } from 'app/tutorialgroup/shared/service/tutorial-group-tutor.service';
+import { TutorialGroupSharedStateService } from 'app/tutorialgroup/manage/service/tutorial-group-shared-state.service';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -19,8 +19,8 @@ import { TutorialGroupTutorService } from 'app/tutorialgroup/shared/service/tuto
 export class TutorialEditContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
-    private tutorialGroupService = inject(TutorialGroupService);
     private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorService);
     private router = inject(Router);
@@ -29,8 +29,8 @@ export class TutorialEditContainerComponent {
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
     isTutorsLoading = this.tutorialGroupTutorService.isLoading;
     tutors = this.tutorialGroupTutorService.tutors;
-    isTutorialGroupLoading = this.tutorialGroupService.isLoading;
-    tutorialGroup = this.tutorialGroupService.tutorialGroup;
+    isTutorialGroupLoading = this.tutorialGroupSharedStateService.isTutorialGroupLoading;
+    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
     isScheduleLoading = signal(false);
     schedule = signal<TutorialGroupScheduleDTO | undefined>(undefined);
     isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading() || this.isScheduleLoading());
@@ -63,7 +63,7 @@ export class TutorialEditContainerComponent {
             .subscribe({
                 next: () => {
                     this.isTutorialGroupLoading.set(false);
-                    this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.router.navigate(['..'], { relativeTo: this.activatedRoute });
                 },
                 error: () => {
@@ -90,7 +90,7 @@ export class TutorialEditContainerComponent {
     private loadGroupIfNecessary(courseId: number, tutorialGroupId: number) {
         const tutorialGroup = this.tutorialGroup();
         if (!tutorialGroup) {
-            this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+            this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
         }
     }
 }

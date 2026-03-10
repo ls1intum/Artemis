@@ -1,4 +1,4 @@
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot } from '@angular/router';
 import { Signal, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -29,4 +29,16 @@ export function getNumericPathVariableSignal(route: ActivatedRoute, variableName
         ),
         { initialValue: undefined },
     );
+}
+
+export function getNumericPathVariable(routeSnapshot: ActivatedRouteSnapshot, variableName: string): number | undefined {
+    for (const currentSnapshot of [...routeSnapshot.pathFromRoot].reverse()) {
+        const paramValue = currentSnapshot.paramMap.get(variableName);
+        if (paramValue === null) {
+            continue;
+        }
+        const numericValue = Number(paramValue);
+        return Number.isFinite(numericValue) ? numericValue : undefined;
+    }
+    return undefined;
 }

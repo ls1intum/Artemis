@@ -28,7 +28,7 @@
                 overflow-wrap: break-word;
             }
 
-            th:last-child {
+            th.action-column {
                 flex: none;
                 width: 5rem;
                 justify-content: end;
@@ -56,7 +56,7 @@
                     overflow-wrap: break-word;
                 }
 
-                td:last-child {
+                td.action-column {
                     flex: none;
                     width: 5rem;
                     justify-content: end;

@@ -95,7 +95,7 @@ export class TutorialRegistrationsImportModalComponent {
 
     importParsedStudents() {
         this.isLoading.set(true);
-        this.tutorialGroupsService.registerMultipleStudentsViaLoginOrRegistrationNumber(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
+        this.tutorialGroupsService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
             next: (response: HttpResponse<Array<TutorialGroupRegisterStudentDTO>>) => {
                 const nonExistingStudents = response.body || [];
                 const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {

@@ -2,7 +2,6 @@ import { Component, computed, effect, inject, input, output, signal, viewChild }
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
 import { TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { Course, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -135,8 +134,12 @@ export class TutorialGroupDetailComponent {
     private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
     activatedRoute = inject(ActivatedRoute);
-    course = input.required<Course>();
     tutorialGroup = input.required<TutorialGroupDTO>();
+    courseId = input.required<number>();
+    isMessagingEnabled = input.required<boolean>();
+    loggedInUserIsAtLeastTutorOfGroup = input.required<boolean>();
+    loggedInUserIsAtLeastEditorInCourse = input.required<boolean>();
+    loggedInUserIsAtLeastInstructorInCourse = input.required<boolean>();
     componentDisplayedInManagement = input<boolean>(false);
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
@@ -151,7 +154,6 @@ export class TutorialGroupDetailComponent {
     pieChartColors = computed<Color>(() => this.computePieChartColor());
     sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
-    messagingEnabled = computed<boolean>(() => isMessagingEnabled(this.course()));
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
     userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().tutorLogin);
@@ -159,9 +161,6 @@ export class TutorialGroupDetailComponent {
     cancelSessionButtonTooltipLabel = computed(() => this.computeCancelSessionButtonTooltipLabel());
     activateSessionButtonTooltipLabel = computed(() => this.computeActivateSessionButtonTooltipLabel());
     deleteSessionButtonTooltipLabel = computed(() => this.computeDeleteSessionButtonTooltipLabel());
-    loggedInUserIsAtLeastEditor = computed(() => this.accountService.isAtLeastEditorInCourse(this.course()));
-    loggedInUserIsAtLeastInstructor = computed(() => this.accountService.isAtLeastInstructorInCourse(this.course()));
-    loggedInUserIsAtLeastTutorOfGroup = computed(() => this.tutorialGroup().tutorLogin === this.accountService.userIdentity()?.login || this.loggedInUserIsAtLeastEditor());
     onDeleteSession = output<ModifyTutorialGroupSessionEvent>();
     onCancelSession = output<ModifyTutorialGroupSessionEvent>();
     onUpdateSession = output<UpdateTutorialGroupSessionEvent>();
@@ -179,7 +178,7 @@ export class TutorialGroupDetailComponent {
     }
 
     createTutorChat() {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         const tutorLogin = this.tutorialGroup().tutorLogin;
         if (courseId) {
             this.oneToOneChatService.create(courseId, tutorLogin).subscribe({
@@ -248,7 +247,7 @@ export class TutorialGroupDetailComponent {
     }
 
     cancelTutorialGroupSession(sessionId: number) {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         this.onCancelSession.emit({
@@ -259,7 +258,7 @@ export class TutorialGroupDetailComponent {
     }
 
     activateTutorialGroupSession(sessionId: number) {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         this.onActivateSession.emit({
@@ -270,7 +269,7 @@ export class TutorialGroupDetailComponent {
     }
 
     updateTutorialGroupSession(updateTutorialGroupSessionData: UpdateTutorialGroupSessionData) {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         const updateTutorialGroupSessionEvent: UpdateTutorialGroupSessionEvent = {
@@ -283,7 +282,7 @@ export class TutorialGroupDetailComponent {
     }
 
     createTutorialGroupSession(createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO) {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         const createTutorialGroupSessionEvent: CreateTutorialGroupSessionEvent = {
@@ -295,7 +294,7 @@ export class TutorialGroupDetailComponent {
     }
 
     private deleteTutorialGroupSession(sessionId: number) {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         this.onDeleteSession.emit({
@@ -306,7 +305,7 @@ export class TutorialGroupDetailComponent {
     }
 
     private deleteTutorialGroup() {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         const tutorialGroupId = this.tutorialGroup().id;
         if (courseId) {
             this.onDeleteGroup.emit({
@@ -386,7 +385,7 @@ export class TutorialGroupDetailComponent {
     }
 
     private computeTutorChatLink() {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         const tutorChatId = this.tutorialGroup().tutorChatId;
         if (!courseId || !tutorChatId) return undefined;
         return {
@@ -396,7 +395,7 @@ export class TutorialGroupDetailComponent {
     }
 
     private computeGroupChannelLink() {
-        const courseId = this.course().id;
+        const courseId = this.courseId();
         const groupChannelId = this.tutorialGroup().groupChannelId;
         if (!courseId || !groupChannelId) return undefined;
         return {

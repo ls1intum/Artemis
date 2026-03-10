@@ -2,7 +2,9 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
     CreateOrUpdateTutorialGroupDTO,
+    RawTutorialGroupDTO,
     TutorialGroup,
+    TutorialGroupDTO,
     TutorialGroupRegisterStudentDTO,
     TutorialGroupRegisteredStudentDTO,
     TutorialGroupScheduleDTO,
@@ -38,6 +40,12 @@ export class TutorialGroupsService {
         return this.httpClient
             .get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupResponseArrayDatesFromServer(res)));
+    }
+
+    getTutorialGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDTO> {
+        return this.httpClient
+            .get<RawTutorialGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/dto`)
+            .pipe(map((rawDto) => new TutorialGroupDTO(rawDto)));
     }
 
     create(courseId: number, createTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO): Observable<void> {
@@ -79,11 +87,7 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.deregisterStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudentsViaLoginOrRegistrationNumber(
-        courseId: number,
-        tutorialGroupId: number,
-        studentDtos: Student[],
-    ): Observable<HttpResponse<Array<TutorialGroupRegisterStudentDTO>>> {
+    importRegistrations(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<TutorialGroupRegisterStudentDTO>>> {
         return this.httpClient.post<Array<Student>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
             observe: 'response',
         });

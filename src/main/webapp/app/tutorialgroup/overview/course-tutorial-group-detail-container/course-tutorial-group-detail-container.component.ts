@@ -1,12 +1,11 @@
-import { Component, computed, effect, inject, signal } from '@angular/core';
-import { Course } from 'app/core/course/shared/entities/course.model';
+import { Component, computed, effect, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/shared/service/alert.service';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
-import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariableSignal';
-import { TutorialGroupService } from 'app/tutorialgroup/shared/service/tutorial-group.service';
+import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
+import { TutorialGroupSharedStateService } from 'app/tutorialgroup/manage/service/tutorial-group-shared-state.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 
 @Component({
     selector: 'jhi-course-tutorial-group-detail-container',
@@ -15,36 +14,23 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-o
 })
 export class CourseTutorialGroupDetailContainerComponent {
     private route = inject(ActivatedRoute);
-    private alertService = inject(AlertService);
-    private courseManagementService = inject(CourseManagementService);
-    private tutorialGroupService = inject(TutorialGroupService);
-    private courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
+    private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
+    private accountService = inject(AccountService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
 
-    isTutorialGroupLoading = this.tutorialGroupService.isLoading;
-    tutorialGroup = this.tutorialGroupService.tutorialGroup;
-    isCourseLoading = signal(false);
-    course = signal<Course | undefined>(undefined);
-    isLoading = computed<boolean>(() => this.isCourseLoading() || this.isTutorialGroupLoading());
+    isLoading = this.tutorialGroupSharedStateService.isTutorialGroupLoading;
+    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
+    isMessagingEnabled = computed(() => this.computeIfMessagingEnabled());
+    loggedInUserIsAtLeastTutorOfGroup = computed(() => this.computeIfLoggedInUserIsAtLeastTutorOfGroup());
+    loggedInUserIsAtLeastEditorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastEditorInCourse());
+    loggedInUserIsAtLeastInstructorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastInstructorInCourse());
 
     constructor() {
         effect(() => {
             const courseId = this.courseId();
             if (courseId) {
-                this.isCourseLoading.set(true);
-                this.courseManagementService.find(courseId).subscribe({
-                    next: (response) => {
-                        const course = response.body;
-                        if (course) {
-                            this.course.set(course);
-                        }
-                        this.isCourseLoading.set(false);
-                    },
-                    error: () => {
-                        this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.groupDeletion');
-                        this.isCourseLoading.set(false);
-                    },
-                });
+                this.tutorialGroupSharedStateService.fetchCourse(courseId);
             }
         });
 
@@ -52,8 +38,32 @@ export class CourseTutorialGroupDetailContainerComponent {
             const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
             if (courseId && tutorialGroupId) {
-                this.tutorialGroupService.fetchTutorialGroupDTO(courseId, tutorialGroupId);
+                this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
             }
         });
+    }
+
+    private computeIfMessagingEnabled(): boolean | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        return isMessagingEnabled(course);
+    }
+
+    private computeIfLoggedInUserIsAtLeastTutorOfGroup(): boolean | undefined {
+        const tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup();
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!tutorialGroup || !course) return undefined;
+        return tutorialGroup.tutorLogin === this.accountService.userIdentity()?.login || this.accountService.isAtLeastEditorInCourse(course);
+    }
+
+    private computeIfLoggedInUserIsAtLeastEditorInCourse(): boolean | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!course) return undefined;
+        return this.accountService.isAtLeastEditorInCourse(course);
+    }
+
+    private computeIfLoggedInUserIsAtLeastInstructorInCourse(): boolean | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!course) return undefined;
+        return this.accountService.isAtLeastInstructorInCourse(course);
     }
 }

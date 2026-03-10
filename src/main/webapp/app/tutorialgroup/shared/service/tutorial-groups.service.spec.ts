@@ -146,7 +146,7 @@ describe('TutorialGroupService', () => {
         let result: any;
 
         service
-            .registerMultipleStudentsViaLoginOrRegistrationNumber(1, 1, [returnedFromService])
+            .importRegistrations(1, 1, [returnedFromService])
             .pipe(
                 take(1),
                 map((resp) => resp.body),

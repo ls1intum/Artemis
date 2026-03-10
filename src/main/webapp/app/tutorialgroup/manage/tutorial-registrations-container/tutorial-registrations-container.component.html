@@ -2,8 +2,16 @@
     @let courseIdToPass = courseId();
     @let tutorialGroupIdToPass = tutorialGroupId();
     @let registeredStudentsToPass = registeredStudents();
-    @if (courseIdToPass && tutorialGroupIdToPass) {
-        <jhi-tutorial-registrations [courseId]="courseIdToPass" [tutorialGroupId]="tutorialGroupIdToPass" [registeredStudents]="registeredStudentsToPass" />
+    @let loggedInUserIsAtLeastTutorOfGroupToPass = loggedInUserIsAtLeastTutorOfGroup();
+    @let loggedInUserIsAtLeastInstructorInCourseToPass = loggedInUserIsAtLeastInstructorInCourse();
+    @if (courseIdToPass && tutorialGroupIdToPass && loggedInUserIsAtLeastTutorOfGroupToPass !== undefined && loggedInUserIsAtLeastInstructorInCourseToPass !== undefined) {
+        <jhi-tutorial-registrations
+            [courseId]="courseIdToPass"
+            [tutorialGroupId]="tutorialGroupIdToPass"
+            [registeredStudents]="registeredStudentsToPass"
+            [loggedInUserIsAtLeastTutorOfGroup]="loggedInUserIsAtLeastTutorOfGroupToPass"
+            [loggedInUserIsAtLeastInstructorInCourse]="loggedInUserIsAtLeastInstructorInCourseToPass"
+        />
     }
     @if (isLoading()) {
         <jhi-loading-indicator-overlay />

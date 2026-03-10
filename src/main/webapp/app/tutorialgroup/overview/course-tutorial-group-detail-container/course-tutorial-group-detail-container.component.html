@@ -1,9 +1,27 @@
 <div>
-    @let courseToPass = course();
     @let tutorialGroupToPass = tutorialGroup();
-    @if (courseToPass && tutorialGroupToPass) {
+    @let courseIdToPass = courseId();
+    @let isMessagingEnabledToPass = isMessagingEnabled();
+    @let loggedInUserIsAtLeastTutorOfGroupToPass = loggedInUserIsAtLeastTutorOfGroup();
+    @let loggedInUserIsAtLeastEditorInCourseToPass = loggedInUserIsAtLeastEditorInCourse();
+    @let loggedInUserIsAtLeastInstructorInCourseToPass = loggedInUserIsAtLeastInstructorInCourse();
+    @if (
+        courseIdToPass &&
+        tutorialGroupToPass &&
+        isMessagingEnabledToPass !== undefined &&
+        loggedInUserIsAtLeastTutorOfGroupToPass !== undefined &&
+        loggedInUserIsAtLeastEditorInCourseToPass !== undefined &&
+        loggedInUserIsAtLeastInstructorInCourseToPass !== undefined
+    ) {
         <div class="p-3 scrollable-content">
-            <jhi-course-tutorial-group-detail [course]="courseToPass" [tutorialGroup]="tutorialGroupToPass" />
+            <jhi-course-tutorial-group-detail
+                [tutorialGroup]="tutorialGroupToPass"
+                [courseId]="courseIdToPass"
+                [isMessagingEnabled]="isMessagingEnabledToPass"
+                [loggedInUserIsAtLeastTutorOfGroup]="loggedInUserIsAtLeastTutorOfGroupToPass"
+                [loggedInUserIsAtLeastEditorInCourse]="loggedInUserIsAtLeastEditorInCourseToPass"
+                [loggedInUserIsAtLeastInstructorInCourse]="loggedInUserIsAtLeastInstructorInCourseToPass"
+            />
         </div>
     }
     @if (isLoading()) {

@@ -8,7 +8,7 @@ import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot, provideRouter } from '@angular/router';
-import { TutorialGroupManagementResolve } from 'app/tutorialgroup/manage/service/tutorial-group-management-resolve.service';
+import { TutorialGroupManagementCourseResolver } from 'app/tutorialgroup/manage/service/tutorial-group-management-course-resolver.service';
 import { MockProvider } from 'ng-mocks';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,7 +17,7 @@ import { MockRouter } from 'test/helpers/mocks/mock-router';
 describe('TutorialGroupManagementResolve', () => {
     setupTestBed({ zoneless: true });
 
-    let resolver: TutorialGroupManagementResolve;
+    let resolver: TutorialGroupManagementCourseResolver;
     let service: CourseManagementService;
     let router: Router;
 
@@ -27,7 +27,7 @@ describe('TutorialGroupManagementResolve', () => {
                 provideRouter([]),
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                TutorialGroupManagementResolve,
+                TutorialGroupManagementCourseResolver,
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: TranslateService,
@@ -36,7 +36,7 @@ describe('TutorialGroupManagementResolve', () => {
                 MockProvider(CourseManagementService),
             ],
         });
-        resolver = TestBed.inject(TutorialGroupManagementResolve);
+        resolver = TestBed.inject(TutorialGroupManagementCourseResolver);
         service = TestBed.inject(CourseManagementService);
         router = TestBed.inject(Router);
     });
