@@ -1,6 +1,7 @@
 import { themes as prismThemes } from 'prism-react-renderer';
 import type { Config } from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
+import warnSphinxRefs from './src/remark/warn-sphinx-refs';
 
 // This runs in Node.js - Don't use client-side code here (browser APIs, JSX...)
 const ARTEMIS_DOCUMENTATION_REPOSITORY_URL = 'https://github.com/ls1intum/Artemis';
@@ -34,6 +35,7 @@ const config: Config = {
 
     onBrokenLinks: 'throw',
     onBrokenAnchors: 'throw',
+    onBrokenMarkdownLinks: 'throw',
 
     // Even if you don't use internationalization, you can use this field to set
     // useful metadata like html lang. For example, if your site is Chinese, you
@@ -96,6 +98,7 @@ const config: Config = {
                 sidebarPath: './sidebar-students.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
         [
@@ -107,6 +110,7 @@ const config: Config = {
                 sidebarPath: './sidebar-instructors.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
         [
@@ -118,6 +122,7 @@ const config: Config = {
                 sidebarPath: './sidebar-developer.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
         [
@@ -129,6 +134,7 @@ const config: Config = {
                 sidebarPath: './sidebar-admin.ts',
                 editUrl: EDIT_URL,
                 exclude: ['**/README.md'],
+                beforeDefaultRemarkPlugins: [warnSphinxRefs],
             },
         ],
     ],
