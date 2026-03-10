@@ -11,6 +11,6 @@ class IrisCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 5;
+        return 4;
     }
 }

@@ -68,7 +68,7 @@ test.describe('Competency Exercise Linking', { tag: '@fast' }, () => {
 
         // Verify first competency no longer shows exercise
         await page.getByRole('link', { name: competenciesData[0].title }).click();
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
         await expect(page.getByRole('button', { name: 'Start exercise' })).toHaveCount(0);
         await competencyManagement.goto(course.id!);
 

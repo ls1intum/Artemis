@@ -54,8 +54,10 @@ import com.github.dockerjava.api.command.RemoveContainerCmd;
 import com.github.dockerjava.api.command.RemoveImageCmd;
 import com.github.dockerjava.api.command.StartContainerCmd;
 import com.github.dockerjava.api.command.StopContainerCmd;
+import com.github.dockerjava.api.command.VersionCmd;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Version;
 
 import de.tum.cit.aet.artemis.buildagent.service.BuildAgentDockerService;
 
@@ -170,7 +172,24 @@ public class DockerClientTestService {
         when(disconnectFromNetworkCmd.withContainerId(anyString())).thenReturn(disconnectFromNetworkCmd);
         when(disconnectFromNetworkCmd.withNetworkId(anyString())).thenReturn(disconnectFromNetworkCmd);
 
+        // Mock versionCmd for BuildAgentInformationService.updateDockerVersion()
+        mockVersionCmd(dockerClient, "24.0.0-test");
+
         return dockerClient;
+    }
+
+    /**
+     * Mock dockerClient.versionCmd().exec() to return a Version with the specified version string.
+     *
+     * @param dockerClient  the DockerClient to mock
+     * @param versionString the Docker version string to return
+     */
+    public static void mockVersionCmd(DockerClient dockerClient, String versionString) {
+        VersionCmd versionCmd = mock(VersionCmd.class);
+        Version version = mock(Version.class);
+        when(dockerClient.versionCmd()).thenReturn(versionCmd);
+        when(versionCmd.exec()).thenReturn(version);
+        when(version.getVersion()).thenReturn(versionString);
     }
 
     /**

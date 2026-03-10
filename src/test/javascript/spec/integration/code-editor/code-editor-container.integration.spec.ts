@@ -564,4 +564,19 @@ describe('CodeEditorContainerIntegration', () => {
             'src/Test3.java': [new FileBadge(FileBadgeType.FEEDBACK_SUGGESTION, 3)],
         });
     });
+
+    it('should return empty feedbacks when participation has no submissions (test repository)', () => {
+        const participation = { id: 1 } as Participation;
+        containerFixture.componentRef.setInput('participation', participation);
+        containerFixture.componentRef.setInput('showInlineFeedback', true);
+
+        expect(container.feedbackForSubmission()).toEqual([]);
+    });
+
+    it('should return empty feedbacks when participation is undefined (test repository via repository view)', () => {
+        containerFixture.componentRef.setInput('participation', undefined);
+        containerFixture.componentRef.setInput('showInlineFeedback', true);
+
+        expect(container.feedbackForSubmission()).toEqual([]);
+    });
 });

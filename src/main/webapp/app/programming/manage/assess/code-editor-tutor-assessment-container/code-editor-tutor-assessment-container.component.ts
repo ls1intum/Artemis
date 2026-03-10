@@ -579,7 +579,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * @param feedback Feedback suggestion that is removed
      */
     removeSuggestion(feedback: Feedback) {
-        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => feedbackSuggestion !== feedback);
+        this.feedbackSuggestions = this.feedbackSuggestions.filter((feedbackSuggestion) => !Feedback.areIdentical(feedbackSuggestion, feedback));
         this.hasPendingChanges = true;
     }
 

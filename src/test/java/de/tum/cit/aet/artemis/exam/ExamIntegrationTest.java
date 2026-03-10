@@ -16,6 +16,7 @@ import static org.springframework.http.HttpStatus.CREATED;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -89,6 +90,9 @@ import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadSubmission;
 import de.tum.cit.aet.artemis.fileupload.util.ZipFileTestUtilService;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestRepository;
@@ -150,6 +154,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
 
     @Autowired
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
+
+    @Autowired(required = false)
+    private WeaviateService weaviateService;
+
+    @Autowired(required = false)
+    private ExerciseWeaviateService exerciseWeaviateService;
 
     private Course course1;
 
@@ -706,6 +716,34 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examWithModelingEx.getId());
         Exercise exercise = fetchedExam.getExerciseGroups().getFirst().getExercises().stream().findFirst().orElseThrow();
         assertThat(exercise.isExampleSolutionPublished()).isTrue();
+
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_datesChangedReflectedInWeaviate() throws Exception {
+        var modelingExercise = examUtilService.addCourseExamExerciseGroupWithOneModelingExercise();
+        var exam = modelingExercise.getExerciseGroup().getExam();
+
+        // Insert the exercise into Weaviate with initial dates
+        if (exerciseWeaviateService != null) {
+            exerciseWeaviateService.upsertExerciseAsync(modelingExercise);
+
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam));
+        }
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), exam);
+
+        // Update the exam visible, start and end dates
+        ZonedDateTime newVisibleDate = now().minusHours(10);
+        ZonedDateTime newStartDate = now().minusHours(8);
+        ZonedDateTime newEndDate = now().minusHours(6);
+        examUtilService.setVisibleStartAndEndDateOfExam(exam, newVisibleDate, newStartDate, newEndDate);
+
+        request.put("/api/exam/courses/" + exam.getCourse().getId() + "/exams", exam, HttpStatus.OK);
+
+        Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        WeaviateTestUtil.assertExerciseExamDatesInWeaviate(weaviateService, modelingExercise.getId(), fetchedExam);
     }
 
     @Test
@@ -827,10 +865,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExamWithExerciseGroupAndTextExercise_asInstructor() throws Exception {
-        TextExercise textExercise = TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst());
-        exerciseRepository.save(textExercise);
+        final TextExercise textExercise = exerciseRepository.save(TextExerciseFactory.generateTextExerciseForExam(exam2.getExerciseGroups().getFirst()));
+        if (exerciseWeaviateService != null) {
+            exerciseWeaviateService.upsertExerciseAsync(textExercise);
+
+            await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise));
+        }
+        WeaviateTestUtil.assertExerciseExistsInWeaviate(weaviateService, textExercise);
+
         request.delete("/api/exam/courses/" + course1.getId() + "/exams/" + exam2.getId(), HttpStatus.OK);
         verify(examAccessService).checkCourseAndExamAccessForInstructorElseThrow(course1.getId(), exam2.getId());
+
+        WeaviateTestUtil.assertExerciseNotInWeaviate(weaviateService, textExercise.getId());
     }
 
     @Test
@@ -1216,7 +1262,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/core/courses/" + course.getId() + "/archive", null, HttpStatus.OK);
 
         final var courseId = course.getId();
-        await().until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> courseRepository.findById(courseId).orElseThrow().getCourseArchivePath() != null);
 
         var updatedCourse = courseRepository.findById(courseId).orElseThrow();
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
@@ -1235,7 +1281,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVCBatchTe
         request.put("/api/exam/courses/" + course.getId() + "/exams/" + exam.getId() + "/archive", null, HttpStatus.OK);
 
         final var examId = exam.getId();
-        await().until(() -> examRepository.findById(examId).orElseThrow().getExamArchivePath() != null);
+        await().atMost(Duration.ofSeconds(30)).until(() -> examRepository.findById(examId).orElseThrow().getExamArchivePath() != null);
 
         var updatedExam = examRepository.findById(examId).orElseThrow();
         assertThat(updatedExam.getExamArchivePath()).isNotEmpty();

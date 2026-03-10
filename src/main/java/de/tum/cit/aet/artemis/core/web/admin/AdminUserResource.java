@@ -2,12 +2,15 @@ package de.tum.cit.aet.artemis.core.web.admin;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LDAP;
+import static de.tum.cit.aet.artemis.core.security.Role.SUPER_ADMIN;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import jakarta.validation.Valid;
 
@@ -20,6 +23,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.lang.Nullable;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -32,7 +36,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
-import de.tum.cit.aet.artemis.core.domain.Authority;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.StudentDTO;
 import de.tum.cit.aet.artemis.core.dto.UserDTO;
@@ -86,6 +89,8 @@ public class AdminUserResource {
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
 
+    private final String artemisInternalAdminUsername;
+
     private final UserService userService;
 
     private final UserCreationService userCreationService;
@@ -99,13 +104,15 @@ public class AdminUserResource {
     private final AuthorizationCheckService authorizationCheckService;
 
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, AuthorityRepository authorityRepository,
-            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService) {
+            Optional<LdapUserService> ldapUserService, AuthorizationCheckService authorizationCheckService,
+            @Nullable @Value("${artemis.user-management.internal-admin.username:#{null}}") String artemisInternalAdminUsername) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.authorityRepository = authorityRepository;
         this.ldapUserService = ldapUserService;
         this.authorizationCheckService = authorizationCheckService;
+        this.artemisInternalAdminUsername = artemisInternalAdminUsername;
     }
 
     /**
@@ -113,34 +120,31 @@ public class AdminUserResource {
      * <p>
      * Creates a new user if the login and email are not already used, and sends an email with an activation link. The user needs to be activated on creation.
      *
-     * @param managedUserVM the user to create. If the password is null, a random one will be generated
+     * @param userToBeCreated the user to create. If the password is null, a random one will be generated
      * @return the ResponseEntity with status 201 (Created) and with body the new user, or with status 400 (Bad Request) if the login or email is already in use
      * @throws URISyntaxException       if the Location URI syntax is incorrect
      * @throws BadRequestAlertException 400 (Bad Request) if the login or email is already in use
      */
     @PostMapping("users")
-    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException, AccessForbiddenAlertException {
-        this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
+    public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM userToBeCreated) throws URISyntaxException, AccessForbiddenAlertException {
+        this.userService.checkUsernameAndPasswordValidityElseThrow(userToBeCreated.getLogin(), userToBeCreated.getPassword());
 
-        log.debug("REST request to save User : {}", managedUserVM);
+        log.debug("REST request to save User : {}", userToBeCreated);
 
-        if (managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName()) && !this.authorizationCheckService.isSuperAdmin()) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to create other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
-        }
+        checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdminByAuthorityName(userToBeCreated.getAuthorities()));
 
-        if (managedUserVM.getId() != null) {
+        if (userToBeCreated.getId() != null) {
             throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
             // Lowercase the user login before comparing with database
         }
-        else if (userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {
+        else if (userRepository.findOneByLogin(userToBeCreated.getLogin().toLowerCase()).isPresent()) {
             throw new LoginAlreadyUsedException();
         }
-        else if (userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail()).isPresent()) {
+        else if (userRepository.findOneByEmailIgnoreCase(userToBeCreated.getEmail()).isPresent()) {
             throw new EmailAlreadyUsedException();
         }
         else {
-            User newUser = userCreationService.createUser(managedUserVM);
+            User newUser = userCreationService.createUser(userToBeCreated);
 
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
@@ -158,13 +162,11 @@ public class AdminUserResource {
     @PatchMapping("users/{userId}/activate")
     public ResponseEntity<UserDTO> activateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to activate User {}", userId);
-        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
-            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
-                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
-                        "userManagement.onlySuperAdminCanManageSuperAdmins");
-            }
-            userCreationService.activateUser(user);
-            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", user.getLogin())).body(new UserDTO(user));
+        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeActivated -> {
+            checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeActivated.getAuthorities()));
+            userCreationService.activateUser(userToBeActivated);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.activated", userToBeActivated.getLogin()))
+                    .body(new UserDTO(userToBeActivated));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
@@ -177,13 +179,11 @@ public class AdminUserResource {
     @PatchMapping("users/{userId}/deactivate")
     public ResponseEntity<UserDTO> deactivateUser(@PathVariable long userId) throws AccessForbiddenAlertException {
         log.debug("REST request to deactivate User {}", userId);
-        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(user -> {
-            if (user.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY) && !this.authorizationCheckService.isSuperAdmin()) {
-                throw new AccessForbiddenAlertException("Only super administrators are allowed to manage the activation state of other super administrators.", "userManagement",
-                        "userManagement.onlySuperAdminCanManageSuperAdmins");
-            }
-            userCreationService.deactivateUser(user);
-            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", user.getLogin())).body(new UserDTO(user));
+        return userRepository.findOneWithGroupsAndAuthoritiesById(userId).map(userToBeDeactivated -> {
+            checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeactivated.getAuthorities()));
+            userCreationService.deactivateUser(userToBeDeactivated);
+            return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deactivated", userToBeDeactivated.getLogin()))
+                    .body(new UserDTO(userToBeDeactivated));
         }).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
 
@@ -211,10 +211,10 @@ public class AdminUserResource {
         }
 
         var existingUser = userRepository.findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(managedUserVM.getId());
-        if (isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(managedUserVM, existingUser)) {
-            throw new AccessForbiddenAlertException("Only super administrators can grant super admin authority.", "userManagement",
-                    "userManagement.onlySuperAdminCanCreateSuperAdmin");
-        }
+        boolean editedUserIsAdmin = AuthorizationCheckService.isAdmin(existingUser.getAuthorities());
+        boolean requestedAdminEscalation = managedUserVM.getAuthorities() != null && AuthorizationCheckService.isAdminByAuthorityName(managedUserVM.getAuthorities());
+        checkSuperAdminAuthorizationToManageAdmin(editedUserIsAdmin || requestedAdminEscalation);
+        checkCannotRemoveSuperAdminFromDefaultAdmin(existingUser.getLogin(), managedUserVM.getAuthorities());
 
         final boolean shouldActivateUser = !existingUser.getActivated() && managedUserVM.isActivated();
         var updatedUser = userCreationService.updateUser(existingUser, managedUserVM);
@@ -226,19 +226,40 @@ public class AdminUserResource {
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
     }
 
-    private boolean isIsNonSuperAdminUserTryingToCreateOrUpdateSuperAdmin(ManagedUserVM managedUserVM, User existingUser) {
-        boolean isUpdatedUserIsSuperAdmin = existingUser.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY);
-        boolean isNonSuperAdminUserTryingToUpdateSuperAdmin = isUpdatedUserIsSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
-        if (isNonSuperAdminUserTryingToUpdateSuperAdmin) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanManageSuperAdmins");
+    /**
+     * Checks if the current user has permission to manage admin users. Throws an exception if the operation involves
+     * an admin user (either creating, editing, or deleting) and the current user is not a super admin.
+     *
+     * @param involvesAdminUser whether the operation involves managing an admin user
+     * @throws AccessForbiddenAlertException if a non-super-admin tries to manage an admin user
+     */
+    private void checkSuperAdminAuthorizationToManageAdmin(boolean involvesAdminUser) {
+        if (involvesAdminUser && !this.authorizationCheckService.isSuperAdmin()) {
+            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage administrators.", "userManagement",
+                    "userManagement.onlySuperAdminCanManageAdmins");
+        }
+    }
+
+    /**
+     * Checks if the operation attempts to remove super admin rights from the default admin user defined in the configuration.
+     * The default admin must always retain super admin rights to ensure system accessibility.
+     *
+     * @param login          the login of the user being modified
+     * @param newAuthorities the new authorities to be assigned to the user (may be null if not changing authorities)
+     * @throws BadRequestAlertException if attempting to remove super admin rights from the default admin
+     */
+    private void checkCannotRemoveSuperAdminFromDefaultAdmin(String login, Set<String> newAuthorities) {
+        if (artemisInternalAdminUsername == null || newAuthorities == null) {
+            return;
         }
 
-        boolean isTryingToEscalatePrivilegesToSuperAdmin = managedUserVM.getAuthorities() != null
-                && managedUserVM.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY.getName());
-        // noinspection UnnecessaryLocalVariable: not inlined because the variable name improves readability
-        boolean isNonSuperAdminUserTryingToCreateSuperAdmin = isTryingToEscalatePrivilegesToSuperAdmin && !this.authorizationCheckService.isSuperAdmin();
-        return isNonSuperAdminUserTryingToCreateSuperAdmin;
+        boolean isDefaultAdmin = artemisInternalAdminUsername.equals(login);
+        boolean newAuthoritiesContainSuperAdmin = newAuthorities.contains(SUPER_ADMIN.getAuthority());
+
+        if (isDefaultAdmin && !newAuthoritiesContainSuperAdmin) {
+            throw new BadRequestAlertException("You cannot remove super admin rights from the default admin user.", "userManagement",
+                    "userManagement.cannotRemoveDefaultAdminRights");
+        }
     }
 
     /**
@@ -340,12 +361,7 @@ public class AdminUserResource {
         }
 
         User userToBeDeleted = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new EntityNotFoundException("User", login));
-        boolean isNonSuperAdminUserTryingToDeleteSuperAdmin = userToBeDeleted.getAuthorities().contains(Authority.SUPER_ADMIN_AUTHORITY)
-                && !this.authorizationCheckService.isSuperAdmin();
-        if (isNonSuperAdminUserTryingToDeleteSuperAdmin) {
-            throw new AccessForbiddenAlertException("Only super administrators are allowed to manage other super administrators.", "userManagement",
-                    "userManagement.onlySuperAdminCanManageSuperAdmins");
-        }
+        checkSuperAdminAuthorizationToManageAdmin(AuthorizationCheckService.isAdmin(userToBeDeleted.getAuthorities()));
         userService.softDeleteUser(login);
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
     }
@@ -364,6 +380,11 @@ public class AdminUserResource {
         // Get current user and remove current user from list of logins
         var currentUser = userRepository.getUser();
         logins.remove(currentUser.getLogin());
+
+        // Check if non-super-admin is trying to delete admin users
+        Set<User> usersToDelete = userRepository.findAllWithGroupsAndAuthoritiesByDeletedIsFalseAndLoginIn(new HashSet<>(logins));
+        boolean containsAdminUser = usersToDelete.stream().anyMatch(user -> AuthorizationCheckService.isAdmin(user.getAuthorities()));
+        checkSuperAdminAuthorizationToManageAdmin(containsAdminUser);
 
         logins.parallelStream().forEach(login -> {
             try {

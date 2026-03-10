@@ -56,9 +56,16 @@ public class StudentExamApi extends AbstractExamApi {
         studentExamRepository.save(studentExam);
     }
 
+    /**
+     * Finds all student exams for a user grouped by course.
+     * This uses a simplified query that only fetches basic exercise data.
+     * Participation data (submissions, results, feedbacks) should be fetched separately.
+     *
+     * @param userId the id of the user
+     * @return student exams grouped by course
+     */
     public Map<Course, List<StudentExam>> findStudentExamsByCourseForUserId(long userId) {
-        return studentExamRepository.findAllWithExercisesSubmissionPolicyParticipationsSubmissionsResultsAndFeedbacksByUserId(userId).stream()
-                .collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
+        return studentExamRepository.findAllWithExercisesByUserId(userId).stream().collect(Collectors.groupingBy(studentExam -> studentExam.getExam().getCourse()));
     }
 
     public Optional<StudentExam> findByExamIdAndUserId(Long examId, Long userId) {

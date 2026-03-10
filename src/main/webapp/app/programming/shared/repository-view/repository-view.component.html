@@ -52,11 +52,11 @@
                     />
                 }
 
-                @if (exercise.id) {
+                @if (exercise?.id) {
                     @if (repositoryType === 'USER') {
-                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise.id" [participationId]="participation.id!" />
+                        <jhi-programming-exercise-student-repo-download [buttonSize]="ButtonSize.MEDIUM" [exerciseId]="exercise.id!" [participationId]="participation.id!" />
                     } @else {
-                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType" [exerciseId]="exercise.id" [buttonSize]="ButtonSize.MEDIUM" />
+                        <jhi-programming-exercise-instructor-repo-download [repositoryType]="repositoryType" [exerciseId]="exercise.id!" [buttonSize]="ButtonSize.MEDIUM" />
                     }
                 }
             </div>

@@ -19,11 +19,16 @@ import { Participation } from 'app/exercise/shared/entities/participation/partic
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { editor } from 'monaco-editor';
+import { Subject } from 'rxjs';
+import { ExerciseEditorSyncEventType, FileCreatedEvent, FileDeletedEvent, FileRenamedEvent } from 'app/exercise/synchronization/services/exercise-editor-sync.service';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 class MockFileService {
     updateFileReferences = jest.fn((refs) => refs);
     updateFileReference = jest.fn((file) => file);
 }
+
+const fileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
 
 describe('CodeEditorContainerComponent', () => {
     let component: CodeEditorContainerComponent;
@@ -50,6 +55,9 @@ describe('CodeEditorContainerComponent', () => {
         component = fixture.componentInstance;
         alertService = TestBed.inject(AlertService);
         fileService = TestBed.inject(CodeEditorFileService) as unknown as MockFileService;
+
+        fixture.componentRef.setInput('participation', {} as Participation);
+
         component.monacoEditor = {
             onFileChange: jest.fn(),
             storeAnnotations: jest.fn(),
@@ -103,7 +111,7 @@ describe('CodeEditorContainerComponent', () => {
         const onFileChanged = jest.fn();
         component.onFileChanged.subscribe(onFileChanged);
 
-        component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/main/App.java')]);
+        component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/main/App.java'), false]);
 
         expect(component.selectedFile).toBe('src/main/App.java');
         expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
@@ -119,7 +127,7 @@ describe('CodeEditorContainerComponent', () => {
         fileService.updateFileReferences.mockReturnValue({ 'new/File.java': 'x' });
         fileService.updateFileReference.mockReturnValue('new/File.java');
 
-        component.onFileChange([[], new RenameFileChange(FileType.FILE, 'old/File.java', 'new/File.java')]);
+        component.onFileChange([[], new RenameFileChange(FileType.FILE, 'old/File.java', 'new/File.java'), false]);
 
         expect(fileService.updateFileReferences).toHaveBeenCalled();
         expect(component.unsavedFiles).toEqual({ 'new/File.java': 'x' });
@@ -133,7 +141,7 @@ describe('CodeEditorContainerComponent', () => {
         component.unsavedFiles = { 'old/File.java': 'x' };
         fileService.updateFileReferences.mockReturnValue({});
 
-        component.onFileChange([[], new DeleteFileChange(FileType.FILE, 'old/File.java')]);
+        component.onFileChange([[], new DeleteFileChange(FileType.FILE, 'old/File.java'), false]);
 
         expect(component.unsavedFiles).toEqual({});
         expect(component.editorState).toBe(EditorState.CLEAN);
@@ -245,5 +253,145 @@ describe('CodeEditorContainerComponent', () => {
         component.fileLoad('src/main/App.java');
 
         expect(spy).toHaveBeenCalledWith('src/main/App.java');
+    });
+
+    describe('remote file tree sync events', () => {
+        let mockSyncService: Partial<CodeEditorFileSyncService>;
+
+        beforeEach(() => {
+            mockSyncService = { fileTreeChange$: fileTreeChange$.asObservable() } as any;
+        });
+
+        /**
+         * Helper: sets the fileSyncService input, runs detectChanges (which triggers the effect
+         * and resets @ViewChild to undefined because the template is ''), then re-assigns the
+         * fileBrowser mock so the subscription handler can delegate to it.
+         */
+        function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
+            fixture.componentRef.setInput('fileSyncService', syncService);
+            fixture.detectChanges();
+            // @ViewChild is undefined in template-less tests; re-assign after detectChanges
+            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+        }
+
+        it('should subscribe to fileTreeChange$ when fileSyncService is set', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'src/New.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'src/New.java'), true);
+        });
+
+        it('should handle remote FILE_DELETED by delegating to fileBrowser', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_DELETED,
+                target: 0 as any,
+                filePath: 'src/Old.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new DeleteFileChange(FileType.FILE, 'src/Old.java'), true);
+        });
+
+        it('should handle remote FILE_RENAMED by delegating to fileBrowser', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_RENAMED,
+                target: 0 as any,
+                oldPath: 'src/Old.java',
+                newPath: 'src/New.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new RenameFileChange(FileType.FILE, 'src/Old.java', 'src/New.java'), true);
+        });
+
+        it('should map FOLDER fileType correctly', () => {
+            activateSyncService(mockSyncService);
+
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'src/newpkg',
+                fileType: 'FOLDER',
+                timestamp: 1,
+            });
+
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FOLDER, 'src/newpkg'), true);
+        });
+
+        it('should unsubscribe from previous sync service when a new one is set', () => {
+            activateSyncService(mockSyncService);
+
+            const newFileTreeChange$ = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
+            const newMockSyncService = { fileTreeChange$: newFileTreeChange$.asObservable() } as any;
+            activateSyncService(newMockSyncService);
+
+            // Old stream should no longer trigger handler
+            fileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'old-stream.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+            expect(component.fileBrowser.handleFileChange).not.toHaveBeenCalled();
+
+            // New stream should work
+            newFileTreeChange$.next({
+                eventType: ExerciseEditorSyncEventType.FILE_CREATED,
+                target: 0 as any,
+                filePath: 'new-stream.java',
+                fileType: 'FILE',
+                timestamp: 1,
+            });
+            expect(component.fileBrowser.handleFileChange).toHaveBeenCalledWith(new CreateFileChange(FileType.FILE, 'new-stream.java'), true);
+        });
+    });
+
+    describe('remote file-create does not hijack local selection', () => {
+        function activateSyncService(syncService: Partial<CodeEditorFileSyncService>) {
+            fixture.componentRef.setInput('fileSyncService', syncService);
+            fixture.detectChanges();
+            component.fileBrowser = { handleFileChange: jest.fn() } as any;
+        }
+
+        it('remote FILE_CREATED does not change selectedFile', () => {
+            activateSyncService({ fileTreeChange$: fileTreeChange$.asObservable() } as any);
+            component.selectedFile = 'existing.java';
+
+            component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/Remote.java'), true]);
+
+            expect(component.selectedFile).toBe('existing.java');
+        });
+
+        it('remote FILE_CREATED still sets commitState to UNCOMMITTED_CHANGES', () => {
+            activateSyncService({ fileTreeChange$: fileTreeChange$.asObservable() } as any);
+            component.commitState = CommitState.CLEAN;
+
+            component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/Remote.java'), true]);
+
+            expect(component.commitState).toBe(CommitState.UNCOMMITTED_CHANGES);
+        });
+
+        it('local FILE_CREATED still selects the new file', () => {
+            activateSyncService({ fileTreeChange$: fileTreeChange$.asObservable() } as any);
+            component.selectedFile = 'existing.java';
+
+            component.onFileChange([[], new CreateFileChange(FileType.FILE, 'src/Local.java'), false]);
+
+            expect(component.selectedFile).toBe('src/Local.java');
+        });
     });
 });

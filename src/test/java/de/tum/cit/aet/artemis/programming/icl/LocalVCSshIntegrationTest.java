@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALVC;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -15,7 +14,6 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
-import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -32,7 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Profile;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -41,7 +38,6 @@ import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactorySe
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
-@Profile(PROFILE_LOCALVC)
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     private static final Logger log = LoggerFactory.getLogger(LocalVCSshIntegrationTest.class);
@@ -193,21 +189,24 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
      * and {@link org.apache.sshd.common.session.helpers.AbstractSession#getSession}.
      */
     private SshClient clientConnectToArtemisSshServer() throws GeneralSecurityException, IOException {
-        var serverSessions = sshServer.getActiveSessions();
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
         KeyPair keyPair = setupKeyPairAndAddToUser();
         User user = userTestRepository.getUser();
+
+        // Capture baseline session count BEFORE connecting, scoped to the test user to avoid flakiness under parallel runs
+        var baselineServerSessions = sshServer.getActiveSessions();
+        long baselineAttachedSessionCount = baselineServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
 
         SshClient client = SshClient.setUpDefaultClient();
         client.start();
 
         ClientSession clientSession = connect(client, user, keyPair);
-        int numberOfSessions = serverSessions.size();
 
-        serverSessions = sshServer.getActiveSessions();
-        var attachedServerSessions = serverSessions.stream().filter(Objects::nonNull).count();
+        // Get current session count AFTER connecting, scoped to the test user
+        var currentServerSessions = sshServer.getActiveSessions();
+        var attachedServerSessions = currentServerSessions.stream().filter(session -> user.getName().equals(session.getUsername())).count();
         assertThat(clientSession.isAuthenticated()).isTrue();
-        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(numberOfSessions + 1);
+        assertThat(attachedServerSessions).as("There are more server sessions activated than expected.").isEqualTo(baselineAttachedSessionCount + 1);
         return client;
     }
 

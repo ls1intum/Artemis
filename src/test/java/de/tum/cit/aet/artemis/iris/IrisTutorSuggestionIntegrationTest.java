@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.iris;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
@@ -16,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
 
 import de.tum.cit.aet.artemis.communication.domain.AnswerPost;
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
@@ -52,7 +50,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
 
-@ActiveProfiles(PROFILE_IRIS)
+// Note: Iris is enabled via artemis.iris.enabled=true in the base class AbstractSpringIntegrationLocalCILocalVCTest
 class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
 
     private static final String TEST_PREFIX = "iristutorsuggestionintegration";

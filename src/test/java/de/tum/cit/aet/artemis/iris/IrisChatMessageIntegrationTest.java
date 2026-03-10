@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -33,6 +34,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.AiSelectionDecision;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
@@ -93,6 +95,11 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
     @BeforeEach
     void initTestCase() throws GitAPIException, IOException, URISyntaxException {
         List<User> users = userUtilService.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        for (User user : users) {
+            user.setSelectedLLMUsageTimestamp(ZonedDateTime.parse("2025-12-11T00:00:00Z"));
+            user.setSelectedLLMUsage(AiSelectionDecision.CLOUD_AI);
+            userTestRepository.save(user);
+        }
 
         final Course course = programmingExerciseUtilService.addCourseWithOneProgrammingExercise();
 
@@ -472,6 +479,24 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
 
         var irisSessionFromDb = irisSessionRepository.findByIdWithMessagesElseThrow(irisSession.getId());
         assertThat(irisSessionFromDb.getTitle()).isEqualTo(expectedTitle);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void sendOneMessage_invokesIrisCitationService() throws Exception {
+        IrisProgrammingExerciseChatSession irisSession = irisChatSessionUtilService.createAndSaveProgrammingExerciseChatSessionForUser(soloExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        var messageToSend = IrisMessageFactory.createIrisMessageForSessionWithContent(irisSession);
+
+        irisRequestMockProvider.mockProgrammingExerciseChatResponse(dto -> {
+            assertThatNoException().isThrownBy(() -> sendStatus(dto.settings().authenticationToken(), "Hello World", dto.initialStages(), null, null));
+            pipelineDone.set(true);
+        });
+
+        request.postWithoutResponseBody("/api/iris/sessions/" + irisSession.getId() + "/messages", messageToSend, HttpStatus.CREATED);
+        await().until(pipelineDone::get);
+
+        verify(irisCitationService).resolveCitationInfo(any());
     }
 
     private void sendStatus(String jobId, String result, List<PyrisStageDTO> stages, String sessionTitle, List<String> suggestions) throws Exception {

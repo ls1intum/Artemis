@@ -90,9 +90,8 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         await selectTaxonomy(page, competencyData.taxonomy);
         await page.getByRole('button', { name: 'Submit' }).click();
 
-        // Verify creation
-        await page.waitForLoadState('networkidle');
-        await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible();
+        // Verify creation - wait for the page to navigate back and load competency data
+        await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible({ timeout: 30000 });
         await expect(page.locator('.markdown-preview')).toContainText(competencyData.description);
         await expect(page.getByRole('cell', { name: competencyData.taxonomy })).toBeVisible();
     });
@@ -108,8 +107,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
         test.beforeEach('Create competency', async ({ page, courseManagementAPIRequests, competencyManagement }) => {
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
             await competencyManagement.goto(course!.id!);
-            await page.waitForLoadState('networkidle');
-            await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible();
+            await expect(page.getByRole('link', { name: competencyData.title })).toBeVisible({ timeout: 10000 });
         });
 
         test('Edits a competency', async ({ page }) => {
@@ -146,8 +144,7 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.createCompetency(course, competencyData.title, competencyData.description);
 
             await competencyManagement.goto(course!.id!);
-            await page.waitForLoadState('networkidle');
-            await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible();
+            await expect(page.getByRole('cell', { name: competencyData.title })).toBeVisible({ timeout: 10000 });
         });
 
         test('Deletes a competency', async ({ page }) => {
@@ -195,9 +192,8 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
         await selectTaxonomy(page, prerequisiteData.taxonomy);
         await page.getByRole('button', { name: 'Submit' }).click();
 
-        // Verify creation
-        await page.waitForLoadState('networkidle');
-        await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
+        // Verify creation - wait for the page to navigate back and load data
+        await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible({ timeout: 30000 });
         await expect(page.locator('.markdown-preview')).toContainText(prerequisiteData.description);
         await expect(page.getByText(new RegExp(prerequisiteData.taxonomy, 'i'))).toBeVisible();
     });
@@ -207,9 +203,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             // Create prerequisite via API
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
             await competencyManagement.goto(course!.id!);
-
-            await page.waitForLoadState('networkidle');
-            await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
+            await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible({ timeout: 10000 });
         });
 
         test('Edits a prerequisite', async ({ page }) => {
@@ -228,9 +222,8 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await selectTaxonomy(page, updatedPrerequisiteData.taxonomy);
             await page.getByRole('button', { name: 'Submit' }).click();
 
-            // Verify update
-            await page.waitForLoadState('networkidle');
-            await expect(page.getByRole('link', { name: updatedPrerequisiteData.title })).toBeVisible();
+            // Verify update - wait for navigation back and data load
+            await expect(page.getByRole('link', { name: updatedPrerequisiteData.title })).toBeVisible({ timeout: 30000 });
             await expect(page.locator('.markdown-preview')).toContainText(updatedPrerequisiteData.description);
             await expect(page.getByText(new RegExp(updatedPrerequisiteData.taxonomy, 'i'))).toBeVisible();
         });
@@ -247,8 +240,7 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             await courseManagementAPIRequests.createPrerequisite(course, prerequisiteData.title, prerequisiteData.description);
 
             await competencyManagement.goto(course!.id!);
-            await page.waitForLoadState('networkidle');
-            await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible();
+            await expect(page.getByRole('link', { name: prerequisiteData.title })).toBeVisible({ timeout: 10000 });
         });
 
         test('Deletes a prerequisite', async ({ page }) => {

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title th:text="#{email.dataExportCreated.title}">Your Artemis data export is ready</title>
+    <th:block th:replace="~{mail/notification/fragments :: headMetaDataAndIconLink}"/>
+    <th:block th:replace="~{mail/notification/fragments :: css}"/>
+</head>
+
+<body>
+<th:block th:replace="~{mail/notification/fragments :: header}" />
+
+<div id="message-body">
+    <th:block th:replace="~{mail/notification/fragments :: greetingsFullName}" />
+
+    <p>
+        <span th:text="#{email.dataExportCreated.text}">Your requested data export has been successfully created.</span>
+    </p>
+    <p>
+        <span th:text="#{email.dataExportCreated.downloadLink}">Download your data export</span>:
+        <a th:with="url=(@{|${baseUrl}/privacy/data-exports/${dataExport.id}|})" th:href="${url}" th:text="${url}">Link</a>
+    </p>
+
+    <th:block th:replace="~{mail/notification/fragments :: farewell}" />
+</div>
+
+<th:block th:replace="~{mail/notification/fragments :: footer}" />
+
+</body>
+</html>

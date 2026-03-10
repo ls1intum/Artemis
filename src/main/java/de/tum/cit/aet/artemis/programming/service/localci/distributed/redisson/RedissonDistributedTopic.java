@@ -32,9 +32,7 @@ public class RedissonDistributedTopic<T> implements DistributedTopic<T> {
 
     @Override
     public UUID addMessageListener(Consumer<T> messageConsumer) {
-        int listenerId = topic.addListener(Object.class, (MessageListener<T>) (channel, msg) -> {
-            messageConsumer.accept(msg);
-        });
+        int listenerId = topic.addListener(Object.class, (MessageListener<T>) (_, msg) -> messageConsumer.accept(msg));
         UUID uuid = UUID.randomUUID();
         listenerRegistrations.put(uuid, listenerId);
         return uuid;

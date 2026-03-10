@@ -211,7 +211,7 @@ public class UserUtilService {
     }
 
     /**
-     * Deletes all tokens and saves the calendarSubscriptionToken in his calendarSubscriptionTokenStore of the user.
+     * Deletes all tokens and saves the calendarSubscriptionToken in their calendarSubscriptionTokenStore of the user.
      *
      * @param user                      The User to update
      * @param calendarSubscriptionToken The calendarSubscriptionToken to set
@@ -508,6 +508,21 @@ public class UserUtilService {
         superAdmin.setAuthorities(superAdminAuthorities);
         superAdmin = userTestRepository.save(superAdmin);
         assertThat(superAdmin.getId()).as("Super admin has been created").isNotNull();
+    }
+
+    /**
+     * Creates a new admin user if it doesn't exist or resets and updates existing user with admin authorities.
+     *
+     * @param prefix The prefix for the admin username
+     */
+    public void addAdmin(final String prefix) {
+        String adminLogin = prefix + "admin";
+        User admin = createOrReuseExistingUser(adminLogin, UserFactory.USER_PASSWORD);
+        String[] groups = new String[] { "admin", "testgroup" };
+        admin.setGroups(Set.of(groups));
+        admin.setAuthorities(adminAuthorities);
+        admin = userTestRepository.save(admin);
+        assertThat(admin.getId()).as("Admin has been created").isNotNull();
     }
 
     /**
