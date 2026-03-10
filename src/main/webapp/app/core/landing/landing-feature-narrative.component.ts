@@ -5,11 +5,12 @@ import { LandingChapterIntroComponent } from './landing-chapter-intro.component'
 import { LandingFeatureSectionComponent } from './landing-feature-section.component';
 import { LANDING_CHAPTERS, LANDING_SECTIONS, LandingFeatureSection } from './landing-feature-data';
 import { LandingGlowbarComponent } from './landing-glowbar.component';
+import { LandingSupportStripComponent } from './landing-support-strip.component';
 
 @Component({
     selector: 'jhi-landing-feature-narrative',
     standalone: true,
-    imports: [TranslateDirective, ArtemisTranslatePipe, LandingChapterIntroComponent, LandingFeatureSectionComponent, LandingGlowbarComponent],
+    imports: [TranslateDirective, ArtemisTranslatePipe, LandingChapterIntroComponent, LandingFeatureSectionComponent, LandingGlowbarComponent, LandingSupportStripComponent],
     template: `
         <section class="feature-narrative" aria-labelledby="feature-narrative-heading">
             <h2 id="feature-narrative-heading" class="visually-hidden" jhiTranslate="landing.narrative.heading"></h2>
@@ -42,6 +43,7 @@ import { LandingGlowbarComponent } from './landing-glowbar.component';
                     @for (section of aiSections; track section.id) {
                         <jhi-landing-feature-section #sectionEl [section]="section" [attr.data-section-id]="section.id" />
                     }
+                    <jhi-landing-support-strip stripId="ai" />
 
                     <jhi-landing-glowbar />
 
@@ -49,6 +51,7 @@ import { LandingGlowbarComponent } from './landing-glowbar.component';
                     @for (section of assessmentSections; track section.id) {
                         <jhi-landing-feature-section #sectionEl [section]="section" [attr.data-section-id]="section.id" />
                     }
+                    <jhi-landing-support-strip stripId="assessment" />
 
                     <jhi-landing-glowbar />
 
@@ -56,6 +59,7 @@ import { LandingGlowbarComponent } from './landing-glowbar.component';
                     @for (section of platformSections; track section.id) {
                         <jhi-landing-feature-section #sectionEl [section]="section" [attr.data-section-id]="section.id" />
                     }
+                    <jhi-landing-support-strip stripId="platform" />
                 </div>
             </div>
         </section>

@@ -22,24 +22,24 @@
             "heading": "Plattform-Features",
             "contents": {
                 "ai": "KI",
-                "assessment": "Bewertung",
-                "platform": "Plattform"
+                "assessment": "Aufgaben & Klausuren",
+                "platform": "Betrieb"
             },
             "chapters": {
                 "ai": {
                     "eyebrow": "KI-Features",
                     "title": "KI, die Lernen und Lehren unterstützt",
-                    "description": "Artemis integriert KI über den gesamten Lehrworkflow —<br/>von personalisiertem Tutoring und Kompetenzverfolgung bis hin zu automatisierter Bewertung und Aufgabengenerierung."
+                    "description": "Artemis integriert KI in den gesamten Lehrworkflow —<br/>von vorlesungsbezogener Unterstützung und Kompetenzbegleitung bis hin zu Bewertungsunterstützung und Aufgabenerstellung."
                 },
                 "assessment": {
-                    "eyebrow": "Bewertung",
-                    "title": "Bewertung, die in echten Kursen funktioniert",
-                    "description": "Von Programmieraufgaben mit integrierter CI bis hin zu sicheren Online-Klausuren — Artemis deckt die gesamte Bewertungsfläche technischer Kurse ab."
+                    "eyebrow": "Aufgaben & Klausuren",
+                    "title": "Aufgaben und Klausuren für echte Lehrveranstaltungen",
+                    "description": "Von Programmieraufgaben mit integrierter CI bis hin zu sicheren Online-Klausuren unterstützt Artemis die zentralen Aufgaben- und Prüfungsabläufe technischer Lehrveranstaltungen."
                 },
                 "platform": {
-                    "eyebrow": "Kursdurchführung",
-                    "title": "Kursdurchführung, Integrität und Skalierung",
-                    "description": "Artemis geht über Aufgaben hinaus mit integrierter Vorlesungsverwaltung, Echtzeit-Kommunikation, Plagiatserkennung und Lernanalysen."
+                    "eyebrow": "Lehre & Betrieb",
+                    "title": "Kursdurchführung, Integrität und Betrieb",
+                    "description": "Artemis geht über Aufgaben hinaus mit integrierten Vorlesungen, Kommunikation, Tutorien, Integritätswerkzeugen und Lernanalysen."
                 }
             },
             "summary": {
@@ -76,74 +76,141 @@
                     }
                 }
             },
+            "support": {
+                "ai": {
+                    "eyebrow": "Mehr KI im Alltag",
+                    "title": "KI, die Vorlesungen, Tutors und längere Lernverläufe erreicht",
+                    "description": "Artemis-KI ist in alltägliche Lehrabläufe eingebettet und nicht nur ein isoliertes Chatfenster.",
+                    "items": {
+                        "tutorSuggestions": {
+                            "title": "Tutor-Vorschläge",
+                            "description": "Iris kann Tutorinnen und Tutoren Antwortvorschläge liefern, wenn sie auf Fragen von Studierenden im Kommunikationsbereich reagieren.",
+                            "imageAlt": "Artemis Ansicht für Tutor-Vorschläge"
+                        },
+                        "lectureAwareAi": {
+                            "title": "Vorlesungsbezogene KI",
+                            "description": "Verarbeitete Vorlesungseinheiten und Transkripte geben KI-Assistenten fundierten Zugriff auf echte Kursinhalte.",
+                            "imageAlt": "Verarbeitete Vorlesungseinheiten in Artemis"
+                        },
+                        "persistentContext": {
+                            "title": "Persistenter Kontext",
+                            "description": "Langzeitgedächtnis und Gesprächskontinuität machen Folgehinweise persönlicher und kontextbezogener."
+                        }
+                    }
+                },
+                "assessment": {
+                    "eyebrow": "Weitere Workflows",
+                    "title": "Mehr als nur eine Art von Aufgaben",
+                    "description": "Artemis unterstützt kollaborative, offene und bewertungsintensive Workflows über die Kernaufgabentypen hinaus.",
+                    "items": {
+                        "teamExercises": {
+                            "title": "Teamaufgaben",
+                            "description": "Führen Sie teambasierte Aufgaben mit Echtzeit-Zusammenarbeit und zugewiesenen Tutorinnen oder Tutoren pro Team durch."
+                        },
+                        "fileUpload": {
+                            "title": "Datei-Upload-Aufgaben",
+                            "description": "Akzeptieren Sie Dokumente, Bilder und andere Dateien, wenn der passende Aufgabentyp weder Code noch Quiz ist."
+                        },
+                        "grading": {
+                            "title": "Bewertung & Benotung",
+                            "description": "Doppelblind-Bewertung, Assessment-Training, Beschwerden, Notenschlüssel, Exporte und Bonusregeln unterstützen echte Prüfungsabläufe.",
+                            "imageAlt": "Artemis Assessment-Dashboard"
+                        }
+                    }
+                },
+                "platform": {
+                    "eyebrow": "Plattformbetrieb",
+                    "title": "Lehrbetrieb über einzelne Aufgaben hinaus",
+                    "description": "Artemis deckt auch Kursorganisation, LMS-Integration und die Infrastruktur für große Lehrveranstaltungen ab.",
+                    "items": {
+                        "tutorialGroups": {
+                            "title": "Tutorien",
+                            "description": "Planen Sie Termine, verwalten Sie Anmeldungen, weisen Sie Tutorinnen und Tutoren zu, verfolgen Sie Anwesenheit und verbinden Sie Tutorien mit Kommunikationskanälen.",
+                            "imageAlt": "Artemis Tutorien-Übersicht"
+                        },
+                        "lti": {
+                            "title": "LTI-Integration",
+                            "description": "Integrieren Sie Artemis über LTI in bestehende LMS-Umgebungen wie Moodle oder edX."
+                        },
+                        "openSource": {
+                            "title": "Open Source",
+                            "description": "Nutzen und erweitern Sie eine Open-Source-Plattform mit aktiver akademischer Entwicklungs-Community."
+                        },
+                        "scalable": {
+                            "title": "Skalierbare Infrastruktur",
+                            "description": "Betreiben Sie große technische Lehrveranstaltungen mit integrierten Build Agents und Infrastruktur für tausende Studierende."
+                        }
+                    }
+                }
+            },
             "sections": {
                 "iris": {
                     "navLabel": "KI-Tutor",
                     "badge": "Iris",
                     "title": "Dein persönlicher KI-Tutor",
-                    "description": "Kontextbewusster KI-Assistent, der deinen Code liest, deine Fehler versteht und dich zur Lösung führt, ohne die Antwort zu verraten.",
+                    "description": "Iris beantwortet Fragen zu Aufgaben, Vorlesungen und Lernfortschritt mit kontextbewusster Unterstützung, die Studierende weiterbringt, ohne den Lernprozess abzukürzen.",
                     "bullets": {
-                        "0": "Fünf spezialisierte Unterstützungsmodi für unterschiedliche Lernkontexte",
-                        "1": "Proaktive Hilfe, wenn Build- und Testfeedback zeigt, dass der Student nicht weiterkommt",
-                        "2": "Durchgängiges Unterstützungserlebnis über Sitzungen hinweg"
+                        "0": "Unterstützung für Programmieraufgaben, Vorlesungen und Kursinhalte",
+                        "1": "Proaktive Hinweise, wenn Feedback zeigt, dass Studierende feststecken",
+                        "2": "Fortlaufende Gespräche und personalisierte Anschlussunterstützung über Sitzungen hinweg"
                     }
                 },
                 "atlas": {
                     "navLabel": "Lernpfade",
                     "badge": "Atlas",
                     "title": "Adaptive Lernpfade",
-                    "description": "Personalisierte Kompetenzverfolgung, die Studierenden hilft zu verstehen, wo sie stehen und worauf sie sich als Nächstes konzentrieren sollten.",
+                    "description": "Kompetenzbasierte Lernpfade verbinden Vorlesungen, Aufgaben und Lernziele, damit Studierende und Lehrende Fortschritt klar nachvollziehen können.",
                     "bullets": {
-                        "0": "Feingranulare Lernziele verknüpft mit Übungen und Vorlesungen",
-                        "1": "Visuelle Fortschritts-Dashboards für Studierende und Lehrende",
-                        "2": "Automatische Empfehlungen basierend auf individueller Leistung"
+                        "0": "Kompetenzen verfolgen, die mit Vorlesungseinheiten und Aufgaben verknüpft sind",
+                        "1": "Visuelle Dashboards für Studierende und Lehrende",
+                        "2": "Empfehlungen und Analysen auf Basis individuellen Fortschritts"
                     }
                 },
                 "athena": {
                     "navLabel": "KI-Bewertung",
                     "badge": "Athena",
                     "title": "KI-gestützte Bewertung",
-                    "description": "Maschinelle Lernmodelle, die Einreichungen analysieren und Feedback vorschlagen, um die Korrekturzeit zu reduzieren und die Qualität zu sichern.",
+                    "description": "KI-gestützte Bewertungsworkflows helfen Lehrenden, Text-, Modellierungs- und Programmierabgaben schneller und konsistenter zu bewerten.",
                     "bullets": {
-                        "0": "Automatische Feedbackvorschläge für Text- und Modellierungsaufgaben",
-                        "1": "Konsistenzprüfungen über Korrekturteams hinweg",
-                        "2": "Kontinuierliches Lernen aus Korrekturen der Lehrenden"
+                        "0": "Feedbackvorschläge für Text-, Modellierungs- und Programmierworkflows",
+                        "1": "Konsistenzunterstützung für große Bewertungsteams",
+                        "2": "Lernt aus Korrekturen und Bewertungsmustern der Lehrenden"
                     }
                 },
                 "hyperion": {
                     "navLabel": "KI-Generierung",
                     "badge": "Hyperion",
                     "title": "KI-Aufgabengenerierung",
-                    "description": "Aufgaben mit großen Sprachmodellen generieren und verfeinern — von der Idee zur vollständigen, einsetzbaren Aufgabe in Minuten.",
+                    "description": "Hyperion hilft Lehrenden, neue Aufgaben zu erstellen, zu verfeinern und zu prüfen, damit aus Ideen schneller hochwertige Kursmaterialien werden.",
                     "bullets": {
                         "0": "Programmieraufgaben aus natürlichsprachlichen Beschreibungen erstellen",
-                        "1": "Automatische Testfall- und Lösungsgenerierung",
-                        "2": "Iterative Verfeinerung mit Feedback der Lehrenden"
+                        "1": "Tests, Lösungen und unterstützendes Material vorschlagen",
+                        "2": "Entwürfe mit Konsistenzprüfungen und Feedback verfeinern"
                     }
                 },
                 "programming": {
                     "navLabel": "Programmierung",
                     "badge": "Übungen",
                     "title": "Programmieraufgaben",
-                    "description": "Integrierte Entwicklungsumgebung mit eingebautem Git-Hosting, Continuous Integration und automatischem Feedback für mehrere Programmiersprachen.",
+                    "description": "Artemis kombiniert Versionskontrolle, CI, Online-Editor und sichere Build Agents zu einem gemeinsamen Workflow für skalierbare Programmierlehre.",
                     "imageAlt": "Artemis Editor-Ansicht",
                     "bullets": {
-                        "0": "Eingebautes Git und CI — keine externen Dienste erforderlich",
-                        "1": "Sofortiges Feedback durch Testergebnisse und statische Codeanalyse",
-                        "2": "Unterstützung für Java, Python, C, Kotlin, Swift und mehr"
+                        "0": "Studierende arbeiten lokal oder direkt im Browser",
+                        "1": "Sofortiges Feedback durch Tests, statische Analyse, Hinweise und versteckte Tests",
+                        "2": "Viele Programmiersprachen mit integriertem Git und CI"
                     },
                     "cards": {
-                        "git": {
-                            "title": "Artemis Git",
-                            "description": "Integriertes Git-Hosting richtet automatisch Start-, Muster- und Studierenden-Repositories mit passenden Zugriffsrechten ein."
+                        "platform": {
+                            "title": "Integriertes Git & CI",
+                            "description": "Start-, Muster- und Studierenden-Repositories sowie automatisierte Builds werden direkt in Artemis bereitgestellt."
                         },
-                        "ci": {
-                            "title": "Artemis CI",
-                            "description": "Continuous-Integration-Pipelines laufen direkt in Artemis und liefern automatisiertes Feedback, ohne dass eigene Server verwaltet werden müssen."
+                        "workflow": {
+                            "title": "Browser- und lokale IDE-Workflows",
+                            "description": "Studierende wechseln zwischen Online-Editor und lokaler Umgebung, während Lehrende Code direkt im Browser begutachten."
                         },
-                        "batteries": {
-                            "title": "Alles inklusive",
-                            "description": "Externe CI/CD-Integrationen sind nicht nötig oder unterstützt; richten Sie Kurse in Minuten ein, alles läuft innerhalb von Artemis."
+                        "secure": {
+                            "title": "Sichere Build Agents",
+                            "description": "Build Agents führen Tests und statische Analyse in isolierten Umgebungen für skalierbaren Kursbetrieb aus."
                         }
                     },
                     "programmingLanguages": "Funktioniert mit allen Programmiersprachen, wie zum Beispiel"
@@ -152,89 +219,108 @@
                     "navLabel": "Quiz",
                     "badge": "Übungen",
                     "title": "Quizaufgaben",
-                    "description": "Vielseitige Quiz-Engine mit verschiedenen Frageformaten, sofortiger automatischer Bewertung und detaillierter Ergebnisanalyse.",
+                    "description": "Quizaufgaben decken Live-Lehre, Übungsphasen und Klausuren mit mehreren Formaten und sofortiger Bewertung ab.",
                     "bullets": {
-                        "0": "Multiple-Choice, Drag-and-Drop und Kurzantwort-Fragetypen",
-                        "1": "Live-Quizze mit Echtzeit-Teilnahmeverfolgung",
-                        "2": "Automatische Bewertung mit konfigurierbaren Bewertungsregeln"
+                        "0": "Multiple Choice, Drag-and-Drop, Kurzantworten und modellbasierte Quizfragen",
+                        "1": "Live-, Übungs- und Klausurmodus für unterschiedliche Lehrsituationen",
+                        "2": "Automatische Bewertung mit konfigurierbaren Regeln und Teilnahmetracking"
                     }
                 },
                 "modeling": {
                     "navLabel": "Modellierung & Text",
                     "badge": "Übungen",
                     "title": "Modellierungs- & Textaufgaben",
-                    "description": "Interaktive Diagrammaufgaben und Freitext-Einreichungen mit KI-gestützter halbautomatischer Bewertung.",
+                    "description": "Modellierungs- und Textaufgaben verbinden strukturierte Diagrammarbeit, freie Texte und KI-gestützte Bewertung in einer Plattform.",
                     "bullets": {
-                        "0": "UML-Diagramm-Editor mit automatischem Layout und visuellem Feedback",
-                        "1": "Freitextaufgaben mit NLP-gestützten Feedbackvorschlägen",
-                        "2": "Halbautomatische Bewertung lernt aus Korrekturen der Lehrenden"
+                        "0": "UML- und weitere Diagrammtypen mit visuellem Feedback und elementgenauer Begutachtung",
+                        "1": "Textabgaben mit NLP-gestützten Feedbackvorschlägen und Spracherkennung",
+                        "2": "Halbautomatische Bewertung verbessert sich durch Korrekturen der Lehrenden"
+                    },
+                    "cards": {
+                        "modeling": {
+                            "title": "Modellierungsaufgaben",
+                            "description": "Erstellen Sie UML- und andere Diagramme per Drag-and-Drop mit mehreren Diagrammtypen und Feedback direkt an Modellelementen."
+                        },
+                        "text": {
+                            "title": "Textaufgaben",
+                            "description": "Bewerten Sie Freitextantworten mit strukturierten Kriterien, segmentgenauem Feedback, NLP-Unterstützung und sprachsensitiver Auswertung."
+                        }
                     }
                 },
                 "exams": {
                     "navLabel": "Klausuren",
                     "badge": "Klausurmodus",
                     "title": "Umfassender Klausurmodus",
-                    "description": "Sichere Online-Klausuren mit Aufgabenvarianten, integrierter Plagiatserkennung und strukturierten Bewertungsabläufen durchführen.",
+                    "description": "Führen Sie sichere Online-Klausuren mit Varianten, Bewertungsworkflows, Erkennung auffälligen Verhaltens und integrierter Nachkorrektur durch.",
                     "imageAlt": "Artemis Klausuren-Dashboard",
                     "bullets": {
-                        "0": "Einzigartige Klausurvarianten pro Student mit zufälliger Aufgabenreihenfolge",
-                        "1": "Integrierte Plagiatserkennung und Testläufe",
-                        "2": "Detaillierte Statistiken und studentischer Überprüfungsprozess"
+                        "0": "Aufgabengruppen und Varianten erschweren Abschreiben in echten Klausuren",
+                        "1": "Integrierte Plagiatsprüfung, Analyse auffälligen Verhaltens und Testläufe",
+                        "2": "Statistiken, Review-Phasen und Korrekturworkflows bleiben in einem System"
                     },
                     "statsImageAlt": "Artemis Klausurstatistiken",
-                    "assessmentImageAlt": "Artemis Klausurbewertung",
+                    "integrityImageAlt": "Artemis Analyse auffälligen Verhaltens",
                     "statistics": {
-                        "title": "Statistiken",
-                        "description": "Klausurergebnisse anhand detaillierter Statistiken von Artemis auswerten, einschließlich Leistungsmetriken und Analyse der Aufgabenschwierigkeit.",
+                        "title": "Statistiken & Review",
+                        "description": "Verfolgen Sie Ergebnisse, Schwierigkeit und Review-Bereitschaft mit detaillierten Klausurstatistiken und strukturierten Überprüfungsabläufen.",
                         "usingMetrics": "Überprüfen Sie die Leistung der Studierenden mit verschiedenen Metriken wie Durchschnitt, Median und Standardabweichung.",
                         "studentFeedback": "Bewerten Sie die wahrgenommene Schwierigkeit jeder Übung durch die Studierenden, um zukünftige Klausuren zu verbessern."
                     },
-                    "automaticAssessment": {
-                        "title": "Von maschinellem Lernen unterstützte Bewertung",
-                        "description": "Artemis unterstützt die Korrektur mit automatischen und halbautomatischen Bewertungen für verschiedene Übungstypen.",
-                        "automate": "Für Quizaufgaben können Sie die richtige Lösung im Voraus festlegen. Nach Durchführung einer Klausur können Sie Artemis auffordern, alle Einsendungen automatisch auszuwerten.",
-                        "quality": "Für Text- und Modellierungsaufgaben können Sie automatische Korrekturvorschläge aktivieren. Artemis verwendet maschinelles Lernen, um ähnliche Elemente in den Einsendungen zu identifizieren."
+                    "integrity": {
+                        "title": "Integritätsüberwachung",
+                        "description": "Untersuchen Sie auffällige Sitzungen, Plagiate und andere Anomalien direkt über Checklisten und Monitoring-Dashboards."
                     }
                 },
                 "lectures": {
                     "navLabel": "Vorlesungen",
                     "badge": "Lehre",
                     "title": "Vorlesungsintegration",
-                    "description": "Strukturierte Kursinhalte mit Folien, Videos und Lerneinheiten bereitstellen, verknüpft mit Übungen und Kompetenzen.",
+                    "description": "Stellen Sie Vorlesungen als strukturierte Einheiten mit Folien, Aufzeichnungen, Kompetenzen und KI-fähigen Kursinhalten bereit.",
                     "bullets": {
-                        "0": "Vorlesungsfolien hochladen und Videoinhalte einbetten",
-                        "1": "Inhalte in Lerneinheiten mit klaren Zielen organisieren",
-                        "2": "Einheiten mit Übungen und Kompetenzen für ein vernetztes Lernerlebnis verknüpfen"
+                        "0": "Folien, Videos, Aufzeichnungen und verknüpfte Aufgaben in einem Vorlesungsablauf kombinieren",
+                        "1": "Vorlesungseinheiten mit Kompetenzen und Lernzielen verknüpfen",
+                        "2": "Vorlesungsinhalte für Transkription und KI-gestützte Unterstützung verarbeiten"
+                    },
+                    "processingImageAlt": "Verarbeitete Vorlesungseinheiten in Artemis",
+                    "cards": {
+                        "delivery": {
+                            "title": "Strukturierte Vorlesungsdurchführung",
+                            "description": "Organisieren Sie Vorlesungen in Einheiten, binden Sie Aufzeichnungen ein, verlinken Sie Aufgaben und verbinden Sie alles mit Kompetenzen und Kurszielen."
+                        },
+                        "transcription": {
+                            "title": "Transkription und KI-Verankerung",
+                            "description": "Verarbeiten Sie Vorlesungsvideos und Einheiten so, dass Artemis Inhalte transkribieren und für vorlesungsbezogene KI-Unterstützung nutzbar machen kann."
+                        }
                     }
                 },
                 "communication": {
                     "navLabel": "Kommunikation",
                     "badge": "Messaging",
                     "title": "Echtzeit-Kommunikation",
-                    "description": "Kursweite Kanäle, aufgabenspezifische Diskussionen und Direktnachrichten verbinden Studierende und Lehrende.",
+                    "description": "Ankündigungen, Kurskanäle, Direktnachrichten und Benachrichtigungen halten Studierende, Tutorinnen, Tutoren und Lehrende auf dem gleichen Stand.",
                     "bullets": {
-                        "0": "Dedizierte Kanäle pro Vorlesung, Übung und Klausur",
-                        "1": "Ankündigungen mit Push-Benachrichtigungen",
-                        "2": "Threaded Diskussionen mit Reaktionen und Erwähnungen"
+                        "0": "Eigene Kanäle für Vorlesungen, Aufgaben, Tutorien und Klausuren",
+                        "1": "Ankündigungen mit Web- und E-Mail-Benachrichtigungen",
+                        "2": "Direktnachrichten, Reaktionen, Erwähnungen und mobile Kommunikation"
                     }
                 },
                 "integrity": {
                     "navLabel": "Integrität & Analysen",
                     "badge": "Plattform",
                     "title": "Akademische Integrität & Lernanalysen",
-                    "description": "Umfassende Werkzeuge zur Wahrung akademischer Standards und zum Verständnis studentischer Lernmuster im großen Maßstab.",
+                    "description": "Sichern Sie akademische Standards und verstehen Sie Kursverläufe mit Plagiatsprüfungen, Analyse-Dashboards und operativen Signalen.",
                     "bullets": {
                         "0": "Integrierte JPlag-basierte Plagiatserkennung für Code, Text und Modellierung",
-                        "1": "Detaillierte Einblicke in Studierendenleistung, Engagement und kursweite Trends",
-                        "2": "Datengestütztes Feedback zur Verbesserung von Lehre und Kursdesign"
+                        "1": "Dashboards für Leistung, Engagement und Kompetenzfortschritt",
+                        "2": "Exportierbare Daten und Kurssignale zur Verbesserung von Lehrentscheidungen"
                     },
                     "plagiarism": {
                         "title": "Plagiatserkennung",
-                        "description": "Integrierte JPlag-basierte Erkennung für Code-, Text- und Modellierungseinreichungen mit Ähnlichkeitsanalyse und Seitenvergleich."
+                        "description": "Vergleichen Sie Einreichungen nebeneinander und verwalten Sie Plagiatsfälle in Kursen und Klausuren mit integrierter JPlag-basierter Erkennung."
                     },
                     "analytics": {
                         "title": "Lernanalysen",
-                        "description": "Detaillierte Dashboards zu Studierendenleistung, Engagement-Mustern und kursweiten Trends zur Unterstützung von Lehrentscheidungen."
+                        "description": "Nutzen Sie Dashboards zu Aufgaben, Kompetenzen und Kursverläufen, um Engagement, Fortschritt und Leistung besser zu verstehen."
                     }
                 }
             }

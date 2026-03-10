@@ -341,18 +341,22 @@ export class LandingNavbarComponent {
     currentLang = signal(inject(TranslateService).currentLang || 'en');
     isEnglish = computed(() => this.currentLang() === 'en');
 
-    featuresMenuItems: MenuItem[] = [
-        { label: 'AI & Learning', command: () => this.scrollTo('feature-iris') },
-        { label: 'Assessment & Exams', command: () => this.scrollTo('feature-programming') },
-        { label: 'Platform & Delivery', command: () => this.scrollTo('feature-lectures') },
-    ];
+    get featuresMenuItems(): MenuItem[] {
+        return [
+            { label: this.translateService.instant('landing.narrative.chapters.ai.title'), command: () => this.scrollTo('feature-iris') },
+            { label: this.translateService.instant('landing.narrative.chapters.assessment.title'), command: () => this.scrollTo('feature-programming') },
+            { label: this.translateService.instant('landing.narrative.chapters.platform.title'), command: () => this.scrollTo('feature-lectures') },
+        ];
+    }
 
-    docsMenuItems: MenuItem[] = [
-        { label: 'Student', url: 'https://docs.artemis.tum.de/user/student-guides/intro', target: '_blank' },
-        { label: 'Instructor', url: 'https://docs.artemis.tum.de/user/instructor-guides/intro', target: '_blank' },
-        { label: 'Admin', url: 'https://docs.artemis.tum.de/admin/intro', target: '_blank' },
-        { label: 'Developer', url: 'https://docs.artemis.tum.de/dev/intro', target: '_blank' },
-    ];
+    get docsMenuItems(): MenuItem[] {
+        return [
+            { label: this.translateService.instant('landing.navbar.docStudent'), url: 'https://docs.artemis.tum.de/user/student-guides/intro', target: '_blank' },
+            { label: this.translateService.instant('landing.navbar.docInstructor'), url: 'https://docs.artemis.tum.de/user/instructor-guides/intro', target: '_blank' },
+            { label: this.translateService.instant('landing.navbar.docAdmin'), url: 'https://docs.artemis.tum.de/admin/intro', target: '_blank' },
+            { label: this.translateService.instant('landing.navbar.docDeveloper'), url: 'https://docs.artemis.tum.de/dev/intro', target: '_blank' },
+        ];
+    }
 
     toggleMenu(): void {
         this.menuOpen.update((v) => !v);

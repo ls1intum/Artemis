@@ -139,18 +139,18 @@ import { ILLUSTRATION_COLORS, LANGUAGE_ICONS_RAW, LandingFeatureSection, Languag
                     <div class="integration-cards">
                         <div class="integration-card">
                             <img src="content/images/landing/logo.png" alt="Artemis" class="card-logo" />
-                            <h5 jhiTranslate="landing.narrative.sections.programming.cards.git.title"></h5>
-                            <p jhiTranslate="landing.narrative.sections.programming.cards.git.description"></p>
+                            <h5 jhiTranslate="landing.narrative.sections.programming.cards.platform.title"></h5>
+                            <p jhiTranslate="landing.narrative.sections.programming.cards.platform.description"></p>
                         </div>
                         <div class="integration-card">
                             <img src="content/images/landing/logo.png" alt="Artemis" class="card-logo" />
-                            <h5 jhiTranslate="landing.narrative.sections.programming.cards.ci.title"></h5>
-                            <p jhiTranslate="landing.narrative.sections.programming.cards.ci.description"></p>
+                            <h5 jhiTranslate="landing.narrative.sections.programming.cards.workflow.title"></h5>
+                            <p jhiTranslate="landing.narrative.sections.programming.cards.workflow.description"></p>
                         </div>
                         <div class="integration-card">
                             <img src="content/images/landing/logo.png" alt="Artemis" class="card-logo" />
-                            <h5 jhiTranslate="landing.narrative.sections.programming.cards.batteries.title"></h5>
-                            <p jhiTranslate="landing.narrative.sections.programming.cards.batteries.description"></p>
+                            <h5 jhiTranslate="landing.narrative.sections.programming.cards.secure.title"></h5>
+                            <p jhiTranslate="landing.narrative.sections.programming.cards.secure.description"></p>
                         </div>
                     </div>
                     <div class="languages-row">
@@ -171,6 +171,53 @@ import { ILLUSTRATION_COLORS, LANGUAGE_ICONS_RAW, LandingFeatureSection, Languag
                 </div>
             }
 
+            @if (section().subcontent === 'modeling-text-details') {
+                <div class="subcontent" jhiVisibleOnScroll>
+                    <div class="detail-grid detail-grid-two">
+                        <article class="detail-card">
+                            <div class="detail-icon" aria-hidden="true">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <rect x="3" y="3" width="7" height="7" rx="1" />
+                                    <rect x="14" y="3" width="7" height="7" rx="1" />
+                                    <rect x="3" y="14" width="7" height="7" rx="1" />
+                                    <path d="M14 17h7" />
+                                </svg>
+                            </div>
+                            <h5 jhiTranslate="landing.narrative.sections.modeling.cards.modeling.title"></h5>
+                            <p jhiTranslate="landing.narrative.sections.modeling.cards.modeling.description"></p>
+                        </article>
+                        <article class="detail-card">
+                            <div class="detail-icon" aria-hidden="true">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.5"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                    <path d="M14 2v6h6" />
+                                    <path d="M8 13h8" />
+                                    <path d="M8 17h6" />
+                                </svg>
+                            </div>
+                            <h5 jhiTranslate="landing.narrative.sections.modeling.cards.text.title"></h5>
+                            <p jhiTranslate="landing.narrative.sections.modeling.cards.text.description"></p>
+                        </article>
+                    </div>
+                </div>
+            }
+
             @if (section().subcontent === 'exam-details') {
                 <div class="subcontent" jhiVisibleOnScroll>
                     <div class="exam-cards">
@@ -186,16 +233,71 @@ import { ILLUSTRATION_COLORS, LANGUAGE_ICONS_RAW, LandingFeatureSection, Languag
                         <div class="exam-card">
                             <div class="exam-card-image">
                                 <img
-                                    src="content/images/landing/exam-assessment.png"
-                                    [alt]="'landing.narrative.sections.exams.assessmentImageAlt' | artemisTranslate"
+                                    src="content/images/landing/suspicious-behavior-analysis.png"
+                                    [alt]="'landing.narrative.sections.exams.integrityImageAlt' | artemisTranslate"
                                     loading="lazy"
                                 />
                             </div>
                             <div class="exam-card-text">
-                                <h5 jhiTranslate="landing.narrative.sections.exams.automaticAssessment.title"></h5>
-                                <p jhiTranslate="landing.narrative.sections.exams.automaticAssessment.description"></p>
+                                <h5 jhiTranslate="landing.narrative.sections.exams.integrity.title"></h5>
+                                <p jhiTranslate="landing.narrative.sections.exams.integrity.description"></p>
                             </div>
                         </div>
+                    </div>
+                </div>
+            }
+
+            @if (section().subcontent === 'lecture-details') {
+                <div class="subcontent" jhiVisibleOnScroll>
+                    <div class="detail-grid detail-grid-two">
+                        <article class="detail-card detail-card-media detail-card-illustrated">
+                            <div class="detail-media detail-media-illustrated" aria-hidden="true">
+                                <div class="detail-illustration-glow"></div>
+                                <div class="detail-illustration-grid"></div>
+                                <div class="detail-icon">
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.5"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                                    </svg>
+                                </div>
+                                <div class="detail-scene detail-scene-lecture">
+                                    <div class="lecture-panel">
+                                        <div class="lecture-strip"></div>
+                                        <div class="lecture-line line-long"></div>
+                                        <div class="lecture-line line-mid"></div>
+                                        <div class="lecture-row">
+                                            <span class="lecture-pill"></span>
+                                            <span class="lecture-pill short"></span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="detail-copy">
+                                <h5 jhiTranslate="landing.narrative.sections.lectures.cards.delivery.title"></h5>
+                                <p jhiTranslate="landing.narrative.sections.lectures.cards.delivery.description"></p>
+                            </div>
+                        </article>
+                        <article class="detail-card detail-card-media">
+                            <div class="detail-media">
+                                <img
+                                    src="content/images/landing/processed-lecture-units.png"
+                                    [alt]="'landing.narrative.sections.lectures.processingImageAlt' | artemisTranslate"
+                                    loading="lazy"
+                                />
+                            </div>
+                            <div class="detail-copy">
+                                <h5 jhiTranslate="landing.narrative.sections.lectures.cards.transcription.title"></h5>
+                                <p jhiTranslate="landing.narrative.sections.lectures.cards.transcription.description"></p>
+                            </div>
+                        </article>
                     </div>
                 </div>
             }
@@ -657,6 +759,168 @@ import { ILLUSTRATION_COLORS, LANGUAGE_ICONS_RAW, LandingFeatureSection, Languag
             transform: translateY(0);
         }
 
+        .detail-grid {
+            display: grid;
+            gap: 1.25rem;
+        }
+
+        .detail-grid-two {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .detail-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 1.35rem;
+        }
+
+        .detail-card-media {
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .detail-media {
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            border-bottom: 1px solid #1e293b;
+            position: relative;
+        }
+
+        .detail-media img {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: cover;
+            object-position: top left;
+        }
+
+        .detail-media-illustrated {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(7, 11, 22, 0.98));
+        }
+
+        .detail-illustration-glow {
+            position: absolute;
+            inset: -22%;
+            background: radial-gradient(circle at center, rgba(20, 184, 166, 0.32), transparent 60%);
+            filter: blur(34px);
+        }
+
+        .detail-illustration-grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.24;
+            background-image: linear-gradient(rgba(148, 163, 184, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(148, 163, 184, 0.08) 1px, transparent 1px);
+            background-size: 22px 22px;
+            mask-image: linear-gradient(180deg, transparent, black 25%, black 75%, transparent);
+        }
+
+        .detail-copy {
+            padding: 1.35rem;
+        }
+
+        .detail-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 2.75rem;
+            height: 2.75rem;
+            border-radius: 12px;
+            color: #60a5fa;
+            background: rgba(30, 41, 59, 0.68);
+        }
+
+        .detail-icon svg {
+            width: 1.35rem;
+            height: 1.35rem;
+        }
+
+        .detail-card-illustrated .detail-icon {
+            position: absolute;
+            top: 0.9rem;
+            right: 0.9rem;
+            z-index: 2;
+        }
+
+        .detail-scene {
+            position: relative;
+            z-index: 1;
+            width: min(78%, 240px);
+            height: 70%;
+        }
+
+        .detail-scene-lecture {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lecture-panel {
+            width: min(82%, 220px);
+            padding: 1rem;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(15, 23, 42, 0.76);
+            box-shadow:
+                inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                0 18px 30px rgba(15, 23, 42, 0.34);
+        }
+
+        .lecture-strip {
+            width: 96px;
+            height: 24px;
+            border-radius: 999px;
+            margin-bottom: 0.8rem;
+            background: rgba(20, 184, 166, 0.22);
+        }
+
+        .lecture-line {
+            height: 10px;
+            border-radius: 999px;
+            background: linear-gradient(90deg, rgba(226, 232, 240, 0.92), rgba(226, 232, 240, 0.18));
+        }
+
+        .lecture-line + .lecture-line {
+            margin-top: 0.55rem;
+        }
+
+        .lecture-row {
+            display: flex;
+            gap: 0.55rem;
+            margin-top: 0.9rem;
+        }
+
+        .lecture-pill {
+            width: 88px;
+            height: 20px;
+            border-radius: 999px;
+            background: rgba(96, 165, 250, 0.22);
+        }
+
+        .lecture-pill.short {
+            width: 54px;
+            background: rgba(167, 139, 250, 0.22);
+        }
+
+        .detail-card h5,
+        .detail-copy h5 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 0.85rem 0 0.45rem;
+        }
+
+        .detail-card p,
+        .detail-copy p {
+            font-size: 0.875rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin: 0;
+        }
+
         /* Programming subcontent */
         .integration-cards {
             display: grid;
@@ -850,6 +1114,10 @@ import { ILLUSTRATION_COLORS, LANGUAGE_ICONS_RAW, LandingFeatureSection, Languag
             }
 
             .integrity-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .detail-grid-two {
                 grid-template-columns: 1fr;
             }
 

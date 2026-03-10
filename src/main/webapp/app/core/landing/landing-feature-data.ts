@@ -14,7 +14,7 @@ export interface LandingFeatureSection {
     imageAltKey?: string;
     illustrationIcon?: string;
     bullets: string[];
-    subcontent?: 'programming-details' | 'exam-details' | 'integrity-analytics-details';
+    subcontent?: 'programming-details' | 'modeling-text-details' | 'exam-details' | 'lecture-details' | 'integrity-analytics-details';
 }
 
 export interface LandingChapter {
@@ -108,6 +108,7 @@ export const LANDING_SECTIONS: LandingFeatureSection[] = [
         imageSrc: 'content/images/feature-overview/students/modeling_editor.png',
         imageAltKey: 'landing.narrative.sections.modeling.imageAlt',
         bullets: ['0', '1', '2'],
+        subcontent: 'modeling-text-details',
     },
     {
         id: 'exams',
@@ -130,6 +131,7 @@ export const LANDING_SECTIONS: LandingFeatureSection[] = [
         imageSrc: 'content/images/landing/lecture-details.png',
         imageAltKey: 'landing.narrative.sections.lectures.imageAlt',
         bullets: ['0', '1', '2'],
+        subcontent: 'lecture-details',
     },
     {
         id: 'communication',

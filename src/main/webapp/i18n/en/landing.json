@@ -22,24 +22,24 @@
             "heading": "Platform Features",
             "contents": {
                 "ai": "AI",
-                "assessment": "Assessment",
-                "platform": "Platform"
+                "assessment": "Exercises & Exams",
+                "platform": "Operations"
             },
             "chapters": {
                 "ai": {
                     "eyebrow": "AI Features",
                     "title": "AI That Supports Learning And Teaching",
-                    "description": "Artemis integrates AI across the entire teaching workflow —<br/>from personalized tutoring and competency tracking to automated assessment and exercise generation."
+                    "description": "Artemis integrates AI across the teaching workflow —<br/>from lecture-aware tutoring and competency guidance to assessment support and exercise creation."
                 },
                 "assessment": {
-                    "eyebrow": "Assessment",
-                    "title": "Assessment That Works In Real Courses",
-                    "description": "From programming exercises with built-in CI to secure online exams, Artemis covers the full assessment surface area of technical courses."
+                    "eyebrow": "Exercises & Exams",
+                    "title": "Exercises And Exams For Real Courses",
+                    "description": "From programming exercises with built-in CI to secure online exams, Artemis supports the core exercise and exam workflows of technical courses."
                 },
                 "platform": {
-                    "eyebrow": "Course Delivery",
-                    "title": "Course Delivery, Integrity, And Scale",
-                    "description": "Artemis goes beyond assignments with integrated lecture delivery, real-time communication, plagiarism detection, and learning analytics."
+                    "eyebrow": "Teaching & Operations",
+                    "title": "Course Delivery, Integrity, And Operations",
+                    "description": "Artemis goes beyond assignments with integrated lectures, communication, tutorial workflows, integrity tooling, and learning analytics."
                 }
             },
             "summary": {
@@ -76,74 +76,141 @@
                     }
                 }
             },
+            "support": {
+                "ai": {
+                    "eyebrow": "More AI In Practice",
+                    "title": "AI that reaches lectures, tutors, and long-running courses",
+                    "description": "Artemis AI is embedded across daily teaching workflows, not just isolated chat windows.",
+                    "items": {
+                        "tutorSuggestions": {
+                            "title": "Tutor Suggestions",
+                            "description": "Iris can suggest answers for tutors responding to student questions in the communication module.",
+                            "imageAlt": "Artemis tutor suggestions view"
+                        },
+                        "lectureAwareAi": {
+                            "title": "Lecture-Aware AI",
+                            "description": "Processed lecture units and transcriptions give AI assistants grounded access to actual course material.",
+                            "imageAlt": "Processed lecture units in Artemis"
+                        },
+                        "persistentContext": {
+                            "title": "Persistent Context",
+                            "description": "Long-term memory and conversation continuity make follow-up guidance more personalized over time."
+                        }
+                    }
+                },
+                "assessment": {
+                    "eyebrow": "Additional Workflows",
+                    "title": "More than one kind of coursework",
+                    "description": "Artemis supports collaborative, open-ended, and grading-heavy workflows beyond the core exercise types.",
+                    "items": {
+                        "teamExercises": {
+                            "title": "Team Exercises",
+                            "description": "Run team-based assignments with real-time collaboration and dedicated tutors per team."
+                        },
+                        "fileUpload": {
+                            "title": "File Upload Exercises",
+                            "description": "Accept documents, images, and other files when the right exercise format is not code or quiz based."
+                        },
+                        "grading": {
+                            "title": "Assessment & Grading",
+                            "description": "Double-blind grading, assessment training, complaints, grade keys, exports, and bonus handling support real assessment operations.",
+                            "imageAlt": "Artemis assessment dashboard"
+                        }
+                    }
+                },
+                "platform": {
+                    "eyebrow": "Platform Operations",
+                    "title": "Teaching operations beyond individual exercises",
+                    "description": "Artemis also covers course administration, LMS integration, and the infrastructure needed for large courses.",
+                    "items": {
+                        "tutorialGroups": {
+                            "title": "Tutorial Groups",
+                            "description": "Plan sessions, manage registrations, assign tutors, track attendance, and connect tutorial groups to communication channels.",
+                            "imageAlt": "Artemis tutorial groups overview"
+                        },
+                        "lti": {
+                            "title": "LTI Integration",
+                            "description": "Integrate Artemis into existing LMS setups through LTI for platforms such as Moodle and edX."
+                        },
+                        "openSource": {
+                            "title": "Open Source",
+                            "description": "Use and extend an open-source platform backed by an active academic development community."
+                        },
+                        "scalable": {
+                            "title": "Scalable Infrastructure",
+                            "description": "Run large technical courses with integrated build agents and infrastructure designed for thousands of students."
+                        }
+                    }
+                }
+            },
             "sections": {
                 "iris": {
                     "navLabel": "AI Tutor",
                     "badge": "Iris",
                     "title": "Your Personal AI Tutor",
-                    "description": "Context-aware AI assistant that reads your code, understands your errors, and guides you to the solution without giving away the answer.",
+                    "description": "Iris answers questions about exercises, lectures, and learning progress with context-aware guidance that helps students move forward without short-circuiting the learning process.",
                     "bullets": {
-                        "0": "Five specialized assistance modes for different learning contexts",
-                        "1": "Proactive support when build and test feedback indicates the student is stuck",
-                        "2": "Persistent support experience across sessions"
+                        "0": "Support for programming exercises, lectures, and course content",
+                        "1": "Proactive guidance when feedback signals that a student is stuck",
+                        "2": "Persistent conversations and personalized follow-up across sessions"
                     }
                 },
                 "atlas": {
                     "navLabel": "Learning Paths",
                     "badge": "Atlas",
                     "title": "Adaptive Learning Paths",
-                    "description": "Personalized competency tracking that helps students understand where they stand and what to focus on next.",
+                    "description": "Competency-based learning paths connect lectures, exercises, and learning objectives so students and instructors can see progress clearly.",
                     "bullets": {
-                        "0": "Fine-grained learning objectives linked to exercises and lectures",
-                        "1": "Visual progress dashboards for students and instructors",
-                        "2": "Automatic recommendations based on individual performance"
+                        "0": "Track competencies linked to lecture units and exercises",
+                        "1": "Visual dashboards for students and instructors",
+                        "2": "Recommendations and analytics based on individual progress"
                     }
                 },
                 "athena": {
                     "navLabel": "AI Assessment",
                     "badge": "Athena",
                     "title": "AI-Powered Assessment",
-                    "description": "Machine learning models that analyze submissions and suggest feedback, reducing grading time while maintaining quality.",
+                    "description": "AI-assisted assessment workflows help instructors review text, modeling, and programming submissions with faster, more consistent feedback.",
                     "bullets": {
-                        "0": "Automatic feedback suggestions for text and modeling exercises",
-                        "1": "Consistency checks across grading teams",
-                        "2": "Continuous learning from instructor corrections"
+                        "0": "Feedback suggestions across text, modeling, and programming workflows",
+                        "1": "Consistency support for large assessment teams",
+                        "2": "Learns from instructor corrections and grading patterns"
                     }
                 },
                 "hyperion": {
                     "navLabel": "AI Generation",
                     "badge": "Hyperion",
                     "title": "AI Exercise Generation",
-                    "description": "Generate and refine exercises using large language models, turning ideas into complete, deployable assignments in minutes.",
+                    "description": "Hyperion helps instructors create, refine, and sanity-check new exercises so ideas become high-quality course material faster.",
                     "bullets": {
                         "0": "Create programming exercises from natural language descriptions",
-                        "1": "Automatic test case and solution generation",
-                        "2": "Iterative refinement with instructor feedback"
+                        "1": "Suggest tests, solutions, and supporting material",
+                        "2": "Refine drafts with consistency checks and instructor feedback"
                     }
                 },
                 "programming": {
                     "navLabel": "Programming",
                     "badge": "Exercises",
                     "title": "Programming Exercises",
-                    "description": "Integrated development environment with built-in Git hosting, continuous integration, and automated feedback for multiple programming languages.",
+                    "description": "Artemis combines built-in version control, CI, online editing, and secure build agents into one workflow for scalable programming education.",
                     "imageAlt": "Artemis Editor View",
                     "bullets": {
-                        "0": "Built-in Git and CI — no external services required",
-                        "1": "Instant feedback through test results and static code analysis",
-                        "2": "Support for Java, Python, C, Kotlin, Swift, and more"
+                        "0": "Students can work locally or directly in the browser",
+                        "1": "Instant feedback through tests, static analysis, hints, and hidden tests",
+                        "2": "Supports many programming languages with integrated Git and CI"
                     },
                     "cards": {
-                        "git": {
-                            "title": "Artemis Git",
-                            "description": "Built-in Git hosting provisions starter, solution, and student repositories with access rules applied automatically."
+                        "platform": {
+                            "title": "Integrated Git & CI",
+                            "description": "Starter, solution, and student repositories plus automated builds are provisioned directly inside Artemis."
                         },
-                        "ci": {
-                            "title": "Artemis CI",
-                            "description": "Continuous integration pipelines run directly in Artemis, delivering automated feedback without managing external servers."
+                        "workflow": {
+                            "title": "Browser And Local IDE Workflow",
+                            "description": "Students can switch between the online editor and their local setup while instructors review code directly in the browser."
                         },
-                        "batteries": {
-                            "title": "Batteries Included",
-                            "description": "No external CI/CD integrations are needed or supported; set up courses in minutes with everything running inside Artemis."
+                        "secure": {
+                            "title": "Secure Build Agents",
+                            "description": "Build agents run tests and static analysis in isolated environments designed for scalable course operation."
                         }
                     },
                     "programmingLanguages": "Works with all programming languages, such as"
@@ -152,89 +219,108 @@
                     "navLabel": "Quiz",
                     "badge": "Exercises",
                     "title": "Quiz Exercises",
-                    "description": "Versatile quiz engine supporting multiple question formats with instant automated grading and detailed result analytics.",
+                    "description": "Quiz exercises cover live teaching, practice, and exams with multiple formats and instant grading.",
                     "bullets": {
-                        "0": "Multiple-choice, drag-and-drop, and short-answer question types",
-                        "1": "Live quizzes with real-time participation tracking",
-                        "2": "Automatic grading with configurable scoring rules"
+                        "0": "Multiple-choice, drag-and-drop, short-answer, and modeling quiz questions",
+                        "1": "Live, practice, and exam modes for different teaching moments",
+                        "2": "Automatic grading with configurable scoring and participation tracking"
                     }
                 },
                 "modeling": {
                     "navLabel": "Modeling & Text",
                     "badge": "Exercises",
                     "title": "Modeling & Text Exercises",
-                    "description": "Interactive diagram exercises and free-text submissions with AI-assisted semi-automatic assessment.",
+                    "description": "Modeling and text exercises combine structured diagram work, free-form writing, and AI-assisted assessment in one platform.",
                     "bullets": {
-                        "0": "UML diagram editor with automatic layout and visual feedback",
-                        "1": "Free-text exercises with NLP-powered feedback suggestions",
-                        "2": "Semi-automatic assessment learns from instructor corrections"
+                        "0": "UML and other diagram types with visual feedback and element-level review",
+                        "1": "Text submissions with NLP-assisted feedback suggestions and language detection",
+                        "2": "Semi-automatic assessment improves with instructor corrections"
+                    },
+                    "cards": {
+                        "modeling": {
+                            "title": "Modeling Exercises",
+                            "description": "Create UML and other diagrams with drag and drop, multiple diagram types, and feedback directly on model elements."
+                        },
+                        "text": {
+                            "title": "Text Exercises",
+                            "description": "Assess free-text answers with structured criteria, segment-level feedback, NLP assistance, and language-aware support."
+                        }
                     }
                 },
                 "exams": {
                     "navLabel": "Exams",
                     "badge": "Exam Mode",
                     "title": "Comprehensive Exam Mode",
-                    "description": "Conduct secure online exams with exercise variants, integrated plagiarism detection, and structured grading workflows.",
+                    "description": "Run secure online exams with variants, grading workflows, suspicious-behavior monitoring, and integrated review.",
                     "imageAlt": "Artemis Exam Dashboard",
                     "bullets": {
-                        "0": "Unique exam variants per student with randomized exercise order",
-                        "1": "Built-in plagiarism detection and test runs",
-                        "2": "Detailed statistics and student review process"
+                        "0": "Exercise groups and variants reduce copying during real exams",
+                        "1": "Integrated plagiarism checks, suspicious-behavior analysis, and test runs",
+                        "2": "Statistics, review windows, and correction workflows stay in one system"
                     },
                     "statsImageAlt": "Artemis Exam Statistics",
-                    "assessmentImageAlt": "Artemis Exam Assessment",
+                    "integrityImageAlt": "Artemis suspicious behavior analysis results",
                     "statistics": {
-                        "title": "Statistics",
-                        "description": "Evaluate exam outcomes using detailed statistics generated by Artemis, including performance metrics and exercise difficulty analysis.",
+                        "title": "Statistics & Review",
+                        "description": "Track outcomes, difficulty, and review readiness with detailed exam statistics and structured student review workflows.",
                         "usingMetrics": "Review the students' performance using various metrics such as average, median, and standard deviation.",
                         "studentFeedback": "Review the students' perceived difficulty of every exercise to improve exams in the future."
                     },
-                    "automaticAssessment": {
-                        "title": "Machine-learning Assisted Assessment",
-                        "description": "Artemis supports correction with automatic and semi-automatic assessments for various exercise types.",
-                        "automate": "For quiz exercises, you may specify the correct solution in advance. After conducting an exam, you can prompt Artemis to automatically evaluate all submissions.",
-                        "quality": "For text and modeling exercises, you can activate automatic correction suggestions. Artemis uses machine learning to identify similar elements across submissions."
+                    "integrity": {
+                        "title": "Integrity Monitoring",
+                        "description": "Investigate suspicious sessions, plagiarism, and other anomalies from the exam checklist and dedicated monitoring dashboards."
                     }
                 },
                 "lectures": {
                     "navLabel": "Lectures",
                     "badge": "Teaching",
                     "title": "Lecture Integration",
-                    "description": "Deliver structured course content with slides, videos, and learning units linked to exercises and competencies.",
+                    "description": "Deliver lectures as structured units with slides, recordings, competencies, and AI-ready course content.",
                     "bullets": {
-                        "0": "Upload lecture slides and embed video content",
-                        "1": "Organize content into learning units with clear objectives",
-                        "2": "Link units to exercises and competencies for a connected learning experience"
+                        "0": "Combine slides, videos, recordings, and linked exercises in one lecture flow",
+                        "1": "Map lecture units to competencies and learning objectives",
+                        "2": "Process lecture content for transcription and AI-grounded assistance"
+                    },
+                    "processingImageAlt": "Processed lecture units in Artemis",
+                    "cards": {
+                        "delivery": {
+                            "title": "Structured Lecture Delivery",
+                            "description": "Organize lectures into units, embed recordings, link exercises, and connect everything to competencies and course objectives."
+                        },
+                        "transcription": {
+                            "title": "Transcription And AI Grounding",
+                            "description": "Process lecture videos and units so Artemis can transcribe content and make it usable for lecture-aware AI support."
+                        }
                     }
                 },
                 "communication": {
                     "navLabel": "Communication",
                     "badge": "Messaging",
                     "title": "Real-Time Communication",
-                    "description": "Course-wide channels, exercise-specific discussions, and direct messaging keep students and instructors connected.",
+                    "description": "Announcements, course channels, private messages, and notifications keep students, tutors, and instructors aligned.",
                     "bullets": {
-                        "0": "Dedicated channels per lecture, exercise, and exam",
-                        "1": "Announcements with push notifications",
-                        "2": "Threaded discussions with reactions and mentions"
+                        "0": "Dedicated channels for lectures, exercises, tutorial groups, and exams",
+                        "1": "Announcements with web and email notifications",
+                        "2": "Private messages, reactions, mentions, and mobile-friendly communication"
                     }
                 },
                 "integrity": {
                     "navLabel": "Integrity & Analytics",
                     "badge": "Platform",
                     "title": "Academic Integrity & Learning Analytics",
-                    "description": "Comprehensive tools for maintaining academic standards and understanding student learning patterns at scale.",
+                    "description": "Protect academic standards and understand course progress with plagiarism checks, analytics dashboards, and operational insight.",
                     "bullets": {
                         "0": "Integrated JPlag-based plagiarism detection for code, text, and modeling",
-                        "1": "Detailed insights into student performance, engagement, and course-wide trends",
-                        "2": "Data-driven feedback to improve teaching and course design"
+                        "1": "Dashboards for performance, engagement, and competency progress",
+                        "2": "Exportable data and course-wide signals for improving teaching decisions"
                     },
                     "plagiarism": {
                         "title": "Plagiarism Detection",
-                        "description": "Integrated JPlag-based detection for code, text, and modeling submissions with similarity analysis and side-by-side comparison."
+                        "description": "Compare submissions side by side and manage plagiarism cases across courses and exams with integrated JPlag-based detection."
                     },
                     "analytics": {
                         "title": "Learning Analytics",
-                        "description": "Detailed dashboards showing student performance, engagement patterns, and course-wide trends to inform teaching decisions."
+                        "description": "Use exercise, competency, and course-wide dashboards to understand engagement, progress, and performance trends."
                     }
                 }
             }
