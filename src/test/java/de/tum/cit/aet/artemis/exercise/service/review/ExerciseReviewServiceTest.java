@@ -1,4 +1,4 @@
-package de.tum.cit.aet.artemis.exercise.service;
+package de.tum.cit.aet.artemis.exercise.service.review;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
@@ -15,6 +15,7 @@ import java.util.Set;
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.transport.RefSpec;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CreateCommentThreadGroupDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UpdateThreadResolvedStateDTO;
@@ -39,9 +41,14 @@ import de.tum.cit.aet.artemis.exercise.repository.ExerciseVersionTestRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadGroupRepository;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
-import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService;
+import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.exercise.service.review.ExerciseReviewService.LineMappingResult;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.hyperion.domain.ArtifactType;
+import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
+import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -158,6 +165,174 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         assertThat(reply.getInitialVersion()).isEqualTo(latestVersion);
         assertThat(reply.getInitialVersion()).isNotEqualTo(initialVersion);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldAppendConsistencyCheckThreadsWithoutDeletingPreviousOnes() {
+        ExerciseVersion initialVersion = createExerciseVersion();
+        CommentThread oldConsistencyThread = persistThread(programmingExercise);
+        Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
+        oldConsistencyComment.setThread(oldConsistencyThread);
+        commentRepository.save(oldConsistencyComment);
+
+        CommentThread userThread = persistThread(programmingExercise);
+        Comment userComment = buildUserCommentEntity("Keep me");
+        userComment.setThread(userThread);
+        commentRepository.save(userComment);
+
+        ConsistencyIssueDTO issue = buildConsistencyIssue("New consistency issue", ArtifactType.PROBLEM_STATEMENT, "", 2);
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).hasSize(3);
+
+        CommentThread persistedUserThread = threads.stream().filter(thread -> thread.getId().equals(userThread.getId())).findFirst().orElseThrow();
+        assertThat(persistedUserThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.USER);
+
+        CommentThread persistedOldConsistencyThread = threads.stream().filter(thread -> thread.getId().equals(oldConsistencyThread.getId())).findFirst().orElseThrow();
+        assertThat(persistedOldConsistencyThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+
+        CommentThread generatedConsistencyThread = threads.stream().filter(thread -> !thread.getId().equals(userThread.getId()))
+                .filter(thread -> !thread.getId().equals(oldConsistencyThread.getId())).findFirst().orElseThrow();
+        assertThat(generatedConsistencyThread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+        assertThat(generatedConsistencyThread.getLineNumber()).isEqualTo(2);
+        assertThat(generatedConsistencyThread.getGroup()).isNull();
+        assertThat(generatedConsistencyThread.getInitialVersion()).isEqualTo(initialVersion);
+        assertThat(generatedConsistencyThread.getInitialCommitSha()).isNull();
+        assertThat(generatedConsistencyThread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        var content = generatedConsistencyThread.getComments().iterator().next().getContent();
+        assertThat(content).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+        assertThat(((ConsistencyIssueCommentContentDTO) content).text()).contains("New consistency issue");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldKeepPreviousConsistencyCheckThreadsWhenNoIssuesRemain() {
+        CommentThread oldConsistencyThread = persistThread(programmingExercise);
+        Comment oldConsistencyComment = buildConsistencyIssueCommentEntity("Old consistency issue");
+        oldConsistencyComment.setThread(oldConsistencyThread);
+        commentRepository.save(oldConsistencyComment);
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of());
+
+        assertThat(commentThreadRepository.findById(oldConsistencyThread.getId())).isPresent();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldMapTemplateRepositoryIssueToTemplateReviewThread() throws Exception {
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-issue");
+        pushFileToRepository(templateRepo, "src/Main.java", "class Main {}");
+
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+        String expectedCommitSha = gitService.getLastCommitHash(templateRepo.uri());
+
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Template issue", ArtifactType.TEMPLATE_REPOSITORY, "src/Main.java", 8);
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).singleElement().satisfies(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("src/Main.java");
+            assertThat(thread.getLineNumber()).isEqualTo(8);
+            assertThat(thread.getGroup()).isNull();
+            assertThat(thread.getInitialCommitSha()).isEqualTo(expectedCommitSha);
+            assertThat(thread.getComments()).singleElement().extracting(Comment::getType).isEqualTo(CommentType.CONSISTENCY_CHECK);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldCreateOneGroupPerIssueAndThreadsForAllRelatedLocations() throws Exception {
+        createExerciseVersion();
+        LocalRepoWithGit templateRepo = createLocalRepositoryWithGit("template-grouped");
+        pushFileToRepository(templateRepo, "src/A.java", "class A {}");
+        var templateParticipation = programmingExercise.getTemplateParticipation();
+        templateParticipation.setRepositoryUri(templateRepo.uri().toString());
+        templateProgrammingExerciseParticipationRepository.save(templateParticipation);
+
+        LocalRepoWithGit testsRepo = createLocalRepositoryWithGit("tests-grouped");
+        pushFileToRepository(testsRepo, "test/ATest.java", "class ATest {}");
+        programmingExercise.setTestRepositoryUri(testsRepo.uri().toString());
+        programmingExerciseRepository.save(programmingExercise);
+
+        LocalRepoWithGit solutionRepo = createLocalRepositoryWithGit("solution-grouped");
+        pushFileToRepository(solutionRepo, "src/B.java", "class B {}");
+        var solutionParticipation = programmingExercise.getSolutionParticipation();
+        solutionParticipation.setRepositoryUri(solutionRepo.uri().toString());
+        solutionProgrammingExerciseParticipationRepository.save(solutionParticipation);
+
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
+
+        ConsistencyIssueDTO firstIssue = new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "First grouped issue", "Fix first issue",
+                List.of(new ArtifactLocationDTO(ArtifactType.TEMPLATE_REPOSITORY, "src/A.java", 3, 3),
+                        new ArtifactLocationDTO(ArtifactType.TESTS_REPOSITORY, "test/ATest.java", 8, 8)));
+        ConsistencyIssueDTO secondIssue = new ConsistencyIssueDTO(Severity.LOW, ConsistencyIssueCategory.ATTRIBUTE_TYPE_MISMATCH, "Second grouped issue", "Fix second issue",
+                List.of(new ArtifactLocationDTO(ArtifactType.SOLUTION_REPOSITORY, "src/B.java", 5, 5), new ArtifactLocationDTO(ArtifactType.PROBLEM_STATEMENT, "", 2, 2)));
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(firstIssue, secondIssue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).hasSize(4);
+
+        List<CommentThread> firstIssueThreads = threads.stream()
+                .filter(thread -> ((ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent()).text().contains("First grouped issue")).toList();
+        List<CommentThread> secondIssueThreads = threads.stream()
+                .filter(thread -> ((ConsistencyIssueCommentContentDTO) thread.getComments().iterator().next().getContent()).text().contains("Second grouped issue")).toList();
+
+        assertThat(firstIssueThreads).hasSize(2);
+        assertThat(secondIssueThreads).hasSize(2);
+
+        Long firstIssueGroupId = firstIssueThreads.get(0).getGroup().getId();
+        Long secondIssueGroupId = secondIssueThreads.get(0).getGroup().getId();
+
+        assertThat(firstIssueThreads).allSatisfy(thread -> {
+            assertThat(thread.getGroup()).isNotNull();
+            assertThat(thread.getGroup().getId()).isEqualTo(firstIssueGroupId);
+        });
+        assertThat(secondIssueThreads).allSatisfy(thread -> {
+            assertThat(thread.getGroup()).isNotNull();
+            assertThat(thread.getGroup().getId()).isEqualTo(secondIssueGroupId);
+        });
+        assertThat(firstIssueGroupId).isNotEqualTo(secondIssueGroupId);
+
+        assertThat(firstIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEMPLATE_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("src/A.java");
+            assertThat(thread.getLineNumber()).isEqualTo(3);
+        });
+        assertThat(firstIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.TEST_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("test/ATest.java");
+            assertThat(thread.getLineNumber()).isEqualTo(8);
+        });
+        assertThat(secondIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.SOLUTION_REPO);
+            assertThat(thread.getFilePath()).isEqualTo("src/B.java");
+            assertThat(thread.getLineNumber()).isEqualTo(5);
+        });
+        assertThat(secondIssueThreads).anySatisfy(thread -> {
+            assertThat(thread.getTargetType()).isEqualTo(CommentThreadLocationType.PROBLEM_STATEMENT);
+            assertThat(thread.getFilePath()).isNull();
+            assertThat(thread.getLineNumber()).isEqualTo(2);
+            assertThat(thread.getInitialVersion()).isNotNull();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldSkipConsistencyIssueWhenRepositoryFileDoesNotExist() {
+        ConsistencyIssueDTO issue = buildConsistencyIssue("Missing file issue", ArtifactType.TEMPLATE_REPOSITORY, "src/DoesNotExist.java", 3);
+
+        exerciseReviewService.createConsistencyCheckThreads(programmingExercise.getId(), List.of(issue));
+
+        Set<CommentThread> threads = commentThreadRepository.findWithCommentsByExerciseId(programmingExercise.getId());
+        assertThat(threads).isEmpty();
     }
 
     @Test
@@ -553,13 +728,13 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta-updated", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         LineMappingResult shiftedLine = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 2);
         assertThat(shiftedLine.newLine()).isEqualTo(3);
@@ -584,12 +759,12 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         Files.deleteIfExists(filePath);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Delete file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
@@ -602,14 +777,14 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         LocalVCRepositoryUri repositoryUri = repo.uri();
 
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Initial").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         Path filePath = repo.workingCopyPath().resolve("src").resolve("Main.java");
         Files.createDirectories(filePath.getParent());
         FileUtils.writeStringToFile(filePath.toFile(), "a\nb\nc\n", StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         LineMappingResult result = exerciseReviewService.mapLine(repositoryUri, "src/Main.java", oldCommit.getName(), newCommit.getName(), 1);
         assertThat(result.newLine()).isNull();
@@ -850,8 +1025,20 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         return comment;
     }
 
+    private Comment buildConsistencyIssueCommentEntity(String text) {
+        Comment comment = new Comment();
+        comment.setType(CommentType.CONSISTENCY_CHECK);
+        comment.setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, text, null));
+        return comment;
+    }
+
     private UserCommentContentDTO buildUserCommentContent(String text) {
         return new UserCommentContentDTO(text);
+    }
+
+    private ConsistencyIssueDTO buildConsistencyIssue(String description, ArtifactType artifactType, String filePath, int lineNumber) {
+        ArtifactLocationDTO location = new ArtifactLocationDTO(artifactType, filePath, lineNumber, lineNumber);
+        return new ConsistencyIssueDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, description, "Use matching signatures", List.of(location));
     }
 
     private ExerciseVersion createExerciseVersion() {
@@ -881,15 +1068,43 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         FileUtils.writeStringToFile(filePath.toFile(), oldText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit oldCommit = GitService.commit(repo.git()).setMessage("Add file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         String newText = String.join("\n", "alpha", "inserted", "beta", "gamma", "delta", "epsilon", "zeta", "eta", "theta", "iota", "kappa", "");
         FileUtils.writeStringToFile(filePath.toFile(), newText, StandardCharsets.UTF_8);
         repo.git().add().addFilepattern(".").call();
         RevCommit newCommit = GitService.commit(repo.git()).setMessage("Update file").call();
-        repo.git().push().setRemote("origin").call();
+        pushHeadToDefaultBranch(repo.git());
 
         return new RepoHistory(repo.uri(), oldCommit.getName(), newCommit.getName());
+    }
+
+    /**
+     * Adds or updates one file in a local working copy and pushes the commit to origin.
+     *
+     * @param repo           local repo wrapper
+     * @param repositoryPath repository-relative file path
+     * @param fileContent    UTF-8 file content to write
+     * @throws Exception if git or file operations fail
+     */
+    private void pushFileToRepository(LocalRepoWithGit repo, String repositoryPath, String fileContent) throws Exception {
+        Path filePath = repo.workingCopyPath().resolve(repositoryPath);
+        Files.createDirectories(filePath.getParent());
+        FileUtils.writeStringToFile(filePath.toFile(), fileContent, StandardCharsets.UTF_8);
+        repo.git().add().addFilepattern(".").call();
+        GitService.commit(repo.git()).setMessage("Add " + repositoryPath).call();
+        pushHeadToDefaultBranch(repo.git());
+    }
+
+    /**
+     * Pushes the current local HEAD to the configured default branch on origin.
+     * This keeps repository history deterministic in tests and avoids implicit remote HEAD/branch behavior.
+     *
+     * @param git the local git handle
+     * @throws Exception if pushing fails
+     */
+    private void pushHeadToDefaultBranch(Git git) throws Exception {
+        git.push().setRemote("origin").setRefSpecs(new RefSpec("HEAD:refs/heads/" + defaultBranch)).call();
     }
 
     private LocalRepoWithGit createLocalRepositoryWithGit(String suffix) throws Exception {
