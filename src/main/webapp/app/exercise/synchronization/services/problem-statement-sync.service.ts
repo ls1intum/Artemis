@@ -66,6 +66,7 @@ export class ProblemStatementSyncService {
     // individual component lifecycles. Completing it on reset() would prevent subsequent init()
     // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private stateReplacedSubject = new Subject<ProblemStatementSyncState>();
+    private initialSyncFinalizedSubject = new Subject<{ contentChangedDuringFinalize: boolean }>();
     // Track initial leader selection and buffer updates until we seed the doc.
     private pendingInitialSync?: {
         requestId: string;
@@ -82,6 +83,21 @@ export class ProblemStatementSyncService {
      */
     get stateReplaced$(): Observable<ProblemStatementSyncState> {
         return this.stateReplacedSubject.asObservable();
+    }
+
+    /**
+     * Stream emitting when initial synchronization finalizes.
+     * Carries whether finalize applied content that changed the local Y.Text.
+     */
+    get initialSyncFinalized$(): Observable<{ contentChangedDuringFinalize: boolean }> {
+        return this.initialSyncFinalizedSubject.asObservable();
+    }
+
+    /**
+     * Whether the current problem statement synchronization is still in its initial bootstrap phase.
+     */
+    isAwaitingInitialSync(): boolean {
+        return this.awaitingInitialSync;
     }
 
     /**
@@ -324,6 +340,7 @@ export class ProblemStatementSyncService {
         if (!this.pendingInitialSync) {
             return;
         }
+        const textBeforeFinalize = this.yText?.toString() ?? '';
         const responses = this.pendingInitialSync.responses;
         if (responses.length) {
             const selected = responses.reduce((best, next) => {
@@ -360,6 +377,8 @@ export class ProblemStatementSyncService {
         // because even tho we sent the "seed" update, remote might have initialized with their own seed already
         // this ensures that remote will replace their seed with our seed
         this.flushQueuedFullContentRequests();
+        const textAfterFinalize = this.yText?.toString() ?? '';
+        this.initialSyncFinalizedSubject.next({ contentChangedDuringFinalize: textBeforeFinalize !== textAfterFinalize });
         this.awaitingInitialSync = false;
         if (this.pendingInitialSync.timeoutId) {
             clearTimeout(this.pendingInitialSync.timeoutId);

@@ -109,6 +109,7 @@ export class CodeEditorFileSyncService {
     // calls from emitting. Consumers must unsubscribe when they are destroyed.
     private fileTreeChangeSubject = new Subject<FileCreatedEvent | FileDeletedEvent | FileRenamedEvent>();
     private stateReplacedSubject = new Subject<{ filePath: string } & FileSyncState>();
+    private initialSyncFinalizedSubject = new Subject<{ filePath: string }>();
 
     /**
      * Stream emitting file tree changes (create/delete/rename) from remote peers.
@@ -124,6 +125,14 @@ export class CodeEditorFileSyncService {
      */
     get stateReplaced$(): Observable<{ filePath: string } & FileSyncState> {
         return this.stateReplacedSubject.asObservable();
+    }
+
+    /**
+     * Stream emitting file paths when their initial synchronization finalized.
+     * Consumers can use this to defer editor widget placement until file content is stable.
+     */
+    get initialSyncFinalized$(): Observable<{ filePath: string }> {
+        return this.initialSyncFinalizedSubject.asObservable();
     }
 
     /**
@@ -231,6 +240,15 @@ export class CodeEditorFileSyncService {
      */
     isFileOpen(filePath: string): boolean {
         return this.fileDocs.has(this.buildKey(filePath));
+    }
+
+    /**
+     * Whether an open file is still awaiting initial synchronization.
+     *
+     * Returns false when the file is not open.
+     */
+    isFileAwaitingInitialSync(filePath: string): boolean {
+        return this.getEntryByFilePath(filePath)?.awaitingInitialSync ?? false;
     }
 
     /**
@@ -441,7 +459,7 @@ export class CodeEditorFileSyncService {
             auxiliaryRepositoryId: this.auxiliaryRepositoryId,
         };
         this.syncService.sendSynchronizationUpdate(this.exerciseId, requestEvent);
-        entry.pendingInitialSync.timeoutId = setTimeout(() => this.finalizeInitialSync(entry, filePath), INITIAL_SYNC_FINALIZE_DELAY_MS);
+        entry.pendingInitialSync.timeoutId = setTimeout(() => this.finalizeInitialSync(entry), INITIAL_SYNC_FINALIZE_DELAY_MS);
     }
 
     private respondWithFullContent(entry: FileSyncEntry, filePath: string, responseTo: string): void {
@@ -500,7 +518,7 @@ export class CodeEditorFileSyncService {
         this.replaceDocumentWithRemoteState(entry, entry.filePath, update, message.leaderTimestamp, message.sessionId);
     }
 
-    private finalizeInitialSync(entry: FileSyncEntry, filePath: string): void {
+    private finalizeInitialSync(entry: FileSyncEntry): void {
         if (!entry.pendingInitialSync) {
             return;
         }
@@ -533,8 +551,9 @@ export class CodeEditorFileSyncService {
                 Y.applyUpdate(entry.doc, update, FileSyncOrigin.Remote);
             });
         }
-        this.flushQueuedFullContentRequests(entry, filePath);
+        this.flushQueuedFullContentRequests(entry, entry.filePath);
         entry.awaitingInitialSync = false;
+        this.initialSyncFinalizedSubject.next({ filePath: entry.filePath });
         if (entry.pendingInitialSync.timeoutId) {
             clearTimeout(entry.pendingInitialSync.timeoutId);
         }

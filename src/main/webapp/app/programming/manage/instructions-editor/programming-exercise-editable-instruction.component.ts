@@ -111,9 +111,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     testCaseSubscription: Subscription;
     forceRenderSubscription: Subscription;
     private problemStatementStateReplacementSubscription?: Subscription;
+    private problemStatementInitialSyncFinalizedSubscription?: Subscription;
     private problemStatementSyncState?: ProblemStatementSyncState;
     private problemStatementBinding?: MonacoBinding;
     private problemStatementBindingDestroyed = false;
+    private suppressUnsavedForNextProblemStatementChange = false;
 
     @ViewChild(MarkdownEditorMonacoComponent, { static: false }) markdownEditorMonaco?: MarkdownEditorMonacoComponent;
 
@@ -277,7 +279,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
 
     updateProblemStatement(problemStatement: string) {
         if (this.exercise().problemStatement !== problemStatement) {
-            this.unsavedChanges = true;
+            if (this.suppressUnsavedForNextProblemStatementChange) {
+                this.suppressUnsavedForNextProblemStatementChange = false;
+            } else if (this.shouldMarkProblemStatementAsUnsaved()) {
+                this.unsavedChanges = true;
+            }
             // parent component should update `problemStatement` in `exercise`
             this.instructionChange.emit(problemStatement);
             // Trigger preview update when showPreview is enabled
@@ -290,6 +296,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      */
     generateHtml() {
         this.generateHtmlSubject.next();
+    }
+
+    private shouldMarkProblemStatementAsUnsaved(): boolean {
+        // During initial sync bootstrap, incoming Yjs content may replace the initial server state.
+        // We adopt this content without marking the statement as locally unsaved.
+        if (this.problemStatementSyncState && this.problemStatementSyncService.isAwaitingInitialSync()) {
+            return false;
+        }
+        return true;
     }
 
     private setupTestCaseSubscription() {
@@ -511,9 +526,15 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         this.teardownProblemStatementSync();
         this.problemStatementSyncState = this.problemStatementSyncService.init(exerciseId, initialText);
         this.createProblemStatementBinding(this.problemStatementSyncState, model, editorInstance);
+        this.problemStatementInitialSyncFinalizedSubscription = this.problemStatementSyncService.initialSyncFinalized$.subscribe(({ contentChangedDuringFinalize }) => {
+            if (contentChangedDuringFinalize) {
+                this.suppressUnsavedForNextProblemStatementChange = true;
+            }
+        });
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
+            this.suppressUnsavedForNextProblemStatementChange = true;
             model.setValue(syncState.text.toString());
             this.createProblemStatementBinding(syncState, model, editorInstance);
         });
@@ -525,6 +546,8 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
     private teardownProblemStatementSync() {
         this.problemStatementStateReplacementSubscription?.unsubscribe();
         this.problemStatementStateReplacementSubscription = undefined;
+        this.problemStatementInitialSyncFinalizedSubscription?.unsubscribe();
+        this.problemStatementInitialSyncFinalizedSubscription = undefined;
         this.problemStatementBinding?.destroy();
         this.problemStatementBinding = undefined;
         this.problemStatementBindingDestroyed = false;

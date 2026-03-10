@@ -83,10 +83,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     const yText = yDoc.getText('problem-statement');
     const yAwareness = {} as any;
     const stateReplaced$ = new Subject<{ doc: Y.Doc; text: Y.Text; awareness: any }>();
+    const initialSyncFinalized$ = new Subject<{ contentChangedDuringFinalize: boolean }>();
     const problemStatementSyncServiceMock = {
         init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
         reset: jest.fn(),
         stateReplaced$: stateReplaced$.asObservable(),
+        initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+        isAwaitingInitialSync: jest.fn(() => false),
     };
 
     const defaultForceRender$ = new Subject<void>();
@@ -198,6 +201,53 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
     });
+
+    it('does not emit unsaved flag during initial sync bootstrap', () => {
+        const hasUnsavedSpy = jest.fn();
+        const instructionChangeSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        (comp as any).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness };
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(true);
+
+        comp.updateProblemStatement('changed-during-sync');
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue).toBeFalse();
+        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
+    });
+
+    it('does not emit unsaved flag for initial sync finalize hydration change', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        const instructionChangeSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true });
+        comp.updateProblemStatement('changed-after-finalize');
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue).toBeFalse();
+        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
+    }));
 
     it('should reset sync service on component destroy', () => {
         setRequiredInputs(fixture, exercise);
