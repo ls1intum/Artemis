@@ -100,17 +100,102 @@ public class ProgrammingExerciseRepositoryService {
      *
      * @param programmingExercise the programming exercise that should be set up
      * @param exerciseCreator     the User that performed the action (used as Git commit author)
+     * @throws IOException     If setting up the base template files fails due to file I/O.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
      */
-    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws GitAPIException {
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator) throws IOException, GitAPIException {
+        setupExerciseTemplate(programmingExercise, exerciseCreator, false);
+    }
+
+    /**
+     * Set up the exercise template by determining the files needed for the template and copying them. Commit and push the changes to all repositories for this programming
+     * exercise.
+     *
+     * @param programmingExercise the programming exercise that should be set up
+     * @param exerciseCreator     the User that performed the action (used as Git commit author)
+     * @param emptyRepositories   if true, clear sources in template, solution, and test repositories after setup
+     * @throws IOException     If setting up the base template files fails due to file I/O.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
+     */
+    void setupExerciseTemplate(final ProgrammingExercise programmingExercise, final User exerciseCreator, boolean emptyRepositories) throws IOException, GitAPIException {
+        if (programmingExercise == null) {
+            throw new IllegalArgumentException("ProgrammingExercise must not be null");
+        }
+        if (exerciseCreator == null) {
+            throw new IllegalArgumentException("Exercise creator must not be null");
+        }
         final RepositoryResources exerciseResources = getRepositoryResources(programmingExercise, RepositoryType.TEMPLATE);
         final RepositoryResources solutionResources = getRepositoryResources(programmingExercise, RepositoryType.SOLUTION);
         final RepositoryResources testResources = getRepositoryResources(programmingExercise, RepositoryType.TESTS);
 
         setupRepositories(programmingExercise, exerciseCreator, exerciseResources, solutionResources, testResources);
+
+        if (emptyRepositories) {
+            clearRepositoriesForAiGeneration(exerciseResources.repository, solutionResources.repository, testResources.repository, exerciseCreator);
+        }
+    }
+
+    private void clearRepositoriesForAiGeneration(final Repository templateRepository, final Repository solutionRepository, final Repository testRepository,
+            final User exerciseCreator) {
+        clearRepositorySourcesSafely(templateRepository, RepositoryType.TEMPLATE, exerciseCreator);
+        clearRepositorySourcesSafely(solutionRepository, RepositoryType.SOLUTION, exerciseCreator);
+        clearRepositorySourcesSafely(testRepository, RepositoryType.TESTS, exerciseCreator);
+    }
+
+    private void clearRepositorySourcesSafely(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) {
+        try {
+            clearRepositorySources(repository, repositoryType, exerciseCreator);
+        }
+        catch (IOException | GitAPIException ex) {
+            log.warn("Failed to clear {} repository sources for AI generation in {}. Continuing without source cleanup.", repositoryType.name().toLowerCase(Locale.ROOT),
+                    repository.getRemoteRepositoryUri(), ex);
+        }
     }
 
     private record RepositoryResources(Repository repository, Resource[] resources, Path prefix, Resource[] projectTypeResources, Path projectTypePrefix,
             Resource[] staticCodeAnalysisResources, Path staticCodeAnalysisPrefix) {
+    }
+
+    /**
+     * Clears the repository sources while keeping build scaffolding in place.
+     *
+     * @param repository      the repository to clean
+     * @param repositoryType  the repository type for logging and commit message
+     * @param exerciseCreator the user performing the cleanup
+     * @throws IOException     If file cleanup in the repository fails.
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception.
+     */
+    void clearRepositorySources(final Repository repository, final RepositoryType repositoryType, final User exerciseCreator) throws IOException, GitAPIException {
+        final String repositoryLabel = repositoryType.name().toLowerCase(Locale.ROOT);
+        List<Path> sourcePaths = getAiGenerationSourcePaths(repository, repositoryType);
+        if (sourcePaths.isEmpty()) {
+            throw new IOException("Cannot clear sources for AI generation: no source directory found in " + repositoryLabel + " repository " + repository.getRemoteRepositoryUri());
+        }
+        try {
+            for (Path sourcePath : sourcePaths) {
+                FileUtils.cleanDirectory(sourcePath.toFile());
+                Path keepFile = sourcePath.resolve(".gitkeep");
+                if (!Files.exists(keepFile)) {
+                    Files.createFile(keepFile);
+                }
+            }
+            commitAndPushRepository(repository, "Cleared " + repositoryLabel + " sources for AI generation", true, exerciseCreator);
+        }
+        catch (IOException ex) {
+            log.error("Failed to clean {} sources for AI generation", repositoryLabel, ex);
+            throw ex;
+        }
+    }
+
+    private static List<Path> getAiGenerationSourcePaths(final Repository repository, final RepositoryType repositoryType) {
+        final Path repositoryPath = repository.getLocalPath();
+        final List<Path> possibleSourcePaths = switch (repositoryType) {
+            case TEMPLATE, SOLUTION -> List.of(repositoryPath.resolve("src"));
+            case TESTS -> List.of(repositoryPath.resolve("test"), repositoryPath.resolve("behavior").resolve("test"), repositoryPath.resolve("structural").resolve("test"),
+                    repositoryPath.resolve("testsuite"));
+            default -> List.of();
+        };
+        return possibleSourcePaths.stream().filter(Files::exists).filter(Files::isDirectory).toList();
     }
 
     /**
