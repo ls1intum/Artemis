@@ -78,7 +78,7 @@ public class ExerciseVersionService {
     public ExerciseVersionService(ExerciseVersionRepository exerciseVersionRepository, GitService gitService, ProgrammingExerciseRepository programmingExerciseRepository,
             QuizExerciseRepository quizExerciseRepository, TextExerciseRepository textExerciseRepository, Optional<ModelingRepositoryApi> modelingRepositoryApi,
             Optional<FileUploadApi> fileUploadApi, UserRepository userRepository, ExerciseEditorSyncService exerciseEditorSyncService, ChannelRepository channelRepository,
-            ExerciseReviewService exerciseReviewService, ApplicationEventPublisher eventPublisher) {
+            ExerciseReviewVersionChangeService exerciseReviewVersionChangeService, ApplicationEventPublisher eventPublisher) {
         this.exerciseVersionRepository = exerciseVersionRepository;
         this.gitService = gitService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -90,7 +90,6 @@ public class ExerciseVersionService {
         this.exerciseEditorSyncService = exerciseEditorSyncService;
         this.channelRepository = channelRepository;
         this.exerciseReviewVersionChangeService = exerciseReviewVersionChangeService;
-        this.exerciseReviewService = exerciseReviewService;
         this.eventPublisher = eventPublisher;
     }
 
