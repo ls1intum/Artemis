@@ -31,6 +31,10 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+import org.junit.jupiter.api.parallel.Isolated;
 import org.mockito.ArgumentMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,7 +49,6 @@ import com.github.dockerjava.api.command.InspectExecResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -55,16 +58,19 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 import de.tum.cit.aet.artemis.programming.domain.ProjectType;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultListenerService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIResultProcessingService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseFactory;
 
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@Execution(ExecutionMode.SAME_THREAD)
+@Isolated
 class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalVCTestBase {
 
     private static final String TEST_PREFIX = "localcibuildphases";
@@ -86,10 +92,6 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private final List<Path> clonedRepoPaths = new ArrayList<>();
 
-    private DistributedQueue<BuildJobQueueItem> queuedJobs;
-
-    private DistributedMap<String, BuildJobQueueItem> processingJobs;
-
     @Override
     protected String getTestPrefix() {
         return TEST_PREFIX;
@@ -104,8 +106,6 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         course = courseUtilService.addEmptyCourse();
 
         forceLocalCIResultProcessingInitialization();
-        queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
-        processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
     }
 
     private void forceLocalCIResultProcessingInitialization() {
@@ -157,7 +157,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for results and verify: partly successful test results contain 1 passing test
-        localVCLocalCITestService.testLatestSubmission(participation.getId(), null, 1, false, 90);
+        localVCLocalCITestService.testLatestSubmission(participation.getId(), null, 1, false, 60);
     }
 
     @Test
@@ -187,7 +187,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for the result and verify compile-only success
-        await().atMost(Duration.ofSeconds(90)).until(() -> {
+        await().atMost(Duration.ofSeconds(60)).until(() -> {
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participation.getId());
             return submission.isPresent() && submission.get().getLatestResult() != null;
         });
@@ -230,7 +230,7 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         }
 
         // Wait for the result and verify build failure
-        await().atMost(Duration.ofSeconds(90)).until(() -> {
+        await().atMost(Duration.ofSeconds(60)).until(() -> {
             var submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participation.getId());
             return submission.isPresent() && submission.get().getLatestResult() != null;
         });
@@ -264,9 +264,18 @@ class LocalCIBuildPhasesIntegrationTest extends AbstractProgrammingIntegrationLo
         long templateParticipationId = exercise.getTemplateParticipation().getId();
         long solutionParticipationId = exercise.getSolutionParticipation().getId();
 
-        await().atMost(Duration.ofSeconds(90))
-                .until(() -> queuedJobs.getAll().stream().noneMatch(job -> job.participationId() == templateParticipationId || job.participationId() == solutionParticipationId)
-                        && processingJobs.values().stream().noneMatch(job -> job.participationId() == templateParticipationId || job.participationId() == solutionParticipationId));
+        await().atMost(Duration.ofSeconds(60)).untilAsserted(() -> {
+            assertParticipationBuildFinished(templateParticipationId);
+            assertParticipationBuildFinished(solutionParticipationId);
+        });
+    }
+
+    private void assertParticipationBuildFinished(long participationId) {
+        BuildJob buildJob = buildJobRepository.findFirstByParticipationIdOrderByBuildStartDateDesc(participationId).orElseThrow();
+        assertThat(buildJob.getBuildStatus()).isNotIn(BuildStatus.QUEUED, BuildStatus.BUILDING);
+
+        ProgrammingSubmission submission = programmingSubmissionRepository.findFirstByParticipationIdWithResultsOrderBySubmissionDateDesc(participationId).orElseThrow();
+        assertThat(submission.getLatestResult()).isNotNull();
     }
 
     private void mockFreshStreamForContainer(String resourceRegexPattern, Map<String, String> dataForTarArchive) {
