@@ -673,7 +673,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.markdownChange.emit(event.text);
     }
 
-    onSelectionChanged(selection: { isEmpty: boolean }): void {
+    onSelectionChanged(selection: IRange | undefined): void {
         if (!selection.isEmpty === this.showTextStyleActions() && selection.isEmpty === this.showNonTextStyleActions()) {
             return;
         }
