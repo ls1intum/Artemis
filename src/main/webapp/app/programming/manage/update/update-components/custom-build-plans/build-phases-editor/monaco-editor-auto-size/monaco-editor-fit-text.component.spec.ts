@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { MonacoEditorFitTextComponent } from './monaco-editor-fit-text.component';
 import { MockComponent } from 'ng-mocks';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
@@ -28,7 +29,9 @@ describe('MonacoEditorFitTextComponent', () => {
     describe('initialization', () => {
         it('should create', () => {
             fixture.detectChanges();
-            expect(component).toBeDefined();
+
+            const monacoEditor = fixture.debugElement.query(By.directive(MonacoEditorComponent));
+            expect(monacoEditor).not.toBeNull();
         });
 
         it('should have empty text by default', () => {

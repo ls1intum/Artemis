@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildPhasesEditorComponent } from './build-phases-editor.component';
 import { BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -37,21 +38,27 @@ describe('BuildPhasesEditorComponent', () => {
         fixture.detectChanges();
     });
 
+    const getBuildPhaseEditors = () => fixture.debugElement.queryAll(By.directive(BuildPhaseEditorComponent));
+    const getAddPhaseButton = () => fixture.debugElement.nativeElement.querySelector('#add-phase-button') as HTMLButtonElement;
+
     describe('phaseCount', () => {
         it('should return the correct number of phases', () => {
-            expect(component.phaseCount()).toBe(2);
+            expect(getBuildPhaseEditors()).toHaveLength(2);
         });
 
         it('should update when phases change', () => {
-            component.addPhase();
-            expect(component.phaseCount()).toBe(3);
+            getAddPhaseButton().click();
+            fixture.detectChanges();
+
+            expect(getBuildPhaseEditors()).toHaveLength(3);
         });
     });
 
     describe('addPhase', () => {
         it('should add a new phase with default values', () => {
             const initialCount = component.phases().length;
-            component.addPhase();
+            getAddPhaseButton().click();
+            fixture.detectChanges();
 
             const phases = component.phases();
             expect(phases.length).toBe(initialCount + 1);
@@ -64,7 +71,9 @@ describe('BuildPhasesEditorComponent', () => {
         });
 
         it('should append to existing phases', () => {
-            component.addPhase();
+            getAddPhaseButton().click();
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases[0].name).toBe('build');
@@ -75,7 +84,9 @@ describe('BuildPhasesEditorComponent', () => {
 
     describe('deletePhase', () => {
         it('should remove phase at specified index', () => {
-            component.deletePhase(0);
+            getBuildPhaseEditors()[0].triggerEventHandler('delete', undefined);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases.length).toBe(1);
@@ -83,9 +94,12 @@ describe('BuildPhasesEditorComponent', () => {
         });
 
         it('should remove phase from the middle', () => {
-            component.addPhase();
+            getAddPhaseButton().click();
+            fixture.detectChanges();
+
             component.phases()[2].name = 'deploy';
-            component.deletePhase(1);
+            getBuildPhaseEditors()[1].triggerEventHandler('delete', undefined);
+            fixture.detectChanges();
 
             const phases = component.phases();
             expect(phases.length).toBe(2);
@@ -93,7 +107,9 @@ describe('BuildPhasesEditorComponent', () => {
         });
 
         it('should handle deleting the last phase', () => {
-            component.deletePhase(1);
+            getBuildPhaseEditors()[1].triggerEventHandler('delete', undefined);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases.length).toBe(1);
@@ -110,7 +126,9 @@ describe('BuildPhasesEditorComponent', () => {
                 resultPaths: ['dist/**/*'],
             };
 
-            component.updatePhase(0, updatedPhase);
+            getBuildPhaseEditors()[0].triggerEventHandler('phaseChange', updatedPhase);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases[0]).toEqual(updatedPhase);
@@ -126,7 +144,8 @@ describe('BuildPhasesEditorComponent', () => {
                 resultPaths: [],
             };
 
-            component.updatePhase(0, updatedPhase);
+            getBuildPhaseEditors()[0].triggerEventHandler('phaseChange', updatedPhase);
+            fixture.detectChanges();
 
             expect(component.phases()[1]).toEqual(originalSecondPhase);
         });
@@ -134,7 +153,9 @@ describe('BuildPhasesEditorComponent', () => {
 
     describe('moveUp', () => {
         it('should swap phase with previous phase', () => {
-            component.moveUp(1);
+            getBuildPhaseEditors()[1].triggerEventHandler('moveUp', undefined);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases[0].name).toBe('test');
@@ -143,21 +164,27 @@ describe('BuildPhasesEditorComponent', () => {
 
         it('should do nothing when index is 0', () => {
             const originalPhases = [...component.phases()];
-            component.moveUp(0);
+            getBuildPhaseEditors()[0].triggerEventHandler('moveUp', undefined);
+            fixture.detectChanges();
 
             expect(component.phases()[0].name).toBe(originalPhases[0].name);
             expect(component.phases()[1].name).toBe(originalPhases[1].name);
         });
 
         it('should correctly move middle element up', () => {
-            component.addPhase();
+            getAddPhaseButton().click();
+            fixture.detectChanges();
+
             fixture.componentRef.setInput('phases', [
                 { name: 'first', script: '', condition: 'ALWAYS', resultPaths: [] },
                 { name: 'second', script: '', condition: 'ALWAYS', resultPaths: [] },
                 { name: 'third', script: '', condition: 'ALWAYS', resultPaths: [] },
             ]);
+            fixture.detectChanges();
 
-            component.moveUp(2);
+            getBuildPhaseEditors()[2].triggerEventHandler('moveUp', undefined);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases[0].name).toBe('first');
@@ -168,7 +195,9 @@ describe('BuildPhasesEditorComponent', () => {
 
     describe('moveDown', () => {
         it('should swap phase with next phase', () => {
-            component.moveDown(0);
+            getBuildPhaseEditors()[0].triggerEventHandler('moveDown', undefined);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases[0].name).toBe('test');
@@ -177,7 +206,8 @@ describe('BuildPhasesEditorComponent', () => {
 
         it('should do nothing when index is last', () => {
             const originalPhases = [...component.phases()];
-            component.moveDown(1);
+            getBuildPhaseEditors()[1].triggerEventHandler('moveDown', undefined);
+            fixture.detectChanges();
 
             expect(component.phases()[0].name).toBe(originalPhases[0].name);
             expect(component.phases()[1].name).toBe(originalPhases[1].name);
@@ -189,8 +219,11 @@ describe('BuildPhasesEditorComponent', () => {
                 { name: 'second', script: '', condition: 'ALWAYS', resultPaths: [] },
                 { name: 'third', script: '', condition: 'ALWAYS', resultPaths: [] },
             ]);
+            fixture.detectChanges();
 
-            component.moveDown(1);
+            getBuildPhaseEditors()[1].triggerEventHandler('moveDown', undefined);
+            fixture.detectChanges();
+
             const phases = component.phases();
 
             expect(phases[0].name).toBe('first');

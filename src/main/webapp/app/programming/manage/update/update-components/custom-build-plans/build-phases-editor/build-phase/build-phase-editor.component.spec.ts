@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { BuildPhaseEditorComponent } from './build-phase-editor.component';
 import { BUILD_PHASE_CONDITION, BuildPhase } from 'app/programming/shared/entities/build-plan-phases.model';
@@ -42,6 +43,16 @@ describe('BuildPhaseEditorComponent', () => {
         fixture.detectChanges();
     });
 
+    const getPhaseNameInput = () => fixture.debugElement.nativeElement.querySelector('#phase-name-input') as HTMLInputElement;
+    const getScriptEditor = () => fixture.debugElement.query(By.css('[data-testid="script-editor"]'));
+    const getResultPathInput = (index: number) => fixture.debugElement.nativeElement.querySelector(`[data-testid="result-path-input-${index}"]`) as HTMLInputElement | null;
+    const getMoveUpButton = () => fixture.debugElement.nativeElement.querySelector('#move-up-button') as HTMLButtonElement;
+    const getMoveDownButton = () => fixture.debugElement.nativeElement.querySelector('#move-down-button') as HTMLButtonElement;
+    const getDeletePhaseButton = () => fixture.debugElement.nativeElement.querySelector('#delete-phase-button') as HTMLButtonElement;
+    const getAddResultPathButton = () => fixture.debugElement.nativeElement.querySelector('#add-result-path-button') as HTMLButtonElement;
+    const getDeleteResultPathButton = (index: number) =>
+        fixture.debugElement.nativeElement.querySelector(`[data-testid="delete-result-path-button-${index}"]`) as HTMLButtonElement | null;
+
     describe('conditionOptions', () => {
         it('should generate options from BUILD_PHASE_CONDITION', () => {
             const options = component.conditionOptions();
@@ -54,13 +65,19 @@ describe('BuildPhaseEditorComponent', () => {
 
     describe('updateName', () => {
         it('should update the phase name', () => {
-            component.updateName('new-name');
+            const nameInput = getPhaseNameInput();
+            nameInput.value = 'new-name';
+            nameInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
 
             expect(component.phase().name).toBe('new-name');
         });
 
         it('should preserve other phase properties', () => {
-            component.updateName('updated');
+            const nameInput = getPhaseNameInput();
+            nameInput.value = 'updated';
+            nameInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
 
             const phase = component.phase();
             expect(phase.script).toBe(initialPhase.script);
@@ -72,13 +89,15 @@ describe('BuildPhaseEditorComponent', () => {
     describe('updateScript', () => {
         it('should update the phase script', () => {
             const newScript = 'echo test';
-            component.updateScript(newScript);
+            getScriptEditor().triggerEventHandler('textChange', newScript);
+            fixture.detectChanges();
 
             expect(component.phase().script).toBe(newScript);
         });
 
         it('should preserve other phase properties', () => {
-            component.updateScript('new script');
+            getScriptEditor().triggerEventHandler('textChange', 'new script');
+            fixture.detectChanges();
 
             const phase = component.phase();
             expect(phase.name).toBe(initialPhase.name);
@@ -104,14 +123,20 @@ describe('BuildPhaseEditorComponent', () => {
 
     describe('updateResultPath', () => {
         it('should update result path at specified index', () => {
-            component.updateResultPath(0, '**/new-results.xml');
+            const resultPathInput = getResultPathInput(0)!;
+            resultPathInput.value = '**/new-results.xml';
+            resultPathInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths[0]).toBe('**/new-results.xml');
             expect(component.phase().resultPaths[1]).toBe('**/coverage.xml');
         });
 
         it('should update result path at last index', () => {
-            component.updateResultPath(1, '**/updated.xml');
+            const resultPathInput = getResultPathInput(1)!;
+            resultPathInput.value = '**/updated.xml';
+            resultPathInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths[0]).toBe('**/results.xml');
             expect(component.phase().resultPaths[1]).toBe('**/updated.xml');
@@ -119,7 +144,15 @@ describe('BuildPhaseEditorComponent', () => {
 
         it('should handle empty resultPaths array', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [] });
-            component.updateResultPath(0, 'new-path');
+            fixture.detectChanges();
+
+            getAddResultPathButton().click();
+            fixture.detectChanges();
+
+            const resultPathInput = getResultPathInput(0)!;
+            resultPathInput.value = 'new-path';
+            resultPathInput.dispatchEvent(new Event('input'));
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths[0]).toBe('new-path');
         });
@@ -128,7 +161,8 @@ describe('BuildPhaseEditorComponent', () => {
     describe('addResultPath', () => {
         it('should add an empty result path', () => {
             const initialLength = component.phase().resultPaths.length;
-            component.addResultPath();
+            getAddResultPathButton().click();
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths.length).toBe(initialLength + 1);
             expect(component.phase().resultPaths[initialLength]).toBe('');
@@ -136,7 +170,10 @@ describe('BuildPhaseEditorComponent', () => {
 
         it('should add to empty resultPaths', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [] });
-            component.addResultPath();
+            fixture.detectChanges();
+
+            getAddResultPathButton().click();
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths.length).toBe(1);
             expect(component.phase().resultPaths[0]).toBe('');
@@ -144,7 +181,10 @@ describe('BuildPhaseEditorComponent', () => {
 
         it('should handle undefined resultPaths', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: undefined as any });
-            component.addResultPath();
+            fixture.detectChanges();
+
+            getAddResultPathButton().click();
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths.length).toBe(1);
         });
@@ -152,14 +192,16 @@ describe('BuildPhaseEditorComponent', () => {
 
     describe('deleteResultPath', () => {
         it('should remove result path at specified index', () => {
-            component.deleteResultPath(0);
+            getDeleteResultPathButton(0)!.click();
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths.length).toBe(1);
             expect(component.phase().resultPaths[0]).toBe('**/coverage.xml');
         });
 
         it('should remove last result path', () => {
-            component.deleteResultPath(1);
+            getDeleteResultPathButton(1)!.click();
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths.length).toBe(1);
             expect(component.phase().resultPaths[0]).toBe('**/results.xml');
@@ -167,7 +209,10 @@ describe('BuildPhaseEditorComponent', () => {
 
         it('should handle deleting from single-item array', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: ['single'] });
-            component.deleteResultPath(0);
+            fixture.detectChanges();
+
+            getDeleteResultPathButton(0)!.click();
+            fixture.detectChanges();
 
             expect(component.phase().resultPaths.length).toBe(0);
         });
@@ -178,54 +223,54 @@ describe('BuildPhaseEditorComponent', () => {
             const deleteSpy = vi.fn();
             component.delete.subscribe(deleteSpy);
 
-            component.delete.emit();
+            getDeletePhaseButton().click();
+            fixture.detectChanges();
 
-            expect(deleteSpy).toHaveBeenCalled();
+            expect(deleteSpy).toHaveBeenCalledOnce();
         });
 
         it('should emit moveUp event', () => {
             const moveUpSpy = vi.fn();
             component.moveUp.subscribe(moveUpSpy);
 
-            component.moveUp.emit();
+            getMoveUpButton().click();
+            fixture.detectChanges();
 
-            expect(moveUpSpy).toHaveBeenCalled();
+            expect(moveUpSpy).toHaveBeenCalledOnce();
         });
 
         it('should emit moveDown event', () => {
             const moveDownSpy = vi.fn();
             component.moveDown.subscribe(moveDownSpy);
 
-            component.moveDown.emit();
+            getMoveDownButton().click();
+            fixture.detectChanges();
 
-            expect(moveDownSpy).toHaveBeenCalled();
+            expect(moveDownSpy).toHaveBeenCalledOnce();
         });
     });
 
-    describe('input signals', () => {
-        it('should reflect isFirst input', () => {
+    describe('button states', () => {
+        it('should disable the move up button for the first phase', () => {
             fixture.componentRef.setInput('index', 0);
-            expect(component.isFirst()).toBe(true);
+            fixture.detectChanges();
 
-            fixture.componentRef.setInput('index', 1);
-            expect(component.isFirst()).toBe(false);
+            expect(getMoveUpButton().disabled).toBe(true);
         });
 
-        it('should reflect isLast input', () => {
+        it('should disable the move down button for the last phase', () => {
             fixture.componentRef.setInput('isLast', true);
-            expect(component.isLast()).toBe(true);
+            fixture.detectChanges();
 
-            fixture.componentRef.setInput('isLast', false);
-            expect(component.isLast()).toBe(false);
+            expect(getMoveDownButton().disabled).toBe(true);
         });
 
-        it('should reflect isOnly input', () => {
+        it('should disable the delete button when there is only one phase', () => {
             fixture.componentRef.setInput('index', 0);
             fixture.componentRef.setInput('isLast', true);
-            expect(component.isOnly()).toBe(true);
+            fixture.detectChanges();
 
-            fixture.componentRef.setInput('isLast', false);
-            expect(component.isOnly()).toBe(false);
+            expect(getDeletePhaseButton().disabled).toBe(true);
         });
     });
 });

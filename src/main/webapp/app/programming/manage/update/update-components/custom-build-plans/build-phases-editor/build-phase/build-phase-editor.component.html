@@ -5,6 +5,7 @@
 
         <div class="d-flex gap-1 ms-auto">
             <button
+                id="move-up-button"
                 pButton
                 [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveUp' | artemisTranslate"
                 tooltipPosition="bottom"
@@ -19,6 +20,7 @@
             </button>
 
             <button
+                id="move-down-button"
                 pButton
                 [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveDown' | artemisTranslate"
                 tooltipPosition="bottom"
@@ -33,6 +35,7 @@
             </button>
 
             <button
+                id="delete-phase-button"
                 class="ms-2"
                 pButton
                 [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.delete' | artemisTranslate"
@@ -53,6 +56,7 @@
         <div class="d-flex flex-column gap-1">
             <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.phaseName"></label>
             <input
+                id="phase-name-input"
                 pInputText
                 pSize="small"
                 [ngModel]="phase().name"
@@ -75,7 +79,7 @@
             <label jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.script"></label>
             <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.scriptHelp" />
         </div>
-        <jhi-monaco-editor-fit-text [text]="phase().script" (textChange)="updateScript($event)" />
+        <jhi-monaco-editor-fit-text data-testid="script-editor" [text]="phase().script" (textChange)="updateScript($event)" />
     </div>
 
     <!-- Result paths -->
@@ -89,20 +93,29 @@
         @for (path of phase().resultPaths; track $index) {
             <div class="d-flex align-items-center gap-2">
                 <input
+                    [attr.data-testid]="'result-path-input-' + $index"
                     pInputText
                     pSize="small"
                     [ngModel]="path"
                     (ngModelChange)="updateResultPath($index, $event)"
                     [placeholder]="'artemisApp.programmingExercise.buildPhasesEditor.resultPathPlaceholder' | artemisTranslate"
                 />
-                <button pButton [text]="true" [rounded]="true" size="small" severity="danger" (click)="deleteResultPath($index)">
+                <button
+                    [attr.data-testid]="'delete-result-path-button-' + $index"
+                    pButton
+                    [text]="true"
+                    [rounded]="true"
+                    size="small"
+                    severity="danger"
+                    (click)="deleteResultPath($index)"
+                >
                     <fa-icon [icon]="faXmark" pButtonIcon />
                 </button>
             </div>
         }
 
         <div>
-            <button pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
+            <button id="add-result-path-button" pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
                 <fa-icon [icon]="faPlus" pButtonIcon />
                 <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addResultPath"></span>
             </button>
