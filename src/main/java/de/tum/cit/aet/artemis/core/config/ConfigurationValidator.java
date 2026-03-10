@@ -19,10 +19,10 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-import de.tum.cit.aet.artemis.core.config.weaviate.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 
 /**
  * Validates application configuration at startup.

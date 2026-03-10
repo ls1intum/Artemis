@@ -282,6 +282,7 @@
             "tutorialFreePeriodInvalidFormat": "Das Start- und Enddatum des freien Zeitraums der Tutoriengruppe müssen gültige ISO-8601-Datumsangaben sein.",
             "tutorialFreePeriodInvalidOrder": "Das Startdatum des freien Zeitraums der Tutoriengruppe muss vor dem Enddatum liegen.",
             "tutorialFreePeriodOutOfBounds": "Freie Zeiträume der Tutoriengruppe müssen innerhalb des Tutorienzeitraums liegen."
-        }
+        },
+        "fileReadError": "Beim Lesen der Dateien des betreffenden Commits ist ein Fehler aufgetreten. Bitte versuche es erneut."
     }
 }

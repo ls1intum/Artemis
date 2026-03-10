@@ -33,7 +33,6 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { Annotation } from 'app/programming/shared/code-editor/monaco/code-editor-monaco.component';
 import { RewriteResult } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/rewriting-result';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
 import { ProblemStatementSyncService, ProblemStatementSyncState } from 'app/exercise/synchronization/services/problem-statement-sync.service';
 import {
     EditorSelectionWithPosition,
@@ -43,6 +42,7 @@ import {
 } from 'app/programming/manage/shared/problem-statement.utils';
 import { editor } from 'monaco-editor';
 import { MonacoBinding } from 'y-monaco';
+import { ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { InlineRefinementButtonComponent } from 'app/shared/monaco-editor/inline-refinement-button/inline-refinement-button.component';
 
 @Component({
@@ -132,7 +132,9 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * Whether to show the preview button and default preview in the markdown editor.
      * Set to false when using an external preview component (e.g., in the code editor).
      */
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
+    readonly showPreview = input<boolean>(true);
+    readonly forceRender = input<Observable<void> | undefined>();
+    readonly enableExerciseReviewComments = input<boolean>(false);
 
     readonly isGeneratingOrRefining = input<boolean>(false);
 
@@ -146,13 +148,11 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
      * In the code editor view, this is the currently selected participation (template/solution/student).
      */
     readonly participation = input<Participation>();
-    readonly forceRender = input<Observable<void> | undefined>();
-    readonly showPreview = input<boolean>(true);
-    readonly enableExerciseReviewComments = input<boolean>(false);
 
     readonly hasUnsavedChanges = output<boolean>();
     readonly instructionChange = output<string>();
     readonly onProblemStatementSaved = output<void>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
     generateHtmlSubject: Subject<void> = new Subject<void>();
 
     inlineRefinementPosition = signal<{ top: number; left: number } | undefined>(undefined);

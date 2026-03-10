@@ -53,6 +53,9 @@ public abstract class AbstractSpringIntegrationJenkinsLocalVCTemplateTest extend
         registry.add("artemis.version-control.url", () -> "http://localhost:" + serverPort);
         registry.add("artemis.version-control.ssh-port", () -> sshPort);
         registry.add("artemis.version-control.ssh-template-clone-url", () -> "ssh://git@localhost:" + sshPort + "/");
+
+        // Override parent's Weaviate configuration with a unique prefix for this test context
+        de.tum.cit.aet.artemis.shared.WeaviateTestConfiguration.registerWeaviateProperties(registry, weaviateContainer, "JenkinsLocalVC_Template_");
     }
 
     private static int findAvailableTcpPort() {
