@@ -344,6 +344,27 @@ describe('CodeEditorMonacoComponent', () => {
         expect(comp.editorLocked()).toBeFalse();
     });
 
+    it('should not lock editor when selecting a file whose initial sync already finished', async () => {
+        const filePath = 'src/Main.java';
+        const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();
+        const stateReplaced$ = new Subject<any>();
+        const fileSyncServiceMock = {
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+            initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        } as any;
+
+        jest.spyOn(comp, 'selectFileInEditor').mockResolvedValue(undefined);
+        fixture.componentRef.setInput('fileSyncService', fileSyncServiceMock);
+        fixture.componentRef.setInput('selectedFile', filePath);
+        fixture.detectChanges();
+        await new Promise(process.nextTick);
+
+        expect(comp.editorLocked()).toBeFalse();
+    });
+
     it('should mark the file as dirty after initial sync if finalized content diverged from fallback', () => {
         const filePath = 'src/Main.java';
         const initialSyncFinalized$ = new Subject<{ filePath: string; contentDivergedFromFallback: boolean; finalContent: string }>();

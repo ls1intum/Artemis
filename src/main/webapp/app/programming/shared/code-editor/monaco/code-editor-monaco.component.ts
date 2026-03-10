@@ -633,10 +633,16 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
      */
     private beginSelectedFileInitialSyncGuard(): void {
         const syncService = this.fileSyncService();
-        if (!syncService?.isInitialized()) {
+        const selectedFile = this.selectedFile();
+        if (!selectedFile || !syncService?.isInitialized()) {
             this.selectedFileAwaitingInitialSync.set(false);
             return;
         }
+        if (syncService.isFileOpen(selectedFile)) {
+            this.selectedFileAwaitingInitialSync.set(syncService.isFileAwaitingInitialSync(selectedFile));
+            return;
+        }
+        // The file is about to be opened via onFileLoad; lock until initial sync finalizes.
         this.selectedFileAwaitingInitialSync.set(true);
     }
 
