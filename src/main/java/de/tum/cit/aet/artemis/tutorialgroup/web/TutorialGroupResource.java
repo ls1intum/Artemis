@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
-import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
@@ -146,12 +145,9 @@ public class TutorialGroupResource {
      * @return ResponseEntity with status 200 (OK) and with body containing the unique language values of tutorial groups in the course
      */
     @GetMapping("courses/{courseId}/tutorial-groups/language-values")
-    @EnforceAtLeastInstructor // TODO: use correct authorization when used
+    @EnforceAtLeastEditorInCourse
     public ResponseEntity<Set<String>> getUniqueLanguageValues(@PathVariable Long courseId) {
         log.debug("REST request to get unique language values used for tutorial groups in course : {}", courseId);
-        var course = courseRepository.findByIdElseThrow(courseId);
-        var user = userRepository.getUserWithGroupsAndAuthorities();
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueLanguageValuesByCourseId(courseId));
     }
 
