@@ -11,6 +11,9 @@
     font-size: 0.95rem;
     margin-bottom: 0.75rem;
     line-height: 1.4;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 .mcq-options {
@@ -75,6 +78,9 @@
 
 .mcq-option-text {
     flex: 1;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
 }
 
 .mcq-submit {
@@ -120,6 +126,9 @@
     font-size: 0.85rem;
     line-height: 1.4;
     color: var(--body-color);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
 
     strong {
         margin-right: 0.25rem;
