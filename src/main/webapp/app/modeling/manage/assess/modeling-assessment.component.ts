@@ -333,6 +333,13 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
                 }
             }
         });
+
+        // Refresh Apollon rendering to display assessment status icons (check/cross) immediately.
+        // Reassigning the model forces internal store sync and visual refresh without waiting for user interaction.
+        if (this.apollonEditor) {
+            const currentModel = this.apollonEditor.model;
+            this.apollonEditor.model = { ...currentModel };
+        }
     }
 
     private calculateLabel(feedback: any) {
