@@ -245,6 +245,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             childList: true,
             subtree: true,
         });
+
+        const resizeObserver ResizeObserver(() => {
+            if (!this.createdNewMessage && this.posts.length > 0) {
+                this.scrollToStoredId();
+            }
+        });
+        resizeObserver.observe(el);
     }
 
     ngOnDestroy(): void {
