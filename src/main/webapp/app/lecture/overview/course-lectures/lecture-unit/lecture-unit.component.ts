@@ -59,8 +59,10 @@ export class LectureUnitComponent implements OnDestroy {
             (onCleanup) => {
                 if (this.initiallyExpanded()) {
                     // Set collapsed state and emit event so parent components can load content
-                    this.isCollapsed.set(false);
-                    this.onCollapse.emit(false);
+                    if (this.isCollapsed()) {
+                        this.isCollapsed.set(false);
+                        this.onCollapse.emit(false);
+                    }
 
                     afterNextRender(
                         () => {

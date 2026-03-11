@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -99,18 +99,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     // Deep-linking: target unit and PDF page from URL query params (?unit=X&page=Y)
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
-
-    // Computed helpers to check if a unit is the deep-link target
-    readonly isTargetUnit = computed(() => {
-        const targetId = this.targetUnitId();
-        return (unitId: number | undefined) => unitId === targetId;
-    });
-
-    readonly getTargetPdfPage = computed(() => {
-        const targetId = this.targetUnitId();
-        const targetPage = this.targetPdfPage();
-        return (unitId: number | undefined) => (unitId === targetId ? targetPage : undefined);
-    });
 
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);

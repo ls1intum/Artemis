@@ -19,7 +19,7 @@
         </div>
     }
 
-    @if (lectureUnit()?.description && !!videoUrl()) {
+    @if (lectureUnit()?.description && (!!videoUrl() || hasPdf())) {
         <hr />
     }
 

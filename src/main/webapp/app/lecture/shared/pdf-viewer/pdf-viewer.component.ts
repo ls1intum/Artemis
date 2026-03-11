@@ -60,7 +60,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private isZooming = false;
 
     constructor() {
-        // Use legacy build to avoid ES2025 Promise.try compatibility issues
         (PDFJS.GlobalWorkerOptions as any).workerSrc = '/content/scripts/pdf.worker.min.mjs';
 
         effect(() => {
