@@ -91,6 +91,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollSubject = new Subject<number>();
     canStartSaving = false;
     createdNewMessage = false;
+    private hasScrolled = false;
 
     @Output() openThread = new EventEmitter<Post>();
 
@@ -234,6 +235,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             }
         });
         this.content.nativeElement.addEventListener('scroll', () => {
+            // Ignore the very first scroll (usually caused by scrollToStoredId)
+            if (!this.hasScrolled) {
+                this.hasScrolled = true;
+                return;
+            }
             this.findElementsAtScrollPosition();
         });
 
