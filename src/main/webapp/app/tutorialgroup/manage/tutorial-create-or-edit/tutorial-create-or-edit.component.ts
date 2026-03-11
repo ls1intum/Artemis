@@ -45,7 +45,6 @@ export interface UpdateTutorialGroupEvent {
 }
 
 // TODO: add input to capture updateChannelName flag for edit mode
-// TODO: decide whether we want to support notification in edit
 @Component({
     selector: 'jhi-tutorial-edit',
     imports: [
