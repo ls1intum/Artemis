@@ -205,7 +205,8 @@
                     "fetchGroup": "Something went wrong while fetching the tutorial group information. Please refresh the page to try again.",
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
                     "scheduleLoading": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.",
-                    "fetchTutors": "Something went wrong while loading the tutors for the tutorial group. Please try again by refreshing the page."
+                    "fetchTutors": "Something went wrong while loading the tutors for the tutorial group. Please try again by refreshing the page.",
+                    "fetchLanguages": "Something went wrong while loading the languages that this course already uses. Please refresh the page if you wish to be proposed already used languages while selecting the language for this group."
                 },
                 "confirmSaveDialog": {
                     "header": "Save Group?",

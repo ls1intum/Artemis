@@ -32,8 +32,8 @@ export class TutorialGroupsService {
 
     private resourceURL = 'api/tutorialgroup';
 
-    getUniqueLanguageValues(courseId: number): Observable<HttpResponse<Array<string>>> {
-        return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response');
+    getUniqueLanguageValues(courseId: number): Observable<string[]> {
+        return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response').pipe(map((response) => response.body ?? []));
     }
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {

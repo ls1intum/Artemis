@@ -50,8 +50,7 @@
         </div>
 
         <div class="label-and-input-row">
-            <!-- TODO: inject real languages -->
-            <jhi-tutorial-edit-languages-input [alreadyUsedLanguages]="['German', 'English']" [(language)]="language" />
+            <jhi-tutorial-edit-languages-input [alreadyUsedLanguages]="alreadyUsedLanguages()" [(language)]="selectedLanguage" />
 
             <div class="label-and-input">
                 <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode"></label>

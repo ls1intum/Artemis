@@ -204,7 +204,8 @@
                     "fetchGroup": "Beim laden der Tutoriumsgruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
                     "scheduleLoading": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
-                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "fetchLanguages": "Beim laden der vom Kurs benutzten Sprachen ist etwas schief gegangen. Bitte lade die Seite neu, falls du beim Auswählen der Sprache bereits benutzte Sprachen vorgeschlagen bekommen willst."
                 },
                 "confirmSaveDialog": {
                     "header": "Gruppe Speichern?",

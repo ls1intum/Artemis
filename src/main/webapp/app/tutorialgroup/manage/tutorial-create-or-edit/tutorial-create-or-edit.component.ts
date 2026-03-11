@@ -18,6 +18,8 @@ import { ConfirmationService } from 'primeng/api';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { AlertService } from 'app/shared/service/alert.service';
 
 enum Mode {
     ONLINE = 'Online',
@@ -73,7 +75,9 @@ export class TutorialCreateOrEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(ConfirmationService);
+    private tutorialGroupsService = inject(TutorialGroupsService);
     private translateService = inject(TranslateService);
+    private alertService = inject(AlertService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();
@@ -88,7 +92,8 @@ export class TutorialCreateOrEditComponent {
     selectedTutorId = signal<number | undefined>(undefined);
     tutorValidationResult = computed<Validation>(() => this.computeTutorValidation());
     tutorInputTouched = signal(false);
-    language = signal<string>('');
+    alreadyUsedLanguages = signal<string[]>([]);
+    selectedLanguage = signal<string>('');
     modes = Object.values(Mode);
     selectedMode = signal<Mode>(Mode.OFFLINE);
     campus = signal('');
@@ -123,7 +128,7 @@ export class TutorialCreateOrEditComponent {
             if (tutorialGroup) {
                 this.title.set(tutorialGroup.title);
                 this.selectedTutorId.set(tutorialGroup.tutorId);
-                this.language.set(tutorialGroup.language);
+                this.selectedLanguage.set(tutorialGroup.language);
                 this.selectedMode.set(tutorialGroup.isOnline ? Mode.ONLINE : Mode.OFFLINE);
                 if (tutorialGroup.campus) {
                     this.campus.set(tutorialGroup.campus);
@@ -146,6 +151,16 @@ export class TutorialCreateOrEditComponent {
                 this.location.set(schedule.location);
                 this.configureSessionPlan.set(true);
             }
+        });
+        effect(() => {
+            this.tutorialGroupsService.getUniqueLanguageValues(this.courseId()).subscribe({
+                next: (languages) => {
+                    this.alreadyUsedLanguages.set(languages);
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchLanguages');
+                },
+            });
         });
     }
 
@@ -191,7 +206,7 @@ export class TutorialCreateOrEditComponent {
         return {
             title: this.title(),
             tutorId: this.selectedTutorId()!,
-            language: this.language(),
+            language: this.selectedLanguage(),
             isOnline: this.selectedMode() === Mode.ONLINE,
             campus: this.campus() || undefined,
             capacity: this.capacity(),
@@ -342,7 +357,7 @@ export class TutorialCreateOrEditComponent {
     private checkIfTutorialGroupChanged(tutorialGroup: TutorialGroupDTO, schedule?: TutorialGroupScheduleDTO): boolean {
         const titleChanged = this.title() !== tutorialGroup.title;
         const tutorChanged = this.selectedTutorId() !== tutorialGroup.tutorId;
-        const languageChanged = this.language() !== tutorialGroup.language;
+        const languageChanged = this.selectedLanguage() !== tutorialGroup.language;
         const modeChanged = this.selectedMode() === Mode.OFFLINE && tutorialGroup.isOnline;
         const campusChanged = this.campus() !== (tutorialGroup.campus ?? '');
         const capacityChanged = this.capacity() !== tutorialGroup.capacity;
