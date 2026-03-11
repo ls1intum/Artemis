@@ -28,7 +28,6 @@ type ParsedCSVRow = { [header: string]: string };
 
 const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9: \\-]{0,19}$');
 
-// ToDo: Idea for future: Let the specify the column names / values in the dialog
 const POSSIBLE_TUTORIAL_GROUP_TITLE_HEADERS = ['gruppe', 'titel', 'group', 'title', 'tutorialgroups'];
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername', 'anmeldename'];
