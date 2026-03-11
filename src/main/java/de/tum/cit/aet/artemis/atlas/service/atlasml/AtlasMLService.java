@@ -71,7 +71,7 @@ public class AtlasMLService {
 
     private static final String MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT = "/api/v1/competency/map-competency-to-competency";
 
-    private static final String MAP_COMPETENCY_TO_EXERCISE_ENDPOINT = "/map-competency-to-exercise";
+    private static final String MAP_COMPETENCY_TO_EXERCISE_ENDPOINT = "/api/v1/competency/map-competency-to-exercise";
 
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,

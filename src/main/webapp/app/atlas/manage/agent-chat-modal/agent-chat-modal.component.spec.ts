@@ -2229,4 +2229,149 @@ describe('AgentChatModalComponent', () => {
             expect(result).toBeFalsy();
         });
     });
+
+    describe('isDelegationBrief', () => {
+        it.each([
+            'EXERCISE_ID: 42',
+            '%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER',
+            '[CREATE_APPROVED_EXERCISE_MAPPING]:{}',
+            '[CREATE_APPROVED_COMPETENCY]:',
+            '[CREATE_APPROVED_RELATION]:',
+            '  EXERCISE_ID: 42',
+        ])('returns true for internal system message: %s', (content) => {
+            expect(component['isDelegationBrief'](content)).toBeTrue();
+        });
+
+        it('returns false for normal message or empty string', () => {
+            expect(component['isDelegationBrief']('Please help')).toBeFalse();
+            expect(component['isDelegationBrief']('')).toBeFalse();
+        });
+    });
+
+    describe('exercise mapping checkbox state', () => {
+        let msg: ChatMessage;
+
+        beforeEach(() => {
+            msg = {
+                id: 'msg-box-1',
+                content: 'Exercise mapping',
+                isUser: false,
+                timestamp: new Date(),
+                exerciseMappingPreview: {
+                    exerciseId: 10,
+                    exerciseTitle: 'Test Exercise',
+                    competencies: [
+                        { competencyId: 1, competencyTitle: 'C1', weight: 0.5 },
+                        { competencyId: 2, competencyTitle: 'C2', weight: 1.0 },
+                    ],
+                },
+            };
+        });
+
+        it('defaults to false, set/get round-trips correctly', () => {
+            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeFalse();
+            component['setCompetencyCheckboxState'](msg, 1, true);
+            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeTrue();
+        });
+
+        it('getSelectedCompetencies returns only checked entries with weights', () => {
+            component['setCompetencyCheckboxState'](msg, 1, true);
+            const selected = component['getSelectedCompetencies'](msg);
+            expect(selected).toEqual([{ competencyId: 1, weight: 0.5 }]);
+        });
+
+        it('getSelectedCompetencies returns empty when no preview', () => {
+            const bare: ChatMessage = { id: 'x', content: '', isUser: false, timestamp: new Date() };
+            expect(component['getSelectedCompetencies'](bare)).toEqual([]);
+        });
+    });
+
+    describe('addMessage with exerciseMappingPreview', () => {
+        it('pre-checks alreadyMapped and suggested competencies, leaves others unchecked', () => {
+            const preview = {
+                exerciseId: 5,
+                exerciseTitle: 'Ex',
+                competencies: [
+                    { competencyId: 10, competencyTitle: 'C10', weight: 0.5, alreadyMapped: true },
+                    { competencyId: 20, competencyTitle: 'C20', weight: 0.5, suggested: true },
+                    { competencyId: 30, competencyTitle: 'C30', weight: 0.5 },
+                ],
+            };
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({ message: 'ok', sessionId: 's', timestamp: '', success: true, competenciesModified: false, exerciseMappingPreview: preview } as AgentChatResponse),
+            );
+            component.currentMessage.set('map');
+            component['sendMessage']();
+
+            const agentMsg = component.messages().find((m) => m.exerciseMappingPreview !== undefined)!;
+            expect(component['getCompetencyCheckboxState'](agentMsg, 10)).toBeTrue();
+            expect(component['getCompetencyCheckboxState'](agentMsg, 20)).toBeTrue();
+            expect(component['getCompetencyCheckboxState'](agentMsg, 30)).toBeFalse();
+        });
+    });
+
+    describe('onApproveExerciseMapping', () => {
+        let exerciseMsg: ChatMessage;
+
+        beforeEach(() => {
+            exerciseMsg = {
+                id: 'ex-1',
+                content: 'preview',
+                isUser: false,
+                timestamp: new Date(),
+                exerciseMappingPreview: {
+                    exerciseId: 42,
+                    exerciseTitle: 'Algo',
+                    competencies: [{ competencyId: 1, competencyTitle: 'C1', weight: 0.5 }],
+                },
+            };
+            component.messages.set([exerciseMsg]);
+        });
+
+        it('does nothing when viewOnly, already created, no preview, or no selection', () => {
+            const bare: ChatMessage = { id: '99', content: '', isUser: false, timestamp: new Date() };
+            component['onApproveExerciseMapping'](bare);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+
+            exerciseMsg.exerciseMappingPreview!.viewOnly = true;
+            component['onApproveExerciseMapping'](exerciseMsg);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+
+            exerciseMsg.exerciseMappingPreview!.viewOnly = false;
+            exerciseMsg.exerciseMappingCreated = true;
+            component['onApproveExerciseMapping'](exerciseMsg);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+
+            exerciseMsg.exerciseMappingCreated = false;
+            component['onApproveExerciseMapping'](exerciseMsg);
+            expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
+        });
+
+        it('sends correct payload, marks created, and emits competencyChanged on success', async () => {
+            component['setCompetencyCheckboxState'](exerciseMsg, 1, true);
+            mockAgentChatService.sendMessage.mockReturnValue(
+                of({ message: 'done', sessionId: 's', timestamp: '', success: true, competenciesModified: false } as AgentChatResponse),
+            );
+            const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
+
+            component['onApproveExerciseMapping'](exerciseMsg);
+            await flushPromises();
+
+            const expectedPayload = JSON.stringify({ exerciseId: 42, mappings: [{ competencyId: 1, weight: 0.5 }] });
+            expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(`[CREATE_APPROVED_EXERCISE_MAPPING]:${expectedPayload}`, 123);
+            expect(component.messages().find((m) => m.id === exerciseMsg.id)?.exerciseMappingCreated).toBeTrue();
+            expect(emitSpy).toHaveBeenCalled();
+        });
+
+        it('shows error message on failure', async () => {
+            component['setCompetencyCheckboxState'](exerciseMsg, 1, true);
+            mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('fail')));
+
+            component['onApproveExerciseMapping'](exerciseMsg);
+            await flushPromises();
+
+            const msgs = component.messages();
+            expect(msgs[msgs.length - 1].content).toContain('artemisApp.agent.chat.error.exerciseMappingFailed');
+        });
+    });
 });

@@ -29,6 +29,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -597,27 +598,25 @@ public class AtlasAgentService {
         String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
 
         try {
-            PreviewDataContainer container = objectMapper.readValue(jsonData, PreviewDataContainer.class);
-            return new PreviewDataResult(cleanedText, container.previews(), null, null, null);
-        }
-        catch (JsonProcessingException e) {
-            // If competency parsing fails, try relation preview
-            try {
-                RelationPreviewDataContainer relationContainer = objectMapper.readValue(jsonData, RelationPreviewDataContainer.class);
+            JsonNode node = objectMapper.readTree(jsonData);
+
+            if (node.has("exerciseMappingPreview")) {
+                ExerciseMappingPreviewDataContainer exerciseContainer = objectMapper.treeToValue(node, ExerciseMappingPreviewDataContainer.class);
+                return new PreviewDataResult(cleanedText, null, null, null, exerciseContainer.exerciseMappingPreview());
+            }
+
+            if (node.has("singleRelationPreview") || node.has("batchRelationPreview") || node.has("relationGraphPreview")) {
+                RelationPreviewDataContainer relationContainer = objectMapper.treeToValue(node, RelationPreviewDataContainer.class);
                 List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(relationContainer.singleRelationPreview(),
                         relationContainer.batchRelationPreview());
                 return new PreviewDataResult(cleanedText, null, relationPreviews, relationContainer.relationGraphPreview(), null);
             }
-            catch (JsonProcessingException ex) {
-                // Try exercise mapping preview
-                try {
-                    ExerciseMappingPreviewDataContainer exerciseContainer = objectMapper.readValue(jsonData, ExerciseMappingPreviewDataContainer.class);
-                    return new PreviewDataResult(cleanedText, null, null, null, exerciseContainer.exerciseMappingPreview());
-                }
-                catch (JsonProcessingException exc) {
-                    return new PreviewDataResult(cleanedText, null, null, null, null);
-                }
-            }
+
+            PreviewDataContainer container = objectMapper.treeToValue(node, PreviewDataContainer.class);
+            return new PreviewDataResult(cleanedText, container.previews(), null, null, null);
+        }
+        catch (JsonProcessingException e) {
+            return new PreviewDataResult(cleanedText, null, null, null, null);
         }
     }
 
