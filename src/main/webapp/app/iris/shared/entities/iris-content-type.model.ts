@@ -58,29 +58,55 @@ export function isJsonContent(content: IrisMessageContent): content is IrisJsonM
 }
 
 /**
- * Checks whether the given message content represents an MCQ (multiple-choice question).
- * @param content the message content to check
- * @returns true if the content is JSON content with type 'mcq'
+ * Validates that a plain object has the full McqOption shape: a non-empty text string and a boolean correct field.
+ * @param obj the value to validate
+ * @returns true if obj is a valid McqOption
  */
-export function isMcqContent(content: IrisMessageContent): boolean {
-    if (!isJsonContent(content)) {
+function isValidMcqOption(obj: unknown): obj is McqOption {
+    if (typeof obj !== 'object' || obj == null) {
         return false;
     }
-    return content.attributes?.['type'] === 'mcq';
+    const rec = obj as Record<string, unknown>;
+    return typeof rec['text'] === 'string' && rec['text'].length > 0 && typeof rec['correct'] === 'boolean';
 }
 
 /**
- * Extracts typed McqData from a message content if it represents an MCQ.
- * @param content the message content to extract from
- * @returns the McqData if the content is an MCQ, undefined otherwise
+ * Runtime type guard that checks whether the given message content is a fully valid MCQ.
+ * Validates type, question (non-empty string), options (array with at least 2 valid entries),
+ * and explanation (non-empty string).
+ * @param content the message content to check
+ * @returns true if the content is JSON content containing a valid McqData payload
  */
-export function getMcqData(content: IrisMessageContent): McqData | undefined {
+export function isMcqContent(content: IrisMessageContent): content is IrisJsonMessageContent & { attributes: McqData } {
     if (!isJsonContent(content)) {
-        return undefined;
+        return false;
     }
     const attrs = content.attributes;
-    if (attrs?.['type'] === 'mcq') {
-        return attrs as unknown as McqData;
+    if (attrs?.['type'] !== 'mcq') {
+        return false;
+    }
+    if (typeof attrs['question'] !== 'string' || attrs['question'].length === 0) {
+        return false;
+    }
+    if (typeof attrs['explanation'] !== 'string' || attrs['explanation'].length === 0) {
+        return false;
+    }
+    const options = attrs['options'];
+    if (!Array.isArray(options) || options.length < 2) {
+        return false;
+    }
+    return options.every(isValidMcqOption);
+}
+
+/**
+ * Extracts typed McqData from a message content if it represents a valid MCQ.
+ * Uses the isMcqContent type guard for full shape validation instead of an unchecked cast.
+ * @param content the message content to extract from
+ * @returns the McqData if the content is a valid MCQ, undefined otherwise
+ */
+export function getMcqData(content: IrisMessageContent): McqData | undefined {
+    if (isMcqContent(content)) {
+        return content.attributes;
     }
     return undefined;
 }
