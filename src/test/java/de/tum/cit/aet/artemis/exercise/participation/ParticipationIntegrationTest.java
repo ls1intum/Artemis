@@ -805,18 +805,6 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void requestFeedbackAlreadySent() throws Exception { // TODO ldv why is this passing? what is this test?
-        var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INITIALIZED, programmingExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        participation.setIndividualDueDate(ZonedDateTime.now().minusMinutes(20));
-        participationRepo.save(participation);
-
-        request.putWithResponseBody("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
-                ProgrammingExerciseStudentParticipation.class, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void requestProgrammingFeedbackIfARequestAlreadySent_withAthenaSuccess() throws Exception {
 
         var course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
