@@ -117,7 +117,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         // temporarily remove listener to avoid triggering build job processing
         sharedQueueProcessingService.removeListenerAndCancelScheduledFuture();
         // Reset pause state to ensure clean state for each test (prevents issues if a previous test left isPaused=true)
-        sharedQueueProcessingService.resetPauseState();
+        sharedQueueProcessingService.setPauseState(false);
 
         JobTimingInfo jobTimingInfo1 = new JobTimingInfo(ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), ZonedDateTime.now().plusMinutes(3), null, 20);
         JobTimingInfo jobTimingInfo2 = new JobTimingInfo(ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(2), null, 20);
@@ -191,7 +191,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
             }
         }
         // Reset pause state to ensure clean state for next test (in case this test failed during pause/resume)
-        sharedQueueProcessingService.resetPauseState();
+        sharedQueueProcessingService.setPauseState(false);
         sharedQueueProcessingService.init();
         queuedJobs.clear();
         processingJobs.clear();
@@ -462,7 +462,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         });
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/pause", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
             if (agent == null) {
                 return false;
@@ -472,7 +472,7 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         });
 
         request.put("/api/core/admin/agents/" + URLEncoder.encode(buildAgentShortName, StandardCharsets.UTF_8) + "/resume", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agent = buildAgentInformation.get(buildAgentShortName);
             if (agent == null) {
                 return false;
@@ -500,14 +500,14 @@ class LocalCIResourceIntegrationTest extends AbstractProgrammingIntegrationLocal
         await().atMost(Duration.ofSeconds(10)).pollInterval(Duration.ofMillis(200)).until(() -> !buildAgentInformation.values().isEmpty());
 
         request.put("/api/core/admin/agents/pause-all", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agents = buildAgentInformation.values();
             printAgentInformation(agents);
             return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.PAUSED);
         });
 
         request.put("/api/core/admin/agents/resume-all", null, HttpStatus.NO_CONTENT);
-        await().atMost(Duration.ofSeconds(30)).pollInterval(Duration.ofMillis(200)).until(() -> {
+        await().atMost(Duration.ofSeconds(30)).until(() -> {
             var agents = buildAgentInformation.values();
             printAgentInformation(agents);
             return !agents.isEmpty() && agents.stream().allMatch(agent -> agent.status() == BuildAgentStatus.IDLE);

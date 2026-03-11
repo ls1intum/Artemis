@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -85,7 +86,8 @@ public class HyperionCodeGenerationResource {
             return codeGenerationJobService.getActiveJob(user, exercise).map(job -> ResponseEntity.ok(new CodeGenerationJobStartDTO(job.jobId())))
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
-        String jobId = codeGenerationJobService.startJob(user, exercise, request.repositoryType());
+        Long courseId = resolveCourseId(exercise);
+        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
     }
@@ -130,6 +132,20 @@ public class HyperionCodeGenerationResource {
         validateExerciseForGeneration(exercise);
 
         return exercise;
+    }
+
+    private static Long resolveCourseId(ProgrammingExercise exercise) {
+        if (exercise == null) {
+            return null;
+        }
+
+        try {
+            Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+            return course != null ? course.getId() : null;
+        }
+        catch (RuntimeException ignored) {
+            return null;
+        }
     }
 
     /**
