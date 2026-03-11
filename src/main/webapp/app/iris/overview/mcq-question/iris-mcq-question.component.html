@@ -1,6 +1,6 @@
 <div class="mcq-container">
-    <div class="mcq-question" id="mcq-question-label">{{ mcqData().question }}</div>
-    <div class="mcq-options" role="radiogroup" aria-labelledby="mcq-question-label">
+    <div class="mcq-question" [id]="questionLabelId">{{ mcqData().question }}</div>
+    <div class="mcq-options" role="radiogroup" [attr.aria-labelledby]="questionLabelId">
         @for (option of mcqData().options; track $index) {
             <button
                 class="mcq-option"

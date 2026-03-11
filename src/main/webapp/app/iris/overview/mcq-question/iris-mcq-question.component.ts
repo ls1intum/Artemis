@@ -18,6 +18,10 @@ export class IrisMcqQuestionComponent {
     /** The MCQ payload to render, containing the question, options, and explanation. */
     mcqData = input.required<McqData>();
 
+    private readonly instanceId = window.crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+    /** Unique id for the question label element, used to link aria-labelledby across instances. */
+    readonly questionLabelId = `mcq-question-label-${this.instanceId}`;
+
     selectedIndex = signal<number | undefined>(undefined);
     submitted = signal(false);
 
