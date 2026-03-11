@@ -104,6 +104,7 @@ describe('ProgrammingExerciseUpdateComponent', () => {
                         init: jest.fn().mockReturnValue({ doc: {}, text: { toString: () => '' }, awareness: {} }),
                         reset: jest.fn(),
                         stateReplaced$: of(),
+                        initialSyncFinalized$: of({ contentChangedDuringFinalize: false, contentDivergedFromFallback: false, finalContent: '' }),
                     },
                 },
                 MockProvider(DialogService),
