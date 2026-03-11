@@ -249,7 +249,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     /**
      * Validates that a JSON node has the required MCQ shape expected by the client:
      * a non-empty "question" string, an "options" array with at least two entries
-     * (each having a "text" string and a "correct" boolean), and an "explanation" string.
+     * (each having a "text" string and a "correct" boolean) where exactly one option
+     * is marked correct, and an "explanation" string.
      *
      * @param node the JSON node to validate
      * @return true if the node represents a valid MCQ
@@ -264,6 +265,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (options == null || !options.isArray() || options.size() < 2) {
             return false;
         }
+        int correctCount = 0;
         for (JsonNode option : options) {
             if (!option.isObject()) {
                 return false;
@@ -276,6 +278,12 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             if (correct == null || !correct.isBoolean()) {
                 return false;
             }
+            if (correct.asBoolean()) {
+                correctCount++;
+            }
+        }
+        if (correctCount != 1) {
+            return false;
         }
 
         JsonNode explanation = node.get("explanation");
