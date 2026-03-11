@@ -6,6 +6,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisMcqQuestionComponent } from './iris-mcq-question.component';
 
+/**
+ * Carousel component that displays a set of multiple-choice questions with navigation,
+ * tracks answers per question, and shows a score summary when all questions are answered.
+ */
 @Component({
     selector: 'jhi-iris-mcq-carousel',
     standalone: true,
