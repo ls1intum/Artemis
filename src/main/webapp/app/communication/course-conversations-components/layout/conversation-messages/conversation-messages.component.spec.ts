@@ -64,6 +64,14 @@ examples.forEach((activeConversation) => {
         let examplePost: Post;
         const course = { id: 1 } as Course;
 
+        beforeAll(() => {
+            (window as any).ResizeObserver = class {
+                observe() {}
+                unobserve() {}
+                disconnect() {}
+            };
+        });
+
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
                 imports: [FormsModule, ReactiveFormsModule, FaIconComponent],
