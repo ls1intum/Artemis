@@ -44,9 +44,7 @@ export interface UpdateTutorialGroupEvent {
     updateTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO;
 }
 
-// TODO: add warning when changing schedule (all existing sessions will be overwritten)
 // TODO: add input to capture updateChannelName flag for edit mode
-// TODO: only enable save on edit if any field changed
 // TODO: decide whether we want to support notification in edit
 @Component({
     selector: 'jhi-tutorial-edit',
