@@ -244,7 +244,6 @@ class ExerciseMappingToolsServiceTest {
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of(existingLink));
         when(courseCompetencyRepository.findAllById(any())).thenReturn(List.of());
 
-        // Save with empty mappings -> existing link should be deleted
         JsonNode json = objectMapper.readTree(service.saveExerciseCompetencyMappings(10L, 42L, List.of()));
 
         assertThat(json.get("success").asBoolean()).isTrue();
@@ -264,7 +263,6 @@ class ExerciseMappingToolsServiceTest {
         when(competencyExerciseLinkRepository.findByExerciseIdWithCompetency(42L)).thenReturn(List.of(existingLink));
         when(courseCompetencyRepository.findAllById(List.of())).thenReturn(List.of());
 
-        // Same competency, new weight 1.0
         var mappings = List.of(new ExerciseMappingToolsService.ExerciseCompetencyMappingOperation(1L, 1.0, true, false));
         service.saveExerciseCompetencyMappings(10L, 42L, mappings);
 
