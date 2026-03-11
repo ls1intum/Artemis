@@ -82,7 +82,6 @@ export class UsersImportDialogComponent implements OnDestroy {
         this.noUsersFoundError = undefined;
     }
 
-    // TODO: test all locatiosn that use this
     async onCSVFileSelect(event: any) {
         if (event.target.files.length > 0) {
             this.resetDialog();
