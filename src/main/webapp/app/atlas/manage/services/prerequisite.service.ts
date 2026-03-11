@@ -73,7 +73,6 @@ export class PrerequisiteService extends CourseCompetencyService {
         const payload: CourseCompetencyImportOptionsDTO = {
             importExercises: false,
             importRelations,
-            sourceCourseId: courseId,
             importLectures: false,
             competencyIds: courseCompetencyIds,
         };
