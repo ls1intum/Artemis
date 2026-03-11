@@ -1,20 +1,19 @@
 ---
-id: adaptive-learning
 title: Adaptive Learning
 sidebar_label: Adaptive Learning
 ---
 
-import Image, {ImageSize} from "../../src/components/Image/Image";
-import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
-import studentsLearningGoalsStatisticsImg from './assets/adaptive-learning/students-learning-goals-statistics.png';
-import studentsLearningGoalsStatisticsDetailImg from './assets/adaptive-learning/students-learning-goals-statistics-detail.png';
-import studentsLearningPathParticipationImg from './assets/adaptive-learning/students-learning-path-participation.png';
-import studentsLearningPathGraphImg from './assets/adaptive-learning/students-learning-path-graph.png';
-import studentsFeedbackLearnerProfileInitialImg from './assets/adaptive-learning/students-feedback-learner-profile-initial-screen.png';
-import studentsFeedbackLearnerProfileOnboardingImg from './assets/adaptive-learning/students-feedback-learner-profile-onboarding-modal.png';
-import studentsFeedbackLearnerProfileSetupImg from './assets/adaptive-learning/students-feedback-learner-profile-setup.png';
-import studentsCourseLearnerProfileImg from './assets/adaptive-learning/students-course-learner-profile.png';
+import studentsLearningGoalsStatisticsImg from '../assets/adaptive-learning/students-learning-goals-statistics.png';
+import studentsLearningGoalsStatisticsDetailImg from '../assets/adaptive-learning/students-learning-goals-statistics-detail.png';
+import studentsLearningPathParticipationImg from '../assets/adaptive-learning/students-learning-path-participation.png';
+import studentsLearningPathGraphImg from '../assets/adaptive-learning/students-learning-path-graph.png';
+import studentsFeedbackLearnerProfileInitialImg from '../assets/adaptive-learning/students-feedback-learner-profile-initial-screen.png';
+import studentsFeedbackLearnerProfileOnboardingImg from '../assets/adaptive-learning/students-feedback-learner-profile-onboarding-modal.png';
+import studentsFeedbackLearnerProfileSetupImg from '../assets/adaptive-learning/students-feedback-learner-profile-setup.png';
+import studentsCourseLearnerProfileImg from '../assets/adaptive-learning/students-course-learner-profile.png';
 
 # Adaptive Learning
 
@@ -22,7 +21,7 @@ Adaptive Learning in Artemis is centered around **competencies**, overarching le
 
 <TumLiveVideo src="https://live.rbg.tum.de/w/artemisintro/26313" title="Adaptive Learning Overview" />
 
-Students can track their progress in `competencies_student` and view the next recommended content in their `learning_paths_student`.
+Students can track their progress on the **Competencies** tab and view the next recommended content on the **Learning Path** tab.
 
 ---
 
@@ -72,7 +71,7 @@ Students can open the course competency graph for a broader view of how competen
 ## Learner Profile
 
 **Learner Profiles** allow students to configure their personal learning preferences and motivations, making their experience in Artemis more tailored to their individual needs.
-Currently, there are two types of learner profiles available: **Feedback Learner Profile** and **Course Learner Profile**.
+Currently, there are three types of learner profiles available: **Feedback Learner Profile**, **Course Learner Profile**, and **Insights Learner Profile**.
 
 ### Feedback Learner Profile
 
@@ -106,3 +105,9 @@ By indicating their goals and motivations, students enable Artemis to provide a 
 Students can modify their course learner profile at the bottom of the Learner Profile settings page.
 
 <Image src={studentsCourseLearnerProfileImg} alt={"students-course-learner-profile"} size={ImageSize.large}/>
+
+---
+
+### Insights Learner Profile
+
+The Insights Learner Profile is available when the Iris AI memory feature is enabled on the Artemis instance. It allows students to configure whether Iris can retain context from previous interactions to provide more personalized guidance over time. Students can enable or disable this feature in the Learner Profile settings page.
