@@ -7,8 +7,8 @@ import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tut
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupTutorService } from 'app/tutorialgroup/shared/service/tutorial-group-tutor.service';
-import { TutorialGroupSharedStateService } from 'app/tutorialgroup/manage/service/tutorial-group-shared-state.service';
+import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
+import { TutorialGroupSharedStateService } from 'app/tutorialgroup/shared/service/tutorial-group-shared-state.service';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -22,7 +22,7 @@ export class TutorialEditContainerComponent {
     private tutorialGroupsService = inject(TutorialGroupsService);
     private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
     private alertService = inject(AlertService);
-    private tutorialGroupTutorService = inject(TutorialGroupTutorService);
+    private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');

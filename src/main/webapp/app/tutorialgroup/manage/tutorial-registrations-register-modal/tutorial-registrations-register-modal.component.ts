@@ -14,7 +14,7 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-o
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/shared/service/tutorial-group-registered-students.service';
+import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',

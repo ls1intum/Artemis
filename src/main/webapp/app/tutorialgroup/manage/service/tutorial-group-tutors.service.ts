@@ -7,7 +7,7 @@ import { User } from 'app/core/user/user.model';
 import { AlertService } from 'app/shared/service/alert.service';
 
 @Injectable({ providedIn: 'root' })
-export class TutorialGroupTutorService {
+export class TutorialGroupTutorsService {
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 

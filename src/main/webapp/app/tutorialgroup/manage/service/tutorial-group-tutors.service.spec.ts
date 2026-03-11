@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { TutorialGroupTutorService } from './tutorial-group-tutor.service';
+import { TutorialGroupTutorsService } from './tutorial-group-tutors.service';
 
 describe('TutorialGroupTutor', () => {
-    let service: TutorialGroupTutorService;
+    let service: TutorialGroupTutorsService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
-        service = TestBed.inject(TutorialGroupTutorService);
+        service = TestBed.inject(TutorialGroupTutorsService);
     });
 
     it('should be created', () => {

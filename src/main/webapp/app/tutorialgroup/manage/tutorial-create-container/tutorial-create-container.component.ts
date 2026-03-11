@@ -5,7 +5,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import { TutorialGroupTutorService } from 'app/tutorialgroup/shared/service/tutorial-group-tutor.service';
+import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 
 @Component({
@@ -19,7 +19,7 @@ export class TutorialCreateContainerComponent {
     private activatedRoute = inject(ActivatedRoute);
     private tutorialGroupsService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
-    private tutorialGroupTutorService = inject(TutorialGroupTutorService);
+    private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');

@@ -38,7 +38,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { ExamParticipationService } from 'app/exam/overview/services/exam-participation.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { CourseAccessStorageService } from 'app/core/course/shared/services/course-access-storage.service';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
