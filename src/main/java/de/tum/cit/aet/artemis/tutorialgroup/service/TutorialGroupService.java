@@ -657,7 +657,8 @@ public class TutorialGroupService {
 
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
         List<TutorialGroupSessionDTO> sessionDTOs;
-        // the schedule related properties are null if and only if there is no schedule for the tutorial group TODO: bundle in a nested schedule DTO
+        // The schedule related properties are null if and only if there is no schedule for the tutorial group.
+        // It would be nicer to bundle the schedule properties of the RawTutorialGroupDTO into a nested DTO, but unfortunately JPQL does not support nested projections
         if (rawGroupDTOs.scheduleDayOfWeek() != null) {
             int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
             LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
