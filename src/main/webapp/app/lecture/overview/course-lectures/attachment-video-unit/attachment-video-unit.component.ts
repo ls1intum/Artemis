@@ -1,5 +1,4 @@
-import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -32,11 +31,13 @@ import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
+import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
+    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent, ArtemisDatePipe],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
@@ -44,7 +45,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
 
-    private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
@@ -61,13 +61,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly isPdfLoading = signal<boolean>(false);
     readonly pdfLoadError = signal<boolean>(false);
 
-    private currentLoadSession = 0;
+    private playlistSubscription?: Subscription;
+    private transcriptSubscription?: Subscription;
+    private pdfSubscription?: Subscription;
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     readonly hasPdf = computed(() => {
-        const link = this.lectureUnit().attachment?.link;
-        return this.hasAttachment() && link ? link.toLowerCase().endsWith('.pdf') : false;
+        const attachment = this.lectureUnit().attachment;
+        const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
+        return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
     });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
@@ -118,61 +121,47 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         if (!isCollapsed) {
             this.logUnitOpenedEvent();
+            this.cancelPendingLoads();
             this.clearLoadedContent();
-
-            // Rotate session token to invalidate any pending async operations
-            const sessionToken = ++this.currentLoadSession;
 
             const src = this.lectureUnit().videoSource;
 
             if (src) {
                 this.isLoading.set(true);
 
-                this.attachmentVideoUnitService
-                    .getPlaylistUrl(src)
-                    .pipe(takeUntilDestroyed(this.destroyRef))
-                    .subscribe({
-                        next: (resolvedUrl) => {
-                            // Only update state if this is still the active session
-                            if (sessionToken !== this.currentLoadSession) {
-                                return;
-                            }
-                            if (resolvedUrl) {
-                                this.playlistUrl.set(resolvedUrl);
-                                this.fetchTranscript(sessionToken);
-                            }
-                            this.isLoading.set(false);
-                        },
-                        error: () => {
-                            // Only update state if this is still the active session
-                            if (sessionToken !== this.currentLoadSession) {
-                                return;
-                            }
-                            this.playlistUrl.set(undefined);
-                            this.isLoading.set(false);
-                        },
-                    });
+                this.playlistSubscription = this.attachmentVideoUnitService.getPlaylistUrl(src).subscribe({
+                    next: (resolvedUrl) => {
+                        if (resolvedUrl) {
+                            this.playlistUrl.set(resolvedUrl);
+                            this.fetchTranscript();
+                        }
+                        this.isLoading.set(false);
+                    },
+                    error: () => {
+                        this.playlistUrl.set(undefined);
+                        this.isLoading.set(false);
+                    },
+                });
             } else {
                 this.isLoading.set(false);
             }
 
             if (this.hasPdf()) {
-                this.loadPdf(sessionToken);
+                this.loadPdf();
             }
         } else {
-            // Invalidate any pending async operations by rotating the session token
-            this.currentLoadSession++;
             // Clear loaded content and reset state
+            this.cancelPendingLoads();
             this.clearLoadedContent();
             this.isLoading.set(false);
             this.isPdfLoading.set(false);
         }
     }
 
-    private fetchTranscript(sessionToken: number): void {
+    private fetchTranscript(): void {
         const id = this.lectureUnit().id!;
 
-        this.lectureTranscriptionService
+        this.transcriptSubscription = this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
                 map((dto) => {
@@ -182,28 +171,19 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     // Filter segments with required fields
                     return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
-                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
                 next: (segments) => {
-                    // Only update state if this is still the active session
-                    if (sessionToken !== this.currentLoadSession) {
-                        return;
-                    }
                     this.transcriptSegments.set(segments);
                 },
                 error: () => {
-                    // Only update state if this is still the active session
-                    if (sessionToken !== this.currentLoadSession) {
-                        return;
-                    }
                     // Failed to fetch transcript, video player will work without it
                     this.transcriptSegments.set([]);
                 },
             });
     }
 
-    private loadPdf(sessionToken: number): void {
+    private loadPdf(): void {
         this.isPdfLoading.set(true);
         this.pdfLoadError.set(false);
 
@@ -215,34 +195,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        this.httpClient
-            .get(link, { responseType: 'blob' })
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe({
-                next: (blob) => {
-                    // Only update state if this is still the active session
-                    if (sessionToken !== this.currentLoadSession) {
-                        return;
-                    }
-                    if (blob) {
-                        this.pdfUrl.set(URL.createObjectURL(blob));
-                        this.pdfLoadError.set(false);
-                    }
-                    this.isPdfLoading.set(false);
-                },
-                error: () => {
-                    // Only update state if this is still the active session
-                    if (sessionToken !== this.currentLoadSession) {
-                        return;
-                    }
-                    this.pdfUrl.set(undefined);
-                    this.pdfLoadError.set(true);
-                    this.isPdfLoading.set(false);
-                },
-            });
+        this.pdfSubscription = this.httpClient.get(link, { responseType: 'blob' }).subscribe({
+            next: (blob) => {
+                if (blob) {
+                    this.revokePdfUrl();
+                    this.pdfUrl.set(URL.createObjectURL(blob));
+                    this.pdfLoadError.set(false);
+                }
+                this.isPdfLoading.set(false);
+            },
+            error: () => {
+                this.pdfUrl.set(undefined);
+                this.pdfLoadError.set(true);
+                this.isPdfLoading.set(false);
+            },
+        });
     }
 
     ngOnDestroy(): void {
+        this.cancelPendingLoads();
         this.revokePdfUrl();
     }
 
@@ -251,6 +222,15 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (url) {
             URL.revokeObjectURL(url);
         }
+    }
+
+    private cancelPendingLoads(): void {
+        this.playlistSubscription?.unsubscribe();
+        this.playlistSubscription = undefined;
+        this.transcriptSubscription?.unsubscribe();
+        this.transcriptSubscription = undefined;
+        this.pdfSubscription?.unsubscribe();
+        this.pdfSubscription = undefined;
     }
 
     /**

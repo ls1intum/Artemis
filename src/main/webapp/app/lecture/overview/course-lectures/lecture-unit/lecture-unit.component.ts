@@ -1,4 +1,4 @@
-import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, Injector, OnDestroy, afterNextRender, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { IconDefinition, faCheckCircle, faCircle, faDownload, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -25,6 +25,7 @@ export class LectureUnitComponent implements OnDestroy {
     private elementRef = inject(ElementRef);
     private injector = inject(Injector);
     private scrollTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private autoExpanded = false;
 
     protected faDownload = faDownload;
     protected faCheckCircle = faCheckCircle;
@@ -57,32 +58,24 @@ export class LectureUnitComponent implements OnDestroy {
         // Watch initiallyExpanded signal and trigger expansion/scroll when it becomes true
         effect(
             (onCleanup) => {
-                if (this.initiallyExpanded()) {
+                const shouldAutoExpand = this.initiallyExpanded();
+                if (shouldAutoExpand && !this.autoExpanded) {
+                    this.autoExpanded = true;
                     // Set collapsed state and emit event so parent components can load content
-                    if (this.isCollapsed()) {
+                    if (untracked(() => this.isCollapsed())) {
                         this.isCollapsed.set(false);
                         this.onCollapse.emit(false);
                     }
 
-                    afterNextRender(
-                        () => {
-                            this.scrollTimeoutId = setTimeout(() => {
-                                this.elementRef.nativeElement.scrollIntoView?.({
-                                    behavior: 'smooth',
-                                    block: 'start',
-                                });
-                            }, LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
-                        },
-                        { injector: this.injector },
-                    );
+                    this.scheduleScroll('start', LectureUnitComponent.SCROLL_INTO_VIEW_DELAY_MS);
+                }
+                if (!shouldAutoExpand) {
+                    this.autoExpanded = false;
                 }
 
                 // Cleanup: clear timeout if effect re-runs or component is destroyed
                 onCleanup(() => {
-                    if (this.scrollTimeoutId !== undefined) {
-                        clearTimeout(this.scrollTimeoutId);
-                        this.scrollTimeoutId = undefined;
-                    }
+                    this.clearScrollTimeout();
                 });
             },
             { injector: this.injector },
@@ -91,10 +84,7 @@ export class LectureUnitComponent implements OnDestroy {
 
     ngOnDestroy(): void {
         // Clear any outstanding scroll timeout to avoid callbacks after destruction
-        if (this.scrollTimeoutId !== undefined) {
-            clearTimeout(this.scrollTimeoutId);
-            this.scrollTimeoutId = undefined;
-        }
+        this.clearScrollTimeout();
     }
 
     toggleCompletion(event: Event) {
@@ -107,12 +97,7 @@ export class LectureUnitComponent implements OnDestroy {
         this.onCollapse.emit(this.isCollapsed());
 
         if (!this.isCollapsed()) {
-            afterNextRender(
-                () => {
-                    this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block: 'nearest' });
-                },
-                { injector: this.injector },
-            );
+            this.scheduleScroll('nearest');
         }
     }
 
@@ -124,5 +109,26 @@ export class LectureUnitComponent implements OnDestroy {
     handleOriginalVersionView(event: Event) {
         event.stopPropagation();
         this.onShowOriginalVersion.emit();
+    }
+
+    private scheduleScroll(block: ScrollLogicalPosition, delayMs = 0): void {
+        afterNextRender(
+            () => {
+                const doScroll = () => this.elementRef.nativeElement.scrollIntoView?.({ behavior: 'smooth', block });
+                if (delayMs > 0) {
+                    this.scrollTimeoutId = setTimeout(doScroll, delayMs);
+                } else {
+                    doScroll();
+                }
+            },
+            { injector: this.injector },
+        );
+    }
+
+    private clearScrollTimeout(): void {
+        if (this.scrollTimeoutId !== undefined) {
+            clearTimeout(this.scrollTimeoutId);
+            this.scrollTimeoutId = undefined;
+        }
     }
 }

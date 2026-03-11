@@ -13,6 +13,24 @@
     (onShowIsolated)="handleDownload()"
     (onShowOriginalVersion)="handleOriginalVersion()"
 >
+    @if (lectureUnit().attachment?.link) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
+            {{ getFileName() }}
+        </div>
+    }
+    @if (!hasPdf() && lectureUnit().attachment?.uploadDate) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
+            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+        </div>
+    }
+    @if (!hasPdf() && lectureUnit().attachment?.version) {
+        <div>
+            <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
+            {{ lectureUnit().attachment?.version }}
+        </div>
+    }
     @if (lectureUnit()?.description) {
         <div>
             {{ lectureUnit().description }}

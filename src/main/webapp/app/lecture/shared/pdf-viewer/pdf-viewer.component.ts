@@ -67,6 +67,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private resizeObserver: ResizeObserver | undefined;
     private lastObservedWidth = 0;
     private isZooming = false;
+    private pendingRender = false;
+    private loadToken = 0;
+    private loadingTask?: { promise: Promise<PDFDocumentProxy>; destroy?: () => Promise<void> | void };
 
     constructor() {
         (PDFJS.GlobalWorkerOptions as any).workerSrc = '/content/scripts/pdf.worker.min.mjs';
@@ -152,18 +155,27 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             this.zoomRetryTimeoutId = undefined;
         }
 
-        if (this.pdfDocument) {
-            this.pdfDocument.destroy();
-        }
+        this.loadToken++;
+        this.clearPdfResources();
     }
 
     private async loadPdf(url: string): Promise<void> {
+        const token = ++this.loadToken;
+        this.clearPdfResources();
         this.isLoading.set(true);
         this.error.set(undefined);
+        this.totalPages.set(0);
+        this.currentPage.set(1);
 
         try {
-            const loadingTask = PDFJS.getDocument({ url });
-            this.pdfDocument = await loadingTask.promise;
+            const loadingTask = PDFJS.getDocument({ url }) as { promise: Promise<PDFDocumentProxy>; destroy?: () => Promise<void> | void };
+            this.loadingTask = loadingTask;
+            const pdfDocument = await loadingTask.promise;
+            if (token !== this.loadToken) {
+                await pdfDocument.destroy();
+                return;
+            }
+            this.pdfDocument = pdfDocument;
 
             const numPages = this.pdfDocument.numPages;
             this.totalPages.set(numPages);
@@ -174,16 +186,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 return;
             }
 
-            const containerRef = this.pdfContainer();
-            if (!containerRef) {
-                this.error.set('error');
-                this.isLoading.set(false);
+            await this.renderAllPages();
+            if (token !== this.loadToken) {
                 return;
             }
-
-            await this.renderAllPages();
             this.isLoading.set(false);
         } catch (err) {
+            if (token !== this.loadToken) {
+                return;
+            }
             this.error.set('error');
             this.isLoading.set(false);
         }
@@ -191,6 +202,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     private async renderAllPages(): Promise<void> {
         if (this.isRendering) {
+            this.pendingRender = true;
             return;
         }
 
@@ -246,6 +258,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
         } finally {
             this.isRendering = false;
+            if (this.pendingRender) {
+                this.pendingRender = false;
+                void this.renderAllPages();
+            }
         }
     }
 
@@ -586,6 +602,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             return true;
         } catch (error) {
             return false;
+        }
+    }
+
+    private clearPdfResources(): void {
+        this.loadingTask?.destroy?.();
+        this.loadingTask = undefined;
+        if (this.pdfDocument) {
+            this.pdfDocument.destroy();
+            this.pdfDocument = undefined;
         }
     }
 }
