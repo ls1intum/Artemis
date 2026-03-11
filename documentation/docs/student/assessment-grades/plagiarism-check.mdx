@@ -1,10 +1,10 @@
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import Image, {ImageSize} from "../../src/components/Image/Image";
-import studentWorkflowImg from './assets/plagiarism-check/student/student-workflow.png';
-import plagiarismCaseNavigationImg from './assets/plagiarism-check/student/plagiarism-case-navigation.png';
-import significantSimilarityButtonImg from './assets/plagiarism-check/student/significant-similarity-button.png';
-import significantSimilarityPlagCaseImg from './assets/plagiarism-check/student/significant-similarity-plagiarism-case.png';
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import studentWorkflowImg from '../assets/plagiarism-check/student/student-workflow.png';
+import plagiarismCaseNavigationImg from '../assets/plagiarism-check/student/plagiarism-case-navigation.png';
+import significantSimilarityButtonImg from '../assets/plagiarism-check/student/significant-similarity-button.png';
+import significantSimilarityPlagCaseImg from '../assets/plagiarism-check/student/significant-similarity-plagiarism-case.png';
 
 # Plagiarism checks
 
@@ -22,7 +22,7 @@ Plagiarism checks are available for both course and exam exercises.
 
 ### Students
 
-After the student got a notification that the instructor asked for the statement, they have one week to respond.
+After the student receives a notification that the instructor asked for a statement, they have a limited time to respond within the deadline set by the instructor.
 The process is visualized in the following diagram.
 
 <Image src={studentWorkflowImg} alt={"student-workflow"} size={ImageSize.large} />
@@ -37,7 +37,7 @@ b. For exam exercises: Course Overview → Course → Exams → Exam → Plagiar
 2. Reply to the message of the instructor.
 3. Wait for the final verdict.
 
-### Students
+### Continuous Plagiarism Control (CPC)
 
 When a student submits a work for which the CPC identifies significant similarity and creates a plagiarism case, the student receives a notification similar to what is sent when instructors create a classic plagiarism case.
 If the exercise due date has not passed, the student can submit updated work again.
@@ -50,5 +50,5 @@ When a significant similarity plagiarism case exists for the latest submission, 
 A significant similarity plagiarism case contains a short message and an overview of similarity in the submission:
 <Image src={significantSimilarityPlagCaseImg} alt={"significant-similarity-plagiarism-case"} size={ImageSize.large} />
 
-In case the exercise due date has passed and student does not agree with the significant similarity plagiarism case,
-the student can dispute the case within the period configured by the instructor.
+In case the exercise due date has passed and a student does not agree with the significant similarity plagiarism case,
+the student can dispute the case within the period configured by the instructor (by default 7 days, configurable between 7 and 31 days).
