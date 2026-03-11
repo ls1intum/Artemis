@@ -307,4 +307,25 @@ describe('IrisMcqQuestionComponent', () => {
         expect(component.selectedIndex()).toBe(0);
         expect(component.submitted()).toBe(false);
     });
+
+    it('should not submit when no option is selected', () => {
+        render();
+        component.submit();
+        expect(component.submitted()).toBe(false);
+    });
+
+    it('should not submit again after already submitted', () => {
+        render();
+        component.selectOption(1);
+        component.submit();
+        expect(component.submitted()).toBe(true);
+        // second submit should be a no-op
+        component.submit();
+        expect(component.submitted()).toBe(true);
+    });
+
+    it('should return false for isCorrectAnswer when no option is selected', () => {
+        render();
+        expect(component.isCorrectAnswer()).toBe(false);
+    });
 });

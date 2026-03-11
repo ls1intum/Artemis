@@ -3,7 +3,7 @@
     padding: 1rem;
     border-radius: 12px;
     background: var(--iris-received-message-background);
-    border: 1px solid var(--border-color, #e0e0e0);
+    border: 1px solid var(--border-color);
 }
 
 .mcq-question {
@@ -25,7 +25,7 @@
     align-items: center;
     gap: 0.625rem;
     padding: 0.625rem 0.75rem;
-    border: 1.5px solid var(--border-color, #d0d0d0);
+    border: 1.5px solid var(--border-color);
     border-radius: 8px;
     background: transparent;
     cursor: pointer;
@@ -36,23 +36,23 @@
     font-size: 0.9rem;
 
     &:hover:not(:disabled) {
-        border-color: var(--primary, #3b82f6);
-        background: rgba(59, 130, 246, 0.05);
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 5%, transparent);
     }
 
     &.selected {
-        border-color: var(--primary, #3b82f6);
-        background: rgba(59, 130, 246, 0.1);
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 10%, transparent);
     }
 
     &.correct {
-        border-color: var(--bs-success, #22c55e);
-        background: rgba(34, 197, 94, 0.1);
+        border-color: var(--bs-success);
+        background: color-mix(in srgb, var(--bs-success) 10%, transparent);
     }
 
     &.incorrect {
-        border-color: var(--bs-danger, #ef4444);
-        background: rgba(239, 68, 68, 0.1);
+        border-color: var(--bs-danger);
+        background: color-mix(in srgb, var(--bs-danger) 10%, transparent);
     }
 
     &:disabled {
@@ -67,7 +67,7 @@
     width: 1.5rem;
     height: 1.5rem;
     border-radius: 50%;
-    background: var(--border-color, #e0e0e0);
+    background: var(--border-color);
     font-weight: 600;
     font-size: 0.8rem;
     flex-shrink: 0;
@@ -82,8 +82,8 @@
     padding: 0.5rem;
     border: none;
     border-radius: 8px;
-    background: var(--primary, #3b82f6);
-    color: white;
+    background: var(--primary);
+    color: var(--white);
     font-weight: 600;
     cursor: pointer;
     transition: opacity 0.15s;
@@ -106,20 +106,20 @@
     margin-bottom: 0.5rem;
 
     &-correct {
-        background: rgba(34, 197, 94, 0.15);
-        color: var(--bs-success, #16a34a);
+        background: color-mix(in srgb, var(--bs-success) 15%, transparent);
+        color: var(--bs-success);
     }
 
     &-incorrect {
-        background: rgba(239, 68, 68, 0.15);
-        color: var(--bs-danger, #dc2626);
+        background: color-mix(in srgb, var(--bs-danger) 15%, transparent);
+        color: var(--bs-danger);
     }
 }
 
 .mcq-explanation {
     font-size: 0.85rem;
     line-height: 1.4;
-    color: var(--text-secondary, #666);
+    color: var(--body-color);
 
     strong {
         margin-right: 0.25rem;
