@@ -36,7 +36,7 @@ export class TutorialGroupSharedStateService {
                 this.isTutorialGroupLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('uncreated'); // TODO: create string key
+                this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkErrors.fetchGroup');
                 this.isTutorialGroupLoading.set(false);
             },
         });
@@ -50,12 +50,12 @@ export class TutorialGroupSharedStateService {
                 if (course) {
                     this.course.set(course);
                 } else {
-                    this.alertService.addErrorAlert('uncreated'); // TODO: create string key
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkErrors.fetchCourse');
                 }
                 this.isCourseLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('uncreated'); // TODO: create string key
+                this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkErrors.fetchCourse');
                 this.isCourseLoading.set(false);
             },
         });
