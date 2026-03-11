@@ -350,6 +350,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         privacy_statement: 'global.menu.admin.sidebar.privacy',
         imprint: 'global.menu.admin.sidebar.imprint',
         edit_build_plan: 'artemisApp.programmingExercise.buildPlanEditor',
+        version_history: 'artemisApp.exercise.versionHistory.title',
         suspicious_behavior: 'artemisApp.examManagement.suspiciousBehavior.title',
         suspicious_sessions: 'artemisApp.examManagement.suspiciousBehavior.suspiciousSessions.title',
         exam_timeline: 'artemisApp.examTimeline.breadcrumb',
