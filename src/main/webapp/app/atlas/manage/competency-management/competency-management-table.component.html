@@ -10,7 +10,7 @@
                     pInputText
                     type="text"
                     class="competency-search-input"
-                    [placeholder]="'artemisApp.' + competencyType() + '.manage.search' | artemisTranslate"
+                    [placeholder]="searchPlaceholder()"
                     [value]="filterText()"
                     (input)="filterText.set($any($event.target).value)"
                 />

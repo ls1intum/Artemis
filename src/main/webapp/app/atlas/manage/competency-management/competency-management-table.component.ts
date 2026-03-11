@@ -1,3 +1,4 @@
+import dayjs from 'dayjs/esm';
 import { Component, DestroyRef, computed, effect, inject, input, output, signal } from '@angular/core';
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -6,6 +7,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, map } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { faFileImport, faMagnifyingGlass, faPencilAlt, faPlus, faSort, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 import {
@@ -80,6 +82,7 @@ export class CompetencyManagementTableComponent {
     readonly getIcon = getIcon;
 
     readonly filterText = signal<string>('');
+    readonly searchPlaceholder = signal<string>('');
     private readonly _sortPredicate = signal<string>('title');
     private readonly _sortAscending = signal<boolean>(true);
 
@@ -119,8 +122,8 @@ export class CompetencyManagementTableComponent {
                     valB = b.taxonomy ?? '';
                     break;
                 case 'softDueDate':
-                    valA = a.softDueDate?.valueOf() ?? 0;
-                    valB = b.softDueDate?.valueOf() ?? 0;
+                    valA = a.softDueDate ? dayjs(a.softDueDate).valueOf() : 0;
+                    valB = b.softDueDate ? dayjs(b.softDueDate).valueOf() : 0;
                     break;
                 case 'masteredStudents': {
                     const totalA = a.courseProgress?.numberOfStudents ?? 0;
@@ -147,6 +150,11 @@ export class CompetencyManagementTableComponent {
         effect(() => {
             const type = this.competencyType();
             this.service = type === CourseCompetencyType.COMPETENCY ? this.competencyService : this.prerequisiteService;
+            this.searchPlaceholder.set(this.translateService.instant(`artemisApp.${type}.manage.search`));
+        });
+
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+            this.searchPlaceholder.set(this.translateService.instant(`artemisApp.${this.competencyType()}.manage.search`));
         });
 
         inject(DestroyRef).onDestroy(() => {
