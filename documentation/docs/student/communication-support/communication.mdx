@@ -1,37 +1,36 @@
 ---
-id: communication
 title: Communication
 sidebar_label: Communication
 ---
 
 import React from "react";
-import Image, {ImageSize} from "../../src/components/Image/Image";
-import TumLiveVideo from "../../src/components/TumLiveVideo/TumLiveVideo";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
+import TumLiveVideo from "../../../src/components/TumLiveVideo/TumLiveVideo";
 
-import messagingPageImg from "./assets/communication/message-page.png";
-import lectureViewImg from "./assets/communication/lecture-page.png";
-import exerciseViewImg from "./assets/communication/exercise-page.png";
-import messagesImg from "./assets/communication/direct-message-page.png";
-import linkPreviewViewImg from "./assets/communication/link-preview-single.png";
+import messagingPageImg from "../assets/communication/message-page.png";
+import lectureViewImg from "../assets/communication/lecture-page.png";
+import exerciseViewImg from "../assets/communication/exercise-page.png";
+import messagesImg from "../assets/communication/direct-message-page.png";
+import linkPreviewViewImg from "../assets/communication/link-preview-single.png";
 
-import globalSearchImg from "./assets/communication/global-search.png";
-import pinnedMessagesButtonImg from "./assets/communication/pinned-button.png";
-import appliedPinnedFilterImg from "./assets/communication/applied-pinned-filtering.png";
+import globalSearchImg from "../assets/communication/global-search.png";
+import pinnedMessagesButtonImg from "../assets/communication/pinned-button.png";
+import appliedPinnedFilterImg from "../assets/communication/applied-pinned-filtering.png";
 
-import instructorRoleImg from "./assets/communication/user-authorities/instructor-role.png";
-import tutorRoleImg from "./assets/communication/user-authorities/tutor-role.png";
-import studentRoleImg from "./assets/communication/user-authorities/student-role.png";
+import instructorRoleImg from "../assets/communication/user-authorities/instructor-role.png";
+import tutorRoleImg from "../assets/communication/user-authorities/tutor-role.png";
+import studentRoleImg from "../assets/communication/user-authorities/student-role.png";
 
-import messageReferencesImg from "./assets/communication/references.png";
-import slideMenuImg from "./assets/communication/slide-menu-view.png";
-import slidePreviewImg from "./assets/communication/slide-preview-message.png";
-import slideViewImg from "./assets/communication/slide-open.png";
+import messageReferencesImg from "../assets/communication/references.png";
+import slideMenuImg from "../assets/communication/slide-menu-view.png";
+import slidePreviewImg from "../assets/communication/slide-preview-message.png";
+import slideViewImg from "../assets/communication/slide-open.png";
 
-import resolvedPostImg from "./assets/communication/mark-resolved.png";
-import forwardMessageDialogImg from "./assets/communication/forward-dialog.png";
-import forwardedMessageImg from "./assets/communication/forward-view.png";
-import saveMessagesImg from "./assets/communication/save-message.png";
-import expandedThreadImg from "./assets/communication/expanded.png";
+import resolvedPostImg from "../assets/communication/mark-resolved.png";
+import forwardMessageDialogImg from "../assets/communication/forward-dialog.png";
+import forwardedMessageImg from "../assets/communication/forward-view.png";
+import saveMessagesImg from "../assets/communication/save-message.png";
+import expandedThreadImg from "../assets/communication/expanded.png";
 
 export const AVAILABLE = () => (
   <span style={{ backgroundColor: "#28a745", padding: "3px 6px", borderRadius: "8px", color: "white", fontWeight: "bold", display: "inline-block", width: "150px", textAlign: "center" }}>
@@ -378,7 +377,7 @@ Similar to course members, users can reference public and course-wide channels o
 
 Marking a message as resolved will indicate to other users that the posted question is resolved and does not need any further input.
 This can be done by clicking the check mark next to the answer message. (see image below)
-Note that only the author of the message as well as a moderator can perform this action.
+Note that only the author of the message as well as tutors and instructors can perform this action.
 This is helpful for moderators to identify open questions, e.g., by applying the according filter in the course overview.
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
 
