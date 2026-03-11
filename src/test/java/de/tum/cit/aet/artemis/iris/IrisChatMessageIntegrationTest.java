@@ -525,7 +525,8 @@ class IrisChatMessageIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(llmMessages).hasSize(1);
         assertThat(llmMessages.getFirst().getContent()).hasSize(1);
         assertThat(llmMessages.getFirst().getContent().getFirst()).isInstanceOf(IrisJsonMessageContent.class);
-        assertThat(llmMessages.getFirst().getContent().getFirst().getContentAsString()).contains("\"type\" : \"mcq\"");
+        var jsonContent = (IrisJsonMessageContent) llmMessages.getFirst().getContent().getFirst();
+        assertThat(jsonContent.getJsonNode().get("type").asText()).isEqualTo("mcq");
     }
 
     @Test
