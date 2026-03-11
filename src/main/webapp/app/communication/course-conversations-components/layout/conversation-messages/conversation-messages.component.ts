@@ -246,7 +246,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             subtree: true,
         });
 
-        const resizeObserver ResizeObserver(() => {
+        const resizeObserver = new ResizeObserver(() => {
             if (!this.createdNewMessage && this.posts.length > 0) {
                 this.scrollToStoredId();
             }
