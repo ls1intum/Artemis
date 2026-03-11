@@ -16,7 +16,7 @@ export class TutorialGroupSharedStateService {
     isTutorialGroupLoading = signal(false);
     tutorialGroup = signal<TutorialGroupDTO | undefined>(undefined);
     isCourseLoading = signal(false);
-    course = signal<Course | undefined>(undefined); // TODO: course really needed
+    course = signal<Course | undefined>(undefined);
 
     toggleCancellationStatusOfSession(sessionId: number) {
         this.tutorialGroup.update((tutorialGroup) => {
