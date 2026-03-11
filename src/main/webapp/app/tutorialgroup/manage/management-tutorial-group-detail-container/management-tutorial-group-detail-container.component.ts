@@ -68,7 +68,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(
                 catchError((_) => {
                     this.isLoading.set(false);
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.sessionDeletion');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.deleteSession');
                     return of(undefined);
                 }),
             )
@@ -99,7 +99,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.sessionCancellation');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.cancelSession');
                     this.isLoading.set(false);
                 },
             });
@@ -119,7 +119,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.sessionActivation');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.activateSession');
                     this.isLoading.set(false);
                 },
             });
@@ -140,7 +140,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.sessionUpdate');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.updateSession');
                     this.isLoading.set(false);
                 },
             });
@@ -160,7 +160,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.sessionCreation');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.createSession');
                     this.isLoading.set(false);
                 },
             });
@@ -174,11 +174,11 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(
                 catchError((_) => {
                     this.isLoading.set(false);
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.fetchCourse');
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupDetail.networkError.deleteGroup');
                     return of(undefined);
                 }),
             )
-            .subscribe((response) => {
+            .subscribe(() => {
                 this.router.navigate(['../'], { relativeTo: this.route });
                 this.isLoading.set(false);
             });

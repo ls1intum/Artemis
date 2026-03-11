@@ -25,7 +25,7 @@ export class TutorialGroupTutorService {
                 this.isLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchTutors');
+                this.alertService.addErrorAlert('artemisApp.services.tutorialGroupTutorService.networkError.fetchTutors');
                 this.isLoading.set(false);
             },
         });

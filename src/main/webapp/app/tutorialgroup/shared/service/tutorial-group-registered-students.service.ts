@@ -28,7 +28,7 @@ export class TutorialGroupRegisteredStudentsService {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.networkError.deregisterStudent');
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupRegisteredStudentsService.networkError.deregisterStudent');
                     this.isLoading.set(false);
                 },
             });
@@ -48,7 +48,7 @@ export class TutorialGroupRegisteredStudentsService {
                     this.isLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.networkError.fetchRegisteredStudents');
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupRegisteredStudentsService.networkError.fetchRegisteredStudents');
                     this.isLoading.set(false);
                 },
             });

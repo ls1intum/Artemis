@@ -153,10 +153,6 @@
                 "registerSearchBar": {
                     "fetchSuggestionsError": "Ein Fehler ist aufgetreten während des Ladens der Suchergebnisse. Bitte versuche es erneut.",
                     "noResultsText": "Keine Studenten gefunden."
-                },
-                "networkError": {
-                    "deregisterStudent": "Beim Deregistrieren des Studenten ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "fetchRegisteredStudents": "Beim Laden der registrierten Studenten ist etwas schief gegangen. Bitte versuche es erneut."
                 }
             },
             "createOrEditTutorialGroup": {
@@ -201,10 +197,9 @@
                     "locationRequired": "Bitte wähle einen Ort."
                 },
                 "networkError": {
-                    "fetchGroup": "Beim laden der Tutoriumsgruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
                     "updateGroup": "Beim Bearbeiten der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "scheduleLoading": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
-                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
+                    "createGroup": "Beim Erstellen der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchSchedule": "Beim laden des Sessionplans ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
                     "fetchLanguages": "Beim laden der vom Kurs benutzten Sprachen ist etwas schief gegangen. Bitte lade die Seite neu, falls du beim Auswählen der Sprache bereits benutzte Sprachen vorgeschlagen bekommen willst."
                 },
                 "confirmSaveDialog": {
@@ -278,14 +273,12 @@
                     "notAttended": "Abwesend"
                 },
                 "networkError": {
-                    "sessionDeletion": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
-                    "groupDeletion": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut.",
-                    "groupCreation": "Beim Erstellen der Gruppe ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "sessionCancellation": "Beim Absagen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "sessionActivation": "Beim Rückgängigmachen der Absage ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "sessionUpdate": "Beim Bearbeiten der Session ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "sessionCreation": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
-                    "fetchCourse": "Beim Laden des Kurses der Tutoriumsgruppe ist etwas schief gegangen. Bitte versiche es erneut, indem du die Seite neu lädst.",
+                    "deleteGroup": "Fehler beim Löschen der Gruppe. Bitte versuchen Sie es erneut.",
+                    "deleteSession": "Fehler beim Löschen der Session. Bitte versuchen Sie es erneut.",
+                    "cancelSession": "Beim Absagen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "activateSession": "Beim Rückgängigmachen der Absage ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "updateSession": "Beim Bearbeiten der Session ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "createSession": "Beim Erstellen der Session ist etwas schief gegangen. Bitte versuche es erneut.",
                     "createOneToOneChat": "Fehler beim Erstellen des Tutor-Chats. Bitte versuchen Sie es erneut."
                 },
                 "createOrEditSessionModal": {
@@ -339,6 +332,17 @@
                 "networkError": {
                     "fetchGroup": "Beim Aktualisieren der Daten der Tutorial Gruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
                     "fetchCourse": "Beim Aktualisieren der Daten des Kurses ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                }
+            },
+            "tutorialGroupTutorService": {
+                "networkError": {
+                    "fetchTutors": "Beim laden der Tutoren ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."
+                }
+            },
+            "tutorialGroupRegisteredStudentsService": {
+                "networkError": {
+                    "deregisterStudent": "Beim Deregistrieren des Studenten ist etwas schief gegangen. Bitte versuche es erneut.",
+                    "fetchRegisteredStudents": "Beim Laden der registrierten Studenten ist etwas schief gegangen. Bitte versuche es erneut."
                 }
             }
         }

@@ -153,10 +153,6 @@
                 "registerSearchBar": {
                     "fetchSuggestionsError": "An error occured while loading search results. Please try again.",
                     "noResultsText": "No Students Found."
-                },
-                "networkError": {
-                    "deregisterStudent": "Something went wrong while deregistering the student. Please try again.",
-                    "fetchRegisteredStudents": "Something went wrong while fetching the registered students. Please try again"
                 }
             },
             "createOrEditTutorialGroup": {
@@ -202,10 +198,9 @@
                     "locationRequired": "Please choose a location."
                 },
                 "networkError": {
-                    "fetchGroup": "Something went wrong while fetching the tutorial group information. Please refresh the page to try again.",
                     "updateGroup": "Something went wrong while updating the tutorial group. Please try again.",
-                    "scheduleLoading": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.",
-                    "fetchTutors": "Something went wrong while loading the tutors for the tutorial group. Please try again by refreshing the page.",
+                    "createGroup": "Something went wrong while creating the tutorial group. Please try again.",
+                    "fetchSchedule": "Something went wrong while loading the schedule for the tutorial group. Please try again by refreshing the page.",
                     "fetchLanguages": "Something went wrong while loading the languages that this course already uses. Please refresh the page if you wish to be proposed already used languages while selecting the language for this group."
                 },
                 "confirmSaveDialog": {
@@ -279,14 +274,12 @@
                     "notAttended": "Not Attended"
                 },
                 "networkError": {
-                    "sessionDeletion": "Error while deleting session. Please try again.",
-                    "groupDeletion": "Error while deleting group. Please try again.",
-                    "groupCreation": "Something went wrong while creating the tutorial group. Please try again.",
-                    "sessionCancellation": "Something went wrong while cancelling the session. Please try again.",
-                    "sessionActivation": "Something went wrong while undoing the cancellation. Please try again.",
-                    "sessionUpdate": "Something went wrong while updating the session. Please try again.",
-                    "sessionCreation": "Something went wrong while creating the session. Please try again.",
-                    "fetchCourse": "Something went wrong while loading the course for the tutorial group. Please try again by refreshing the page.",
+                    "deleteGroup": "Error while deleting group. Please try again.",
+                    "deleteSession": "Error while deleting session. Please try again.",
+                    "cancelSession": "Something went wrong while cancelling the session. Please try again.",
+                    "activateSession": "Something went wrong while undoing the cancellation. Please try again.",
+                    "updateSession": "Something went wrong while updating the session. Please try again.",
+                    "createSession": "Something went wrong while creating the session. Please try again.",
                     "createOneToOneChat": "Error while creating tutor chat. Please try again."
                 },
                 "createOrEditSessionModal": {
@@ -340,6 +333,17 @@
                 "networkError": {
                     "fetchGroup": "Something went wrong while refreshing the state of the tutorial group. Please try again by refreshing the page.",
                     "fetchCourse": "Something went wrong while refreshing the state of the course. Please try again by refreshing the page."
+                }
+            },
+            "tutorialGroupTutorService": {
+                "networkError": {
+                    "fetchTutors": "Something went wrong while loading the tutors for the tutorial group. Please try again by refreshing the page."
+                }
+            },
+            "tutorialGroupRegisteredStudentsService": {
+                "networkError": {
+                    "deregisterStudent": "Something went wrong while deregistering the student. Please try again.",
+                    "fetchRegisteredStudents": "Something went wrong while fetching the registered students. Please try again"
                 }
             }
         }

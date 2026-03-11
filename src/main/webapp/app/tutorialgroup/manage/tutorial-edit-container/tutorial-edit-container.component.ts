@@ -81,7 +81,7 @@ export class TutorialEditContainerComponent {
                 this.isScheduleLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.scheduleLoading');
+                this.alertService.addErrorAlert('artemisApp.pages.createOrEditTutorialGroup.networkError.fetchSchedule');
                 this.isScheduleLoading.set(false);
             },
         });
