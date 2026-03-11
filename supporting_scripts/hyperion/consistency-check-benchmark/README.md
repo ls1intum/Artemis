@@ -7,9 +7,11 @@ They are intended to use for benchmarking of consistency check approaches, of th
 
 ## Prerequisites
 
-
 - Python 3.13 (other versions might not work due to model incompatibility)
 - pip
+- [GitHub CLI](https://cli.github.com/) (`gh`) — required for automated PR creation with benchmark results
+  - Install: `brew install gh` (macOS) or `sudo apt install gh` (Linux)
+  - Authenticate: `gh auth login`
 
 ## 1. Create and activate a virtual environment in **consistency-check-benchmark** folder
 It is recommended to use a virtual environment to manage dependencies in isolation from the global Python environment. This approach can prevent version conflicts and keep your system environment clean.
