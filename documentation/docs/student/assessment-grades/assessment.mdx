@@ -1,15 +1,14 @@
 ---
-id: assessment
 title: Assessment and Feedback
 sidebar_label: Assessment and Feedback
 ---
 
-import Callout from "../../src/components/Callout/Callout";
-import {CalloutVariant} from "../../src/components/Callout/Callout.types";
-import complaintSubmissionImg from './assets/assessment/complaint-submission.png';
-import moreFeedbackImg from './assets/assessment/more-feedback.png';
-import studentFeedbackImg from './assets/assessment/student-feedback.png';
-import Image, {ImageSize} from "../../src/components/Image/Image";
+import Callout from "../../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../../src/components/Callout/Callout.types";
+import complaintSubmissionImg from '../assets/assessment/complaint-submission.png';
+import moreFeedbackImg from '../assets/assessment/more-feedback.png';
+import studentFeedbackImg from '../assets/assessment/student-feedback.png';
+import Image, {ImageSize} from "../../../src/components/Image/Image";
 
 # Assessment and Feedback
 
@@ -55,9 +54,8 @@ Submitting a complaint is a request for a re-evaluation of your submission.
 
 ### How Complaints Work
 
-1. **Complaint Tokens:** Your instructor sets a maximum number of complaints you can submit per course. Each complaint uses one token.
-2. **Token Return:** If your complaint is accepted, the token is returned to you. Throughout a course you can submit as many complaints as you want, as long as they are accepted.
-3. **Deadline:** Complaints must be submitted before the complaint due date set by your instructor.
+1. **Complaint Tokens:** Your instructor sets a maximum number of allowed complaints per course. Each complaint uses one token. If your complaint is accepted, the token is returned — so you can submit additional complaints as long as accepted ones replenish your tokens.
+2. **Deadline:** Complaints must be submitted within a certain number of days after your individual result is published. The instructor configures this window (the default is 7 days).
 
 ### Submitting a Complaint
 
@@ -90,7 +88,7 @@ If you want additional clarification or feedback but don't want to dispute your 
 ### Key Differences from Complaints
 
 - **No Token Required:** More feedback requests don't use complaint tokens
-- **Score Cannot Change:** Reviewers cannot modify your score when responding to a feedback request
+- **Score Typically Does Not Change:** More feedback requests are intended for clarification, not score adjustment
 - **Cannot Complain After:** Submitting a feedback request removes your ability to complain about that exercise
 
 
