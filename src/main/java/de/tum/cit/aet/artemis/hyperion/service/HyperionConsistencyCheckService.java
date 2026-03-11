@@ -165,22 +165,22 @@ public class HyperionConsistencyCheckService {
 
         // issues = combined output of structural + semantic checks (always returned)
         List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
-        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
 
-        // issuesVerified = verifier output (always returned, independent of combinedIssues)
-        List<ConsistencyIssueDTO> issuesVerifiedDTOs;
+        // issues = verifier output; fallback to combined if verifier fails
+        List<ConsistencyIssueDTO> issueDTOs;
         try {
             ObjectMapper mapper = new ObjectMapper();
-            String issuesJson = mapper.writeValueAsString(issueDTOs);
+            String issuesJson = mapper.writeValueAsString(combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
             var verificationInput = new HashMap<>(input);
             verificationInput.put("detected_issues_json", issuesJson);
             List<ConsistencyIssue> verifiedIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);
-            issuesVerifiedDTOs = verifiedIssues != null ? verifiedIssues.stream().map(this::mapConsistencyIssueToDto).toList() : List.of();
-            log.info("Verification step: {} raw issues → {} verified issues", combinedIssues.size(), issuesVerifiedDTOs.size());
+            issueDTOs = verifiedIssues != null ? verifiedIssues.stream().map(this::mapConsistencyIssueToDto).toList()
+                    : combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
+            log.info("Verification step: {} raw issues → {} verified issues", combinedIssues.size(), issueDTOs.size());
         }
         catch (Exception e) {
-            log.error("Verification step failed — issuesVerified will be empty", e);
-            issuesVerifiedDTOs = List.of();
+            log.error("Verification step failed — falling back to pre-verification results", e);
+            issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
         }
 
         List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
@@ -207,9 +207,9 @@ public class HyperionConsistencyCheckService {
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);
         var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
 
-        log.info("Consistency check for exercise {} complete: {} issues (structural+semantic), {} issues (verified)", exerciseId, issueDTOs.size(), issuesVerifiedDTOs.size());
+        log.info("Consistency check for exercise {} complete: {} issues (structural+semantic), {} issues (verified)", exerciseId, issueDTOs.size());
 
-        return new ConsistencyCheckResponseDTO(startTime, issueDTOs, issuesVerifiedDTOs, timingDTO, tokenDTO, costsDto);
+        return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
     }
 
     /**
