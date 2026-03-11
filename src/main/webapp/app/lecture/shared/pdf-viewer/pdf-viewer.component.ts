@@ -10,6 +10,12 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { ButtonModule } from 'primeng/button';
 
+type PdfViewerAnchorState = {
+    pageIndex: number;
+    pdfX: number;
+    pdfY: number;
+};
+
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
@@ -27,6 +33,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private static readonly ZOOM_INCREMENT = 0.25;
     private static readonly ZOOM_RETRY_DELAY_MS = 100;
     private static readonly PAGE_SCROLL_OFFSET_PX = 20;
+    private static clamp(value: number, min: number, max: number): number {
+        return Math.max(min, Math.min(max, value));
+    }
 
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
@@ -195,23 +204,13 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
 
         const viewerBox = this.pdfViewerBox()?.nativeElement;
-        let scrollTopPercentage = 0;
-        let scrollLeftPercentage = 0;
-        if (viewerBox) {
-            const scrollableHeight = viewerBox.scrollHeight - viewerBox.clientHeight;
-            const scrollableWidth = viewerBox.scrollWidth - viewerBox.clientWidth;
-            if (scrollableHeight > 0) {
-                scrollTopPercentage = viewerBox.scrollTop / scrollableHeight;
-            }
-            if (scrollableWidth > 0) {
-                scrollLeftPercentage = viewerBox.scrollLeft / scrollableWidth;
-            }
-        }
+        const container = containerRef.nativeElement;
+
+        const anchor = viewerBox ? this.captureAnchorState(viewerBox, container) : undefined;
 
         this.isRendering = true;
 
         try {
-            const container = containerRef.nativeElement;
             container.innerHTML = '';
 
             const targetWidth = this.calculateTargetWidth();
@@ -237,29 +236,16 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 if (this.zoomLevel() !== 1.0) {
                     this.applyZoomToPages();
                 }
-                this.restoreScrollPosition(viewerBox, scrollTopPercentage, scrollLeftPercentage);
+
+                // Restore scroll position to the same top-left PDF content
+                if (viewerBox && anchor) {
+                    this.restoreAnchorState(anchor, viewerBox, container);
+                }
+
                 this.updateCurrentPage();
             }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
         } finally {
             this.isRendering = false;
-        }
-    }
-
-    private restoreScrollPosition(viewerBox: HTMLDivElement | undefined, scrollTopPercentage: number, scrollLeftPercentage: number): void {
-        if (!viewerBox) {
-            return;
-        }
-
-        if (scrollTopPercentage > 0 || scrollLeftPercentage > 0) {
-            const scrollableHeight = viewerBox.scrollHeight - viewerBox.clientHeight;
-            const scrollableWidth = viewerBox.scrollWidth - viewerBox.clientWidth;
-
-            if (scrollableHeight > 0) {
-                viewerBox.scrollTop = scrollTopPercentage * scrollableHeight;
-            }
-            if (scrollableWidth > 0) {
-                viewerBox.scrollLeft = scrollLeftPercentage * scrollableWidth;
-            }
         }
     }
 
@@ -406,6 +392,64 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    private getPageScale(page: HTMLElement): { scaleX: number; scaleY: number; pdfWidth: number; pdfHeight: number } {
+        const pdfWidth = Number(page.dataset.pdfWidth) || 0;
+        const pdfHeight = Number(page.dataset.pdfHeight) || 0;
+        return {
+            scaleX: pdfWidth > 0 ? page.offsetWidth / pdfWidth : 0,
+            scaleY: pdfHeight > 0 ? page.offsetHeight / pdfHeight : 0,
+            pdfWidth,
+            pdfHeight,
+        };
+    }
+
+    private captureAnchorState(viewerBox: HTMLDivElement, container: HTMLDivElement): PdfViewerAnchorState {
+        const pages = container.querySelectorAll('.pdf-page');
+        if (pages.length === 0) {
+            return { pageIndex: 0, pdfX: 0, pdfY: 0 };
+        }
+
+        const anchorX = viewerBox.scrollLeft;
+        const anchorY = viewerBox.scrollTop;
+
+        let pageIndex = pages.length - 1;
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i] as HTMLElement;
+            if (anchorY <= page.offsetTop + page.offsetHeight) {
+                pageIndex = i;
+                break;
+            }
+        }
+
+        const page = pages[pageIndex] as HTMLElement;
+        const { scaleX, scaleY, pdfWidth, pdfHeight } = this.getPageScale(page);
+
+        return {
+            pageIndex,
+            pdfX: scaleX ? PdfViewerComponent.clamp((anchorX - page.offsetLeft) / scaleX, 0, pdfWidth) : 0,
+            pdfY: scaleY ? PdfViewerComponent.clamp((anchorY - page.offsetTop) / scaleY, 0, pdfHeight) : 0,
+        };
+    }
+
+    private restoreAnchorState(anchor: PdfViewerAnchorState, viewerBox: HTMLDivElement, container: HTMLDivElement): void {
+        const pages = container.querySelectorAll('.pdf-page');
+        if (pages.length === 0) {
+            return;
+        }
+
+        const pageIndex = Math.min(anchor.pageIndex, pages.length - 1);
+        const page = pages[pageIndex] as HTMLElement;
+        const { scaleX, scaleY } = this.getPageScale(page);
+
+        const desiredScrollLeft = page.offsetLeft + (scaleX ? anchor.pdfX * scaleX : 0);
+        const desiredScrollTop = page.offsetTop + (scaleY ? anchor.pdfY * scaleY : 0);
+        const maxScrollLeft = Math.max(0, viewerBox.scrollWidth - viewerBox.clientWidth);
+        const maxScrollTop = Math.max(0, viewerBox.scrollHeight - viewerBox.clientHeight);
+
+        viewerBox.scrollLeft = PdfViewerComponent.clamp(desiredScrollLeft, 0, maxScrollLeft);
+        viewerBox.scrollTop = PdfViewerComponent.clamp(desiredScrollTop, 0, maxScrollTop);
+    }
+
     private handleResize = (): void => {
         if (this.resizeTimeout !== undefined) {
             clearTimeout(this.resizeTimeout);
@@ -505,6 +549,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             pageDiv.className = 'pdf-page';
             pageDiv.style.width = canvas.style.width;
             pageDiv.style.height = canvas.style.height;
+            pageDiv.dataset.pdfWidth = `${viewport.width}`;
+            pageDiv.dataset.pdfHeight = `${viewport.height}`;
             pageDiv.appendChild(canvas);
             container.appendChild(pageDiv);
 

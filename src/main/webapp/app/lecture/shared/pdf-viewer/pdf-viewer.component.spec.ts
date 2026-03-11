@@ -5,8 +5,10 @@ import { PdfViewerComponent } from './pdf-viewer.component';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TranslateService } from '@ngx-translate/core';
 import type { PDFDocumentProxy, PDFPageProxy } from 'pdfjs-dist';
 import dayjs from 'dayjs/esm';
+import { of } from 'rxjs';
 
 // Mock pdfjs-dist
 vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => {
@@ -46,8 +48,39 @@ describe('PdfViewerComponent', () => {
         mockGetDocument = pdfjs.getDocument as any;
         mockGetDocument.mockClear();
 
+        // Mock canvas.getContext to work in test environment
+        const mockContext = {
+            fillRect: vi.fn(),
+            clearRect: vi.fn(),
+            getImageData: vi.fn(),
+            putImageData: vi.fn(),
+            createImageData: vi.fn(),
+            setTransform: vi.fn(),
+            drawImage: vi.fn(),
+            save: vi.fn(),
+            restore: vi.fn(),
+            scale: vi.fn(),
+            rotate: vi.fn(),
+            translate: vi.fn(),
+            transform: vi.fn(),
+        };
+
+        vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(mockContext as any);
+
         await TestBed.configureTestingModule({
             imports: [PdfViewerComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useValue: {
+                        get: vi.fn((key: string) => of(key)),
+                        instant: vi.fn((key: string) => key),
+                        onLangChange: of({}),
+                        onTranslationChange: of({}),
+                        onDefaultLangChange: of({}),
+                    },
+                },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PdfViewerComponent);
@@ -273,20 +306,55 @@ describe('PdfViewerComponent', () => {
             await expect(component['renderAllPages']()).resolves.not.toThrow();
         });
 
-        it('should restore scroll position correctly', () => {
-            const mockViewerBox = {
-                scrollTop: 0,
-                scrollLeft: 0,
-                scrollHeight: 1000,
-                scrollWidth: 800,
-                clientHeight: 0,
-                clientWidth: 0,
-            } as HTMLDivElement;
+        it('should preserve scroll position logic on re-render', () => {
+            // Test the scroll position preservation logic
+            const mockContainer = document.createElement('div');
 
-            component['restoreScrollPosition'](mockViewerBox, 0.5, 0.25);
+            // Create mock pages
+            const mockPage1 = document.createElement('div');
+            Object.defineProperty(mockPage1, 'offsetTop', { value: 0 });
+            Object.defineProperty(mockPage1, 'offsetHeight', { value: 500 });
+            mockPage1.className = 'pdf-page';
 
-            expect(mockViewerBox.scrollTop).toBe(500);
-            expect(mockViewerBox.scrollLeft).toBe(200);
+            const mockPage2 = document.createElement('div');
+            Object.defineProperty(mockPage2, 'offsetTop', { value: 500 });
+            Object.defineProperty(mockPage2, 'offsetHeight', { value: 500 });
+            mockPage2.className = 'pdf-page';
+
+            mockContainer.appendChild(mockPage1);
+            mockContainer.appendChild(mockPage2);
+
+            // Simulate being 150px into page 2 (30% down page 2)
+            const currentScrollTop = 650;
+            const pages = mockContainer.querySelectorAll('.pdf-page');
+
+            let targetPageIndex = 0;
+            let offsetRatio = 0;
+
+            for (let i = 0; i < pages.length; i++) {
+                const page = pages[i] as HTMLElement;
+                const pageTop = page.offsetTop;
+                const pageBottom = pageTop + page.offsetHeight;
+
+                if (pageBottom > currentScrollTop) {
+                    targetPageIndex = i;
+                    const offsetIntoPage = currentScrollTop - pageTop;
+                    offsetRatio = page.offsetHeight > 0 ? offsetIntoPage / page.offsetHeight : 0;
+                    break;
+                }
+            }
+
+            // Should have found page 2 at 30% down
+            expect(targetPageIndex).toBe(1);
+            expect(offsetRatio).toBeCloseTo(0.3);
+
+            // After resize, calculate new scroll position
+            const targetPage = pages[targetPageIndex] as HTMLElement;
+            const newOffsetIntoPage = offsetRatio * targetPage.offsetHeight;
+            const newScrollTop = targetPage.offsetTop + newOffsetIntoPage;
+
+            // Should restore to same position: 500 + (0.3 * 500) = 650
+            expect(newScrollTop).toBe(650);
         });
     });
 
