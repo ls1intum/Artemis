@@ -42,6 +42,34 @@ describe('PdfViewerComponent', () => {
         destroy: vi.fn(),
     });
 
+    const setupLoadedPdf = (numPages = 3): PDFDocumentProxy => {
+        const mockDoc = createMockPdfDocument(numPages) as PDFDocumentProxy;
+        component['pdfDocument'] = mockDoc;
+        component.totalPages.set(numPages);
+        component.isLoading.set(false);
+        return mockDoc;
+    };
+
+    const findScrollAnchor = (pages: NodeListOf<Element>, currentScrollTop: number): { pageIndex: number; offsetRatio: number } => {
+        let pageIndex = pages.length - 1;
+        let offsetRatio = 0;
+
+        for (let i = 0; i < pages.length; i++) {
+            const page = pages[i] as HTMLElement;
+            const pageTop = page.offsetTop;
+            const pageBottom = pageTop + page.offsetHeight;
+
+            if (pageBottom > currentScrollTop) {
+                pageIndex = i;
+                const offsetIntoPage = currentScrollTop - pageTop;
+                offsetRatio = page.offsetHeight > 0 ? offsetIntoPage / page.offsetHeight : 0;
+                break;
+            }
+        }
+
+        return { pageIndex, offsetRatio };
+    };
+
     beforeEach(async () => {
         // Import the mocked module to access getDocument
         const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
@@ -150,46 +178,36 @@ describe('PdfViewerComponent', () => {
             expect(component.zoomLevel()).toBe(1.0);
         });
 
-        it('should clamp zoom at min and max boundaries', () => {
-            component.zoomLevel.set(2.9);
-            component.zoomIn();
-            expect(component.zoomLevel()).toBe(3.0);
-
-            component.zoomLevel.set(0.6);
-            component.zoomOut();
-            expect(component.zoomLevel()).toBe(0.5);
+        it.each([
+            { start: 2.9, method: 'zoomIn', expected: 3.0 },
+            { start: 0.6, method: 'zoomOut', expected: 0.5 },
+        ])('should clamp zoom at boundaries ($method)', ({ start, method, expected }) => {
+            component.zoomLevel.set(start);
+            (component as any)[method]();
+            expect(component.zoomLevel()).toBe(expected);
         });
     });
 
     describe('Page navigation', () => {
         beforeEach(() => {
             fixture.detectChanges();
-            component.totalPages.set(5);
-            component['pdfDocument'] = createMockPdfDocument(5) as PDFDocumentProxy;
+            setupLoadedPdf(5);
         });
 
-        it('should navigate to valid page', () => {
-            component.goToPage(3);
-            expect(component.currentPage()).toBe(3);
-        });
-
-        it('should not navigate to page below 1', () => {
-            component.currentPage.set(2);
-            component.goToPage(0);
-            expect(component.currentPage()).toBe(2);
-        });
-
-        it('should not navigate to page above total pages', () => {
-            component.currentPage.set(2);
-            component.goToPage(10);
-            expect(component.currentPage()).toBe(2);
-        });
-
-        it('should not navigate if pdf document is not loaded', () => {
-            component['pdfDocument'] = undefined;
-            component.currentPage.set(1);
-            component.goToPage(3);
-            expect(component.currentPage()).toBe(1);
+        it.each([
+            { label: 'valid page', target: 3, expected: 3 },
+            { label: 'below 1', target: 0, initial: 2, expected: 2 },
+            { label: 'above total pages', target: 10, initial: 2, expected: 2 },
+            { label: 'no pdf document', target: 3, initial: 1, expected: 1, unsetDoc: true },
+        ])('should handle navigation when $label', ({ target, initial, expected, unsetDoc }) => {
+            if (initial !== undefined) {
+                component.currentPage.set(initial);
+            }
+            if (unsetDoc) {
+                component['pdfDocument'] = undefined;
+            }
+            component.goToPage(target);
+            expect(component.currentPage()).toBe(expected);
         });
     });
 
@@ -264,8 +282,7 @@ describe('PdfViewerComponent', () => {
         it('should cleanup resources on destroy', () => {
             fixture.detectChanges();
 
-            const mockDoc = createMockPdfDocument(3);
-            component['pdfDocument'] = mockDoc as PDFDocumentProxy;
+            const mockDoc = setupLoadedPdf(3);
             const disconnectSpy = vi.fn();
             component['resizeObserver'] = { disconnect: disconnectSpy } as any;
             const clearTimeoutSpy = vi.spyOn(global, 'clearTimeout');
@@ -296,7 +313,7 @@ describe('PdfViewerComponent', () => {
 
         it('should skip rendering when already rendering or no pdf document', async () => {
             component['isRendering'] = true;
-            component['pdfDocument'] = createMockPdfDocument(3) as PDFDocumentProxy;
+            setupLoadedPdf(3);
 
             await component['renderAllPages']();
             expect(component['isRendering']).toBe(true);
@@ -327,22 +344,7 @@ describe('PdfViewerComponent', () => {
             // Simulate being 150px into page 2 (30% down page 2)
             const currentScrollTop = 650;
             const pages = mockContainer.querySelectorAll('.pdf-page');
-
-            let targetPageIndex = 0;
-            let offsetRatio = 0;
-
-            for (let i = 0; i < pages.length; i++) {
-                const page = pages[i] as HTMLElement;
-                const pageTop = page.offsetTop;
-                const pageBottom = pageTop + page.offsetHeight;
-
-                if (pageBottom > currentScrollTop) {
-                    targetPageIndex = i;
-                    const offsetIntoPage = currentScrollTop - pageTop;
-                    offsetRatio = page.offsetHeight > 0 ? offsetIntoPage / page.offsetHeight : 0;
-                    break;
-                }
-            }
+            const { pageIndex: targetPageIndex, offsetRatio } = findScrollAnchor(pages, currentScrollTop);
 
             // Should have found page 2 at 30% down
             expect(targetPageIndex).toBe(1);
@@ -362,8 +364,7 @@ describe('PdfViewerComponent', () => {
         it('should debounce resize events', () => {
             vi.useFakeTimers();
             fixture.detectChanges();
-            component['pdfDocument'] = createMockPdfDocument(3) as PDFDocumentProxy;
-            component.isLoading.set(false);
+            setupLoadedPdf(3);
 
             const renderSpy = vi.spyOn(component as any, 'renderAllPages');
 

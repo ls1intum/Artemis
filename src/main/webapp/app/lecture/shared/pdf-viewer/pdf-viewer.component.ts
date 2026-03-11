@@ -36,6 +36,12 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private static clamp(value: number, min: number, max: number): number {
         return Math.max(min, Math.min(max, value));
     }
+    private static clearTimeoutId(timeoutId: number | undefined): undefined {
+        if (timeoutId !== undefined) {
+            clearTimeout(timeoutId);
+        }
+        return undefined;
+    }
 
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
@@ -85,19 +91,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         effect(() => {
             const targetPage = this.initialPage();
-            const loaded = !this.isLoading();
             const totalPages = this.totalPages();
 
-            if (targetPage && loaded && totalPages > 0) {
-                // Clear any previous timeout before scheduling a new one
-                if (this.pageNavTimeoutId !== undefined) {
-                    clearTimeout(this.pageNavTimeoutId);
-                    this.pageNavTimeoutId = undefined;
-                }
-
-                // Clamp to valid page range
-                const validPage = Math.max(1, Math.min(targetPage, totalPages));
-                this.pageNavTimeoutId = window.setTimeout(() => this.goToPage(validPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
+            if (targetPage && !this.isLoading() && totalPages > 0) {
+                this.schedulePageNavigation(targetPage, totalPages);
             }
         });
     }
@@ -141,19 +138,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             this.resizeObserver.disconnect();
         }
 
-        if (this.resizeTimeout !== undefined) {
-            clearTimeout(this.resizeTimeout);
-        }
-
-        if (this.pageNavTimeoutId !== undefined) {
-            clearTimeout(this.pageNavTimeoutId);
-            this.pageNavTimeoutId = undefined;
-        }
-
-        if (this.zoomRetryTimeoutId !== undefined) {
-            clearTimeout(this.zoomRetryTimeoutId);
-            this.zoomRetryTimeoutId = undefined;
-        }
+        this.resizeTimeout = PdfViewerComponent.clearTimeoutId(this.resizeTimeout);
+        this.pageNavTimeoutId = PdfViewerComponent.clearTimeoutId(this.pageNavTimeoutId);
+        this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
 
         this.loadToken++;
         this.clearPdfResources();
@@ -271,40 +258,25 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     zoomIn(): void {
-        if (this.zoomLevel() < PdfViewerComponent.MAX_ZOOM_LEVEL) {
-            this.zoomLevel.set(Math.min(PdfViewerComponent.MAX_ZOOM_LEVEL, this.zoomLevel() + PdfViewerComponent.ZOOM_INCREMENT));
-            this.performZoom();
-        }
+        this.setZoom(this.zoomLevel() + PdfViewerComponent.ZOOM_INCREMENT);
     }
 
     zoomOut(): void {
-        if (this.zoomLevel() > PdfViewerComponent.MIN_ZOOM_LEVEL) {
-            this.zoomLevel.set(Math.max(PdfViewerComponent.MIN_ZOOM_LEVEL, this.zoomLevel() - PdfViewerComponent.ZOOM_INCREMENT));
-            this.performZoom();
-        }
+        this.setZoom(this.zoomLevel() - PdfViewerComponent.ZOOM_INCREMENT);
     }
 
     resetZoom(): void {
-        this.zoomLevel.set(1.0);
-        this.performZoom();
+        this.setZoom(1.0, true);
     }
 
     private performZoom(): void {
         // Wait for rendering to complete
         if (this.isRendering) {
-            // Clear any previous retry timeout
-            if (this.zoomRetryTimeoutId !== undefined) {
-                clearTimeout(this.zoomRetryTimeoutId);
-            }
+            this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
             this.zoomRetryTimeoutId = window.setTimeout(() => this.performZoom(), PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
             return;
         }
-
-        // Clear retry timeout since we're proceeding with zoom
-        if (this.zoomRetryTimeoutId !== undefined) {
-            clearTimeout(this.zoomRetryTimeoutId);
-            this.zoomRetryTimeoutId = undefined;
-        }
+        this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
 
         // Pause observer to prevent scrollbar feedback loop
         this.isZooming = true;
@@ -494,15 +466,28 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     private handleResize = (): void => {
-        if (this.resizeTimeout !== undefined) {
-            clearTimeout(this.resizeTimeout);
-        }
+        this.resizeTimeout = PdfViewerComponent.clearTimeoutId(this.resizeTimeout);
         this.resizeTimeout = window.setTimeout(() => {
             if (this.pdfDocument && !this.isLoading() && !this.error()) {
                 this.renderAllPages();
             }
         }, PdfViewerComponent.RESIZE_DEBOUNCE_MS);
     };
+
+    private schedulePageNavigation(targetPage: number, totalPages: number): void {
+        this.pageNavTimeoutId = PdfViewerComponent.clearTimeoutId(this.pageNavTimeoutId);
+        const validPage = Math.max(1, Math.min(targetPage, totalPages));
+        this.pageNavTimeoutId = window.setTimeout(() => this.goToPage(validPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
+    }
+
+    private setZoom(nextZoom: number, force = false): void {
+        const clamped = PdfViewerComponent.clamp(nextZoom, PdfViewerComponent.MIN_ZOOM_LEVEL, PdfViewerComponent.MAX_ZOOM_LEVEL);
+        if (!force && clamped === this.zoomLevel()) {
+            return;
+        }
+        this.zoomLevel.set(clamped);
+        this.performZoom();
+    }
 
     private updateCurrentPage = (): void => {
         if (this.isRendering) {
