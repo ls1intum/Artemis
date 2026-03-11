@@ -15,6 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     styleUrl: './iris-mcq-question.component.scss',
 })
 export class IrisMcqQuestionComponent {
+    /** The MCQ payload to render, containing the question, options, and explanation. */
     mcqData = input.required<McqData>();
 
     selectedIndex = signal<number | undefined>(undefined);

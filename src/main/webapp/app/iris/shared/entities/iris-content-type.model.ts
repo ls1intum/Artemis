@@ -16,11 +16,13 @@ export class IrisTextMessageContent extends IrisMessageContent {
     }
 }
 
+/** A single option in a multiple-choice question. */
 export interface McqOption {
     text: string;
     correct: boolean;
 }
 
+/** Structured data representing a multiple-choice question sent by the LLM. */
 export interface McqData {
     type: 'mcq';
     question: string;
@@ -28,6 +30,7 @@ export interface McqData {
     explanation: string;
 }
 
+/** Message content carrying an arbitrary JSON payload, used for structured responses like MCQs. */
 export class IrisJsonMessageContent extends IrisMessageContent {
     constructor(public attributes: Record<string, unknown>) {
         super(IrisMessageContentType.JSON);
