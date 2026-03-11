@@ -314,6 +314,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
      * When the content of a file changes, set it as unsaved.
      */
     onFileContentChange({ fileName, text }: { fileName: string; text: string }) {
+        const syncService = this.fileSyncService();
+        if (syncService?.isInitialized() && syncService.isFileOpen(fileName) && syncService.isFileAwaitingInitialSync(fileName)) {
+            return;
+        }
         this.unsavedFiles = { ...this.unsavedFiles, [fileName]: text };
         this.onFileChanged.emit();
     }
