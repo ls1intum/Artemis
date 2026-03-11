@@ -44,7 +44,6 @@ export interface UpdateTutorialGroupEvent {
     updateTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO;
 }
 
-// TODO: add input to capture updateChannelName flag for edit mode
 @Component({
     selector: 'jhi-tutorial-edit',
     imports: [
