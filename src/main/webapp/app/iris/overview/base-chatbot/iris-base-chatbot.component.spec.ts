@@ -1153,7 +1153,15 @@ describe('IrisBaseChatbotComponent', () => {
 
     describe('MCQ content rendering', () => {
         it('should identify MCQ content using isMcqContent helper', () => {
-            const mcqContent = new IrisJsonMessageContent({ type: 'mcq', question: 'Q?', options: [], explanation: 'E' });
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'Q?',
+                options: [
+                    { text: 'A', correct: false },
+                    { text: 'B', correct: true },
+                ],
+                explanation: 'E',
+            });
             const textContent = new IrisTextMessageContent('hello');
 
             expect(isMcqContent(mcqContent)).toBe(true);
@@ -1161,19 +1169,35 @@ describe('IrisBaseChatbotComponent', () => {
         });
 
         it('should extract MCQ data using getMcqData helper', () => {
-            const mcqContent = new IrisJsonMessageContent({ type: 'mcq', question: 'Q?', options: [{ text: 'A', correct: true }], explanation: 'E' });
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'Q?',
+                options: [
+                    { text: 'A', correct: false },
+                    { text: 'B', correct: true },
+                ],
+                explanation: 'E',
+            });
             const textContent = new IrisTextMessageContent('hello');
 
             const data = getMcqData(mcqContent);
             expect(data).toBeDefined();
             expect(data?.question).toBe('Q?');
-            expect(data?.options).toHaveLength(1);
+            expect(data?.options).toHaveLength(2);
 
             expect(getMcqData(textContent)).toBeUndefined();
         });
 
         it('should render MCQ component for MCQ messages', () => {
-            const mcqContent = new IrisJsonMessageContent({ type: 'mcq', question: 'What is 1+1?', options: [{ text: '2', correct: true }], explanation: 'Math' });
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'What is 1+1?',
+                options: [
+                    { text: '2', correct: true },
+                    { text: '3', correct: false },
+                ],
+                explanation: 'Math',
+            });
             const mcqMessage = {
                 sender: IrisSender.LLM,
                 id: 20,
