@@ -384,20 +384,46 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             const canvas = page.querySelector('canvas') as HTMLCanvasElement;
 
             if (canvas?.dataset.originalWidth && canvas.dataset.originalHeight) {
-                canvas.style.width = `${Math.round(parseFloat(canvas.dataset.originalWidth) * zoom)}px`;
-                canvas.style.height = `${Math.round(parseFloat(canvas.dataset.originalHeight) * zoom)}px`;
+                const width = parseFloat(canvas.dataset.originalWidth) * zoom;
+                const height = parseFloat(canvas.dataset.originalHeight) * zoom;
+                canvas.style.width = `${width}px`;
+                canvas.style.height = `${height}px`;
                 page.style.width = canvas.style.width;
                 page.style.height = canvas.style.height;
             }
         });
     }
 
-    private getPageScale(page: HTMLElement): { scaleX: number; scaleY: number; pdfWidth: number; pdfHeight: number } {
+    private getPageMetrics(
+        page: HTMLElement,
+        container: HTMLDivElement,
+    ): {
+        left: number;
+        top: number;
+        width: number;
+        height: number;
+        scaleX: number;
+        scaleY: number;
+        pdfWidth: number;
+        pdfHeight: number;
+    } {
+        const rect = page.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+        const left = rect.left - containerRect.left;
+        const top = rect.top - containerRect.top;
+        const width = rect.width;
+        const height = rect.height;
         const pdfWidth = Number(page.dataset.pdfWidth) || 0;
         const pdfHeight = Number(page.dataset.pdfHeight) || 0;
+        const scaleX = pdfWidth > 0 ? width / pdfWidth : 0;
+        const scaleY = pdfHeight > 0 ? height / pdfHeight : 0;
         return {
-            scaleX: pdfWidth > 0 ? page.offsetWidth / pdfWidth : 0,
-            scaleY: pdfHeight > 0 ? page.offsetHeight / pdfHeight : 0,
+            left,
+            top,
+            width,
+            height,
+            scaleX,
+            scaleY,
             pdfWidth,
             pdfHeight,
         };
@@ -415,19 +441,20 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         let pageIndex = pages.length - 1;
         for (let i = 0; i < pages.length; i++) {
             const page = pages[i] as HTMLElement;
-            if (anchorY <= page.offsetTop + page.offsetHeight) {
+            const metrics = this.getPageMetrics(page, container);
+            if (anchorY <= metrics.top + metrics.height) {
                 pageIndex = i;
                 break;
             }
         }
 
         const page = pages[pageIndex] as HTMLElement;
-        const { scaleX, scaleY, pdfWidth, pdfHeight } = this.getPageScale(page);
+        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container);
 
         return {
             pageIndex,
-            pdfX: scaleX ? PdfViewerComponent.clamp((anchorX - page.offsetLeft) / scaleX, 0, pdfWidth) : 0,
-            pdfY: scaleY ? PdfViewerComponent.clamp((anchorY - page.offsetTop) / scaleY, 0, pdfHeight) : 0,
+            pdfX: scaleX ? (anchorX - left) / scaleX : 0,
+            pdfY: scaleY ? (anchorY - top) / scaleY : 0,
         };
     }
 
@@ -439,10 +466,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         const pageIndex = Math.min(anchor.pageIndex, pages.length - 1);
         const page = pages[pageIndex] as HTMLElement;
-        const { scaleX, scaleY } = this.getPageScale(page);
+        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container);
 
-        const desiredScrollLeft = page.offsetLeft + (scaleX ? anchor.pdfX * scaleX : 0);
-        const desiredScrollTop = page.offsetTop + (scaleY ? anchor.pdfY * scaleY : 0);
+        const desiredScrollLeft = left + (scaleX ? anchor.pdfX * scaleX : 0);
+        const desiredScrollTop = top + (scaleY ? anchor.pdfY * scaleY : 0);
         const maxScrollLeft = Math.max(0, viewerBox.scrollWidth - viewerBox.clientWidth);
         const maxScrollTop = Math.max(0, viewerBox.scrollHeight - viewerBox.clientHeight);
 
@@ -528,12 +555,14 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             canvas.width = scaledViewport.width;
 
             // Scale canvas back to CSS pixels for display
-            canvas.style.width = `${Math.round(scaledViewport.width / pixelRatio)}px`;
-            canvas.style.height = `${Math.round(scaledViewport.height / pixelRatio)}px`;
+            const cssWidth = scaledViewport.width / pixelRatio;
+            const cssHeight = scaledViewport.height / pixelRatio;
+            canvas.style.width = `${cssWidth}px`;
+            canvas.style.height = `${cssHeight}px`;
 
             // Store original dimensions for zoom
-            canvas.dataset.originalWidth = canvas.style.width.replace('px', '');
-            canvas.dataset.originalHeight = canvas.style.height.replace('px', '');
+            canvas.dataset.originalWidth = `${cssWidth}`;
+            canvas.dataset.originalHeight = `${cssHeight}`;
 
             const renderContext = {
                 canvasContext: context,
