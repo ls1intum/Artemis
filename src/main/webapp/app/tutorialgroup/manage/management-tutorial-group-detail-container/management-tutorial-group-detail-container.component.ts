@@ -95,7 +95,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.toggleCancellationStatusOfSession(tutorialGroupSessionId);
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -115,7 +115,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.toggleCancellationStatusOfSession(tutorialGroupSessionId);
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -136,7 +136,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.isLoading.set(false);
                 },
                 error: () => {
@@ -156,7 +156,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather update without fetch?
+                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.isLoading.set(false);
                 },
                 error: () => {

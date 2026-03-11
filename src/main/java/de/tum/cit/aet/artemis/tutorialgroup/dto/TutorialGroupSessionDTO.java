@@ -41,11 +41,11 @@ public record TutorialGroupSessionDTO(@NotNull long id, @NotNull ZonedDateTime s
             String scheduleLocation, ZoneId courseTimeZone) {
         boolean isCancelled = rawDto.status() == TutorialGroupSessionStatus.CANCELLED;
         // if isCancelled is true, set sameLocation, sameTime and sameDay always to true
-        boolean sameLocation = isCancelled || rawDto.location().equals(scheduleLocation);
+        boolean sameLocation = rawDto.location().equals(scheduleLocation);
         ZonedDateTime sessionStart = rawDto.start().withZoneSameInstant(courseTimeZone);
         ZonedDateTime sessionEnd = rawDto.end().withZoneSameInstant(courseTimeZone);
-        boolean sameTime = isCancelled || sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
-        boolean sameDay = isCancelled || sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
+        boolean sameTime = sessionStart.toLocalTime().equals(scheduleStart) && sessionEnd.toLocalTime().equals(scheduleEnd);
+        boolean sameDay = sessionStart.getDayOfWeek().getValue() == scheduleDayOfWeek;
         return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, !sameLocation, !sameTime, !sameDay, rawDto.attendanceCount());
     }
 
@@ -69,8 +69,8 @@ public record TutorialGroupSessionDTO(@NotNull long id, @NotNull ZonedDateTime s
         if (schedule != null) {
             LocalTime scheduleStart = LocalTime.parse(schedule.getStartTime());
             LocalTime scheduleEnd = LocalTime.parse(schedule.getEndTime());
-            sameLocation = isCancelled || session.getLocation().equals(schedule.getLocation());
-            sameTime = isCancelled || session.getStart().toLocalTime().equals(scheduleStart) && session.getEnd().toLocalTime().equals(scheduleEnd);
+            sameLocation = session.getLocation().equals(schedule.getLocation());
+            sameTime = session.getStart().toLocalTime().equals(scheduleStart) && session.getEnd().toLocalTime().equals(scheduleEnd);
         }
         return new TutorialGroupSessionDTO(session.getId(), session.getStart(), session.getEnd(), session.getLocation(), isCancelled, !sameLocation, !sameTime, !sameDate,
                 session.getAttendanceCount());

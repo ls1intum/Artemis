@@ -233,7 +233,7 @@
                         <td>
                             <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
                                 {{ session.date }}
-                                @if (session.dateChanged) {
+                                @if (!session.isCancelled && session.dateChanged) {
                                     <div class="change-indicator" aria-hidden="true"></div>
                                 }
                             </div>
@@ -241,7 +241,7 @@
                         <td>
                             <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
                                 {{ session.time }}
-                                @if (session.timeChanged) {
+                                @if (!session.isCancelled && session.timeChanged) {
                                     <div class="change-indicator" aria-hidden="true"></div>
                                 }
                             </div>
@@ -249,7 +249,7 @@
                         <td>
                             <div class="changeable-session-property" [ngClass]="{ 'strikethrough-text': session.isCancelled }">
                                 {{ session.location }}
-                                @if (session.locationChanged) {
+                                @if (!session.isCancelled && session.locationChanged) {
                                     <div class="change-indicator" aria-hidden="true"></div>
                                 }
                             </div>

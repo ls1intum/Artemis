@@ -18,6 +18,16 @@ export class TutorialGroupSharedStateService {
     isCourseLoading = signal(false);
     course = signal<Course | undefined>(undefined); // TODO: course really needed
 
+    toggleCancellationStatusOfSession(sessionId: number) {
+        this.tutorialGroup.update((tutorialGroup) => {
+            if (!tutorialGroup) return tutorialGroup;
+            return {
+                ...tutorialGroup,
+                sessions: tutorialGroup.sessions.map((session) => (session.id !== sessionId ? session : { ...session, isCancelled: !session.isCancelled })),
+            };
+        });
+    }
+
     fetchTutorialGroup(courseId: number, tutorialGroupId: number) {
         this.isTutorialGroupLoading.set(true);
         this.tutorialGroupsService.getTutorialGroupDTO(courseId, tutorialGroupId).subscribe({

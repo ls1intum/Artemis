@@ -5,10 +5,10 @@
     @if (isCancelled()) {
         <jhi-tutorial-group-detail-session-status-chip [variant]="'CANCELLED'" role="listitem" />
     }
-    @if (timeChanged() || dateChanged()) {
+    @if (!isCancelled() && (timeChanged() || dateChanged())) {
         <jhi-tutorial-group-detail-session-status-chip [variant]="'RESCHEDULED'" role="listitem" />
     }
-    @if (locationChanged()) {
+    @if (!isCancelled() && locationChanged()) {
         <jhi-tutorial-group-detail-session-status-chip [variant]="'RELOCATED'" role="listitem" />
     }
 </div>
