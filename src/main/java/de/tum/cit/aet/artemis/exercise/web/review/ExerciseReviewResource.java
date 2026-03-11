@@ -88,7 +88,7 @@ public class ExerciseReviewResource {
         log.debug("REST request to get exercise review threads for exercise {}", exerciseId);
         List<CommentThreadDTO> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(exerciseId).stream()
                 .sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .map(thread -> new CommentThreadDTO(thread, mapComments(thread))).toList();
+                .map(thread -> new CommentThreadDTO(thread, CommentDTO.fromThread(thread))).toList();
         return ResponseEntity.ok(threads);
     }
 
@@ -175,7 +175,7 @@ public class ExerciseReviewResource {
             @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
         log.debug("REST request to update resolved state of thread {} for exercise {}", threadId, exerciseId);
         CommentThread updated = exerciseReviewService.updateThreadResolvedState(exerciseId, threadId, dto);
-        CommentThreadDTO updatedThread = new CommentThreadDTO(updated, mapComments(updated));
+        CommentThreadDTO updatedThread = new CommentThreadDTO(updated, CommentDTO.fromThread(updated));
         exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadUpdated(updatedThread));
         return ResponseEntity.ok(updatedThread);
     }
@@ -197,15 +197,6 @@ public class ExerciseReviewResource {
         CommentDTO updatedComment = new CommentDTO(updated);
         exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.commentUpdated(updatedComment));
         return ResponseEntity.ok(updatedComment);
-    }
-
-    private List<CommentDTO> mapComments(CommentThread thread) {
-        if (thread.getComments() == null || thread.getComments().isEmpty()) {
-            return List.of();
-        }
-
-        return thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).toList();
     }
 
 }

@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
-import java.util.Comparator;
 import java.util.List;
 
 import jakarta.validation.Valid;
@@ -21,7 +20,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastEditorInCourse;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastEditorInExercise;
-import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentThreadDTO;
@@ -112,7 +110,7 @@ public class HyperionProblemStatementResource {
                 if (thread.getId() == null) {
                     continue;
                 }
-                CommentThreadDTO createdThread = new CommentThreadDTO(thread, mapComments(thread));
+                CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
                 exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
             }
         }
@@ -262,11 +260,4 @@ public class HyperionProblemStatementResource {
         return ResponseEntity.ok(result);
     }
 
-    private List<CommentDTO> mapComments(CommentThread thread) {
-        if (thread.getComments() == null || thread.getComments().isEmpty()) {
-            return List.of();
-        }
-        return thread.getComments().stream().sorted(Comparator.comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId,
-                Comparator.nullsLast(Comparator.naturalOrder()))).map(CommentDTO::new).toList();
-    }
 }
