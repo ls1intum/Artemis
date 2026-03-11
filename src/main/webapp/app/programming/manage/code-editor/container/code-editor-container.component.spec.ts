@@ -321,6 +321,40 @@ describe('CodeEditorContainerComponent', () => {
         expect(onFileChanged).toHaveBeenCalled();
     });
 
+    it('should not mark file unsaved while initial file sync is pending', () => {
+        const onFileChanged = jest.fn();
+        component.onFileChanged.subscribe(onFileChanged);
+        fixture.componentRef.setInput('fileSyncService', {
+            fileTreeChange$: fileTreeChange$.asObservable(),
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => true),
+        } as any);
+        fixture.detectChanges();
+
+        component.onFileContentChange({ fileName: 'src/main/App.java', text: 'synced content' });
+
+        expect(component.unsavedFiles['src/main/App.java']).toBeUndefined();
+        expect(onFileChanged).not.toHaveBeenCalled();
+    });
+
+    it('should mark file unsaved after initial file sync finished', () => {
+        const onFileChanged = jest.fn();
+        component.onFileChanged.subscribe(onFileChanged);
+        fixture.componentRef.setInput('fileSyncService', {
+            fileTreeChange$: fileTreeChange$.asObservable(),
+            isInitialized: jest.fn(() => true),
+            isFileOpen: jest.fn(() => true),
+            isFileAwaitingInitialSync: jest.fn(() => false),
+        } as any);
+        fixture.detectChanges();
+
+        component.onFileContentChange({ fileName: 'src/main/App.java', text: 'changed after sync' });
+
+        expect(component.unsavedFiles['src/main/App.java']).toBe('changed after sync');
+        expect(onFileChanged).toHaveBeenCalled();
+    });
+
     it('should clear unsaved files after refresh', () => {
         component.unsavedFiles = { 'src/main/App.java': 'x' };
 
