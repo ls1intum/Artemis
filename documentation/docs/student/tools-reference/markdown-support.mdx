@@ -1,15 +1,14 @@
 ---
-id: markdown-support
 title: Markdown Support
 sidebar_label: Markdown Support
 ---
 
-import Image, {ImageSize} from "../../src/components/Image/Image";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-import markdownLectureExample from "./assets/markdown-support/markdown-lecture-example.png";
-import markdownLecturePreview from "./assets/markdown-support/markdown-lecture-preview.png";
-import markdownPostExtensions from "./assets/markdown-support/markdown-post-extensions.png";
-import markdownPostPreview from "./assets/markdown-support/markdown-post-extensions-preview.png";
+import markdownLectureExample from "../assets/markdown-support/markdown-lecture-example.png";
+import markdownLecturePreview from "../assets/markdown-support/markdown-lecture-preview.png";
+import markdownPostExtensions from "../assets/markdown-support/markdown-post-extensions.png";
+import markdownPostPreview from "../assets/markdown-support/markdown-post-extensions-preview.png";
 
 # Markdown Support
 
@@ -54,5 +53,6 @@ A quick description of the supported syntax can be found <a href="https://www.ma
 
 The following plugins are activated:
 
-- <a href="https://github.com/microsoft/vscode-markdown-it-katex" target="_blank" rel="noopener noreferrer">MarkdownIt Katex</a> (LaTeX / AsciiMath rendering)
+- <a href="https://github.com/microsoft/vscode-markdown-it-katex" target="_blank" rel="noopener noreferrer">MarkdownIt Katex</a> (LaTeX math rendering)
 - <a href="https://github.com/valeriangalliat/markdown-it-highlightjs" target="_blank" rel="noopener noreferrer">MarkdownIt HighlightJS</a> (syntax highlighting in code blocks)
+- <a href="https://github.com/antfu/markdown-it-github-alerts" target="_blank" rel="noopener noreferrer">MarkdownIt GitHub Alerts</a> (GitHub-style alert blocks such as `> [!NOTE]`, `> [!WARNING]`, etc.)
