@@ -1,21 +1,20 @@
 ---
-id: integrated-code-lifecycle
 title: Integrated Code Lifecycle
 sidebar_label: Integrated Code Lifecycle
 ---
 
-import Image, {ImageSize} from "../../src/components/Image/Image";
+import Image, {ImageSize} from "../../../src/components/Image/Image";
 
-import openRepositoryStudentImg from "./assets/integrated-code-lifecycle/open-repository-student.png";
-import currentRepositoryContentImg from "./assets/integrated-code-lifecycle/current-repository-content-view.png";
-import commitHistoryViewImg from "./assets/integrated-code-lifecycle/commit-history-view.png";
-import commitDiffViewImg from "./assets/integrated-code-lifecycle/commit-diff-view.png";
-import openRepositoryButtonImg from "./assets/integrated-code-lifecycle/open-repository-button.png";
-import codeButtonExtendedImg from "./assets/integrated-code-lifecycle/code-button-extended-authentication.png";
+import openRepositoryStudentImg from "../assets/integrated-code-lifecycle/open-repository-student.png";
+import currentRepositoryContentImg from "../assets/integrated-code-lifecycle/current-repository-content-view.png";
+import commitHistoryViewImg from "../assets/integrated-code-lifecycle/commit-history-view.png";
+import commitDiffViewImg from "../assets/integrated-code-lifecycle/commit-diff-view.png";
+import openRepositoryButtonImg from "../assets/integrated-code-lifecycle/open-repository-button.png";
+import codeButtonExtendedImg from "../assets/integrated-code-lifecycle/code-button-extended-authentication.png";
 
-import addVcsAccessTokenImg from "./assets/integrated-code-lifecycle/add-vcs-access-token.png";
-import openSettingsImg from "./assets/integrated-code-lifecycle/open-settings.png";
-import sshAddPublicKeyImg from "./assets/integrated-code-lifecycle/ssh-add-public-key.png";
+import addVcsAccessTokenImg from "../assets/integrated-code-lifecycle/add-vcs-access-token.png";
+import openSettingsImg from "../assets/integrated-code-lifecycle/open-settings.png";
+import sshAddPublicKeyImg from "../assets/integrated-code-lifecycle/ssh-add-public-key.png";
 
 # Integrated Code Lifecycle
 
@@ -247,7 +246,7 @@ They are based on public-key cryptography and come in pairs: a public key and a 
 
 When you try to connect to the server, your computer proves it has the private key that matches the server's public key, granting you access.
 You can add a personal SSH key to your user account to easily authenticate when performing read operations from your local machine.
-An Artemis user can currently add one key to their account.
+You can add multiple SSH keys to your Artemis account.
 For instructions on how to add your SSH key to your Artemis account, please refer to the relevant documentation.
 
 Before you can use SSH keys to secure a connection with Artemis the following must have already been done:
@@ -258,8 +257,8 @@ Before you can use SSH keys to secure a connection with Artemis the following mu
 **Note:**
 
 - You can use the same SSH key for multiple repositories or projects.
-- An Artemis user can currently only add one key to their account.
-- Artemis supports ECDSA, RSA2, and Ed25519 key types.
+- You can add multiple SSH keys to your account.
+- Artemis supports ECDSA, RSA, and Ed25519 key types.
 
 ---
 
