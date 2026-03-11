@@ -31,7 +31,7 @@ import {
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
-import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -1156,20 +1156,20 @@ describe('IrisBaseChatbotComponent', () => {
             const mcqContent = new IrisJsonMessageContent({ type: 'mcq', question: 'Q?', options: [], explanation: 'E' });
             const textContent = new IrisTextMessageContent('hello');
 
-            expect(component.isMcqContent(mcqContent)).toBe(true);
-            expect(component.isMcqContent(textContent)).toBe(false);
+            expect(isMcqContent(mcqContent)).toBe(true);
+            expect(isMcqContent(textContent)).toBe(false);
         });
 
         it('should extract MCQ data using getMcqData helper', () => {
             const mcqContent = new IrisJsonMessageContent({ type: 'mcq', question: 'Q?', options: [{ text: 'A', correct: true }], explanation: 'E' });
             const textContent = new IrisTextMessageContent('hello');
 
-            const data = component.getMcqData(mcqContent);
+            const data = getMcqData(mcqContent);
             expect(data).toBeDefined();
             expect(data?.question).toBe('Q?');
             expect(data?.options).toHaveLength(1);
 
-            expect(component.getMcqData(textContent)).toBeUndefined();
+            expect(getMcqData(textContent)).toBeUndefined();
         });
 
         it('should render MCQ component for MCQ messages', () => {
