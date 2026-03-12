@@ -13,6 +13,12 @@
         background-color: var(--bs-gray-100);
         border-bottom: 0.0625rem solid var(--bs-border-color);
         border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
+
+        .modal-close-button {
+            min-width: 2rem;
+            height: 2rem;
+            padding: 0;
+        }
     }
 
     .modal-body {
@@ -97,6 +103,16 @@
                         .stretched-link {
                             display: none;
                         }
+                    }
+                }
+
+                .relation-graph-preview-container {
+                    .relation-graph-viewport {
+                        height: 25rem;
+                    }
+
+                    .relation-graph-actions {
+                        background-color: var(--bs-body-bg);
                     }
                 }
             }

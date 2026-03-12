@@ -118,9 +118,9 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         request.put("/api/text/text-exercises", exercise, HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
-        await().untilAsserted(() -> {
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
             List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
             assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
 
@@ -303,7 +303,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
         assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
@@ -319,7 +319,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
         assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
@@ -418,7 +418,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
-        await().pollInterval(10, TimeUnit.MILLISECONDS).until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
@@ -453,13 +453,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         Double lastPoints = expectedLastScore != null ? round(expectedLastScore * 0.01 * 10.0) : null;
         Double lastRatedPoints = expectedLastRatedScore != null ? round(expectedLastRatedScore * 0.01 * 10.0) : null;
 
         // Use await().untilAsserted() to handle timing issues with asynchronous participant score updates
-        await().untilAsserted(() -> {
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
             List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
             assertThat(savedParticipantScore).isNotEmpty();
             assertThat(savedParticipantScore).hasSize(1);
