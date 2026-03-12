@@ -17,7 +17,7 @@
         <table class="table-body">
             <tbody>
                 @for (student of students(); track student.id) {
-                    <tr class="body-row">
+                    <tr class="table-row">
                         <td>
                             <div class="student-property">
                                 <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="addPublicFilePrefix(student.profilePictureUrl)" />
