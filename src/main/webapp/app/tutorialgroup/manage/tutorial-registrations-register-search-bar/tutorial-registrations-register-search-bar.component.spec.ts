@@ -23,6 +23,28 @@ function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
     expect(value).not.toBeUndefined();
 }
 
+function createStudent(id: number): TutorialGroupRegisteredStudentDTO {
+    return {
+        id,
+        login: `student${id}`,
+        name: `Student ${id}`,
+        email: `student${id}@tum.de`,
+        registrationNumber: `R${id}`,
+        profilePictureUrl: undefined,
+    };
+}
+
+function createPageOfStudents(): TutorialGroupRegisteredStudentDTO[] {
+    return Array.from({ length: 25 }, (_, index) => createStudent(index + 1));
+}
+
+function simulateViewportScrollNearBottom(viewport: HTMLElement) {
+    Object.defineProperty(viewport, 'scrollHeight', { configurable: true, value: 400 });
+    Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 100 });
+    Object.defineProperty(viewport, 'scrollTop', { configurable: true, value: 280, writable: true });
+    viewport.dispatchEvent(new Event('scroll'));
+}
+
 describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -116,14 +138,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
     });
 
     it('should load the next page when the suggestions viewport is scrolled near the bottom', async () => {
-        const firstPageStudents: TutorialGroupRegisteredStudentDTO[] = Array.from({ length: 25 }, (_, index) => ({
-            id: index + 1,
-            login: `student${index + 1}`,
-            name: `Student ${index + 1}`,
-            email: `student${index + 1}@tum.de`,
-            registrationNumber: `R${index + 1}`,
-            profilePictureUrl: undefined,
-        }));
+        const firstPageStudents = createPageOfStudents();
         const nextPageStudent: TutorialGroupRegisteredStudentDTO = {
             id: 99,
             login: 'grace',
@@ -140,17 +155,11 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         component.searchString.set('ada');
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
-        await fixture.whenStable();
 
         const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
         assertNonNullable(viewport);
 
-        Object.defineProperty(viewport, 'scrollHeight', { configurable: true, value: 400 });
-        Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 100 });
-        Object.defineProperty(viewport, 'scrollTop', { configurable: true, value: 280, writable: true });
-
-        viewport.dispatchEvent(new Event('scroll'));
+        simulateViewportScrollNearBottom(viewport);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -159,18 +168,12 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         expect(component.suggestedStudents()).toEqual([...firstPageStudents, nextPageStudent]);
         expect(component.nextSuggestedStudentsPageIndex()).toBe(2);
         expect(component.hasMorePages()).toBe(false);
+        expect(component.firstSuggestedStudentsPageLoading()).toBe(false);
         expect(component.nextSuggestedStudentsPageLoading()).toBe(false);
     });
 
     it('should show an error alert when next page loading fails', async () => {
-        const firstPageStudents: TutorialGroupRegisteredStudentDTO[] = Array.from({ length: 25 }, (_, index) => ({
-            id: index + 1,
-            login: `student${index + 1}`,
-            name: `Student ${index + 1}`,
-            email: `student${index + 1}@tum.de`,
-            registrationNumber: `R${index + 1}`,
-            profilePictureUrl: undefined,
-        }));
+        const firstPageStudents = createPageOfStudents();
 
         tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(throwError(() => new Error('next page failed')));
 
@@ -179,17 +182,11 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         component.searchString.set('ada');
         fixture.detectChanges();
         await fixture.whenStable();
-        fixture.detectChanges();
-        await fixture.whenStable();
 
         const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
         assertNonNullable(viewport);
 
-        Object.defineProperty(viewport, 'scrollHeight', { configurable: true, value: 400 });
-        Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 100 });
-        Object.defineProperty(viewport, 'scrollTop', { configurable: true, value: 280, writable: true });
-
-        viewport.dispatchEvent(new Event('scroll'));
+        simulateViewportScrollNearBottom(viewport);
         fixture.detectChanges();
         await fixture.whenStable();
 
@@ -199,14 +196,18 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         expect(component.suggestedStudents()).toEqual(firstPageStudents);
         expect(component.nextSuggestedStudentsPageIndex()).toBe(1);
         expect(component.hasMorePages()).toBe(true);
+        expect(component.firstSuggestedStudentsPageLoading()).toBe(false);
         expect(component.nextSuggestedStudentsPageLoading()).toBe(false);
     });
 
     it('should reset suggestion state when the search string is empty', async () => {
-        component.suggestedStudents.set([firstStudent]);
-        component.nextSuggestedStudentsPageIndex.set(3);
-        component.hasMorePages.set(false);
-        component.suggestionHighlightIndex.set(0);
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        input.dispatchEvent(new FocusEvent('focusin'));
+        component.searchString.set('  ada');
+        fixture.detectChanges();
+        await fixture.whenStable();
 
         component.searchString.set('  ');
         fixture.detectChanges();
@@ -262,8 +263,6 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
         input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
-        fixture.detectChanges();
-        await fixture.whenStable();
         fixture.detectChanges();
         await fixture.whenStable();
 
