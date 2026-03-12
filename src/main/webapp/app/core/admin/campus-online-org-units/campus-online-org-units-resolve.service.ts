@@ -8,10 +8,11 @@ import { CampusOnlineOrgUnit, CampusOnlineService } from 'app/core/course/manage
 const DEFAULT_ORG_UNIT: CampusOnlineOrgUnit = { externalId: '', name: '' };
 
 export const campusOnlineOrgUnitsResolve: ResolveFn<CampusOnlineOrgUnit> = (route: ActivatedRouteSnapshot) => {
-    if (route.params['id']) {
+    const idParam = route.params['id'];
+    if (idParam) {
         const alertService = inject(AlertService);
         return inject(CampusOnlineService)
-            .getOrgUnit(route.params['id'])
+            .getOrgUnit(Number(idParam))
             .pipe(
                 catchError((error) => {
                     alertService.error(error.error?.message ?? error.message);

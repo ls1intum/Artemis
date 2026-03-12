@@ -182,9 +182,8 @@ public class CampusOnlineClientService {
                 }
             }
             catch (RestClientException e) {
-                // Network or other REST client error — try next token
-                log.warn("CAMPUSOnline API call failed, trying next token: {}", e.getClass().getSimpleName());
-                lastException = e;
+                // Network or other REST client error — propagate immediately since changing tokens won't resolve connectivity issues
+                throw new CampusOnlineApiException("CAMPUSOnline API call failed due to network error: " + e.getClass().getSimpleName());
             }
         }
         // Do not include the original exception as cause to avoid leaking API tokens (which are embedded in the request URL)

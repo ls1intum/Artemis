@@ -100,14 +100,12 @@ class CampusOnlineClientServiceTest {
     }
 
     @Test
-    void fetchStudents_shouldFallbackOnRestClientException() {
-        String xml = "<students></students>";
-        when(restTemplate.getForObject(anyString(), eq(String.class))).thenThrow(new ResourceAccessException("Connection timeout")).thenReturn(xml);
+    void fetchStudents_shouldThrowImmediatelyOnNetworkError() {
+        when(restTemplate.getForObject(anyString(), eq(String.class))).thenThrow(new ResourceAccessException("Connection timeout"));
 
-        CampusOnlineStudentListResponseDTO result = client.fetchStudents("CO-101");
+        assertThatThrownBy(() -> client.fetchStudents("CO-101")).isInstanceOf(CampusOnlineApiException.class).hasMessageContaining("network error");
 
-        assertThat(result).isNotNull();
-        verify(restTemplate, times(2)).getForObject(anyString(), eq(String.class));
+        verify(restTemplate, times(1)).getForObject(anyString(), eq(String.class));
     }
 
     @Test

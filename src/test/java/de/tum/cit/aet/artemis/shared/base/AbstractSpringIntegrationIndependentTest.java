@@ -134,6 +134,11 @@ public abstract class AbstractSpringIntegrationIndependentTest extends AbstractA
     @MockitoBean(name = "nebulaRestTemplate")
     protected RestTemplate nebulaRestTemplate;
 
+    // Mock RestTemplate for CAMPUSOnline API calls
+    // CAMPUSOnline is enabled in tests; we mock this bean to avoid real HTTP calls and control responses
+    @MockitoBean(name = "campusOnlineRestTemplate")
+    protected RestTemplate campusOnlineRestTemplate;
+
     // Mock PasskeyAuthenticationService to allow super admin operations in tests
     // The @EnforceSuperAdmin annotation requires passkey authentication to be mocked
     @MockitoSpyBean
