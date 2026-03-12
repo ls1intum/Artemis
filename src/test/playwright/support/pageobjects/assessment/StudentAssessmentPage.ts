@@ -11,7 +11,12 @@ export class StudentAssessmentPage {
     }
 
     async startComplaint() {
-        await this.page.locator('#complain').click({ timeout: 30000 });
+        // Wait for the page to fully load before looking for the complaint button.
+        // The button depends on async accountService.identity() resolving to set
+        // isCorrectUserToFileAction, and the exam review period must be active.
+        const complainButton = this.page.locator('#complain');
+        await complainButton.waitFor({ state: 'visible', timeout: 30000 });
+        await complainButton.click();
     }
 
     async enterComplaint(text: string) {
