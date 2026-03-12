@@ -66,9 +66,12 @@ public class LocalCIBuildConfigurationService {
             // Phases path: assemble script from active phases with set -e for fail-fast behavior
             buildScriptBuilder.append("#!/bin/bash\n");
             buildScriptBuilder.append("set -e\n");
-            buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
+            final String testingDirectory = LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir";
+            final String goIntoTestingDirectoryCommand = "cd " + testingDirectory + "\n";
 
             for (BuildPhaseDTO phase : activePhases) {
+                buildScriptBuilder.append("# ===== Phase: ").append(phase.name()).append(" =====\n");
+                buildScriptBuilder.append(goIntoTestingDirectoryCommand);
                 buildScriptBuilder.append(phase.script()).append("\n");
             }
         }
