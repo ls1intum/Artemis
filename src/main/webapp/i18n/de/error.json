@@ -183,6 +183,7 @@
             "submissionIdMissing": "Die Abgabe muss zuerst gespeichert werden, bevor sie umgewandelt werden kann."
         },
         "exerciseVersionIdMismatch": "Die angeforderte Übungsversion gehört nicht zur angegebenen Übungs-ID.",
+        "participationExerciseMismatch": "Die Feedback-Anfrage konnte nicht verarbeitet werden, da die Teilnahme nicht zur Aufgabe passt.",
         "submissionExerciseMismatch": "Die Abgabe gehört nicht zur angegebenen Aufgabe.",
         "maxAthenaResultsReached": "Maximale Anzahl an KI-Feedback-Anfragen erreicht.",
         "submissionAlreadyHasAthenaResult": "Die Abgabe hat bereits ein Athena-Ergebnis.",

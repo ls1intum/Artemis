@@ -1934,6 +1934,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void whenFeedbackRequestedForParticipationNotBelongingToExercise_thenFail() throws Exception {
+        var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
+        participationRepo.save(participation);
+
+        request.putAndExpectError("/api/exercise/exercises/" + modelingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                HttpStatus.BAD_REQUEST, "participationExerciseMismatch");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void whenFeedbackRequestedForNonExistentParticipation_thenFail() throws Exception {
         request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations/" + 999999L + "/request-feedback", null, StudentParticipation.class,
                 HttpStatus.NOT_FOUND);

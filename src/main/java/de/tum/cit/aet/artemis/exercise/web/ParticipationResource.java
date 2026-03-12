@@ -284,6 +284,9 @@ public class ParticipationResource {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
+        if (!participation.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("Participation does not belong to the exercise", ENTITY_NAME, "participationExerciseMismatch");
+        }
         participationAuthorizationService.checkAccessPermissionOwner(participation, user);
 
         if (exercise.isExamExercise()) {
