@@ -329,10 +329,12 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private ProgrammingSubmission awaitLatestSubmissionWithResult(Long participationId) {
         try {
-            await().atMost(BUILD_TIMEOUT).until(() -> {
+            await().atMost(BUILD_TIMEOUT).pollInterval(Duration.ofMillis(500)).until(() -> {
                 localCIResultListenerService.processQueuedResults();
                 participantScoreScheduleService.executeScheduledTasks();
-                await().until(participantScoreScheduleService::isIdle);
+                if (!participantScoreScheduleService.isIdle()) {
+                    return false;
+                }
                 return resultRepository.findFirstWithSubmissionsByParticipationIdOrderByCompletionDateDesc(participationId).isPresent();
             });
 
