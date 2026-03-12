@@ -283,6 +283,16 @@
                 </div>
             </div>
 
+            <div class="memiris-toggle-section">
+                <div class="memiris-toggle-content">
+                    <div class="memiris-toggle-text">
+                        <span class="memiris-toggle-title" jhiTranslate="artemisApp.llmSelectionPopup.memirisTitle"></span>
+                        <span class="memiris-toggle-description" jhiTranslate="artemisApp.llmSelectionPopup.memirisDescription"></span>
+                    </div>
+                    <p-toggleswitch [(ngModel)]="memirisEnabled" (onChange)="onMemirisToggle()" inputId="memiris-toggle" />
+                </div>
+            </div>
+
             <div class="footer-note">
                 <p jhiTranslate="artemisApp.llmSelectionPopup.disclaimer"></p>
                 <a class="learn-more-link" (click)="onLearnMoreClick($event)" jhiTranslate="artemisApp.llmSelectionPopup.disclaimerButton"></a>
