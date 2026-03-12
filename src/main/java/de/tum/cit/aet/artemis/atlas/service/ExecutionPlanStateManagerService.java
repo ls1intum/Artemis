@@ -118,8 +118,9 @@ public class ExecutionPlanStateManagerService {
 
     /**
      * Context for the next step in the plan, including accumulated results from previous steps.
+     * exerciseId and exerciseTitle are non-null only when the next sub-agent is EXERCISE_MAPPER.
      */
-    public record NextStepContext(AgentType agentType, String userGoal, List<StepResult> previousResults) {
+    public record NextStepContext(AgentType agentType, String userGoal, List<StepResult> previousResults, @Nullable Long exerciseId, @Nullable String exerciseTitle) {
     }
 
     /**
@@ -136,6 +137,12 @@ public class ExecutionPlanStateManagerService {
 
         @Nullable
         private StepResult result;
+
+        @Nullable
+        private Long exerciseId;
+
+        @Nullable
+        private String exerciseTitle;
 
         /**
          * Creates a new plan step for the given agent type with PENDING status.
@@ -192,6 +199,44 @@ public class ExecutionPlanStateManagerService {
          */
         public void setResult(@Nullable StepResult result) {
             this.result = result;
+        }
+
+        /**
+         * Returns the exercise ID associated with this step (only set for EXERCISE_MAPPER steps).
+         *
+         * @return the exercise ID, or null
+         */
+        @Nullable
+        public Long getExerciseId() {
+            return exerciseId;
+        }
+
+        /**
+         * Stores the exercise ID for this step.
+         *
+         * @param exerciseId the exercise ID, or null
+         */
+        public void setExerciseId(@Nullable Long exerciseId) {
+            this.exerciseId = exerciseId;
+        }
+
+        /**
+         * Returns the exercise title associated with this step (only set for EXERCISE_MAPPER steps).
+         *
+         * @return the exercise title, or null
+         */
+        @Nullable
+        public String getExerciseTitle() {
+            return exerciseTitle;
+        }
+
+        /**
+         * Stores the exercise title for this step.
+         *
+         * @param exerciseTitle the exercise title, or null
+         */
+        public void setExerciseTitle(@Nullable String exerciseTitle) {
+            this.exerciseTitle = exerciseTitle;
         }
     }
 
@@ -322,11 +367,13 @@ public class ExecutionPlanStateManagerService {
     /**
      * Initializes a new execution plan for a session based on a predefined template.
      *
-     * @param sessionId the session ID
-     * @param template  the plan template to use
-     * @param userGoal  the original user request (for context in subsequent steps)
+     * @param sessionId     the session ID
+     * @param template      the plan template to use
+     * @param userGoal      the original user request (for context in subsequent steps)
+     * @param exerciseId    optional exercise ID to store on the EXERCISE_MAPPER step
+     * @param exerciseTitle optional exercise title to store on the EXERCISE_MAPPER step
      */
-    public void initializePlan(String sessionId, PlanTemplate template, String userGoal) {
+    public void initializePlan(String sessionId, PlanTemplate template, String userGoal, @Nullable Long exerciseId, @Nullable String exerciseTitle) {
         List<AgentType> agentSequence = getAgentSequence(template);
 
         if (agentSequence.size() > MAX_STEPS) {
@@ -336,12 +383,20 @@ public class ExecutionPlanStateManagerService {
 
         List<PlanStep> steps = agentSequence.stream().map(PlanStep::new).toList();
 
+        // Attach exercise metadata to any EXERCISE_MAPPER step so the brief can carry it
+        if (exerciseId != null) {
+            steps.stream().filter(s -> s.getAgentType() == AgentType.EXERCISE_MAPPER).forEach(s -> {
+                s.setExerciseId(exerciseId);
+                s.setExerciseTitle(exerciseTitle);
+            });
+        }
+
         ExecutionPlan plan = new ExecutionPlan(steps, userGoal);
 
         Cache cache = cacheManager.getCache(ATLAS_EXECUTION_PLAN_CACHE);
         if (cache != null) {
             cache.put(sessionId, plan);
-            log.info("Initialized execution plan for session {}: template={}, steps={}", sessionId, template, agentSequence);
+            log.info("Initialized execution plan for session {}: template={}, steps={}, exerciseId={}", sessionId, template, agentSequence, exerciseId);
         }
     }
 
@@ -384,8 +439,9 @@ public class ExecutionPlanStateManagerService {
 
             PlanStep nextStep = plan.getCurrentStep();
             if (nextStep != null) {
-                log.info("Advancing to next step for session {}: agent={}", sessionId, nextStep.getAgentType());
-                return Optional.of(new NextStepContext(nextStep.getAgentType(), plan.getUserGoal(), plan.getAllPreviousResults()));
+                log.info("Advancing to next step for session {}: agent={}, exerciseId={}", sessionId, nextStep.getAgentType(), nextStep.getExerciseId());
+                return Optional
+                        .of(new NextStepContext(nextStep.getAgentType(), plan.getUserGoal(), plan.getAllPreviousResults(), nextStep.getExerciseId(), nextStep.getExerciseTitle()));
             }
         }
 

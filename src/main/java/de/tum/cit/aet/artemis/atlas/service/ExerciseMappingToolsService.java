@@ -99,6 +99,12 @@ public class ExerciseMappingToolsService {
     }
 
     /**
+     * ThreadLocal storage for the current session ID.
+     * Set by AtlasAgentService before delegating to the Exercise Mapper sub-agent.
+     */
+    private static final ThreadLocal<String> currentSessionId = ThreadLocal.withInitial(() -> null);
+
+    /**
      * ThreadLocal storage for exercise mapping preview data.
      * Used to pass preview data from tool methods to the service layer for frontend rendering.
      */
@@ -127,6 +133,23 @@ public class ExerciseMappingToolsService {
         userSelectedMappings.remove();
     }
 
+    /**
+     * Set the current session ID for this request.
+     * Called by AtlasAgentService before routing to the Exercise Mapper sub-agent.
+     *
+     * @param sessionId the session ID
+     */
+    public static void setCurrentSessionId(String sessionId) {
+        currentSessionId.set(sessionId);
+    }
+
+    /**
+     * Clear the current session ID after request completes.
+     */
+    public static void clearCurrentSessionId() {
+        currentSessionId.remove();
+    }
+
     private final ExerciseRepository exerciseRepository;
 
     private final CourseCompetencyRepository courseCompetencyRepository;
@@ -141,11 +164,13 @@ public class ExerciseMappingToolsService {
 
     private final AtlasMLApi atlasMLApi;
 
+    private final AtlasAgentSessionCacheService sessionCacheService;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public ExerciseMappingToolsService(ExerciseRepository exerciseRepository, CourseCompetencyRepository courseCompetencyRepository,
             CompetencyExerciseLinkRepository competencyExerciseLinkRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, AtlasMLApi atlasMLApi) {
+            UserRepository userRepository, AtlasMLApi atlasMLApi, AtlasAgentSessionCacheService sessionCacheService) {
         this.exerciseRepository = exerciseRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
@@ -153,6 +178,7 @@ public class ExerciseMappingToolsService {
         this.authorizationCheckService = authorizationCheckService;
         this.userRepository = userRepository;
         this.atlasMLApi = atlasMLApi;
+        this.sessionCacheService = sessionCacheService;
     }
 
     /**
@@ -236,6 +262,12 @@ public class ExerciseMappingToolsService {
             }).toList(), viewOnly != null && viewOnly);
 
             exerciseMappingPreview.set(preview);
+
+            // Also write to Hazelcast so cross-node requests can retrieve the preview
+            String sessionId = currentSessionId.get();
+            if (sessionId != null) {
+                sessionCacheService.cacheExerciseMappingPreview(sessionId, preview);
+            }
 
             return success("Preview generated successfully for exercise-to-competency mapping.");
 
@@ -375,6 +407,7 @@ public class ExerciseMappingToolsService {
      */
     public static void clearExerciseMappingPreview() {
         exerciseMappingPreview.remove();
+        currentSessionId.remove();
     }
 
     /**

@@ -74,7 +74,7 @@ public class AtlasAgentService {
 
     private static final String RETURN_TO_MAIN_AGENT = "%%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
 
-    private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)%%");
+    private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)(?::exerciseId=(\\d+))?(?::exerciseTitle=([^%]*))?%%");
 
     private static final String PREVIEW_DATA_START_MARKER = "%%PREVIEW_DATA_START%%";
 
@@ -220,9 +220,14 @@ public class AtlasAgentService {
             else if (response.contains(DELEGATE_TO_EXERCISE_MAPPER)) {
                 String brief = extractBriefFromDelegationMarker(response);
 
+                ExerciseMappingToolsService.setCurrentSessionId(sessionId);
                 String delegationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, brief, courseId, sessionId);
 
+                // Retrieve exercise mapping preview from ThreadLocal, fall back to Hazelcast for cross-node resilience
                 ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+                if (exerciseMappingPreview == null) {
+                    exerciseMappingPreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
+                }
                 String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(delegationResponse, exerciseMappingPreview);
 
                 updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
@@ -266,6 +271,7 @@ public class AtlasAgentService {
             CompetencyMappingToolsService.clearAllPreviews();
             ExerciseMappingToolsService.clearUserSelectedMappings();
             ExerciseMappingToolsService.clearExerciseMappingPreview();
+            atlasAgentSessionCacheService.clearCachedExerciseMappingPreview(sessionId);
         }
 
     }
@@ -797,18 +803,14 @@ public class AtlasAgentService {
             }
         }
 
+        ExerciseMappingToolsService.setCurrentSessionId(sessionId);
         String creationResponse = delegateToAgent(AgentType.EXERCISE_MAPPER, CREATE_APPROVED_EXERCISE_MAPPING, courseId, sessionId);
-
-        ExerciseCompetencyMappingDTO exerciseMappingPreview = ExerciseMappingToolsService.getExerciseMappingPreview();
-        String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(creationResponse, exerciseMappingPreview);
-
-        updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
         ExecutionPlanStateManagerService.StepResult stepResult = new ExecutionPlanStateManagerService.StepResult(List.of(), "Exercise mappings saved");
 
         // Attempt plan continuation
         return handlePlanContinuationAfterApproval(sessionId, courseId, creationResponse, stepResult,
-                new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), false, null, null, null, exerciseMappingPreview));
+                new AtlasAgentChatResponseDTO(creationResponse, ZonedDateTime.now(), false, null, null, null, null));
     }
 
     /**
@@ -843,6 +845,7 @@ public class AtlasAgentService {
         switch (agentType) {
             case COMPETENCY_EXPERT -> CompetencyExpertToolsService.setCurrentSessionId(sessionId);
             case COMPETENCY_MAPPER -> CompetencyMappingToolsService.setCurrentSessionId(sessionId);
+            case EXERCISE_MAPPER -> ExerciseMappingToolsService.setCurrentSessionId(sessionId);
         }
 
         // Use saveToMemory=false to prevent internal brief from appearing in chat history
@@ -874,7 +877,11 @@ public class AtlasAgentService {
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, graphPreview, null);
             }
             case EXERCISE_MAPPER -> {
+                // Fall back to Hazelcast when ThreadLocal is empty (cross-node execution)
                 ExerciseCompetencyMappingDTO exercisePreview = ExerciseMappingToolsService.getExerciseMappingPreview();
+                if (exercisePreview == null) {
+                    exercisePreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
+                }
                 log.info("delegateToNextStepAgent: EXERCISE_MAPPER produced exercisePreview={}", exercisePreview != null);
                 String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(combinedResponse, exercisePreview);
                 addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
@@ -909,13 +916,18 @@ public class AtlasAgentService {
      * @param sessionId the session ID
      */
     private void detectAndInitializePlan(String response, String userGoal, String sessionId) {
+        // Guard: never re-initialize a plan that's already active for this session
+        if (executionPlanStateManagerService.hasPlan(sessionId)) {
+            return;
+        }
         Matcher matcher = PLAN_MARKER_PATTERN.matcher(response);
         if (matcher.find()) {
             String templateName = matcher.group(1);
             ExecutionPlanStateManagerService.PlanTemplate template = ExecutionPlanStateManagerService.parseTemplate(templateName);
             if (template != null) {
-                executionPlanStateManagerService.initializePlan(sessionId, template, userGoal);
-                log.info("Initialized execution plan for session {}: template={}, userGoal={}", sessionId, template, userGoal);
+                Long exerciseId = matcher.group(2) != null ? Long.parseLong(matcher.group(2)) : null;
+                String exerciseTitle = matcher.group(3) != null ? matcher.group(3).trim() : null;
+                executionPlanStateManagerService.initializePlan(sessionId, template, userGoal, exerciseId, exerciseTitle);
             }
             else {
                 log.warn("detectAndInitializePlan: unknown template name '{}' in response for session={}", templateName, sessionId);
@@ -967,7 +979,7 @@ public class AtlasAgentService {
         StringBuilder brief = new StringBuilder();
 
         // Add agent-specific action instruction so the agent knows exactly what to do
-        String actionInstruction = getActionInstructionForAgent(nextStep.agentType());
+        String actionInstruction = getActionInstructionForAgent(nextStep);
         brief.append("ACTION: ").append(actionInstruction).append("\n");
 
         List<ExecutionPlanStateManagerService.StepResult> previousResults = nextStep.previousResults();
@@ -997,17 +1009,26 @@ public class AtlasAgentService {
      * @param agentType the type of agent that will receive the brief
      * @return a specific instruction string for the agent
      */
-    private String getActionInstructionForAgent(ExecutionPlanStateManagerService.AgentType agentType) {
-        return switch (agentType) {
+    private String getActionInstructionForAgent(ExecutionPlanStateManagerService.NextStepContext nextStep) {
+        return switch (nextStep.agentType()) {
             case COMPETENCY_MAPPER -> "Suggest relation mappings between the competencies from the previous step. "
                     + "Call getCourseCompetencies first to get the competency IDs, then call suggestRelationMappingsUsingML or "
                     + "use previewRelationMappings to suggest appropriate relations (ASSUMES, EXTENDS, MATCHES) between them. " + "Set viewOnly=false for the preview.";
-            case EXERCISE_MAPPER -> "Map the competencies from the previous step to exercises in the course. "
-                    + "The orchestrator will provide the exercise ID and title. Call getCourseCompetencies to get competency IDs, then call "
-                    + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
-                    + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
+            case EXERCISE_MAPPER -> buildExerciseMapperInstruction(nextStep.exerciseId(), nextStep.exerciseTitle());
             case COMPETENCY_EXPERT -> "Create or update competencies as described in the original user request. " + "Use the context from previous steps if available.";
         };
+    }
+
+    private String buildExerciseMapperInstruction(@Nullable Long exerciseId, @Nullable String exerciseTitle) {
+        if (exerciseId != null && exerciseTitle != null && !exerciseTitle.isBlank()) {
+            return "Map the competencies from the previous step to the exercise below. " + "EXERCISE_ID: " + exerciseId + " | EXERCISE_TITLE: " + exerciseTitle + ". "
+                    + "Call getCourseCompetencies to get competency IDs, then call " + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
+                    + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
+        }
+        // Fallback if exercise was not embedded in the plan marker (should not happen in normal flow)
+        return "Map the competencies from the previous step to exercises in the course. " + "Call getCourseCompetencies to get competency IDs, then call "
+                + "previewExerciseCompetencyMapping with viewOnly=false to show the interactive preview. "
+                + "Do NOT ask the user how they want to adjust mappings - the preview UI is interactive and handles that.";
     }
 
     /**

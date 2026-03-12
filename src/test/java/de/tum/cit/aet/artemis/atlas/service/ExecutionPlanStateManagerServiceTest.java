@@ -41,14 +41,14 @@ class ExecutionPlanStateManagerServiceTest {
 
     @Test
     void initializePlan_storesPlanInCache() {
-        service.initializePlan("session1", ExecutionPlanStateManagerService.PlanTemplate.CREATE_AND_MAP_RELATIONS, "Create competencies");
+        service.initializePlan("session1", ExecutionPlanStateManagerService.PlanTemplate.CREATE_AND_MAP_RELATIONS, "Create competencies", null, null);
 
         verify(cache).put(eq("session1"), any(ExecutionPlanStateManagerService.ExecutionPlan.class));
     }
 
     @Test
     void initializePlan_firstStepIsActive() {
-        service.initializePlan("session1", ExecutionPlanStateManagerService.PlanTemplate.CREATE_AND_MAP_RELATIONS, "goal");
+        service.initializePlan("session1", ExecutionPlanStateManagerService.PlanTemplate.CREATE_AND_MAP_RELATIONS, "goal", null, null);
 
         // Capture what was stored
         var captor = org.mockito.ArgumentCaptor.forClass(ExecutionPlanStateManagerService.ExecutionPlan.class);
@@ -63,7 +63,7 @@ class ExecutionPlanStateManagerServiceTest {
     void initializePlan_nullCache_doesNotThrow() {
         when(cacheManager.getCache(ExecutionPlanStateManagerService.ATLAS_EXECUTION_PLAN_CACHE)).thenReturn(null);
 
-        service.initializePlan("session1", ExecutionPlanStateManagerService.PlanTemplate.CREATE_AND_MAP_RELATIONS, "goal");
+        service.initializePlan("session1", ExecutionPlanStateManagerService.PlanTemplate.CREATE_AND_MAP_RELATIONS, "goal", null, null);
 
         verify(cache, never()).put(any(), any());
     }
@@ -177,7 +177,7 @@ class ExecutionPlanStateManagerServiceTest {
 
     @Test
     void executionPlan_fullWorkflow_hasThreeSteps() {
-        service.initializePlan("s", ExecutionPlanStateManagerService.PlanTemplate.FULL_WORKFLOW, "goal");
+        service.initializePlan("s", ExecutionPlanStateManagerService.PlanTemplate.FULL_WORKFLOW, "goal", null, null);
 
         var captor = org.mockito.ArgumentCaptor.forClass(ExecutionPlanStateManagerService.ExecutionPlan.class);
         verify(cache).put(eq("s"), captor.capture());

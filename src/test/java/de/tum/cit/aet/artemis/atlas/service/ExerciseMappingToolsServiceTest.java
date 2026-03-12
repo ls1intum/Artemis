@@ -64,6 +64,9 @@ class ExerciseMappingToolsServiceTest {
     @Mock
     private AtlasMLApi atlasMLApi;
 
+    @Mock
+    private AtlasAgentSessionCacheService sessionCacheService;
+
     private ExerciseMappingToolsService service;
 
     private ObjectMapper objectMapper;
@@ -80,7 +83,7 @@ class ExerciseMappingToolsServiceTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         service = new ExerciseMappingToolsService(exerciseRepository, courseCompetencyRepository, competencyExerciseLinkRepository, courseRepository, authorizationCheckService,
-                userRepository, atlasMLApi);
+                userRepository, atlasMLApi, sessionCacheService);
 
         course = new Course();
         course.setId(10L);

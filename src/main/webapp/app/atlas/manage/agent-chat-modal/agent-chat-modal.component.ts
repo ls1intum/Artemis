@@ -235,6 +235,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                     response.competencyPreviews,
                     response.relationPreviews,
                     response.relationGraphPreview,
+                    response.exerciseMappingPreview,
                 );
 
                 // Emit event to refresh competencies (relations affect the graph)
