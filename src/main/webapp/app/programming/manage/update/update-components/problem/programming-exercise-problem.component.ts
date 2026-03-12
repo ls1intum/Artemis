@@ -23,6 +23,7 @@ import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actio
 import { TranslateService } from '@ngx-translate/core';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { ChecklistPanelComponent } from './checklist-panel/checklist-panel.component';
 import { AlertService } from 'app/shared/service/alert.service';
 
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
@@ -46,6 +47,7 @@ import { GitDiffLineStatComponent } from 'app/programming/shared/git-diff-report
         ButtonModule,
         FaIconComponent,
         HelpIconComponent,
+        ChecklistPanelComponent,
         GitDiffLineStatComponent,
         MessageModule,
     ],
@@ -150,17 +152,25 @@ export class ProgrammingExerciseProblemComponent implements OnInit, OnDestroy {
         }
     }
 
+    /**
+     * Opens the diff view to show changes proposed by a checklist AI action.
+     * Uses the same diff review flow as refineProblemStatement().
+     */
+    onChecklistActionDiffRequest(proposedContent: string): void {
+        this.aiOps.applyChecklistActionDiff(proposedContent, this.editableInstructions());
+    }
+
     onInstructionChange(problemStatement: string) {
         const exercise = this.programmingExercise();
         const previousContent = this.aiOps.currentProblemStatement();
         this.aiOps.currentProblemStatement.set(problemStatement);
         if (problemStatement !== previousContent) {
             this.programmingExerciseCreationConfig().hasUnsavedChanges = true;
+            if (exercise) {
+                exercise.problemStatement = problemStatement;
+                this.programmingExerciseChange.emit(exercise);
+            }
+            this.problemStatementChange.emit(problemStatement);
         }
-        if (exercise) {
-            exercise.problemStatement = problemStatement;
-            this.programmingExerciseChange.emit(exercise);
-        }
-        this.problemStatementChange.emit(problemStatement);
     }
 }
