@@ -73,7 +73,7 @@ describe('TutorialRegistrationsStudentsTable', () => {
 
     it('should display the remove column when column info is provided', () => {
         const removeActionColumnInfo: TutorialRegistrationsStudentsTableRemoveActionColumnInfo = {
-            headerStringKey: 'artemisApp.pages.tutorialGroupRegistrations.remove',
+            headerStringKey: 'artemisApp.pages.tutorialGroupRegistrations.studentsTableHeaderLabel.deregister',
             onRemove: vi.fn(),
         };
 
