@@ -2239,12 +2239,12 @@ describe('AgentChatModalComponent', () => {
             '[CREATE_APPROVED_RELATION]:',
             '  EXERCISE_ID: 42',
         ])('returns true for internal system message: %s', (content) => {
-            expect(component['isDelegationBrief'](content)).toBeTrue();
+            expect(component['isDelegationBrief'](content)).toBeTruthy();
         });
 
         it('returns false for normal message or empty string', () => {
-            expect(component['isDelegationBrief']('Please help')).toBeFalse();
-            expect(component['isDelegationBrief']('')).toBeFalse();
+            expect(component['isDelegationBrief']('Please help')).toBeFalsy();
+            expect(component['isDelegationBrief']('')).toBeFalsy();
         });
     });
 
@@ -2269,9 +2269,9 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('defaults to false, set/get round-trips correctly', () => {
-            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeFalse();
+            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeFalsy();
             component['setCompetencyCheckboxState'](msg, 1, true);
-            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeTrue();
+            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeTruthy();
         });
 
         it('getSelectedCompetencies returns only checked entries with weights', () => {
@@ -2304,9 +2304,9 @@ describe('AgentChatModalComponent', () => {
             component['sendMessage']();
 
             const agentMsg = component.messages().find((m) => m.exerciseMappingPreview !== undefined)!;
-            expect(component['getCompetencyCheckboxState'](agentMsg, 10)).toBeTrue();
-            expect(component['getCompetencyCheckboxState'](agentMsg, 20)).toBeTrue();
-            expect(component['getCompetencyCheckboxState'](agentMsg, 30)).toBeFalse();
+            expect(component['getCompetencyCheckboxState'](agentMsg, 10)).toBeTruthy();
+            expect(component['getCompetencyCheckboxState'](agentMsg, 20)).toBeTruthy();
+            expect(component['getCompetencyCheckboxState'](agentMsg, 30)).toBeFalsy();
         });
     });
 
@@ -2359,7 +2359,7 @@ describe('AgentChatModalComponent', () => {
 
             const expectedPayload = JSON.stringify({ exerciseId: 42, mappings: [{ competencyId: 1, weight: 0.5 }] });
             expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith(`[CREATE_APPROVED_EXERCISE_MAPPING]:${expectedPayload}`, 123);
-            expect(component.messages().find((m) => m.id === exerciseMsg.id)?.exerciseMappingCreated).toBeTrue();
+            expect(component.messages().find((m) => m.id === exerciseMsg.id)?.exerciseMappingCreated).toBeTruthy();
             expect(emitSpy).toHaveBeenCalled();
         });
 
