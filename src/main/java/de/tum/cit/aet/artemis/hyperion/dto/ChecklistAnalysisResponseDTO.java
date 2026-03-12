@@ -1,0 +1,26 @@
+package de.tum.cit.aet.artemis.hyperion.dto;
+
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+
+/**
+ * DTO for the response of the checklist analysis.
+ *
+ * @param bloomRadar    Bloom's taxonomy distribution for radar chart
+ * @param qualityIssues Quality issues found in the problem statement
+ */
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@Schema(description = "Response containing the checklist analysis results")
+public record ChecklistAnalysisResponseDTO(@Schema(description = "Bloom's taxonomy radar distribution") BloomRadarDTO bloomRadar,
+        @Schema(description = "List of quality issues found in the problem statement") List<QualityIssueDTO> qualityIssues) {
+
+    /**
+     * Creates an empty response (when analysis fails).
+     */
+    public static ChecklistAnalysisResponseDTO empty() {
+        return new ChecklistAnalysisResponseDTO(BloomRadarDTO.empty(), List.of());
+    }
+}
