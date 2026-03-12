@@ -1,4 +1,4 @@
-U/**
+/**
  * ng2-pdf-viewer bundles its own pdfjs-dist version and requires a matching worker script.
  * This script copies the worker to a publicly served location so ng2-pdf-viewer can load it.
  */
@@ -13,7 +13,6 @@ const destination = path.join(destinationDir, 'pdf.worker.ng2.min.mjs');
 fs.mkdirSync(destinationDir, { recursive: true });
 
 if (!fs.existsSync(source)) {
-    // eslint-disable-next-line no-console
     console.warn(`[pdfjs_copy_ng2_worker_script] Missing worker source: ${source}`);
 } else {
     fs.copyFileSync(source, destination);
