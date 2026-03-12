@@ -272,10 +272,11 @@ public class ParticipationResource {
     }
 
     /**
-     * PUT exercises/:exerciseId/request-feedback: Requests feedback for the latest participation
+     * PUT exercises/:exerciseId/participations/:participationId/request-feedback: Requests AI feedback for the given participation
      *
-     * @param exerciseId of the exercise for which to resume participation
-     * @return ResponseEntity with status 200 (OK)
+     * @param exerciseId      of the exercise for which to request feedback
+     * @param participationId of the participation for which feedback is requested
+     * @return ResponseEntity with status 200 (OK) and the updated participation as body
      */
     @PutMapping("exercises/{exerciseId}/participations/{participationId}/request-feedback")
     @EnforceAtLeastStudent
