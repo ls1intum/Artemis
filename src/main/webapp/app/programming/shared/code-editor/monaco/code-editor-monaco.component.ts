@@ -21,7 +21,7 @@ import {
 import { RepositoryFileService } from 'app/programming/shared/services/repository.service';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
-import { firstValueFrom, timeout } from 'rxjs';
+import { Subscription, firstValueFrom, timeout } from 'rxjs';
 import { FEEDBACK_SUGGESTION_ACCEPTED_IDENTIFIER, FEEDBACK_SUGGESTION_IDENTIFIER, Feedback } from 'app/assessment/shared/entities/feedback.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CodeEditorTutorAssessmentInlineFeedbackComponent } from 'app/programming/manage/assess/code-editor-tutor-assessment-inline-feedback/code-editor-tutor-assessment-inline-feedback.component';
@@ -40,6 +40,7 @@ import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-w
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
 import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
 type FileSession = { [fileName: string]: { code: string; cursor: EditorPosition; scrollTop: number; loadingError: boolean } };
 type FeedbackWithLineAndReference = Feedback & { line: number; reference: string };
@@ -95,6 +96,7 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly buildAnnotations = input<Annotation[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly selectedAuxiliaryRepositoryId = input<number | undefined>();
+    readonly fileSyncService = input<CodeEditorFileSyncService | undefined>();
 
     readonly onError = output<string>();
     readonly onFileContentChange = output<{ fileName: string; text: string }>();
@@ -111,13 +113,15 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     readonly newFeedbackLines = signal<number[]>([]);
     readonly binaryFileSelected = signal<boolean>(false);
     readonly fileSession = signal<FileSession>({});
+    readonly selectedFileAwaitingInitialSync = signal<boolean>(false);
     readonly editorLocked = computed<boolean>(
         () =>
             this.disableActions() ||
             this.isTutorAssessment() ||
             this.commitState() === CommitState.CONFLICT ||
             !this.selectedFile() ||
-            !!this.fileSession()[this.selectedFile()!]?.loadingError,
+            !!this.fileSession()[this.selectedFile()!]?.loadingError ||
+            this.selectedFileAwaitingInitialSync(),
     );
 
     readonly feedbackInternal = signal<Feedback[]>([]);
@@ -147,6 +151,11 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     private renderAnimationFrameId?: number;
     private reviewRenderScheduled = false;
     private reviewRenderAnimationFrameId?: number;
+    private pendingReviewRenderFile?: string;
+    private fileSyncReadySubscription?: Subscription;
+    private fileSyncStateReplacedSubscription?: Subscription;
+    private suppressNextDirtySignal = new Set<string>();
+    private dirtySignalSuppressedDuringInitialSync = new Set<string>();
 
     constructor() {
         effect(() => {
@@ -172,10 +181,25 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.exerciseReviewCommentService.threads();
             this.selectedAuxiliaryRepositoryId();
             if (reviewCommentsEnabled) {
-                this.renderReviewCommentWidgets();
+                this.scheduleReviewCommentRenderForSelectedFile();
             } else {
+                this.pendingReviewRenderFile = undefined;
                 this.reviewCommentManager?.disposeAll();
             }
+        });
+
+        effect(() => {
+            const syncService = this.fileSyncService();
+            this.fileSyncReadySubscription?.unsubscribe();
+            this.fileSyncReadySubscription = undefined;
+            this.fileSyncStateReplacedSubscription?.unsubscribe();
+            this.fileSyncStateReplacedSubscription = undefined;
+            if (!syncService) {
+                this.selectedFileAwaitingInitialSync.set(false);
+                return;
+            }
+            this.fileSyncReadySubscription = syncService.initialSyncFinalized$.subscribe((event) => this.onFileInitialSyncFinalized(event));
+            this.fileSyncStateReplacedSubscription = syncService.stateReplaced$.subscribe(({ filePath }) => this.onFileSyncStateReplaced(filePath));
         });
 
         effect(() => {
@@ -209,10 +233,14 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
             this.setBuildAnnotations(this.annotationsArray);
             this.newFeedbackLines.set([]);
             this.renderFeedbackWidgets();
-            this.renderReviewCommentWidgets();
             // changeModel() disposes line-decoration hover buttons; re-apply for the active mode.
             this.updateEditorInteractionMode();
+            this.beginSelectedFileInitialSyncGuard();
             this.onFileLoad.emit(this.selectedFile()!);
+            this.pendingReviewRenderFile = this.selectedFile()!;
+            this.tryRenderPendingReviewCommentWidgets(this.selectedFile()!);
+        } else if (changes.selectedFile && !this.selectedFile()) {
+            this.selectedFileAwaitingInitialSync.set(false);
         }
 
         if (changes.feedbacks) {
@@ -226,6 +254,8 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
     ngOnDestroy(): void {
         this.disposeAddFeedbackShortcut();
         this.reviewCommentManager?.disposeAll();
+        this.fileSyncReadySubscription?.unsubscribe();
+        this.fileSyncStateReplacedSubscription?.unsubscribe();
         if (this.renderAnimationFrameId !== undefined) {
             window.cancelAnimationFrame(this.renderAnimationFrameId);
         }
@@ -299,7 +329,9 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                     },
                 });
 
-                this.onFileContentChange.emit({ fileName, text });
+                if (!this.shouldSuppressDirtySignal(fileName)) {
+                    this.onFileContentChange.emit({ fileName, text });
+                }
             }
         }
     }
@@ -514,6 +546,159 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 });
             }),
         );
+    }
+
+    private scheduleReviewCommentRenderForSelectedFile(): void {
+        if (!this.enableExerciseReviewComments() || !this.selectedFile() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
+            this.pendingReviewRenderFile = undefined;
+            return;
+        }
+        this.pendingReviewRenderFile = this.selectedFile();
+        this.tryRenderPendingReviewCommentWidgets(this.selectedFile()!);
+    }
+
+    private tryRenderPendingReviewCommentWidgets(filePath: string): void {
+        if (this.pendingReviewRenderFile !== filePath || this.selectedFile() !== filePath) {
+            return;
+        }
+        if (!this.enableExerciseReviewComments() || !isReviewCommentsSupportedRepository(this.selectedRepository())) {
+            this.pendingReviewRenderFile = undefined;
+            return;
+        }
+        if (!this.isReviewCommentRenderReady(filePath)) {
+            return;
+        }
+        this.pendingReviewRenderFile = undefined;
+        this.renderReviewCommentWidgets();
+    }
+
+    /**
+     * Handles late leader replacement for an already opened file.
+     *
+     * The replacement updates model content via the binding and must not be interpreted as a
+     * local user edit, so the next dirty signal for this file is suppressed.
+     */
+    private onFileSyncStateReplaced(filePath: string): void {
+        if (this.selectedFile() === filePath) {
+            this.suppressNextDirtySignal.add(filePath);
+            this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
+            this.selectedFileAwaitingInitialSync.set(false);
+        }
+        if (!this.enableExerciseReviewComments() || !isReviewCommentsSupportedRepository(this.selectedRepository()) || this.selectedFile() !== filePath) {
+            return;
+        }
+        this.pendingReviewRenderFile = filePath;
+        this.tryRenderPendingReviewCommentWidgets(filePath);
+    }
+
+    /**
+     * Handles the explicit "initial sync finalized" event for a file.
+     *
+     * During bootstrap, one hydration-related model update is still suppressed. If the finalized
+     * shared content diverged from the initial fallback server content, we then emit an explicit
+     * dirty signal so the parent container marks the file as unsubmitted.
+     */
+    private onFileInitialSyncFinalized({
+        filePath,
+        contentDivergedFromFallback,
+        finalContent,
+    }: {
+        filePath: string;
+        contentDivergedFromFallback: boolean;
+        finalContent: string;
+    }): void {
+        const isSelectedFile = this.selectedFile() === filePath;
+        // During file bootstrap we clear the model and then hydrate from synced Yjs content.
+        // The clear step is suppressed while awaitingInitialSync=true; suppress one additional
+        // post-finalize change so hydration does not mark the file as locally dirty.
+        if (isSelectedFile && this.dirtySignalSuppressedDuringInitialSync.has(filePath)) {
+            this.dirtySignalSuppressedDuringInitialSync.delete(filePath);
+            this.suppressNextDirtySignal.add(filePath);
+        }
+        if (isSelectedFile) {
+            this.selectedFileAwaitingInitialSync.set(false);
+        }
+        // If finalized shared content diverged from the initial server fallback, we surface this
+        // as unsubmitted work in this window as well.
+        if (contentDivergedFromFallback) {
+            this.emitDirtySignalFromInitialSync(filePath, finalContent);
+        }
+        this.tryRenderPendingReviewCommentWidgets(filePath);
+    }
+
+    /**
+     * Puts the selected Monaco file into a temporary read-only mode while collaborative
+     * initial sync bootstraps. This avoids local user edits during the short unstable window
+     * before we know the finalized shared content.
+     */
+    private beginSelectedFileInitialSyncGuard(): void {
+        const syncService = this.fileSyncService();
+        const selectedFile = this.selectedFile();
+        if (!selectedFile || !syncService?.isInitialized()) {
+            this.selectedFileAwaitingInitialSync.set(false);
+            return;
+        }
+        if (syncService.isFileOpen(selectedFile)) {
+            this.selectedFileAwaitingInitialSync.set(syncService.isFileAwaitingInitialSync(selectedFile));
+            return;
+        }
+        // The file is about to be opened via onFileLoad; lock until initial sync finalizes.
+        this.selectedFileAwaitingInitialSync.set(true);
+    }
+
+    /**
+     * Emits a dirty signal after initial sync divergence was detected.
+     *
+     * Also updates cached file-session text so local editor state stays aligned with the content
+     * emitted to the parent container.
+     */
+    private emitDirtySignalFromInitialSync(filePath: string, syncedContent: string): void {
+        const fileSession = this.fileSession();
+        const fileState = fileSession[filePath];
+        if (fileState && fileState.code !== syncedContent) {
+            this.fileSession.set({
+                ...fileSession,
+                [filePath]: {
+                    ...fileState,
+                    code: syncedContent,
+                },
+            });
+        }
+        this.onFileContentChange.emit({ fileName: filePath, text: syncedContent });
+    }
+
+    /**
+     * Decides whether the current text-change event should be treated as local dirty input.
+     *
+     * Suppresses:
+     * - the next change after state replacement/finalize handoff,
+     * - any change while initial sync is still pending.
+     */
+    private shouldSuppressDirtySignal(filePath: string): boolean {
+        if (this.suppressNextDirtySignal.has(filePath)) {
+            this.suppressNextDirtySignal.delete(filePath);
+            return true;
+        }
+        const syncService = this.fileSyncService();
+        if (!syncService?.isInitialized() || !syncService.isFileOpen(filePath)) {
+            return false;
+        }
+        const awaitingInitialSync = syncService.isFileAwaitingInitialSync(filePath);
+        if (awaitingInitialSync) {
+            this.dirtySignalSuppressedDuringInitialSync.add(filePath);
+        }
+        return awaitingInitialSync;
+    }
+
+    private isReviewCommentRenderReady(filePath: string): boolean {
+        const syncService = this.fileSyncService();
+        if (!syncService || !syncService.isInitialized()) {
+            return true;
+        }
+        if (!syncService.isFileOpen(filePath)) {
+            return false;
+        }
+        return !syncService.isFileAwaitingInitialSync(filePath);
     }
 
     private getReviewCommentManager(): ReviewCommentWidgetManager {
