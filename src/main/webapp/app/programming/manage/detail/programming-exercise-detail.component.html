@@ -63,8 +63,14 @@
                                 </a>
                             </jhi-feature-overlay>
                         }
+                        @if (programmingExercise.isAtLeastEditor) {
+                            <a [routerLink]="[baseResource, 'version-history']" class="btn btn-info btn-sm">
+                                <fa-icon [icon]="faHistory" />
+                                <span jhiTranslate="artemisApp.exercise.versionHistory.title"></span>
+                            </a>
+                        }
                         @if (canAccessParticipationsAndScores) {
-                            <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
+                            <a [routerLink]="[baseResource, 'scores']" class="btn btn-info btn-sm">
                                 <fa-icon [icon]="faTable" />
                                 <span jhiTranslate="entity.action.scores"></span>
                             </a>

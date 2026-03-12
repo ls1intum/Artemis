@@ -24,14 +24,6 @@ import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThread, Long> {
 
     /**
-     * Find all comment threads for a given exercise.
-     *
-     * @param exerciseId the exercise id
-     * @return list of comment threads
-     */
-    List<CommentThread> findByExerciseId(long exerciseId);
-
-    /**
      * Find all active comment threads for a given exercise that have a concrete line reference.
      * These are the only threads relevant for version-based line remapping.
      *
@@ -47,13 +39,29 @@ public interface CommentThreadRepository extends ArtemisJpaRepository<CommentThr
      * @return list of comment threads with comments
      */
     @Query("""
-            SELECT DISTINCT ct
+            SELECT ct
             FROM CommentThread ct
                 LEFT JOIN FETCH ct.comments c
                 LEFT JOIN FETCH c.author
             WHERE ct.exercise.id = :exerciseId
             """)
     Set<CommentThread> findWithCommentsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    /**
+     * Find all comment threads for a given exercise with their comments and optional thread groups loaded.
+     * This is used for Hyperion prompt context rendering and intentionally does not fetch comment authors.
+     *
+     * @param exerciseId the exercise id
+     * @return list of comment threads with comments and groups
+     */
+    @Query("""
+            SELECT ct
+            FROM CommentThread ct
+                LEFT JOIN FETCH ct.group
+                LEFT JOIN FETCH ct.comments c
+            WHERE ct.exercise.id = :exerciseId
+            """)
+    Set<CommentThread> findWithCommentsAndGroupByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Find a comment thread by id with its comments loaded.
