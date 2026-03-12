@@ -15,6 +15,57 @@
                 "exportLabel": "Export Quiz Exercises",
                 "createModelDragAndDrop": "Create Drag and Drop Model Quiz"
             },
+            "aiGeneration": {
+                "button": "Generate with AI",
+                "modalTitle": "Generate Quiz with AI",
+                "configuration": {
+                    "title": "Configuration",
+                    "topic": "Topic",
+                    "optionalPrompt": "Optional prompt",
+                    "optionalPromptTooltip": "Add optional instructions, constraints, or expectations to steer the generated questions.",
+                    "language": "Language",
+                    "numberOfQuestions": "Number of questions",
+                    "questionType": "Question type",
+                    "difficulty": "Difficulty",
+                    "difficultyLevels": {
+                        "easy": "Easy",
+                        "medium": "Medium",
+                        "hard": "Hard"
+                    }
+                },
+                "languages": {
+                    "en": "English",
+                    "de": "German"
+                },
+                "types": {
+                    "single-choice": "Single Choice",
+                    "multiple-choice": "Multiple Choice",
+                    "true-false": "True/False"
+                },
+                "actions": {
+                    "generate": "Generate",
+                    "openInEditor": "Open in editor",
+                    "addToEditor": "Add to quiz",
+                    "loading": {
+                        "thinking": "Thinking",
+                        "analyzing": "Analyzing input",
+                        "generating": "Generating questions",
+                        "refining": "Refining results"
+                    }
+                },
+                "errors": {
+                    "invalidConfiguration": "Please provide a topic and select at least one question type.",
+                    "generationFailed": "Failed to generate quiz questions. Please try again."
+                },
+                "preview": {
+                    "title": "Preview Results",
+                    "emptyTitle": "No questions generated yet",
+                    "emptyDescription": "Fill in the configuration on the left and click Generate to preview AI-generated quiz questions.",
+                    "correct": "CORRECT",
+                    "oneResultGenerated": "1 result generated",
+                    "multipleResultsGenerated": "{{ count }} results generated"
+                }
+            },
             "detail": {
                 "title": "Quiz Exercise",
                 "questionCount": {

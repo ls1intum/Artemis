@@ -1,0 +1,49 @@
+@if (details()) {
+    <div class="mb-2 text-break">{{ details()!.content }}</div>
+    <div class="mb-2">
+        <div class="fw-semibold" jhiTranslate="artemisApp.iris.memories.details.learnings"></div>
+        @if (details()!.learnings?.length === 0) {
+            <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.none"></div>
+        } @else {
+            <ul class="mb-0">
+                @for (l of details()!.learnings; track l.id) {
+                    <li>
+                        <span class="fw-semibold">{{ l.title || l.id }}</span>
+                        <div class="small text-break">{{ l.content }}</div>
+                        @if (l.reference) {
+                            <div class="small text-muted">
+                                <span jhiTranslate="artemisApp.iris.memories.details.reference"></span>
+                                : {{ l.reference }}
+                            </div>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+    @if (details()!.connections?.length) {
+        <div class="mb-1">
+            <div class="fw-semibold" jhiTranslate="artemisApp.iris.memories.details.connections"></div>
+            <ul class="mb-0">
+                @for (c of details()!.connections; track c.id) {
+                    <li>
+                        <span class="fw-semibold">{{ c.connectionType }}</span>
+                        <div class="small text-muted">
+                            <span jhiTranslate="artemisApp.iris.memories.details.weight"></span>
+                            : {{ c.weight }}
+                        </div>
+                        <div class="small">
+                            <span jhiTranslate="artemisApp.iris.memories.details.memories"></span>
+                            : {{ c.memories?.join(', ') }}
+                        </div>
+                        @if (c.description) {
+                            <div class="small text-break">{{ c.description }}</div>
+                        }
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+} @else {
+    <div class="small text-muted" jhiTranslate="artemisApp.iris.memories.details.noDetails"></div>
+}

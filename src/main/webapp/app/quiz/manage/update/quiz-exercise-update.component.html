@@ -4,10 +4,20 @@
             <div class="title">
                 <div class="col-sm d-flex align-items-center">
                     @if (!quizExercise.id && !isImport) {
-                        <h4 id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel"></h4>
+                        <h4 class="mb-0" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel"></h4>
+                        @if (canShowAiGenerationButton()) {
+                            <button class="ms-2" pButton type="button" severity="secondary" outlined (click)="openAiGenerationModal()">
+                                <span jhiTranslate="artemisApp.quizExercise.aiGeneration.button"></span>
+                            </button>
+                        }
                     }
                     @if (!isImport && quizExercise.id) {
-                        <h4 id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.quizExercise.home.editLabel"></h4>
+                        <h4 class="mb-0" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.quizExercise.home.editLabel"></h4>
+                        @if (canShowAiGenerationButton()) {
+                            <button class="ms-2" pButton type="button" severity="secondary" outlined (click)="openAiGenerationModal()">
+                                <span jhiTranslate="artemisApp.quizExercise.aiGeneration.button"></span>
+                            </button>
+                        }
                     }
                     @if (isImport) {
                         <h4 id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.quizExercise.home.importLabel"></h4>
@@ -337,4 +347,5 @@
             </div>
         </div>
     </div>
+    <jhi-quiz-ai-generation-modal [(visible)]="aiGenerationModalVisible" [courseId]="courseId" (addQuestions)="appendAiGeneratedQuestions($event)" />
 }
