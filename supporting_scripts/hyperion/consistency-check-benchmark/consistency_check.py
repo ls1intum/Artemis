@@ -7,7 +7,7 @@ from logging_config import logging
 from typing import Dict, Any
 from requests import Session
 
-from utils import SERVER_URL, MAX_THREADS, CONSISTENCY_CHECK_EXERCISES, login_as_admin
+from utils import SERVER_URL, MAX_THREADS, MODEL_NAME, CONSISTENCY_CHECK_EXERCISES, login_as_admin
 from course import get_course_id_request, get_exercise_ids_request
 from exercises import get_pecv_bench_dir
 
@@ -31,27 +31,28 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
         return "Consistency check aborted due to empty PECV-bench directory."
     approach_id = ""
     try:
-        approach_id = subprocess.check_output(
+        branch_name = subprocess.check_output(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
             text=True
         ).strip()
-        # feature/hyperion/run-pecv-bench-in-artemis -> feature-hyperion-run_pecv_bench_in_artemis
-        approach_id = "artemis-" + approach_id.replace("-", "_").replace("/", "-")
+        short_commit = subprocess.check_output(
+            ["git", "rev-parse", "--short", "HEAD"],
+            text=True
+        ).strip()
+        # feature/hyperion/run-pecv-bench-in-artemis -> artemis-feature-hyperion-run_pecv_bench_in_artemis-abc1234
+        approach_id = "artemis-" + branch_name.replace("-", "_").replace("/", "-") + "-" + short_commit
     except subprocess.CalledProcessError:
-        logging.warning("Failed to determine git branch. Using default approach ID.")
+        logging.warning("Failed to determine git branch or commit. Using default approach ID.")
         approach_id = "artemis-default"
 
-    model_name = "azure-openai-gpt-5-mini"  # NOTE future implementation
-                                            # NOTE implement PyYAML parser to extract from src/main/resources//config/application-local.yml
-                                            # NOTE sprint.ai.mode.chat + spring.ai.azure.openai.chat.options.deployment-name
+    model_name = MODEL_NAME
 
-    consistency_check_exercises_dict = {}
-    dataset_version = ""
+    # Map exercise name -> (course, version) so the correct version is used per exercise
+    consistency_check_exercises_dict: Dict[str, tuple[str, str]] = {}
     for version, courses in CONSISTENCY_CHECK_EXERCISES.items():
-        dataset_version = version
         for course, exercises in courses.items():
             for exercise in exercises:
-                consistency_check_exercises_dict[exercise] = course
+                consistency_check_exercises_dict[exercise] = (course, version)
                 os.makedirs(os.path.join(pecv_bench_dir, "results", version, approach_id, model_name, "cases", course, exercise), exist_ok=True)
 
     exercise_ids_filtered = {
@@ -61,20 +62,25 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
 
     run_id = f"{model_name}-default"
 
+    succeeded_count = 0
+    failed_count = 0
+    failed_checks: list[str] = []
+
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
-        futures = []
+        future_to_local_id = {}
 
         for local_id, server_id in exercise_ids_filtered.items():
             exercise_name = local_id.split(':')[0]
-            course_name = consistency_check_exercises_dict.get(exercise_name)
+            lookup = consistency_check_exercises_dict.get(exercise_name)
 
-            if course_name is None:
+            if lookup is None:
                 logging.warning(f"Could not find course for exercise {exercise_name}, skipping")
                 continue
 
+            course_name, dataset_version = lookup
             exercise_results_dir = os.path.join(pecv_bench_dir, "results", dataset_version, approach_id, model_name, "cases", course_name, exercise_name)
 
-            futures.append(executor.submit(
+            future = executor.submit(
                 consistency_check_io,
                 session,
                 SERVER_URL,
@@ -84,16 +90,30 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
                 dataset_version,
                 course_name,
                 run_id
-            ))
+            )
+            future_to_local_id[future] = local_id
 
-        for future in as_completed(futures):
+        logging.info(f"Total variants to check: {len(future_to_local_id)}")
+
+        for future in as_completed(future_to_local_id):
+            local_id = future_to_local_id[future]
             try:
                 result = future.result()
-                logging.info(result)
+                if "success" in result:
+                    succeeded_count += 1
+                    logging.info(f"[OK]   {result}")
+                else:
+                    failed_count += 1
+                    failed_checks.append(local_id)
+                    logging.error(f"[FAIL] {result}")
             except Exception as e:
-                logging.exception(f"Thread failed with error: {e}")
+                failed_count += 1
+                failed_checks.append(local_id)
+                logging.exception(f"[FAIL] {local_id} — thread error: {e}")
 
-    logging.info("All consistency checks completed.")
+    logging.info(f"Consistency checks completed: {succeeded_count}/{len(future_to_local_id)} succeeded.")
+    if failed_checks:
+        logging.error(f"Failed consistency checks ({failed_count}):\n" + "\n".join(f"  - {v}" for v in sorted(failed_checks)))
     return approach_id
 
 def consistency_check_io(session: Session, server_url: str, exercise_local_id: str, exercise_server_id: int, exercise_results_dir: str, dataset_version: str, course_name: str, run_id: str) -> str:
@@ -133,7 +153,7 @@ def consistency_check_io(session: Session, server_url: str, exercise_local_id: s
         logging.exception(f"Failed to write file for {exercise_local_id}: {e}")
         return f"[{exercise_local_id}] error"
 
-def consistency_check_request(session: requests.Session, server_url: str, exercise_server_id: int, exercise_local_id: str| None = None) -> Dict[str, Any] | None:
+def consistency_check_request(session: requests.Session, server_url: str, exercise_server_id: int, exercise_local_id: str | None = None) -> Dict[str, Any] | None:
     """
     Server request, to check the consistency of the programming exercise with Hyperion System.
 
@@ -146,7 +166,6 @@ def consistency_check_request(session: requests.Session, server_url: str, exerci
     :return: A dictionary containing consistency issues, or ``None`` if the request failed.
     :rtype: Dict[str, Any] | None
     """
-    #:param str exercise_variant_local_id: The local variant identifier (e.g., 'H01E01-Lectures:001').
     debug_id = exercise_local_id if exercise_local_id is not None else exercise_server_id
     logging.info(f"[{debug_id}] 		Starting consistency check for programming exercise ID: {debug_id}")
 

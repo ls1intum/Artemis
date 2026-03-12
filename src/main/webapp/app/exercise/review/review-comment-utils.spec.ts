@@ -1,4 +1,10 @@
-import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import {
+    getFirstCommentByCreatedDateThenId,
+    isReviewCommentsSupportedRepository,
+    mapRepositoryToThreadLocationType,
+    matchesSelectedRepository,
+    sortCommentsByCreatedDateThenId,
+} from 'app/exercise/review/review-comment-utils';
 import { CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -89,5 +95,40 @@ describe('isReviewCommentsSupportedRepository', () => {
 
     it('should not support undefined repository', () => {
         expect(isReviewCommentsSupportedRepository(undefined)).toBe(false);
+    });
+});
+
+describe('sortCommentsByCreatedDateThenId', () => {
+    it('should sort comments by createdDate and id', () => {
+        const comments = [
+            { id: 4, createdDate: '2024-01-02T00:00:00Z' },
+            { id: 1, createdDate: '2024-01-01T00:00:00Z' },
+            { id: 3, createdDate: '2024-01-02T00:00:00Z' },
+        ] as any;
+
+        const sorted = sortCommentsByCreatedDateThenId(comments);
+
+        expect(sorted.map((comment: any) => comment.id)).toEqual([1, 3, 4]);
+    });
+
+    it('should return empty list for undefined comments', () => {
+        expect(sortCommentsByCreatedDateThenId(undefined)).toEqual([]);
+    });
+});
+
+describe('getFirstCommentByCreatedDateThenId', () => {
+    it('should return the first chronological comment', () => {
+        const comments = [
+            { id: 5, createdDate: '2024-01-02T00:00:00Z' },
+            { id: 2, createdDate: '2024-01-01T00:00:00Z' },
+        ] as any;
+
+        const firstComment = getFirstCommentByCreatedDateThenId(comments);
+
+        expect(firstComment?.id).toBe(2);
+    });
+
+    it('should return undefined for empty comments', () => {
+        expect(getFirstCommentByCreatedDateThenId([] as any)).toBeUndefined();
     });
 });
