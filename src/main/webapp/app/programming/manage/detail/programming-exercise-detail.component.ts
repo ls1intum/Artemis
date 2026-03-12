@@ -10,6 +10,7 @@ import {
     faExclamationTriangle,
     faEye,
     faFileSignature,
+    faHistory,
     faListAlt,
     faPencilAlt,
     faTable,
@@ -130,6 +131,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     protected readonly faPencilAlt = faPencilAlt;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
+    protected readonly faHistory = faHistory;
     protected readonly faUserCheck = faUserCheck;
 
     programmingExercise: ProgrammingExercise;

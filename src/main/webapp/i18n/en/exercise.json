@@ -41,6 +41,23 @@
             "detail": {
                 "title": "Exercise"
             },
+            "versionHistory": {
+                "title": "Version History",
+                "timeline": {
+                    "title": "Versions",
+                    "loadMore": "Load More",
+                    "empty": "No versions available yet."
+                },
+                "snapshot": {
+                    "empty": "Select a version to inspect its metadata.",
+                    "sharedTitle": "Exercise Metadata"
+                },
+                "errors": {
+                    "invalidExerciseId": "Could not determine exercise id.",
+                    "timelineLoadFailed": "Version timeline could not be loaded.",
+                    "snapshotLoadFailed": "Version snapshot could not be loaded."
+                }
+            },
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
@@ -234,6 +251,9 @@
             "presentationScoreEnabled": {
                 "title": "Presentation",
                 "description": "If the presentation score is enabled, tutors can enter points for students on the \"Participation\" page of the exercise."
+            },
+            "codeEditorSync": {
+                "newCommitAlert": "New commit detected — A new commit was pushed to this repository. Save and submit your changes first, then refresh the page to load the latest version."
             },
             "metadataSync": {
                 "conflictTitle": "Exercise metadata conflicts",

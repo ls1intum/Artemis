@@ -51,6 +51,23 @@
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
             },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programmieraufgaben-Metadaten",
+                    "noProgrammingData": "Diese Version enthält keine programmierspezifischen Metadaten.",
+                    "emptyValueHint": "In diesem Snapshot nicht verfügbar",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker-Flags",
+                    "theiaImage": "Online-IDE-Image",
+                    "postDueDateHandling": "Verhalten nach Abgabefrist",
+                    "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
+                    "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
+                    "testsCheckoutPath": "Tests-Checkout-Pfad",
+                    "buildPlanConfiguration": "Build-Plan-Konfiguration (JSON)",
+                    "noBuildPlanConfiguration": "Keine Build-Plan-Konfiguration in diesem Snapshot",
+                    "noBuildScript": "Kein Build-Skript in diesem Snapshot"
+                }
+            },
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
@@ -208,8 +225,12 @@
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
+            "projectKey": "Projektschlüssel",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
+            "testsCommitId": "Test-Commit-ID",
+            "templateCommitId": "Vorlagen-Commit-ID",
+            "solutionCommitId": "Lösungs-Commit-ID",
             "theiaImage": {
                 "title": "Konfiguration für Online IDE",
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",
@@ -276,6 +297,7 @@
             "codeGeneration": {
                 "creationAssistance": "Erstellungsassistenz",
                 "generateCode": "Code generieren",
+                "generateWithAi": "Mit KI generieren",
                 "generating": "Generiere...",
                 "runningTitle": "Code-Generierung läuft",
                 "runningText": "Die Code-Generierung läuft aktuell für diese Übung durch einen anderen Benutzer. Bitte versuchen Sie es später erneut.",
@@ -810,6 +832,35 @@
                 "error": {
                     "export": "Kann Aufgabe nicht exportieren: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Checkliste für Lehrende",
+                "analyze": "Problemstellung analysieren",
+                "analyzing": "Analysiere...",
+                "defaultMessage": "Klicke auf \"Problemstellung analysieren\", um nach Qualitätsproblemen zu suchen.",
+                "quality": {
+                    "title": "Qualitätsprobleme",
+                    "empty": "Keine Qualitätsprobleme gefunden.",
+                    "fix": "Beheben",
+                    "suggestedFix": "Vorgeschlagene Lösung:",
+                    "fixAll": "Alle Probleme beheben",
+                    "fixIssue": "KI-Lösung für dieses Problem anwenden",
+                    "fixSelected": "Ausgewählte beheben",
+                    "discardIssue": "Dieses Problem verwerfen",
+                    "discarded": "Problem verworfen.",
+                    "discardSelected": "Ausgewählte verwerfen",
+                    "discardedMultiple": "Ausgewählte Probleme verworfen.",
+                    "selectAll": "Alle auswählen",
+                    "deselectAll": "Alle abwählen",
+                    "radarChartLabel": "Radar-Diagramm der Qualitätsbewertung"
+                },
+                "actions": {
+                    "success": "Problemstellung erfolgreich aktualisiert.",
+                    "error": "Aktion konnte nicht angewendet werden. Bitte erneut versuchen.",
+                    "noChanges": "Keine Änderungen für diese Aktion nötig."
+                },
+                "outdated": "Veraltet",
+                "reanalyze": "Erneut analysieren"
             }
         },
         "error": {
