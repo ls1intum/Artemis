@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { Overlay } from '@angular/cdk/overlay';
+import { OverlayContainer } from '@angular/cdk/overlay';
 import { of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,18 +18,9 @@ interface AlertServiceMock {
     addErrorAlert: ReturnType<typeof vi.fn>;
 }
 
-interface OverlayRefMock {
-    updateSize: ReturnType<typeof vi.fn>;
-    attach: ReturnType<typeof vi.fn>;
-    dispose: ReturnType<typeof vi.fn>;
-}
-
-interface OverlayMock {
-    position: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    scrollStrategies: {
-        reposition: ReturnType<typeof vi.fn>;
-    };
+function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
+    expect(value).not.toBeNull();
+    expect(value).not.toBeUndefined();
 }
 
 describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
@@ -40,8 +31,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
     let tutorialGroupsServiceMock: TutorialGroupsServiceMock;
     let alertServiceMock: AlertServiceMock;
-    let overlayRefMock: OverlayRefMock;
-    let overlayMock: OverlayMock;
+    let overlayContainer: OverlayContainer;
 
     const firstStudent: TutorialGroupRegisteredStudentDTO = {
         id: 1,
@@ -70,40 +60,16 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
             addErrorAlert: vi.fn(),
         };
 
-        overlayRefMock = {
-            updateSize: vi.fn(),
-            attach: vi.fn(),
-            dispose: vi.fn(),
-        };
-
-        const positionStrategy = {
-            withPositions: vi.fn().mockReturnThis(),
-            withFlexibleDimensions: vi.fn().mockReturnThis(),
-            withPush: vi.fn().mockReturnThis(),
-        };
-
-        const connectedPositionBuilder = {
-            flexibleConnectedTo: vi.fn().mockReturnValue(positionStrategy),
-        };
-
-        overlayMock = {
-            position: vi.fn().mockReturnValue(connectedPositionBuilder),
-            create: vi.fn().mockReturnValue(overlayRefMock),
-            scrollStrategies: {
-                reposition: vi.fn().mockReturnValue({}),
-            },
-        };
-
         await TestBed.configureTestingModule({
             imports: [TutorialRegistrationsRegisterSearchBarComponent],
             providers: [
                 { provide: TutorialGroupsService, useValue: tutorialGroupsServiceMock },
                 { provide: AlertService, useValue: alertServiceMock },
-                { provide: Overlay, useValue: overlayMock },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
+        overlayContainer = TestBed.inject(OverlayContainer);
         fixture = TestBed.createComponent(TutorialRegistrationsRegisterSearchBarComponent);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('courseId', 7);
@@ -113,6 +79,7 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        overlayContainer.getContainerElement().innerHTML = '';
     });
 
     it('should load the first page when the search string becomes non-empty', async () => {
@@ -148,6 +115,93 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         expect(component.nextSuggestedStudentsPageLoading()).toBe(false);
     });
 
+    it('should load the next page when the suggestions viewport is scrolled near the bottom', async () => {
+        const firstPageStudents: TutorialGroupRegisteredStudentDTO[] = Array.from({ length: 25 }, (_, index) => ({
+            id: index + 1,
+            login: `student${index + 1}`,
+            name: `Student ${index + 1}`,
+            email: `student${index + 1}@tum.de`,
+            registrationNumber: `R${index + 1}`,
+            profilePictureUrl: undefined,
+        }));
+        const nextPageStudent: TutorialGroupRegisteredStudentDTO = {
+            id: 99,
+            login: 'grace',
+            name: 'Grace Hopper',
+            email: 'grace@tum.de',
+            registrationNumber: 'R099',
+            profilePictureUrl: undefined,
+        };
+
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(of([nextPageStudent]));
+
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        input.dispatchEvent(new FocusEvent('focusin'));
+        component.searchString.set('ada');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
+        assertNonNullable(viewport);
+
+        Object.defineProperty(viewport, 'scrollHeight', { configurable: true, value: 400 });
+        Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 100 });
+        Object.defineProperty(viewport, 'scrollTop', { configurable: true, value: 280, writable: true });
+
+        viewport.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledTimes(2);
+        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenNthCalledWith(2, 7, 11, 'ada', 1, 25);
+        expect(component.suggestedStudents()).toEqual([...firstPageStudents, nextPageStudent]);
+        expect(component.nextSuggestedStudentsPageIndex()).toBe(2);
+        expect(component.hasMorePages()).toBe(false);
+        expect(component.nextSuggestedStudentsPageLoading()).toBe(false);
+    });
+
+    it('should show an error alert when next page loading fails', async () => {
+        const firstPageStudents: TutorialGroupRegisteredStudentDTO[] = Array.from({ length: 25 }, (_, index) => ({
+            id: index + 1,
+            login: `student${index + 1}`,
+            name: `Student ${index + 1}`,
+            email: `student${index + 1}@tum.de`,
+            registrationNumber: `R${index + 1}`,
+            profilePictureUrl: undefined,
+        }));
+
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValueOnce(of(firstPageStudents)).mockReturnValueOnce(throwError(() => new Error('next page failed')));
+
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+        input.dispatchEvent(new FocusEvent('focusin'));
+        component.searchString.set('ada');
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
+        assertNonNullable(viewport);
+
+        Object.defineProperty(viewport, 'scrollHeight', { configurable: true, value: 400 });
+        Object.defineProperty(viewport, 'clientHeight', { configurable: true, value: 100 });
+        Object.defineProperty(viewport, 'scrollTop', { configurable: true, value: 280, writable: true });
+
+        viewport.dispatchEvent(new Event('scroll'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenCalledTimes(2);
+        expect(tutorialGroupsServiceMock.getUnregisteredStudentDTOs).toHaveBeenNthCalledWith(2, 7, 11, 'ada', 1, 25);
+        expect(alertServiceMock.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
+        expect(component.suggestedStudents()).toEqual(firstPageStudents);
+        expect(component.nextSuggestedStudentsPageIndex()).toBe(1);
+        expect(component.hasMorePages()).toBe(true);
+        expect(component.nextSuggestedStudentsPageLoading()).toBe(false);
+    });
+
     it('should reset suggestion state when the search string is empty', async () => {
         component.suggestedStudents.set([firstStudent]);
         component.nextSuggestedStudentsPageIndex.set(3);
@@ -164,31 +218,77 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         expect(component.suggestionHighlightIndex()).toBeUndefined();
     });
 
-    it('should mark the input as focused on focus in', () => {
-        component.onInputFocusIn();
+    it('should close the panel on focus out and reopen it on focus in when suggestions exist', async () => {
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+
+        input.dispatchEvent(new FocusEvent('focusin'));
+        component.searchString.set('ada');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
+        assertNonNullable(viewport);
+        Object.defineProperty(viewport, 'scrollTo', { configurable: true, value: vi.fn() });
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        fixture.detectChanges();
 
         expect(component.inputIsFocused()).toBe(true);
-    });
+        expect(component.suggestionHighlightIndex()).toBe(0);
+        expect(overlayContainer.getContainerElement().querySelector('.search-panel')).not.toBeNull();
 
-    it('should clear the highlight index and mark the input as unfocused on focus out', () => {
-        component.suggestionHighlightIndex.set(1);
+        input.dispatchEvent(new FocusEvent('focusout'));
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        component.onInputFocusOut();
-
-        expect(component.suggestionHighlightIndex()).toBeUndefined();
         expect(component.inputIsFocused()).toBe(false);
+        expect(component.suggestionHighlightIndex()).toBeUndefined();
+        expect(overlayContainer.getContainerElement().querySelector('.search-panel')).toBeNull();
+
+        input.dispatchEvent(new FocusEvent('focusin'));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(component.inputIsFocused()).toBe(true);
+        expect(overlayContainer.getContainerElement().querySelector('.search-panel')).not.toBeNull();
     });
 
-    it('should emit the selected student and reset the component state', () => {
+    it('should update the highlight with arrow keys and emit the selected student on enter after loading suggestions', async () => {
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
         const emitSpy = vi.spyOn(component.onStudentSelected, 'emit');
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
 
+        input.dispatchEvent(new FocusEvent('focusin'));
         component.searchString.set('ada');
-        component.suggestedStudents.set([firstStudent, secondStudent]);
-        component.nextSuggestedStudentsPageIndex.set(4);
-        component.hasMorePages.set(false);
-        component.suggestionHighlightIndex.set(1);
+        fixture.detectChanges();
+        await fixture.whenStable();
+        fixture.detectChanges();
+        await fixture.whenStable();
 
-        component.selectSuggestion(1);
+        const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
+        assertNonNullable(viewport);
+        Object.defineProperty(viewport, 'scrollTo', { configurable: true, value: vi.fn() });
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        fixture.detectChanges();
+        expect(component.suggestionHighlightIndex()).toBe(0);
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        fixture.detectChanges();
+        expect(component.suggestionHighlightIndex()).toBe(1);
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        fixture.detectChanges();
+        expect(component.suggestionHighlightIndex()).toBe(0);
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        fixture.detectChanges();
+        expect(component.suggestionHighlightIndex()).toBe(1);
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+        fixture.detectChanges();
 
         expect(emitSpy).toHaveBeenCalledWith(secondStudent);
         expect(component.searchString()).toBe('');
