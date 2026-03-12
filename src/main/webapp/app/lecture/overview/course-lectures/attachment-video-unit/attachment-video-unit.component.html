@@ -53,12 +53,70 @@
                 <fa-icon [icon]="faFileLines" size="3x" class="text-danger" />
             </div>
         } @else if (pdfUrl()) {
-            <jhi-pdf-viewer
-                [pdfUrl]="pdfUrl()!"
-                [uploadDate]="lectureUnit().attachment?.uploadDate"
-                [version]="lectureUnit().attachment?.version"
-                [initialPage]="targetPdfPage()"
-            />
+            <div class="pdf-viewer-container">
+                <div class="d-flex align-items-center justify-content-between mb-0 small text-secondary">
+                    <div class="d-flex align-items-center gap-0">
+                        <p-button
+                            [text]="true"
+                            severity="secondary"
+                            (click)="zoomOut()"
+                            [disabled]="pdfZoom() <= pdfMinZoom"
+                            [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faSearchMinus" />
+                        </p-button>
+                        <span>{{ (pdfZoom() * 100).toFixed(0) }}%</span>
+                        <p-button
+                            [text]="true"
+                            severity="secondary"
+                            (click)="zoomIn()"
+                            [disabled]="pdfZoom() >= pdfMaxZoom"
+                            [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faSearchPlus" />
+                        </p-button>
+                        <p-button
+                            [text]="true"
+                            severity="secondary"
+                            (click)="resetZoom()"
+                            [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.resetZoom' | artemisTranslate"
+                        >
+                            <fa-icon [icon]="faRotateLeft" />
+                        </p-button>
+                    </div>
+                    <div class="d-flex align-items-center pe-2">
+                        <span>{{ currentPdfPage }}/{{ pdfPageCount }}</span>
+                    </div>
+                </div>
+                <div class="pdf-viewer-box hide-scrollbar-unless-scrolling" #pdfViewerBox>
+                    <pdf-viewer
+                        [src]="pdfUrl()!"
+                        [render-text]="true"
+                        [show-all]="true"
+                        [original-size]="false"
+                        [zoom]="pdfZoom()"
+                        [zoom-scale]="'page-width'"
+                        [(page)]="currentPdfPage"
+                        (after-load-complete)="onPdfLoaded($event)"
+                        (error)="onPdfError()"
+                    />
+                </div>
+                @if (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version) {
+                    <div class="mt-2 small text-secondary">
+                        @if (lectureUnit().attachment?.uploadDate) {
+                            <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
+                            {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+                        }
+                        @if (lectureUnit().attachment?.uploadDate && lectureUnit().attachment?.version) {
+                            <span> - </span>
+                        }
+                        @if (lectureUnit().attachment?.version) {
+                            <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
+                            {{ lectureUnit().attachment?.version }}
+                        }
+                    </div>
+                }
+            </div>
         }
     }
 </jhi-lecture-unit-card>

@@ -1,18 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
-// Mock pdfjs-dist BEFORE importing the component
-vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => {
-    return {
-        __esModule: true,
-        GlobalWorkerOptions: {
-            workerSrc: '',
-        },
-        getDocument: vi.fn(() => ({ promise: Promise.resolve({ numPages: 0, getPage: vi.fn(), destroy: vi.fn() }) })),
-    };
-});
-
-import { AttachmentVideoUnitComponent } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
+import type { AttachmentVideoUnitComponent as AttachmentVideoUnitComponentType } from 'app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { AttachmentType } from 'app/lecture/shared/entities/attachment.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -48,6 +37,15 @@ import urlParser from 'js-video-url-parser';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
+vi.mock('ng2-pdf-viewer', async () => {
+    const { MockPdfViewerComponent, MockPdfViewerModule } = await import('test/helpers/mocks/mock-pdf-viewer.component');
+    return {
+        PdfViewerComponent: MockPdfViewerComponent,
+        PdfViewerModule: MockPdfViewerModule,
+    };
+});
+
+type AttachmentVideoUnitComponentClass = typeof import('app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component').AttachmentVideoUnitComponent;
 
 // Mock ResizeObserver for VideoPlayerComponent
 class MockResizeObserver {
@@ -65,8 +63,9 @@ describe('AttachmentVideoUnitComponent', () => {
     let httpMock: HttpTestingController;
     let lectureTranscriptionService: LectureTranscriptionService;
 
-    let component: AttachmentVideoUnitComponent;
-    let fixture: ComponentFixture<AttachmentVideoUnitComponent>;
+    let attachmentVideoUnitComponentClass: AttachmentVideoUnitComponentClass;
+    let component: AttachmentVideoUnitComponentType;
+    let fixture: ComponentFixture<AttachmentVideoUnitComponentType>;
 
     const attachmentVideoUnit: AttachmentVideoUnit = {
         id: 1,
@@ -88,8 +87,11 @@ describe('AttachmentVideoUnitComponent', () => {
             getTranscriptionStatus: vi.fn(() => of(undefined)),
         };
 
+        const imported = await import('app/lecture/overview/course-lectures/attachment-video-unit/attachment-video-unit.component');
+        attachmentVideoUnitComponentClass = imported.AttachmentVideoUnitComponent;
+
         await TestBed.configureTestingModule({
-            imports: [AttachmentVideoUnitComponent],
+            imports: [attachmentVideoUnitComponentClass],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -109,7 +111,7 @@ describe('AttachmentVideoUnitComponent', () => {
         httpMock = TestBed.inject(HttpTestingController);
         lectureTranscriptionService = TestBed.inject(LectureTranscriptionService);
 
-        fixture = TestBed.createComponent(AttachmentVideoUnitComponent);
+        fixture = TestBed.createComponent(attachmentVideoUnitComponentClass);
         component = fixture.componentInstance;
 
         fixture.componentRef.setInput('lectureUnit', { ...attachmentVideoUnit });
