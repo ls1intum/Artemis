@@ -60,6 +60,23 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programming Exercise Metadata",
+                    "noProgrammingData": "This version does not contain programming-specific metadata.",
+                    "emptyValueHint": "Not available in this snapshot",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker Flags",
+                    "theiaImage": "Online IDE Image",
+                    "postDueDateHandling": "Post Due Date Handling",
+                    "assignmentCheckoutPath": "Assignment Checkout Path",
+                    "solutionCheckoutPath": "Solution Checkout Path",
+                    "testsCheckoutPath": "Tests Checkout Path",
+                    "buildPlanConfiguration": "Build Plan Configuration (JSON)",
+                    "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
+                    "noBuildScript": "No build script in this snapshot"
+                }
+            },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
                 "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
@@ -241,8 +258,12 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "projectKey": "Project Key",
             "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
+            "testsCommitId": "Tests Commit Id",
+            "templateCommitId": "Template Commit Id",
+            "solutionCommitId": "Solution Commit Id",
             "theiaImage": {
                 "title": "Configuration for Online IDE",
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
@@ -309,6 +330,7 @@
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",
                 "generateCode": "Generate Code",
+                "generateWithAi": "Generate with AI",
                 "generating": "Generating...",
                 "runningTitle": "Code generation in progress",
                 "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
@@ -843,6 +865,35 @@
                 "error": {
                     "export": "Unable to export programming exercise: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for quality issues.",
+                "quality": {
+                    "title": "Quality Assessment",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix",
+                    "suggestedFix": "Suggested fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue",
+                    "fixSelected": "Fix Selected",
+                    "discardIssue": "Discard this issue",
+                    "discarded": "Issue discarded.",
+                    "discardSelected": "Discard Selected",
+                    "discardedMultiple": "Selected issues discarded.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "radarChartLabel": "Quality scores radar chart"
+                },
+                "actions": {
+                    "success": "Problem statement updated successfully.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action."
+                },
+                "outdated": "Outdated",
+                "reanalyze": "Re-analyze"
             }
         },
         "error": {
