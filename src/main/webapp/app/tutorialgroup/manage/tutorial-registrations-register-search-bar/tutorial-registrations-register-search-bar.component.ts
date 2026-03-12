@@ -1,4 +1,5 @@
-import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -28,6 +29,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
+    private destroyRef = inject(DestroyRef);
     private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
@@ -39,11 +41,11 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     searchBarPlaceholder = computed<string>(() => this.computeSearchBarPlaceholder());
     searchString = signal<string>('');
     suggestedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    firstSuggestedStudentsPageLoading = signal(false);
+    nextSuggestedStudentsPageLoading = signal(false);
     nextSuggestedStudentsPageIndex = signal(0);
     hasMorePages = signal(true);
     suggestionHighlightIndex = signal<number | undefined>(undefined);
-    firstSuggestedStudentsPageLoading = signal(false);
-    nextSuggestedStudentsPageLoading = signal(false);
     inputIsFocused = signal(false);
     onStudentSelected = output<TutorialGroupRegisteredStudentDTO>();
 
@@ -126,7 +128,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
         this.inputIsFocused.set(true);
         const panelNotAlreadyOpen = this.overlayRef === undefined;
         const suggestedStudentsExist = this.suggestedStudents().length > 0;
-        if (suggestedStudentsExist && panelNotAlreadyOpen) {
+        if (panelNotAlreadyOpen && suggestedStudentsExist) {
             this.openPanel();
         }
     }
@@ -193,14 +195,15 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
         const viewport = this.viewport();
         if (!viewport) return;
 
-        // TODO: fix memory leak
-        viewport.elementScrolled().subscribe(() => {
-            const distanceToBottom = viewport.measureScrollOffset('bottom');
-
-            if (distanceToBottom < 40) {
-                this.loadNextPage();
-            }
-        });
+        viewport
+            .elementScrolled()
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe(() => {
+                const distanceToBottom = viewport.measureScrollOffset('bottom');
+                if (distanceToBottom < 40) {
+                    this.loadNextPage();
+                }
+            });
     }
 
     private closePanel() {
@@ -251,9 +254,9 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
 
     private resetSuggestedStudentsState() {
         this.suggestedStudents.set([]);
-        this.suggestionHighlightIndex.set(undefined);
         this.nextSuggestedStudentsPageIndex.set(0);
         this.hasMorePages.set(true);
+        this.suggestionHighlightIndex.set(undefined);
     }
 
     private computeSearchBarPlaceholder(): string {
