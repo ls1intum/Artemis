@@ -20,18 +20,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { Validation, ValidationStatus } from 'app/shared/util/validation';
 
 enum Mode {
     ONLINE = 'Online',
     OFFLINE = 'Offline',
 }
-
-export enum ValidationStatus {
-    VALID = 'VALID',
-    INVALID = 'INVALID',
-}
-
-export type Validation = { status: ValidationStatus.INVALID; message: string } | { status: ValidationStatus.VALID };
 
 export interface CreateTutorialGroupEvent {
     courseId: number;
