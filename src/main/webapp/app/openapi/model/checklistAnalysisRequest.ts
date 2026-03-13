@@ -10,13 +10,17 @@
 
 
 /**
- * Request to analyze a problem statement for quality
+ * Request to analyze a problem statement for quality, competencies, and difficulty
  */
 export interface ChecklistAnalysisRequest { 
     /**
      * Problem statement in Markdown format
      */
     problemStatementMarkdown: string;
+    /**
+     * Declared difficulty of the exercise
+     */
+    declaredDifficulty?: string;
     /**
      * Programming language, e.g. JAVA, PYTHON
      */
