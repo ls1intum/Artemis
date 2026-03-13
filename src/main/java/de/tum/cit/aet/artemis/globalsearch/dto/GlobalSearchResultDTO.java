@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.globalsearch.dto;
 
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,16 +34,16 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
             metadata.put("courseId", courseId);
         }
 
-        // Add due date if present
+        // Add due date if present (raw ISO string — client handles locale-aware formatting)
         String dueDate = getString(properties, "due_date");
         if (dueDate != null) {
-            metadata.put("dueDate", formatDateForDisplay(dueDate));
+            metadata.put("dueDate", dueDate);
         }
 
-        // Add release date if present
+        // Add release date if present (raw ISO string — client handles locale-aware formatting)
         String releaseDate = getString(properties, "release_date");
         if (releaseDate != null) {
-            metadata.put("releaseDate", formatDateForDisplay(releaseDate));
+            metadata.put("releaseDate", releaseDate);
         }
 
         // Add points
@@ -121,25 +119,6 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
             case "file-upload", "fileupload" -> "File Upload";
             default -> "Exercise";
         };
-    }
-
-    /**
-     * Formats an ISO date string to a display-friendly format.
-     *
-     * @param isoDate the ISO date string
-     * @return formatted date string (e.g., "Feb 15, 2026")
-     */
-    private static String formatDateForDisplay(String isoDate) {
-        if (isoDate == null) {
-            return null;
-        }
-        try {
-            ZonedDateTime dateTime = ZonedDateTime.parse(isoDate, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
-            return dateTime.format(DateTimeFormatter.ofPattern("MMM d, yyyy"));
-        }
-        catch (Exception e) {
-            return isoDate; // Return original if parsing fails
-        }
     }
 
     private static String getString(Map<String, Object> properties, String key) {
