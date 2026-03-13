@@ -398,7 +398,7 @@
             "overview": "Overview",
             "onboarding": {
                 "title": "Course Setup Wizard",
-                "subtitle": "Let's set up your course step by step. You can skip any step and adjust settings later.",
+                "subtitle": "Let's set up your course step by step. You can adjust settings later at any time.",
                 "steps": {
                     "generalSettings": "General",
                     "enrollment": "Enrollment",
@@ -409,7 +409,6 @@
                 "actions": {
                     "next": "Next",
                     "previous": "Previous",
-                    "skip": "Skip",
                     "finishSetup": "Finish Setup",
                     "goToCourse": "Go to Course",
                     "restartSetup": "Course Setup",

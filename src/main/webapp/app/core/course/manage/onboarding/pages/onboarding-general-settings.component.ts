@@ -80,7 +80,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         if (!courseId || !currentSettings) {
             return;
         }
-        const newSettings: IrisCourseSettingsDTO = { ...currentSettings, enabled };
+        const newSettings: IrisCourseSettingsDTO = Object.assign({}, currentSettings, { enabled });
         this.irisSettings.set(newSettings);
         this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
             next: (response) => {

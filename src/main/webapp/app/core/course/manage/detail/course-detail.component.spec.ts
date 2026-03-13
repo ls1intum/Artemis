@@ -129,7 +129,8 @@ describe('Course Management Detail Component', () => {
         await Promise.resolve();
         expect(component.courseDTO()).toEqual(dtoMock);
         // Course will have organizations added from the mocked service
-        expect(component.course()).toEqual({ ...course, organizations: [] });
+        const expectedCourse = Object.assign(new Course(), course, { organizations: [] });
+        expect(component.course()).toEqual(expectedCourse);
         expect(registerSpy).toHaveBeenCalledOnce();
     });
 

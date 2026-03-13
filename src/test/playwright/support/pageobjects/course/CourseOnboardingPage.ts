@@ -39,17 +39,10 @@ export class CourseOnboardingPage {
     }
 
     /**
-     * Clicks the "Next" button to advance to the next step.
+     * Clicks the "Next" button to advance to the next step (saves current step).
      */
     async clickNext() {
         await this.page.locator('.footer-right .btn-primary').click();
-    }
-
-    /**
-     * Clicks the "Skip" button to skip the current step.
-     */
-    async clickSkip() {
-        await this.page.locator('.footer-right .btn-outline-secondary').click();
     }
 
     /**
@@ -60,10 +53,17 @@ export class CourseOnboardingPage {
     }
 
     /**
-     * Clicks the "Finish Setup" button on the last step.
+     * Clicks the "Finish Setup" button (saves onboardingDone and advances to Explore step).
      */
     async clickFinishSetup() {
         await this.page.locator('.footer-right .btn-success').click();
+    }
+
+    /**
+     * Clicks the "Go to Course" button on the Explore step.
+     */
+    async clickGoToCourse() {
+        await this.page.locator('.footer-right .btn-primary').click();
     }
 
     /**
@@ -81,7 +81,7 @@ export class CourseOnboardingPage {
     }
 
     /**
-     * Verifies the "Finish Setup" button is visible (last step).
+     * Verifies the "Finish Setup" button is visible (Assessment step).
      */
     async expectFinishButtonVisible() {
         await expect(this.page.locator('.footer-right .btn-success')).toBeVisible();
@@ -95,7 +95,7 @@ export class CourseOnboardingPage {
     }
 
     /**
-     * Verifies the explore cards are visible on the last step.
+     * Verifies the explore cards are visible on the Explore step.
      */
     async expectExploreCardsVisible() {
         await expect(this.page.locator('.explore-card').first()).toBeVisible();

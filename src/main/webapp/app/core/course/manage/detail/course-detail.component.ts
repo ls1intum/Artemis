@@ -374,7 +374,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.organizationService.getOrganizationsByCourse(courseId).subscribe((organizations) => {
             const currentCourse = this.course();
             if (currentCourse) {
-                this.course.set({ ...currentCourse, organizations });
+                this.course.set(Object.assign(new Course(), currentCourse, { organizations }));
                 this.getCourseDetailSections();
             }
         });

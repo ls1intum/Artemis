@@ -44,22 +44,22 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         await nextResponse2;
         await expect(page.locator('#onboarding_communicationEnabled')).toBeVisible();
 
-        // Skip step 3: Assessment & AI
-        await courseOnboarding.clickSkip();
+        // Advance to step 3: Assessment & AI
+        const nextResponse3 = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
+        await courseOnboarding.clickNext();
+        await nextResponse3;
         await expect(page.locator('#onboarding_complaintsEnabled')).toBeVisible();
-
-        // Skip to step 4: Explore
-        await courseOnboarding.clickSkip();
-        await courseOnboarding.expectExploreCardsVisible();
         await courseOnboarding.expectFinishButtonVisible();
 
-        // Finish setup
+        // Finish setup (saves onboardingDone=true and advances to step 4: Explore)
         const finishResponse = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
         await courseOnboarding.clickFinishSetup();
         await finishResponse;
+        await courseOnboarding.expectExploreCardsVisible();
 
-        // Should redirect to course management page (not back to onboarding)
-        await page.waitForURL(`**/course-management/${course.id}`);
+        // Go to course overview
+        await courseOnboarding.clickGoToCourse();
+        await page.waitForURL(`**/course-management/${course.id}**`);
         await expect(page.locator('.onboarding-wizard')).toBeHidden();
     });
 
@@ -78,25 +78,30 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         await courseOnboarding.expectNoPreviousButton();
     });
 
-    test('Replay wizard from course settings', async ({ page, courseManagement }) => {
-        // First, complete the onboarding
+    test('Replay wizard from course overview', async ({ page, courseOnboarding }) => {
         await page.goto(`/course-management/${course.id}/onboarding`);
-        await page.locator('.onboarding-wizard').waitFor({ state: 'visible' });
+        await courseOnboarding.expectWizardVisible();
 
-        // Skip through all steps and finish
-        for (let i = 0; i < 4; i++) {
-            await page.locator('.footer-right .btn-outline-secondary').click();
+        // Walk through steps 0→1→2→3 using Next
+        for (let i = 0; i < 3; i++) {
+            const resp = page.waitForResponse((r) => r.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && r.request().method() === 'PUT');
+            await courseOnboarding.clickNext();
+            await resp;
         }
-        const finishResponse = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
-        await page.locator('.footer-right .btn-success').click();
-        await finishResponse;
-        await page.waitForURL(`**/course-management/${course.id}`);
 
-        // Now navigate to course settings and find the replay button
-        await courseManagement.openCourseSettings();
-        const replayLink = page.locator('a[href*="onboarding"]');
-        await expect(replayLink).toBeVisible();
-        await replayLink.click();
+        // Finish setup on step 3 (advances to step 4)
+        const finishResponse = page.waitForResponse((resp) => resp.url().includes(`${COURSE_UPDATE_BASE}/${course.id}`) && resp.request().method() === 'PUT');
+        await courseOnboarding.clickFinishSetup();
+        await finishResponse;
+
+        // Go to course overview from step 4
+        await courseOnboarding.clickGoToCourse();
+        await page.waitForURL(`**/course-management/${course.id}**`);
+
+        // Find and click the "Course Setup" button to replay the wizard
+        const replayButton = page.locator('button', { hasText: 'Course Setup' });
+        await expect(replayButton).toBeVisible();
+        await replayButton.click();
 
         // Should open the onboarding wizard again
         await page.waitForURL(`**/course-management/${course.id}/onboarding`);

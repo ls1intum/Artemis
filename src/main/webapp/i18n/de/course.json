@@ -398,7 +398,7 @@
             "overview": "Übersicht",
             "onboarding": {
                 "title": "Kurs-Einrichtungsassistent",
-                "subtitle": "Richte deinen Kurs Schritt für Schritt ein. Du kannst jeden Schritt überspringen und die Einstellungen später anpassen.",
+                "subtitle": "Richte deinen Kurs Schritt für Schritt ein. Du kannst die Einstellungen jederzeit später anpassen.",
                 "steps": {
                     "generalSettings": "Allgemein",
                     "enrollment": "Einschreibung",
@@ -409,7 +409,6 @@
                 "actions": {
                     "next": "Weiter",
                     "previous": "Zurück",
-                    "skip": "Überspringen",
                     "finishSetup": "Einrichtung abschließen",
                     "goToCourse": "Zum Kurs",
                     "restartSetup": "Kurseinrichtung",
