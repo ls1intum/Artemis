@@ -1,0 +1,67 @@
+import { DestroyRef, Injectable, inject, signal } from '@angular/core';
+import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { AlertService } from 'app/shared/service/alert.service';
+
+@Injectable({
+    providedIn: 'root',
+})
+export class TutorialGroupRegisteredStudentsService {
+    private destroyRef = inject(DestroyRef);
+    private tutorialGroupsService = inject(TutorialGroupsService);
+    private alertService = inject(AlertService);
+
+    isLoading = signal(false);
+    registeredStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+
+    deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string) {
+        this.isLoading.set(true);
+        this.tutorialGroupsService
+            .deregisterStudent(courseId, tutorialGroupId, studentLogin)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: () => {
+                    this.registeredStudents.update((registeredStudents) => {
+                        return registeredStudents.filter((student) => student.login !== studentLogin);
+                    });
+                    this.isLoading.set(false);
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupRegisteredStudentsService.networkError.deregisterStudent');
+                    this.isLoading.set(false);
+                },
+            });
+    }
+
+    fetchRegisteredStudents(courseId: number, tutorialGroupId: number) {
+        this.isLoading.set(true);
+        this.tutorialGroupsService
+            .getRegisteredStudentDTOs(courseId, tutorialGroupId)
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (registeredStudents) => {
+                    this.registeredStudents.set(registeredStudents);
+                    this.isLoading.set(false);
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupRegisteredStudentsService.networkError.fetchRegisteredStudents');
+                    this.isLoading.set(false);
+                },
+            });
+    }
+
+    addStudentsToRegisteredStudentsState(students: TutorialGroupRegisteredStudentDTO[]) {
+        this.registeredStudents.update((registeredStudents) => {
+            const existingStudentIds = new Set(registeredStudents.map((student) => student.id));
+            const newStudents: TutorialGroupRegisteredStudentDTO[] = students.filter((student) => {
+                if (existingStudentIds.has(student.id)) {
+                    return false;
+                }
+                existingStudentIds.add(student.id);
+                return true;
+            });
+            return [...registeredStudents, ...newStudents];
+        });
+    }
+}
