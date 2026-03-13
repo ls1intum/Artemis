@@ -6,7 +6,7 @@ import { InputGroupModule } from 'primeng/inputgroup';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { Validation, ValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
+import { Validation, ValidationStatus } from 'app/shared/util/validation';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { TooltipModule } from 'primeng/tooltip';
 import dayjs from 'dayjs/esm';
