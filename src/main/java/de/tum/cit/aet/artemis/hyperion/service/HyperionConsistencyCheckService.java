@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +18,8 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -46,10 +49,15 @@ import reactor.core.scheduler.Schedulers;
  * <p>
  * Flow:
  * <ol>
- * <li>Refetch exercise with template & solution participations.</li>
- * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService} and append existing review-thread context.</li>
- * <li>Execute structural & semantic prompts concurrently using the Spring AI {@link ChatClient}.</li>
- * <li>Parse structured JSON into schema classes, normalize, aggregate, and expose as DTOs.</li>
+ * <li>Refetch exercise with template &amp; solution participations.</li>
+ * <li>Render textual snapshot (problem statement + repositories) via {@link HyperionProgrammingExerciseContextRendererService}.</li>
+ * <li>Execute two concurrent branches:
+ * <ul>
+ * <li>Branch A: structural check then structural verification</li>
+ * <li>Branch B: semantic check then semantic verification</li>
+ * </ul>
+ * </li>
+ * <li>Merge verified results from both branches and expose as DTOs.</li>
  * </ol>
  */
 @Service
@@ -126,11 +134,12 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
-     * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
+     * Execute structural and semantic consistency checks with per-branch verification.
+     * Each branch runs its check followed immediately by a verification step, both branches concurrent.
+     * Results are merged and returned as a single list.
      *
      * @param exerciseId id of the programming exercise to check consistency for
-     * @return aggregated consistency issues, timing, token usage, and costs.
+     * @return aggregated verified consistency issues, timing, token usage, and costs
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
@@ -149,18 +158,32 @@ public class HyperionConsistencyCheckService {
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
 
-        // Thread-safe collector for usage data from parallel checks
+        // Thread-safe collector for usage data from parallel branches
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
 
         Observation parentObs = observationRegistry.getCurrentObservation();
-        var structuralMono = Mono.fromCallable(() -> runStructuralCheck(input, parentObs, usageCollector)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
-        var semanticMono = Mono.fromCallable(() -> runSemanticCheck(input, parentObs, usageCollector)).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
 
-        var results = Mono.zip(structuralMono, semanticMono).block();
-        var structuralIssues = results != null ? results.getT1() : List.<ConsistencyIssue>of();
-        var semanticIssues = results != null ? results.getT2() : List.<ConsistencyIssue>of();
+        // Branch A: structural check -> structural verification (sequential within branch)
+        var structuralBranch = Mono.fromCallable(() -> {
+            List<ConsistencyIssue> structural = runStructuralCheck(input, parentObs, usageCollector);
+            return runVerificationCheck(structural, "/prompts/hyperion/consistency_structural_verification.st", input, parentObs, usageCollector);
 
-        List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
+        }).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+
+        // Branch B: semantic check -> semantic verification (sequential within branch)
+        var semanticBranch = Mono.fromCallable(() -> {
+            List<ConsistencyIssue> semantic = runSemanticCheck(input, parentObs, usageCollector);
+            return runVerificationCheck(semantic, "/prompts/hyperion/consistency_semantic_verification.st", input, parentObs, usageCollector);
+        }).subscribeOn(Schedulers.boundedElastic()).onErrorReturn(List.of());
+
+        var results = Mono.zip(structuralBranch, semanticBranch).block();
+        var verifiedStructural = results != null ? results.getT1() : List.<ConsistencyIssue>of();
+        var verifiedSemantic = results != null ? results.getT2() : List.<ConsistencyIssue>of();
+
+        log.info("Consistency check complete: {} structural + {} semantic verified issues", verifiedStructural.size(), verifiedSemantic.size());
+
+        List<ConsistencyIssueDTO> issueDTOs = Stream.concat(verifiedStructural.stream(), verifiedSemantic.stream()).map(this::mapConsistencyIssueToDto).toList();
+
         List<LLMRequest> validRequests = usageCollector.stream().filter(Objects::nonNull).toList();
         if (!validRequests.isEmpty()) {
             Long courseId = exerciseWithParticipations.getCourseViaExerciseGroupOrCourseMember() != null
@@ -171,14 +194,12 @@ public class HyperionConsistencyCheckService {
                     builder -> builder.withCourse(courseId).withExercise(exerciseWithParticipations.getId()).withUser(userId));
         }
 
-        List<ConsistencyIssueDTO> issueDTOs = combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
-
         // Timing
         Instant endTime = Instant.now();
         double durationSeconds = Duration.between(startTime, endTime).toMillis() / 1000.0;
         var timingDTO = new TimingDTO(startTime.toString(), endTime.toString(), durationSeconds);
 
-        // Aggregate token usage and costs from LLMRequest data
+        // Aggregate token usage and costs
         long totalPromptTokens = validRequests.stream().mapToLong(LLMRequest::numInputTokens).sum();
         long totalCompletionTokens = validRequests.stream().mapToLong(LLMRequest::numOutputTokens).sum();
         double promptCost = validRequests.stream().mapToDouble(r -> r.numInputTokens() * r.costPerMillionInputToken() / 1_000_000.0).sum();
@@ -196,6 +217,7 @@ public class HyperionConsistencyCheckService {
                 log.info("Consistency issue for exercise {}: [{}] {} - Suggested fix: {}", exerciseId, issue.severity(), issue.description(), issue.suggestedFix());
             }
         }
+
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
     }
 
@@ -272,6 +294,66 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
+     * Run the verification prompt against issues from a single checker (structural or semantic).
+     * Receives the full exercise context plus the detected issues, removes false positives,
+     * and improves surviving issues. Falls back to the original detected list on any failure
+     * or when the verifier returns empty.
+     *
+     * @param detectedIssues issues detected by the preceding structural or semantic check
+     * @param input          prompt variables (rendered_context, programming_language, existing_review_threads)
+     * @param parentObs      parent observation for tracing
+     * @param usageCollector thread-safe list to collect LLM request data
+     * @return verified issues, or original detectedIssues if the call fails or returns empty
+     */
+    private List<ConsistencyIssue> runVerificationCheck(List<ConsistencyIssue> detectedIssues, String promptPath, Map<String, String> input, Observation parentObs,
+            List<LLMRequest> usageCollector) {
+        var child = Observation.createNotStarted("hyperion.consistency.verification", observationRegistry).contextualName("verification check")
+                .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
+                .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "verification check")).parentObservation(parentObs).start();
+
+        String issuesJson;
+        try {
+            issuesJson = new ObjectMapper().writeValueAsString(detectedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
+        }
+        catch (Exception e) {
+            log.warn("Failed to serialize detected issues for verification — returning original list", e);
+            child.stop();
+            return detectedIssues;
+        }
+
+        var verificationInput = new HashMap<>(input);
+        verificationInput.put("detected_issues_json", issuesJson);
+
+        var resourcePath = promptPath;
+        String renderedPrompt = templates.render(resourcePath, verificationInput);
+
+        try (Observation.Scope scope = child.openScope()) {
+            var verificationResponse = chatClient.prompt().system("""
+                    You are a senior educational quality assurance engineer reviewing consistency issues in programming exercises.
+                    Your tasks in order:
+                    1. Remove false positives: pedagogical gaps (empty stubs, TODOs, missing method bodies), hallucinated issues, and intentional design variations.
+                    2. Improve surviving issues: correct inaccurate line numbers, sharpen vague descriptions, fix miscategorised categories.
+                    When uncertain whether an issue is a false positive — keep it.
+                    Return only JSON matching the schema. Do not include explanatory text outside the JSON.
+                    """).user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
+
+            usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
+            List<ConsistencyIssue> verified = toGenericConsistencyIssue(verificationResponse.entity());
+            log.info("Verification: {} issues in -> {} issues out", detectedIssues.size(), verified.size());
+            // If verifier returns empty, fall back to original to avoid silent data loss
+            return verified.isEmpty() ? detectedIssues : verified;
+        }
+        catch (RuntimeException e) {
+            child.error(e);
+            log.warn("Verification call failed — returning original detected issues", e);
+            return detectedIssues;
+        }
+        finally {
+            child.stop();
+        }
+    }
+
+    /**
      * Convert an internal issue record into an outward-facing DTO.
      *
      * @param issue internal unified consistency issue
@@ -321,6 +403,21 @@ public class HyperionConsistencyCheckService {
                 .toList();
     }
 
+    /**
+     * Normalize unified issue structured output schema (used by the verifier) to internal issue representations.
+     *
+     * @param unifiedIssues parsed unified model output
+     * @return immutable list of issues
+     */
+    private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.UnifiedConsistencyIssues unifiedIssues) {
+        if (unifiedIssues == null || unifiedIssues.issues == null) {
+            return List.of();
+        }
+        return unifiedIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
+                issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
+                .toList();
+    }
+
     // Unified consistency issue used internally after parsing
     private record ConsistencyIssue(String severity, ConsistencyIssueCategory category, String description, String suggestedFix,
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
@@ -356,8 +453,21 @@ public class HyperionConsistencyCheckService {
                 List<ArtifactLocation> relatedLocations) {
         }
 
+        /** Unified schema covering all 6 categories — used exclusively by the verifier. */
+        private static class UnifiedConsistencyIssues {
+
+            public List<UnifiedConsistencyIssue> issues = List.of();
+        }
+
+        private enum UnifiedConsistencyIssueCategory {
+            METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH, ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY
+        }
+
+        private record UnifiedConsistencyIssue(String severity, UnifiedConsistencyIssueCategory category, String description, String suggestedFix,
+                List<ArtifactLocation> relatedLocations) {
+        }
+
         private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
         }
     }
-
 }
