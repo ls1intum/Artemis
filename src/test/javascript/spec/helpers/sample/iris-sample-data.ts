@@ -109,6 +109,7 @@ export const mockConversation = {
     messages: [mockClientMessage, mockServerMessage],
     mode: ChatServiceMode.COURSE,
     entityId: 1,
+    userId: 1,
     creationDate: new Date(),
 } as IrisSession;
 
@@ -117,6 +118,7 @@ export const mockConversationWithNoMessages = {
     messages: [],
     mode: ChatServiceMode.COURSE,
     entityId: 1,
+    userId: 1,
     creationDate: new Date(),
 } as IrisSession;
 
