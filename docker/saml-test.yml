@@ -38,6 +38,14 @@ services:
         networks:
             - artemis
 
+    # Uncomment this section for containerized Artemis (e.g. docker compose -f artemis-dev-mysql.yml -f saml-test.yml up)
+    # It merges with the artemis-app service from the Artemis compose file to mount the SAML2 config.
+    # You also need to add 'saml2' to the SPRING_PROFILES_ACTIVE environment variable.
+    # For non-containerized Artemis (IntelliJ / gradlew bootRun), configure application-local.yml instead.
+    # artemis-app:
+    #     volumes:
+    #         - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
+
 networks:
     artemis:
         driver: "bridge"

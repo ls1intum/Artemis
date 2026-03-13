@@ -144,6 +144,31 @@ The Keycloak realm also needs `http://localhost:9000/login/saml2/sso/keycloak` a
 
 ---
 
+## Containerized Artemis Setup
+
+When running Artemis as a Docker container, combine the SAML2 compose file with your Artemis compose file:
+
+```bash
+docker compose -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
+```
+
+Then uncomment the `artemis-app` service section in `docker/saml-test.yml` to mount the SAML2 configuration into the Artemis container:
+
+```yaml
+artemis-app:
+    volumes:
+        - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
+```
+
+You also need to add `saml2` to the `SPRING_PROFILES_ACTIVE` environment variable in your Artemis compose configuration.
+
+<Callout variant={CalloutVariant.info}>
+    The containerized setup uses `keycloak:9080` as the metadata URL (Docker's internal DNS) instead of `localhost:9080`.
+    This is already configured in `docker/saml-test/application-saml2.yml`.
+</Callout>
+
+---
+
 ## Step 4: Test the SAML2 Login
 
 1. Start Keycloak: `docker compose -f docker/saml-test.yml up -d`

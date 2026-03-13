@@ -34,6 +34,16 @@ services:
         networks:
             - artemis
 
+    # Uncomment this section for containerized Artemis (e.g. docker compose -f artemis-dev-mysql.yml -f mailpit.yml up)
+    # It merges with the artemis-app service from the Artemis compose file to configure mail settings.
+    # For non-containerized Artemis (IntelliJ / gradlew bootRun), configure application-local.yml instead.
+    # artemis-app:
+    #     environment:
+    #         SPRING_MAIL_HOST: "mailpit"
+    #         SPRING_MAIL_PORT: "1025"
+    #         SPRING_MAIL_USERNAME:
+    #         SPRING_MAIL_PASSWORD:
+
 networks:
     artemis:
         driver: "bridge"

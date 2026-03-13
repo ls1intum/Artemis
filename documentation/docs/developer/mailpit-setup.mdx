@@ -52,9 +52,9 @@ docker compose -f docker/mailpit.yml down
 
 ---
 
-## Configuring Artemis
+## Configuring Artemis (Non-Containerized)
 
-Add the following to your `src/main/resources/config/application-local.yml`:
+When running Artemis from IntelliJ or via `./gradlew bootRun`, add the following to your `src/main/resources/config/application-local.yml`:
 
 ```yaml
 spring:
@@ -70,16 +70,28 @@ jhipster:
 
 This overrides the default mail settings from `application-dev.yml` to route all emails to Mailpit's SMTP server.
 
-<Callout variant={CalloutVariant.info}>
-    If you are running Artemis inside a Docker container (instead of from IntelliJ or `./gradlew bootRun`),
-    use `mailpit` as the host instead of `localhost`:
+## Configuring Artemis (Containerized)
 
-    ```yaml
-    spring:
-        mail:
-            host: mailpit
-            port: 1025
-    ```
+When running Artemis as a Docker container, combine the Mailpit compose file with your Artemis compose file:
+
+```bash
+docker compose -f docker/artemis-dev-mysql.yml -f docker/mailpit.yml up
+```
+
+Then uncomment the `artemis-app` service section in `docker/mailpit.yml` to inject the mail settings into the Artemis container:
+
+```yaml
+artemis-app:
+    environment:
+        SPRING_MAIL_HOST: "mailpit"
+        SPRING_MAIL_PORT: "1025"
+        SPRING_MAIL_USERNAME:
+        SPRING_MAIL_PASSWORD:
+```
+
+<Callout variant={CalloutVariant.info}>
+    The containerized setup uses `mailpit` as the hostname (Docker's internal DNS) instead of `localhost`,
+    because the Artemis container communicates with the Mailpit container over the shared Docker network.
 </Callout>
 
 ---
