@@ -10,6 +10,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-onboarding-assessment-ai',
     templateUrl: './onboarding-assessment-ai.component.html',
+    styleUrls: ['./_onboarding-pages.scss'],
     imports: [FormsModule, TranslateDirective, FaIconComponent, DocumentationButtonComponent, NgClass],
 })
 export class OnboardingAssessmentAiComponent {

@@ -6,7 +6,7 @@
     <!-- Add onboarding_done column to course table -->
     <changeSet id="20260312120000-1" author="krusche">
         <addColumn tableName="course">
-            <column name="onboarding_done" type="boolean" defaultValueBoolean="false">
+            <column name="onboarding_done" type="boolean" defaultValueBoolean="true">
                 <constraints nullable="false"/>
             </column>
         </addColumn>

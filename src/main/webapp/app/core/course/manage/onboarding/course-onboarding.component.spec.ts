@@ -94,6 +94,15 @@ describe('CourseOnboardingComponent', () => {
         vi.restoreAllMocks();
     });
 
+    /** Helper to advance to a specific step by calling nextStep repeatedly with mocked saves */
+    function advanceToStep(targetStep: number) {
+        const updatedCourse = { ...course } as Course;
+        vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
+        for (let i = 0; i < targetStep; i++) {
+            comp.nextStep();
+        }
+    }
+
     describe('ngOnInit', () => {
         it('should load course from route data', () => {
             comp.ngOnInit();
@@ -130,10 +139,7 @@ describe('CourseOnboardingComponent', () => {
             comp.ngOnInit();
             fixture.detectChanges();
 
-            // Navigate to last step
-            for (let i = 0; i < comp.totalSteps - 1; i++) {
-                comp.skipStep();
-            }
+            advanceToStep(comp.totalSteps - 1);
             expect(comp.activeStep()).toBe(comp.totalSteps - 1);
 
             comp.nextStep();
@@ -172,7 +178,7 @@ describe('CourseOnboardingComponent', () => {
         it('should go back to the previous step', () => {
             comp.ngOnInit();
             fixture.detectChanges();
-            comp.skipStep(); // go to step 1
+            advanceToStep(1);
             expect(comp.activeStep()).toBe(1);
 
             comp.previousStep();
@@ -186,32 +192,6 @@ describe('CourseOnboardingComponent', () => {
 
             comp.previousStep();
             expect(comp.activeStep()).toBe(0);
-        });
-    });
-
-    describe('skipStep', () => {
-        it('should advance without saving', () => {
-            const updateSpy = vi.spyOn(courseManagementService, 'update');
-
-            comp.ngOnInit();
-            fixture.detectChanges();
-            comp.skipStep();
-
-            expect(updateSpy).not.toHaveBeenCalled();
-            expect(comp.activeStep()).toBe(1);
-        });
-
-        it('should not skip past the last step', () => {
-            comp.ngOnInit();
-            fixture.detectChanges();
-
-            for (let i = 0; i < comp.totalSteps - 1; i++) {
-                comp.skipStep();
-            }
-            expect(comp.activeStep()).toBe(comp.totalSteps - 1);
-
-            comp.skipStep();
-            expect(comp.activeStep()).toBe(comp.totalSteps - 1);
         });
     });
 
@@ -263,7 +243,7 @@ describe('CourseOnboardingComponent', () => {
             fixture.detectChanges();
 
             expect(comp.isFirstStep()).toBe(true);
-            comp.skipStep();
+            advanceToStep(1);
             expect(comp.isFirstStep()).toBe(false);
         });
 
@@ -272,9 +252,7 @@ describe('CourseOnboardingComponent', () => {
             fixture.detectChanges();
 
             expect(comp.isLastStep()).toBe(false);
-            for (let i = 0; i < comp.totalSteps - 1; i++) {
-                comp.skipStep();
-            }
+            advanceToStep(comp.totalSteps - 1);
             expect(comp.isLastStep()).toBe(true);
         });
 
@@ -283,13 +261,10 @@ describe('CourseOnboardingComponent', () => {
             fixture.detectChanges();
 
             expect(comp.canFinish()).toBe(false);
-            // Navigate to second-to-last step
-            for (let i = 0; i < comp.totalSteps - 2; i++) {
-                comp.skipStep();
-            }
+            advanceToStep(comp.totalSteps - 2);
             expect(comp.canFinish()).toBe(true);
             // Also true on last step
-            comp.skipStep();
+            advanceToStep(comp.totalSteps - 1);
             expect(comp.canFinish()).toBe(true);
         });
     });

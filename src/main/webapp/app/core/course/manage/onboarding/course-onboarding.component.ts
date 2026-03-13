@@ -73,12 +73,6 @@ export class CourseOnboardingComponent implements OnInit {
         }
     }
 
-    skipStep() {
-        if (this.activeStep() < this.totalSteps - 1) {
-            this.activeStep.update((s) => s + 1);
-        }
-    }
-
     finishSetup() {
         const current = { ...this.course(), onboardingDone: true };
         this.isSaving.set(true);

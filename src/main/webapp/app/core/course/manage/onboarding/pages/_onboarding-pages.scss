@@ -1,0 +1,132 @@
+// Shared styles for onboarding wizard page components
+// These must be imported by each page component because Angular's
+// view encapsulation prevents the parent's styles from reaching
+// child component templates.
+
+// ── Step page hero headers ────────────────────────────
+.step-hero {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.75rem 2rem;
+    border-bottom: 1px solid var(--bs-border-color);
+    background: linear-gradient(135deg, var(--step-hero-bg-start, rgba(var(--bs-primary-rgb), 0.04)) 0%, var(--step-hero-bg-end, transparent) 100%);
+
+    .step-hero-icon {
+        flex-shrink: 0;
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: var(--bs-white);
+        background: var(--step-hero-color, var(--bs-primary));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .step-hero-text {
+        h4 {
+            margin: 0 0 0.25rem;
+            font-weight: 600;
+            font-size: 1.15rem;
+        }
+
+        p {
+            margin: 0;
+            color: var(--bs-secondary-color);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+    }
+}
+
+// Step-specific hero colors
+.step-hero--general {
+    --step-hero-color: #6366f1;
+    --step-hero-bg-start: rgba(99, 102, 241, 0.06);
+}
+
+.step-hero--enrollment {
+    --step-hero-color: #0ea5e9;
+    --step-hero-bg-start: rgba(14, 165, 233, 0.06);
+}
+
+.step-hero--communication {
+    --step-hero-color: #8b5cf6;
+    --step-hero-bg-start: rgba(139, 92, 246, 0.06);
+}
+
+.step-hero--assessment {
+    --step-hero-color: #f59e0b;
+    --step-hero-bg-start: rgba(245, 158, 11, 0.06);
+}
+
+.step-hero--explore {
+    --step-hero-color: #10b981;
+    --step-hero-bg-start: rgba(16, 185, 129, 0.06);
+}
+
+// ── Step page form body ───────────────────────────────
+.step-body {
+    padding: 1.5rem 2rem 2rem;
+}
+
+// ── Feature toggle buttons (green/red with icons) ────
+.feature-toggle {
+    display: inline-flex;
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid var(--bs-border-color);
+
+    .toggle-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.45rem 1.1rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+        border: none;
+        background: var(--bs-body-bg);
+        color: var(--bs-secondary-color);
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:first-child {
+            border-right: 1px solid var(--bs-border-color);
+        }
+
+        &.active-enabled {
+            background: var(--bs-success);
+            color: var(--bs-white);
+            border-color: var(--bs-success);
+        }
+
+        &.active-disabled {
+            background: var(--bs-danger);
+            color: var(--bs-white);
+            border-color: var(--bs-danger);
+        }
+    }
+}
+
+// ── Responsive ────────────────────────────────────────
+@media (max-width: 768px) {
+    .step-hero {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.25rem 1rem;
+        gap: 1rem;
+
+        .step-hero-icon {
+            width: 52px;
+            height: 52px;
+            font-size: 1.25rem;
+        }
+    }
+
+    .step-body {
+        padding: 1rem;
+    }
+}

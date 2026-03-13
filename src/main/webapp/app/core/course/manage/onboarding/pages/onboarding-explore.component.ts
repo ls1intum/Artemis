@@ -8,6 +8,7 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
 @Component({
     selector: 'jhi-onboarding-explore',
     templateUrl: './onboarding-explore.component.html',
+    styleUrls: ['./_onboarding-pages.scss'],
     styles: [
         `
             .explore-grid {

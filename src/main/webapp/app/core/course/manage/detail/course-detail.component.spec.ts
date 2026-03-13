@@ -104,7 +104,7 @@ describe('Course Management Detail Component', () => {
 
     it('should make iris settings call when instructor', async () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
+        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true, onboardingDone: true } });
         const irisSpy = vi
             .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
             .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));

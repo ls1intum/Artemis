@@ -15,6 +15,7 @@ import { NgClass } from '@angular/common';
 @Component({
     selector: 'jhi-onboarding-enrollment',
     templateUrl: './onboarding-enrollment.component.html',
+    styleUrls: ['./_onboarding-pages.scss'],
     imports: [
         FormsModule,
         TranslateDirective,

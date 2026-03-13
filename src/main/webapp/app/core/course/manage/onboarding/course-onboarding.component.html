@@ -52,11 +52,6 @@
             }
         </div>
         <div class="footer-right">
-            @if (!isLastStep()) {
-                <button class="btn btn-outline-secondary me-2" (click)="skipStep()" [disabled]="isSaving()">
-                    <span jhiTranslate="artemisApp.course.onboarding.actions.skip"></span>
-                </button>
-            }
             @if (canFinish()) {
                 <button class="btn btn-success me-2" (click)="finishSetup()" [disabled]="isSaving()">
                     @if (isSaving()) {
@@ -67,18 +62,8 @@
                     }
                 </button>
             }
-            @if (!isLastStep() && !canFinish()) {
-                <button class="btn btn-primary" (click)="nextStep()" [disabled]="isSaving()">
-                    @if (isSaving()) {
-                        <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
-                    } @else {
-                        <span jhiTranslate="artemisApp.course.onboarding.actions.next"></span>
-                        <fa-icon [icon]="faChevronRight" class="ms-1" />
-                    }
-                </button>
-            }
-            @if (!isLastStep() && canFinish()) {
-                <button class="btn btn-outline-primary" (click)="nextStep()" [disabled]="isSaving()">
+            @if (!isLastStep()) {
+                <button class="btn btn-primary" [class.btn-outline-primary]="canFinish()" [class.btn-primary]="!canFinish()" (click)="nextStep()" [disabled]="isSaving()">
                     @if (isSaving()) {
                         <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
                     } @else {

@@ -19,6 +19,7 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 @Component({
     selector: 'jhi-onboarding-general-settings',
     templateUrl: './onboarding-general-settings.component.html',
+    styleUrls: ['./_onboarding-pages.scss'],
     imports: [
         FormsModule,
         ColorSelectorComponent,
