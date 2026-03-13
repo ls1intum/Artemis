@@ -18,7 +18,6 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
 import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.messages.AssistantMessage;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
@@ -28,8 +27,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
@@ -76,10 +73,6 @@ public class AtlasAgentService {
 
     private static final Pattern PLAN_MARKER_PATTERN = Pattern.compile("%%ARTEMIS_PLAN:([A-Z_]+)(?::exerciseId=(\\d+))?(?::exerciseTitle=([^%]*))?%%");
 
-    private static final String PREVIEW_DATA_START_MARKER = "%%PREVIEW_DATA_START%%";
-
-    private static final String PREVIEW_DATA_END_MARKER = "%%PREVIEW_DATA_END%%";
-
     private final ChatClient chatClient;
 
     private final AtlasPromptTemplateService templateService;
@@ -100,14 +93,6 @@ public class AtlasAgentService {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    /**
-     * Thread-local storage for the session-specific ChatClient with memory advisor.
-     * This ensures each request uses a single ChatClient instance with memory configured once,
-     * avoiding duplicate memory advisor registrations during multi-agent delegation.
-     *
-     * @return the competency modified flag for the current request
-     */
-
     public Boolean getCompetencyModifiedInCurrentRequest() {
         return competencyModifiedInCurrentRequest.get();
     }
@@ -118,11 +103,13 @@ public class AtlasAgentService {
 
     private final ExecutionPlanStateManagerService executionPlanStateManagerService;
 
+    private final AtlasAgentPreviewService previewService;
+
     public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
             @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
             @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
             @Value("${atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManagerService executionPlanStateManagerService,
-            AtlasAgentSessionCacheService atlasAgentSessionCacheService) {
+            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
@@ -134,6 +121,7 @@ public class AtlasAgentService {
         this.temperature = temperature;
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
+        this.previewService = previewService;
     }
 
     /**
@@ -184,11 +172,11 @@ public class AtlasAgentService {
 
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
 
-                String responseWithEmbeddedData = embedPreviewDataInResponse(delegationResponse, previews);
+                String responseWithEmbeddedData = previewService.embedPreviewDataInResponse(delegationResponse, previews);
 
                 // Replace the last assistant message with the version containing embedded preview data
                 // The MessageChatMemoryAdvisor already added the response, but without preview data
-                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
+                previewService.updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null, null);
             }
@@ -208,12 +196,13 @@ public class AtlasAgentService {
                 RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
 
                 // Embed relation preview data in the response
-                String responseWithEmbeddedData = embedRelationPreviewDataInResponse(delegationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
+                String responseWithEmbeddedData = previewService.embedRelationPreviewDataInResponse(delegationResponse, singleRelationPreview, batchRelationPreview,
+                        relationGraphPreview);
 
-                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
+                previewService.updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
                 // Return with relation preview data (convert to unified list)
-                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
+                List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews,
                         relationGraphPreview, null);
             }
@@ -228,9 +217,9 @@ public class AtlasAgentService {
                 if (exerciseMappingPreview == null) {
                     exerciseMappingPreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
                 }
-                String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(delegationResponse, exerciseMappingPreview);
+                String responseWithEmbeddedData = previewService.embedExerciseMappingPreviewDataInResponse(delegationResponse, exerciseMappingPreview);
 
-                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
+                previewService.updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, delegationResponse);
 
                 return new AtlasAgentChatResponseDTO(delegationResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, exerciseMappingPreview);
             }
@@ -244,10 +233,10 @@ public class AtlasAgentService {
                 String finalResponse = (!response.trim().isEmpty()) ? response : "I apologize, but I couldn't generate a response.";
 
                 // Embed preview data in response for chat memory persistence
-                String responseWithEmbeddedData = embedPreviewDataInResponse(finalResponse, previews);
+                String responseWithEmbeddedData = previewService.embedPreviewDataInResponse(finalResponse, previews);
 
                 // Update chat memory with embedded preview data if previews exist
-                updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
+                previewService.updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, finalResponse);
 
                 return new AtlasAgentChatResponseDTO(finalResponse, ZonedDateTime.now(), competenciesModified, previews, null, null, null);
             }
@@ -360,27 +349,6 @@ public class AtlasAgentService {
     }
 
     /**
-     * Updates the last assistant message in chat memory with embedded preview data.
-     * This ensures preview data persists in conversation history.
-     *
-     * @param sessionId                the session ID
-     * @param responseWithEmbeddedData the response text with embedded preview data
-     * @param originalResponse         the original response text without embedded data
-     */
-    private void updateChatMemoryWithEmbeddedData(String sessionId, String responseWithEmbeddedData, String originalResponse) {
-        if (chatMemory != null && !responseWithEmbeddedData.equals(originalResponse)) {
-            List<Message> messages = chatMemory.get(sessionId);
-            if (!messages.isEmpty() && messages.getLast().getMessageType() == MessageType.ASSISTANT) {
-                List<Message> updatedMessages = new ArrayList<>(messages.subList(0, messages.size() - 1));
-                updatedMessages.add(new AssistantMessage(responseWithEmbeddedData));
-
-                chatMemory.clear(sessionId);
-                updatedMessages.forEach(msg -> chatMemory.add(sessionId, msg));
-            }
-        }
-    }
-
-    /**
      * Extract the brief content from the delegation marker.
      * Expected format:
      * %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:TOPIC/TOPICS: ...\\nREQUIREMENTS: ...\\nCONSTRAINTS: ...\\nCONTEXT: ...
@@ -444,12 +412,14 @@ public class AtlasAgentService {
     }
 
     /**
-     * Retrieves the conversation history for a given session as DTOs.
-     * Filters out internal system messages (delegation markers and briefings) and extracts preview data from messages.
+     * Check if the Atlas Agent service is available and properly configured.
      *
-     * @param sessionId the session/conversation ID
-     * @return list of conversation history messages as DTOs with preview data
+     * @return true if the service is ready, false otherwise
      */
+    public boolean isAvailable() {
+        return chatClient != null && chatMemory != null;
+    }
+
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
             if (chatMemory == null) {
@@ -480,7 +450,7 @@ public class AtlasAgentService {
                     continue;
                 }
 
-                PreviewDataResult extracted = extractPreviewDataFromMessage(text);
+                AtlasAgentPreviewService.PreviewDataResult extracted = previewService.extractPreviewDataFromMessage(text);
                 result.add(new AtlasAgentHistoryMessageDTO(extracted.cleanedText(), isUser, extracted.previews(), extracted.relationPreviews(), extracted.relationGraphPreview(),
                         extracted.exerciseMappingPreview()));
             }
@@ -492,207 +462,8 @@ public class AtlasAgentService {
         }
     }
 
-    /**
-     * Check if the Atlas Agent service is available and properly configured.
-     *
-     * @return true if the service is ready, false otherwise
-     */
-    public boolean isAvailable() {
-        return chatClient != null && chatMemory != null;
-    }
-
-    /**
-     * Embed preview data as a JSON marker in the response text.
-     * This allows preview data to persist in chat memory and be reconstructed when loading history.
-     *
-     * @param response the agent's response text
-     * @param previews optional list of competency previews
-     * @return the response text with embedded preview data marker
-     */
-    private String embedPreviewDataInResponse(String response, @Nullable List<CompetencyPreviewDTO> previews) {
-        if (previews == null || previews.isEmpty()) {
-            return response;
-        }
-
-        try {
-            PreviewDataContainer container = new PreviewDataContainer(previews);
-            String jsonData = objectMapper.writeValueAsString(container);
-
-            return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
-        }
-        catch (JsonProcessingException e) {
-            return response;
-        }
-    }
-
-    /**
-     * Embed relation preview data as a JSON marker in the response text.
-     * This allows relation preview data to persist in chat memory and be reconstructed when loading history.
-     *
-     * @param response              The agent's response text
-     * @param singleRelationPreview Optional single relation preview
-     * @param batchRelationPreview  Optional batch relation preview
-     * @return The response text with embedded relation preview data marker
-     */
-    private String embedRelationPreviewDataInResponse(String response, @Nullable SingleRelationPreviewResponseDTO singleRelationPreview,
-            @Nullable BatchRelationPreviewResponseDTO batchRelationPreview, @Nullable RelationGraphPreviewDTO relationGraphPreview) {
-        if (singleRelationPreview == null && batchRelationPreview == null && relationGraphPreview == null) {
-            return response;
-        }
-
-        try {
-            RelationPreviewDataContainer container = new RelationPreviewDataContainer(singleRelationPreview, batchRelationPreview, relationGraphPreview);
-            String jsonData = objectMapper.writeValueAsString(container);
-
-            return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
-        }
-        catch (JsonProcessingException e) {
-            return response;
-        }
-    }
-
-    /**
-     * Embed exercise mapping preview data as a JSON marker in the response text.
-     * This allows exercise mapping preview data to persist in chat memory and be reconstructed when loading history.
-     *
-     * @param response               The agent's response text
-     * @param exerciseMappingPreview Optional exercise mapping preview
-     * @return The response text with embedded exercise mapping preview data marker
-     */
-    private String embedExerciseMappingPreviewDataInResponse(String response, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
-        if (exerciseMappingPreview == null) {
-            return response;
-        }
-
-        try {
-            ExerciseMappingPreviewDataContainer container = new ExerciseMappingPreviewDataContainer(exerciseMappingPreview);
-            String jsonData = objectMapper.writeValueAsString(container);
-
-            // Append marker with JSON data to the response
-            return response + " " + PREVIEW_DATA_START_MARKER + jsonData + PREVIEW_DATA_END_MARKER;
-        }
-        catch (JsonProcessingException e) {
-            return response;
-        }
-    }
-
-    record ExerciseMappingPreviewDataContainer(@Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
-    }
-
-    /**
-     * Extract preview data from a message text that contains embedded preview markers.
-     * Handles both competency and relation preview data.
-     *
-     * @param messageText The message text potentially containing preview data markers
-     * @return PreviewDataResult containing the cleaned text and extracted preview data
-     */
-    private PreviewDataResult extractPreviewDataFromMessage(String messageText) {
-        int startIndex = messageText.indexOf(PREVIEW_DATA_START_MARKER);
-        if (startIndex == -1) {
-            return new PreviewDataResult(messageText, null, null, null, null);
-        }
-
-        int endIndex = messageText.indexOf(PREVIEW_DATA_END_MARKER, startIndex);
-        if (endIndex == -1) {
-            return new PreviewDataResult(messageText, null, null, null, null);
-        }
-
-        int jsonStart = startIndex + PREVIEW_DATA_START_MARKER.length();
-        String jsonData = messageText.substring(jsonStart, endIndex);
-
-        // Remove the marker section from the text
-        String cleanedText = (messageText.substring(0, startIndex) + messageText.substring(endIndex + PREVIEW_DATA_END_MARKER.length())).trim();
-
-        try {
-            JsonNode node = objectMapper.readTree(jsonData);
-
-            if (node.has("exerciseMappingPreview")) {
-                ExerciseMappingPreviewDataContainer exerciseContainer = objectMapper.treeToValue(node, ExerciseMappingPreviewDataContainer.class);
-                return new PreviewDataResult(cleanedText, null, null, null, exerciseContainer.exerciseMappingPreview());
-            }
-
-            if (node.has("singleRelationPreview") || node.has("batchRelationPreview") || node.has("relationGraphPreview")) {
-                RelationPreviewDataContainer relationContainer = objectMapper.treeToValue(node, RelationPreviewDataContainer.class);
-                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(relationContainer.singleRelationPreview(),
-                        relationContainer.batchRelationPreview());
-                return new PreviewDataResult(cleanedText, null, relationPreviews, relationContainer.relationGraphPreview(), null);
-            }
-
-            PreviewDataContainer container = objectMapper.treeToValue(node, PreviewDataContainer.class);
-            return new PreviewDataResult(cleanedText, container.previews(), null, null, null);
-        }
-        catch (JsonProcessingException e) {
-            return new PreviewDataResult(cleanedText, null, null, null, null);
-        }
-    }
-
-    /**
-     * Generates a unique session ID for a user's conversation in a specific course.
-     * This ensures each user has their own isolated chat history per course.
-     * Centralized generation prevents security risks from client-controlled session IDs.
-     *
-     * @param courseId the course ID
-     * @param userId   the user ID
-     * @return the generated session ID in format "course_{courseId}_user_{userId}"
-     */
     public String generateSessionId(Long courseId, Long userId) {
         return String.format("course_%d_user_%d", courseId, userId);
-    }
-
-    /**
-     * Container for embedding preview data in message text.
-     */
-    private record PreviewDataContainer(@Nullable List<CompetencyPreviewDTO> previews) {
-    }
-
-    /**
-     * Result of extracting preview data from a message.
-     */
-    record PreviewDataResult(String cleanedText, @Nullable List<CompetencyPreviewDTO> previews, @Nullable List<CompetencyRelationPreviewDTO> relationPreviews,
-            @Nullable RelationGraphPreviewDTO relationGraphPreview, @Nullable ExerciseCompetencyMappingDTO exerciseMappingPreview) {
-    }
-
-    /**
-     * Container for embedding relation preview data in message text.
-     */
-    record RelationPreviewDataContainer(@Nullable SingleRelationPreviewResponseDTO singleRelationPreview, @Nullable BatchRelationPreviewResponseDTO batchRelationPreview,
-            @Nullable RelationGraphPreviewDTO relationGraphPreview) {
-    }
-
-    /**
-     * Converts single/batch relation preview DTOs to a unified list of CompetencyRelationPreviewDTO.
-     * This is a temporary helper during migration from the old structure.
-     *
-     * @param singleRelationPreview Optional single relation preview
-     * @param batchRelationPreview  Optional batch relation preview
-     * @return Unified list of relation previews, or null if no previews exist
-     */
-    private List<CompetencyRelationPreviewDTO> convertToRelationPreviewsList(@Nullable SingleRelationPreviewResponseDTO singleRelationPreview,
-            @Nullable BatchRelationPreviewResponseDTO batchRelationPreview) {
-        List<CompetencyRelationPreviewDTO> result = new ArrayList<>();
-
-        if (singleRelationPreview != null && singleRelationPreview.preview() && singleRelationPreview.relation() != null) {
-            result.add(singleRelationPreview.relation());
-        }
-
-        if (batchRelationPreview != null && batchRelationPreview.batchPreview() && batchRelationPreview.relations() != null) {
-            result.addAll(batchRelationPreview.relations());
-        }
-
-        return result.isEmpty() ? null : result;
-    }
-
-    /**
-     * Adds an assistant message directly to chat memory.
-     * Used for plan continuation responses that are generated with saveToMemory=false.
-     *
-     * @param sessionId the session ID
-     * @param message   the assistant message text
-     */
-    private void addAssistantMessageToMemory(String sessionId, String message) {
-        if (chatMemory != null) {
-            chatMemory.add(sessionId, new AssistantMessage(message));
-        }
     }
 
     /**
@@ -710,13 +481,13 @@ public class AtlasAgentService {
         String creationResponse = delegateToAgent(AgentType.COMPETENCY_EXPERT, CREATE_APPROVED_COMPETENCY, courseId, sessionId);
         List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
         log.info("handleCompetencyApproval: received {} previews, viewOnly statuses: {}", previews.size(), previews.stream().map(p -> p.title() + "=" + p.viewOnly()).toList());
-        String responseWithEmbeddedData = embedPreviewDataInResponse(creationResponse, previews);
+        String responseWithEmbeddedData = previewService.embedPreviewDataInResponse(creationResponse, previews);
 
         if (cachedData != null && !cachedData.isEmpty()) {
             atlasAgentSessionCacheService.clearCachedPendingCompetencyOperations(sessionId);
         }
 
-        updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
+        previewService.updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
         // Filter out viewOnly=true previews - user already saw these during preview phase
         List<CompetencyPreviewDTO> actionablePreviews = previews.stream().filter(p -> !Boolean.TRUE.equals(p.viewOnly())).toList();
@@ -752,15 +523,15 @@ public class AtlasAgentService {
         SingleRelationPreviewResponseDTO singleRelationPreview = CompetencyMappingToolsService.getSingleRelationPreview();
         BatchRelationPreviewResponseDTO batchRelationPreview = CompetencyMappingToolsService.getBatchRelationPreview();
         RelationGraphPreviewDTO relationGraphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
-        String responseWithEmbeddedData = embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
+        String responseWithEmbeddedData = previewService.embedRelationPreviewDataInResponse(creationResponse, singleRelationPreview, batchRelationPreview, relationGraphPreview);
 
         if (cachedRelationData != null && !cachedRelationData.isEmpty()) {
             atlasAgentSessionCacheService.clearCachedRelationOperations(sessionId);
         }
 
-        updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
+        previewService.updateChatMemoryWithEmbeddedData(sessionId, responseWithEmbeddedData, creationResponse);
 
-        List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
+        List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
 
         ExecutionPlanStateManagerService.StepResult stepResult = buildStepResultFromRelationPreviews(relationPreviews);
 
@@ -860,8 +631,8 @@ public class AtlasAgentService {
             case COMPETENCY_EXPERT -> {
                 List<CompetencyPreviewDTO> previews = CompetencyExpertToolsService.getAndClearPreviews();
                 log.info("delegateToNextStepAgent: COMPETENCY_EXPERT produced {} previews", previews.size());
-                String responseWithEmbeddedData = embedPreviewDataInResponse(combinedResponse, previews);
-                addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
+                String responseWithEmbeddedData = previewService.embedPreviewDataInResponse(combinedResponse, previews);
+                previewService.addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), previews, null, null, null);
             }
             case COMPETENCY_MAPPER -> {
@@ -870,9 +641,9 @@ public class AtlasAgentService {
                 RelationGraphPreviewDTO graphPreview = CompetencyMappingToolsService.getRelationGraphPreview();
                 log.info("delegateToNextStepAgent: COMPETENCY_MAPPER produced singlePreview={}, batchPreview={}, graphPreview={}", singlePreview != null, batchPreview != null,
                         graphPreview != null);
-                String responseWithEmbeddedData = embedRelationPreviewDataInResponse(combinedResponse, singlePreview, batchPreview, graphPreview);
-                addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
-                List<CompetencyRelationPreviewDTO> relationPreviews = convertToRelationPreviewsList(singlePreview, batchPreview);
+                String responseWithEmbeddedData = previewService.embedRelationPreviewDataInResponse(combinedResponse, singlePreview, batchPreview, graphPreview);
+                previewService.addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
+                List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singlePreview, batchPreview);
                 log.info("delegateToNextStepAgent: COMPETENCY_MAPPER converted to {} relation previews", relationPreviews != null ? relationPreviews.size() : 0);
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, relationPreviews, graphPreview, null);
             }
@@ -883,8 +654,8 @@ public class AtlasAgentService {
                     exercisePreview = atlasAgentSessionCacheService.getCachedExerciseMappingPreview(sessionId);
                 }
                 log.info("delegateToNextStepAgent: EXERCISE_MAPPER produced exercisePreview={}", exercisePreview != null);
-                String responseWithEmbeddedData = embedExerciseMappingPreviewDataInResponse(combinedResponse, exercisePreview);
-                addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
+                String responseWithEmbeddedData = previewService.embedExerciseMappingPreviewDataInResponse(combinedResponse, exercisePreview);
+                previewService.addAssistantMessageToMemory(sessionId, responseWithEmbeddedData);
                 return new AtlasAgentChatResponseDTO(combinedResponse, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(), null, null, null, exercisePreview);
             }
             default -> {
@@ -1006,7 +777,7 @@ public class AtlasAgentService {
      * to be used in the enriched brief during plan continuation.
      * This prevents agents from being confused about what to do.
      *
-     * @param agentType the type of agent that will receive the brief
+     * @param nextStep the context for the next step
      * @return a specific instruction string for the agent
      */
     private String getActionInstructionForAgent(ExecutionPlanStateManagerService.NextStepContext nextStep) {
