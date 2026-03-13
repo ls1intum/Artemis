@@ -1,13 +1,9 @@
 package de.tum.cit.aet.artemis.globalsearch.web;
 
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +27,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
  * REST controller for Weaviate-based exercise search operations.
@@ -63,7 +60,7 @@ public class ExerciseWeaviateResource {
      * GET /courses/:courseId/programming-exercises/weaviate : get programming exercises for a course from Weaviate.
      * <p>
      * Access control:
-     * - Students: only see non-exam exercises with a release date in the past
+     * - Students: only see non-exam exercises with a release date in the past, and exam exercises after the exam has started
      * - Tutors/TAs: see all non-exam exercises; see exam exercises only after the exam has ended
      * - Editors/Instructors/Admins: see all exercises
      *
@@ -79,12 +76,14 @@ public class ExerciseWeaviateResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        boolean isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-        var exerciseProperties = exerciseWeaviateService.fetchProgrammingExercisesForCourse(courseId, isAtLeastTutor);
+        Filter programmingFilter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseId)
+                .and(Filter.property(ExerciseSchema.Properties.EXERCISE_TYPE).eq("programming"));
 
-        Map<Long, Course> courseMap = Map.of(courseId, course);
-        var filteredResults = filterResultsByAccessRights(exerciseProperties, user, courseMap);
-        var exercises = filteredResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
+        Filter accessFilter = buildAccessFilterForRole(getUserRoleInCourse(user, course));
+        Filter combinedFilter = accessFilter != null ? Filter.and(programmingFilter, accessFilter) : programmingFilter;
+
+        var exerciseProperties = exerciseWeaviateService.fetchExercisesWithFilter(combinedFilter, 100);
+        var exercises = exerciseProperties.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
 
         return ResponseEntity.ok(exercises);
     }
@@ -98,7 +97,7 @@ public class ExerciseWeaviateResource {
      * <p>
      * When courseId is not specified, the search is performed globally across all courses
      * the authenticated user has access to (as a student, TA, editor, or instructor).
-     * Results are filtered per course based on the user's role in each course.
+     * Results are filtered per course based on the user's role in each course via Weaviate filters.
      * <p>
      * When query is empty, the endpoint returns recent items (sorted by the sortBy parameter if provided).
      *
@@ -118,70 +117,44 @@ public class ExerciseWeaviateResource {
         log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}, sortBy: {}", query, type, courseId, limit, sortBy);
 
         boolean isEmptyQuery = query == null || query.trim().isEmpty();
-
-        // Apply limit bounds: minimum 1, maximum 100
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
 
-        // For now, only support exercise search (type filter is optional for future extensibility)
         if (type == null || "exercise".equals(type)) {
             User user = userRepository.getUserWithGroupsAndAuthorities();
-            List<Map<String, Object>> searchResults;
-            Map<Long, Course> courseMap;
+            Filter filter;
 
             if (courseId != null) {
-                // Course-specific search: validate access and search within that course
                 Course course = courseRepository.findByIdElseThrow(courseId);
                 authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-                courseMap = Map.of(courseId, course);
-
-                if (isEmptyQuery) {
-                    searchResults = exerciseWeaviateService.fetchRecentExercises(courseId, effectiveLimit, sortBy);
-                }
-                else {
-                    searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
-                }
+                filter = buildFilterForSingleCourse(user, course);
             }
             else {
-                // Global search: get all courses accessible to the user and search across them
                 boolean isAdmin = authCheckService.isAdmin(user);
-
                 if (isAdmin) {
                     // Admins see everything - no filtering needed
-                    if (isEmptyQuery) {
-                        searchResults = exerciseWeaviateService.fetchRecentExercisesInCourses(null, effectiveLimit, sortBy);
-                    }
-                    else {
-                        searchResults = exerciseWeaviateService.searchExercisesInCourses(query, null, effectiveLimit);
-                    }
-
-                    var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
-                    return ResponseEntity.ok(resultDTOs);
-                }
-
-                // Regular users: get courses based on group memberships
-                List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
-
-                if (accessibleCourses.isEmpty()) {
-                    return ResponseEntity.ok(List.of());
-                }
-
-                courseMap = accessibleCourses.stream().collect(Collectors.toMap(Course::getId, Function.identity()));
-                Set<Long> accessibleCourseIds = courseMap.keySet();
-
-                if (isEmptyQuery) {
-                    searchResults = exerciseWeaviateService.fetchRecentExercisesInCourses(accessibleCourseIds, effectiveLimit, sortBy);
+                    filter = null;
                 }
                 else {
-                    searchResults = exerciseWeaviateService.searchExercisesInCourses(query, accessibleCourseIds, effectiveLimit);
+                    List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
+                    if (accessibleCourses.isEmpty()) {
+                        return ResponseEntity.ok(List.of());
+                    }
+                    filter = buildFilterForMultipleCourses(user, accessibleCourses);
                 }
             }
 
-            var filteredResults = filterResultsByAccessRights(searchResults, user, courseMap);
-            var resultDTOs = filteredResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
+            List<Map<String, Object>> searchResults;
+            if (isEmptyQuery) {
+                searchResults = exerciseWeaviateService.fetchExercisesWithFilter(filter, effectiveLimit);
+            }
+            else {
+                searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
+            }
+
+            var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
             return ResponseEntity.ok(resultDTOs);
         }
 
-        // Return empty list for unsupported types (ready to add more types in the future)
         return ResponseEntity.ok(List.of());
     }
 
@@ -204,121 +177,156 @@ public class ExerciseWeaviateResource {
             return ResponseEntity.badRequest().build();
         }
 
-        // Apply limit bounds: minimum 1, maximum 100
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Map<Long, Course> courseMap;
+        Filter filter;
 
         if (courseId != null) {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-            courseMap = Map.of(courseId, course);
+            filter = buildFilterForSingleCourse(user, course);
         }
         else {
-            // Global search: restrict to accessible courses
             boolean isAdmin = authCheckService.isAdmin(user);
             if (isAdmin) {
-                var searchResults = exerciseWeaviateService.searchExercises(query, null, effectiveLimit);
-                var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
-                return ResponseEntity.ok(resultDTOs);
+                filter = null;
             }
-
-            List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
-            if (accessibleCourses.isEmpty()) {
-                return ResponseEntity.ok(List.of());
+            else {
+                List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
+                if (accessibleCourses.isEmpty()) {
+                    return ResponseEntity.ok(List.of());
+                }
+                filter = buildFilterForMultipleCourses(user, accessibleCourses);
             }
-
-            courseMap = accessibleCourses.stream().collect(Collectors.toMap(Course::getId, Function.identity()));
         }
 
-        var searchResults = exerciseWeaviateService.searchExercises(query, courseId, effectiveLimit);
-        var filteredResults = filterResultsByAccessRights(searchResults, user, courseMap);
-        var resultDTOs = filteredResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
+        var searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
+        var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
         return ResponseEntity.ok(resultDTOs);
     }
 
+    // -- Filter building helpers --
+
     /**
-     * Filters search results based on the user's access rights per course.
-     * <p>
-     * Access rules:
-     * <ul>
-     * <li>Editors, instructors, and admins: see all exercises including exam exercises at any time</li>
-     * <li>Tutors/TAs: see all regular exercises; see exam exercises only after the exam has ended</li>
-     * <li>Students: cannot see exam exercises; can only see exercises with a release date in the past (or no release date)</li>
-     * </ul>
-     *
-     * @param results   the raw search results from Weaviate
-     * @param user      the authenticated user with groups loaded
-     * @param courseMap map of course ID to Course object for role lookup
-     * @return filtered results the user is allowed to see
+     * Builds a combined Weaviate filter for a single course, incorporating course ID and role-based access control.
      */
-    private List<Map<String, Object>> filterResultsByAccessRights(List<Map<String, Object>> results, User user, Map<Long, Course> courseMap) {
-        ZonedDateTime now = ZonedDateTime.now();
-
-        return results.stream().filter(result -> {
-            Object courseIdObj = result.get(ExerciseSchema.Properties.COURSE_ID);
-            if (courseIdObj == null) {
-                return false;
-            }
-
-            long resultCourseId = ((Number) courseIdObj).longValue();
-            Course course = courseMap.get(resultCourseId);
-            if (course == null) {
-                return false;
-            }
-
-            // Editors, instructors, and admins see everything
-            if (authCheckService.isAtLeastEditorInCourse(course, user)) {
-                return true;
-            }
-
-            Boolean isExamExercise = (Boolean) result.get(ExerciseSchema.Properties.IS_EXAM_EXERCISE);
-            boolean isAtLeastTA = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
-
-            if (Boolean.TRUE.equals(isExamExercise)) {
-                if (isAtLeastTA) {
-                    // TAs can see exam exercises only after the exam has ended
-                    ZonedDateTime examEndDate = parseDate(result.get(ExerciseSchema.Properties.EXAM_END_DATE));
-                    if (examEndDate == null) {
-                        return false;
-                    }
-                    return examEndDate.isBefore(now);
-                }
-                // Students never see exam exercises
-                return false;
-            }
-
-            // Regular (non-exam) exercise
-            if (isAtLeastTA) {
-                return true;
-            }
-
-            // Students: only see exercises with release date in the past
-            ZonedDateTime releaseDate = parseDate(result.get(ExerciseSchema.Properties.RELEASE_DATE));
-            if (releaseDate == null) {
-                return true;
-            }
-            return releaseDate.isBefore(now);
-        }).toList();
+    private Filter buildFilterForSingleCourse(User user, Course course) {
+        Filter courseFilter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(course.getId());
+        Filter accessFilter = buildAccessFilterForRole(getUserRoleInCourse(user, course));
+        return accessFilter != null ? Filter.and(courseFilter, accessFilter) : courseFilter;
     }
 
     /**
-     * Parses a date value from Weaviate properties, handling both OffsetDateTime and String formats.
-     *
-     * @param value the date value from Weaviate (may be OffsetDateTime, String, or null)
-     * @return the parsed ZonedDateTime, or null if the value is null or unparseable
+     * Builds a combined Weaviate filter for multiple courses, grouping courses by the user's role
+     * and applying appropriate access control filters per group.
+     * <p>
+     * Courses are grouped into three role levels:
+     * - Editor+ (editors, instructors): no access restrictions on exercises
+     * - TA: see all regular exercises, exam exercises only after the exam has ended
+     * - Student: see released regular exercises only, exam exercises only after the exam has started
+     * <p>
+     * Each group gets a filter of: (course_id IN group_ids) AND (role-based access filter).
+     * All groups are OR-ed together.
      */
-    private static ZonedDateTime parseDate(Object value) {
-        if (value == null) {
+    private Filter buildFilterForMultipleCourses(User user, List<Course> courses) {
+        List<Long> editorCourseIds = new ArrayList<>();
+        List<Long> taCourseIds = new ArrayList<>();
+        List<Long> studentCourseIds = new ArrayList<>();
+
+        for (Course course : courses) {
+            Role role = getUserRoleInCourse(user, course);
+            switch (role) {
+                case EDITOR, INSTRUCTOR -> editorCourseIds.add(course.getId());
+                case TEACHING_ASSISTANT -> taCourseIds.add(course.getId());
+                default -> studentCourseIds.add(course.getId());
+            }
+        }
+
+        List<Filter> groupFilters = new ArrayList<>();
+
+        if (!editorCourseIds.isEmpty()) {
+            groupFilters.add(buildCourseIdOrFilter(editorCourseIds));
+        }
+        if (!taCourseIds.isEmpty()) {
+            Filter courseFilter = buildCourseIdOrFilter(taCourseIds);
+            Filter accessFilter = buildAccessFilterForRole(Role.TEACHING_ASSISTANT);
+            groupFilters.add(accessFilter != null ? Filter.and(courseFilter, accessFilter) : courseFilter);
+        }
+        if (!studentCourseIds.isEmpty()) {
+            Filter courseFilter = buildCourseIdOrFilter(studentCourseIds);
+            Filter accessFilter = buildAccessFilterForRole(Role.STUDENT);
+            groupFilters.add(accessFilter != null ? Filter.and(courseFilter, accessFilter) : courseFilter);
+        }
+
+        if (groupFilters.isEmpty()) {
             return null;
         }
-        if (value instanceof OffsetDateTime offsetDateTime) {
-            return offsetDateTime.toZonedDateTime();
+        if (groupFilters.size() == 1) {
+            return groupFilters.getFirst();
         }
-        if (value instanceof String dateStr) {
-            return ZonedDateTime.parse(dateStr, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+        return Filter.or(groupFilters.toArray(new Filter[0]));
+    }
+
+    /**
+     * Builds a Weaviate OR filter for a list of course IDs: (course_id = id1 OR course_id = id2 OR ...).
+     */
+    private static Filter buildCourseIdOrFilter(List<Long> courseIds) {
+        Filter filter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIds.getFirst());
+        for (int i = 1; i < courseIds.size(); i++) {
+            filter = Filter.or(filter, Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIds.get(i)));
         }
-        return null;
+        return filter;
+    }
+
+    /**
+     * Determines the user's highest role in the given course.
+     *
+     * @return INSTRUCTOR if at least editor, TEACHING_ASSISTANT if TA, STUDENT otherwise
+     */
+    private Role getUserRoleInCourse(User user, Course course) {
+        if (authCheckService.isAtLeastEditorInCourse(course, user)) {
+            return Role.EDITOR;
+        }
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            return Role.TEACHING_ASSISTANT;
+        }
+        return Role.STUDENT;
+    }
+
+    /**
+     * Builds a Weaviate filter for role-based exercise access control.
+     * <p>
+     * Access rules:
+     * <ul>
+     * <li>Editors/Instructors/Admins: no filter needed (see everything)</li>
+     * <li>TAs: see all regular exercises; exam exercises only after the exam has ended</li>
+     * <li>Students: regular exercises only if released (release_date &lt;= now or null);
+     * exam exercises only after the exam has started (exam_start_date &lt;= now)</li>
+     * </ul>
+     *
+     * @param role the user's role
+     * @return the access control filter, or null if no filtering is needed
+     */
+    private static Filter buildAccessFilterForRole(Role role) {
+        if (role == Role.EDITOR || role == Role.INSTRUCTOR) {
+            return null;
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+
+        if (role == Role.TEACHING_ASSISTANT) {
+            // TAs: regular exercises always visible; exam exercises only after exam end
+            return Filter.or(Filter.property(ExerciseSchema.Properties.IS_EXAM_EXERCISE).eq(false),
+                    Filter.and(Filter.property(ExerciseSchema.Properties.IS_EXAM_EXERCISE).eq(true), Filter.property(ExerciseSchema.Properties.EXAM_END_DATE).lte(now)));
+        }
+
+        // Students: released regular exercises OR exam exercises after exam start
+        Filter releasedRegularExercises = Filter.and(Filter.property(ExerciseSchema.Properties.IS_EXAM_EXERCISE).eq(false),
+                Filter.or(Filter.property(ExerciseSchema.Properties.RELEASE_DATE).lte(now), Filter.property(ExerciseSchema.Properties.RELEASE_DATE).isNull()));
+
+        Filter startedExamExercises = Filter.and(Filter.property(ExerciseSchema.Properties.IS_EXAM_EXERCISE).eq(true),
+                Filter.property(ExerciseSchema.Properties.EXAM_START_DATE).lte(now));
+
+        return Filter.or(releasedRegularExercises, startedExamExercises);
     }
 }

@@ -516,4 +516,61 @@ public class ExerciseWeaviateService {
             throw new WeaviateException("Failed to fetch recent exercises across courses", e);
         }
     }
+
+    /**
+     * Performs a hybrid (semantic + keyword) search on exercises using a pre-built filter.
+     * The filter should include both course access restrictions and role-based access control.
+     *
+     * @param query  the search query
+     * @param filter the Weaviate filter (may be null for no filtering)
+     * @param limit  maximum number of results
+     * @return list of exercise search results from Weaviate
+     */
+    public List<Map<String, Object>> searchExercisesWithFilter(String query, Filter filter, int limit) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.hybrid(query, h -> {
+                h.limit(limit);
+                if (filter != null) {
+                    h.filters(filter);
+                }
+                return h;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
+            throw new WeaviateException("Failed to search exercises", e);
+        }
+    }
+
+    /**
+     * Fetches exercises using a pre-built filter (no search query).
+     * The filter should include both course access restrictions and role-based access control.
+     *
+     * @param filter the Weaviate filter (may be null for no filtering)
+     * @param limit  maximum number of results
+     * @return list of exercise results from Weaviate
+     */
+    public List<Map<String, Object>> fetchExercisesWithFilter(Filter filter, int limit) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.fetchObjects(q -> {
+                q.limit(limit);
+                if (filter != null) {
+                    q.filters(filter);
+                }
+                return q;
+            });
+
+            return result.objects().stream().map(obj -> obj.properties()).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch exercises: {}", e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch exercises", e);
+        }
+    }
 }

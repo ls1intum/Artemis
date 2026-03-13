@@ -36,7 +36,8 @@ import de.tum.cit.aet.artemis.text.util.TextExerciseFactory;
  * verifying role-based access control for exercise search endpoints.
  * <p>
  * Tests verify:
- * - Students cannot see exam exercises
+ * - Students cannot see exam exercises before the exam has started
+ * - Students can see exam exercises once the exam has started
  * - Students cannot see unreleased exercises
  * - Tutors cannot see exam exercises before the exam has ended
  * - Tutors can see exam exercises after the exam has ended
@@ -68,6 +69,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
     private ProgrammingExercise unreleasedExercise;
 
+    private TextExercise notStartedExamExercise;
+
     private TextExercise ongoingExamExercise;
 
     private TextExercise endedExamExercise;
@@ -93,7 +96,16 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         unreleasedExercise.setReleaseDate(ZonedDateTime.now().plusDays(7));
         exerciseRepository.save(unreleasedExercise);
 
-        // Create an exam exercise where the exam is still ongoing (end date in the future)
+        // Create an exam exercise where the exam has NOT started yet (start date in the future)
+        Exam notStartedExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(3), false);
+        notStartedExam = examRepository.save(notStartedExam);
+        var notStartedExerciseGroup = ExamFactory.generateExerciseGroup(true, notStartedExam);
+        notStartedExerciseGroup = exerciseGroupRepository.save(notStartedExerciseGroup);
+        notStartedExamExercise = TextExerciseFactory.generateTextExerciseForExam(notStartedExerciseGroup);
+        notStartedExamExercise.setTitle("WeaviateSearchableNotStartedExamExercise");
+        notStartedExamExercise = exerciseRepository.save(notStartedExamExercise);
+
+        // Create an exam exercise where the exam is ongoing (started but not ended)
         Exam ongoingExam = ExamFactory.generateExam(course, ZonedDateTime.now().minusHours(2), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), false);
         ongoingExam = examRepository.save(ongoingExam);
         var ongoingExerciseGroup = ExamFactory.generateExerciseGroup(true, ongoingExam);
@@ -114,6 +126,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         // Index all exercises in Weaviate
         exerciseWeaviateService.upsertExerciseAsync(releasedExercise);
         exerciseWeaviateService.upsertExerciseAsync(unreleasedExercise);
+        exerciseWeaviateService.upsertExerciseAsync(notStartedExamExercise);
         exerciseWeaviateService.upsertExerciseAsync(ongoingExamExercise);
         exerciseWeaviateService.upsertExerciseAsync(endedExamExercise);
 
@@ -121,6 +134,7 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
             assertExerciseExistsInWeaviate(weaviateService, releasedExercise);
             assertExerciseExistsInWeaviate(weaviateService, unreleasedExercise);
+            assertExerciseExistsInWeaviate(weaviateService, notStartedExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, ongoingExamExercise);
             assertExerciseExistsInWeaviate(weaviateService, endedExamExercise);
         });
@@ -135,12 +149,20 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentCannotSeeExamExercises() throws Exception {
+        void testStudentCannotSeeNotStartedExamExercises() throws Exception {
             var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchableReleasedExercise");
-            assertThat(titles).doesNotContain("WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
+            assertThat(titles).doesNotContain("WeaviateSearchableNotStartedExamExercise");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testStudentCanSeeStartedExamExercises() throws Exception {
+            var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
+            var titles = getResultTitles(results);
+
+            assertThat(titles).contains("WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
         }
 
         @Test
@@ -155,11 +177,11 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-        void testTutorCannotSeeOngoingExamExercises() throws Exception {
+        void testTutorCannotSeeNotEndedExamExercises() throws Exception {
             var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("WeaviateSearchableOngoingExamExercise");
+            assertThat(titles).doesNotContain("WeaviateSearchableNotStartedExamExercise", "WeaviateSearchableOngoingExamExercise");
         }
 
         @Test
@@ -186,8 +208,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableOngoingExamExercise",
-                    "WeaviateSearchableEndedExamExercise");
+            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableNotStartedExamExercise",
+                    "WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
         }
 
         @Test
@@ -196,8 +218,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var results = request.getList("/api/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableOngoingExamExercise",
-                    "WeaviateSearchableEndedExamExercise");
+            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableNotStartedExamExercise",
+                    "WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
         }
     }
 
@@ -206,12 +228,12 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testGlobalSearchStudentFiltersExamAndUnreleased() throws Exception {
+        void testGlobalSearchStudentFiltersCorrectly() throws Exception {
             var results = request.getList("/api/search?q=WeaviateSearchable", HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchableReleasedExercise");
-            assertThat(titles).doesNotContain("WeaviateSearchableUnreleasedExercise", "WeaviateSearchableOngoingExamExercise");
+            assertThat(titles).doesNotContain("WeaviateSearchableUnreleasedExercise", "WeaviateSearchableNotStartedExamExercise");
         }
 
         @Test
@@ -220,8 +242,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var results = request.getList("/api/search?q=WeaviateSearchable", HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableOngoingExamExercise",
-                    "WeaviateSearchableEndedExamExercise");
+            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableNotStartedExamExercise",
+                    "WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
         }
     }
 
@@ -230,20 +252,20 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentCannotSeeExamExercises() throws Exception {
+        void testStudentCannotSeeNotStartedExamOrUnreleasedExercises() throws Exception {
             var results = request.getList("/api/exercises/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
+            assertThat(titles).doesNotContain("WeaviateSearchableNotStartedExamExercise", "WeaviateSearchableUnreleasedExercise");
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentCannotSeeUnreleasedExercises() throws Exception {
+        void testStudentCanSeeStartedExamExercises() throws Exception {
             var results = request.getList("/api/exercises/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).doesNotContain("WeaviateSearchableUnreleasedExercise");
+            assertThat(titles).contains("WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
         }
 
         @Test
@@ -252,8 +274,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             var results = request.getList("/api/exercises/search?q=WeaviateSearchable&courseId=" + course.getId(), HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
-            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableOngoingExamExercise",
-                    "WeaviateSearchableEndedExamExercise");
+            assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableNotStartedExamExercise",
+                    "WeaviateSearchableOngoingExamExercise", "WeaviateSearchableEndedExamExercise");
         }
 
         @Test
