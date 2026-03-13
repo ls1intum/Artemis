@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -64,7 +64,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private irisSettingsService = inject(IrisSettingsService);
     private markdownService = inject(ArtemisMarkdownService);
-    private router = inject(Router);
 
     readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
@@ -95,10 +94,6 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
         this.route.data.subscribe(({ course }) => {
             if (course) {
-                if (!course.onboardingDone && course.isAtLeastInstructor) {
-                    this.router.navigate(['course-management', course.id, 'onboarding']);
-                    return;
-                }
                 this.course.set(course);
                 this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
                 this.communicationEnabled.set(!!course.courseInformationSharingConfiguration?.includes('COMMUNICATION'));
