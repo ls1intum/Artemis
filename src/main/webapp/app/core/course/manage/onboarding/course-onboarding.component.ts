@@ -75,8 +75,11 @@ export class CourseOnboardingComponent implements OnInit {
 
     finishSetup() {
         const current = { ...this.course(), onboardingDone: true };
+        if (!current.id) {
+            return;
+        }
         this.isSaving.set(true);
-        this.courseManagementService.update(current.id!, current).subscribe({
+        this.courseManagementService.update(current.id, current).subscribe({
             next: (response) => {
                 this.isSaving.set(false);
                 if (response.body) {

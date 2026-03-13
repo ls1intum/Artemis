@@ -45,10 +45,10 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     readonly isIrisEnabled = computed(() => this.irisSettings()?.enabled ?? false);
 
     protected readonly ProgrammingLanguage = ProgrammingLanguage;
-    protected readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
+    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     readonly semesters = getSemesters();
 
-    protected readonly languageOptions: { key: string; value: string }[] = [
+    readonly languageOptions: { key: string; value: string }[] = [
         { key: Language.ENGLISH, value: 'English' },
         { key: Language.GERMAN, value: 'German' },
     ];

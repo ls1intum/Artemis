@@ -31,7 +31,6 @@ describe('CourseOnboardingComponent', () => {
     let comp: CourseOnboardingComponent;
     let fixture: ComponentFixture<CourseOnboardingComponent>;
     let courseManagementService: CourseManagementService;
-    let _alertService: AlertService;
     let router: MockRouter;
     let course: Course;
 
@@ -86,7 +85,7 @@ describe('CourseOnboardingComponent', () => {
         fixture = TestBed.createComponent(CourseOnboardingComponent);
         comp = fixture.componentInstance;
         courseManagementService = TestBed.inject(CourseManagementService);
-        _alertService = TestBed.inject(AlertService);
+
         router = TestBed.inject(Router) as unknown as MockRouter;
     });
 

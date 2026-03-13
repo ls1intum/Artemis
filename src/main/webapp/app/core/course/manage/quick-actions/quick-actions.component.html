@@ -68,14 +68,16 @@
                 />
             }
         }
-        <jhi-button
-            [btnType]="ButtonType.PRIMARY"
-            [btnSize]="ButtonSize.MEDIUM"
-            [title]="'entity.action.addFaq'"
-            [icon]="faQuestion"
-            [shouldToggle]="true"
-            (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
-        />
+        @if (course()?.isAtLeastInstructor) {
+            <jhi-button
+                [btnType]="ButtonType.PRIMARY"
+                [btnSize]="ButtonSize.MEDIUM"
+                [title]="'entity.action.addFaq'"
+                [icon]="faQuestion"
+                [shouldToggle]="true"
+                (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
+            />
+        }
         @if (course()?.isAtLeastInstructor) {
             <jhi-button
                 [btnType]="ButtonType.PRIMARY"
