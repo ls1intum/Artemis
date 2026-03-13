@@ -176,4 +176,16 @@ public class WeaviateService {
     public CollectionHandle<Map<String, Object>> getCollection(String collectionName) {
         return client.collections.use(resolveCollectionName(collectionName));
     }
+
+    /**
+     * Returns whether a text vectorizer is configured that can automatically
+     * create embeddings from text. When this returns {@code false}, only keyword
+     * (BM25) search should be used instead of hybrid search because hybrid search
+     * requires a vectorizer to convert the query text into a vector.
+     *
+     * @return {@code true} if a text vectorizer is available, {@code false} otherwise
+     */
+    public boolean isVectorizerAvailable() {
+        return !WeaviateConfigurationProperties.VECTORIZER_NONE.equals(vectorizerModule);
+    }
 }

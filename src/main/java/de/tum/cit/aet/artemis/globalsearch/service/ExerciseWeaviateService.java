@@ -339,7 +339,9 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Performs a hybrid (semantic + keyword) search on exercises using a pre-built filter.
+     * Performs a search on exercises using a pre-built filter.
+     * Uses hybrid (semantic + keyword) search when a vectorizer is available,
+     * or falls back to BM25 (keyword-only) search otherwise.
      * The filter should include both course access restrictions and role-based access control.
      *
      * @param query  the search query
@@ -351,12 +353,18 @@ public class ExerciseWeaviateService {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            var result = collection.query.hybrid(query, h -> {
+            var result = weaviateService.isVectorizerAvailable() ? collection.query.hybrid(query, h -> {
                 h.limit(limit);
                 if (filter != null) {
                     h.filters(filter);
                 }
                 return h;
+            }) : collection.query.bm25(query, b -> {
+                b.limit(limit);
+                if (filter != null) {
+                    b.filters(filter);
+                }
+                return b;
             });
 
             return result.objects().stream().map(obj -> obj.properties()).toList();
