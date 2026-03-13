@@ -1,3 +1,14 @@
+# Spring Security SAML2 relying party registration (required for the RelyingPartyRegistrationRepository bean)
+spring:
+    security:
+        saml2:
+            relyingparty:
+                registration:
+                    keycloak:
+                        assertingparty:
+                            metadata-uri: http://keycloak:9080/realms/artemis/protocol/saml/descriptor
+
+# Artemis-specific SAML2 properties (user attribute mapping)
 saml2:
     username-pattern: 'saml2-{first_name}_{last_name}'
     first-name-pattern: '{first_name}'

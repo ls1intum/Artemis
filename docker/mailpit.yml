@@ -4,8 +4,20 @@
 # Web UI: http://localhost:8025
 # SMTP:   localhost:1025
 #
-# Out of the box this setup just works with a containerized dev Artemis instance
-# see comments above artemis-app on how to get it working with a non-containerized Artemis instance
+# This file can be run standalone for non-containerized Artemis (e.g. IntelliJ):
+#   docker compose -f docker/mailpit.yml up
+#
+# For non-containerized Artemis, add the following to your application-local.yml:
+#   spring:
+#       mail:
+#           host: localhost
+#           port: 1025
+#           username:
+#           password:
+#
+# For containerized Artemis, combine with an Artemis setup and pass the mail environment:
+#   docker compose -f docker/artemis-dev-mysql.yml -f docker/mailpit.yml up
+#   (also add SPRING_MAIL_HOST=mailpit and SPRING_MAIL_PORT=1025 to your env_file or environment)
 # ----------------------------------------------------------------------------------------------------------------------
 services:
     mailpit:
@@ -21,15 +33,6 @@ services:
             - "8025"
         networks:
             - artemis
-
-    # comment this section if you use mailpit with a non-containerized Artemis instance
-    # and add the following spring configuration in your application-local.yml
-    artemis-app:
-        environment:
-            SPRING_MAIL_HOST: "mailpit"
-            SPRING_MAIL_PORT: "1025"
-            SPRING_MAIL_USERNAME:
-            SPRING_MAIL_PASSWORD:
 
 networks:
     artemis:

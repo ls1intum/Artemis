@@ -3,13 +3,20 @@
 # ----------------------------------------------------------------------------------------------------------------------
 # Keycloak provides a full-featured SAML2 Identity Provider for local testing.
 #
-# Admin console: http://localhost:8443 (admin/admin)
-# SAML metadata: http://localhost:8443/realms/artemis/protocol/saml/descriptor
+# Admin console: http://localhost:9080 (admin/admin)
+# SAML metadata: http://localhost:9080/realms/artemis/protocol/saml/descriptor
+# Test users:    saml2user1 / password, saml2user2 / password
 #
-# When using this service you have to manually add the saml2 spring profile in your Artemis configuration.
+# This file can be run standalone for non-containerized Artemis (e.g. IntelliJ):
+#   docker compose -f docker/saml-test.yml up
 #
-# Out of the box this setup just works with a containerized Artemis instance.
-# See comments above artemis-app on how to get it working with a non-containerized Artemis instance.
+# For non-containerized Artemis, add the saml2 Spring profile and the Keycloak SAML2 configuration
+# to your application-local.yml. See the developer documentation for the full configuration:
+#   https://docs.artemis.tum.de/developer/docker-compose
+#
+# For containerized Artemis, combine with an Artemis setup, add the saml2 profile, and mount the config:
+#   docker compose -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
+#   (also add 'saml2' to SPRING_PROFILES_ACTIVE and mount application-saml2.yml into the container)
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
@@ -30,12 +37,6 @@ services:
             - ./saml-test/artemis-realm.json:/opt/keycloak/data/import/artemis-realm.json
         networks:
             - artemis
-
-    # comment this section if you use the saml-test service with a non-containerized Artemis instance
-    # and copy the ./saml-test/application-saml2.yml to your server configs
-    artemis-app:
-        volumes:
-            - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
 
 networks:
     artemis:
