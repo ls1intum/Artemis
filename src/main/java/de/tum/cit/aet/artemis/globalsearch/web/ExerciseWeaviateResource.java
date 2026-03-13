@@ -99,22 +99,20 @@ public class ExerciseWeaviateResource {
      * the authenticated user has access to (as a student, TA, editor, or instructor).
      * Results are filtered per course based on the user's role in each course via Weaviate filters.
      * <p>
-     * When query is empty, the endpoint returns recent items (sorted by the sortBy parameter if provided).
+     * When query is empty, the endpoint returns recent items.
      *
      * @param query    the search query (can be empty to get recent items)
      * @param type     optional entity type to filter by (e.g., "exercise", "page", "course")
      * @param courseId optional course ID to filter by (if null, searches across all accessible courses)
      * @param limit    maximum number of results (default: 10, max: 100)
-     * @param sortBy   optional sort field (e.g., "dueDate") - only used when query is empty
      * @return the ResponseEntity with status 200 (OK) and the list of unified search results in body
      */
     @GetMapping("search")
     @EnforceAtLeastStudent
     public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") String query, @RequestParam(value = "type", required = false) String type,
-            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit,
-            @RequestParam(value = "sortBy", required = false) String sortBy) {
+            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit) {
 
-        log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}, sortBy: {}", query, type, courseId, limit, sortBy);
+        log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}", query, type, courseId, limit);
 
         boolean isEmptyQuery = query == null || query.trim().isEmpty();
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
