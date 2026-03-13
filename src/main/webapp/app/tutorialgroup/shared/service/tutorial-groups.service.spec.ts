@@ -1,29 +1,140 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { map, take } from 'rxjs/operators';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
-import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { firstValueFrom, of } from 'rxjs';
+import dayjs from 'dayjs/esm';
+import { TutorialGroupsService } from './tutorial-groups.service';
+import {
+    CreateOrUpdateTutorialGroupDTO,
+    RawTutorialGroupDTO,
+    TutorialGroup,
+    TutorialGroupRegisteredStudentDTO,
+    TutorialGroupScheduleDTO,
+} from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
+import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { Student } from 'app/openapi/model/student';
+import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
+import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
+import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
-describe('TutorialGroupService', () => {
+interface TutorialGroupSessionServiceMock {
+    convertTutorialGroupSessionDatesFromServer: ReturnType<typeof vi.fn>;
+}
+
+interface TutorialGroupsConfigurationServiceMock {
+    convertTutorialGroupsConfigurationDatesFromServer: ReturnType<typeof vi.fn>;
+}
+
+interface TutorialGroupApiServiceMock {
+    getUniqueLanguageValues: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
+    deregisterStudent: ReturnType<typeof vi.fn>;
+    importRegistrations: ReturnType<typeof vi.fn>;
+    exportTutorialGroupsToCSV: ReturnType<typeof vi.fn>;
+    exportTutorialGroupsToJSON: ReturnType<typeof vi.fn>;
+}
+
+function createTutorialGroup(): TutorialGroup {
+    const tutorialGroupSchedule = new TutorialGroupSchedule();
+    tutorialGroupSchedule.validFromInclusive = dayjs('2025-01-10');
+    tutorialGroupSchedule.validToInclusive = dayjs('2025-01-20');
+
+    const tutorialGroupSession: TutorialGroupSession = {
+        id: 11,
+        start: dayjs('2025-01-10T09:00:00Z'),
+        end: dayjs('2025-01-10T10:00:00Z'),
+    };
+
+    const nextSession: TutorialGroupSession = {
+        id: 12,
+        start: dayjs('2025-01-11T09:00:00Z'),
+        end: dayjs('2025-01-11T10:00:00Z'),
+    };
+
+    const tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+    tutorialGroupsConfiguration.tutorialPeriodStartInclusive = dayjs('2025-01-01');
+    tutorialGroupsConfiguration.tutorialPeriodEndInclusive = dayjs('2025-02-01');
+    tutorialGroupsConfiguration.tutorialGroupFreePeriods = [];
+
+    const course = new Course();
+    course.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
+
+    return {
+        id: 1,
+        title: 'TG 1',
+        tutorialGroupSchedule,
+        tutorialGroupSessions: [tutorialGroupSession],
+        nextSession,
+        course,
+    };
+}
+
+function createTutorialGroupDTO(): CreateOrUpdateTutorialGroupDTO {
+    return {
+        title: 'Group A',
+        tutorId: 5,
+        language: 'English',
+        isOnline: true,
+        capacity: 12,
+    };
+}
+
+function createRegisteredStudent(id: number, login: string): TutorialGroupRegisteredStudentDTO {
+    return {
+        id,
+        login,
+        name: `${login} name`,
+        email: `${login}@tum.de`,
+        registrationNumber: `${id}`,
+    };
+}
+
+// TODO: have a close look at these tests again
+describe('TutorialGroupsService', () => {
     setupTestBed({ zoneless: true });
 
     let service: TutorialGroupsService;
     let httpMock: HttpTestingController;
-    let elemDefault: TutorialGroup;
+
+    let tutorialGroupSessionServiceMock: TutorialGroupSessionServiceMock;
+    let tutorialGroupsConfigurationServiceMock: TutorialGroupsConfigurationServiceMock;
+    let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
 
     beforeEach(() => {
+        tutorialGroupSessionServiceMock = {
+            convertTutorialGroupSessionDatesFromServer: vi.fn((session) => session),
+        };
+        tutorialGroupsConfigurationServiceMock = {
+            convertTutorialGroupsConfigurationDatesFromServer: vi.fn((configuration) => configuration),
+        };
+        tutorialGroupApiServiceMock = {
+            getUniqueLanguageValues: vi.fn(),
+            delete: vi.fn(),
+            deregisterStudent: vi.fn(),
+            importRegistrations: vi.fn(),
+            exportTutorialGroupsToCSV: vi.fn(),
+            exportTutorialGroupsToJSON: vi.fn(),
+        };
+
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: TutorialGroupSessionService, useValue: tutorialGroupSessionServiceMock },
+                { provide: TutorialGroupsConfigurationService, useValue: tutorialGroupsConfigurationServiceMock },
+                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
+            ],
         });
+
         service = TestBed.inject(TutorialGroupsService);
         httpMock = TestBed.inject(HttpTestingController);
-
-        elemDefault = generateExampleTutorialGroup({});
     });
 
     afterEach(() => {
@@ -31,130 +142,230 @@ describe('TutorialGroupService', () => {
         vi.restoreAllMocks();
     });
 
-    it('getUniqueCampusValues', () => {
-        const returnedFromService = ['Test', 'Test2'];
-        let result: any;
-        service
-            .getUniqueCampusValues(1)
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: returnedFromService });
+    it('should get unique language values from the api service', async () => {
+        tutorialGroupApiServiceMock.getUniqueLanguageValues.mockReturnValue(of(new HttpResponse({ body: ['English', 'German'] })));
+
+        const result = await firstValueFrom(service.getUniqueLanguageValues(7));
+
+        expect(tutorialGroupApiServiceMock.getUniqueLanguageValues).toHaveBeenCalledWith(7, 'response');
+        expect(result).toEqual(['English', 'German']);
     });
 
-    it('getOneOfCourse', () => {
-        const returnedFromService = { ...elemDefault };
-        let result: any;
-        service
-            .getOneOfCourse(1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
+    it('should get an empty list when the api service returns no language values', async () => {
+        tutorialGroupApiServiceMock.getUniqueLanguageValues.mockReturnValue(of(new HttpResponse({ body: undefined })));
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: elemDefault });
+        const result = await firstValueFrom(service.getUniqueLanguageValues(7));
+
+        expect(result).toEqual([]);
     });
 
-    it('create', () => {
-        const returnedFromService = { ...elemDefault, id: 0 };
-        const expected = { ...returnedFromService };
-        let result: any;
-        service
-            .create(new TutorialGroup(), 1)
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
+    it('should get all tutorial groups for a course and convert nested dates', async () => {
+        const tutorialGroup = createTutorialGroup();
+        const convertedSession = { id: 100 } as TutorialGroupSession;
+        const convertedNextSession = { id: 101 } as TutorialGroupSession;
+        const convertedConfiguration = new TutorialGroupsConfiguration();
+        convertedConfiguration.tutorialPeriodStartInclusive = dayjs('2025-01-01');
 
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: expected });
+        tutorialGroupSessionServiceMock.convertTutorialGroupSessionDatesFromServer.mockReturnValueOnce(convertedSession).mockReturnValueOnce(convertedNextSession);
+        tutorialGroupsConfigurationServiceMock.convertTutorialGroupsConfigurationDatesFromServer.mockReturnValue(convertedConfiguration);
+
+        const resultPromise = firstValueFrom(service.getAllForCourse(42));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/42/tutorial-groups' });
+        req.flush([tutorialGroup]);
+
+        const result = await resultPromise;
+        const resultBody = result.body;
+        expect(resultBody).toBeDefined();
+        expect(resultBody).toHaveLength(1);
+
+        expect(resultBody?.[0].tutorialGroupSchedule?.validFromInclusive?.toISOString()).toBe(dayjs('2025-01-10').toISOString());
+        expect(resultBody?.[0].tutorialGroupSchedule?.validToInclusive?.toISOString()).toBe(dayjs('2025-01-20').toISOString());
+        expect(resultBody?.[0].tutorialGroupSessions).toEqual(tutorialGroup.tutorialGroupSessions);
+        expect(resultBody?.[0].nextSession).toBe(convertedNextSession);
+        expect(resultBody?.[0].course?.tutorialGroupsConfiguration).toBe(convertedConfiguration);
+        expect(tutorialGroupSessionServiceMock.convertTutorialGroupSessionDatesFromServer).toHaveBeenCalledTimes(2);
+        expect(tutorialGroupsConfigurationServiceMock.convertTutorialGroupsConfigurationDatesFromServer).toHaveBeenCalledOnce();
     });
 
-    it('update', () => {
-        const returnedFromService = { ...elemDefault, title: 'Test' };
-        const expected = { ...returnedFromService };
-        let result: any;
+    it('should get a tutorial group dto and map it to a TutorialGroupDTO', async () => {
+        const rawDto: RawTutorialGroupDTO = {
+            id: 1,
+            title: 'Group A',
+            language: 'English',
+            isOnline: true,
+            tutorName: 'Ada',
+            tutorLogin: 'ada',
+            tutorId: 2,
+            sessions: [
+                {
+                    id: 9,
+                    start: '2025-01-10T09:00:00Z',
+                    end: '2025-01-10T10:00:00Z',
+                    location: 'MI 00.01.001',
+                    isCancelled: false,
+                    locationChanged: false,
+                    timeChanged: false,
+                    dateChanged: false,
+                    attendanceCount: 7,
+                },
+            ],
+            capacity: 15,
+        };
 
-        service
-            .update(1, 1, expected)
-            .pipe(take(1))
-            .subscribe((resp) => (result = resp));
+        const resultPromise = firstValueFrom(service.getTutorialGroupDTO(7, 9));
 
-        const req = httpMock.expectOne({ method: 'PUT' });
-        req.flush(returnedFromService);
-        expect(result).toMatchObject({ body: expected });
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/dto' });
+        req.flush(rawDto);
+
+        const result = await resultPromise;
+        expect(result.id).toBe(1);
+        expect(result.sessions).toHaveLength(1);
+        expect(result.sessions[0].start.toISOString()).toBe(dayjs('2025-01-10T09:00:00Z').toISOString());
+        expect(result.sessions[0].end.toISOString()).toBe(dayjs('2025-01-10T10:00:00Z').toISOString());
     });
 
-    it('getAllOfCourse', () => {
-        const returnedFromService = { ...elemDefault, title: 'Test' };
-        const expected = { ...returnedFromService };
-        let result: any;
+    it('should create a tutorial group', async () => {
+        const dto = createTutorialGroupDTO();
+        const resultPromise = firstValueFrom(service.create(7, dto));
 
-        service
-            .getAllForCourse(1)
-            .pipe(
-                take(1),
-                map((resp) => resp.body),
-            )
-            .subscribe((body) => (result = body));
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/tutorialgroup/courses/7/tutorial-groups' });
+        expect(req.request.body).toEqual(dto);
+        req.flush(null);
 
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush([returnedFromService]);
-        expect(result).toContainEqual(expected);
+        await expect(resultPromise).resolves.toBeNull();
     });
 
-    it('deregisterStudent', () => {
-        let result: any;
-        service
-            .deregisterStudent(1, 1, 'login')
-            .pipe(take(1))
-            .subscribe((res) => (result = res));
+    it('should update a tutorial group', async () => {
+        const dto = createTutorialGroupDTO();
+        const resultPromise = firstValueFrom(service.update(7, 9, dto));
 
-        const req = httpMock.expectOne({ method: 'DELETE' });
+        const req = httpMock.expectOne({ method: 'PUT', url: 'api/tutorialgroup/courses/7/tutorial-groups/9' });
+        expect(req.request.body).toEqual(dto);
+        req.flush(null);
+
+        await expect(resultPromise).resolves.toBeNull();
+    });
+
+    it('should delete a tutorial group via the api service', async () => {
+        tutorialGroupApiServiceMock.delete.mockReturnValue(of(new HttpResponse<void>({ status: 204 })));
+
+        const result = await firstValueFrom(service.delete(7, 9));
+
+        expect(tutorialGroupApiServiceMock.delete).toHaveBeenCalledWith(7, 9, 'response');
+        expect(result.status).toBe(204);
+    });
+
+    it('should get undefined when the tutorial group response is null', async () => {
+        const resultPromise = firstValueFrom(service.getTutorialGroupScheduleDTO(7, 9));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/schedule' });
+        req.flush(null);
+
+        await expect(resultPromise).resolves.toBeUndefined();
+    });
+
+    it('should get the tutorial group schedule dto', async () => {
+        const scheduleDto: TutorialGroupScheduleDTO = {
+            firstSessionStart: '2025-01-10T09:00:00',
+            firstSessionEnd: '2025-01-10T10:00:00',
+            repetitionFrequency: 1,
+            tutorialPeriodEnd: '2025-02-01',
+            location: 'MI 00.01.001',
+        };
+
+        const resultPromise = firstValueFrom(service.getTutorialGroupScheduleDTO(7, 9));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/schedule' });
+        req.flush(scheduleDto);
+
+        await expect(resultPromise).resolves.toEqual(scheduleDto);
+    });
+
+    it('should get registered student dtos', async () => {
+        const students = [createRegisteredStudent(1, 'ada')];
+        const resultPromise = firstValueFrom(service.getRegisteredStudentDTOs(7, 9));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/registered-students' });
+        req.flush(students);
+
+        await expect(resultPromise).resolves.toEqual(students);
+    });
+
+    it('should get unregistered student dtos', async () => {
+        const students = [createRegisteredStudent(2, 'alan')];
+        const resultPromise = firstValueFrom(service.getUnregisteredStudentDTOs(7, 9, 'ada', 3, 25));
+
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/tutorialgroup/courses/7/tutorial-groups/9/unregistered-students');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('pageIndex')).toBe('3');
+        expect(req.request.params.get('pageSize')).toBe('25');
+        req.flush(students);
+
+        await expect(resultPromise).resolves.toEqual(students);
+    });
+
+    it('should deregister a student via the api service', async () => {
+        tutorialGroupApiServiceMock.deregisterStudent.mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
+
+        const result = await firstValueFrom(service.deregisterStudent(7, 9, 'ada'));
+
+        expect(tutorialGroupApiServiceMock.deregisterStudent).toHaveBeenCalledWith(7, 9, 'ada', 'response');
+        expect(result.status).toBe(200);
+    });
+
+    it('should import registrations', async () => {
+        const studentDtos = [{ login: 'ada' }, { login: 'alan' }] as Student[];
+        const responseBody = [{ login: 'ada' }];
+        const resultPromise = firstValueFrom(service.importRegistrations(7, 9, studentDtos));
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/register-multiple' });
+        expect(req.request.body).toEqual(studentDtos);
+        req.flush(responseBody);
+
+        const result = await resultPromise;
+        expect(result.body).toEqual(responseBody);
+    });
+
+    it('should register multiple students via login', async () => {
+        const logins = ['ada', 'alan'];
+        const resultPromise = firstValueFrom(service.registerMultipleStudentsViaLogin(7, 9, logins));
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/register-via-login' });
+        expect(req.request.body).toEqual(logins);
         req.flush({});
-        expect(result.body).toEqual({});
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
     });
 
-    it('registerStudent', () => {
-        let result: any;
-        service
-            .registerStudent(1, 1, 'login')
-            .pipe(take(1))
-            .subscribe((res) => (result = res));
+    it('should import tutorial group registrations via the api service', async () => {
+        const tutorialGroups: TutorialGroupRegistrationImport[] = [{ title: 'A', student: { login: 'ada' } as Student }];
+        tutorialGroupApiServiceMock.importRegistrations.mockReturnValue(of(new HttpResponse({ body: tutorialGroups })));
 
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush({});
-        expect(result.body).toEqual({});
+        const result = await firstValueFrom(service.import(7, tutorialGroups));
+
+        expect(tutorialGroupApiServiceMock.importRegistrations).toHaveBeenCalledWith(7, tutorialGroups, 'response');
+        expect(result.body).toEqual(tutorialGroups);
     });
 
-    it('delete', () => {
-        let result: any;
-        service
-            .delete(1, 1)
-            .pipe(take(1))
-            .subscribe((res) => (result = res));
+    it('should export tutorial groups to csv via the api service', async () => {
+        const blob = new Blob(['csv']);
+        tutorialGroupApiServiceMock.exportTutorialGroupsToCSV.mockReturnValue(of(blob));
 
-        const req = httpMock.expectOne({ method: 'DELETE' });
-        req.flush({});
-        expect(result.body).toEqual({});
+        const result = await firstValueFrom(service.exportTutorialGroupsToCSV(7, ['title', 'language']));
+
+        expect(tutorialGroupApiServiceMock.exportTutorialGroupsToCSV).toHaveBeenCalledWith(7, ['title', 'language']);
+        expect(result).toBe(blob);
     });
 
-    it('registerMultipleStudents', () => {
-        const returnedFromService = new StudentDTO();
-        returnedFromService.login = 'login';
-        const expected = { ...returnedFromService };
-        let result: any;
+    it('should export tutorial groups to json via the api service', async () => {
+        const exports = [{ title: 'Group A' }, { title: 'Group B' }] as TutorialGroupExport[];
+        tutorialGroupApiServiceMock.exportTutorialGroupsToJSON.mockReturnValue(of(exports));
 
-        service
-            .importRegistrations(1, 1, [returnedFromService])
-            .pipe(
-                take(1),
-                map((resp) => resp.body),
-            )
-            .subscribe((body) => (result = body));
+        const result = await firstValueFrom(service.exportToJson(7, ['title']));
 
-        const req = httpMock.expectOne({ method: 'POST' });
-        req.flush([returnedFromService]);
-        expect(result).toContainEqual(expected);
+        expect(tutorialGroupApiServiceMock.exportTutorialGroupsToJSON).toHaveBeenCalledWith(7, ['title']);
+        expect(result).toBe(JSON.stringify(exports));
     });
 });
