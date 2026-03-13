@@ -35,9 +35,6 @@ export class TutorialGroupRegisteredStudentsService {
     }
 
     fetchRegisteredStudents(courseId: number, tutorialGroupId: number) {
-        if (!courseId || !tutorialGroupId) {
-            return;
-        }
         this.isLoading.set(true);
         this.tutorialGroupsService
             .getRegisteredStudentDTOs(courseId, tutorialGroupId)
@@ -56,8 +53,13 @@ export class TutorialGroupRegisteredStudentsService {
 
     addStudentsToRegisteredStudentsState(students: TutorialGroupRegisteredStudentDTO[]) {
         this.registeredStudents.update((registeredStudents) => {
+            const existingStudentIds = new Set(registeredStudents.map((student) => student.id));
             const newStudents: TutorialGroupRegisteredStudentDTO[] = students.filter((student) => {
-                return registeredStudents.every((alreadyRegisteredStudent) => alreadyRegisteredStudent.id !== student.id);
+                if (existingStudentIds.has(student.id)) {
+                    return false;
+                }
+                existingStudentIds.add(student.id);
+                return true;
             });
             return [...registeredStudents, ...newStudents];
         });
