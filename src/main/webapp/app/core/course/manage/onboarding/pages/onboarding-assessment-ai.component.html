@@ -44,7 +44,7 @@
 
         @if (complaintsEnabled) {
             <div class="ms-4 mb-3">
-                <div class="row g-3 mb-2">
+                <div class="row g-3 mb-2 align-items-end">
                     <div class="col-md-4">
                         <label class="form-label" jhiTranslate="artemisApp.course.maxComplaints.title"></label>
                         <input type="number" class="form-control" [ngModel]="course().maxComplaints" (ngModelChange)="updateField('maxComplaints', $event)" min="0" />

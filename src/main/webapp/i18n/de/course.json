@@ -211,6 +211,7 @@
             "startDate": "Start",
             "endDate": "Ende",
             "semester": "Semester",
+            "language": "Sprache",
             "ltiConfiguration": "LTI Konfiguration",
             "recentlyAccessed": "Zuletzt verwendet",
             "maxPoints": {
