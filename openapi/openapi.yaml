@@ -530,7 +530,7 @@ paths:
         required: true
         schema:
           type: string
-          enum: [QUALITY]
+          enum: [COMPETENCIES, DIFFICULTY, QUALITY]
       requestBody:
         content:
           application/json:
@@ -697,6 +697,20 @@ paths:
         '200': {description: OK}
 components:
   schemas:
+    DifficultyAssessment:
+      type: object
+      properties:
+        suggested:
+          type: string
+          enum: [EASY, MEDIUM, HARD, UNKNOWN]
+        confidence: {type: number, format: double}
+        reasoning: {type: string}
+        matchesDeclared: {type: boolean}
+        delta:
+          type: string
+          enum: [LOWER, MATCH, HIGHER, UNKNOWN]
+        taskCount: {type: integer, format: int32}
+        testCount: {type: integer, format: int32}
     Costs:
       type: object
       description: Response containing consistency check costs
@@ -720,10 +734,13 @@ components:
         campus: {type: string}
     ChecklistAnalysisRequest:
       type: object
-      description: Request to analyze a problem statement for quality
+      description: Request to analyze a problem statement for quality, competencies,
+        and difficulty
       properties:
         problemStatementMarkdown: {type: string, description: Problem statement in
             Markdown format, maxLength: 50000, minLength: 0}
+        declaredDifficulty: {type: string, description: Declared difficulty of the
+            exercise, maxLength: 20, minLength: 0}
         language: {type: string, description: 'Programming language, e.g. JAVA, PYTHON',
           maxLength: 50, minLength: 0}
         exerciseId: {type: integer, format: int64, description: ID of the exercise}
@@ -736,7 +753,7 @@ components:
         actionType:
           type: string
           description: Type of action to apply
-          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES]
+          enum: [FIX_QUALITY_ISSUE, FIX_ALL_QUALITY_ISSUES, ADAPT_DIFFICULTY]
         problemStatementMarkdown: {type: string, description: Current problem statement
             markdown, maxLength: 50000, minLength: 0}
         context:
@@ -788,8 +805,14 @@ components:
       type: object
       description: Response containing the checklist analysis results
       properties:
+        inferredCompetencies:
+          type: array
+          description: Top inferred competencies from the standardized catalog
+          items: {$ref: '#/components/schemas/InferredCompetency'}
         bloomRadar: {$ref: '#/components/schemas/BloomRadar', description: Bloom's
             taxonomy radar distribution}
+        difficultyAssessment: {$ref: '#/components/schemas/DifficultyAssessment',
+          description: Difficulty assessment with delta indicator}
         qualityIssues:
           type: array
           description: List of quality issues found in the problem statement
@@ -912,6 +935,25 @@ components:
           description: Related locations across artifacts
           items: {$ref: '#/components/schemas/ArtifactLocation'}
       required: [category, description, relatedLocations, severity, suggestedFix]
+    InferredCompetency:
+      type: object
+      properties:
+        knowledgeAreaShortTitle: {type: string}
+        competencyTitle: {type: string}
+        competencyVersion: {type: string}
+        catalogSourceId: {type: integer, format: int64}
+        taxonomyLevel: {type: string}
+        confidence: {type: number, format: double}
+        rank: {type: integer, format: int32}
+        evidence:
+          type: array
+          items: {type: string}
+        whyThisMatches: {type: string}
+        isLikelyPrimary: {type: boolean}
+        relatedTaskNames:
+          type: array
+          items: {type: string}
+        matchedCourseCompetencyId: {type: integer, format: int64}
     ProblemStatementRewriteRequest:
       type: object
       description: Request to rewrite a problem statement
