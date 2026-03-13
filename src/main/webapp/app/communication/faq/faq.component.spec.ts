@@ -2,7 +2,7 @@ import { HttpErrorResponse, HttpResponse, provideHttpClient } from '@angular/com
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
@@ -23,6 +23,8 @@ import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.serv
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
+import { SortDirective } from 'app/shared/sort/directive/sort.directive';
+import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 
 function createFaq(id: number, category: string, color: string): Faq {
     const faq = new Faq();
@@ -64,7 +66,7 @@ describe('FaqComponent', () => {
         } as unknown as ProfileInfo;
 
         TestBed.configureTestingModule({
-            declarations: [FaqComponent, MockRouterLinkDirective, MockComponent(CustomExerciseCategoryBadgeComponent)],
+            imports: [FaqComponent],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useClass: MockRouter },
@@ -112,6 +114,10 @@ describe('FaqComponent', () => {
                 provideHttpClient(),
             ],
         })
+            .overrideComponent(FaqComponent, {
+                remove: { imports: [SortDirective, SortByDirective, CustomExerciseCategoryBadgeComponent] },
+                add: { imports: [MockDirective(SortDirective), MockDirective(SortByDirective), MockComponent(CustomExerciseCategoryBadgeComponent)] },
+            })
             .compileComponents()
             .then(() => {
                 faqComponentFixture = TestBed.createComponent(FaqComponent);
