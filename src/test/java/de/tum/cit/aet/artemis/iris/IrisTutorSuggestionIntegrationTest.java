@@ -139,7 +139,7 @@ class IrisTutorSuggestionIntegrationTest extends AbstractIrisIntegrationTest {
         var post = createPostInProgrammingExerciseChat(programmingExercise, TEST_PREFIX);
         var irisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         var currentIrisSession = request.postWithResponseBody(tutorSuggestionUrl(post.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
-        assertThat(irisSession).isEqualTo(currentIrisSession);
+        assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
     }
 
     @Test

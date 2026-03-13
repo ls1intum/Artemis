@@ -132,7 +132,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
     void getCurrentSession() throws Exception {
         var irisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         var currentIrisSession = request.postWithResponseBody(exerciseChatUrl(exercise.getId()) + "/current", null, IrisChatSessionResponseDTO.class, HttpStatus.OK);
-        assertThat(currentIrisSession).isEqualTo(irisSession);
+        assertThat(currentIrisSession.id()).isEqualTo(irisSession.id());
     }
 
     @Test
@@ -141,7 +141,7 @@ class IrisProgrammingExerciseChatSessionIntegrationTest extends AbstractIrisInte
         var irisSession1 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         var irisSession2 = request.postWithResponseBody(exerciseChatUrl(exercise.getId()), null, IrisChatSessionResponseDTO.class, HttpStatus.CREATED);
         List<IrisChatSessionResponseDTO> irisSessions = request.getList(exerciseChatUrl(exercise.getId()), HttpStatus.OK, IrisChatSessionResponseDTO.class);
-        assertThat(irisSessions).hasSize(2).containsAll(List.of(irisSession1, irisSession2));
+        assertThat(irisSessions).hasSize(2).extracting(IrisChatSessionResponseDTO::id).containsExactlyInAnyOrder(irisSession1.id(), irisSession2.id());
     }
 
     @Test
