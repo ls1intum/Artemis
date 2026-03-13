@@ -462,7 +462,7 @@
                         "description": "Lade Vorlesungsfolien hoch, organisiere Inhalte und verknüpfe Lernmaterialien mit Kompetenzen."
                     },
                     "tutorialGroups": {
-                        "title": "Übungsgruppen",
+                        "title": "Tutorien",
                         "description": "Organisiere Studierende in Übungsgruppen und verwalte Zeitpläne."
                     },
                     "exams": {

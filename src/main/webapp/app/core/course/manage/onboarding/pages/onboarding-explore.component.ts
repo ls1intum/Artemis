@@ -17,6 +17,10 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
                 gap: 1.25rem;
             }
 
+            .explore-grid--3col {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
             .explore-card {
                 border: 1px solid var(--bs-border-color);
                 border-radius: 0.75rem;
@@ -25,6 +29,9 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
 
                 &::before {
                     content: '';
@@ -58,6 +65,7 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
                     font-size: 0.88rem;
                     margin-bottom: 1rem;
                     line-height: 1.45;
+                    flex: 1;
                 }
             }
 
@@ -115,6 +123,7 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
 export class OnboardingExploreComponent {
     readonly course = input.required<Course>();
     readonly showHero = input(true);
+    readonly columns = input<number | undefined>(undefined);
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faBullseye = faBullseye;

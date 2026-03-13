@@ -462,7 +462,7 @@
                         "description": "Upload lecture slides, organize content, and link learning materials to competencies."
                     },
                     "tutorialGroups": {
-                        "title": "Tutorial Groups",
+                        "title": "Tutorials",
                         "description": "Organize students into tutorial groups and manage schedules."
                     },
                     "exams": {

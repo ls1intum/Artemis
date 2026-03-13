@@ -11,7 +11,7 @@
         </div>
     }
     <div class="step-body">
-        <div class="explore-grid">
+        <div class="explore-grid" [class.explore-grid--3col]="columns() === 3">
             <div class="explore-card explore-card--exercises">
                 <div class="explore-icon-wrapper">
                     <fa-icon [icon]="faCode" />
