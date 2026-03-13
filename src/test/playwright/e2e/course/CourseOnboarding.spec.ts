@@ -98,8 +98,8 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         await courseOnboarding.clickGoToCourse();
         await page.waitForURL(`**/course-management/${course.id}**`);
 
-        // Find and click the "Course Setup" button to replay the wizard
-        const replayButton = page.locator('button', { hasText: 'Course Setup' });
+        // Find and click the "Course Onboarding" button to replay the wizard
+        const replayButton = page.locator('button', { hasText: 'Course Onboarding' });
         await expect(replayButton).toBeVisible();
         await replayButton.click();
 

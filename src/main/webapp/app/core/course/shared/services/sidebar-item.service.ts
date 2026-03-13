@@ -31,16 +31,23 @@ import {
 })
 export class CourseSidebarItemService {
     getManagementDefaultItems(courseId: number): SidebarItem[] {
-        const overviewItem: SidebarItem = {
-            routerLink: courseId ? `${courseId}` : '',
-            icon: faTableCells,
-            title: 'Overview',
-            translation: 'artemisApp.course.overview',
-            hidden: false,
-            isPrefix: true,
-        };
+        return [
+            {
+                routerLink: courseId ? `${courseId}` : '',
+                icon: faTableCells,
+                title: 'Overview',
+                translation: 'artemisApp.course.overview',
+                hidden: false,
+                isPrefix: true,
+            },
+            this.getExamsItem(courseId),
+            this.getExercisesItem(courseId),
+            this.getStatisticsItem(courseId),
+        ];
+    }
 
-        const exercisesItem: SidebarItem = {
+    getExercisesItem(courseId?: number): SidebarItem {
+        return {
             routerLink: courseId ? `${courseId}/exercises` : 'exercises',
             icon: faCode,
             iconColor: '#6366f1',
@@ -48,16 +55,16 @@ export class CourseSidebarItemService {
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
         };
+    }
 
-        const statisticsItem: SidebarItem = {
+    getStatisticsItem(courseId?: number): SidebarItem {
+        return {
             routerLink: courseId ? `${courseId}/course-statistics` : 'course-statistics',
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hidden: false,
         };
-
-        return [overviewItem, this.getExamsItem(courseId), exercisesItem, statisticsItem];
     }
 
     getStudentDefaultItems(hasDashboard = false, questionsAvailable = false): SidebarItem[] {

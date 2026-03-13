@@ -42,6 +42,20 @@
             />
             @if (course()?.isAtLeastInstructor) {
                 <jhi-user-management-dropdown [courseId]="course()?.id" />
+                <jhi-button
+                    [btnType]="ButtonType.SECONDARY"
+                    [btnSize]="ButtonSize.MEDIUM"
+                    [title]="'artemisApp.course.import.button'"
+                    [icon]="faFileImport"
+                    (onClick)="openImportDialog()"
+                />
+                <jhi-button
+                    [btnType]="ButtonType.SECONDARY"
+                    [btnSize]="ButtonSize.MEDIUM"
+                    [title]="'artemisApp.course.onboarding.actions.restartSetup'"
+                    [icon]="faRocket"
+                    [routerLink]="['/course-management', course()?.id, 'onboarding']"
+                />
             }
         </div>
     </div>
@@ -52,7 +66,7 @@
                 [btnType]="ButtonType.PRIMARY"
                 [btnSize]="ButtonSize.MEDIUM"
                 [title]="'entity.action.addExercise'"
-                [icon]="faListAlt"
+                [icon]="faCode"
                 [shouldToggle]="true"
                 (click)="addExercisePopover.showPopover($event)"
             />
@@ -62,7 +76,7 @@
                     [btnType]="ButtonType.PRIMARY"
                     [btnSize]="ButtonSize.MEDIUM"
                     [title]="'entity.action.addLecture'"
-                    [icon]="faChalkboardUser"
+                    [icon]="faChalkboardTeacher"
                     [shouldToggle]="true"
                     (onClick)="navigateToCourseManagementSection(CourseManagementSection.LECTURE)"
                 />
@@ -72,36 +86,39 @@
             <jhi-button
                 [btnType]="ButtonType.PRIMARY"
                 [btnSize]="ButtonSize.MEDIUM"
-                [title]="'entity.action.addFaq'"
-                [icon]="faQuestion"
+                [title]="'entity.action.addTutorial'"
+                [icon]="faUsers"
                 [shouldToggle]="true"
-                (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
+                (onClick)="navigateToCourseManagementSection(CourseManagementSection.TUTORIAL_GROUP)"
             />
-        }
-        @if (course()?.isAtLeastInstructor) {
+
             <jhi-button
                 [btnType]="ButtonType.PRIMARY"
                 [btnSize]="ButtonSize.MEDIUM"
                 [title]="'entity.action.addExam'"
-                [icon]="faGraduationCap"
+                [icon]="faFileAlt"
                 [shouldToggle]="true"
                 (onClick)="navigateToCourseManagementSection(CourseManagementSection.EXAM)"
             />
 
-            <jhi-button
-                [btnType]="ButtonType.SECONDARY"
-                [btnSize]="ButtonSize.MEDIUM"
-                [title]="'artemisApp.course.import.button'"
-                [icon]="faFileImport"
-                (onClick)="openImportDialog()"
-            />
+            @if (atlasEnabled) {
+                <jhi-button
+                    [btnType]="ButtonType.PRIMARY"
+                    [btnSize]="ButtonSize.MEDIUM"
+                    [title]="'entity.action.addCompetency'"
+                    [icon]="faBullseye"
+                    [shouldToggle]="true"
+                    (onClick)="navigateToCourseManagementSection(CourseManagementSection.COMPETENCY)"
+                />
+            }
 
             <jhi-button
-                [btnType]="ButtonType.SECONDARY"
+                [btnType]="ButtonType.PRIMARY"
                 [btnSize]="ButtonSize.MEDIUM"
-                [title]="'artemisApp.course.onboarding.actions.restartSetup'"
-                [icon]="faCog"
-                [routerLink]="['/course-management', course()?.id, 'onboarding']"
+                [title]="'entity.action.addFaq'"
+                [icon]="faQuestion"
+                [shouldToggle]="true"
+                (onClick)="navigateToCourseManagementSection(CourseManagementSection.FAQ)"
             />
         }
     </div>
