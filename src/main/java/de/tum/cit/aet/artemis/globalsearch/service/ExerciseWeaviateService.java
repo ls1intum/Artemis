@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseS
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.query.Filter;
+import io.weaviate.client6.v1.api.collections.query.SortBy;
 
 /**
  * Service for synchronizing exercise metadata with Weaviate vector database.
@@ -380,6 +381,7 @@ public class ExerciseWeaviateService {
 
             var result = collection.query.fetchObjects(q -> {
                 q.limit(limit);
+                q.sort(SortBy.creationTime().desc());
                 if (filter != null) {
                     q.filters(filter);
                 }

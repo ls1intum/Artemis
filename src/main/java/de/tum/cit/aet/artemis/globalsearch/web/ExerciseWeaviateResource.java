@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.globalsearch.web;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.slf4j.Logger;
@@ -114,30 +115,36 @@ public class ExerciseWeaviateResource {
 
         log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}", query, type, courseId, limit);
 
+        // Normalize type parameter: trim, lowercase, treat blank as null
+        String normalizedType = type != null ? type.trim().toLowerCase(Locale.ROOT) : null;
+        if (normalizedType != null && normalizedType.isEmpty()) {
+            normalizedType = null;
+        }
+
+        if (normalizedType != null && !"exercise".equals(normalizedType)) {
+            return ResponseEntity.badRequest().build();
+        }
+
         boolean isEmptyQuery = query == null || query.trim().isEmpty();
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
 
-        if (type == null || "exercise".equals(type)) {
-            User user = userRepository.getUserWithGroupsAndAuthorities();
-            FilterResult filterResult = buildFilterForUser(user, courseId);
-            if (!filterResult.hasAccess()) {
-                return ResponseEntity.ok(List.of());
-            }
-            Filter filter = filterResult.filter();
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        FilterResult filterResult = buildFilterForUser(user, courseId);
+        if (!filterResult.hasAccess()) {
+            return ResponseEntity.ok(List.of());
+        }
+        Filter filter = filterResult.filter();
 
-            List<Map<String, Object>> searchResults;
-            if (isEmptyQuery) {
-                searchResults = exerciseWeaviateService.fetchExercisesWithFilter(filter, effectiveLimit);
-            }
-            else {
-                searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
-            }
-
-            var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
-            return ResponseEntity.ok(resultDTOs);
+        List<Map<String, Object>> searchResults;
+        if (isEmptyQuery) {
+            searchResults = exerciseWeaviateService.fetchExercisesWithFilter(filter, effectiveLimit);
+        }
+        else {
+            searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
         }
 
-        return ResponseEntity.ok(List.of());
+        var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
+        return ResponseEntity.ok(resultDTOs);
     }
 
     /**
