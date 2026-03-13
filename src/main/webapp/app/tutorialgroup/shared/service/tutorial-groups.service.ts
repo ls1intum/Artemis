@@ -101,6 +101,18 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
     }
 
+    exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
+        return this.tutorialGroupApiService.exportTutorialGroupsToCSV(courseId, fields);
+    }
+
+    exportToJson(courseId: number, fields: string[]): Observable<string> {
+        return this.tutorialGroupApiService.exportTutorialGroupsToJSON(courseId, fields).pipe(
+            map((data: Array<TutorialGroupExport>) => {
+                return JSON.stringify(data);
+            }),
+        );
+    }
+
     convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
         if (tutorialGroups) {
             tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
@@ -141,17 +153,5 @@ export class TutorialGroupsService {
             });
         }
         return res;
-    }
-
-    exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {
-        return this.tutorialGroupApiService.exportTutorialGroupsToCSV(courseId, fields);
-    }
-
-    exportToJson(courseId: number, fields: string[]): Observable<string> {
-        return this.tutorialGroupApiService.exportTutorialGroupsToJSON(courseId, fields).pipe(
-            map((data: Array<TutorialGroupExport>) => {
-                return JSON.stringify(data);
-            }),
-        );
     }
 }
