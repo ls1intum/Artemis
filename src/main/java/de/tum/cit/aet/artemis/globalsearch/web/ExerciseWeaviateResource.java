@@ -121,27 +121,11 @@ public class ExerciseWeaviateResource {
 
         if (type == null || "exercise".equals(type)) {
             User user = userRepository.getUserWithGroupsAndAuthorities();
-            Filter filter;
-
-            if (courseId != null) {
-                Course course = courseRepository.findByIdElseThrow(courseId);
-                authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-                filter = buildFilterForSingleCourse(user, course);
+            FilterResult filterResult = buildFilterForUser(user, courseId);
+            if (!filterResult.hasAccess()) {
+                return ResponseEntity.ok(List.of());
             }
-            else {
-                boolean isAdmin = authCheckService.isAdmin(user);
-                if (isAdmin) {
-                    // Admins see everything - no filtering needed
-                    filter = null;
-                }
-                else {
-                    List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
-                    if (accessibleCourses.isEmpty()) {
-                        return ResponseEntity.ok(List.of());
-                    }
-                    filter = buildFilterForMultipleCourses(user, accessibleCourses);
-                }
-            }
+            Filter filter = filterResult.filter();
 
             List<Map<String, Object>> searchResults;
             if (isEmptyQuery) {
@@ -179,30 +163,56 @@ public class ExerciseWeaviateResource {
 
         int effectiveLimit = Math.min(Math.max(limit, 1), 100);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Filter filter;
-
-        if (courseId != null) {
-            Course course = courseRepository.findByIdElseThrow(courseId);
-            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-            filter = buildFilterForSingleCourse(user, course);
+        FilterResult filterResult = buildFilterForUser(user, courseId);
+        if (!filterResult.hasAccess()) {
+            return ResponseEntity.ok(List.of());
         }
-        else {
-            boolean isAdmin = authCheckService.isAdmin(user);
-            if (isAdmin) {
-                filter = null;
-            }
-            else {
-                List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
-                if (accessibleCourses.isEmpty()) {
-                    return ResponseEntity.ok(List.of());
-                }
-                filter = buildFilterForMultipleCourses(user, accessibleCourses);
-            }
-        }
+        Filter filter = filterResult.filter();
 
         var searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
         var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
         return ResponseEntity.ok(resultDTOs);
+    }
+
+    /**
+     * Result of building a user-specific Weaviate filter.
+     *
+     * @param filter    the Weaviate filter to apply ({@code null} means no filter, i.e. admin access)
+     * @param hasAccess whether the user has access to any courses; if {@code false}, callers should return an empty result
+     */
+    private record FilterResult(Filter filter, boolean hasAccess) {
+    }
+
+    /**
+     * Builds a Weaviate filter scoped to the courses the user may access.
+     * <p>
+     * Handles three cases:
+     * <ol>
+     * <li>Single course (courseId != null): verifies student role and returns a course+role filter</li>
+     * <li>Admin: no filter needed (returns {@code null} filter with {@code hasAccess = true})</li>
+     * <li>Multi-course: groups accessible courses by role and returns a combined filter</li>
+     * </ol>
+     *
+     * @param user     the authenticated user
+     * @param courseId optional course ID; if {@code null}, searches across all accessible courses
+     * @return a {@link FilterResult} containing the filter and an access flag
+     */
+    private FilterResult buildFilterForUser(User user, Long courseId) {
+        if (courseId != null) {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+            return new FilterResult(buildFilterForSingleCourse(user, course), true);
+        }
+
+        if (authCheckService.isAdmin(user)) {
+            return new FilterResult(null, true);
+        }
+
+        List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
+        if (accessibleCourses.isEmpty()) {
+            return new FilterResult(null, false);
+        }
+        return new FilterResult(buildFilterForMultipleCourses(user, accessibleCourses), true);
     }
 
     // -- Filter building helpers --
