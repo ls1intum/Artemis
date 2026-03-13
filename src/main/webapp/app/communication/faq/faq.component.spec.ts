@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { MockRouterLinkDirective } from 'test/helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { FaqService } from 'app/communication/faq/faq.service';
