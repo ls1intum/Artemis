@@ -4,7 +4,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { OverlayContainer } from '@angular/cdk/overlay';
 import { TranslateService } from '@ngx-translate/core';
 import { TutorialEditLanguagesInputComponent } from './tutorial-edit-languages-input.component';
-import { ValidationStatus } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
+import { ValidationStatus } from 'app/shared/util/validation';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 function assertNonNullable<T>(value: T): asserts value is NonNullable<T> {
