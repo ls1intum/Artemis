@@ -69,7 +69,8 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
         // Add type-specific metadata
         addTypeSpecificMetadata(properties, exerciseType, metadata);
 
-        String id = getLong(properties, "exercise_id") != null ? getLong(properties, "exercise_id").toString() : null;
+        Long exerciseId = getLong(properties, "exercise_id");
+        String id = exerciseId != null ? exerciseId.toString() : null;
 
         return new GlobalSearchResultDTO(id, "exercise", title, problemStatement, badge, metadata);
     }
