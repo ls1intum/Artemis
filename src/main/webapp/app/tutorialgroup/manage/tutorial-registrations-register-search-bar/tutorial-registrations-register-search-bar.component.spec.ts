@@ -296,4 +296,42 @@ describe('TutorialRegistrationsRegisterSearchBarComponent', () => {
         expect(component.hasMorePages()).toBe(true);
         expect(component.suggestionHighlightIndex()).toBeUndefined();
     });
+
+    it('should select the first suggestion when arrow down is pressed without an active selection', async () => {
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+
+        input.dispatchEvent(new FocusEvent('focusin'));
+        component.searchString.set('ada');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
+        assertNonNullable(viewport);
+        Object.defineProperty(viewport, 'scrollTo', { configurable: true, value: vi.fn() });
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+        fixture.detectChanges();
+
+        expect(component.suggestionHighlightIndex()).toBe(0);
+    });
+
+    it('should keep the selection undefined when arrow up is pressed without an active selection', async () => {
+        tutorialGroupsServiceMock.getUnregisteredStudentDTOs.mockReturnValue(of([firstStudent, secondStudent]));
+        const input = fixture.nativeElement.querySelector('.search-input') as HTMLInputElement;
+
+        input.dispatchEvent(new FocusEvent('focusin'));
+        component.searchString.set('ada');
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const viewport = overlayContainer.getContainerElement().querySelector('.search-viewport') as HTMLElement | null;
+        assertNonNullable(viewport);
+        Object.defineProperty(viewport, 'scrollTo', { configurable: true, value: vi.fn() });
+
+        input.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
+        fixture.detectChanges();
+
+        expect(component.suggestionHighlightIndex()).toBeUndefined();
+    });
 });
