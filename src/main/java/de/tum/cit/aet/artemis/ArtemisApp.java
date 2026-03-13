@@ -81,7 +81,7 @@ public class ArtemisApp {
      *
      * @param args the command line arguments
      */
-    static void main(String[] args) {
+    public static void main(String[] args) {
         SpringApplication app = new SpringApplication(ArtemisApp.class);
         DefaultProfileUtil.addDefaultProfile(app);
         var context = app.run(args);

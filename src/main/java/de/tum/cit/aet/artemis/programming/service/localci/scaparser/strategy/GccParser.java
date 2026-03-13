@@ -87,7 +87,7 @@ public class GccParser implements ParserStrategy {
         if (flag.contains("format")) {
             return "Security";
         }
-        if (flag.contains("uninitialized") || flag.contains("maybe-uninitialized")) {
+        if (flag.contains("uninitialized")) {
             return "UndefinedBehavior";
         }
         return "Misc";
