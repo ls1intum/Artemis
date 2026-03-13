@@ -410,6 +410,7 @@
                     "previous": "Zurück",
                     "skip": "Überspringen",
                     "finishSetup": "Einrichtung abschließen",
+                    "restartSetup": "Kurseinrichtung",
                     "saving": "Speichern..."
                 },
                 "generalSettings": {

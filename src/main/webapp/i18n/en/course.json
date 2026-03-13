@@ -410,6 +410,7 @@
                     "previous": "Previous",
                     "skip": "Skip",
                     "finishSetup": "Finish Setup",
+                    "restartSetup": "Course Setup",
                     "saving": "Saving..."
                 },
                 "generalSettings": {

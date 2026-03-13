@@ -95,6 +95,14 @@
                 [icon]="faFileImport"
                 (onClick)="openImportDialog()"
             />
+
+            <jhi-button
+                [btnType]="ButtonType.SECONDARY"
+                [btnSize]="ButtonSize.MEDIUM"
+                [title]="'artemisApp.course.onboarding.restartSetup'"
+                [icon]="faCog"
+                [routerLink]="['/course-management', course()?.id, 'onboarding']"
+            />
         }
     </div>
 </jhi-card-wrapper>

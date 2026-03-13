@@ -2,7 +2,7 @@ import { Component, inject, input, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { faChalkboardUser, faChartBar, faClipboard, faFileImport, faGraduationCap, faListAlt, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { faChalkboardUser, faChartBar, faClipboard, faCog, faFileImport, faGraduationCap, faListAlt, faQuestion } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -43,6 +43,7 @@ export class QuickActionsComponent {
     protected readonly faChalkboardUser = faChalkboardUser;
     protected readonly faQuestion = faQuestion;
     protected readonly faFileImport = faFileImport;
+    protected readonly faCog = faCog;
     protected readonly CourseManagementSection = CourseManagementSection;
     course = input.required<Course>();
     private router = inject(Router);
