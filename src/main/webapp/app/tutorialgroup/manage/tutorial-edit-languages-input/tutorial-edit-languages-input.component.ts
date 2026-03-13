@@ -109,13 +109,15 @@ export class TutorialEditLanguagesInputComponent {
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             this.suggestionHighlightIndex.update((selectionTargetIndex) => {
-                return selectionTargetIndex !== undefined ? Math.min(selectionTargetIndex + 1, numberOfAlreadyUsedLanguages - 1) : 0;
+                return selectionTargetIndex !== undefined ? (selectionTargetIndex + 1) % numberOfAlreadyUsedLanguages : 0;
             });
         }
         if (event.key === 'ArrowUp') {
             event.preventDefault();
             this.suggestionHighlightIndex.update((selectionTargetIndex) => {
-                return selectionTargetIndex !== undefined ? Math.max(selectionTargetIndex - 1, 0) : numberOfAlreadyUsedLanguages - 1;
+                return selectionTargetIndex !== undefined
+                    ? (selectionTargetIndex - 1 + numberOfAlreadyUsedLanguages) % numberOfAlreadyUsedLanguages
+                    : numberOfAlreadyUsedLanguages - 1;
             });
         }
 
