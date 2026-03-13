@@ -42,7 +42,6 @@ describe('TutorialEditLanguagesInputComponent', () => {
         overlayContainer.getContainerElement().innerHTML = '';
     });
 
-    // open and close
     it('should open the suggestion panel on focus and close it on blur', async () => {
         const input = fixture.nativeElement.querySelector('input') as HTMLInputElement | null;
         assertNonNullable(input);
@@ -61,7 +60,6 @@ describe('TutorialEditLanguagesInputComponent', () => {
         expect(overlayContainer.getContainerElement().querySelector('.suggestion-panel')).toBeNull();
     });
 
-    // validation
     it('should expose error validation after blur with an empty language', async () => {
         const input = fixture.nativeElement.querySelector('input') as HTMLInputElement | null;
         assertNonNullable(input);
@@ -122,7 +120,6 @@ describe('TutorialEditLanguagesInputComponent', () => {
         expect(component.languageValidationResult()).toEqual({ status: ValidationStatus.VALID });
     });
 
-    // selection
     it('should highlight suggestions with arrow keys and select the highlighted language on enter', async () => {
         const input = fixture.nativeElement.querySelector('input') as HTMLInputElement | null;
         assertNonNullable(input);
