@@ -26,6 +26,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.StandardizedCompetencyApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.KnowledgeArea;
+import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
+import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.ChecklistSection;
 import de.tum.cit.aet.artemis.hyperion.domain.DifficultyDelta;
 import de.tum.cit.aet.artemis.hyperion.domain.QualityIssueCategory;
@@ -56,23 +58,29 @@ class HyperionChecklistServiceTest {
     @Mock
     private ProgrammingExerciseTestRepository programmingExerciseRepository;
 
+    @Mock
+    private LLMTokenUsageService llmTokenUsageService;
+
+    @Mock
+    private UserTestRepository userRepository;
+
     private HyperionChecklistService hyperionChecklistService;
 
     @BeforeEach
     void setup() {
         ChatClient chatClient = ChatClient.create(chatModel);
 
-        // Mock StandardizedCompetencyService to return empty catalog
+        // Mock StandardizedCompetencyService to return empty catalog (lenient because not all tests trigger competency analysis)
         lenient().when(standardizedCompetencyApi.getAllForTreeView()).thenReturn(List.of());
 
         lenient().when(taskRepository.findByExerciseIdWithTestCases(any())).thenReturn(java.util.Set.of());
 
-        // Mock CourseCompetencyApi to return empty set
+        // Mock CourseCompetencyApi to return empty set (lenient because not all tests trigger competency analysis)
         lenient().when(courseCompetencyApi.findAllForCourse(any(Long.class))).thenReturn(java.util.Set.of());
 
         var templateService = new HyperionPromptTemplateService();
         this.hyperionChecklistService = new HyperionChecklistService(chatClient, templateService, ObservationRegistry.NOOP, Optional.of(standardizedCompetencyApi),
-                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper());
+                Optional.of(courseCompetencyApi), taskRepository, programmingExerciseRepository, new ObjectMapper(), llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -128,7 +136,7 @@ class HyperionChecklistServiceTest {
             else if (text.contains("suggest the appropriate difficulty level")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(difficultyJson))));
             }
-            else if (text.contains("for quality issues")) {
+            else if (text.contains("problem statement for quality issues")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
             }
             throw new AssertionError("Unexpected prompt: " + text);
@@ -168,7 +176,7 @@ class HyperionChecklistServiceTest {
             else if (text.contains("suggest the appropriate difficulty level")) {
                 throw new RuntimeException("AI error");
             }
-            else if (text.contains("for quality issues")) {
+            else if (text.contains("problem statement for quality issues")) {
                 return new ChatResponse(List.of(new Generation(new AssistantMessage(qualityJson))));
             }
             throw new AssertionError("Unexpected prompt: " + text);
@@ -334,7 +342,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
                 Map.of("issueDescription", "Vague instructions", "category", "CLARITY", "suggestedFix", "Be more specific"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
@@ -349,7 +357,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
                 Map.of("issueDescription", "Vague", "category", "CLARITY"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isFalse();
@@ -364,7 +372,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.ADAPT_DIFFICULTY, "Original problem statement",
                 Map.of("targetDifficulty", "MEDIUM", "currentDifficulty", "EASY", "reasoning", "Exercise is conceptually moderate.", "taskCount", "5", "testCount", "10"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
@@ -382,7 +390,7 @@ class HyperionChecklistServiceTest {
         var request = new ChecklistActionRequestDTO(ChecklistActionRequestDTO.ActionType.FIX_QUALITY_ISSUE, "Original problem statement",
                 Map.of("issueDescription", "Vague instructions", "category", "CLARITY"));
 
-        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request).join();
+        ChecklistActionResponseDTO response = hyperionChecklistService.applyChecklistAction(request, 1L).join();
 
         assertThat(response).isNotNull();
         assertThat(response.applied()).isTrue();
