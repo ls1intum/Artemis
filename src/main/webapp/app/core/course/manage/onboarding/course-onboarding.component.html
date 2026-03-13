@@ -6,7 +6,7 @@
 
     <div class="step-indicator">
         @for (step of stepKeys; track step; let i = $index) {
-            <div class="step-item" [class.active]="activeStep() === i" [class.completed]="activeStep() > i">
+            <div class="step-item" [class.active]="activeStep() === i" [class.completed]="activeStep() > i" (click)="goToStep(i)">
                 <div class="step-circle">
                     @if (activeStep() > i) {
                         <fa-icon [icon]="faCheck" />
@@ -53,7 +53,7 @@
         </div>
         <div class="footer-right">
             @if (canFinish()) {
-                <button class="btn btn-success me-2" (click)="finishSetup()" [disabled]="isSaving()">
+                <button class="btn btn-success" (click)="finishSetup()" [disabled]="isSaving()">
                     @if (isSaving()) {
                         <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
                     } @else {
@@ -61,9 +61,13 @@
                         <span jhiTranslate="artemisApp.course.onboarding.actions.finishSetup"></span>
                     }
                 </button>
-            }
-            @if (!isLastStep()) {
-                <button class="btn btn-primary" [class.btn-outline-primary]="canFinish()" [class.btn-primary]="!canFinish()" (click)="nextStep()" [disabled]="isSaving()">
+            } @else if (isLastStep()) {
+                <button class="btn btn-primary" (click)="goToCourse()">
+                    <span jhiTranslate="artemisApp.course.onboarding.actions.goToCourse"></span>
+                    <fa-icon [icon]="faChevronRight" class="ms-1" />
+                </button>
+            } @else {
+                <button class="btn btn-primary" (click)="nextStep()" [disabled]="isSaving()">
                     @if (isSaving()) {
                         <span jhiTranslate="artemisApp.course.onboarding.actions.saving"></span>
                     } @else {

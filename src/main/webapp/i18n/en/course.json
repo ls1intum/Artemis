@@ -411,6 +411,7 @@
                     "previous": "Previous",
                     "skip": "Skip",
                     "finishSetup": "Finish Setup",
+                    "goToCourse": "Go to Course",
                     "restartSetup": "Course Setup",
                     "saving": "Saving..."
                 },

@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, input, output, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Course, Language } from 'app/core/course/shared/entities/course.model';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
@@ -57,7 +57,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
 
-    colorSelectorVisible = false;
+    readonly colorSelector = viewChild(ColorSelectorComponent);
 
     ngOnInit(): void {
         if (this.irisEnabled) {
@@ -101,14 +101,12 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     }
 
     openColorSelector(event: MouseEvent) {
-        event.stopPropagation();
-        this.colorSelectorVisible = !this.colorSelectorVisible;
+        this.colorSelector()?.openColorSelector(event);
     }
 
     onSelectedColor(color: string) {
         const current = this.course();
         current.color = color;
-        this.colorSelectorVisible = false;
         this.courseUpdated.emit(Course.from(current));
     }
 }

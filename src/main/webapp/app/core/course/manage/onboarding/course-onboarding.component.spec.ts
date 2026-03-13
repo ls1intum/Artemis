@@ -195,7 +195,7 @@ describe('CourseOnboardingComponent', () => {
     });
 
     describe('finishSetup', () => {
-        it('should set onboardingDone and navigate to course management', () => {
+        it('should set onboardingDone and advance to explore step', () => {
             const updatedCourse = { ...course, onboardingDone: true } as Course;
             const updateSpy = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
 
@@ -206,7 +206,7 @@ describe('CourseOnboardingComponent', () => {
             expect(comp.course().onboardingDone).toBe(true);
             expect(updateSpy).toHaveBeenCalledWith(course.id, expect.objectContaining({ onboardingDone: true }));
             expect(comp.isSaving()).toBe(false);
-            expect(router.navigate).toHaveBeenCalledWith(['course-management', course.id]);
+            expect(comp.activeStep()).toBe(comp.totalSteps - 1);
         });
 
         it('should handle error during finish', () => {
@@ -218,7 +218,47 @@ describe('CourseOnboardingComponent', () => {
             comp.finishSetup();
 
             expect(comp.isSaving()).toBe(false);
-            expect(router.navigate).not.toHaveBeenCalledWith(['course-management', course.id]);
+            expect(comp.activeStep()).toBe(0);
+        });
+    });
+
+    describe('goToCourse', () => {
+        it('should navigate to course management', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.goToCourse();
+
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', course.id], { queryParams: { fromOnboarding: true } });
+        });
+    });
+
+    describe('goToStep', () => {
+        it('should navigate to a specific step', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            comp.goToStep(3);
+            expect(comp.activeStep()).toBe(3);
+        });
+
+        it('should not navigate when already on that step', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            comp.goToStep(0);
+            expect(comp.activeStep()).toBe(0);
+        });
+
+        it('should not navigate while saving', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            const errorResponse = new HttpErrorResponse({ status: 500, statusText: 'Server Error' });
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(throwError(() => errorResponse));
+
+            comp.isSaving.set(true);
+            comp.goToStep(2);
+            expect(comp.activeStep()).toBe(0);
         });
     });
 
@@ -262,9 +302,9 @@ describe('CourseOnboardingComponent', () => {
             expect(comp.canFinish()).toBe(false);
             advanceToStep(comp.totalSteps - 2);
             expect(comp.canFinish()).toBe(true);
-            // Also true on last step
+            // False on last step (Explore)
             advanceToStep(comp.totalSteps - 1);
-            expect(comp.canFinish()).toBe(true);
+            expect(comp.canFinish()).toBe(false);
         });
     });
 });

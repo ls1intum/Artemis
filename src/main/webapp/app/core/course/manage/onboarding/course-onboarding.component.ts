@@ -51,7 +51,7 @@ export class CourseOnboardingComponent implements OnInit {
 
     readonly isLastStep = computed(() => this.activeStep() === this.totalSteps - 1);
     readonly isFirstStep = computed(() => this.activeStep() === 0);
-    readonly canFinish = computed(() => this.activeStep() >= this.totalSteps - 2);
+    readonly canFinish = computed(() => this.activeStep() === this.totalSteps - 2);
 
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {
@@ -73,6 +73,12 @@ export class CourseOnboardingComponent implements OnInit {
         }
     }
 
+    goToStep(index: number) {
+        if (index !== this.activeStep() && !this.isSaving()) {
+            this.activeStep.set(index);
+        }
+    }
+
     finishSetup() {
         const current = this.course();
         current.onboardingDone = true;
@@ -86,13 +92,18 @@ export class CourseOnboardingComponent implements OnInit {
                 if (response.body) {
                     this.course.set(response.body);
                 }
-                this.router.navigate(['course-management', current.id]);
+                this.activeStep.set(this.totalSteps - 1);
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);
                 onError(this.alertService, error);
             },
         });
+    }
+
+    goToCourse() {
+        const current = this.course();
+        this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
     }
 
     onCourseUpdated(updatedCourse: Course) {

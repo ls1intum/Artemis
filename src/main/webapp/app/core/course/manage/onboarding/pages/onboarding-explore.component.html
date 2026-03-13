@@ -1,13 +1,15 @@
 <div>
-    <div class="step-hero step-hero--explore">
-        <div class="step-hero-icon">
-            <fa-icon [icon]="faRocket" />
+    @if (showHero()) {
+        <div class="step-hero step-hero--explore">
+            <div class="step-hero-icon">
+                <fa-icon [icon]="faRocket" />
+            </div>
+            <div class="step-hero-text">
+                <h4 jhiTranslate="artemisApp.course.onboarding.explore.title"></h4>
+                <p jhiTranslate="artemisApp.course.onboarding.explore.description"></p>
+            </div>
         </div>
-        <div class="step-hero-text">
-            <h4 jhiTranslate="artemisApp.course.onboarding.explore.title"></h4>
-            <p jhiTranslate="artemisApp.course.onboarding.explore.description"></p>
-        </div>
-    </div>
+    }
     <div class="step-body">
         <div class="explore-grid">
             <div class="explore-card explore-card--exercises">
@@ -17,7 +19,7 @@
                 <h5 jhiTranslate="artemisApp.course.onboarding.explore.exercises.title"></h5>
                 <p jhiTranslate="artemisApp.course.onboarding.explore.exercises.description"></p>
                 <a [routerLink]="['/course-management', course().id, 'exercises']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.exercises"></span>
+                    <span jhiTranslate="artemisApp.course.onboarding.explore.exercises.title"></span>
                     <fa-icon [icon]="faArrowRight" />
                 </a>
             </div>
@@ -29,7 +31,7 @@
                 <h5 jhiTranslate="artemisApp.course.onboarding.explore.lectures.title"></h5>
                 <p jhiTranslate="artemisApp.course.onboarding.explore.lectures.description"></p>
                 <a [routerLink]="['/course-management', course().id, 'lectures']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.lectures"></span>
+                    <span jhiTranslate="artemisApp.course.onboarding.explore.lectures.title"></span>
                     <fa-icon [icon]="faArrowRight" />
                 </a>
             </div>
@@ -41,7 +43,7 @@
                 <h5 jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.title"></h5>
                 <p jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.description"></p>
                 <a [routerLink]="['/course-management', course().id, 'tutorial-groups']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.tutorialGroups"></span>
+                    <span jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.title"></span>
                     <fa-icon [icon]="faArrowRight" />
                 </a>
             </div>
@@ -53,7 +55,7 @@
                 <h5 jhiTranslate="artemisApp.course.onboarding.explore.exams.title"></h5>
                 <p jhiTranslate="artemisApp.course.onboarding.explore.exams.description"></p>
                 <a [routerLink]="['/course-management', course().id, 'exams']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.exams"></span>
+                    <span jhiTranslate="artemisApp.course.onboarding.explore.exams.title"></span>
                     <fa-icon [icon]="faArrowRight" />
                 </a>
             </div>
@@ -65,7 +67,7 @@
                 <h5 jhiTranslate="artemisApp.course.onboarding.explore.competencies.title"></h5>
                 <p jhiTranslate="artemisApp.course.onboarding.explore.competencies.description"></p>
                 <a [routerLink]="['/course-management', course().id, 'competency-management']" class="explore-link">
-                    <span jhiTranslate="artemisApp.competency.manage.title"></span>
+                    <span jhiTranslate="artemisApp.course.onboarding.explore.competencies.title"></span>
                     <fa-icon [icon]="faArrowRight" />
                 </a>
             </div>

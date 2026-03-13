@@ -11,8 +11,8 @@
 // ── Hero header with gradient background ──────────────
 .onboarding-header {
     text-align: center;
-    padding: 2.5rem 2rem 2rem;
-    margin: -1rem -1.5rem 2rem;
+    padding: 1.5rem 2rem 1.25rem;
+    margin: -1rem -1.5rem 1.5rem;
     background: linear-gradient(135deg, rgba(var(--bs-primary-rgb), 0.08) 0%, rgba(var(--bs-primary-rgb), 0.02) 100%);
     border-bottom: 1px solid rgba(var(--bs-primary-rgb), 0.1);
     border-radius: 0 0 1.5rem 1.5rem;
@@ -44,15 +44,16 @@
     }
 
     h2 {
-        margin-bottom: 0.5rem;
+        margin-bottom: 0.25rem;
         font-weight: 700;
+        font-size: 1.4rem;
         position: relative;
     }
 
     .onboarding-subtitle {
         color: var(--bs-secondary-color);
-        font-size: 1rem;
-        max-width: 500px;
+        font-size: 0.95rem;
+        max-width: 700px;
         margin: 0 auto;
         position: relative;
     }
@@ -63,7 +64,7 @@
     display: flex;
     align-items: flex-start;
     justify-content: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     gap: 0;
     padding: 0 1rem;
 }
@@ -73,7 +74,7 @@
     flex-direction: column;
     align-items: center;
     min-width: 90px;
-    cursor: default;
+    cursor: pointer;
 
     .step-circle {
         width: 48px;
@@ -126,6 +127,15 @@
     &.completed .step-label {
         color: var(--bs-success);
         font-weight: 500;
+    }
+
+    &:hover:not(.active) .step-circle {
+        border-color: var(--bs-primary);
+        transform: scale(1.05);
+    }
+
+    &:hover:not(.active) .step-label {
+        color: var(--bs-primary);
     }
 }
 

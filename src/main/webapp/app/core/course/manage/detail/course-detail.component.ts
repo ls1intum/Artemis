@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
@@ -18,10 +18,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
+import { OnboardingExploreComponent } from 'app/core/course/manage/onboarding/pages/onboarding-explore.component';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -38,9 +40,17 @@ export enum DoughnutChartType {
     selector: 'jhi-course-detail',
     templateUrl: './course-detail.component.html',
     styleUrls: ['./course-detail.component.scss'],
-    imports: [CourseDetailDoughnutChartComponent, CourseDetailLineChartComponent, DetailOverviewListComponent, QuickActionsComponent, ControlCenterComponent],
+    imports: [
+        CourseDetailDoughnutChartComponent,
+        CourseDetailLineChartComponent,
+        DetailOverviewListComponent,
+        QuickActionsComponent,
+        ControlCenterComponent,
+        OnboardingExploreComponent,
+        TranslateDirective,
+    ],
 })
-export class CourseDetailComponent implements OnInit, OnDestroy {
+export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly DoughnutChartType = DoughnutChartType;
     protected readonly FeatureToggle = FeatureToggle;
 
@@ -66,8 +76,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     private router = inject(Router);
     private markdownService = inject(ArtemisMarkdownService);
 
+    private readonly exploreSection = viewChild<ElementRef>('exploreSection');
+
     readonly courseDTO = signal<CourseManagementDetailViewDto | undefined>(undefined);
     readonly course = signal<Course | undefined>(undefined);
+    readonly fromOnboarding = signal(false);
 
     readonly courseDetailSections = signal<DetailOverviewSection[]>([]);
 
@@ -93,6 +106,13 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
+        this.route.queryParams.subscribe((params) => {
+            if (params['fromOnboarding'] === 'true') {
+                this.fromOnboarding.set(true);
+                this.router.navigate([], { queryParams: {}, replaceUrl: true });
+            }
+        });
+
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 if (course.onboardingDone === false && course.isAtLeastInstructor) {
@@ -117,6 +137,14 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             this.fetchCourseStatistics(courseId);
             this.registerChangeInCourses(courseId);
         });
+    }
+
+    ngAfterViewInit() {
+        if (this.fromOnboarding()) {
+            setTimeout(() => {
+                this.exploreSection()?.nativeElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 300);
+        }
     }
 
     getGeneralDetailSection(): DetailOverviewSection {

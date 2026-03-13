@@ -114,6 +114,7 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
 })
 export class OnboardingExploreComponent {
     readonly course = input.required<Course>();
+    readonly showHero = input(true);
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faBullseye = faBullseye;

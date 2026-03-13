@@ -103,29 +103,23 @@ describe('OnboardingGeneralSettingsComponent', () => {
     });
 
     describe('openColorSelector', () => {
-        it('should toggle color selector visibility', () => {
-            expect(comp.colorSelectorVisible).toBe(false);
+        it('should delegate to ColorSelectorComponent', () => {
+            const colorSelectorRef = comp.colorSelector();
+            const openSpy = vi.spyOn(colorSelectorRef!, 'openColorSelector');
 
             const event = new MouseEvent('click');
-            vi.spyOn(event, 'stopPropagation');
-
             comp.openColorSelector(event);
-            expect(comp.colorSelectorVisible).toBe(true);
-            expect(event.stopPropagation).toHaveBeenCalled();
 
-            comp.openColorSelector(event);
-            expect(comp.colorSelectorVisible).toBe(false);
+            expect(openSpy).toHaveBeenCalledWith(event);
         });
     });
 
     describe('onSelectedColor', () => {
         it('should update the course color and emit change', () => {
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
-            comp.colorSelectorVisible = true;
 
             comp.onSelectedColor('#ff0000');
 
-            expect(comp.colorSelectorVisible).toBe(false);
             expect(emitSpy).toHaveBeenCalled();
             const emittedCourse = emitSpy.mock.calls[0][0];
             expect(emittedCourse.color).toBe('#ff0000');

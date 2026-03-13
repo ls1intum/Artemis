@@ -63,6 +63,7 @@ describe('Course Management Detail Component', () => {
     const mockActivatedRoute = {
         data: courseDataSubject.asObservable(),
         params: of({ courseId: course.id }),
+        queryParams: of({}),
     } as unknown as ActivatedRoute;
 
     beforeEach(async () => {
