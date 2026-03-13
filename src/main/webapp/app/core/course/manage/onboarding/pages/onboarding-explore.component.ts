@@ -13,12 +13,8 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
         `
             .explore-grid {
                 display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-                gap: 1.25rem;
-            }
-
-            .explore-grid--3col {
                 grid-template-columns: repeat(3, 1fr);
+                gap: 1.25rem;
             }
 
             .explore-card {
@@ -122,8 +118,6 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
 })
 export class OnboardingExploreComponent {
     readonly course = input.required<Course>();
-    readonly showHero = input(true);
-    readonly columns = input<number | undefined>(undefined);
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faBullseye = faBullseye;

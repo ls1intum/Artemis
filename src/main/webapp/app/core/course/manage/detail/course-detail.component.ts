@@ -18,7 +18,6 @@ import { AccountService } from 'app/core/auth/account.service';
 import { DetailOverviewListComponent, DetailOverviewSection, DetailType } from 'app/shared/detail-overview-list/detail-overview-list.component';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { Detail } from 'app/shared/detail-overview-list/detail.model';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseDetailDoughnutChartComponent } from './course-detail-doughnut-chart.component';
 import { CourseDetailLineChartComponent } from './course-detail-line-chart.component';
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
@@ -47,7 +46,6 @@ export enum DoughnutChartType {
         QuickActionsComponent,
         ControlCenterComponent,
         OnboardingExploreComponent,
-        TranslateDirective,
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {

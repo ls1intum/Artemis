@@ -20,17 +20,15 @@
         </div>
 
         <div class="row mb-3">
-            <div class="col-auto">
+            <div class="col-auto" style="position: relative">
                 <label class="form-label" jhiTranslate="artemisApp.course.color"></label>
-                <div class="d-flex align-items-center gap-2">
-                    <div
-                        class="color-preview"
-                        role="button"
-                        [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
-                        (click)="openColorSelector($event)"
-                    ></div>
-                    <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
-                </div>
+                <div
+                    class="color-preview"
+                    role="button"
+                    [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
+                    (click)="openColorSelector($event)"
+                ></div>
+                <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
             </div>
         </div>
 

@@ -7,8 +7,7 @@
         </div>
         @if (course()!.isAtLeastInstructor) {
             <div #exploreSection class="col-12 p-2" [class.explore-animate]="fromOnboarding()">
-                <h5 class="mb-3 fw-semibold" jhiTranslate="artemisApp.course.onboarding.explore.title"></h5>
-                <jhi-onboarding-explore [course]="course()!" [showHero]="false" [columns]="3" />
+                <jhi-onboarding-explore [course]="course()!" />
             </div>
         }
         <div class="col-12">

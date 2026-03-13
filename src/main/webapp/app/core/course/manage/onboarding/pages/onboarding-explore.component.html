@@ -1,17 +1,15 @@
 <div>
-    @if (showHero()) {
-        <div class="step-hero step-hero--explore">
-            <div class="step-hero-icon">
-                <fa-icon [icon]="faRocket" />
-            </div>
-            <div class="step-hero-text">
-                <h4 jhiTranslate="artemisApp.course.onboarding.explore.title"></h4>
-                <p jhiTranslate="artemisApp.course.onboarding.explore.description"></p>
-            </div>
+    <div class="step-hero step-hero--explore">
+        <div class="step-hero-icon">
+            <fa-icon [icon]="faRocket" />
         </div>
-    }
+        <div class="step-hero-text">
+            <h4 jhiTranslate="artemisApp.course.onboarding.explore.title"></h4>
+            <p jhiTranslate="artemisApp.course.onboarding.explore.description"></p>
+        </div>
+    </div>
     <div class="step-body">
-        <div class="explore-grid" [class.explore-grid--3col]="columns() === 3">
+        <div class="explore-grid">
             <div class="explore-card explore-card--exercises">
                 <div class="explore-icon-wrapper">
                     <fa-icon [icon]="faCode" />
