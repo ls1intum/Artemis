@@ -222,6 +222,7 @@
                     "navLabel": "Quiz",
                     "badge": "Übungen",
                     "title": "Quizaufgaben",
+                    "imageAlt": "Artemis Quiz-Übersicht",
                     "description": "Quizaufgaben decken Live-Lehre, Übungsphasen und Klausuren mit mehreren Formaten und sofortiger Bewertung ab.",
                     "bullets": {
                         "0": "Multiple Choice, Drag-and-Drop, Kurzantworten und modellbasierte Quizfragen",
@@ -233,6 +234,7 @@
                     "navLabel": "Modellierung & Text",
                     "badge": "Übungen",
                     "title": "Modellierungs- & Textaufgaben",
+                    "imageAlt": "Artemis Modellierungseditor",
                     "description": "Modellierungs- und Textaufgaben verbinden strukturierte Diagrammarbeit, freie Texte und KI-gestützte Bewertung in einer Plattform.",
                     "bullets": {
                         "0": "UML- und weitere Diagrammtypen mit visuellem Feedback und elementgenauer Begutachtung",
@@ -278,6 +280,7 @@
                     "navLabel": "Vorlesungen",
                     "badge": "Lehre",
                     "title": "Vorlesungsintegration",
+                    "imageAlt": "Artemis Vorlesungsdetailansicht",
                     "description": "Stellen Sie Vorlesungen als strukturierte Einheiten mit Folien, Aufzeichnungen, Kompetenzen und KI-fähigen Kursinhalten bereit.",
                     "bullets": {
                         "0": "Folien, Videos, Aufzeichnungen und verknüpfte Aufgaben in einem Vorlesungsablauf kombinieren",
@@ -300,6 +303,7 @@
                     "navLabel": "Kommunikation",
                     "badge": "Messaging",
                     "title": "Echtzeit-Kommunikation",
+                    "imageAlt": "Artemis Kommunikationsansicht auf einer Aufgabenseite",
                     "description": "Ankündigungen, Kurskanäle, Direktnachrichten und Benachrichtigungen halten Studierende, Tutorinnen, Tutoren und Lehrende auf dem gleichen Stand.",
                     "bullets": {
                         "0": "Eigene Kanäle für Vorlesungen, Aufgaben, Tutorien und Klausuren",
@@ -311,6 +315,7 @@
                     "navLabel": "Integrität & Analysen",
                     "badge": "Plattform",
                     "title": "Akademische Integrität & Lernanalysen",
+                    "imageAlt": "Artemis Plagiatsübersicht",
                     "description": "Sichern Sie akademische Standards und verstehen Sie Kursverläufe mit Plagiatsprüfungen, Analyse-Dashboards und operativen Signalen.",
                     "bullets": {
                         "0": "Integrierte JPlag-basierte Plagiatserkennung für Code, Text und Modellierung",

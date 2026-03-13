@@ -204,7 +204,6 @@ export class LandingFeatureNarrativeComponent implements OnDestroy {
 
     private observer?: IntersectionObserver;
     private readonly visibilityRatios = new Map<HTMLElement, number>();
-    private readonly reducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     readonly chapters = LANDING_CHAPTERS;
     readonly allSections = LANDING_SECTIONS;
@@ -283,7 +282,8 @@ export class LandingFeatureNarrativeComponent implements OnDestroy {
 
         const topOffset = 96;
         const top = element.getBoundingClientRect().top + container.scrollTop - topOffset;
-        container.scrollTo({ top, behavior: this.reducedMotion ? 'instant' : 'smooth' });
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        container.scrollTo({ top, behavior: reducedMotion ? 'instant' : 'smooth' });
     }
 
     ngOnDestroy(): void {

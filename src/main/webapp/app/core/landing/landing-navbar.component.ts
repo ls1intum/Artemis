@@ -12,10 +12,10 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
     template: `
         <nav class="landing-nav">
             <div class="nav-container">
-                <span class="nav-brand" (click)="scrollTo('top')">
+                <button type="button" class="nav-brand" (click)="scrollTo('top')" aria-label="Scroll to top">
                     <img src="content/images/landing/logo.png" alt="Artemis" class="nav-logo" />
                     <span class="nav-brand-text">Artemis</span>
-                </span>
+                </button>
 
                 <!-- Desktop nav -->
                 <div class="landing-links">
@@ -25,14 +25,14 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                             <polyline points="6 9 12 15 18 9" />
                         </svg>
                     </button>
-                    <p-menu #featuresMenu [model]="featuresMenuItems" [popup]="true" appendTo="body" styleClass="landing-docs-menu" />
+                    <p-menu #featuresMenu [model]="featuresMenuItems()" [popup]="true" appendTo="body" styleClass="landing-docs-menu" />
                     <button class="landing-link dropdown-trigger" (click)="toggleDocsMenu($event)">
                         <span jhiTranslate="landing.navbar.documentation"></span>
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="6 9 12 15 18 9" />
                         </svg>
                     </button>
-                    <p-menu #docsMenu [model]="docsMenuItems" [popup]="true" appendTo="body" styleClass="landing-docs-menu" />
+                    <p-menu #docsMenu [model]="docsMenuItems()" [popup]="true" appendTo="body" styleClass="landing-docs-menu" />
                 </div>
 
                 <div class="nav-right">
@@ -64,9 +64,24 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                     <div class="mobile-docs">
                         <span class="mobile-link mobile-docs-label" jhiTranslate="landing.navbar.features"></span>
                         <div class="mobile-docs-links">
-                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-iris'); closeMenu()" jhiTranslate="landing.navbar.chapterAI"></span>
-                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-programming'); closeMenu()" jhiTranslate="landing.navbar.chapterAssessment"></span>
-                            <span class="mobile-link mobile-doc-item" (click)="scrollTo('feature-lectures'); closeMenu()" jhiTranslate="landing.navbar.chapterPlatform"></span>
+                            <button
+                                type="button"
+                                class="mobile-link mobile-doc-item"
+                                (click)="scrollTo('feature-iris'); closeMenu()"
+                                jhiTranslate="landing.navbar.chapterAI"
+                            ></button>
+                            <button
+                                type="button"
+                                class="mobile-link mobile-doc-item"
+                                (click)="scrollTo('feature-programming'); closeMenu()"
+                                jhiTranslate="landing.navbar.chapterAssessment"
+                            ></button>
+                            <button
+                                type="button"
+                                class="mobile-link mobile-doc-item"
+                                (click)="scrollTo('feature-lectures'); closeMenu()"
+                                jhiTranslate="landing.navbar.chapterPlatform"
+                            ></button>
                         </div>
                     </div>
                     <div class="mobile-docs">
@@ -143,6 +158,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
             gap: 0.5rem;
             color: white;
             cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
         }
 
         .nav-logo {
@@ -330,25 +348,27 @@ export class LandingNavbarComponent {
     private readonly docsMenu = viewChild<Menu>('docsMenu');
 
     menuOpen = signal(false);
-    currentLang = signal(inject(TranslateService).getCurrentLang() || 'en');
+    currentLang = signal(this.translateService.getCurrentLang() || 'en');
     isEnglish = computed(() => this.currentLang() === 'en');
 
-    get featuresMenuItems(): MenuItem[] {
+    readonly featuresMenuItems = computed<MenuItem[]>(() => {
+        this.currentLang(); // recompute on language change
         return [
             { label: this.translateService.instant('landing.navbar.chapterAI'), command: () => this.scrollTo('feature-iris') },
             { label: this.translateService.instant('landing.navbar.chapterAssessment'), command: () => this.scrollTo('feature-programming') },
             { label: this.translateService.instant('landing.navbar.chapterPlatform'), command: () => this.scrollTo('feature-lectures') },
         ];
-    }
+    });
 
-    get docsMenuItems(): MenuItem[] {
+    readonly docsMenuItems = computed<MenuItem[]>(() => {
+        this.currentLang(); // recompute on language change
         return [
             { label: this.translateService.instant('landing.navbar.docStudent'), url: 'https://docs.artemis.tum.de/user/student-guides/intro', target: '_blank' },
             { label: this.translateService.instant('landing.navbar.docInstructor'), url: 'https://docs.artemis.tum.de/user/instructor-guides/intro', target: '_blank' },
             { label: this.translateService.instant('landing.navbar.docAdmin'), url: 'https://docs.artemis.tum.de/admin/intro', target: '_blank' },
             { label: this.translateService.instant('landing.navbar.docDeveloper'), url: 'https://docs.artemis.tum.de/dev/intro', target: '_blank' },
         ];
-    }
+    });
 
     toggleMenu(): void {
         this.menuOpen.update((v) => !v);

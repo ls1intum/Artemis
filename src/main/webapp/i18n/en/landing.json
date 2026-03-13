@@ -222,6 +222,7 @@
                     "navLabel": "Quiz",
                     "badge": "Exercises",
                     "title": "Quiz Exercises",
+                    "imageAlt": "Artemis quiz exercise overview",
                     "description": "Quiz exercises cover live teaching, practice, and exams with multiple formats and instant grading.",
                     "bullets": {
                         "0": "Multiple-choice, drag-and-drop, short-answer, and modeling quiz questions",
@@ -233,6 +234,7 @@
                     "navLabel": "Modeling & Text",
                     "badge": "Exercises",
                     "title": "Modeling & Text Exercises",
+                    "imageAlt": "Artemis modeling exercise editor",
                     "description": "Modeling and text exercises combine structured diagram work, free-form writing, and AI-assisted assessment in one platform.",
                     "bullets": {
                         "0": "UML and other diagram types with visual feedback and element-level review",
@@ -278,6 +280,7 @@
                     "navLabel": "Lectures",
                     "badge": "Teaching",
                     "title": "Lecture Integration",
+                    "imageAlt": "Artemis lecture detail view",
                     "description": "Deliver lectures as structured units with slides, recordings, competencies, and AI-ready course content.",
                     "bullets": {
                         "0": "Combine slides, videos, recordings, and linked exercises in one lecture flow",
@@ -300,6 +303,7 @@
                     "navLabel": "Communication",
                     "badge": "Messaging",
                     "title": "Real-Time Communication",
+                    "imageAlt": "Artemis communication view on an exercise page",
                     "description": "Announcements, course channels, private messages, and notifications keep students, tutors, and instructors aligned.",
                     "bullets": {
                         "0": "Dedicated channels for lectures, exercises, tutorial groups, and exams",
@@ -311,6 +315,7 @@
                     "navLabel": "Integrity & Analytics",
                     "badge": "Platform",
                     "title": "Academic Integrity & Learning Analytics",
+                    "imageAlt": "Artemis plagiarism detection overview",
                     "description": "Protect academic standards and understand course progress with plagiarism checks, analytics dashboards, and operational insight.",
                     "bullets": {
                         "0": "Integrated JPlag-based plagiarism detection for code, text, and modeling",
