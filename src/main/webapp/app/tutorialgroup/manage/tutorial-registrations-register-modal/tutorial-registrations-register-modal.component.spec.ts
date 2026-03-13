@@ -1,4 +1,3 @@
-import { Component, input, output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { HttpResponse } from '@angular/common/http';
@@ -7,47 +6,17 @@ import { Subject, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { Dialog } from 'primeng/dialog';
+import { PrimeNgDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
 import { TutorialRegistrationsRegisterModalComponent } from './tutorial-registrations-register-modal.component';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialRegistrationsRegisterSearchBarComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-search-bar/tutorial-registrations-register-search-bar.component';
-import {
-    TutorialRegistrationsStudentsTableComponent,
-    TutorialRegistrationsStudentsTableRemoveActionColumnInfo,
-} from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
+import { TutorialRegistrationsRegisterSearchBarStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-register-search-bar-stub.component';
+import { TutorialRegistrationsStudentsTableComponent } from 'app/tutorialgroup/manage/tutorial-registrations-students-table/tutorial-registrations-students-table.component';
+import { TutorialRegistrationsStudentsTableStubComponent } from 'test/helpers/stubs/tutorialgroup/tutorial-registrations-students-table-stub.component';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-
-@Component({
-    selector: 'p-dialog',
-    template: `<ng-content />`,
-})
-class DialogStubComponent {
-    header = input<string>('');
-    modal = input(false);
-    visible = input(false);
-    visibleChange = output<boolean>();
-}
-
-@Component({
-    selector: 'jhi-tutorial-registrations-register-search-bar',
-    template: '',
-})
-class TutorialRegistrationsRegisterSearchBarStubComponent {
-    courseId = input.required<number>();
-    tutorialGroupId = input.required<number>();
-    onStudentSelected = output<TutorialGroupRegisteredStudentDTO>();
-}
-
-@Component({
-    selector: 'jhi-tutorial-registrations-students-table',
-    template: '',
-})
-class TutorialRegistrationsStudentsTableStubComponent {
-    students = input.required<TutorialGroupRegisteredStudentDTO[]>();
-    removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
-}
 
 interface TutorialGroupsServiceMock {
     registerMultipleStudentsViaLogin: ReturnType<typeof vi.fn>;
@@ -116,7 +85,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
                     imports: [Dialog, TutorialRegistrationsRegisterSearchBarComponent, TutorialRegistrationsStudentsTableComponent],
                 },
                 add: {
-                    imports: [DialogStubComponent, TutorialRegistrationsRegisterSearchBarStubComponent, TutorialRegistrationsStudentsTableStubComponent],
+                    imports: [PrimeNgDialogStubComponent, TutorialRegistrationsRegisterSearchBarStubComponent, TutorialRegistrationsStudentsTableStubComponent],
                 },
             })
             .compileComponents();
@@ -157,7 +126,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         await fixture.whenStable();
 
         const searchBar = fixture.debugElement.query(By.directive(TutorialRegistrationsRegisterSearchBarStubComponent)).componentInstance;
-        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
         const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableStubComponent)).componentInstance;
         const cancelButton = fixture.nativeElement.querySelector('.p-button-secondary');
 
@@ -185,7 +154,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
 
         const searchBar = fixture.debugElement.query(By.directive(TutorialRegistrationsRegisterSearchBarStubComponent)).componentInstance;
         const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableStubComponent)).componentInstance;
-        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
         const registerButton = fixture.nativeElement.querySelector('.p-button-primary');
 
         searchBar.onStudentSelected.emit(firstStudent);
@@ -229,7 +198,7 @@ describe('TutorialRegistrationsRegisterModalComponent', () => {
         const searchBar = fixture.debugElement.query(By.directive(TutorialRegistrationsRegisterSearchBarStubComponent)).componentInstance;
         const registerButton = fixture.nativeElement.querySelector('.p-button-primary');
         const studentsTable = fixture.debugElement.query(By.directive(TutorialRegistrationsStudentsTableStubComponent)).componentInstance;
-        const dialog = fixture.debugElement.query(By.directive(DialogStubComponent)).componentInstance;
+        const dialog = fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance;
 
         searchBar.onStudentSelected.emit(firstStudent);
         fixture.detectChanges();
