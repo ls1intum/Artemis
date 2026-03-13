@@ -330,7 +330,7 @@ export class LandingNavbarComponent {
     private readonly docsMenu = viewChild<Menu>('docsMenu');
 
     menuOpen = signal(false);
-    currentLang = signal(inject(TranslateService).currentLang || 'en');
+    currentLang = signal(inject(TranslateService).getCurrentLang() || 'en');
     isEnglish = computed(() => this.currentLang() === 'en');
 
     get featuresMenuItems(): MenuItem[] {
