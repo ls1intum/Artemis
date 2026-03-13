@@ -60,6 +60,23 @@
                 "showTemplateSubmissions": "Zeige Template-Abgaben",
                 "showSolutionSubmissions": "Zeige Lösungsabgaben"
             },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programmieraufgaben-Metadaten",
+                    "noProgrammingData": "Diese Version enthält keine programmierspezifischen Metadaten.",
+                    "emptyValueHint": "In diesem Snapshot nicht verfügbar",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker-Flags",
+                    "theiaImage": "Online-IDE-Image",
+                    "postDueDateHandling": "Verhalten nach Abgabefrist",
+                    "assignmentCheckoutPath": "Aufgaben-Checkout-Pfad",
+                    "solutionCheckoutPath": "Lösungs-Checkout-Pfad",
+                    "testsCheckoutPath": "Tests-Checkout-Pfad",
+                    "buildPlanConfiguration": "Build-Plan-Konfiguration (JSON)",
+                    "noBuildPlanConfiguration": "Keine Build-Plan-Konfiguration in diesem Snapshot",
+                    "noBuildScript": "Kein Build-Skript in diesem Snapshot"
+                }
+            },
             "wizardMode": {
                 "steps": {
                     "generalInfoStepTitle": "Informationen",
@@ -217,8 +234,12 @@
             },
             "programmingLanguage": "Programmiersprache",
             "projectType": "Projekttyp",
+            "projectKey": "Projektschlüssel",
             "testRepositoryProjectType": "Projekttyp des Test-Repository",
             "packageName": "Package-Name",
+            "testsCommitId": "Test-Commit-ID",
+            "templateCommitId": "Vorlagen-Commit-ID",
+            "solutionCommitId": "Lösungs-Commit-ID",
             "theiaImage": {
                 "title": "Konfiguration für Online IDE",
                 "noImageAvailable": "Die Online IDE ist für diese Programmiersprache noch nicht verfügbar.",

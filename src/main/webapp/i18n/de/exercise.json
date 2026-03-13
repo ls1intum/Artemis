@@ -31,6 +31,23 @@
             "detail": {
                 "title": "Übung"
             },
+            "versionHistory": {
+                "title": "Versionsverlauf",
+                "timeline": {
+                    "title": "Versionen",
+                    "loadMore": "Mehr laden",
+                    "empty": "Noch keine Versionen verfügbar."
+                },
+                "snapshot": {
+                    "empty": "Wähle eine Version aus, um die Metadaten anzuzeigen.",
+                    "sharedTitle": "Aufgaben-Metadaten"
+                },
+                "errors": {
+                    "invalidExerciseId": "Die Seite konnte nicht geladen werden.",
+                    "timelineLoadFailed": "Der Versionsverlauf konnte nicht geladen werden.",
+                    "snapshotLoadFailed": "Die Versionsdaten konnten nicht geladen werden."
+                }
+            },
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
