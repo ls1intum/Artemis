@@ -47,7 +47,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
-    protected showResults = computed(() => this.hasSearched() && (this.hasResults() || this.activeFilters().length > 0));
+    protected showResults = computed(() => this.isLoading() || (this.hasSearched() && (this.hasResults() || this.activeFilters().length > 0)));
 
     ngOnDestroy(): void {
         if (this.overlay.isOpen()) {
@@ -130,6 +130,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected onSearchInput(query: string): void {
         this.searchQuery.set(query);
+
+        // Show skeleton immediately while debounce waits, for a responsive feel
+        const trimmedQuery = query?.trim() || '';
+        const hasFilter = this.activeFilters().length > 0;
+        if (trimmedQuery.length >= 2 || hasFilter) {
+            this.isLoading.set(true);
+        }
+
         this.searchSubject.next(query);
     }
 

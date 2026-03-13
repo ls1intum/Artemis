@@ -30,7 +30,7 @@
 }
 
 <!-- Results list when searching or filter is active -->
-@if (showResults()) {
+@if (showResults() && !isLoading()) {
     <div class="search-results-list mt-3">
         @for (result of results(); track result.id; let i = $index) {
             <div #selectableItem>
@@ -40,6 +40,27 @@
                     [isSelected]="selectedIndex() === i"
                     (resultClick)="navigateToResult($event)"
                 />
+            </div>
+        }
+    </div>
+} @else if (isLoading()) {
+    <!-- Skeleton loading placeholders -->
+    <div class="search-results-list mt-3">
+        @for (_ of skeletonItems; track $index) {
+            <div class="skeleton-result-item p-3" aria-hidden="true">
+                <div class="d-flex align-items-start gap-3">
+                    <!-- Icon placeholder -->
+                    <p-skeleton width="2.5rem" height="2.5rem" borderRadius="0.375rem" class="flex-shrink-0" />
+                    <!-- Content placeholder -->
+                    <div class="d-flex flex-column flex-grow-1" style="gap: 0.5rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <p-skeleton width="45%" height="1rem" borderRadius="0.25rem" />
+                            <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.25rem" />
+                        </div>
+                        <p-skeleton width="65%" height="0.75rem" borderRadius="0.25rem" />
+                        <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
+                    </div>
+                </div>
             </div>
         }
     </div>

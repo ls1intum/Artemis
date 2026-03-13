@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { SkeletonModule } from 'primeng/skeleton';
 import {
     faBook,
     faCalendarAlt,
@@ -38,7 +39,7 @@ export const NAV_ACTION_COUNT = 2;
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent],
+    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -49,6 +50,10 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly results = input<GlobalSearchResult[]>([]);
     readonly hasSearched = input<boolean>(false);
     readonly showResults = input<boolean>(false);
+    readonly isLoading = input<boolean>(false);
+
+    // Skeleton placeholder array for loading animation
+    protected readonly skeletonItems = Array(5);
 
     // Emits when an action button is activated (click or Enter); the modal navigates to that view.
     readonly viewSelected = output<SearchView>();
