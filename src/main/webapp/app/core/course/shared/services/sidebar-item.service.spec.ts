@@ -1,21 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
-    faChalkboardUser,
+    faBullseye,
+    faChalkboardTeacher,
     faChartColumn,
+    faCode,
     faCog,
     faComments,
     faDumbbell,
-    faFlag,
-    faGraduationCap,
+    faFileAlt,
     faList,
-    faListAlt,
     faPuzzlePiece,
     faQuestion,
     faRobot,
     faTable,
     faTableCells,
     faUserCheck,
+    faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 
@@ -42,7 +43,8 @@ describe('CourseSidebarItemService', () => {
                 },
                 {
                     routerLink: `${courseId}/exams`,
-                    icon: faGraduationCap,
+                    icon: faFileAlt,
+                    iconColor: '#f59e0b',
                     title: 'Exams',
                     testId: 'exam-tab',
                     translation: 'artemisApp.courseOverview.menu.exams',
@@ -50,7 +52,8 @@ describe('CourseSidebarItemService', () => {
                 },
                 {
                     routerLink: `${courseId}/exercises`,
-                    icon: faListAlt,
+                    icon: faCode,
+                    iconColor: '#6366f1',
                     title: 'Exercises',
                     translation: 'artemisApp.courseOverview.menu.exercises',
                     hidden: false,
@@ -83,7 +86,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(items[2]).toEqual({
                 routerLink: '2/exercises',
-                icon: faListAlt,
+                icon: faCode,
+                iconColor: '#6366f1',
                 title: 'Exercises',
                 translation: 'artemisApp.courseOverview.menu.exercises',
                 hidden: false,
@@ -131,7 +135,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: `${courseId}/exams`,
-                icon: faGraduationCap,
+                icon: faFileAlt,
+                iconColor: '#f59e0b',
                 title: 'Exams',
                 testId: 'exam-tab',
                 translation: 'artemisApp.courseOverview.menu.exams',
@@ -144,7 +149,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: 'exams',
-                icon: faGraduationCap,
+                icon: faFileAlt,
+                iconColor: '#f59e0b',
                 title: 'Exams',
                 testId: 'exam-tab',
                 translation: 'artemisApp.courseOverview.menu.exams',
@@ -157,7 +163,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: `${courseId}/lectures`,
-                icon: faChalkboardUser,
+                icon: faChalkboardTeacher,
+                iconColor: '#0ea5e9',
                 title: 'Lectures',
                 translation: 'artemisApp.courseOverview.menu.lectures',
                 testId: 'lectures',
@@ -170,7 +177,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: 'lectures',
-                icon: faChalkboardUser,
+                icon: faChalkboardTeacher,
+                iconColor: '#0ea5e9',
                 title: 'Lectures',
                 translation: 'artemisApp.courseOverview.menu.lectures',
                 testId: 'lectures',
@@ -195,7 +203,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: `${courseId}/competency-management`,
-                icon: faFlag,
+                icon: faBullseye,
+                iconColor: '#10b981',
                 title: 'Competency Management',
                 translation: 'artemisApp.courseOverview.menu.competencies',
                 hidden: false,
@@ -207,7 +216,8 @@ describe('CourseSidebarItemService', () => {
 
             expect(item).toEqual({
                 routerLink: 'competencies',
-                icon: faFlag,
+                icon: faBullseye,
+                iconColor: '#10b981',
                 title: 'Competencies',
                 translation: 'artemisApp.courseOverview.menu.competencies',
                 hidden: false,
@@ -250,6 +260,7 @@ describe('CourseSidebarItemService', () => {
             expect(item).toEqual({
                 routerLink: `${courseId}/faqs`,
                 icon: faQuestion,
+                iconColor: '#ec4899',
                 title: 'FAQs',
                 translation: 'artemisApp.courseOverview.menu.faq',
                 hidden: false,
@@ -262,6 +273,7 @@ describe('CourseSidebarItemService', () => {
             expect(item).toEqual({
                 routerLink: 'faq',
                 icon: faQuestion,
+                iconColor: '#ec4899',
                 title: 'FAQs',
                 translation: 'artemisApp.courseOverview.menu.faq',
                 hidden: false,
@@ -340,6 +352,19 @@ describe('CourseSidebarItemService', () => {
                 translation: 'artemisApp.courseOverview.menu.settings',
                 testId: 'course-settings',
                 bottom: true,
+                hidden: false,
+            });
+        });
+
+        it('getTutorialGroupsItem should return correct item with courseId', () => {
+            const item = service.getTutorialGroupsItem(courseId);
+
+            expect(item).toEqual({
+                routerLink: `${courseId}/tutorial-groups`,
+                icon: faUsers,
+                iconColor: '#8b5cf6',
+                title: 'Tutorials',
+                translation: 'artemisApp.courseOverview.menu.tutorialGroups',
                 hidden: false,
             });
         });
