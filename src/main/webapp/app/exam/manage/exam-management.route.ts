@@ -568,6 +568,16 @@ export const examManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/version-history',
+        loadComponent: () =>
+            import('app/programming/manage/version-history/programming-exercise-version-history.component').then((m) => m.ProgrammingExerciseVersionHistoryComponent),
+        data: {
+            authorities: IS_AT_LEAST_EDITOR,
+            pageTitle: 'artemisApp.exercise.versionHistory.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/exercise-groups/:exerciseGroupId/programming-exercises/:exerciseId/repository/:repositoryType',
         children: repositorySubRoutes,
     },
