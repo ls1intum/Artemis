@@ -75,9 +75,6 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     }
 
     onKeyDown(event: KeyboardEvent) {
-        const viewport = this.viewport();
-        if (!viewport) return;
-
         if (event.key === 'Enter') {
             const suggestionIndex = this.suggestionHighlightIndex();
             if (suggestionIndex !== undefined) {
@@ -100,12 +97,15 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
         if (event.key === 'ArrowUp') {
             event.preventDefault();
             this.suggestionHighlightIndex.update((selectionTargetIndex) => {
-                return selectionTargetIndex !== undefined ? Math.max(selectionTargetIndex - 1, 0) : numberOfSuggestedStudents - 1;
+                return selectionTargetIndex !== undefined ? Math.max(selectionTargetIndex - 1, 0) : undefined;
             });
         }
 
         const updatedSuggestionHighlightIndex = this.suggestionHighlightIndex();
         if (updatedSuggestionHighlightIndex !== undefined) {
+            const viewport = this.viewport();
+            if (!viewport) return;
+
             const scrollTop = viewport.measureScrollOffset();
             const viewportHeight = viewport.getViewportSize();
 
