@@ -22,53 +22,61 @@
                 </a>
             </div>
 
-            <div class="explore-card explore-card--lectures">
-                <div class="explore-icon-wrapper">
-                    <fa-icon [icon]="faChalkboardTeacher" />
+            @if (lectureEnabled) {
+                <div class="explore-card explore-card--lectures">
+                    <div class="explore-icon-wrapper">
+                        <fa-icon [icon]="faChalkboardTeacher" />
+                    </div>
+                    <h5 jhiTranslate="artemisApp.course.onboarding.explore.lectures.title"></h5>
+                    <p jhiTranslate="artemisApp.course.onboarding.explore.lectures.description"></p>
+                    <a [routerLink]="['/course-management', course().id, 'lectures']" class="explore-link">
+                        <span jhiTranslate="artemisApp.course.onboarding.explore.lectures.title"></span>
+                        <fa-icon [icon]="faArrowRight" />
+                    </a>
                 </div>
-                <h5 jhiTranslate="artemisApp.course.onboarding.explore.lectures.title"></h5>
-                <p jhiTranslate="artemisApp.course.onboarding.explore.lectures.description"></p>
-                <a [routerLink]="['/course-management', course().id, 'lectures']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.onboarding.explore.lectures.title"></span>
-                    <fa-icon [icon]="faArrowRight" />
-                </a>
-            </div>
+            }
 
-            <div class="explore-card explore-card--tutorial">
-                <div class="explore-icon-wrapper">
-                    <fa-icon [icon]="faUsers" />
+            @if (tutorialGroupEnabled) {
+                <div class="explore-card explore-card--tutorial">
+                    <div class="explore-icon-wrapper">
+                        <fa-icon [icon]="faUsers" />
+                    </div>
+                    <h5 jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.title"></h5>
+                    <p jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.description"></p>
+                    <a [routerLink]="['/course-management', course().id, 'tutorial-groups']" class="explore-link">
+                        <span jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.title"></span>
+                        <fa-icon [icon]="faArrowRight" />
+                    </a>
                 </div>
-                <h5 jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.title"></h5>
-                <p jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.description"></p>
-                <a [routerLink]="['/course-management', course().id, 'tutorial-groups']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.onboarding.explore.tutorialGroups.title"></span>
-                    <fa-icon [icon]="faArrowRight" />
-                </a>
-            </div>
+            }
 
-            <div class="explore-card explore-card--exams">
-                <div class="explore-icon-wrapper">
-                    <fa-icon [icon]="faFileAlt" />
+            @if (examEnabled) {
+                <div class="explore-card explore-card--exams">
+                    <div class="explore-icon-wrapper">
+                        <fa-icon [icon]="faFileAlt" />
+                    </div>
+                    <h5 jhiTranslate="artemisApp.course.onboarding.explore.exams.title"></h5>
+                    <p jhiTranslate="artemisApp.course.onboarding.explore.exams.description"></p>
+                    <a [routerLink]="['/course-management', course().id, 'exams']" class="explore-link">
+                        <span jhiTranslate="artemisApp.course.onboarding.explore.exams.title"></span>
+                        <fa-icon [icon]="faArrowRight" />
+                    </a>
                 </div>
-                <h5 jhiTranslate="artemisApp.course.onboarding.explore.exams.title"></h5>
-                <p jhiTranslate="artemisApp.course.onboarding.explore.exams.description"></p>
-                <a [routerLink]="['/course-management', course().id, 'exams']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.onboarding.explore.exams.title"></span>
-                    <fa-icon [icon]="faArrowRight" />
-                </a>
-            </div>
+            }
 
-            <div class="explore-card explore-card--competencies">
-                <div class="explore-icon-wrapper">
-                    <fa-icon [icon]="faBullseye" />
+            @if (atlasEnabled) {
+                <div class="explore-card explore-card--competencies">
+                    <div class="explore-icon-wrapper">
+                        <fa-icon [icon]="faBullseye" />
+                    </div>
+                    <h5 jhiTranslate="artemisApp.course.onboarding.explore.competencies.title"></h5>
+                    <p jhiTranslate="artemisApp.course.onboarding.explore.competencies.description"></p>
+                    <a [routerLink]="['/course-management', course().id, 'competency-management']" class="explore-link">
+                        <span jhiTranslate="artemisApp.course.onboarding.explore.competencies.title"></span>
+                        <fa-icon [icon]="faArrowRight" />
+                    </a>
                 </div>
-                <h5 jhiTranslate="artemisApp.course.onboarding.explore.competencies.title"></h5>
-                <p jhiTranslate="artemisApp.course.onboarding.explore.competencies.description"></p>
-                <a [routerLink]="['/course-management', course().id, 'competency-management']" class="explore-link">
-                    <span jhiTranslate="artemisApp.course.onboarding.explore.competencies.title"></span>
-                    <fa-icon [icon]="faArrowRight" />
-                </a>
-            </div>
+            }
 
             <div class="explore-card explore-card--faqs">
                 <div class="explore-icon-wrapper">

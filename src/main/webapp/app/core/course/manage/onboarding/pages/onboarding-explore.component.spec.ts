@@ -9,6 +9,8 @@ import { OnboardingExploreComponent } from './onboarding-explore.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { By } from '@angular/platform-browser';
 
 describe('OnboardingExploreComponent', () => {
@@ -17,6 +19,7 @@ describe('OnboardingExploreComponent', () => {
     let comp: OnboardingExploreComponent;
     let fixture: ComponentFixture<OnboardingExploreComponent>;
     let course: Course;
+    let profileService: ProfileService;
 
     beforeEach(async () => {
         course = new Course();
@@ -25,13 +28,19 @@ describe('OnboardingExploreComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [OnboardingExploreComponent, RouterModule.forRoot([])],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+            ],
         })
             .overrideComponent(OnboardingExploreComponent, {
                 remove: { imports: [TranslateDirective] },
                 add: { imports: [MockDirective(TranslateDirective)] },
             })
             .compileComponents();
+
+        profileService = TestBed.inject(ProfileService);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
 
         fixture = TestBed.createComponent(OnboardingExploreComponent);
         fixture.componentRef.setInput('course', course);
@@ -48,7 +57,7 @@ describe('OnboardingExploreComponent', () => {
         expect(comp.course()).toEqual(course);
     });
 
-    it('should render explore cards', () => {
+    it('should render all explore cards when all modules are enabled', () => {
         const cards = fixture.debugElement.queryAll(By.css('.explore-card'));
         expect(cards.length).toBe(6);
     });

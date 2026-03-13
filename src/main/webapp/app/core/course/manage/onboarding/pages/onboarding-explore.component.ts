@@ -1,9 +1,12 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
+
 @Component({
     selector: 'jhi-onboarding-explore',
     templateUrl: './onboarding-explore.component.html',
@@ -122,7 +125,14 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
     imports: [TranslateDirective, RouterLink, FaIconComponent],
 })
 export class OnboardingExploreComponent {
+    private readonly profileService = inject(ProfileService);
+
     readonly course = input.required<Course>();
+
+    readonly lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
+    readonly atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    readonly examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+    readonly tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
 
     protected readonly faArrowRight = faArrowRight;
     protected readonly faBullseye = faBullseye;
