@@ -420,14 +420,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (typeof window === 'undefined') {
             return;
         }
-        const globalWindow = window as typeof window & { pdfWorkerSrc?: string; [key: string]: string | undefined };
+        const globalWindow = window as typeof window & { pdfWorkerSrc?: string };
         if (!globalWindow.pdfWorkerSrc) {
-            globalWindow.pdfWorkerSrc = '/content/scripts/pdf.worker.min.mjs';
-        }
-        const ng2PdfJsVersion = '4.8.69';
-        const ng2WorkerKey = `pdfWorkerSrc${ng2PdfJsVersion}`;
-        if (!globalWindow[ng2WorkerKey]) {
-            globalWindow[ng2WorkerKey] = '/content/scripts/pdf.worker.ng2.min.mjs';
+            globalWindow.pdfWorkerSrc = '/content/scripts/pdf.worker.ng2.min.mjs';
         }
     }
 

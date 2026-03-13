@@ -98,6 +98,8 @@ export class LectureUnitComponent implements OnDestroy {
 
         if (!this.isCollapsed()) {
             this.scheduleScroll('nearest');
+        } else {
+            this.clearScrollTimeout();
         }
     }
 
