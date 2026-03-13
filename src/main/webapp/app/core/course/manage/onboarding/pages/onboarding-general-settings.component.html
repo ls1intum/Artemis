@@ -1,0 +1,86 @@
+<div>
+    <div class="step-hero step-hero--general">
+        <div class="step-hero-icon">
+            <fa-icon [icon]="faCog" />
+        </div>
+        <div class="step-hero-text">
+            <h4>
+                <span jhiTranslate="artemisApp.course.onboarding.generalSettings.title"></span>
+                <jhi-documentation-button [type]="'Course'" />
+            </h4>
+            <p jhiTranslate="artemisApp.course.onboarding.generalSettings.description"></p>
+        </div>
+    </div>
+    <div class="step-body">
+        <div class="row mb-3">
+            <div class="col">
+                <label class="form-label" jhiTranslate="artemisApp.course.description"></label>
+                <textarea class="form-control" rows="3" [ngModel]="course().description" (ngModelChange)="updateField('description', $event)"></textarea>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-auto">
+                <label class="form-label" jhiTranslate="artemisApp.course.color"></label>
+                <div class="d-flex align-items-center gap-2">
+                    <div
+                        class="color-preview"
+                        role="button"
+                        [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
+                        (click)="openColorSelector($event)"
+                    ></div>
+                    <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3 g-3">
+            <div class="col-md-6">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.course.startDate' | artemisTranslate }}"
+                    [ngModel]="course().startDate"
+                    (ngModelChange)="updateField('startDate', $event)"
+                />
+            </div>
+            <div class="col-md-6">
+                <jhi-date-time-picker
+                    labelName="{{ 'artemisApp.course.endDate' | artemisTranslate }}"
+                    [ngModel]="course().endDate"
+                    (ngModelChange)="updateField('endDate', $event)"
+                />
+            </div>
+        </div>
+
+        <div class="row mb-3 g-3">
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.semester"></label>
+                <select class="form-select" [ngModel]="course().semester" (ngModelChange)="updateField('semester', $event)">
+                    @for (semester of semesters; track semester) {
+                        <option [value]="semester">{{ semester }}</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.language"></label>
+                <select class="form-select" [ngModel]="course().language" (ngModelChange)="updateField('language', $event)">
+                    <option [ngValue]="undefined"></option>
+                    @for (lang of languageOptions; track lang.key) {
+                        <option [value]="lang.key">{{ lang.value }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label" jhiTranslate="artemisApp.course.defaultProgrammingLanguage"></label>
+                <select class="form-select" [ngModel]="course().defaultProgrammingLanguage" (ngModelChange)="updateField('defaultProgrammingLanguage', $event)">
+                    <option [ngValue]="undefined"></option>
+                    @for (pl of ProgrammingLanguage | keyvalue; track pl) {
+                        <option [value]="pl.key">{{ pl.value }}</option>
+                    }
+                </select>
+            </div>
+        </div>
+    </div>
+</div>

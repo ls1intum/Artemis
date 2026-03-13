@@ -21,7 +21,7 @@ import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { MetisService } from 'app/communication/service/metis.service';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
-import { Course, isCommunicationEnabled, isFaqEnabled } from 'app/core/course/shared/entities/course.model';
+import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/course.model';
 import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
@@ -112,7 +112,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
-        const faqAction = isFaqEnabled(this.metisService.getCourse()) ? [new FaqReferenceAction(this.metisService)] : [];
+        const faqAction = [new FaqReferenceAction(this.metisService)];
 
         this.defaultActions = [
             new BoldAction(),

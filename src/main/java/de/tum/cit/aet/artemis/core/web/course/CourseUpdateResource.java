@@ -159,6 +159,11 @@ public class CourseUpdateResource {
         courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
         courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
 
+        // Prevent accidental reset of onboarding status via settings
+        if (existingCourse.isOnboardingDone()) {
+            courseUpdate.setOnboardingDone(true);
+        }
+
         if (courseUpdate.getTitle().length() > MAX_TITLE_LENGTH) {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }

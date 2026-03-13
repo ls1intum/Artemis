@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.api.PrerequisitesApi;
+import de.tum.cit.aet.artemis.communication.domain.FaqState;
 import de.tum.cit.aet.artemis.communication.repository.FaqRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
@@ -204,6 +205,7 @@ public class CourseService {
         else {
             course.setNumberOfTutorialGroups(0L);
         }
+        course.setNumberOfAcceptedFaqs(faqRepository.countByCourseIdAndFaqState(courseId, FaqState.ACCEPTED));
         if (authCheckService.isOnlyStudentInCourse(course, user) && examRepositoryApi.isPresent()) {
             var examRepoApi = examRepositoryApi.get();
             course.setExams(examRepoApi.filterVisibleExams(course.getExams()));

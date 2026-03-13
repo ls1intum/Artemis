@@ -228,12 +228,4 @@ export class FaqComponent implements OnInit, OnDestroy {
             });
         }
     }
-    enableFaq() {
-        this.faqService.enable(this.courseId).subscribe({
-            next: () => {
-                this.course.faqEnabled = true;
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
 }

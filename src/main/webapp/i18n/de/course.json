@@ -254,10 +254,6 @@
                     "label": "Direktnachrichten / Gruppenchats aktiviert",
                     "tooltip": "Ermöglicht den Nachrichtenaustausch in Gruppenchats oder Direktnachrichten. Alle Nutzer:innen können Direktnachrichten oder einen privaten Gruppenchat starten und andere Nutzer:innen hinzufügen. Ein Gruppenchat ist auf zehn Mitglieder begrenzt. Die Chats finden im Kommunikationbereich des Kurses statt.",
                     "codeOfConduct": "Nachrichten: Code of Conduct"
-                },
-                "faqEnabled": {
-                    "label": "FAQs aktivieren",
-                    "tooltip": "Ermöglicht das Anlegen von FAQ-Einträgen, in denen Lehrende häufig gestellte Fragen übersichtlich sammeln. Studierende können auf diese Wissensbasis zugreifen, um selbstständig Themen nachzuarbeiten und offene Fragen eigenständig zu klären."
                 }
             },
             "enrollmentEnabled": {
@@ -398,7 +394,92 @@
                 "title": "Bild zuschneiden",
                 "uploadTitle": "Ein Bild hinzufügen"
             },
-            "overview": "Übersicht"
+            "overview": "Übersicht",
+            "onboarding": {
+                "title": "Kurs-Einrichtungsassistent",
+                "subtitle": "Richte deinen Kurs Schritt für Schritt ein. Du kannst jeden Schritt überspringen und die Einstellungen später anpassen.",
+                "steps": {
+                    "generalSettings": "Allgemein",
+                    "enrollment": "Einschreibung",
+                    "communication": "Kommunikation",
+                    "assessment": "Bewertung & KI",
+                    "explore": "Erkunden"
+                },
+                "actions": {
+                    "next": "Weiter",
+                    "previous": "Zurück",
+                    "skip": "Überspringen",
+                    "finishSetup": "Einrichtung abschließen",
+                    "saving": "Speichern..."
+                },
+                "generalSettings": {
+                    "title": "Allgemeine Einstellungen",
+                    "description": "Konfiguriere die grundlegenden Einstellungen wie Beschreibung, Zeitraum und Spracheinstellungen."
+                },
+                "enrollment": {
+                    "title": "Einschreibung & Zugang",
+                    "description": "Konfiguriere, wie sich Studierende in deinen Kurs einschreiben können.",
+                    "selfEnrollmentEnabled": "Studierende können sich selbstständig für diesen Kurs registrieren. Du kannst Einschreibungszeiträume und eine Bestätigungsnachricht festlegen.",
+                    "selfEnrollmentDisabled": "Studierende können sich nicht selbst registrieren. Du musst Teilnehmende manuell oder per CSV-Import hinzufügen.",
+                    "unenrollmentEnabled": "Studierende können den Kurs innerhalb des angegebenen Zeitraums selbstständig verlassen.",
+                    "unenrollmentDisabled": "Studierende können den Kurs nicht selbst verlassen. Nur Dozierende können Teilnehmende entfernen.",
+                    "onlineCourseEnabled": "Dieser Kurs wird über eine LTI-Plattform verwaltet. Die Selbsteinschreibung ist deaktiviert.",
+                    "onlineCourseDisabled": "Dies ist ein Standard-Artemis-Kurs, der nicht über eine externe LTI-Plattform verwaltet wird."
+                },
+                "communication": {
+                    "title": "Kommunikation & Zusammenarbeit",
+                    "description": "Richte Kommunikationskanäle und Kollaborationstools für deinen Kurs ein.",
+                    "communicationEnabled": "Diskussionskanäle sind verfügbar. Studierende und Dozierende können Fragen stellen, Ressourcen teilen und zusammenarbeiten.",
+                    "communicationDisabled": "Keine Diskussionskanäle. Studierende können nicht innerhalb der Kursplattform kommunizieren.",
+                    "messagingEnabled": "Private Direktnachrichten sind zwischen allen Kursteilnehmenden verfügbar.",
+                    "messagingDisabled": "Keine privaten Nachrichten. Teilnehmende können nur öffentliche Diskussionskanäle nutzen.",
+                    "codeOfConductHint": "Lege Erwartungen für respektvolle und konstruktive Kommunikation fest. Dies wird allen Teilnehmenden angezeigt."
+                },
+                "assessment": {
+                    "title": "Bewertung & KI",
+                    "description": "Konfiguriere Bewertungsoptionen, Beschwerden, Feedback-Anfragen und KI-gestützte Funktionen.",
+                    "complaintsEnabled": "Studierende können Beschwerden zu manuellen Bewertungen einreichen. Konfiguriere die Limits unten.",
+                    "complaintsDisabled": "Studierende können Bewertungsergebnisse nicht anfechten. Alle Noten aus manuellen Bewertungen sind endgültig.",
+                    "moreFeedbackEnabled": "Studierende können zusätzliches Feedback zu ihren bewerteten Abgaben von Tutoren anfordern.",
+                    "moreFeedbackDisabled": "Studierende können kein zusätzliches Feedback anfordern. Sie erhalten nur die ursprüngliche Bewertung.",
+                    "irisTitle": "Iris KI-Assistent",
+                    "irisEnabledHint": "Studierende können mit dem KI-Tutor für Hilfe bei Übungen, Code-Review und Kursinhalten interagieren.",
+                    "irisDisabledHint": "Der KI-Tutor ist nicht verfügbar. Studierende haben keinen Zugang zu KI-gestützter Unterstützung.",
+                    "learningPathsEnabled": "Adaptive Lernpfade führen Studierende basierend auf ihrem individuellen Fortschritt durch Kompetenzen.",
+                    "learningPathsDisabled": "Keine personalisierten Lernpfade. Alle Studierenden folgen der gleichen Kursstruktur.",
+                    "irisSettings": "Für detaillierte Iris-KI-Einstellungen besuche die",
+                    "irisSettingsLink": "Iris-Einstellungsseite"
+                },
+                "explore": {
+                    "title": "Artemis erkunden",
+                    "description": "Dein Kurs ist bereit! Hier sind die wichtigsten Bereiche, die du sofort nutzen kannst.",
+                    "exercises": {
+                        "title": "Übungen",
+                        "description": "Erstelle Programmier-, Modellierungs-, Text-, Quiz- und Dateiupload-Übungen mit automatischer Bewertung."
+                    },
+                    "lectures": {
+                        "title": "Vorlesungen",
+                        "description": "Lade Vorlesungsfolien hoch, organisiere Inhalte und verknüpfe Lernmaterialien mit Kompetenzen."
+                    },
+                    "tutorialGroups": {
+                        "title": "Übungsgruppen",
+                        "description": "Organisiere Studierende in Übungsgruppen und verwalte Zeitpläne."
+                    },
+                    "exams": {
+                        "title": "Prüfungen",
+                        "description": "Erstelle und verwalte Online-Prüfungen mit verschiedenen Aufgabentypen."
+                    },
+                    "competencies": {
+                        "title": "Kompetenzen",
+                        "description": "Definiere Lernziele und verfolge den Fortschritt der Studierenden im gesamten Kurs."
+                    },
+                    "faqs": {
+                        "title": "FAQs",
+                        "description": "Erstelle und organisiere häufig gestellte Fragen, damit Studierende eigenständig Antworten finden."
+                    }
+                },
+                "replayWizard": "Einrichtungsassistent wiederholen"
+            }
         },
         "courseStatistics": {
             "statistics": "Statistiken",

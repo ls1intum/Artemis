@@ -90,7 +90,6 @@ const course1: Course = {
     courseInformationSharingConfiguration: CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING,
     courseIconPath: 'api/core/files/path/to/icon.png',
     onlineCourse: true,
-    faqEnabled: true,
 };
 
 const course2: Course = {
@@ -342,7 +341,6 @@ describe('CourseManagementContainerComponent', () => {
             isAtLeastEditor: true,
             isAtLeastInstructor: true,
             tutorialGroupsConfiguration: {},
-            faqEnabled: true,
             onlineCourse: true,
         });
         fixture.detectChanges();
@@ -374,7 +372,6 @@ describe('CourseManagementContainerComponent', () => {
             ...course1,
             isAtLeastEditor: true,
             isAtLeastInstructor: false,
-            faqEnabled: false,
             courseInformationSharingConfiguration: CourseInformationSharingConfiguration.DISABLED,
         };
         component.course.set(courseWithDisabledFeatures);

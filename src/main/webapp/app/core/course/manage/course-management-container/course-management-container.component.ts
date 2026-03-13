@@ -388,7 +388,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     }
 
     private addFaqItem(currentCourse: Course, sidebarItems: SidebarItem[]) {
-        if (currentCourse.isAtLeastInstructor || currentCourse.faqEnabled) {
+        if (currentCourse.isAtLeastInstructor) {
             sidebarItems.push(this.sidebarItemService.getFaqManagementItem(this.courseId()));
         }
     }
