@@ -162,6 +162,24 @@ public class PyrisConnectorService {
     }
 
     /**
+     * Deletes all Memiris memories for a user.
+     *
+     * @param userId the Artemis user id
+     */
+    public void deleteAllMemirisMemories(long userId) {
+        try {
+            restTemplate.delete(pyrisUrl + "/api/v1/memiris/user/" + userId + "/delete-all");
+        }
+        catch (HttpStatusCodeException e) {
+            throw toIrisException(e);
+        }
+        catch (RestClientException | IllegalArgumentException e) {
+            log.error("Failed to delete all Memiris memories for user {}", userId, e);
+            throw new PyrisConnectorException("Could not delete all memories in Pyris");
+        }
+    }
+
+    /**
      * Executes a pipeline with the given feature and variant
      *
      * @param feature      The feature name of the pipeline to execute

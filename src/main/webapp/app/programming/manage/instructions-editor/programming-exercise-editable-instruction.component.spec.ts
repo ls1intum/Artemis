@@ -83,10 +83,13 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
     const yText = yDoc.getText('problem-statement');
     const yAwareness = {} as any;
     const stateReplaced$ = new Subject<{ doc: Y.Doc; text: Y.Text; awareness: any }>();
+    const initialSyncFinalized$ = new Subject<{ contentChangedDuringFinalize: boolean; contentDivergedFromFallback: boolean; finalContent: string }>();
     const problemStatementSyncServiceMock = {
         init: jest.fn().mockReturnValue({ doc: yDoc, text: yText, awareness: yAwareness }),
         reset: jest.fn(),
         stateReplaced$: stateReplaced$.asObservable(),
+        initialSyncFinalized$: initialSyncFinalized$.asObservable(),
+        isAwaitingInitialSync: jest.fn(() => false),
     };
 
     const defaultForceRender$ = new Subject<void>();
@@ -198,6 +201,113 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
         expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
     });
+
+    it('does not emit unsaved flag during initial sync bootstrap', () => {
+        const hasUnsavedSpy = jest.fn();
+        const instructionChangeSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+        setRequiredInputs(fixture, { ...exercise, problemStatement: 'old' });
+        fixture.detectChanges();
+
+        (comp as any).problemStatementSyncState = { doc: yDoc, text: yText, awareness: yAwareness };
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(true);
+
+        comp.updateProblemStatement('changed-during-sync');
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue).toBeFalse();
+        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-during-sync');
+    });
+
+    it('does not emit unsaved flag for finalize hydration when a bootstrap change was suppressed', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        const instructionChangeSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+        comp.instructionChange.subscribe(instructionChangeSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(true);
+        comp.updateProblemStatement('changed-during-sync');
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+
+        (problemStatementSyncServiceMock.isAwaitingInitialSync as jest.Mock).mockReturnValue(false);
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'changed-after-finalize' });
+        comp.updateProblemStatement('changed-after-finalize');
+
+        expect(hasUnsavedSpy).not.toHaveBeenCalled();
+        expect(comp.unsavedChangesValue).toBeFalse();
+        expect(instructionChangeSpy).toHaveBeenCalledWith('changed-after-finalize');
+    }));
+
+    it('does not suppress first user edit after finalize when no bootstrap change was suppressed', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'old' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({ contentChangedDuringFinalize: true, contentDivergedFromFallback: false, finalContent: 'first-user-edit-after-finalize' });
+        comp.updateProblemStatement('first-user-edit-after-finalize');
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue).toBeTrue();
+    }));
+
+    it('marks unsaved when finalized sync content diverges from fallback', fakeAsync(() => {
+        const hasUnsavedSpy = jest.fn();
+        comp.hasUnsavedChanges.subscribe(hasUnsavedSpy);
+
+        const exerciseWithStatement = { ...exercise, problemStatement: 'saved-server-content' } as ProgrammingExercise;
+        setRequiredInputs(fixture, exerciseWithStatement);
+        fixture.detectChanges();
+
+        const mockEditor = editor.create();
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getModel: () => mockEditor.getModel(),
+                getEditor: () => mockEditor,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        comp.ngAfterViewInit();
+        tick();
+
+        initialSyncFinalized$.next({
+            contentChangedDuringFinalize: true,
+            contentDivergedFromFallback: true,
+            finalContent: 'remote-unsaved-content',
+        });
+
+        expect(hasUnsavedSpy).toHaveBeenCalledWith(true);
+        expect(comp.unsavedChangesValue).toBeTrue();
+    }));
 
     it('should reset sync service on component destroy', () => {
         setRequiredInputs(fixture, exercise);
@@ -449,4 +559,132 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
         fixture.destroy();
         flush();
     }));
+
+    it('should update inline refinement position with signal on selection change', () => {
+        const selection = {
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+            selectedText: 'Some selected text',
+            screenPosition: { top: 100, left: 200 },
+        };
+
+        // Enable hyperion
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture.destroy();
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        // Mock container bounding rect to verify viewport-to-container coordinate conversion
+        jest.spyOn(fixture.nativeElement, 'getBoundingClientRect').mockReturnValue({ top: 30, left: 50 } as DOMRect);
+
+        comp.onEditorSelectionChange(selection);
+
+        // Position uses viewport-relative coordinates with clamping
+        expect(comp.inlineRefinementPosition()).toEqual({ top: 100, left: 200 });
+        expect(comp.selectedTextForRefinement()).toBe('Some selected text');
+        expect(comp.selectionPositionInfo()).toEqual({
+            startLine: 1,
+            endLine: 2,
+            startColumn: 5,
+            endColumn: 10,
+        });
+    });
+
+    it('should hide inline refinement button when selection is empty', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('some text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        comp.onEditorSelectionChange(undefined);
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should hide inline refinement button when selection has only whitespace', () => {
+        jest.spyOn(TestBed.inject(ProfileService), 'isModuleFeatureActive').mockReturnValue(true);
+        fixture = TestBed.createComponent(ProgrammingExerciseEditableInstructionComponent);
+        comp = fixture.componentInstance;
+
+        const selection = {
+            startLine: 1,
+            endLine: 1,
+            startColumn: 0,
+            endColumn: 5,
+            selectedText: '   ',
+            screenPosition: { top: 100, left: 200 },
+        };
+
+        comp.onEditorSelectionChange(selection);
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+    });
+
+    it('should emit inline refinement event and hide button on refine', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('some text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        const emitSpy = jest.spyOn(comp.onInlineRefinement, 'emit');
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 0,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefine(event);
+
+        expect(emitSpy).toHaveBeenCalledWith(event);
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
+
+    it('should get current content from editor', () => {
+        const mockGetText = jest.fn().mockReturnValue('editor content');
+        comp.markdownEditorMonaco = {
+            monacoEditor: {
+                getText: mockGetText,
+            },
+        } as unknown as MarkdownEditorMonacoComponent;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBe('editor content');
+        expect(mockGetText).toHaveBeenCalled();
+    });
+
+    it('should return undefined when editor is not available for getCurrentContent', () => {
+        comp.markdownEditorMonaco = undefined;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBeUndefined();
+    });
+
+    it('should return undefined when monacoEditor is not available for getCurrentContent', () => {
+        comp.markdownEditorMonaco = {} as unknown as MarkdownEditorMonacoComponent;
+
+        const content = comp.getCurrentContent();
+
+        expect(content).toBeUndefined();
+    });
+
+    it('should hide inline refinement button explicitly', () => {
+        comp.inlineRefinementPosition.set({ top: 100, left: 200 });
+        comp.selectedTextForRefinement.set('text');
+        comp.selectionPositionInfo.set({ startLine: 1, endLine: 1, startColumn: 0, endColumn: 5 });
+
+        comp.hideInlineRefinementButton();
+
+        expect(comp.inlineRefinementPosition()).toBeUndefined();
+        expect(comp.selectedTextForRefinement()).toBe('');
+        expect(comp.selectionPositionInfo()).toBeUndefined();
+    });
 });
