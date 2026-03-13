@@ -71,19 +71,23 @@
         }
     }
     @if (course()?.isAtLeastInstructor) {
-        <button class="quick-action-card quick-action-card--tutorial" (click)="navigateToCourseManagementSection(CourseManagementSection.TUTORIAL_GROUP)">
-            <div class="quick-action-icon">
-                <fa-icon [icon]="faUsers" />
-            </div>
-            <span class="quick-action-label" jhiTranslate="entity.action.addTutorial"></span>
-        </button>
+        @if (tutorialGroupEnabled) {
+            <button class="quick-action-card quick-action-card--tutorial" (click)="navigateToCourseManagementSection(CourseManagementSection.TUTORIAL_GROUP)">
+                <div class="quick-action-icon">
+                    <fa-icon [icon]="faUsers" />
+                </div>
+                <span class="quick-action-label" jhiTranslate="entity.action.addTutorial"></span>
+            </button>
+        }
 
-        <button class="quick-action-card quick-action-card--exams" (click)="navigateToCourseManagementSection(CourseManagementSection.EXAM)">
-            <div class="quick-action-icon">
-                <fa-icon [icon]="faFileAlt" />
-            </div>
-            <span class="quick-action-label" jhiTranslate="entity.action.addExam"></span>
-        </button>
+        @if (examEnabled) {
+            <button class="quick-action-card quick-action-card--exams" (click)="navigateToCourseManagementSection(CourseManagementSection.EXAM)">
+                <div class="quick-action-icon">
+                    <fa-icon [icon]="faFileAlt" />
+                </div>
+                <span class="quick-action-label" jhiTranslate="entity.action.addExam"></span>
+            </button>
+        }
 
         @if (atlasEnabled) {
             <button class="quick-action-card quick-action-card--competencies" (click)="navigateToCourseManagementSection(CourseManagementSection.COMPETENCY)">

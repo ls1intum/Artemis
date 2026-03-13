@@ -8,7 +8,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { AddExercisePopoverComponent } from 'app/core/course/manage/quick-actions/add-exercise-popover/add-exercise-popover.component';
 import { CourseMaterialImportDialogComponent } from 'app/core/course/manage/course-material-import/course-material-import-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE } from 'app/app.constants';
+import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODULE_FEATURE_TUTORIALGROUP } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export enum CourseManagementSection {
@@ -192,6 +192,8 @@ export class QuickActionsComponent {
 
     lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
     atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
+    examEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_EXAM);
+    tutorialGroupEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_TUTORIALGROUP);
 
     readonly importDialog = viewChild<CourseMaterialImportDialogComponent>('importDialog');
 
