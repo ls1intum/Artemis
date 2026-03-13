@@ -10,7 +10,7 @@ services:
       - --scheme
       - http
     # Must be compatible with the Java client: https://docs.weaviate.io/weaviate/release-notes
-    image: cr.weaviate.io/semitechnologies/weaviate:${WEAVIATE_SERVER_VERSION}
+    image: cr.weaviate.io/semitechnologies/weaviate:${WEAVIATE_SERVER_VERSION:-1.34.14}
     expose:
       - 8001
       - 50051

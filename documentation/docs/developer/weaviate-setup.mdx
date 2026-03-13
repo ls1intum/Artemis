@@ -75,14 +75,19 @@ docker compose -f weaviate-embeddings.yml up -d
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-  <p>The <code>embeddinggemma-300m</code> model is a gated model. You must accept the license agreement on Hugging Face
-  and provide your access token before building the image.</p>
+  The `embeddinggemma-300m` model is a gated model. You must accept the license agreement on Hugging Face
+  and provide your access token before building the image.
+</Callout>
+
+<Callout variant={CalloutVariant.warning}>
+  You need to delete the existing Weaviate collection or reset the Docker volume when switching between `weaviate.yml` and `weaviate-embeddings.yml`, as otherwise Artemis will not create the collection with the new vectorizer settings.
+  Either to it directly via curl `curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"`, or reset the [docker volume](#resetting-data)
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
-  <p>The HF_TOKEN is passed securely to Docker using BuildKit secrets and will not be stored in the image history.
-  The first build takes several minutes as it downloads the <code>google/embeddinggemma-300m</code> model from Hugging Face.
-  Subsequent starts are fast since the model is cached in the Docker image.</p>
+  The `HF_TOKEN` is passed securely to Docker using BuildKit secrets and will not be stored in the image history.
+  The first build takes several minutes as it downloads the `google/embeddinggemma-300m` model from Hugging Face.
+  Subsequent starts are fast since the model is cached in the Docker image.
 </Callout>
 
 This will start Weaviate with the following configuration:
@@ -175,8 +180,8 @@ By default, the embedding model runs on CPU. To enable GPU acceleration:
 | Global search with semantic search (automatic embedding generation) | `docker compose -f weaviate-embeddings.yml up -d` |
 
 <Callout variant={CalloutVariant.info}>
-  Remember to run all commands from the <code>docker</code> directory.
-  For <code>weaviate-embeddings.yml</code>, ensure you have completed the prerequisites (accept model license, set <code>HF_TOKEN</code>) and built the image first.
+  Remember to run all commands from the `docker` directory.
+  For `weaviate-embeddings.yml`, ensure you have completed the prerequisites (accept model license, set `HF_TOKEN`) and built the image first.
 </Callout>
 
 ---
@@ -249,13 +254,13 @@ To enable Weaviate integration in Artemis, add the following to your `applicatio
 ```yaml
 artemis:
     weaviate:
-        enabled: false                    # Disabled by default; set to true to enable Weaviate integration
-        http-host: localhost              # Weaviate server HTTP hostname
-        http-port: 8001                   # Weaviate HTTP port (avoid conflicts with main app)
-        grpc-port: 50051                  # Weaviate gRPC port for better performance
-        scheme: http                      # http scheme for development (https should be used in production environments)
-        collection-prefix: Artemis_       # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris, or allowing different prefixes for a shared Weaviate instance for test servers)
-        vectorizer-module: none           # Vectorizer module: "none" for self-provided vectors or "text2vec-transformers" for automatic embeddings
+        enabled: true                            # Disabled by default; set to true to enable Weaviate integration
+        http-host: localhost                     # Weaviate server HTTP hostname
+        http-port: 8001                          # Weaviate HTTP port (avoid conflicts with main app)
+        grpc-port: 50051                         # Weaviate gRPC port for better performance
+        scheme: http                             # http scheme for development (https should be used in production environments)
+        collection-prefix: Artemis_              # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
+        vectorizer-module: text2vec-transformers # Vectorizer module: "none" (docker/weaviate.yml) or "text2vec-transformers" (docker/weaviate-embeddings.yml)
 ```
 
 ### Vectorizer Configuration
@@ -273,8 +278,8 @@ The `vectorizer-module` setting determines how vectors (embeddings) are generate
   - You want Weaviate to automatically generate embeddings for text content
 
 <Callout variant={CalloutVariant.warning}>
-  The <code>vectorizer-module</code> setting must match your Docker setup.
-  Using <code>text2vec-transformers</code> requires the transformer service from <code>weaviate-embeddings.yml</code> to be running, otherwise collection creation will fail.
+  The `vectorizer-module` setting must match your Docker setup.
+  Using `text2vec-transformers` requires the transformer service from `weaviate-embeddings.yml` to be running, otherwise collection creation will fail.
 </Callout>
 
 Ensure that Weaviate is running before starting Artemis.
@@ -291,11 +296,14 @@ Alternatively, you can enable Weaviate via:
 
 ### Port Conflicts
 
-If port 8001 or 50051 is already in use, create or edit `docker/.env` (which is gitignored) and set custom ports:
+If port 8001 or 50051 is already in use, create or edit `docker/.env` (which is gitignored) and set custom ports,
+
+You can also define a custom Weaviate version if needed, but make sure to use a compatible version with the embedding model and the [java client used in Artemis](https://docs.weaviate.io/weaviate/release-notes).
 
 ```bash
 WEAVIATE_REST_PORT=8002
 WEAVIATE_GRPC_PORT=50052
+WEAVIATE_SERVER_VERSION=1.34.14
 ```
 
 Remember to update the Pyris configuration accordingly.
@@ -358,7 +366,7 @@ curl -X POST http://localhost:8001/v1/objects \
 Then verify the object has a vector:
 
 ```bash
-curl http://localhost:8001/v1/objects?class=Test | jq '.objects[0].vector'
+curl "http://localhost:8001/v1/objects?class=Test&include=vector" | jq '.objects[0].vector'
 ```
 
 ### Resetting Data
