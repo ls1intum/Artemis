@@ -275,6 +275,9 @@
     margin-bottom: 8px;
     place-self: center;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .bubble-right {
@@ -286,6 +289,26 @@
     border-radius: 8px;
     padding: 16px;
     max-width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bubble-meta {
+    display: flex;
+    align-items: center;
+}
+
+.bubble-meta-right {
+    justify-content: flex-end;
+}
+
+.bubble-meta-left {
+    justify-content: flex-start;
+}
+
+.bubble-content {
+    display: block;
 }
 
 .client-chat-error {

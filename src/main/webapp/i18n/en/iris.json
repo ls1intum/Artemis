@@ -223,6 +223,16 @@
                 "empty": "No memories found.",
                 "delete": "Delete",
                 "deleting": "Deleting...",
+                "indicator": {
+                    "usedSingular": "1 memory used",
+                    "usedPlural": "{{count}} memories used",
+                    "createdSingular": "1 created",
+                    "createdPlural": "{{count}} created",
+                    "compactUsed": "{{count}} used",
+                    "compactCreated": "{{count}} created",
+                    "usedSectionTitle": "Used memories",
+                    "createdSectionTitle": "Created memories"
+                },
                 "conflict": {
                     "warning": "There are conflicts between memories that need to be resolved.",
                     "resolve": "Resolve",

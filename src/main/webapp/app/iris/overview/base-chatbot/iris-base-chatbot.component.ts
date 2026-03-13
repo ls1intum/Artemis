@@ -49,6 +49,8 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService } from 'primeng/api';
 import { AlertService } from 'app/shared/service/alert.service';
 import { formatDate } from '@angular/common';
+import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
+import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 // Interval (in ms) to check if the date has changed for session bucket recalculation
 const DAY_CHANGE_CHECK_INTERVAL_MS = 60000;
 
@@ -77,6 +79,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         ChatHistoryItemComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
+        IrisChatMemoriesIndicatorComponent,
         ConfirmDialogModule,
     ],
     providers: [ConfirmationService],
@@ -225,6 +228,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+
+    protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
+        return message.accessedMemories ?? [];
+    }
+
+    protected getCreatedMemories(message: IrisMessage): MemirisMemory[] {
+        return message.createdMemories ?? [];
+    }
+
+    protected hasMemories(message: IrisMessage): boolean {
+        return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
+    }
 
     constructor() {
         // Initialize user acceptance state
