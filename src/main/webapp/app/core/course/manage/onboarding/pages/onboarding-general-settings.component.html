@@ -84,7 +84,10 @@
         @if (irisEnabled) {
             <hr />
             <div class="mb-3">
-                <h5 jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></h5>
+                <h5 class="d-flex align-items-center gap-2">
+                    <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                    <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
+                </h5>
                 @if (isIrisEnabled()) {
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>
                 } @else {
@@ -100,7 +103,7 @@
                         <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                     </button>
                 </div>
-                <p class="text-muted small mt-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisPrivacyNote"></p>
+                <p class="text-muted small mt-2" [innerHTML]="'artemisApp.course.onboarding.generalSettings.irisPrivacyNote' | artemisTranslate"></p>
             </div>
         }
     </div>

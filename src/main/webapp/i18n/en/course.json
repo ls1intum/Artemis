@@ -420,7 +420,7 @@
                     "irisTitle": "Iris AI Assistant",
                     "irisEnabledHint": "Iris is enabled. Students can interact with the AI tutor for help with exercises, code review, and course content.",
                     "irisDisabledHint": "Iris is disabled. Students will not have access to AI-powered assistance in this course.",
-                    "irisPrivacyNote": "Students can choose to turn off Iris individually. Iris can use local models hosted in the university infrastructure or cloud models within the EU."
+                    "irisPrivacyNote": "<strong>Please note:</strong> Students can choose to turn off Iris individually. Iris can use local models hosted in the university infrastructure or cloud models within the EU."
                 },
                 "enrollment": {
                     "title": "Enrollment",

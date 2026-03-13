@@ -4,7 +4,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
-
 @Component({
     selector: 'jhi-onboarding-explore',
     templateUrl: './onboarding-explore.component.html',

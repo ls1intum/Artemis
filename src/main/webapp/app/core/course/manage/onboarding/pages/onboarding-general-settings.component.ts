@@ -15,6 +15,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/buttons/docu
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -31,9 +32,11 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
         ArtemisTranslatePipe,
         FaIconComponent,
         DocumentationButtonComponent,
+        IrisLogoComponent,
     ],
 })
 export class OnboardingGeneralSettingsComponent implements OnInit {
+    protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
 

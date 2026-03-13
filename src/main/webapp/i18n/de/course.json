@@ -420,7 +420,7 @@
                     "irisTitle": "Iris KI-Assistent",
                     "irisEnabledHint": "Iris ist aktiviert. Studierende können mit dem KI-Tutor für Hilfe bei Übungen, Code-Review und Kursinhalten interagieren.",
                     "irisDisabledHint": "Iris ist deaktiviert. Studierende haben keinen Zugang zu KI-gestützter Unterstützung in diesem Kurs.",
-                    "irisPrivacyNote": "Studierende können Iris individuell deaktivieren. Iris kann lokale Modelle in der Universitätsinfrastruktur oder Cloud-Modelle innerhalb der EU verwenden."
+                    "irisPrivacyNote": "<strong>Bitte beachten:</strong> Studierende können Iris individuell deaktivieren. Iris kann lokale Modelle in der Universitätsinfrastruktur oder Cloud-Modelle innerhalb der EU verwenden."
                 },
                 "enrollment": {
                     "title": "Einschreibung",
