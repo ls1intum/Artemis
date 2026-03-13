@@ -14,7 +14,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ColorSelectorComponent } from 'app/shared/color-selector/color-selector.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
+import { of } from 'rxjs';
 
 describe('OnboardingGeneralSettingsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -32,7 +36,19 @@ describe('OnboardingGeneralSettingsComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [OnboardingGeneralSettingsComponent, FormsModule],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useClass: MockProfileService },
+                {
+                    provide: IrisSettingsService,
+                    useValue: {
+                        getCourseSettingsWithRateLimit: () => of({ settings: { enabled: true } }),
+                        updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
+                    },
+                },
+                provideHttpClient(),
+                provideHttpClientTesting(),
+            ],
         })
             .overrideComponent(OnboardingGeneralSettingsComponent, {
                 remove: {

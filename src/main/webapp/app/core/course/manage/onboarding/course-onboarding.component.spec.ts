@@ -277,5 +277,20 @@ describe('CourseOnboardingComponent', () => {
             }
             expect(comp.isLastStep()).toBe(true);
         });
+
+        it('should correctly compute canFinish', () => {
+            comp.ngOnInit();
+            fixture.detectChanges();
+
+            expect(comp.canFinish()).toBe(false);
+            // Navigate to second-to-last step
+            for (let i = 0; i < comp.totalSteps - 2; i++) {
+                comp.skipStep();
+            }
+            expect(comp.canFinish()).toBe(true);
+            // Also true on last step
+            comp.skipStep();
+            expect(comp.canFinish()).toBe(true);
+        });
     });
 });

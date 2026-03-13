@@ -399,11 +399,11 @@
                 "title": "Course Setup Wizard",
                 "subtitle": "Let's set up your course step by step. You can skip any step and adjust settings later.",
                 "steps": {
-                    "generalSettings": "General Settings",
-                    "enrollment": "Enrollment & Access",
+                    "generalSettings": "General",
+                    "enrollment": "Enrollment",
                     "communication": "Communication",
-                    "assessment": "Assessment & AI",
-                    "explore": "Explore Artemis"
+                    "assessment": "Assessment",
+                    "explore": "Explore"
                 },
                 "actions": {
                     "next": "Next",
@@ -413,11 +413,15 @@
                     "saving": "Saving..."
                 },
                 "generalSettings": {
-                    "title": "General Settings",
-                    "description": "Configure the basic settings for your course such as description, dates, and language preferences."
+                    "title": "General",
+                    "description": "Configure the basic settings for your course such as description, dates, and language preferences.",
+                    "irisTitle": "Iris AI Assistant",
+                    "irisEnabledHint": "Iris is enabled. Students can interact with the AI tutor for help with exercises, code review, and course content.",
+                    "irisDisabledHint": "Iris is disabled. Students will not have access to AI-powered assistance in this course.",
+                    "irisPrivacyNote": "Students can choose to turn off Iris individually. Iris can use local models hosted in the university infrastructure or cloud models within the EU."
                 },
                 "enrollment": {
-                    "title": "Enrollment & Access",
+                    "title": "Enrollment",
                     "description": "Configure how students can enroll in your course and set enrollment periods.",
                     "selfEnrollmentEnabled": "Students can find and register for this course on their own. You can set enrollment periods and a confirmation message below.",
                     "selfEnrollmentDisabled": "Students cannot self-register. You will need to add participants manually or via CSV import.",
@@ -427,7 +431,7 @@
                     "onlineCourseDisabled": "This is a standard Artemis course, not managed through an external LTI platform."
                 },
                 "communication": {
-                    "title": "Communication & Collaboration",
+                    "title": "Communication",
                     "description": "Set up communication channels and collaboration tools for your course.",
                     "communicationEnabled": "Discussion channels are available. Students and instructors can post questions, share resources, and collaborate.",
                     "communicationDisabled": "No discussion channels. Students cannot communicate within the course platform.",
@@ -436,19 +440,12 @@
                     "codeOfConductHint": "Set expectations for respectful and constructive communication. This is shown to all participants."
                 },
                 "assessment": {
-                    "title": "Assessment & AI",
-                    "description": "Configure grading, complaints, feedback requests, and AI-powered features.",
+                    "title": "Assessment",
+                    "description": "Configure grading, complaints, and feedback requests.",
                     "complaintsEnabled": "Students can submit complaints about manual assessments. Configure the limits below.",
                     "complaintsDisabled": "Students cannot dispute assessment results. All grades from manual assessments are final.",
                     "moreFeedbackEnabled": "Students can request additional feedback on their assessed submissions from tutors.",
-                    "moreFeedbackDisabled": "Students cannot request additional feedback. They only receive the initial assessment.",
-                    "irisTitle": "Iris AI Assistant",
-                    "irisEnabledHint": "Students can interact with the AI tutor for help with exercises, code review, and course content.",
-                    "irisDisabledHint": "The AI tutor is not available. Students will not have access to AI-powered assistance.",
-                    "learningPathsEnabled": "Adaptive learning paths guide students through competencies based on their individual progress.",
-                    "learningPathsDisabled": "No personalized learning paths. All students follow the same course structure.",
-                    "irisSettings": "For detailed Iris AI settings, visit the",
-                    "irisSettingsLink": "Iris Settings page"
+                    "moreFeedbackDisabled": "Students cannot request additional feedback. They only receive the initial assessment."
                 },
                 "explore": {
                     "title": "Explore Artemis",

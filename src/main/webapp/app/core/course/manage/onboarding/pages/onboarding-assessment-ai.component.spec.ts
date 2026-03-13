@@ -12,10 +12,6 @@ import { OnboardingAssessmentAiComponent } from './onboarding-assessment-ai.comp
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
-import { of } from 'rxjs';
 
 describe('OnboardingAssessmentAiComponent', () => {
     setupTestBed({ zoneless: true });
@@ -34,23 +30,10 @@ describe('OnboardingAssessmentAiComponent', () => {
         course.maxComplaintTextLimit = 0;
         course.maxComplaintResponseTextLimit = 0;
         course.maxRequestMoreFeedbackTimeDays = 0;
-        course.learningPathsEnabled = false;
 
         await TestBed.configureTestingModule({
             imports: [OnboardingAssessmentAiComponent, FormsModule, RouterModule.forRoot([])],
-            providers: [
-                { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useClass: MockProfileService },
-                {
-                    provide: IrisSettingsService,
-                    useValue: {
-                        getCourseSettingsWithRateLimit: () => of({ settings: { enabled: false } }),
-                        updateCourseSettings: () => of({ body: { settings: { enabled: true } } }),
-                    },
-                },
-                provideHttpClient(),
-                provideHttpClientTesting(),
-            ],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, provideHttpClient(), provideHttpClientTesting()],
         })
             .overrideComponent(OnboardingAssessmentAiComponent, {
                 remove: { imports: [TranslateDirective] },
@@ -164,32 +147,6 @@ describe('OnboardingAssessmentAiComponent', () => {
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.maxRequestMoreFeedbackTimeDays).toBe(0);
-        });
-    });
-
-    describe('toggleLearningPaths', () => {
-        it('should enable learning paths', () => {
-            course.learningPathsEnabled = false;
-            fixture.componentRef.setInput('course', { ...course });
-            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
-
-            comp.toggleLearningPaths();
-
-            expect(emitSpy).toHaveBeenCalled();
-            const emitted = emitSpy.mock.calls[0][0];
-            expect(emitted.learningPathsEnabled).toBe(true);
-        });
-
-        it('should disable learning paths', () => {
-            course.learningPathsEnabled = true;
-            fixture.componentRef.setInput('course', { ...course });
-            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
-
-            comp.toggleLearningPaths();
-
-            expect(emitSpy).toHaveBeenCalled();
-            const emitted = emitSpy.mock.calls[0][0];
-            expect(emitted.learningPathsEnabled).toBe(false);
         });
     });
 

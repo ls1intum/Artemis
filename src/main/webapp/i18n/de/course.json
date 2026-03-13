@@ -402,7 +402,7 @@
                     "generalSettings": "Allgemein",
                     "enrollment": "Einschreibung",
                     "communication": "Kommunikation",
-                    "assessment": "Bewertung & KI",
+                    "assessment": "Bewertung",
                     "explore": "Erkunden"
                 },
                 "actions": {
@@ -413,11 +413,15 @@
                     "saving": "Speichern..."
                 },
                 "generalSettings": {
-                    "title": "Allgemeine Einstellungen",
-                    "description": "Konfiguriere die grundlegenden Einstellungen wie Beschreibung, Zeitraum und Spracheinstellungen."
+                    "title": "Allgemein",
+                    "description": "Konfiguriere die grundlegenden Einstellungen wie Beschreibung, Zeitraum und Spracheinstellungen.",
+                    "irisTitle": "Iris KI-Assistent",
+                    "irisEnabledHint": "Iris ist aktiviert. Studierende können mit dem KI-Tutor für Hilfe bei Übungen, Code-Review und Kursinhalten interagieren.",
+                    "irisDisabledHint": "Iris ist deaktiviert. Studierende haben keinen Zugang zu KI-gestützter Unterstützung in diesem Kurs.",
+                    "irisPrivacyNote": "Studierende können Iris individuell deaktivieren. Iris kann lokale Modelle in der Universitätsinfrastruktur oder Cloud-Modelle innerhalb der EU verwenden."
                 },
                 "enrollment": {
-                    "title": "Einschreibung & Zugang",
+                    "title": "Einschreibung",
                     "description": "Konfiguriere, wie sich Studierende in deinen Kurs einschreiben können.",
                     "selfEnrollmentEnabled": "Studierende können sich selbstständig für diesen Kurs registrieren. Du kannst Einschreibungszeiträume und eine Bestätigungsnachricht festlegen.",
                     "selfEnrollmentDisabled": "Studierende können sich nicht selbst registrieren. Du musst Teilnehmende manuell oder per CSV-Import hinzufügen.",
@@ -427,7 +431,7 @@
                     "onlineCourseDisabled": "Dies ist ein Standard-Artemis-Kurs, der nicht über eine externe LTI-Plattform verwaltet wird."
                 },
                 "communication": {
-                    "title": "Kommunikation & Zusammenarbeit",
+                    "title": "Kommunikation",
                     "description": "Richte Kommunikationskanäle und Kollaborationstools für deinen Kurs ein.",
                     "communicationEnabled": "Diskussionskanäle sind verfügbar. Studierende und Dozierende können Fragen stellen, Ressourcen teilen und zusammenarbeiten.",
                     "communicationDisabled": "Keine Diskussionskanäle. Studierende können nicht innerhalb der Kursplattform kommunizieren.",
@@ -436,19 +440,12 @@
                     "codeOfConductHint": "Lege Erwartungen für respektvolle und konstruktive Kommunikation fest. Dies wird allen Teilnehmenden angezeigt."
                 },
                 "assessment": {
-                    "title": "Bewertung & KI",
-                    "description": "Konfiguriere Bewertungsoptionen, Beschwerden, Feedback-Anfragen und KI-gestützte Funktionen.",
+                    "title": "Bewertung",
+                    "description": "Konfiguriere Bewertungsoptionen, Beschwerden und Feedback-Anfragen.",
                     "complaintsEnabled": "Studierende können Beschwerden zu manuellen Bewertungen einreichen. Konfiguriere die Limits unten.",
                     "complaintsDisabled": "Studierende können Bewertungsergebnisse nicht anfechten. Alle Noten aus manuellen Bewertungen sind endgültig.",
                     "moreFeedbackEnabled": "Studierende können zusätzliches Feedback zu ihren bewerteten Abgaben von Tutoren anfordern.",
-                    "moreFeedbackDisabled": "Studierende können kein zusätzliches Feedback anfordern. Sie erhalten nur die ursprüngliche Bewertung.",
-                    "irisTitle": "Iris KI-Assistent",
-                    "irisEnabledHint": "Studierende können mit dem KI-Tutor für Hilfe bei Übungen, Code-Review und Kursinhalten interagieren.",
-                    "irisDisabledHint": "Der KI-Tutor ist nicht verfügbar. Studierende haben keinen Zugang zu KI-gestützter Unterstützung.",
-                    "learningPathsEnabled": "Adaptive Lernpfade führen Studierende basierend auf ihrem individuellen Fortschritt durch Kompetenzen.",
-                    "learningPathsDisabled": "Keine personalisierten Lernpfade. Alle Studierenden folgen der gleichen Kursstruktur.",
-                    "irisSettings": "Für detaillierte Iris-KI-Einstellungen besuche die",
-                    "irisSettingsLink": "Iris-Einstellungsseite"
+                    "moreFeedbackDisabled": "Studierende können kein zusätzliches Feedback anfordern. Sie erhalten nur die ursprüngliche Bewertung."
                 },
                 "explore": {
                     "title": "Artemis erkunden",

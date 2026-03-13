@@ -51,6 +51,7 @@ export class CourseOnboardingComponent implements OnInit {
 
     readonly isLastStep = computed(() => this.activeStep() === this.totalSteps - 1);
     readonly isFirstStep = computed(() => this.activeStep() === 0);
+    readonly canFinish = computed(() => this.activeStep() >= this.totalSteps - 2);
 
     ngOnInit() {
         this.route.data.subscribe(({ course }) => {

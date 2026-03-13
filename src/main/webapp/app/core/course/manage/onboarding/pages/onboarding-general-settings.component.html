@@ -82,5 +82,28 @@
                 </select>
             </div>
         </div>
+
+        @if (irisEnabled) {
+            <hr />
+            <div class="mb-3">
+                <h5 jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></h5>
+                @if (isIrisEnabled()) {
+                    <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisEnabledHint"></p>
+                } @else {
+                    <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
+                }
+                <div class="feature-toggle">
+                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" (click)="setIrisEnabled(true)">
+                        <fa-icon [icon]="faCheck" />
+                        <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
+                    </button>
+                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-disabled': !isIrisEnabled() }" (click)="setIrisEnabled(false)">
+                        <fa-icon [icon]="faTimes" />
+                        <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
+                    </button>
+                </div>
+                <p class="text-muted small mt-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisPrivacyNote"></p>
+            </div>
+        }
     </div>
 </div>
