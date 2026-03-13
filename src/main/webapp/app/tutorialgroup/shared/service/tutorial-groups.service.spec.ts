@@ -3,11 +3,22 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
+import { firstValueFrom } from 'rxjs';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroup, TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { provideHttpClient } from '@angular/common/http';
+
+function createRegisteredStudent(id: number, login: string): TutorialGroupRegisteredStudentDTO {
+    return {
+        id,
+        login,
+        name: `${login} name`,
+        email: `${login}@tum.de`,
+        registrationNumber: `${id}`,
+    };
+}
 
 describe('TutorialGroupService', () => {
     setupTestBed({ zoneless: true });
@@ -156,5 +167,40 @@ describe('TutorialGroupService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush([returnedFromService]);
         expect(result).toContainEqual(expected);
+    });
+
+    it('should get registered student dtos', async () => {
+        const students = [createRegisteredStudent(1, 'ada')];
+        const resultPromise = firstValueFrom(service.getRegisteredStudentDTOs(7, 9));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/registered-students' });
+        req.flush(students);
+
+        await expect(resultPromise).resolves.toEqual(students);
+    });
+
+    it('should get unregistered student dtos', async () => {
+        const students = [createRegisteredStudent(2, 'alan')];
+        const resultPromise = firstValueFrom(service.getUnregisteredStudentDTOs(7, 9, 'ada', 3, 25));
+
+        const req = httpMock.expectOne((request) => request.method === 'GET' && request.url === 'api/tutorialgroup/courses/7/tutorial-groups/9/unregistered-students');
+        expect(req.request.params.get('loginOrName')).toBe('ada');
+        expect(req.request.params.get('pageIndex')).toBe('3');
+        expect(req.request.params.get('pageSize')).toBe('25');
+        req.flush(students);
+
+        await expect(resultPromise).resolves.toEqual(students);
+    });
+
+    it('should register multiple students via login', async () => {
+        const logins = ['ada', 'alan'];
+        const resultPromise = firstValueFrom(service.registerMultipleStudentsViaLogin(7, 9, logins));
+
+        const req = httpMock.expectOne({ method: 'POST', url: 'api/tutorialgroup/courses/7/tutorial-groups/9/register-via-login' });
+        expect(req.request.body).toEqual(logins);
+        req.flush({});
+
+        const result = await resultPromise;
+        expect(result.ok).toBe(true);
     });
 });
