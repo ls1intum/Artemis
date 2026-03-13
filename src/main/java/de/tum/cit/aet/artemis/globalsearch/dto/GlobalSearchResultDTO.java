@@ -12,7 +12,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * This DTO provides a consistent structure for search results regardless of the entity type
  * (exercises, pages, features, courses, etc.), making it easy to render in a unified search UI.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GlobalSearchResultDTO(String id, String type, String title, String description, String badge, Map<String, Object> metadata) {
 
     /**
