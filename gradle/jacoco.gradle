@@ -6,6 +6,7 @@ ext {
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.851, "CLASS":  2],
+        // CLASS raised from 6 to 7: removal of CompetencyJolIntegrationTest (JOL feature eliminated)
         "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  7],
         // Lowered to accommodate PostgreSQL/MySQL testcontainer configuration classes
         "buildagent"    :          ["INSTRUCTION": 0.750, "CLASS":  3],
