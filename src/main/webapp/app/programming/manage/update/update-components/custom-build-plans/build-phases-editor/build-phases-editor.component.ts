@@ -64,8 +64,10 @@ export class BuildPhasesEditorComponent {
      * @param index the index of the phase to move
      */
     moveUp(index: number) {
-        if (index === 0) return;
         this.phases.update((phases) => {
+            if (index <= 0 || index >= phases.length) {
+                return phases;
+            }
             const updated = [...phases];
             [updated[index - 1], updated[index]] = [updated[index], updated[index - 1]];
             return updated;
@@ -79,7 +81,9 @@ export class BuildPhasesEditorComponent {
      */
     moveDown(index: number) {
         this.phases.update((phases) => {
-            if (index === phases.length - 1) return phases;
+            if (index < 0 || index >= phases.length - 1) {
+                return phases;
+            }
             const updated = [...phases];
             [updated[index], updated[index + 1]] = [updated[index + 1], updated[index]];
             return updated;

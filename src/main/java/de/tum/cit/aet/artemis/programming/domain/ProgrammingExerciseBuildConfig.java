@@ -261,8 +261,7 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
         }
         try {
             BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.deserialize(buildPlanConfiguration);
-            // Discriminate: phases format must have a non-null, non-empty phases list
-            if (phases.phases() != null && !phases.phases().isEmpty()) {
+            if (phases.phases() != null) {
                 return phases;
             }
         }

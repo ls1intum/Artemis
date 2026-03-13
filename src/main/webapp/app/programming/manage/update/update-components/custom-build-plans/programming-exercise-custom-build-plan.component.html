@@ -5,16 +5,14 @@
         <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.customizeBuildPlansWithAeolusTooltip" />
     </div>
     @if (programmingExercise.customizeBuildPlanWithAeolus) {
-        @if (buildPlanPhases.dockerImage) {
-            <jhi-programming-exercise-build-configuration
-                [programmingExercise]="programmingExercise"
-                [dockerImage]="buildPlanPhases.dockerImage"
-                (dockerImageChange)="setDockerImage($event)"
-                [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
-                (timeoutChange)="setTimeout($event)"
-                [isAeolus]="false"
-            />
-        }
+        <jhi-programming-exercise-build-configuration
+            [programmingExercise]="programmingExercise"
+            [dockerImage]="buildPlanPhases.dockerImage ?? ''"
+            (dockerImageChange)="setDockerImage($event)"
+            [timeout]="programmingExercise.buildConfig!.timeoutSeconds === 0 ? 120 : programmingExercise.buildConfig!.timeoutSeconds!"
+            (timeoutChange)="setTimeout($event)"
+            [isAeolus]="false"
+        />
         <jhi-build-phases-editor [phases]="buildPlanPhases.phases" (phasesChange)="onPhasesChange($event)" />
     }
 </div>

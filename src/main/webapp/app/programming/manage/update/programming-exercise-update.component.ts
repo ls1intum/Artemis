@@ -529,7 +529,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
     private resetBuildOptionSelections() {
         this.programmingExercise.staticCodeAnalysisEnabled = false;
         this.programmingExercise.maxStaticCodeAnalysisPenalty = undefined;
-        this.programmingExercise.buildConfig!.sequentialTestRuns = false;
+        if (this.programmingExercise.buildConfig) {
+            this.programmingExercise.buildConfig.sequentialTestRuns = false;
+        }
     }
 
     /**
@@ -895,9 +897,9 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
             const phasesJSON = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent?.getBuildPlanPhasesJSON();
             if (phasesJSON) {
                 this.programmingExercise.buildConfig!.buildPlanConfiguration = phasesJSON;
-            } else {
-                // Fallback to windfile serialization (e.g. import-from-file/sharing)
-                this.programmingExercise.buildConfig!.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig!.windfile!);
+            } else if (this.programmingExercise.buildConfig?.windfile) {
+                // Fallback to windfile serialization
+                this.programmingExercise.buildConfig.buildPlanConfiguration = this.aeolusService.serializeWindFile(this.programmingExercise.buildConfig.windfile);
             }
         }
 

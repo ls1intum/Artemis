@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.AeolusResult;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude()
 public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage) {
 
     private static final JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();

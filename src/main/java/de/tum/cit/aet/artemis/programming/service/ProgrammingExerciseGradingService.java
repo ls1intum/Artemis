@@ -189,7 +189,8 @@ public class ProgrammingExerciseGradingService {
             // When tests are expected: build failed if all feedbacks are SCA (no test results at all).
             // When tests are NOT expected (compile-only phase): build failed if the script exited with non-zero.
             final boolean noTestFeedbacks = newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback);
-            final boolean scriptFailed = buildResult.buildScriptExitCode() != null && buildResult.buildScriptExitCode() != 0;
+            final Integer exitCode = buildResult.buildScriptExitCode();
+            final boolean scriptFailed = exitCode != null && exitCode != 0;
             final var buildFailed = testsExpected ? noTestFeedbacks : scriptFailed;
             latestSubmission.setBuildFailed(buildFailed);
 

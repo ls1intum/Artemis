@@ -47,7 +47,7 @@ public class BuildPhaseEvaluationService {
     public EvaluatedBuildPlan evaluate(BuildPlanPhasesDTO phases, ProgrammingExerciseParticipation participation) {
         boolean allPhasesActive = isInstructorParticipation(participation) || exerciseDateService.isAfterDueDate(participation);
 
-        List<BuildPhaseDTO> activePhases = phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList();
+        List<BuildPhaseDTO> activePhases = phases.phases() != null ? phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList() : List.of();
 
         List<String> resultPaths = activePhases.stream().filter(phase -> phase.resultPaths() != null).flatMap(phase -> phase.resultPaths().stream()).toList();
 
