@@ -13,6 +13,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         `
             :host {
                 display: block;
+                flex: 0 0 auto;
             }
 
             .iris-panel {

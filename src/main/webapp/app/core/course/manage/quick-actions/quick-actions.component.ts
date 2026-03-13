@@ -25,7 +25,7 @@ export enum CourseManagementSection {
         `
             :host {
                 display: block;
-                flex: 0 1 70%;
+                flex: 1 1 0;
                 min-width: 0;
             }
 
