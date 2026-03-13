@@ -133,10 +133,10 @@ export class HyperionProblemStatementApiService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public analyzeChecklistSection(courseId: number, section: 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistAnalysisResponse>;
-    public analyzeChecklistSection(courseId: number, section: 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistAnalysisResponse>>;
-    public analyzeChecklistSection(courseId: number, section: 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistAnalysisResponse>>;
-    public analyzeChecklistSection(courseId: number, section: 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<ChecklistAnalysisResponse>;
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<ChecklistAnalysisResponse>>;
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<ChecklistAnalysisResponse>>;
+    public analyzeChecklistSection(courseId: number, section: 'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY', checklistAnalysisRequest: ChecklistAnalysisRequest, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling analyzeChecklistSection.');
         }
@@ -181,7 +181,7 @@ export class HyperionProblemStatementApiService extends BaseService {
             }
         }
 
-        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis/sections/${this.configuration.encodeParam({name: "section", value: section, in: "path", style: "simple", explode: false, dataType: "'QUALITY'", dataFormat: undefined})}`;
+        let localVarPath = `/api/hyperion/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/checklist-analysis/sections/${this.configuration.encodeParam({name: "section", value: section, in: "path", style: "simple", explode: false, dataType: "'COMPETENCIES' | 'DIFFICULTY' | 'QUALITY'", dataFormat: undefined})}`;
         const { basePath, withCredentials } = this.configuration;
         return this.httpClient.request<ChecklistAnalysisResponse>('post', `${basePath}${localVarPath}`,
             {
