@@ -156,7 +156,6 @@ public class Course extends DomainObject {
     @Column(name = "unenrollment_enabled")
     private boolean unenrollmentEnabled = false;
 
-    @JsonInclude(JsonInclude.Include.ALWAYS)
     @Column(name = "onboarding_done", nullable = false)
     private boolean onboardingDone = false;
 
