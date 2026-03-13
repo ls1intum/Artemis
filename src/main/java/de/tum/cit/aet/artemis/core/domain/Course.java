@@ -157,7 +157,7 @@ public class Course extends DomainObject {
     private boolean unenrollmentEnabled = false;
 
     @Column(name = "onboarding_done", nullable = false)
-    private Boolean onboardingDone = false;
+    private boolean onboardingDone = false;
 
     @Column(name = "presentation_score")
     private Integer presentationScore;
@@ -590,11 +590,11 @@ public class Course extends DomainObject {
         this.enrollmentEnabled = enrollmentEnabled;
     }
 
-    public Boolean isOnboardingDone() {
+    public boolean isOnboardingDone() {
         return onboardingDone;
     }
 
-    public void setOnboardingDone(Boolean onboardingDone) {
+    public void setOnboardingDone(boolean onboardingDone) {
         this.onboardingDone = onboardingDone;
     }
 

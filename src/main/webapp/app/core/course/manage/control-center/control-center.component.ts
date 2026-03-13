@@ -45,10 +45,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                 display: flex;
                 align-items: center;
             }
-
-            .iris-toggle ::ng-deep > div {
-                width: 100%;
-            }
         `,
     ],
 })

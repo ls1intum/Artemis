@@ -19,6 +19,11 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
     changeDetection: ChangeDetectionStrategy.OnPush,
     styles: [
         `
+            :host {
+                display: block;
+                width: 100%;
+            }
+
             .iris-controls {
                 display: flex;
                 flex-direction: column;

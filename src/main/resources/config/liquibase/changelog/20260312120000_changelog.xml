@@ -12,15 +12,8 @@
         </addColumn>
     </changeSet>
 
-    <!-- Set onboarding_done to true for all existing courses -->
-    <changeSet id="20260312120000-2" author="krusche">
-        <update tableName="course">
-            <column name="onboarding_done" valueBoolean="true"/>
-        </update>
-    </changeSet>
-
     <!-- Drop faq_enabled column from course table (FAQs are now always enabled) -->
-    <changeSet id="20260312120000-3" author="krusche">
+    <changeSet id="20260312120000-2" author="krusche">
         <dropColumn tableName="course" columnName="faq_enabled"/>
     </changeSet>
 
