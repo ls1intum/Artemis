@@ -7,14 +7,12 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 import { InputTextModule } from 'primeng/inputtext';
 import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
-import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
-    imports: [InputTextModule, InputGroupModule, InputGroupAddonModule, TooltipModule, FormsModule, ScrollingModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [InputTextModule, InputGroupModule, InputGroupAddonModule, TooltipModule, FormsModule, TranslateDirective, ArtemisTranslatePipe],
     templateUrl: './tutorial-edit-languages-input.component.html',
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
@@ -25,7 +23,6 @@ export class TutorialEditLanguagesInputComponent {
     private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
-    private viewport = viewChild<CdkVirtualScrollViewport>(CdkVirtualScrollViewport);
 
     alreadyUsedLanguages = input.required<string[]>();
     language = model<string>('');
@@ -95,9 +92,6 @@ export class TutorialEditLanguagesInputComponent {
     }
 
     onKeyDown(event: KeyboardEvent) {
-        const viewport = this.viewport();
-        if (!viewport) return;
-
         if (event.key === 'Enter') {
             const suggestionIndex = this.suggestionHighlightIndex();
             if (suggestionIndex !== undefined) {
@@ -127,21 +121,8 @@ export class TutorialEditLanguagesInputComponent {
 
         const updatedSuggestionHighlightIndex = this.suggestionHighlightIndex();
         if (updatedSuggestionHighlightIndex !== undefined) {
-            const scrollTop = viewport.measureScrollOffset();
-            const viewportHeight = viewport.getViewportSize();
-
-            const ITEM_SIZE = 40;
-            const itemTop = updatedSuggestionHighlightIndex * ITEM_SIZE;
-            const itemBottom = itemTop + ITEM_SIZE;
-
-            const viewportTop = scrollTop;
-            const viewportBottom = scrollTop + viewportHeight;
-
-            if (itemTop < viewportTop) {
-                viewport.scrollToIndex(updatedSuggestionHighlightIndex, 'smooth');
-            } else if (itemBottom > viewportBottom) {
-                viewport.scrollToIndex(updatedSuggestionHighlightIndex, 'smooth');
-            }
+            const highlightedSuggestion = this.overlayRef?.overlayElement.querySelectorAll<HTMLButtonElement>('.language-row')[updatedSuggestionHighlightIndex];
+            highlightedSuggestion?.scrollIntoView({ block: 'nearest' });
         }
     }
 

@@ -26,16 +26,17 @@
 <ng-template #panelTemplate>
     <div class="suggestion-panel">
         <div class="suggestion-panel-header" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.languageAutocompleteHeader"></div>
-        <cdk-virtual-scroll-viewport class="suggestion-viewport" [itemSize]="40" minBufferPx="200" maxBufferPx="400">
-            <button
-                class="language-row"
-                *cdkVirtualFor="let suggestedLanguage of alreadyUsedLanguages(); let i = index"
-                (mouseenter)="suggestionHighlightIndex.set(i)"
-                [class.active]="suggestionHighlightIndex() === i"
-                (mousedown)="selectSuggestedLanguage(i)"
-            >
-                {{ suggestedLanguage }}
-            </button>
-        </cdk-virtual-scroll-viewport>
+        <div class="suggestion-scroll-container">
+            @for (suggestedLanguage of alreadyUsedLanguages(); track suggestedLanguage; let index = $index) {
+                <button
+                    class="language-row"
+                    [class.active]="suggestionHighlightIndex() === index"
+                    (mousedown)="selectSuggestedLanguage(index)"
+                    (mousemove)="suggestionHighlightIndex.set(index)"
+                >
+                    {{ suggestedLanguage }}
+                </button>
+            }
+        </div>
     </div>
 </ng-template>
