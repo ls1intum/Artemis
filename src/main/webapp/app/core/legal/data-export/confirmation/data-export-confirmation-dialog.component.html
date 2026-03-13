@@ -47,6 +47,7 @@
             (ngModelChange)="enteredLogin.set($event)"
             name="confirmEntityName"
         />
+        <button type="submit" class="d-none" [disabled]="dataExportConfirmationForm.invalid || submitDisabled()"></button>
     </form>
     <ng-template #footer>
         <button type="button" class="btn btn-secondary" (click)="clear()" [disabled]="submitDisabled()">
