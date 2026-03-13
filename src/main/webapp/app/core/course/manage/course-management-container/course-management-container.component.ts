@@ -377,7 +377,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
             sidebarItems.push(this.sidebarItemService.getLearningPathManagementItem(courseId));
         }
         if (isInstructor) {
-            sidebarItems.push(...this.getScoresItem());
+            sidebarItems.push(this.sidebarItemService.getScoresItem(courseId));
         }
         sidebarItems.push(this.sidebarItemService.getStatisticsItem(courseId));
         if (isInstructor) {

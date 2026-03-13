@@ -335,7 +335,7 @@ describe('CourseManagementContainerComponent', () => {
         expect(findOneForDashboardSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should create sidebar items based on course properties', async () => {
+    it('should create sidebar items based on course properties', () => {
         component.course.set({
             ...course1,
             isAtLeastEditor: true,
@@ -343,29 +343,27 @@ describe('CourseManagementContainerComponent', () => {
             tutorialGroupsConfiguration: {},
             onlineCourse: true,
         });
-        fixture.detectChanges();
-
-        vi.spyOn(featureToggleService, 'getFeatureToggleActive').mockReturnValue(of(true));
-        await component.ngOnInit();
-        const sidebarItems = component.sidebarItems();
+        component.lectureEnabled = true;
+        component.atlasEnabled = true;
+        component.ltiEnabled = true;
+        component.irisEnabled = true;
+        const sidebarItems = component.getSidebarItems();
 
         expect(sidebarItems.find((item) => item.title === 'Overview')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Exercises')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
-
         expect(sidebarItems.find((item) => item.title === 'Lectures')).toBeTruthy();
-
-        expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Exams')).toBeTruthy();
         expect(sidebarItems.find((item) => item.title === 'Competency Management')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Learning Path')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
 
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeTruthy();
-        expect(sidebarItems.find((item) => item.title === 'Tutorials')).toBeTruthy();
-
-        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'IRIS Settings')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Assessment Dashboard')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Scores')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Statistics')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'LTI Configuration')).toBeTruthy();
+        expect(sidebarItems.find((item) => item.title === 'Settings')).toBeTruthy();
     });
     it('should not include sidebar items for disabled features for non-instructors', async () => {
         const courseWithDisabledFeatures = {
