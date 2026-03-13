@@ -32,14 +32,6 @@ test.describe('Modeling Exercise Assessment', { tag: '@slow' }, () => {
     });
 
     test.describe.serial('Handling complaints', () => {
-        // test.beforeEach('Ending assessment period', async ({ browser }) => {
-        //     const context = await browser.newContext();
-        //     const page = await context.newPage();
-        //     const exerciseAPIRequests = new ExerciseAPIRequests(page);
-        //     const response = await exerciseAPIRequests.updateModelingExerciseAssessmentDueDate(modelingExercise, dayjs());
-        //     modelingExercise = await response.json();
-        // });
-
         test('Tutor can assess a submission', async ({ login, courseManagement, exerciseAssessment, modelingExerciseAssessment, toggleSidebar }) => {
             await login(tutor, '/course-management');
             await courseManagement.openSubmissionsForExerciseAndCourse(course.id!, modelingExercise.id!);

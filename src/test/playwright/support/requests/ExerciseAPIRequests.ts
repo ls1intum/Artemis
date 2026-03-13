@@ -738,14 +738,6 @@ export class ExerciseAPIRequests {
     }
 
     /**
-     * Creates a team for a team-based exercise.
-     *
-     * @param exerciseId - The ID of the exercise for which to create a team.
-     * @param students - A list of student users to be added to the team.
-     * @param tutor - The tutor user who is the owner of the team.
-     * @returns A Promise<Team> representing the team created.
-     */
-    /**
      * Configures all SCA categories for a programming exercise to be GRADED via API.
      * This is faster than configuring through the UI.
      */
@@ -809,6 +801,14 @@ export class ExerciseAPIRequests {
         }
     }
 
+    /**
+     * Creates a team for a team-based exercise.
+     *
+     * @param exerciseId - The ID of the exercise for which to create a team.
+     * @param students - A list of student users to be added to the team.
+     * @param tutor - The tutor user who is the owner of the team.
+     * @returns A Promise<Team> representing the team created.
+     */
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
         const team: Team = {

@@ -343,8 +343,6 @@ export EDITOR_GROUP_NAME="editors"
 export INSTRUCTOR_GROUP_NAME="instructors"
 export EXERCISE_REPO_DIRECTORY="test-exercise-repos"
 export TEST_WORKERS="${TEST_WORKERS:-${FAST_SLOW_WORKERS:-6}}"
-# SEQUENTIAL_WORKERS is no longer used — sequential tests have been merged into slow-tests
-# export SEQUENTIAL_WORKERS="${SEQUENTIAL_WORKERS:-6}"
 export TEST_RETRIES="${TEST_RETRIES:-1}"
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"
 export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-90}"
@@ -418,15 +416,6 @@ set -e
 if [ $TEST_EXIT -ne 0 ]; then
     EXIT_CODE=$TEST_EXIT
 fi
-
-# Old two-phase execution (sequential tests merged into slow-tests):
-# PHASE1_START=$(date +%s)
-# FAST_SLOW_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=fast-tests --project=slow-tests --workers="$TEST_WORKERS")
-# "${FAST_SLOW_CMD[@]}"
-# PHASE1_END=$(date +%s)
-#
-# SEQ_CMD=(npx playwright test "${BASE_ARGS[@]}" --project=sequential-tests --workers="$SEQUENTIAL_WORKERS")
-# "${SEQ_CMD[@]}"
 
 # Stop CPU monitoring
 kill "$CPU_MONITOR_PID" 2>/dev/null || true

@@ -7,16 +7,6 @@
  * All IDs use high ranges (9000+) to avoid conflicts with runtime-created data.
  */
 
-export const SEED_USERS = {
-    admin: { id: 100, username: 'artemis_admin' },
-    studentOne: { id: 101, username: 'artemis_test_user_1' },
-    studentTwo: { id: 102, username: 'artemis_test_user_2' },
-    studentThree: { id: 103, username: 'artemis_test_user_3' },
-    studentFour: { id: 104, username: 'artemis_test_user_4' },
-    tutor: { id: 106, username: 'artemis_test_user_6' },
-    instructor: { id: 116, username: 'artemis_test_user_16' },
-} as const;
-
 interface SeedCourse {
     id: number;
     shortName: string;

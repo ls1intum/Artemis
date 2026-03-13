@@ -1,7 +1,7 @@
 import { test } from '../../support/fixtures';
 import dayjs from 'dayjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { admin, instructor, PlaywrightUserManagement, studentOne, studentThree, studentTwo, tutor, UserRole } from '../../support/users';
+import { admin, instructor, studentOne, studentThree, studentTwo, tutor } from '../../support/users';
 import { base64StringToBlob, convertBooleanToCheckIconClass, dayjsToString, generateUUID, trimDate } from '../../support/utils';
 import { expect } from '@playwright/test';
 import { Fixtures } from '../../fixtures/fixtures';

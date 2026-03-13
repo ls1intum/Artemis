@@ -124,7 +124,6 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const graceEnd = examEndDate.add(10, 'seconds');
         if (dayjs().isBefore(graceEnd)) {
             const timeToWait = graceEnd.diff(dayjs(), 'ms') + 2000;
-            console.log(`Waiting ${timeToWait}ms for exam end + grace period...`);
             await page.waitForTimeout(timeToWait);
         }
 

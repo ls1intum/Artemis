@@ -82,18 +82,5 @@ export default defineConfig({
                 viewport: { width: 1920, height: 1080 },
             },
         },
-        // Sequential tests have been merged into slow-tests. C builds (2-5s) no longer cause
-        // contention even with parallel workers, so the sequential isolation is unnecessary.
-        // Kept commented out for reference in case sequential execution is needed again.
-        // {
-        //     name: 'sequential-tests',
-        //     grep: /@sequential/,
-        //     timeout: (parseNumber(process.env.SEQUENTIAL_TEST_TIMEOUT_SECONDS) ?? 180) * 1000,
-        //     fullyParallel: false,
-        //     use: {
-        //         browserName: 'chromium',
-        //         viewport: { width: 1920, height: 1080 },
-        //     },
-        // },
     ],
 });
