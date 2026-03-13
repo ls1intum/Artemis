@@ -46,15 +46,15 @@ describe('ControlCenterComponent', () => {
     });
 
     it('should display the control center card when iris is enabled and the user is at least an instructor', () => {
-        const card = fixture.debugElement.nativeElement.querySelector('.card');
-        expect(card).toBeTruthy();
+        const panel = fixture.debugElement.nativeElement.querySelector('.iris-panel');
+        expect(panel).toBeTruthy();
     });
 
     it('should not display the control center card when iris is disabled', () => {
         componentRef.setInput('irisEnabled', false);
         fixture.detectChanges();
-        const card = fixture.debugElement.nativeElement.querySelector('.card');
-        expect(card).toBeFalsy();
+        const panel = fixture.debugElement.nativeElement.querySelector('.iris-panel');
+        expect(panel).toBeFalsy();
     });
 
     it('should display the iris enabled component with correct inputs', () => {
