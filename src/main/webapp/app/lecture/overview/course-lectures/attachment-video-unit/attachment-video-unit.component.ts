@@ -96,6 +96,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly pdfMaxZoom = 3.0;
     readonly pdfZoomStep = 0.25;
 
+    private resizeObserver?: ResizeObserver;
+    private pendingScrollRestore?: { xRatio: number; yRatio: number };
+    private lastViewportScale = 1;
+    private resizeDebounceTimer?: number;
+    private lastCapturedSnapshot?: { xRatio: number; yRatio: number };
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     readonly hasPdf = computed(() => {
@@ -194,6 +200,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.clearLoadedContent();
             this.isLoading.set(false);
             this.isPdfLoading.set(false);
+            this.cleanupResizeObserver();
         }
     }
 
@@ -255,6 +262,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     ngOnDestroy(): void {
         this.cancelPendingLoads();
         this.revokePdfUrl();
+        this.cleanupResizeObserver();
     }
 
     private revokePdfUrl(): void {
@@ -281,6 +289,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (this.pdfTotalPages > 0 && this.pdfPage > this.pdfTotalPages) {
             this.pdfPage = this.pdfTotalPages;
         }
+        this.setupResizeObserver();
     }
 
     onPdfError(): void {
@@ -414,6 +423,99 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     set currentPdfPage(page: number) {
         this.pdfPage = page;
+    }
+
+    private setupResizeObserver(): void {
+        this.cleanupResizeObserver();
+
+        const container = this.getPdfScrollContainer();
+        if (!container) {
+            return;
+        }
+
+        // Initialize viewport scale
+        this.lastViewportScale = window.visualViewport?.scale ?? 1;
+
+        this.resizeObserver = new ResizeObserver(() => {
+            const currentScale = window.visualViewport?.scale ?? 1;
+            const isBrowserZoom = currentScale !== this.lastViewportScale;
+            this.lastViewportScale = currentScale;
+
+            // Only restore scroll position for layout changes, not browser zoom
+            if (!isBrowserZoom) {
+                // Capture snapshot immediately (before resize animation)
+                if (!this.lastCapturedSnapshot) {
+                    this.lastCapturedSnapshot = this.capturePdfScrollCenter();
+                }
+
+                // Clear existing debounce timer
+                if (this.resizeDebounceTimer) {
+                    clearTimeout(this.resizeDebounceTimer);
+                }
+
+                // Wait for resize animation to finish (150ms debounce)
+                this.resizeDebounceTimer = window.setTimeout(() => {
+                    if (this.lastCapturedSnapshot) {
+                        this.pendingScrollRestore = this.lastCapturedSnapshot;
+                        this.attemptScrollRestore();
+                        this.lastCapturedSnapshot = undefined;
+                    }
+                    this.resizeDebounceTimer = undefined;
+                }, 150);
+            }
+        });
+
+        this.resizeObserver.observe(container);
+    }
+
+    private cleanupResizeObserver(): void {
+        if (this.resizeObserver) {
+            this.resizeObserver.disconnect();
+            this.resizeObserver = undefined;
+        }
+        if (this.resizeDebounceTimer) {
+            clearTimeout(this.resizeDebounceTimer);
+            this.resizeDebounceTimer = undefined;
+        }
+        this.pendingScrollRestore = undefined;
+        this.lastCapturedSnapshot = undefined;
+    }
+
+    private attemptScrollRestore(): void {
+        if (!this.pendingScrollRestore) {
+            return;
+        }
+
+        const snapshot = this.pendingScrollRestore;
+        const maxAttempts = 30;
+        let attempts = 0;
+
+        const tryRestore = () => {
+            attempts++;
+            const container = this.getPdfScrollContainer();
+            if (!container) {
+                this.pendingScrollRestore = undefined;
+                return;
+            }
+
+            const { scrollWidth, scrollHeight } = container;
+            if (scrollWidth > 0 && scrollHeight > 0) {
+                // PDF has rendered, restore scroll position
+                const centerX = snapshot.xRatio * scrollWidth;
+                const centerY = snapshot.yRatio * scrollHeight;
+                container.scrollLeft = Math.max(0, centerX - container.clientWidth / 2);
+                container.scrollTop = Math.max(0, centerY - container.clientHeight / 2);
+                this.pendingScrollRestore = undefined;
+            } else if (attempts < maxAttempts) {
+                // PDF not ready yet, try again
+                requestAnimationFrame(tryRestore);
+            } else {
+                // Give up after max attempts
+                this.pendingScrollRestore = undefined;
+            }
+        };
+
+        requestAnimationFrame(tryRestore);
     }
 
     private ensurePdfWorkerSrc(): void {
