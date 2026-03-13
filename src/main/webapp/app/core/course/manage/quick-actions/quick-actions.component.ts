@@ -1,6 +1,5 @@
 import { Component, inject, input, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
@@ -26,11 +25,8 @@ export enum CourseManagementSection {
         `
             :host {
                 display: block;
-                background: var(--bs-body-bg);
-                border: 1px solid var(--bs-border-color);
-                border-radius: 0.75rem;
-                padding: 1.25rem;
-                flex: 1;
+                flex: 0 1 70%;
+                min-width: 0;
             }
 
             .quick-actions-header {
@@ -66,6 +62,34 @@ export enum CourseManagementSection {
                 align-items: center;
                 gap: 0.5rem;
                 flex-wrap: wrap;
+            }
+
+            .header-action-btn {
+                display: inline-flex;
+                align-items: center;
+                gap: 0.5rem;
+                padding: 0.5rem 0.875rem;
+                border: 1px solid var(--bs-border-color);
+                border-radius: 0.625rem;
+                background: var(--bs-body-bg);
+                color: var(--bs-body-color);
+                font-weight: 500;
+                font-size: 0.85rem;
+                cursor: pointer;
+                text-decoration: none;
+                transition: all 0.2s ease;
+                white-space: nowrap;
+
+                &:hover {
+                    background: var(--bs-tertiary-bg);
+                    border-color: var(--bs-secondary-border-subtle);
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+                }
+
+                fa-icon {
+                    color: var(--bs-secondary-color);
+                    font-size: 0.9rem;
+                }
             }
 
             .quick-actions-grid {
@@ -150,20 +174,9 @@ export enum CourseManagementSection {
             }
         `,
     ],
-    imports: [
-        ButtonComponent,
-        UserManagementDropdownComponent,
-        TranslateDirective,
-        RouterLink,
-        NgTemplateOutlet,
-        AddExercisePopoverComponent,
-        CourseMaterialImportDialogComponent,
-        FaIconComponent,
-    ],
+    imports: [UserManagementDropdownComponent, TranslateDirective, RouterLink, NgTemplateOutlet, AddExercisePopoverComponent, CourseMaterialImportDialogComponent, FaIconComponent],
 })
 export class QuickActionsComponent {
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly faCode = faCode;
     protected readonly faFileAlt = faFileAlt;
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
