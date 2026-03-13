@@ -42,7 +42,6 @@ import org.testcontainers.weaviate.WeaviateContainer;
 import com.github.dockerjava.api.DockerClient;
 
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyJolService;
 import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyProgressService;
 import de.tum.cit.aet.artemis.buildagent.BuildAgentConfiguration;
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -208,9 +207,6 @@ public abstract class AbstractSpringIntegrationLocalCILocalVCTest extends Abstra
 
     @MockitoSpyBean
     protected IrisCitationService irisCitationService;
-
-    @MockitoSpyBean
-    protected CompetencyJolService competencyJolService;
 
     @MockitoSpyBean
     protected PyrisPipelineService pyrisPipelineService;
