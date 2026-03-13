@@ -74,7 +74,8 @@ export class CourseOnboardingComponent implements OnInit {
     }
 
     finishSetup() {
-        const current = { ...this.course(), onboardingDone: true };
+        const current = this.course();
+        current.onboardingDone = true;
         if (!current.id) {
             return;
         }

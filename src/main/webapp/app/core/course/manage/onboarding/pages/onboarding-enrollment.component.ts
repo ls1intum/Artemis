@@ -40,39 +40,42 @@ export class OnboardingEnrollmentComponent {
     protected readonly faTimes = faTimes;
 
     updateField(field: keyof Course, value: any) {
-        const updated = { ...this.course(), [field]: value };
-        this.courseUpdated.emit(updated);
+        const current = this.course();
+        (current as any)[field] = value;
+        this.courseUpdated.emit(Course.from(current));
     }
 
     toggleEnrollment() {
-        const updated = { ...this.course() };
-        updated.enrollmentEnabled = !updated.enrollmentEnabled;
-        if (updated.enrollmentEnabled && updated.onlineCourse) {
-            updated.onlineCourse = false;
+        const current = this.course();
+        current.enrollmentEnabled = !current.enrollmentEnabled;
+        if (current.enrollmentEnabled && current.onlineCourse) {
+            current.onlineCourse = false;
         }
-        if (!updated.enrollmentEnabled) {
-            updated.enrollmentConfirmationMessage = undefined;
-            updated.unenrollmentEnabled = false;
+        if (!current.enrollmentEnabled) {
+            current.enrollmentConfirmationMessage = undefined;
+            current.unenrollmentEnabled = false;
         }
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 
     toggleUnenrollment() {
-        const updated = { ...this.course(), unenrollmentEnabled: !this.course().unenrollmentEnabled };
-        this.courseUpdated.emit(updated);
+        const current = this.course();
+        current.unenrollmentEnabled = !current.unenrollmentEnabled;
+        this.courseUpdated.emit(Course.from(current));
     }
 
     toggleOnlineCourse() {
-        const updated = { ...this.course() };
-        updated.onlineCourse = !updated.onlineCourse;
-        if (updated.onlineCourse) {
-            updated.enrollmentEnabled = false;
+        const current = this.course();
+        current.onlineCourse = !current.onlineCourse;
+        if (current.onlineCourse) {
+            current.enrollmentEnabled = false;
         }
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 
     updateEnrollmentMessage(message: string) {
-        const updated = { ...this.course(), enrollmentConfirmationMessage: message };
-        this.courseUpdated.emit(updated);
+        const current = this.course();
+        current.enrollmentConfirmationMessage = message;
+        this.courseUpdated.emit(Course.from(current));
     }
 }

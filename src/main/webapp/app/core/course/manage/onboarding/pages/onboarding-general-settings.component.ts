@@ -95,8 +95,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     }
 
     updateField(field: keyof Course, value: any) {
-        const updated = { ...this.course(), [field]: value };
-        this.courseUpdated.emit(updated);
+        const current = this.course();
+        (current as any)[field] = value;
+        this.courseUpdated.emit(Course.from(current));
     }
 
     openColorSelector(event: MouseEvent) {
@@ -105,8 +106,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     }
 
     onSelectedColor(color: string) {
-        const updated = { ...this.course(), color };
+        const current = this.course();
+        current.color = color;
         this.colorSelectorVisible = false;
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 }

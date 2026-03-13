@@ -31,33 +31,34 @@ export class OnboardingAssessmentAiComponent {
     }
 
     updateField(field: keyof Course, value: any) {
-        const updated = { ...this.course(), [field]: value };
-        this.courseUpdated.emit(updated);
+        const current = this.course();
+        (current as any)[field] = value;
+        this.courseUpdated.emit(Course.from(current));
     }
 
     toggleComplaints() {
-        const updated = { ...this.course() };
+        const current = this.course();
         if (this.complaintsEnabled) {
-            updated.maxComplaints = 0;
-            updated.maxTeamComplaints = 0;
-            updated.maxComplaintTimeDays = 0;
+            current.maxComplaints = 0;
+            current.maxTeamComplaints = 0;
+            current.maxComplaintTimeDays = 0;
         } else {
-            updated.maxComplaints = 3;
-            updated.maxTeamComplaints = 3;
-            updated.maxComplaintTimeDays = 7;
-            updated.maxComplaintTextLimit = 2000;
-            updated.maxComplaintResponseTextLimit = 2000;
+            current.maxComplaints = 3;
+            current.maxTeamComplaints = 3;
+            current.maxComplaintTimeDays = 7;
+            current.maxComplaintTextLimit = 2000;
+            current.maxComplaintResponseTextLimit = 2000;
         }
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 
     toggleRequestMoreFeedback() {
-        const updated = { ...this.course() };
+        const current = this.course();
         if (this.requestMoreFeedbackEnabled) {
-            updated.maxRequestMoreFeedbackTimeDays = 0;
+            current.maxRequestMoreFeedbackTimeDays = 0;
         } else {
-            updated.maxRequestMoreFeedbackTimeDays = 7;
+            current.maxRequestMoreFeedbackTimeDays = 7;
         }
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 }

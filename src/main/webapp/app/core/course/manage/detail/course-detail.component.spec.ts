@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { CourseDetailComponent } from 'app/core/course/manage/detail/course-detail.component';
 import { MockProvider } from 'ng-mocks';
@@ -82,6 +82,7 @@ describe('Course Management Detail Component', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: AccountService, useClass: MockAccountService },
                 MockProvider(EventManager),
+                MockProvider(Router),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
@@ -104,7 +105,7 @@ describe('Course Management Detail Component', () => {
 
     it('should make iris settings call when instructor', async () => {
         vi.spyOn(profileService, 'getProfileInfo').mockReturnValue({ activeModuleFeatures: ['iris'] } as ProfileInfo);
-        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true } });
+        courseDataSubject.next({ course: { ...course, isAtLeastInstructor: true, onboardingDone: true } });
         const irisSpy = vi
             .spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit')
             .mockReturnValue(of({ courseId: 123, settings: { enabled: true, variant: 'default', rateLimit: {} } } as IrisCourseSettingsWithRateLimitDTO));

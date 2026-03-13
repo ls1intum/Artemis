@@ -33,27 +33,28 @@ export class OnboardingCommunicationComponent {
     }
 
     toggleCommunication() {
-        const updated = { ...this.course() };
+        const current = this.course();
         if (this.communicationEnabled) {
-            updated.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
+            current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         } else {
-            updated.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         }
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 
     toggleMessaging() {
-        const updated = { ...this.course() };
+        const current = this.course();
         if (this.messagingEnabled) {
-            updated.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
+            current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
-            updated.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         }
-        this.courseUpdated.emit(updated);
+        this.courseUpdated.emit(Course.from(current));
     }
 
     updateCodeOfConduct(message: string) {
-        const updated = { ...this.course(), courseInformationSharingMessagingCodeOfConduct: message };
-        this.courseUpdated.emit(updated);
+        const current = this.course();
+        current.courseInformationSharingMessagingCodeOfConduct = message;
+        this.courseUpdated.emit(Course.from(current));
     }
 }
