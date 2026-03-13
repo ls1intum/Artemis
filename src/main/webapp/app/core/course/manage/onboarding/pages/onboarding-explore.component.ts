@@ -11,6 +11,12 @@ import { faArrowRight, faBullseye, faChalkboardTeacher, faCode, faFileAlt, faQue
     styleUrls: ['./_onboarding-pages.scss'],
     styles: [
         `
+            :host {
+                display: block;
+                max-width: 920px;
+                margin: 0 auto;
+            }
+
             .explore-grid {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);

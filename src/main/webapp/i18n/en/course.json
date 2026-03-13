@@ -462,7 +462,7 @@
                     },
                     "tutorialGroups": {
                         "title": "Tutorials",
-                        "description": "Organize students into tutorial groups and manage schedules."
+                        "description": "Organize students into tutorials and manage schedules."
                     },
                     "exams": {
                         "title": "Exams",

@@ -25,6 +25,7 @@ export interface CourseActionItem {
 export interface SidebarItem {
     routerLink: string;
     icon?: IconDefinition;
+    iconColor?: string;
     title: string;
     testId?: string;
     translation: string;
