@@ -1,5 +1,5 @@
 import { faCode } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 const CODE_DELIMITER = '`';
@@ -7,7 +7,7 @@ const CODE_DELIMITER = '`';
 /**
  * Action to toggle code text in the editor. It wraps the selected text with the code delimiter, e.g. switching between text and `text`.
  */
-export class CodeAction extends TextEditorAction {
+export class CodeAction extends TextStyleTextEditorAction {
     static readonly ID = 'code.action';
     constructor() {
         super(CodeAction.ID, 'artemisApp.multipleChoiceQuestion.editor.code', faCode, undefined);
