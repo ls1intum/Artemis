@@ -2,16 +2,15 @@ import { Component, inject, input, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { faBullseye, faChalkboardTeacher, faChartBar, faClipboard, faCode, faFileAlt, faFileImport, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
-import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
 import { AddExercisePopoverComponent } from 'app/core/course/manage/quick-actions/add-exercise-popover/add-exercise-popover.component';
-import { CardWrapperComponent } from 'app/shared/card-wrapper/card-wrapper.component';
 import { CourseMaterialImportDialogComponent } from 'app/core/course/manage/course-material-import/course-material-import-dialog.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_LECTURE } from 'app/app.constants';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 export enum CourseManagementSection {
     LECTURE = 'lectures',
@@ -23,6 +22,134 @@ export enum CourseManagementSection {
 @Component({
     selector: 'jhi-quick-actions',
     templateUrl: './quick-actions.component.html',
+    styles: [
+        `
+            :host {
+                display: block;
+                background: var(--bs-body-bg);
+                border: 1px solid var(--bs-border-color);
+                border-radius: 0.75rem;
+                padding: 1.25rem;
+                flex: 1;
+            }
+
+            .quick-actions-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .user-stats {
+                display: flex;
+                gap: 1.25rem;
+            }
+
+            .stat-item {
+                text-align: center;
+            }
+
+            .stat-label {
+                font-size: 0.8rem;
+                color: var(--bs-secondary-color);
+            }
+
+            .stat-value {
+                font-weight: 600;
+                font-size: 1.1rem;
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+            }
+
+            .quick-actions-grid {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+            }
+
+            .quick-action-card {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                padding: 0.625rem 1rem;
+                border: 1px solid var(--bs-border-color);
+                border-radius: 0.75rem;
+                background: var(--bs-body-bg);
+                cursor: pointer;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                overflow: hidden;
+
+                &::before {
+                    content: '';
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    bottom: 0;
+                    width: 3px;
+                    background: var(--card-accent, var(--bs-primary));
+                    opacity: 0;
+                    transition: opacity 0.2s ease;
+                }
+
+                &:hover {
+                    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+                    transform: translateY(-1px);
+                    border-color: transparent;
+
+                    &::before {
+                        opacity: 1;
+                    }
+                }
+            }
+
+            .quick-action-card--exercises {
+                --card-accent: #6366f1;
+            }
+            .quick-action-card--lectures {
+                --card-accent: #0ea5e9;
+            }
+            .quick-action-card--tutorial {
+                --card-accent: #8b5cf6;
+            }
+            .quick-action-card--exams {
+                --card-accent: #f59e0b;
+            }
+            .quick-action-card--competencies {
+                --card-accent: #10b981;
+            }
+            .quick-action-card--faqs {
+                --card-accent: #ec4899;
+            }
+
+            .quick-action-icon {
+                width: 36px;
+                height: 36px;
+                border-radius: 10px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                color: var(--bs-white);
+                background: var(--card-accent, var(--bs-primary));
+                box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+                font-size: 0.9rem;
+            }
+
+            .quick-action-label {
+                font-weight: 600;
+                font-size: 0.88rem;
+                white-space: nowrap;
+            }
+        `,
+    ],
     imports: [
         ButtonComponent,
         UserManagementDropdownComponent,
@@ -30,17 +157,14 @@ export enum CourseManagementSection {
         RouterLink,
         NgTemplateOutlet,
         AddExercisePopoverComponent,
-        CardWrapperComponent,
         CourseMaterialImportDialogComponent,
+        FaIconComponent,
     ],
 })
 export class QuickActionsComponent {
-    protected readonly FeatureToggle = FeatureToggle;
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
     protected readonly faCode = faCode;
-    protected readonly faChartBar = faChartBar;
-    protected readonly faClipboard = faClipboard;
     protected readonly faFileAlt = faFileAlt;
     protected readonly faChalkboardTeacher = faChalkboardTeacher;
     protected readonly faQuestion = faQuestion;
