@@ -11,6 +11,7 @@ export class MockPdfViewerComponent {
     @Input() showAll?: boolean;
     @Input() originalSize?: boolean;
     @Input() zoom?: number;
+    @Input('stick-to-page') stickToPage?: boolean;
     @Input() zoomScale?: string;
     @Input() page?: number;
     @Output() pageChange = new EventEmitter<number>();
