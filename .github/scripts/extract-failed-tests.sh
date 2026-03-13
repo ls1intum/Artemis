@@ -11,17 +11,20 @@ fi
 
 FAILURES=$(python3 -c "
 import xml.etree.ElementTree as ET, sys
-tree = ET.parse(sys.argv[1])
-lines = []
-for tc in tree.iter('testcase'):
-    if tc.find('failure') is not None:
-        name = tc.get('name', 'Unknown')
-        time_s = float(tc.get('time', 0))
-        m, s = divmod(int(time_s), 60)
-        dur = f'{m}m {s}s' if m else f'{s}s'
-        lines.append(f'{name} ({dur})')
-print('\n'.join(lines))
-" "$XML")
+try:
+    tree = ET.parse(sys.argv[1])
+    lines = []
+    for tc in tree.iter('testcase'):
+        if tc.find('failure') is not None:
+            name = tc.get('name', 'Unknown')
+            time_s = float(tc.get('time', 0))
+            m, s = divmod(int(time_s), 60)
+            dur = f'{m}m {s}s' if m else f'{s}s'
+            lines.append(f'{name} ({dur})')
+    print('\n'.join(lines))
+except Exception as e:
+    print(f'XML parse error: {e}', file=sys.stderr)
+" "$XML" || true)
 
 EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
 echo "failures<<$EOF" >> "$GITHUB_OUTPUT"
