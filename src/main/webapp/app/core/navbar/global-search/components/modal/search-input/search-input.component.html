@@ -1,0 +1,26 @@
+<div class="search-input-container d-flex align-items-center p-3 flex-shrink-0 border-bottom">
+    <fa-icon [icon]="faSearch" class="search-icon text-secondary me-2" aria-hidden="true" />
+
+    <!-- Active Filters -->
+    @if (hasActiveFilters()) {
+        @for (filter of activeFilters(); track filter) {
+            <p-chip [label]="filter" [removable]="true" (onRemove)="onFilterRemove(filter)" styleClass="me-2 search-filter-chip" [attr.aria-label]="'Filter: ' + filter" />
+        }
+    }
+
+    <input
+        #searchInput
+        type="text"
+        [value]="searchQuery()"
+        (input)="onInput($event)"
+        (keydown)="onKeyDown($event)"
+        [placeholder]="'global.search.placeholder' | artemisTranslate"
+        class="search-input flex-grow-1 border-0 bg-transparent text-body"
+        [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
+        autocomplete="off"
+    />
+
+    @if (isLoading()) {
+        <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-label="Loading"></span>
+    }
+</div>
