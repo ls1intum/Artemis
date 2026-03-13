@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris.dto;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
@@ -23,7 +24,7 @@ public record IrisChatSessionResponseDTO(long id, String type, IrisChatMode mode
      */
     public static IrisChatSessionResponseDTO of(IrisChatSession session) {
         return new IrisChatSessionResponseDTO(session.getId(), session.getMode().name().toLowerCase(Locale.ROOT), session.getMode(), session.getUserId(), session.getTitle(),
-                session.getCreationDate(), null, session.getLatestSuggestions(), session.getCitationInfo());
+                session.getCreationDate().truncatedTo(ChronoUnit.MICROS), null, session.getLatestSuggestions(), session.getCitationInfo());
     }
 
     /**
@@ -35,6 +36,6 @@ public record IrisChatSessionResponseDTO(long id, String type, IrisChatMode mode
     public static IrisChatSessionResponseDTO ofWithMessages(IrisChatSession session) {
         List<IrisMessageResponseDTO> messageDTOs = session.getMessages().stream().map(IrisMessageResponseDTO::of).toList();
         return new IrisChatSessionResponseDTO(session.getId(), session.getMode().name().toLowerCase(Locale.ROOT), session.getMode(), session.getUserId(), session.getTitle(),
-                session.getCreationDate(), messageDTOs.isEmpty() ? null : messageDTOs, session.getLatestSuggestions(), session.getCitationInfo());
+                session.getCreationDate().truncatedTo(ChronoUnit.MICROS), messageDTOs.isEmpty() ? null : messageDTOs, session.getLatestSuggestions(), session.getCitationInfo());
     }
 }
