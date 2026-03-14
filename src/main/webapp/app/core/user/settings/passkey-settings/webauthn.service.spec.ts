@@ -402,6 +402,129 @@ describe('WebauthnService', () => {
 
             expect(abortSpy).not.toHaveBeenCalled();
         });
+
+        it('should rethrow PasskeyAbortError without showing alerts when conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new PasskeyAbortError());
+
+            await expect(service.loginWithPasskey(true)).rejects.toThrow(PasskeyAbortError);
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
+        it('should rethrow DOMException AbortError without showing alerts when conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+
+            await expect(service.loginWithPasskey(true)).rejects.toThrow(DOMException);
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
+        it('should rethrow DOMException NotAllowedError without showing alerts when conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('User cancelled', 'NotAllowedError'));
+
+            await expect(service.loginWithPasskey(true)).rejects.toThrow(DOMException);
+            expect(alertService.addErrorAlert).not.toHaveBeenCalled();
+        });
+
+        it('should show error alert for 401 errors even when conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            const error401 = { status: 401 } as any;
+            webauthnApiService.loginWithPasskey.mockRejectedValue(error401);
+            jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(service.loginWithPasskey(true)).rejects.toEqual(error401);
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.loginDeactivated');
+        });
+
+        it('should show error alert for generic errors even when conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const genericError = new Error('Server error');
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
+            jest.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(service.loginWithPasskey(true)).rejects.toThrow(genericError);
+            expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
+        });
+    });
+
+    describe('getCredential request serialization', () => {
+        it('should wait for pending options request before starting a new one', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            const callOrder: string[] = [];
+
+            let resolveFirst: (value: any) => void;
+            const firstOptionsPromise = new Promise((resolve) => {
+                resolveFirst = resolve;
+            });
+
+            webauthnApiService.getAuthenticationOptions
+                .mockImplementationOnce(() => {
+                    callOrder.push('first-start');
+                    return firstOptionsPromise.then((val) => {
+                        callOrder.push('first-end');
+                        return val;
+                    });
+                })
+                .mockImplementationOnce(() => {
+                    callOrder.push('second-start');
+                    return Promise.resolve({
+                        challenge: encodeAsBase64Url(challenge),
+                        timeout: 60000,
+                        rpId: 'example.com',
+                    });
+                });
+
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
+
+            // Start first request
+            const first = service.getCredential(true);
+            // Start second request before first completes
+            const second = service.getCredential(false);
+
+            // Resolve the first request
+            resolveFirst!({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            });
+
+            await first;
+            await second;
+
+            // The second request should have waited for the first to complete
+            expect(callOrder[0]).toBe('first-start');
+            expect(callOrder[1]).toBe('first-end');
+            expect(callOrder[2]).toBe('second-start');
+        });
     });
 
     describe('addNewPasskey', () => {

@@ -24,6 +24,12 @@ export class WebauthnService {
     private authAbortController = new AbortController();
 
     /**
+     * Tracks the in-flight `getAuthenticationOptions()` request to prevent concurrent
+     * requests from overwriting each other's server-side challenge cookies.
+     */
+    private pendingOptionsRequest: Promise<unknown> | undefined;
+
+    /**
      * Aborts any pending credential request (e.g., a conditional mediation request)
      * and prepares a fresh AbortController for the next request.
      *
@@ -38,13 +44,24 @@ export class WebauthnService {
     /**
      * Retrieves a credential from the authenticator.
      *
+     * Serializes calls to `getAuthenticationOptions()` so that only one challenge cookie
+     * is active at a time, preventing race conditions where a second request overwrites
+     * the cookie before the first request's `navigator.credentials.get()` completes.
+     *
      * @param isConditional when true, uses conditional mediation (required for passkey autofill).
      *        The browser will show passkey suggestions in the username/password autocomplete dropdown
      *        and the returned promise will stay pending until the user selects a passkey.
      * @returns the credential or undefined if no credential was selected
      */
     async getCredential(isConditional: boolean = false): Promise<PublicKeyCredential | undefined> {
-        const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
+        if (this.pendingOptionsRequest) {
+            await this.pendingOptionsRequest.catch(() => {});
+        }
+
+        const optionsPromise = this.webauthnApiService.getAuthenticationOptions();
+        this.pendingOptionsRequest = optionsPromise;
+        const publicKeyCredentialOptions = await optionsPromise;
+        this.pendingOptionsRequest = undefined;
 
         const assertionOptions: PublicKeyCredentialRequestOptions = {
             challenge: decodeBase64url(publicKeyCredentialOptions.challenge),
@@ -145,6 +162,12 @@ export class WebauthnService {
             await this.webauthnApiService.loginWithPasskey(credential);
             await this.accountService.identity(true);
         } catch (error) {
+            if (isConditional && this.isConditionalMediationAbortError(error)) {
+                // Abort/cancel errors during conditional mediation are expected
+                // (e.g., user dismissed autofill, or we aborted to start a modal request).
+                // Let the caller decide how to handle them.
+                throw error;
+            }
             if (error instanceof InvalidCredentialError) {
                 this.alertService.addErrorAlert('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
             } else {
@@ -158,5 +181,19 @@ export class WebauthnService {
             console.error(error);
             throw error;
         }
+    }
+
+    /**
+     * Checks whether the error is an expected abort or cancellation during conditional mediation.
+     * These errors should not trigger user-visible error alerts.
+     */
+    private isConditionalMediationAbortError(error: unknown): boolean {
+        if (error instanceof PasskeyAbortError) {
+            return true;
+        }
+        if (error instanceof DOMException) {
+            return error.name === 'AbortError' || error.name === 'NotAllowedError';
+        }
+        return false;
     }
 }
