@@ -6,11 +6,11 @@
         </div>
     } @else {
         <div class="thinking-state">
-            <span class="visually-hidden" role="status" aria-live="polite" jhiTranslate="artemisApp.iris.chatStatus.processing"></span>
+            <span class="visually-hidden" role="status" aria-live="polite">{{ displayName() }}</span>
 
             <jhi-iris-logo [size]="20" [spinning]="true" aria-hidden="true" />
 
-            <span class="status-text" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()" [jhiTranslate]="currentKey()"></span>
+            <span class="status-text" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ displayName() }}</span>
 
             <div class="typing-dots" aria-hidden="true">
                 <span class="dot"></span>

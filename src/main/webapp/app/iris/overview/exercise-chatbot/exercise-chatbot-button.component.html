@@ -6,14 +6,8 @@
     }
     @if (isProcessing() && !newIrisMessage()) {
         <div class="status-indicator" (click)="handleButtonClick()">
-            <span class="visually-hidden" role="status" aria-live="polite" jhiTranslate="artemisApp.exerciseChatbot.statusIndicator.processing"></span>
-            <span
-                class="status-label"
-                aria-hidden="true"
-                [class.slide-out]="statusLabelAnimState() === 'slide-out'"
-                [class.slide-in]="statusLabelAnimState() === 'slide-in'"
-                [jhiTranslate]="statusLabelKey()"
-            ></span>
+            <span class="visually-hidden" role="status" aria-live="polite">{{ stageDisplayName() }}</span>
+            <span class="status-label" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ stageDisplayName() }}</span>
             <div class="typing-dots" aria-hidden="true">
                 <span class="dot"></span>
                 <span class="dot"></span>

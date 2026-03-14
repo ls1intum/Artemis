@@ -32,7 +32,7 @@
     align-items: center;
     gap: 8px;
     padding: 12px 0;
-    border-radius: 8px;
+    border-radius: var(--bs-border-radius-lg);
 }
 
 .status-text {

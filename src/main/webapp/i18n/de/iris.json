@@ -262,14 +262,6 @@
                     "deleteFailed": "Fehler beim Löschen der Erinnerung.",
                     "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
                 }
-            },
-            "chatStatus": {
-                "processing": "Iris denkt nach",
-                "thinkingHard": "Denkt angestrengt nach",
-                "analyzingContext": "Analysiert den Kontext",
-                "craftingResponse": "Formuliert eine Antwort",
-                "consultingSources": "Durchsucht Quellen",
-                "almostThere": "Fast fertig"
             }
         }
     }

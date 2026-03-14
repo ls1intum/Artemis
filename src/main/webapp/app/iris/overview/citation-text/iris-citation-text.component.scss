@@ -54,11 +54,11 @@ jhi-iris-citation-text {
         width: 280px;
         max-width: 70vw;
         padding: 10px 10px 14px;
-        border-radius: 8px;
+        border-radius: var(--bs-border-radius-lg);
         background-color: var(--iris-citation-summary-bg);
         line-height: 1.4;
         white-space: normal;
-        text-align: center;
+        text-align: left;
         z-index: $citation-base-z-index + 1; // Summary tooltip above citation bubble
         transform: translate(-50%, var(--iris-citation-vertical-offset)) translateX(var(--iris-citation-shift));
         opacity: 0;

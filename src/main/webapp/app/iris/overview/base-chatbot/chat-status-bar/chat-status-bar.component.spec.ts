@@ -5,9 +5,8 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { By } from '@angular/platform-browser';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ChatStatusBarComponent', () => {
     setupTestBed({ zoneless: true });
@@ -17,11 +16,11 @@ describe('ChatStatusBarComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FontAwesomeModule, ChatStatusBarComponent, MockComponent(IrisLogoComponent), MockDirective(TranslateDirective)],
+            imports: [FontAwesomeModule, ChatStatusBarComponent, MockComponent(IrisLogoComponent)],
         })
             .overrideComponent(ChatStatusBarComponent, {
-                remove: { imports: [IrisLogoComponent, TranslateDirective] },
-                add: { imports: [MockComponent(IrisLogoComponent), MockDirective(TranslateDirective)] },
+                remove: { imports: [IrisLogoComponent] },
+                add: { imports: [MockComponent(IrisLogoComponent)] },
             })
             .compileComponents();
 
@@ -109,5 +108,30 @@ describe('ChatStatusBarComponent', () => {
         expect(logo).toBeFalsy();
         const errorIcon = fixture.debugElement.query(By.css('fa-icon'));
         expect(errorIcon).toBeTruthy();
+    });
+
+    it('should display the active stage name', async () => {
+        const stages = [{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false }];
+        fixture.componentRef.setInput('stages', stages);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        expect(component.displayName()).toBe('Thinking hard');
+        const statusText = fixture.debugElement.query(By.css('.status-text'));
+        expect(statusText.nativeElement.textContent.trim()).toBe('Thinking hard');
+    });
+
+    it('should update displayName when stage changes', async () => {
+        const stages1 = [{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false }];
+        fixture.componentRef.setInput('stages', stages1);
+        await fixture.whenStable();
+        expect(component.displayName()).toBe('Thinking hard');
+
+        const stages2 = [
+            { name: 'Thinking hard', state: IrisStageStateDTO.DONE, weight: 1, message: '', internal: false },
+            { name: 'Analyzing context', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false },
+        ];
+        fixture.componentRef.setInput('stages', stages2);
+        await fixture.whenStable();
+        expect(component.displayName()).toBe('Analyzing context');
     });
 });

@@ -13,21 +13,16 @@ import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citat
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
     templateUrl: './exercise-chatbot-button.component.html',
     styleUrls: ['./exercise-chatbot-button.component.scss'],
-    imports: [FaIconComponent, IrisLogoComponent, TranslateDirective],
+    imports: [FaIconComponent, IrisLogoComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class IrisExerciseChatbotButtonComponent {
     protected readonly faCircle = faCircle;
-    // Must match the number of keys in i18n exerciseChatbot.statusIndicator.labels
-    private static readonly STATUS_LABEL_COUNT = 2;
-    private static readonly STATUS_CYCLE_INTERVAL = 3000;
-    private static readonly SLIDE_ANIMATION_DURATION = 300;
 
     private readonly dialog = inject(MatDialog);
     private readonly overlay = inject(Overlay);
@@ -56,15 +51,10 @@ export class IrisExerciseChatbotButtonComponent {
     private readonly currentStages = toSignal(this.chatService.stages, { initialValue: [] as IrisStageDTO[] });
     readonly isProcessing = computed(() => this.currentStages().some((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
 
-    // Status label cycling
-    readonly statusLabelIndex = signal(0);
-    readonly statusLabelAnimState = signal<'slide-in' | 'slide-out'>('slide-in');
-    readonly statusLabelKey = computed(() => 'artemisApp.exerciseChatbot.statusIndicator.labels.' + this.statusLabelIndex());
-    private statusCycleIntervalId: ReturnType<typeof setInterval> | undefined;
-    private slideTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    private shuffledLabelOrder: number[] = [];
-    private shuffledPosition = 0;
-    private wasProcessing = false;
+    // Active stage and display name for minimized indicator
+    readonly activeStage = computed(() => this.currentStages().find((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
+    readonly stageDisplayName = computed(() => this.activeStage()?.name ?? '');
+    readonly animToggle = signal(false);
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -94,6 +84,9 @@ export class IrisExerciseChatbotButtonComponent {
 
     private readonly shouldReopenChat = toSignal(this.chatService.shouldReopenChat$, { initialValue: false });
 
+    // Track previous display name for animation toggle
+    private previousDisplayName = '';
+
     constructor() {
         // Register cleanup for dialog
         this.destroyRef.onDestroy(() => {
@@ -102,12 +95,6 @@ export class IrisExerciseChatbotButtonComponent {
             }
             if (this.bubbleTimeoutId) {
                 clearTimeout(this.bubbleTimeoutId);
-            }
-            if (this.statusCycleIntervalId) {
-                clearInterval(this.statusCycleIntervalId);
-            }
-            if (this.slideTimeoutId) {
-                clearTimeout(this.slideTimeoutId);
             }
         });
 
@@ -161,42 +148,13 @@ export class IrisExerciseChatbotButtonComponent {
             }
         });
 
-        // Cycle status labels while processing (only react to transitions)
+        // Toggle animation when stage display name changes
         effect(() => {
-            const processing = this.isProcessing();
-
-            if (processing && !this.wasProcessing) {
-                // Transition: not processing → processing — start the cycle
-                this.shuffleLabelOrder();
-                this.shuffledPosition = 0;
-                this.statusLabelIndex.set(this.shuffledLabelOrder[0]);
-                this.statusLabelAnimState.set('slide-in');
-                this.statusCycleIntervalId = setInterval(() => {
-                    // Phase 1: slide out old text
-                    this.statusLabelAnimState.set('slide-out');
-                    this.slideTimeoutId = setTimeout(() => {
-                        // Phase 2: swap text and slide in new text
-                        this.shuffledPosition = (this.shuffledPosition + 1) % IrisExerciseChatbotButtonComponent.STATUS_LABEL_COUNT;
-                        if (this.shuffledPosition === 0) {
-                            this.shuffleLabelOrder();
-                        }
-                        this.statusLabelIndex.set(this.shuffledLabelOrder[this.shuffledPosition]);
-                        this.statusLabelAnimState.set('slide-in');
-                    }, IrisExerciseChatbotButtonComponent.SLIDE_ANIMATION_DURATION);
-                }, IrisExerciseChatbotButtonComponent.STATUS_CYCLE_INTERVAL);
-            } else if (!processing && this.wasProcessing) {
-                // Transition: processing → not processing — stop the cycle
-                if (this.statusCycleIntervalId) {
-                    clearInterval(this.statusCycleIntervalId);
-                    this.statusCycleIntervalId = undefined;
-                }
-                if (this.slideTimeoutId) {
-                    clearTimeout(this.slideTimeoutId);
-                    this.slideTimeoutId = undefined;
-                }
+            const name = this.stageDisplayName();
+            if (name && name !== this.previousDisplayName) {
+                this.animToggle.update((v) => !v);
             }
-
-            this.wasProcessing = processing;
+            this.previousDisplayName = name;
         });
 
         effect(() => {
@@ -248,16 +206,5 @@ export class IrisExerciseChatbotButtonComponent {
     private handleDialogClose() {
         this.chatOpen.set(false);
         this.newIrisMessage.set(undefined);
-    }
-
-    private shuffleLabelOrder(): void {
-        const lastShown = this.shuffledLabelOrder.length > 0 ? this.shuffledLabelOrder[this.shuffledLabelOrder.length - 1] : -1;
-        do {
-            this.shuffledLabelOrder = Array.from({ length: IrisExerciseChatbotButtonComponent.STATUS_LABEL_COUNT }, (_, i) => i);
-            for (let i = this.shuffledLabelOrder.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [this.shuffledLabelOrder[i], this.shuffledLabelOrder[j]] = [this.shuffledLabelOrder[j], this.shuffledLabelOrder[i]];
-            }
-        } while (this.shuffledLabelOrder[0] === lastShown && IrisExerciseChatbotButtonComponent.STATUS_LABEL_COUNT > 1);
     }
 }

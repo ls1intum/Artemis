@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import exerciseChatbotEn from 'app/../i18n/en/exerciseChatbot.json';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -37,7 +37,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
-    let mockDialogClose: any;
+    let mockDialogClose: ReturnType<typeof vi.fn>;
     let mockDialogAfterClosed: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
@@ -268,110 +268,21 @@ describe('ExerciseChatbotButtonComponent', () => {
         });
     });
 
-    describe('status label cycling', () => {
-        beforeEach(() => {
-            vi.useFakeTimers();
+    describe('stage display name', () => {
+        it('should reflect the active stage name', async () => {
+            chatService.stages.next([{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: '', internal: false }]);
+            await fixture.whenStable();
+
+            expect(component.stageDisplayName()).toBe('Thinking hard');
+            expect(component.isProcessing()).toBe(true);
         });
 
-        afterEach(() => {
-            vi.useRealTimers();
-        });
+        it('should return empty string when no active stage', async () => {
+            chatService.stages.next([{ name: 'Done Stage', state: IrisStageStateDTO.DONE, weight: 10, message: '', internal: false }]);
+            await fixture.whenStable();
 
-        it('should start with statusLabelKey at index 0', () => {
-            expect(component.statusLabelIndex()).toBe(0);
-            expect(component.statusLabelKey()).toBe('artemisApp.exerciseChatbot.statusIndicator.labels.0');
-        });
-
-        it('should cycle the status label index every 3 seconds while processing, alternating between labels', () => {
-            // Mock Math.random for deterministic shuffle
-            let callCount = 0;
-            const randomValues = [0.7, 0.3, 0.8, 0.5, 0.1, 0.9, 0.2, 0.6, 0.4, 0.0];
-            vi.spyOn(Math, 'random').mockImplementation(() => randomValues[callCount++ % randomValues.length]);
-
-            // Simulate processing by emitting stages with IN_PROGRESS state
-            chatService.stages.next([{ state: IrisStageStateDTO.IN_PROGRESS } as any]);
-            vi.advanceTimersByTime(0);
-            TestBed.tick();
-
-            const initialIndex = component.statusLabelIndex();
-            expect(initialIndex).toBeGreaterThanOrEqual(0);
-            expect(initialIndex).toBeLessThan(2);
-            expect(component.statusLabelAnimState()).toBe('slide-in');
-
-            const seenIndices = new Set<number>([initialIndex]);
-
-            // First cycle: advance 3000ms to trigger interval (slide-out)
-            vi.advanceTimersByTime(3000);
-            expect(component.statusLabelAnimState()).toBe('slide-out');
-
-            // Then 300ms for the slide timeout (slide-in with new index)
-            vi.advanceTimersByTime(300);
-            expect(component.statusLabelAnimState()).toBe('slide-in');
-            seenIndices.add(component.statusLabelIndex());
-
-            // After 2 labels (initial + 1 cycle), both should have appeared
-            expect(seenIndices.size).toBe(2);
-
-            // Verify consecutive labels are never the same
-            const previousIndex = component.statusLabelIndex();
-            vi.advanceTimersByTime(3300);
-            expect(component.statusLabelIndex()).not.toBe(previousIndex);
-        });
-
-        it('should reset to a valid index when processing stops and restarts', () => {
-            // Start processing
-            chatService.stages.next([{ state: IrisStageStateDTO.IN_PROGRESS } as any]);
-            vi.advanceTimersByTime(0);
-            TestBed.tick();
-
-            // Advance through two full cycles
-            vi.advanceTimersByTime(3000);
-            vi.advanceTimersByTime(300);
-            vi.advanceTimersByTime(2700);
-            vi.advanceTimersByTime(300);
-            const indexBeforeStop = component.statusLabelIndex();
-            expect(indexBeforeStop).toBeGreaterThanOrEqual(0);
-            expect(indexBeforeStop).toBeLessThan(2);
-
-            // Stop processing
-            chatService.stages.next([{ state: IrisStageStateDTO.DONE } as any]);
-            vi.advanceTimersByTime(0);
-            TestBed.tick();
-
-            // Restart processing
-            chatService.stages.next([{ state: IrisStageStateDTO.IN_PROGRESS } as any]);
-            vi.advanceTimersByTime(0);
-            TestBed.tick();
-
-            // Should have a valid index and fresh slide-in animation
-            const restartIndex = component.statusLabelIndex();
-            expect(restartIndex).toBeGreaterThanOrEqual(0);
-            expect(restartIndex).toBeLessThan(2);
-            expect(component.statusLabelAnimState()).toBe('slide-in');
-        });
-    });
-
-    describe('STATUS_LABEL_COUNT consistency', () => {
-        it('should cycle through all i18n status label keys and no more', () => {
-            const labels = exerciseChatbotEn.artemisApp.exerciseChatbot.statusIndicator.labels;
-            const i18nLabelCount = Object.keys(labels).length;
-
-            // The component generates keys "artemisApp.exerciseChatbot.statusIndicator.labels.<index>"
-            // for indices 0..STATUS_LABEL_COUNT-1. Verify every generated key has a matching i18n entry
-            // and that no i18n entries are unused (i.e. STATUS_LABEL_COUNT === number of i18n keys).
-            // We infer STATUS_LABEL_COUNT from the cycling behavior in existing tests: the upper bound
-            // check in 'should cycle the status label index' uses `.toBeLessThan(2)`, matching the constant.
-            // This test will fail if labels are added/removed in i18n without updating the component.
-            expect(i18nLabelCount).toBeGreaterThan(0);
-            for (let i = 0; i < i18nLabelCount; i++) {
-                expect(labels).toHaveProperty(String(i));
-                expect((labels as Record<string, string>)[String(i)]).toBeTruthy();
-            }
-
-            // Verify the component's statusLabelKey produces keys within the i18n label range.
-            // Index 0 is the initial value; it must be a valid key.
-            expect(component.statusLabelIndex()).toBeLessThan(i18nLabelCount);
-            expect(component.statusLabelKey()).toBe('artemisApp.exerciseChatbot.statusIndicator.labels.' + component.statusLabelIndex());
+            expect(component.stageDisplayName()).toBe('');
+            expect(component.isProcessing()).toBe(false);
         });
     });
 
