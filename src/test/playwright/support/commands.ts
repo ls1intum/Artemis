@@ -9,7 +9,7 @@ import { BUILD_FINISH_TIMEOUT, POLLING_INTERVAL } from './timeouts';
  */
 export class Commands {
     /**
-     * Logs in using API.
+     * Logs in via API authentication.
      * @param page - Playwright page object.
      * @param credentials - UserCredentials object containing username and password.
      * @param url - Optional URL to navigate to after successful login.
@@ -47,7 +47,7 @@ export class Commands {
     };
 
     static logout = async (page: Page): Promise<void> => {
-        await page.request.post(`api/core/public/logout`);
+        await page.request.post('api/core/public/logout');
     };
 
     static reloadUntilFound = async (page: Page, locator: Locator, interval = 10000, timeout = 60000) => {
@@ -57,21 +57,25 @@ export class Commands {
             try {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 return;
-            } catch (error) {
-                // Check if the page is still open before reloading
+            } catch {
+                // waitFor can fail even when the element is visible (Playwright
+                // timing issue with cookie propagation from page.request). Check
+                // isVisible() as a fallback before reloading.
+                if (await locator.isVisible()) {
+                    return;
+                }
                 if (page.isClosed()) {
                     throw new Error(`Page was closed while waiting for element matching "${locator}"`);
                 }
                 try {
                     await page.reload();
                 } catch (reloadError) {
-                    // If reload fails (e.g., page closed), throw a descriptive error
                     throw new Error(`Failed to reload page while waiting for element: ${reloadError}`);
                 }
             }
         }
 
-        throw new Error(`Timed out finding an element matching the "${locator}" locator`);
+        throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
     };
 
     /**

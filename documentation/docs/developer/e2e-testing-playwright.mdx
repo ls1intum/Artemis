@@ -54,6 +54,62 @@ The three steps for setting up Playwright with these supporting scripts are:
 2. Create test users by running `setupUsers.sh` (skip if users already exist).
 3. Run tests either headless with `startPlaywright.sh`, in UI mode with `startPlaywrightUI.sh`, or via VS Code after running `prepareVSCodeForE2ETests.sh`.
 
+### Fast local runner (recommended for development)
+
+For the fastest local development experience, use the `run-e2e-tests-local-fast.sh` script in the repository root.
+Unlike the Docker-based approach above, this script runs only PostgreSQL in Docker while running the server and client directly on the host.
+Services stay running between test runs, so re-runs only take seconds.
+
+**Prerequisites:** Docker, Java 25+, Node.js 24+, npm.
+
+**Architecture:**
+
+- **Docker:** PostgreSQL only (port 5432)
+- **Host:** Spring Boot server via `./gradlew bootRun -x webapp` (port 8080)
+- **Host:** Angular client via `npm start` (port 9000, proxies API calls to 8080)
+- **Host:** Playwright tests connect to `http://localhost:9000`
+
+**First run (starts everything):**
+
+```bash
+./run-e2e-tests-local-fast.sh
+```
+
+This starts PostgreSQL, boots the server (~30-90s), starts the client (~10-20s), then runs all Playwright tests.
+
+**Re-run tests (services already running):**
+
+```bash
+# Run all tests (skips starting services that are already running)
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db
+
+# Run only specific tests
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter "Quiz"
+
+# Open Playwright UI for debugging
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --ui
+```
+
+**Stop everything:**
+
+```bash
+./run-e2e-tests-local-fast.sh --stop
+```
+
+**Available options:**
+
+| Flag | Description |
+|------|-------------|
+| `--stop` | Kill server, client, and database; exit |
+| `--filter <pattern>` | Run only tests matching the pattern (e.g., `"Quiz"`) |
+| `--skip-server` | Reuse already-running server |
+| `--skip-client` | Reuse already-running client |
+| `--skip-db` | Reuse already-running PostgreSQL |
+| `--headed` | Run Playwright in headed mode (visible browser) |
+| `--ui` | Open Playwright UI mode for interactive debugging |
+
+Logs and PID files are stored in the `.e2e-local/` directory (gitignored).
+
 If you want to manually install playwright, you can follow these steps:
 
 ### 1. Install dependencies

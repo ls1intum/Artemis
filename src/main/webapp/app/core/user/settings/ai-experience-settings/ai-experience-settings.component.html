@@ -61,8 +61,15 @@
 <h5 jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagement"></h5>
 <p jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataManagementInfo"></p>
 
-@if (sessionCount() > 0) {
-    <p class="mt-2" jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataStats" [translateValues]="{ sessions: sessionCount(), messages: messageCount() }"></p>
+@if (hasData) {
+    <p class="mt-2">
+        @if (sessionCount() > 0) {
+            <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.dataStats" [translateValues]="{ sessions: sessionCount(), messages: messageCount() }"></span>
+        }
+        @if (memoryCount() > 0) {
+            <span jhiTranslate="artemisApp.userSettings.aiExperienceSettingsPage.memoryStats" [translateValues]="{ memories: memoryCount() }"></span>
+        }
+    </p>
     <div class="mt-2">
         <button
             jhiDeleteButton
