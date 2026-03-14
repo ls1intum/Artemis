@@ -1,4 +1,9 @@
 # Spring Security SAML2 relying party registration (required for the RelyingPartyRegistrationRepository bean)
+# NOTE: Signing credentials are required by Spring Security. Generate them with:
+#   openssl req -x509 -newkey rsa:2048 -keyout saml-key.pem -out saml-cert.crt -days 365 -nodes -subj "/CN=artemis"
+#   openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in saml-key.pem -out saml-key-pkcs8.pem
+# Then mount the files into the container and add the signing section below.
+# See https://docs.artemis.tum.de/developer/keycloak-saml2-setup for full instructions.
 spring:
     security:
         saml2:
@@ -6,6 +11,10 @@ spring:
                 registration:
                     keycloak:
                         entity-id: artemis
+                        # signing:
+                        #     credentials:
+                        #         - private-key-location: file:/path/to/saml-key-pkcs8.pem
+                        #           certificate-location: file:/path/to/saml-cert.crt
                         assertingparty:
                             metadata-uri: http://keycloak:9080/realms/artemis/protocol/saml/descriptor
 

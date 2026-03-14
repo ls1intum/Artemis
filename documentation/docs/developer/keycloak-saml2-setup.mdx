@@ -162,6 +162,12 @@ artemis-app:
 
 You also need to add `saml2` to the `SPRING_PROFILES_ACTIVE` environment variable in your Artemis compose configuration.
 
+<Callout variant={CalloutVariant.warning}>
+    The containerized setup still requires signing credentials. Generate them as described in [Step 2](#step-2-generate-saml2-signing-credentials),
+    then uncomment and update the `signing.credentials` section in `docker/saml-test/application-saml2.yml` with the paths where the credentials
+    are mounted inside the container.
+</Callout>
+
 <Callout variant={CalloutVariant.info}>
     The containerized setup uses `keycloak:9080` as the metadata URL (Docker's internal DNS) instead of `localhost:9080`.
     This is already configured in `docker/saml-test/application-saml2.yml`.
