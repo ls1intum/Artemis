@@ -60,6 +60,12 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
+    getQuizParticipationResult(quizExerciseId: number, participationId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/participations/${participationId}/result`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
+    }
+
     findAllParticipationsByExercise(exerciseId: number, withLatestResults = false): Observable<EntityArrayResponseType> {
         const options = createRequestOption({ withLatestResults });
         return this.http

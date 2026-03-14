@@ -28,7 +28,6 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { IconDefinition, faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
-import { MAX_RESULT_HISTORY_LENGTH, ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -41,7 +40,6 @@ import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTo
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseDetailsStudentActionsComponent } from './student-actions/exercise-details-student-actions.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
-import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
@@ -51,7 +49,6 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 import { LtiInitializerComponent } from './lti-initializer/lti-initializer.component';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ScienceService } from 'app/shared/science/science.service';
@@ -78,8 +75,6 @@ interface InstructorActionItem {
         TranslateDirective,
         ExerciseDetailsStudentActionsComponent,
         ExerciseHeadersInformationComponent,
-        ResultHistoryComponent,
-        ResultComponent,
         ProblemStatementComponent,
         ResetRepoButtonComponent,
         ModelingEditorComponent,
@@ -91,7 +86,6 @@ interface InstructorActionItem {
         IrisExerciseChatbotButtonComponent,
         DiscussionSectionComponent,
         LtiInitializerComponent,
-        ArtemisDatePipe,
         ArtemisTranslatePipe,
         CompetencyContributionComponent,
     ],
@@ -449,15 +443,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     exerciseRatedBadge(result: Result): string {
         return result.rated ? 'bg-success' : 'bg-info';
-    }
-
-    get hasMoreResults(): boolean {
-        const participations = this._studentParticipations();
-        const sorted = this._sortedHistoryResults();
-        if (!participations?.length || !sorted.length) {
-            return false;
-        }
-        return sorted.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     /**

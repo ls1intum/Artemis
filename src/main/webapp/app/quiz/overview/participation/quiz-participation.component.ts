@@ -257,16 +257,33 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * loads quizExercise and starts practice mode
+     * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
      */
     initPracticeMode() {
-        this.quizExerciseService.findForStudent(this.quizId).subscribe({
-            next: (res: HttpResponse<QuizExercise>) => {
-                if (res.body && hasDueDatePassed(res.body)) {
-                    this.startQuizPreviewOrPractice(res.body);
-                } else {
-                    alert('Error: This quiz is not open for practice!');
-                }
+        const participationId = this.route.snapshot.queryParams['participationId'];
+        if (participationId) {
+            this.loadExistingPracticeResult(Number(participationId));
+        } else {
+            this.quizExerciseService.findForStudent(this.quizId).subscribe({
+                next: (res: HttpResponse<QuizExercise>) => {
+                    if (res.body && hasDueDatePassed(res.body)) {
+                        this.startQuizPreviewOrPractice(res.body);
+                    } else {
+                        alert('Error: This quiz is not open for practice!');
+                    }
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        }
+    }
+
+    /**
+     * loads an existing practice participation result
+     */
+    private loadExistingPracticeResult(participationId: number) {
+        this.participationService.getQuizParticipationResult(this.quizId, participationId).subscribe({
+            next: (response: HttpResponse<StudentParticipation>) => {
+                this.updateParticipationFromServer(response.body!);
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });

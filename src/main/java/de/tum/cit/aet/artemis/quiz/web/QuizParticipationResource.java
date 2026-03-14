@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,10 +23,13 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInExercise.EnforceAtLeastStudentInExercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizSubmission;
@@ -60,14 +64,21 @@ public class QuizParticipationResource {
 
     private final QuizBatchService quizBatchService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ParticipationAuthorizationCheckService participationAuthCheckService;
+
     public QuizParticipationResource(QuizExerciseRepository quizExerciseRepository, ParticipationService participationService, UserRepository userRepository,
-            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, QuizBatchService quizBatchService) {
+            ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository, QuizBatchService quizBatchService,
+            StudentParticipationRepository studentParticipationRepository, ParticipationAuthorizationCheckService participationAuthCheckService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.participationService = participationService;
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.quizSubmissionRepository = quizSubmissionRepository;
         this.quizBatchService = quizBatchService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.participationAuthCheckService = participationAuthCheckService;
     }
 
     /**
@@ -124,6 +135,46 @@ public class QuizParticipationResource {
 
         if (responseDTO == null) {
             throw new InternalServerErrorException("Error starting quiz participation");
+        }
+        return new ResponseEntity<>(responseDTO, HttpStatus.OK);
+    }
+
+    /**
+     * GET /quiz-exercises/{exerciseId}/participations/{participationId}/result : get the result of a specific quiz participation.
+     * This is used to view an existing practice mode result without starting a new practice session.
+     *
+     * @param exerciseId      the id of the quiz exercise
+     * @param participationId the id of the participation to retrieve the result for
+     * @return the ResponseEntity with status 200 (OK) and the participation with result
+     */
+    @GetMapping("quiz-exercises/{exerciseId}/participations/{participationId}/result")
+    @EnforceAtLeastStudentInExercise
+    public ResponseEntity<StudentQuizParticipationDTO> getParticipationResult(@PathVariable Long exerciseId, @PathVariable Long participationId) {
+        log.debug("REST request to get quiz participation result : exerciseId={}, participationId={}", exerciseId, participationId);
+        QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
+
+        StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
+        participationAuthCheckService.checkCanAccessParticipationElseThrow(participation);
+
+        if (!exercise.getId().equals(participation.getExercise().getId())) {
+            throw new BadRequestAlertException("The participation does not belong to the specified exercise", "participation", "exerciseMismatch");
+        }
+
+        var result = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).orElse(new Result());
+        QuizSubmission submission;
+        if (result.getId() != null) {
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
+        }
+        else {
+            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().findFirst().orElseThrow();
+        }
+        submission.setResults(List.of(result));
+        participation.setSubmissions(Set.of(submission));
+        participation.setExercise(exercise);
+
+        StudentQuizParticipationDTO responseDTO = StudentQuizParticipationWithSolutionsDTO.of(participation);
+        if (responseDTO == null) {
+            throw new InternalServerErrorException("Error loading quiz participation result");
         }
         return new ResponseEntity<>(responseDTO, HttpStatus.OK);
     }

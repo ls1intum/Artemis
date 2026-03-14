@@ -19,12 +19,22 @@ import { CommonModule } from '@angular/common';
 import { SubmissionResultStatusComponent } from 'app/core/course/overview/submission-result-status/submission-result-status.component';
 import { DifficultyLevelComponent } from 'app/exercise/difficulty-level/difficulty-level.component';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ResultHistoryDropdownComponent } from './result-history-dropdown/result-history-dropdown.component';
 
 @Component({
     selector: 'jhi-exercise-headers-information',
     templateUrl: './exercise-headers-information.component.html',
-    imports: [SubmissionResultStatusComponent, InformationBoxComponent, DifficultyLevelComponent, ExerciseCategoriesComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, CommonModule],
-    styleUrls: ['./exercise-headers-information.component.scss'],
+    imports: [
+        SubmissionResultStatusComponent,
+        InformationBoxComponent,
+        DifficultyLevelComponent,
+        ExerciseCategoriesComponent,
+        ArtemisDatePipe,
+        ArtemisTimeAgoPipe,
+        CommonModule,
+        ResultHistoryDropdownComponent,
+    ],
     /* Our tsconfig file has `preserveWhitespaces: 'true'` which causes whitespace to affect content projection.
     We need to set it to 'false 'for this component, otherwise the components with the selector [contentComponent]
     will not be projected into their specific slot of the "InformationBoxComponent" component.*/
@@ -41,6 +51,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     @Input() studentParticipation?: StudentParticipation;
     @Input() course?: Course;
     @Input() submissionPolicy?: SubmissionPolicy;
+    @Input() sortedHistoryResults: Result[] = [];
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;

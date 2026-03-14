@@ -51,62 +51,11 @@
                         [studentParticipation]="gradedStudentParticipation()"
                         [submissionPolicy]="submissionPolicy()"
                         [course]="exercise.course"
+                        [sortedHistoryResults]="sortedHistoryResults"
                     />
                 </div>
-                <!-- RESULTS START -->
-                @if ((sortedHistoryResults?.length && sortedHistoryResults.length > 1) || numberOfPracticeResults()) {
-                    <div class="row">
-                        <div class="row mb-2 mt-2 align-items-baseline d-none d-md-flex">
-                            <div class="col-auto">
-                                <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.recentResults"></h3>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise" />
-                        </div>
-                        <div class="row mb-2 mt-2 align-items-baseline">
-                            <div class="col-auto">
-                                <a class="text-primary" (click)="toggleShowMoreResults()">
-                                    {{ 'artemisApp.courseOverview.exerciseDetails.' + (showMoreResults() ? 'hideResults' : 'showResults') | artemisTranslate }}
-                                    <fa-icon [icon]="showMoreResults() ? faAngleUp : faAngleDown" />
-                                </a>
-                            </div>
-                        </div>
-                        @if (showMoreResults()) {
-                            <div class="row mb-2 mt-2 align-items-baseline">
-                                <div class="col-auto">
-                                    <h3 jhiTranslate="artemisApp.courseOverview.exerciseDetails.allResults"></h3>
-                                </div>
-                            </div>
-                            <div class="row">
-                                <div class="col-12 col-md-12">
-                                    @for (result of sortedHistoryResults; track result; let i = $index) {
-                                        <div>
-                                            @if (
-                                                result.submission &&
-                                                result.submission.submissionDate &&
-                                                (i === 0 ||
-                                                    !sortedHistoryResults[i - 1].submission ||
-                                                    !sortedHistoryResults[i - 1].submission?.submissionDate ||
-                                                    !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
-                                            ) {
-                                                <h4 class="mt-2">
-                                                    {{ result.submission.submissionDate | artemisDate: 'long-date' }}
-                                                </h4>
-                                            }
-                                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [exercise]="exercise" />
-                                        </div>
-                                    }
-                                    @if (!sortedHistoryResults) {
-                                        <div class="no-results" jhiTranslate="artemisApp.courseOverview.exerciseDetails.noResults"></div>
-                                    }
-                                </div>
-                            </div>
-                        }
-                    </div>
-                }
-                <!-- RESULTS END -->
-                <jhi-problem-statement [exerciseInput]="exercise" [participationInput]="practiceStudentParticipation() ?? gradedStudentParticipation()!" />
+                <!-- Results are now displayed in the submission status dropdown in exercise-headers-information -->
+                <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!" />
                 @if (exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length) {
                     <jhi-reset-repo-button [exercise]="exercise" [participations]="exercise.studentParticipations" [smallButtons]="false" />
                 }
