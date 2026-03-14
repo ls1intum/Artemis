@@ -18,7 +18,7 @@ public class MapItemEvent<K, V> {
     private final EventType eventType;
 
     @JsonCreator
-    private MapItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("key") K key, @JsonProperty("value") V value, @JsonProperty("oldValue") V oldValue) {
+    public MapItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("key") K key, @JsonProperty("value") V value, @JsonProperty("oldValue") V oldValue) {
         this.key = key;
         this.value = value;
         this.eventType = eventType;

@@ -19,7 +19,7 @@ public class SetItemEvent<E> {
     private final EventType eventType;
 
     @JsonCreator
-    private SetItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("item") E item) {
+    public SetItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("item") E item) {
         this.item = item;
         this.eventType = eventType;
     }

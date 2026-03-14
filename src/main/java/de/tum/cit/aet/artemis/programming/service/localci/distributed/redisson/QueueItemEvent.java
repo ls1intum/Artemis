@@ -14,7 +14,7 @@ public class QueueItemEvent<T> {
     private final EventType eventType;
 
     @JsonCreator
-    private QueueItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("item") T item) {
+    public QueueItemEvent(@JsonProperty("eventType") EventType eventType, @JsonProperty("item") T item) {
         this.eventType = eventType;
         this.item = item;
     }
