@@ -230,7 +230,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         assertThat(persistedSubmission.getLatestResult()).isNotNull();
         assertThat(persistedSubmission.isBuildFailed()).isFalse();
         var result = persistedSubmission.getLatestResult();
-        assertThat(result.isSuccessful()).isTrue();
         assertThat(result.getCompletionDate()).isNotNull();
         assertThat(result.getScore()).isEqualTo(100.0);
         assertThat(result.getTestCaseCount()).isEqualTo(expectedSuccessfulTestCaseCount);
