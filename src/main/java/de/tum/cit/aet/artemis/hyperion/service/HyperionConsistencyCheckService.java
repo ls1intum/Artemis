@@ -141,8 +141,8 @@ public class HyperionConsistencyCheckService {
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
      * @param exerciseId        id of the programming exercise to check consistency for
-     * @param skipThreadContext if {@code true}, skips passing existing review-thread context to the AI prompts.
-     *                              This is needed for supporting scripts to evaluate new approaches for consistency check.
+     * @param skipThreadContext if {@code true}, passes empty thread context to the AI prompts (i.e., no prior findings exist).
+     *                              Intended for evaluation scripts that assess consistency check quality without prior thread state.
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })

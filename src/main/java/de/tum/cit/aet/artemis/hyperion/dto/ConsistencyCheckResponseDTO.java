@@ -11,9 +11,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for consistency check responses.
- * issues may be an empty list; NON_NULL ensures it is always serialized for consistent client handling and evaluation script execution.
+ * NON_NULL is used so that an empty issues list is always serialized as "issues": [],
+ * which allows the evaluation scripts to correctly count FNs for variants where no issues were detected.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Response containing consistency check results")
 public record ConsistencyCheckResponseDTO(
 

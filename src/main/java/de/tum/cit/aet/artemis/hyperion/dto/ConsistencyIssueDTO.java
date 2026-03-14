@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for individual consistency issues.
+ * relatedLocations may be an empty list; NON_NULL ensures it is always serialized for consistent client handling and evaluation script execution.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Individual consistency issue details")
