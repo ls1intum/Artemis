@@ -1,6 +1,7 @@
 import { NgClass } from '@angular/common';
 import { Component, OnInit, inject, signal, viewChild } from '@angular/core';
-import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DialogModule } from 'primeng/dialog';
 import { faCheck, faExternalLinkAlt, faSync, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink } from '@angular/router';
@@ -38,12 +39,12 @@ import { AcceptCourseRequestModalComponent } from './accept-course-request-modal
         AdminTitleBarActionsDirective,
         NgbPagination,
         AcceptCourseRequestModalComponent,
+        DialogModule,
     ],
 })
 export class CourseRequestsComponent implements OnInit {
     private readonly courseRequestService = inject(CourseRequestService);
     private readonly alertService = inject(AlertService);
-    private readonly modalService = inject(NgbModal);
 
     protected readonly ButtonType = ButtonType;
     protected readonly ButtonSize = ButtonSize;
@@ -75,8 +76,8 @@ export class CourseRequestsComponent implements OnInit {
     readonly decisionReason = signal('');
     /** Whether reason is invalid */
     readonly reasonInvalid = signal(false);
-    /** Modal reference */
-    readonly modalRef = signal<NgbModalRef | undefined>(undefined);
+    /** Whether the reject modal dialog is visible */
+    readonly rejectModalVisible = signal(false);
 
     ngOnInit() {
         this.load();
@@ -112,11 +113,11 @@ export class CourseRequestsComponent implements OnInit {
         });
     }
 
-    openRejectModal(content: any, request: CourseRequest) {
+    openRejectModal(request: CourseRequest) {
         this.selectedRequest.set(request);
         this.decisionReason.set('');
         this.reasonInvalid.set(false);
-        this.modalRef.set(this.modalService.open(content, { size: 'lg' }));
+        this.rejectModalVisible.set(true);
     }
 
     reject() {
@@ -135,7 +136,7 @@ export class CourseRequestsComponent implements OnInit {
                 this.decidedRequests.update((reqs) => [updated, ...reqs]);
                 this.totalDecidedCount.update((count) => count + 1);
                 this.alertService.success('artemisApp.courseRequest.admin.rejectSuccess', { title: updated.title });
-                this.modalRef()?.close();
+                this.rejectModalVisible.set(false);
                 this.reasonInvalid.set(false);
                 this.selectedRequest.set(undefined);
             },

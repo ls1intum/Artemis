@@ -11,14 +11,13 @@ import { of, throwError } from 'rxjs';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
+import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { CourseRequestsComponent } from 'app/core/admin/course-requests/course-requests.component';
 import { AcceptCourseRequestModalComponent } from 'app/core/admin/course-requests/accept-course-request-modal.component';
 import { CourseRequestService } from 'app/core/course/request/course-request.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseRequest, CourseRequestStatus, CourseRequestsAdminOverview } from 'app/core/shared/entities/course-request.model';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 
 @Component({ selector: 'jhi-accept-course-request-modal', template: '' })
 class MockAcceptCourseRequestModalComponent {
@@ -31,7 +30,6 @@ describe('CourseRequestsComponent', () => {
     let component: CourseRequestsComponent;
     let courseRequestService: CourseRequestService;
     let alertService: AlertService;
-    let modalService: NgbModal;
 
     /** Sample pending course request for testing */
     const mockRequest: CourseRequest = {
@@ -69,16 +67,16 @@ describe('CourseRequestsComponent', () => {
     };
 
     beforeEach(async () => {
+        vi.restoreAllMocks();
         vi.clearAllMocks();
 
         await TestBed.configureTestingModule({
-            imports: [CourseRequestsComponent, TranslateModule.forRoot()],
+            imports: [CourseRequestsComponent, TranslateModule.forRoot(), OwlNativeDateTimeModule],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: mockCourseRequestService },
                 { provide: AlertService, useValue: mockAlertService },
-                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideComponent(CourseRequestsComponent, {
@@ -87,7 +85,6 @@ describe('CourseRequestsComponent', () => {
             })
             .compileComponents();
 
-        modalService = TestBed.inject(NgbModal);
         courseRequestService = TestBed.inject(CourseRequestService);
         alertService = TestBed.inject(AlertService);
 
@@ -134,22 +131,19 @@ describe('CourseRequestsComponent', () => {
 
     describe('openRejectModal', () => {
         it('should open modal and set selected request', () => {
-            const openSpy = vi.spyOn(modalService, 'open');
-            const mockContent = {};
-
-            component.openRejectModal(mockContent, mockRequest);
+            component.openRejectModal(mockRequest);
 
             expect(component.selectedRequest()).toBe(mockRequest);
             expect(component.decisionReason()).toBe('');
             expect(component.reasonInvalid()).toBe(false);
-            expect(openSpy).toHaveBeenCalledWith(mockContent, { size: 'lg' });
+            expect(component.rejectModalVisible()).toBe(true);
         });
     });
 
     describe('reject', () => {
         beforeEach(() => {
             component.selectedRequest.set(mockRequest);
-            component.modalRef.set({ close: vi.fn() } as unknown as NgbModalRef);
+            component.rejectModalVisible.set(true);
         });
 
         it('should reject a request with a reason and move it to decided list', () => {
@@ -166,7 +160,7 @@ describe('CourseRequestsComponent', () => {
             expect(component.decidedRequests()[0].status).toBe(CourseRequestStatus.REJECTED);
             expect(component.totalDecidedCount()).toBe(1);
             expect(alertService.success).toHaveBeenCalledWith('artemisApp.courseRequest.admin.rejectSuccess', { title: 'Test Course' });
-            expect(component.modalRef()?.close).toHaveBeenCalled();
+            expect(component.rejectModalVisible()).toBe(false);
             expect(component.reasonInvalid()).toBe(false);
             expect(component.selectedRequest()).toBeUndefined();
         });

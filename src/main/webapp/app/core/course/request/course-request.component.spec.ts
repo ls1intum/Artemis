@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -15,41 +17,56 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('CourseRequestComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseRequestComponent;
-    let courseRequestService: jest.Mocked<CourseRequestService>;
-    let alertService: jest.Mocked<AlertService>;
+    let courseRequestService: {
+        create: ReturnType<typeof vi.fn>;
+        findAdminOverview: ReturnType<typeof vi.fn>;
+        acceptRequest: ReturnType<typeof vi.fn>;
+        rejectRequest: ReturnType<typeof vi.fn>;
+    };
+    let alertService: {
+        success: ReturnType<typeof vi.fn>;
+        error: ReturnType<typeof vi.fn>;
+        warning: ReturnType<typeof vi.fn>;
+    };
 
     beforeEach(async () => {
         courseRequestService = {
-            create: jest.fn(),
-            findAdminOverview: jest.fn(),
-            acceptRequest: jest.fn(),
-            rejectRequest: jest.fn(),
-        } as unknown as jest.Mocked<CourseRequestService>;
+            create: vi.fn(),
+            findAdminOverview: vi.fn(),
+            acceptRequest: vi.fn(),
+            rejectRequest: vi.fn(),
+        };
 
         alertService = {
-            success: jest.fn(),
-            error: jest.fn(),
-            warning: jest.fn(),
-        } as unknown as jest.Mocked<AlertService>;
+            success: vi.fn(),
+            error: vi.fn(),
+            warning: vi.fn(),
+        };
 
         await TestBed.configureTestingModule({
-            imports: [
-                CourseRequestComponent,
-                TranslateModule.forRoot(),
-                MockComponent(CourseRequestFormComponent),
-                MockComponent(ButtonComponent),
-                MockDirective(TranslateDirective),
-            ],
+            imports: [CourseRequestComponent, TranslateModule.forRoot()],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
                 { provide: CourseRequestService, useValue: courseRequestService },
                 { provide: AlertService, useValue: alertService },
             ],
-        }).compileComponents();
+        })
+            .overrideComponent(CourseRequestComponent, {
+                set: {
+                    imports: [MockComponent(CourseRequestFormComponent), MockComponent(ButtonComponent), MockDirective(TranslateDirective)],
+                },
+            })
+            .compileComponents();
 
         component = TestBed.createComponent(CourseRequestComponent).componentInstance;
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     it('should mark invalid date ranges and not submit', () => {
@@ -62,7 +79,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBeTrue();
+        expect(component.dateRangeInvalid).toBe(true);
         expect(courseRequestService.create).not.toHaveBeenCalled();
     });
 
@@ -78,7 +95,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.dateRangeInvalid).toBeFalse();
+        expect(component.dateRangeInvalid).toBe(false);
         expect(courseRequestService.create).toHaveBeenCalledWith(
             expect.objectContaining({
                 title: 'New Course',
@@ -97,7 +114,7 @@ describe('CourseRequestComponent', () => {
 
         component.submit();
 
-        expect(component.form.get('semester')?.invalid).toBeTrue();
+        expect(component.form.get('semester')?.invalid).toBe(true);
         expect(courseRequestService.create).not.toHaveBeenCalled();
     });
 
@@ -118,7 +135,7 @@ describe('CourseRequestComponent', () => {
 
         expect(component.form.get('title')?.value).toBe('');
         expect(component.form.get('reason')?.value).toBe('');
-        expect(component.isSubmitting).toBeFalse();
+        expect(component.isSubmitting).toBe(false);
     });
 
     it('should not submit when form is invalid', () => {
@@ -130,6 +147,6 @@ describe('CourseRequestComponent', () => {
         component.submit();
 
         expect(courseRequestService.create).not.toHaveBeenCalled();
-        expect(component.form.get('title')?.touched).toBeTrue();
+        expect(component.form.get('title')?.touched).toBe(true);
     });
 });

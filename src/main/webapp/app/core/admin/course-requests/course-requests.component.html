@@ -82,7 +82,7 @@
                                     [btnType]="ButtonType.ERROR"
                                     [btnSize]="ButtonSize.SMALL"
                                     [icon]="faTimes"
-                                    (click)="openRejectModal(rejectModal, request)"
+                                    (click)="openRejectModal(request)"
                                     [title]="'artemisApp.courseRequest.admin.reject'"
                                 />
                             </div>
@@ -191,28 +191,29 @@
 <!-- Accept Modal -->
 <jhi-accept-course-request-modal />
 
-<ng-template #rejectModal let-modal>
-    <div class="modal-header">
-        <h5 class="modal-title" jhiTranslate="artemisApp.courseRequest.admin.reject"></h5>
-        <button type="button" class="btn-close" aria-label="Close" (click)="modal.dismiss()"></button>
-    </div>
-    <div class="modal-body">
-        <label class="form-label fw-semibold" for="rejectReason" jhiTranslate="artemisApp.courseRequest.admin.rejectReasonLabel"></label>
-        <textarea
-            id="rejectReason"
-            class="form-control"
-            rows="4"
-            [ngModel]="decisionReason()"
-            (ngModelChange)="decisionReason.set($event)"
-            [class.is-invalid]="reasonInvalid()"
-            [placeholder]="'artemisApp.courseRequest.admin.rejectReasonPlaceholder' | artemisTranslate"
-        ></textarea>
-        @if (reasonInvalid()) {
-            <div class="invalid-feedback d-block" jhiTranslate="entity.validation.required"></div>
-        }
-    </div>
-    <div class="modal-footer">
-        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="modal.dismiss()" [title]="'entity.action.cancel'" />
+<p-dialog
+    [(visible)]="rejectModalVisible"
+    [modal]="true"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '50dvw' }"
+    header="{{ 'artemisApp.courseRequest.admin.reject' | artemisTranslate }}"
+>
+    <label class="form-label fw-semibold" for="rejectReason" jhiTranslate="artemisApp.courseRequest.admin.rejectReasonLabel"></label>
+    <textarea
+        id="rejectReason"
+        class="form-control"
+        rows="4"
+        [ngModel]="decisionReason()"
+        (ngModelChange)="decisionReason.set($event)"
+        [class.is-invalid]="reasonInvalid()"
+        [placeholder]="'artemisApp.courseRequest.admin.rejectReasonPlaceholder' | artemisTranslate"
+    ></textarea>
+    @if (reasonInvalid()) {
+        <div class="invalid-feedback d-block" jhiTranslate="entity.validation.required"></div>
+    }
+    <ng-template #footer>
+        <jhi-button [btnType]="ButtonType.SECONDARY" (click)="rejectModalVisible.set(false)" [title]="'entity.action.cancel'" />
         <jhi-button [btnType]="ButtonType.ERROR" [icon]="faTimes" (click)="reject()" [title]="'artemisApp.courseRequest.admin.rejectConfirm'" />
-    </div>
-</ng-template>
+    </ng-template>
+</p-dialog>
