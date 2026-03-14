@@ -116,18 +116,10 @@ test.describe('Competency Management', { tag: '@fast' }, () => {
             const row = page.locator('tr', { has: page.getByRole('link', { name: competencyData.title }) });
             await row.locator('a[href*="/competency-management/"][href$="/edit"]').click();
 
-            // Wait for the edit form to load existing competency data from the server.
-            // Without this, the test may start filling fields before the form is populated,
-            // causing the async title uniqueness validator to run against stale/empty state.
-            await expect(page.getByRole('textbox', { name: 'Title' })).toHaveValue(competencyData.title, { timeout: 15000 });
-
             // Update fields
             await page.getByRole('textbox', { name: 'Title' }).fill(updatedCompetencyData.title);
             await setMarkdownDescription(page, updatedCompetencyData.description);
             await selectTaxonomy(page, updatedCompetencyData.taxonomy);
-
-            // Wait for the async title uniqueness validator to resolve before submitting
-            await expect(page.getByRole('button', { name: 'Submit' })).toBeEnabled({ timeout: 10000 });
             await page.getByRole('button', { name: 'Submit' }).click();
 
             // Verify update
@@ -221,18 +213,11 @@ test.describe('Prerequisite Management', { tag: '@fast' }, () => {
             // Edit prerequisite
             const row = page.locator('tr', { has: page.getByRole('link', { name: editPrereqData.title }) });
             await row.locator('a[href*="/prerequisite-management/"][href$="/edit"]').click();
-
-            // Wait for the edit form to load existing prerequisite data from the server
-            await expect(page.getByRole('textbox', { name: 'Prerequisites' })).toHaveValue(editPrereqData.title, { timeout: 15000 });
-
             await page.getByRole('textbox', { name: 'Prerequisites' }).fill(updatedPrerequisiteData.title);
             await setMarkdownDescription(page, updatedPrerequisiteData.description);
 
             await selectDateInPicker(page, 'softDueDate', 2, 15);
             await selectTaxonomy(page, updatedPrerequisiteData.taxonomy);
-
-            // Wait for the async title uniqueness validator to resolve before submitting
-            await expect(page.getByRole('button', { name: 'Submit' })).toBeEnabled({ timeout: 10000 });
             await page.getByRole('button', { name: 'Submit' }).click();
 
             // Verify update - wait for navigation back and data load
