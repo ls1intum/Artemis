@@ -329,6 +329,10 @@ export class GlobalSearchModalComponent implements OnDestroy {
                 return;
             }
             this.irisSourceView.set(this.currentView());
+            this.currentView.set(view);
+            this.activeSplitPanel.set('left');
+            this.selectedIndex.set(-1);
+            return;
         }
         this.currentView.set(view);
         this.activeSplitPanel.set('left');
