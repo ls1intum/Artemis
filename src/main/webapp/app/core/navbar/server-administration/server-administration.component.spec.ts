@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -9,6 +11,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 describe('ServerAdministrationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ServerAdministrationComponent;
     let fixture: ComponentFixture<ServerAdministrationComponent>;
 
@@ -36,6 +40,7 @@ describe('ServerAdministrationComponent', () => {
 
     afterEach(() => {
         fixture.destroy();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -43,7 +48,7 @@ describe('ServerAdministrationComponent', () => {
     });
 
     it('should emit collapseNavbarListener when collapseNavbar is called', () => {
-        const collapseNavbarSpy = jest.spyOn(component.collapseNavbarListener, 'emit');
+        const collapseNavbarSpy = vi.spyOn(component.collapseNavbarListener, 'emit');
 
         component.collapseNavbar();
 
@@ -53,8 +58,8 @@ describe('ServerAdministrationComponent', () => {
     it('should have default input values as false', () => {
         fixture.detectChanges();
 
-        expect(component.isExamActive()).toBeFalse();
-        expect(component.isExamStarted()).toBeFalse();
+        expect(component.isExamActive()).toBe(false);
+        expect(component.isExamStarted()).toBe(false);
     });
 
     it('should handle input properties correctly', () => {
@@ -63,8 +68,8 @@ describe('ServerAdministrationComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.isExamActive()).toBeTrue();
-        expect(component.isExamStarted()).toBeTrue();
+        expect(component.isExamActive()).toBe(true);
+        expect(component.isExamStarted()).toBe(true);
     });
 
     it('should not show admin link when exam is active', () => {
@@ -91,7 +96,7 @@ describe('ServerAdministrationComponent', () => {
     });
 
     it('should collapse navbar when link is clicked', () => {
-        const collapseNavbarSpy = jest.spyOn(component.collapseNavbarListener, 'emit');
+        const collapseNavbarSpy = vi.spyOn(component.collapseNavbarListener, 'emit');
 
         component.onLinkClick();
 
