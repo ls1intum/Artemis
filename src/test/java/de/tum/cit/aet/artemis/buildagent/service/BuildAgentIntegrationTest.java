@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,6 +40,7 @@ import com.github.dockerjava.api.exception.NotFoundException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultQueueException;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
@@ -215,9 +217,14 @@ class BuildAgentIntegrationTest extends AbstractArtemisBuildAgentTest {
 
         buildJobQueue.add(queueItem);
 
-        await().atMost(30, TimeUnit.SECONDS).until(() -> {
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
             var resultQueueItem = resultQueue.poll();
-            return resultQueueItem != null && resultQueueItem.buildJobQueueItem().id().equals(queueItem.id()) && resultQueueItem.buildJobQueueItem().status() == BuildStatus.FAILED;
+            assertThat(resultQueueItem).isNotNull();
+            assertThat(resultQueueItem.buildJobQueueItem().id()).isEqualTo(queueItem.id());
+            assertThat(resultQueueItem.buildJobQueueItem().status()).isEqualTo(BuildStatus.FAILED);
+            assertThat(resultQueueItem.exception()).isInstanceOf(BuildResultQueueException.class);
+            BuildResultQueueException exception = (BuildResultQueueException) resultQueueItem.exception();
+            assertThat(exception.getOriginalClassName()).isEqualTo(CompletionException.class.getName());
         });
     }
 

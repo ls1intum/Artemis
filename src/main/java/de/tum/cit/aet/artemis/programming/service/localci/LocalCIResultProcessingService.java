@@ -28,6 +28,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultQueueException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
@@ -257,20 +258,13 @@ public class LocalCIResultProcessingService {
             }
 
             // save build job to database
-            if (buildException != null) {
-                if (buildException.getCause() instanceof CancellationException && buildException.getMessage().equals("Build job with id " + buildJob.id() + " was cancelled.")) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.CANCELLED, result);
-                }
-                else if (buildException.getCause() instanceof TimeoutException) {
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.TIMEOUT, result);
-                }
-                else {
-                    log.error("Error while processing build job: {}", buildJob, buildException);
-                    savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.FAILED, result);
-                }
+            BuildStatus buildStatus = determineBuildStatus(buildJob, buildException);
+            if (buildStatus == BuildStatus.FAILED && buildException != null) {
+                log.error("Error while processing build job: {}", buildJob, buildException);
             }
-            else {
-                savedBuildJob = saveFinishedBuildJob(buildJob, BuildStatus.SUCCESSFUL, result);
+
+            savedBuildJob = saveFinishedBuildJob(buildJob, buildStatus, result);
+            if (buildStatus == BuildStatus.SUCCESSFUL) {
                 if (programmingExerciseParticipation != null) {
                     updateExerciseBuildDurationAsync(programmingExerciseParticipation.getProgrammingExercise().getId());
                 }
@@ -354,6 +348,36 @@ public class LocalCIResultProcessingService {
             log.error("Could not save build job to database", e);
             return null;
         }
+    }
+
+    private BuildStatus determineBuildStatus(BuildJobQueueItem buildJob, Throwable buildException) {
+        if (buildJob.status() != null) {
+            return buildJob.status();
+        }
+        if (buildException == null) {
+            return BuildStatus.SUCCESSFUL;
+        }
+        if (containsExceptionType(buildException, CancellationException.class.getName())) {
+            return BuildStatus.CANCELLED;
+        }
+        if (containsExceptionType(buildException, TimeoutException.class.getName())) {
+            return BuildStatus.TIMEOUT;
+        }
+        return BuildStatus.FAILED;
+    }
+
+    private boolean containsExceptionType(Throwable throwable, String exceptionClassName) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current.getClass().getName().equals(exceptionClassName)) {
+                return true;
+            }
+            if (current instanceof BuildResultQueueException buildResultQueueException && exceptionClassName.equals(buildResultQueueException.getOriginalClassName())) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private void updateExerciseBuildDurationAsync(long exerciseId) {

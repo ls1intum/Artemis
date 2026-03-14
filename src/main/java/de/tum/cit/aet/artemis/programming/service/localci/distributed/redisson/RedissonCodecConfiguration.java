@@ -22,23 +22,32 @@ public class RedissonCodecConfiguration {
     @Bean
     public RedissonAutoConfigurationCustomizer redissonAutoConfigurationCustomizer() {
         ObjectMapper redissonObjectMapper = new ObjectMapper();
-        redissonObjectMapper.registerModule(new JavaTimeModule());
 
         return (Config configuration) -> configuration.setCodec(new JsonJacksonCodec(redissonObjectMapper) {
 
             @Override
             protected void init(ObjectMapper objectMapper) {
-                objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+                configureObjectMapper(objectMapper);
             }
 
             @Override
             protected void initTypeInclusion(ObjectMapper objectMapper) {
-                // Use EVERYTHING instead of the default NON_FINAL to include Java records (which are final)
-                // in type information. Without this, records like BuildAgentInformation are serialized
-                // without @class and cannot be deserialized back from Object.class.
-                objectMapper.activateDefaultTyping(BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(), ObjectMapper.DefaultTyping.EVERYTHING,
-                        JsonTypeInfo.As.PROPERTY);
+                configureTypeInclusion(objectMapper);
             }
         });
     }
+
+    static void configureObjectMapper(ObjectMapper objectMapper) {
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+
+    static void configureTypeInclusion(ObjectMapper objectMapper) {
+        // Use EVERYTHING instead of the default NON_FINAL to include Java records (which are final)
+        // in type information. Without this, records like BuildAgentInformation are serialized
+        // without @class and cannot be deserialized back from Object.class.
+        objectMapper.activateDefaultTyping(BasicPolymorphicTypeValidator.builder().allowIfBaseType(Object.class).build(), ObjectMapper.DefaultTyping.EVERYTHING,
+                JsonTypeInfo.As.PROPERTY);
+    }
+
 }
