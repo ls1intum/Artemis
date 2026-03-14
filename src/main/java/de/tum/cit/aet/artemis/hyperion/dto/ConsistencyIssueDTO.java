@@ -13,7 +13,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * DTO for individual consistency issues.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Individual consistency issue details")
 public record ConsistencyIssueDTO(
 
