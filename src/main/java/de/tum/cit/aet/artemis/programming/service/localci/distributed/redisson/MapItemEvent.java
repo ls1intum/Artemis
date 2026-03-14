@@ -37,7 +37,7 @@ public class MapItemEvent<K, V> {
         return new MapItemEvent<>(EventType.REMOVE, key, null, oldValue);
     }
 
-    public EventType getType() {
+    public EventType getEventType() {
         return eventType;
     }
 

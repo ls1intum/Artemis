@@ -175,13 +175,13 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     public UUID addEntryListener(MapEntryListener<K, V> listener) {
         int registrationId = notificationTopic.addListener(MapItemEvent.class, (_, event) -> {
             MapItemEvent<K, V> mapItemEvent = (MapItemEvent<K, V>) event;
-            if (event.getType() == MapItemEvent.EventType.ADD) {
+            if (event.getEventType() == MapItemEvent.EventType.ADD) {
                 listener.entryAdded(new MapEntryAddedEvent<>(mapItemEvent.getKey(), mapItemEvent.getValue()));
             }
-            else if (event.getType() == MapItemEvent.EventType.UPDATE) {
+            else if (event.getEventType() == MapItemEvent.EventType.UPDATE) {
                 listener.entryUpdated(new MapEntryUpdatedEvent<>(mapItemEvent.getKey(), mapItemEvent.getValue(), mapItemEvent.getOldValue()));
             }
-            else if (event.getType() == MapItemEvent.EventType.REMOVE) {
+            else if (event.getEventType() == MapItemEvent.EventType.REMOVE) {
                 listener.entryRemoved(new MapEntryRemovedEvent<>(mapItemEvent.getKey(), mapItemEvent.getOldValue()));
             }
         });
@@ -193,13 +193,13 @@ public class RedissonDistributedMap<K, V> implements DistributedMap<K, V> {
     @Override
     public UUID addListener(MapListener listener) {
         int registrationId = notificationTopic.addListener(MapItemEvent.class, (_, event) -> {
-            if (event.getType() == MapItemEvent.EventType.ADD) {
+            if (event.getEventType() == MapItemEvent.EventType.ADD) {
                 listener.entryAdded();
             }
-            else if (event.getType() == MapItemEvent.EventType.UPDATE) {
+            else if (event.getEventType() == MapItemEvent.EventType.UPDATE) {
                 listener.entryUpdated();
             }
-            else if (event.getType() == MapItemEvent.EventType.REMOVE) {
+            else if (event.getEventType() == MapItemEvent.EventType.REMOVE) {
                 listener.entryRemoved();
             }
         });

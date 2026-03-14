@@ -127,10 +127,10 @@ public class RedissonDistributedSet<E> implements DistributedSet<E> {
         int registrationId = notificationTopic.addListener(SetItemEvent.class, (channel, event) -> {
             @SuppressWarnings("unchecked")
             SetItemEvent<E> setItemEvent = (SetItemEvent<E>) event;
-            if (event.getType() == SetItemEvent.EventType.ADD) {
+            if (event.getEventType() == SetItemEvent.EventType.ADD) {
                 listener.itemAdded(new SetItemAddedEvent<>(setItemEvent.getItem()));
             }
-            else if (event.getType() == SetItemEvent.EventType.REMOVE) {
+            else if (event.getEventType() == SetItemEvent.EventType.REMOVE) {
                 listener.itemRemoved(new SetItemRemovedEvent<>(setItemEvent.getItem()));
             }
         });

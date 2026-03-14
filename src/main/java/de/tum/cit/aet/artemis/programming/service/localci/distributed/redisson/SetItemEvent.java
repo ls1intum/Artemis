@@ -32,7 +32,7 @@ public class SetItemEvent<E> {
         return new SetItemEvent<>(EventType.REMOVE, item);
     }
 
-    public EventType getType() {
+    public EventType getEventType() {
         return eventType;
     }
 

@@ -27,7 +27,7 @@ public class QueueItemEvent<T> {
         return new QueueItemEvent<>(EventType.REMOVE, item);
     }
 
-    public EventType getType() {
+    public EventType getEventType() {
         return eventType;
     }
 
