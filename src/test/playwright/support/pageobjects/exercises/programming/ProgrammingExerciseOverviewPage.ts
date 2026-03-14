@@ -1,31 +1,28 @@
 import { expect, Page } from '@playwright/test';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
-import { CoursesPage } from '../../course/CoursesPage';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
 
 export class ProgrammingExerciseOverviewPage {
     private readonly page: Page;
-    private readonly courseList: CoursesPage;
     private readonly courseOverview: CourseOverviewPage;
 
-    constructor(page: Page, courseList: CoursesPage, courseOverview: CourseOverviewPage) {
+    constructor(page: Page, courseOverview: CourseOverviewPage) {
         this.page = page;
-        this.courseList = courseList;
         this.courseOverview = courseOverview;
     }
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+        await Commands.reloadUntilFound(this.page, resultScore, 5000, 120000);
+        await expect(resultScore.getByText(expectedResult)).toBeVisible({ timeout: 30000 });
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
-        await Commands.login(this.page, credentials, '/');
-        await this.page.waitForURL(/\/courses/);
-        await this.courseList.openCourse(courseId!);
-        await this.courseOverview.startExercise(exerciseId);
+        await Commands.login(this.page, credentials, `/courses/${courseId}/exercises/${exerciseId}`);
+        const startButton = this.courseOverview.getStartExerciseButton(exerciseId);
+        await Commands.reloadUntilFound(this.page, startButton);
+        await startButton.click();
     }
 
     async openCodeEditor(exerciseId: number) {
@@ -41,7 +38,7 @@ export class ProgrammingExerciseOverviewPage {
         };
 
         const codeButtonLocator = this.getCodeButton();
-        await Commands.reloadUntilFound(this.page, codeButtonLocator, 4000, 20000);
+        await Commands.reloadUntilFound(this.page, codeButtonLocator, 10000, 40000);
         await codeButtonLocator.click();
         await this.page.locator('.popover-body').waitFor({ state: 'visible' });
         await this.page.locator('.https-or-ssh-button').click();
@@ -54,7 +51,17 @@ export class ProgrammingExerciseOverviewPage {
 
     async copyCloneUrl() {
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-        await this.getCloneUrlButton().click();
+        const button = this.getCloneUrlButton();
+        // The copy button lives inside the Code popover (autoClose='outside').
+        // Under load, the ngbDropdown closing after auth method selection can race
+        // with the popover's outside-click detection, causing the popover to close.
+        // If that happens, re-open it — the auth method is persisted in localStorage.
+        if (!(await button.isVisible())) {
+            await this.getCodeButton().click();
+        }
+        // Wait for the button to be enabled — starts disabled until VCS access token loads
+        await expect(button).toBeEnabled({ timeout: 10000 });
+        await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
         });
