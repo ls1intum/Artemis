@@ -223,7 +223,10 @@ def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[
             if ex_title is not None and ex_id is not None:
                 exercises_map[ex_title] = ex_id
 
-        return __transform_exercise_json_keys(exercises_map)
+        logging.debug(f"Raw exercise titles from server: {list(exercises_map.keys())}")
+        transformed = __transform_exercise_json_keys(exercises_map)
+        logging.info(f"Transformed exercise keys: {list(transformed.keys())}")
+        return transformed
 
     except requests.exceptions.RequestException as e:
         logging.error(f"Error fetching data: {e}")
@@ -257,6 +260,17 @@ def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]
             short_code = match.group(2)
             raw_description = match.group(3)
 
+            # If short_code is purely numeric, the title has extra numeric prefixes
+            # (e.g. "002 - 002 - 0 - QC01 - Decision Diagrams and Tensor Networks").
+            # Keep stripping numeric tokens until we reach the real short code.
+            while short_code.isdigit():
+                inner_match = re.match(r"^([^\s]+)\s*(?:-\s*)?(.*)$", raw_description)
+                if inner_match:
+                    short_code = inner_match.group(1)
+                    raw_description = inner_match.group(2)
+                else:
+                    break
+
             # Replace spaces in description with underscores
             clean_description = raw_description.replace(" ", "_")
 
@@ -281,7 +295,7 @@ if __name__ == "__main__":
     login_as_admin(session=session)
 
     #logging.info("Step 3: Creating Hyperion Benchmark Course")
-    #create_course_request(session=session)
+    create_course_request(session=session)
 
     logging.info("Step 4: Retrieving Hyperion Benchmark Course ID")
     course_id = get_course_id_request(session=session)

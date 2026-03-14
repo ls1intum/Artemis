@@ -426,7 +426,11 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
                     course_name = exercise_details['exerciseGroup']['exam']['course'].get('shortName', '')
 
             exercise_name = exercise_details.get('title', 'Untitled')
-            exercise_details['title'] = f"{variant_id} - {exercise_details.get('title', 'Untitled')}"
+            # Strip any existing variant_id prefix so reruns don't stack duplicates
+            prefix = f"{variant_id} - "
+            while exercise_name.startswith(prefix):
+                exercise_name = exercise_name[len(prefix):]
+            exercise_details['title'] = f"{variant_id} - {exercise_name}"
 
             exercise_details['shortName'] = sanitize_exercise_name(exercise_name, int(variant_id))
             exercise_details["projectKey"] = f"{variant_id}{course_name}{exercise_details['shortName']}"

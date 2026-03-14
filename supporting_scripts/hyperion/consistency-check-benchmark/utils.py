@@ -35,8 +35,10 @@ try:
     COURSE_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVExerciseSettings', 'course_exercises'))
 
     MODEL_NAME: str = config.get('PECVConsistencyCheckSettings', 'model_name', fallback="azure-openai-gpt-5-mini")
+    MODEL_EFFORT: str = config.get('PECVConsistencyCheckSettings', 'model_effort', fallback="medium")
     CONSISTENCY_CHECK_EXERCISES: Dict[str, Dict[str, List[str]]] = json.loads(config.get('PECVConsistencyCheckSettings', 'consistency_check_exercises', fallback='{}'))
-    REFERENCE: str = config.get('PECVConsistencyCheckSettings', 'reference', fallback="No Data Available")
+    CODE_SNAPSHOT_FILES: Dict[str, List[str]] = json.loads(config.get('PECVConsistencyCheckSettings', 'code_snapshot_files', fallback='{}'))
+    REFERENCE: Dict[str, str] = json.loads(config.get('PECVConsistencyCheckSettings', 'reference', fallback='{}'))
 except (configparser.Error, json.JSONDecodeError, ValueError) as e:
     logging.critical(f"Error loading configuration: {e}")
     sys.exit(1)

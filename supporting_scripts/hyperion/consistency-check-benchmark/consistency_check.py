@@ -7,7 +7,7 @@ from logging_config import logging
 from typing import Dict, Any
 from requests import Session
 
-from utils import SERVER_URL, MAX_THREADS, MODEL_NAME, CONSISTENCY_CHECK_EXERCISES, login_as_admin
+from utils import SERVER_URL, MAX_THREADS, MODEL_NAME, MODEL_EFFORT, CONSISTENCY_CHECK_EXERCISES, login_as_admin
 from course import get_course_id_request, get_exercise_ids_request
 from exercises import get_pecv_bench_dir
 
@@ -46,6 +46,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
         approach_id = "artemis-default"
 
     model_name = MODEL_NAME
+    run_id = f"{model_name}-{MODEL_EFFORT}"
 
     # Map exercise name -> (course, version) so the correct version is used per exercise
     consistency_check_exercises_dict: Dict[str, tuple[str, str]] = {}
@@ -53,14 +54,12 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
         for course, exercises in courses.items():
             for exercise in exercises:
                 consistency_check_exercises_dict[exercise] = (course, version)
-                os.makedirs(os.path.join(pecv_bench_dir, "results", version, approach_id, model_name, "cases", course, exercise), exist_ok=True)
+                os.makedirs(os.path.join(pecv_bench_dir, "results", approach_id, version, run_id, "cases", course, exercise), exist_ok=True)
 
     exercise_ids_filtered = {
         k: v for k, v in exercise_ids.items()
         if k.split(':', 1)[0] in consistency_check_exercises_dict
     }
-
-    run_id = f"{model_name}-default"
 
     succeeded_count = 0
     failed_count = 0
@@ -78,7 +77,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
                 continue
 
             course_name, dataset_version = lookup
-            exercise_results_dir = os.path.join(pecv_bench_dir, "results", dataset_version, approach_id, model_name, "cases", course_name, exercise_name)
+            exercise_results_dir = os.path.join(pecv_bench_dir, "results", approach_id, dataset_version, run_id, "cases", course_name, exercise_name)
 
             future = executor.submit(
                 consistency_check_io,
@@ -170,7 +169,8 @@ def consistency_check_request(session: requests.Session, server_url: str, exerci
     logging.info(f"[{debug_id}] 		Starting consistency check for programming exercise ID: {debug_id}")
 
     url: str = f"{server_url}/hyperion/programming-exercises/{exercise_server_id}/consistency-check"
-    response: requests.Response = session.post(url)
+    params = {"skipThreadContext": "true"}
+    response: requests.Response = session.post(url, params=params)
     if response.status_code == 200:
         logging.info(f"[{debug_id}] Finished consistency check for programming exercise ID: {debug_id}")
         return response.json()
