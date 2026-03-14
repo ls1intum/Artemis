@@ -85,7 +85,7 @@ export abstract class AbstractExerciseAssessmentPage {
 
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
-            await this.page.locator('#show-complaint').click();
+            await this.page.locator('#show-complaint').first().click();
         }
         await this.page.locator('#responseTextArea').fill(response);
 
