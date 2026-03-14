@@ -312,13 +312,13 @@ describe('PdfViewerComponent', () => {
         });
 
         it('should skip rendering when already rendering or no pdf document', async () => {
-            component['isRendering'] = true;
+            component['isRendering'].set(true);
             setupLoadedPdf(3);
 
             await component['renderAllPages']();
-            expect(component['isRendering']).toBe(true);
+            expect(component['isRendering']()).toBe(true);
 
-            component['isRendering'] = false;
+            component['isRendering'].set(false);
             component['pdfDocument'] = undefined;
             await expect(component['renderAllPages']()).resolves.not.toThrow();
         });

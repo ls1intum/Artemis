@@ -14,6 +14,7 @@ type PdfViewerAnchorState = {
     pageIndex: number;
     pdfX: number;
     pdfY: number;
+    hadHorizontalScroll: boolean;
 };
 
 @Component({
@@ -76,6 +77,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private pendingRender = false;
     private loadToken = 0;
     private loadingTask?: { promise: Promise<PDFDocumentProxy>; destroy?: () => Promise<void> | void };
+    private preCapturedAnchor: PdfViewerAnchorState | undefined;
+    private isResizing = false;
 
     constructor() {
         (PDFJS.GlobalWorkerOptions as any).workerSrc = '/content/scripts/pdf.worker.min.mjs';
@@ -117,6 +120,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
                     // Skip if rendering, zooming, or width change < 30px (scrollbar threshold)
                     if (!this.isRendering() && !this.isZooming && widthDiff > PdfViewerComponent.RESIZE_WIDTH_THRESHOLD_PX) {
+                        const container = this.pdfContainer()?.nativeElement;
+                        if (viewerBox && container) {
+                            // Capture only on first resize event to avoid browser scroll adjustments
+                            if (!this.isResizing) {
+                                this.isResizing = true;
+                                this.preCapturedAnchor = this.captureAnchorState(viewerBox, container);
+                            }
+                        }
+
                         this.lastObservedWidth = newWidth;
                         this.handleResize();
                     }
@@ -205,7 +217,16 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const viewerBox = this.pdfViewerBox()?.nativeElement;
         const container = containerRef.nativeElement;
 
-        const anchor = viewerBox ? this.captureAnchorState(viewerBox, container) : undefined;
+        // Use pre-captured anchor from resize or capture fresh state
+        let anchor: PdfViewerAnchorState | undefined;
+        if (this.preCapturedAnchor) {
+            anchor = this.preCapturedAnchor;
+            this.preCapturedAnchor = undefined;
+            this.isResizing = false;
+        } else {
+            anchor = viewerBox ? this.captureAnchorState(viewerBox, container) : undefined;
+            this.isResizing = false;
+        }
 
         this.isRendering.set(true);
 
@@ -236,12 +257,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                     this.applyZoomToPages();
                 }
 
-                // Restore scroll position to the same top-left PDF content
-                if (viewerBox && anchor) {
-                    this.restoreAnchorState(anchor, viewerBox, container);
-                }
+                // Wait for one animation frame to ensure layout is stable before measuring positions
+                requestAnimationFrame(() => {
+                    // Restore scroll position to the same top-left PDF content
+                    if (viewerBox && anchor) {
+                        this.restoreAnchorState(anchor, viewerBox, container);
+                    }
 
-                this.updateCurrentPage();
+                    this.updateCurrentPage();
+                });
             }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
         } finally {
             this.isRendering.set(false);
@@ -385,6 +409,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private getPageMetrics(
         page: HTMLElement,
         container: HTMLDivElement,
+        viewerBox?: HTMLDivElement,
     ): {
         left: number;
         top: number;
@@ -396,11 +421,23 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         pdfHeight: number;
     } {
         const rect = page.getBoundingClientRect();
-        const containerRect = container.getBoundingClientRect();
-        const left = rect.left - containerRect.left;
-        const top = rect.top - containerRect.top;
         const width = rect.width;
         const height = rect.height;
+
+        // Calculate position in scroll area (viewerBox) or container
+        let left: number;
+        let top: number;
+
+        if (viewerBox) {
+            const viewerRect = viewerBox.getBoundingClientRect();
+            left = rect.left - viewerRect.left + viewerBox.scrollLeft;
+            top = rect.top - viewerRect.top + viewerBox.scrollTop;
+        } else {
+            const containerRect = container.getBoundingClientRect();
+            left = rect.left - containerRect.left;
+            top = rect.top - containerRect.top;
+        }
+
         const pdfWidth = Number(page.dataset.pdfWidth) || 0;
         const pdfHeight = Number(page.dataset.pdfHeight) || 0;
         const scaleX = pdfWidth > 0 ? width / pdfWidth : 0;
@@ -420,16 +457,17 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private captureAnchorState(viewerBox: HTMLDivElement, container: HTMLDivElement): PdfViewerAnchorState {
         const pages = container.querySelectorAll('.pdf-page');
         if (pages.length === 0) {
-            return { pageIndex: 0, pdfX: 0, pdfY: 0 };
+            return { pageIndex: 0, pdfX: 0, pdfY: 0, hadHorizontalScroll: false };
         }
 
         const anchorX = viewerBox.scrollLeft;
         const anchorY = viewerBox.scrollTop;
+        const hadHorizontalScroll = viewerBox.scrollWidth > viewerBox.clientWidth;
 
         let pageIndex = pages.length - 1;
         for (let i = 0; i < pages.length; i++) {
             const page = pages[i] as HTMLElement;
-            const metrics = this.getPageMetrics(page, container);
+            const metrics = this.getPageMetrics(page, container, viewerBox);
             if (anchorY <= metrics.top + metrics.height) {
                 pageIndex = i;
                 break;
@@ -437,12 +475,18 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
 
         const page = pages[pageIndex] as HTMLElement;
-        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container);
+        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container, viewerBox);
+
+        // Calculate PDF coordinates; clamp horizontal to prevent negative values
+        const rawPdfX = hadHorizontalScroll && scaleX ? (anchorX - left) / scaleX : 0;
+        const pdfX = Math.max(0, rawPdfX);
+        const pdfY = scaleY ? (anchorY - top) / scaleY : 0;
 
         return {
             pageIndex,
-            pdfX: scaleX ? (anchorX - left) / scaleX : 0,
-            pdfY: scaleY ? (anchorY - top) / scaleY : 0,
+            pdfX,
+            pdfY,
+            hadHorizontalScroll,
         };
     }
 
@@ -454,18 +498,36 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         const pageIndex = Math.min(anchor.pageIndex, pages.length - 1);
         const page = pages[pageIndex] as HTMLElement;
-        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container);
+        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container, viewerBox);
 
-        const desiredScrollLeft = left + (scaleX ? anchor.pdfX * scaleX : 0);
+        // Restore horizontal position only if there was scroll before
+        let desiredScrollLeft: number;
+        if (!anchor.hadHorizontalScroll) {
+            desiredScrollLeft = 0;
+        } else {
+            desiredScrollLeft = left + (scaleX ? anchor.pdfX * scaleX : 0);
+        }
+
         const desiredScrollTop = top + (scaleY ? anchor.pdfY * scaleY : 0);
         const maxScrollLeft = Math.max(0, viewerBox.scrollWidth - viewerBox.clientWidth);
         const maxScrollTop = Math.max(0, viewerBox.scrollHeight - viewerBox.clientHeight);
 
-        viewerBox.scrollLeft = PdfViewerComponent.clamp(desiredScrollLeft, 0, maxScrollLeft);
-        viewerBox.scrollTop = PdfViewerComponent.clamp(desiredScrollTop, 0, maxScrollTop);
+        const clampedScrollLeft = PdfViewerComponent.clamp(desiredScrollLeft, 0, maxScrollLeft);
+        const clampedScrollTop = PdfViewerComponent.clamp(desiredScrollTop, 0, maxScrollTop);
+
+        viewerBox.scrollLeft = clampedScrollLeft;
+        viewerBox.scrollTop = clampedScrollTop;
     }
 
     private handleResize = (): void => {
+        // Capture state on first resize event in sequence
+        const viewerBox = this.pdfViewerBox()?.nativeElement;
+        const container = this.pdfContainer()?.nativeElement;
+        if (viewerBox && container && this.pdfDocument && !this.isResizing) {
+            this.isResizing = true;
+            this.preCapturedAnchor = this.captureAnchorState(viewerBox, container);
+        }
+
         this.resizeTimeout = PdfViewerComponent.clearTimeoutId(this.resizeTimeout);
         this.resizeTimeout = window.setTimeout(() => {
             if (this.pdfDocument && !this.isLoading() && !this.error()) {
