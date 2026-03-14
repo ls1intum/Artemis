@@ -688,4 +688,214 @@ class AtlasAgentServiceTest {
         }
     }
 
+    @Nested
+    class UtilityMethods {
+
+        @Test
+        void shouldReturnTrueWhenAvailableWithChatClientAndMemory() {
+            assertThat(atlasAgentService.isAvailable()).isTrue();
+        }
+
+        @Test
+        void shouldReturnFalseWhenChatClientNull() {
+            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, templateService, null, null, null, null, chatMemory, "gpt-4o", 0.2,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
+            assertThat(serviceWithNullClient.isAvailable()).isFalse();
+        }
+
+        @Test
+        void shouldReturnFalseWhenChatMemoryNull() {
+            AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), templateService, null, null, null, null, null, "gpt-4o", 0.2,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
+            assertThat(serviceWithNullMemory.isAvailable()).isFalse();
+        }
+
+        @Test
+        void shouldGenerateCorrectSessionId() {
+            String sessionId = atlasAgentService.generateSessionId(42L, 7L);
+            assertThat(sessionId).isEqualTo("course_42_user_7");
+        }
+
+        @Test
+        void shouldMarkAndResetCompetencyModifiedFlag() {
+            AtlasAgentService.resetCompetencyModifiedFlag();
+            assertThat(AtlasAgentService.wasCompetencyModified()).isFalse();
+            AtlasAgentService.markCompetencyModified();
+            assertThat(AtlasAgentService.wasCompetencyModified()).isTrue();
+            AtlasAgentService.resetCompetencyModifiedFlag();
+            assertThat(AtlasAgentService.wasCompetencyModified()).isFalse();
+        }
+    }
+
+    @Nested
+    class CancelCommandHandling {
+
+        @Test
+        void shouldCancelPlanOnCancelCommand() {
+            String sessionId = "cancel_test_session";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(true);
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage("cancel", 123L, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Plan cancelled.");
+            verify(executionPlanStateManagerService).cancelPlan(sessionId);
+        }
+
+        @Test
+        void shouldCancelPlanOnStopCommand() {
+            String sessionId = "stop_test_session";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(true);
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage("stop", 123L, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Plan cancelled.");
+        }
+
+        @Test
+        void shouldCancelPlanOnAbortCommand() {
+            String sessionId = "abort_test_session";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(true);
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage("abort", 123L, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Plan cancelled.");
+        }
+
+        @Test
+        void shouldNotCancelWhenNoPlanActive() {
+            String sessionId = "no_plan_session";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false);
+            when(templateService.render(anyString(), anyMap())).thenReturn("System prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Some response")))));
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage("cancel", 123L, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Some response");
+        }
+    }
+
+    @Nested
+    class ExerciseMappingDelegation {
+
+        @Test
+        void shouldHandleDelegationToExerciseMapper() {
+            String testMessage = "Map exercises in this course";
+            Long courseId = 123L;
+            String sessionId = "exercise_mapper_test";
+            String responseWithExerciseMapperDelegation = "%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:Map OOP competency to Java exercise";
+
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithExerciseMapperDelegation)))))
+                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Exercise mapping preview generated")))));
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%");
+        }
+
+        @Test
+        void shouldHandleExerciseMappingApprovalWithoutPayload() {
+            String sessionId = "exercise_approval_test";
+            Long courseId = 123L;
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false);
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mappings saved successfully")))));
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage("[CREATE_APPROVED_EXERCISE_MAPPING]", courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Mappings saved successfully");
+        }
+
+        @Test
+        void shouldHandleExerciseMappingApprovalWithValidPayload() {
+            String sessionId = "exercise_approval_payload_test";
+            Long courseId = 123L;
+            String message = "[CREATE_APPROVED_EXERCISE_MAPPING]:{\"exerciseId\":42,\"mappings\":[{\"competencyId\":1,\"weight\":0.5}]}";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false);
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mappings saved")))));
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(message, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Mappings saved");
+        }
+
+        @Test
+        void shouldHandleExerciseMappingApprovalWithInvalidPayload() {
+            String sessionId = "exercise_approval_invalid_test";
+            Long courseId = 123L;
+            String message = "[CREATE_APPROVED_EXERCISE_MAPPING]:{invalid json}";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false);
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Mappings saved with fallback")))));
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(message, courseId, sessionId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.message()).isEqualTo("Mappings saved with fallback");
+        }
+    }
+
+    @Nested
+    class PlanDetection {
+
+        @Test
+        void shouldDetectAndInitializePlanFromResponse() {
+            String sessionId = "plan_detection_test";
+            Long courseId = 123L;
+            String responseWithPlanMarker = "I'll help you. %%ARTEMIS_PLAN:CREATE_AND_MAP_RELATIONS%%";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false);
+            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithPlanMarker)))));
+
+            atlasAgentService.processChatMessage("Create competencies and map them", courseId, sessionId);
+
+            verify(executionPlanStateManagerService).initializePlan(anyString(), any(), anyString(), any(), any());
+        }
+
+        @Test
+        void shouldNotReinitializePlanWhenAlreadyActive() {
+            String sessionId = "plan_already_active_test";
+            Long courseId = 123L;
+            String responseWithPlanMarker = "%%ARTEMIS_PLAN:CREATE_AND_MAP_RELATIONS%%";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(true);
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false).thenReturn(true);
+            when(templateService.render(anyString(), anyMap())).thenReturn("System prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithPlanMarker)))));
+
+            atlasAgentService.processChatMessage("Create competencies", courseId, sessionId);
+        }
+
+        @Test
+        void shouldIgnoreUnknownPlanTemplate() {
+            String sessionId = "unknown_plan_test";
+            Long courseId = 123L;
+            String responseWithUnknownPlan = "%%ARTEMIS_PLAN:UNKNOWN_TEMPLATE%%";
+
+            when(executionPlanStateManagerService.hasPlan(sessionId)).thenReturn(false);
+            when(templateService.render(anyString(), anyMap())).thenReturn("System prompt");
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithUnknownPlan)))));
+
+            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage("Test", courseId, sessionId);
+
+            assertThat(result).isNotNull();
+        }
+    }
+
 }
