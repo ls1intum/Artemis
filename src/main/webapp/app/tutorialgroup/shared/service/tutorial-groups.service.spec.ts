@@ -5,7 +5,7 @@ import { TestBed } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { firstValueFrom } from 'rxjs';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
-import { TutorialGroup, TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroup, TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { generateExampleTutorialGroup } from 'test/helpers/sample/tutorialgroup/tutorialGroupExampleModels';
 import { provideHttpClient } from '@angular/common/http';
@@ -65,6 +65,64 @@ describe('TutorialGroupService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(result).toMatchObject({ body: elemDefault });
+    });
+
+    it('should get tutorial group detail group dto', async () => {
+        const returnedFromService: RawTutorialGroupDetailGroupDTO = {
+            id: 9,
+            title: 'Tutorial 1',
+            language: 'English',
+            isOnline: false,
+            teachingAssistantName: 'Ada Lovelace',
+            teachingAssistantLogin: 'ada',
+            teachingAssistantImageUrl: 'https://example.org/ada.png',
+            capacity: 15,
+            campus: 'Garching',
+            groupChannelId: 21,
+            tutorChatId: 22,
+            sessions: [
+                {
+                    start: '2026-01-10T10:00:00.000Z',
+                    end: '2026-01-10T12:00:00.000Z',
+                    location: 'MI HS 1',
+                    isCancelled: false,
+                    locationChanged: true,
+                    timeChanged: false,
+                    dateChanged: true,
+                    attendanceCount: 12,
+                },
+            ],
+        };
+        const resultPromise = firstValueFrom(service.getTutorialGroupDetailGroupDTO(7, 9));
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/tutorialgroup/courses/7/tutorial-group-detail/9' });
+        req.flush(returnedFromService);
+
+        const result = await resultPromise;
+        expect(result).toMatchObject({
+            id: returnedFromService.id,
+            title: returnedFromService.title,
+            language: returnedFromService.language,
+            isOnline: returnedFromService.isOnline,
+            teachingAssistantName: returnedFromService.teachingAssistantName,
+            teachingAssistantLogin: returnedFromService.teachingAssistantLogin,
+            teachingAssistantImageUrl: returnedFromService.teachingAssistantImageUrl,
+            capacity: returnedFromService.capacity,
+            campus: returnedFromService.campus,
+            groupChannelId: returnedFromService.groupChannelId,
+            tutorChatId: returnedFromService.tutorChatId,
+        });
+        expect(result.sessions).toHaveLength(1);
+        expect(result.sessions[0]).toMatchObject({
+            location: returnedFromService.sessions?.[0].location,
+            isCancelled: returnedFromService.sessions?.[0].isCancelled,
+            locationChanged: returnedFromService.sessions?.[0].locationChanged,
+            timeChanged: returnedFromService.sessions?.[0].timeChanged,
+            dateChanged: returnedFromService.sessions?.[0].dateChanged,
+            attendanceCount: returnedFromService.sessions?.[0].attendanceCount,
+        });
+        expect(result.sessions[0].start.toISOString()).toBe(returnedFromService.sessions?.[0].start);
+        expect(result.sessions[0].end.toISOString()).toBe(returnedFromService.sessions?.[0].end);
     });
 
     it('create', () => {
