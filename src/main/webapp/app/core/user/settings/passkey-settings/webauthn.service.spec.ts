@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { WebauthnService } from './webauthn.service';
 import { WebauthnApiService } from './webauthn-api.service';
@@ -13,11 +15,29 @@ import { encodeAsBase64Url } from 'app/shared/util/base64.util';
 import { AccountService } from 'app/core/auth/account.service';
 import { signal } from '@angular/core';
 
+type MockedWebauthnApiService = {
+    getAuthenticationOptions: ReturnType<typeof vi.fn>;
+    loginWithPasskey: ReturnType<typeof vi.fn>;
+    getRegistrationOptions: ReturnType<typeof vi.fn>;
+    registerPasskey: ReturnType<typeof vi.fn>;
+};
+
+type MockedAlertService = {
+    addErrorAlert: ReturnType<typeof vi.fn>;
+};
+
+type MockedAccountService = {
+    userIdentity: ReturnType<typeof signal<User | undefined>>;
+    identity: ReturnType<typeof vi.fn>;
+};
+
 describe('WebauthnService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: WebauthnService;
-    let webauthnApiService: jest.Mocked<WebauthnApiService>;
-    let alertService: jest.Mocked<AlertService>;
-    let accountService: jest.Mocked<AccountService>;
+    let webauthnApiService: MockedWebauthnApiService;
+    let alertService: MockedAlertService;
+    let accountService: MockedAccountService;
 
     const mockUser: User = {
         id: 1,
@@ -29,14 +49,14 @@ describe('WebauthnService', () => {
 
     beforeEach(() => {
         const webauthnApiServiceMock = {
-            getAuthenticationOptions: jest.fn(),
-            loginWithPasskey: jest.fn(),
-            getRegistrationOptions: jest.fn(),
-            registerPasskey: jest.fn(),
+            getAuthenticationOptions: vi.fn(),
+            loginWithPasskey: vi.fn(),
+            getRegistrationOptions: vi.fn(),
+            registerPasskey: vi.fn(),
         };
 
         const alertServiceMock = {
-            addErrorAlert: jest.fn(),
+            addErrorAlert: vi.fn(),
         };
 
         const accountServiceMock = {
@@ -47,7 +67,7 @@ describe('WebauthnService', () => {
                 askToSetupPasskey: true,
                 internal: true,
             } as User),
-            identity: jest.fn(),
+            identity: vi.fn(),
         };
 
         TestBed.configureTestingModule({
@@ -60,15 +80,15 @@ describe('WebauthnService', () => {
         });
 
         service = TestBed.inject(WebauthnService);
-        webauthnApiService = TestBed.inject(WebauthnApiService) as jest.Mocked<WebauthnApiService>;
-        alertService = TestBed.inject(AlertService) as jest.Mocked<AlertService>;
-        accountService = TestBed.inject(AccountService) as jest.Mocked<AccountService>;
+        webauthnApiService = TestBed.inject(WebauthnApiService) as unknown as MockedWebauthnApiService;
+        alertService = TestBed.inject(AlertService) as unknown as MockedAlertService;
+        accountService = TestBed.inject(AccountService) as unknown as MockedAccountService;
 
         // Mock navigator.credentials
         Object.defineProperty(navigator, 'credentials', {
             value: {
-                get: jest.fn(),
-                create: jest.fn(),
+                get: vi.fn(),
+                create: vi.fn(),
             },
             writable: true,
             configurable: true,
@@ -76,7 +96,7 @@ describe('WebauthnService', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
         Object.defineProperty(navigator, 'credentials', {
             value: originalCredentials,
             writable: true,
@@ -111,8 +131,8 @@ describe('WebauthnService', () => {
         });
 
         it('should successfully login with passkey', async () => {
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
             accountService.identity.mockResolvedValue({} as any);
 
@@ -137,45 +157,45 @@ describe('WebauthnService', () => {
         });
 
         it('should throw InvalidCredentialError when credential is null', async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(null);
+            vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(null);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
         });
 
         it('should throw InvalidCredentialError when credential is undefined', async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(undefined as any);
+            vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(undefined as any);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
         });
 
         it('should throw InvalidCredentialError when credential type is not public-key', async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
+            vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
             const invalidCredential = { ...mockPublicKeyCredential, type: 'invalid-type' } as unknown as PublicKeyCredential;
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(invalidCredential);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(invalidCredential);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
         });
 
         it('should throw InvalidCredentialError when getLoginCredentialWithGracefullyHandlingAuthenticatorIssues returns null', async () => {
-            jest.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(null as any);
+            vi.spyOn(console, 'error').mockImplementation(() => {}); // Suppress console errors in the test
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(null as any);
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
         });
 
         it('should handle InvalidCredentialError from getLoginCredentialWithGracefullyHandlingAuthenticatorIssues', async () => {
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockImplementation(() => {
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockImplementation(() => {
                 throw new InvalidCredentialError();
             });
-            jest.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey()).rejects.toThrow(InvalidCredentialError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.invalidCredential');
@@ -184,8 +204,8 @@ describe('WebauthnService', () => {
 
         it('should handle generic error during login', async () => {
             const genericError = new Error('Network error');
-            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
-            jest.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(navigator.credentials, 'get').mockRejectedValue(genericError);
+            vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey()).rejects.toThrow(genericError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
@@ -194,10 +214,10 @@ describe('WebauthnService', () => {
 
         it('should handle error from webauthnApiService.loginWithPasskey', async () => {
             const apiError = new Error('API error');
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.loginWithPasskey.mockRejectedValue(apiError);
-            jest.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'error').mockImplementation(() => {});
 
             await expect(service.loginWithPasskey()).rejects.toThrow(apiError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.login');
@@ -205,8 +225,8 @@ describe('WebauthnService', () => {
         });
 
         it('should call accountService.identity after successful login', async () => {
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
             accountService.identity.mockResolvedValue({} as any);
 
@@ -230,7 +250,7 @@ describe('WebauthnService', () => {
                 timeout: 60000,
                 rpId: 'example.com',
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
 
             const result = await service.getCredential();
 
@@ -251,7 +271,7 @@ describe('WebauthnService', () => {
             webauthnApiService.getAuthenticationOptions.mockResolvedValue({
                 challenge: encodeAsBase64Url(challenge),
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(null);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue(null);
 
             const result = await service.getCredential();
 
@@ -274,7 +294,7 @@ describe('WebauthnService', () => {
                     },
                 ],
             } as any);
-            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({} as PublicKeyCredential);
+            vi.spyOn(navigator.credentials, 'get').mockResolvedValue({} as PublicKeyCredential);
 
             await service.getCredential();
 
@@ -350,7 +370,7 @@ describe('WebauthnService', () => {
             });
 
             // Start a conditional request — must await the authentication options fetch
-            const credentialPromise = service.getCredential(true);
+            void service.getCredential(true);
             // Wait for the async getAuthenticationOptions mock to resolve
             await new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -378,7 +398,7 @@ describe('WebauthnService', () => {
             });
 
             // Start a conditional request — getAuthenticationOptions is still pending
-            const credentialPromise = service.getCredential(true);
+            void service.getCredential(true);
 
             // Abort BEFORE the HTTP response arrives (simulates ngOnDestroy during fetch)
             service.abortPendingCredentialRequest();
@@ -676,9 +696,9 @@ describe('WebauthnService', () => {
         } as unknown as PublicKeyCredential;
 
         const setupSuccessfulRegistrationMocks = () => {
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.registerPasskey.mockResolvedValue({ success: true } as any);
         };
 
@@ -715,8 +735,8 @@ describe('WebauthnService', () => {
             userAbortedError.name = UserAbortedPasskeyCreationError.name;
             (userAbortedError as any).code = UserAbortedPasskeyCreationError.code;
 
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockRejectedValue(userAbortedError);
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockRejectedValue(userAbortedError);
 
             await service.addNewPasskey(mockUser);
 
@@ -724,9 +744,9 @@ describe('WebauthnService', () => {
         });
 
         it('should handle InvalidCredentialError', async () => {
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockImplementation(() => {
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockImplementation(() => {
                 throw new InvalidCredentialError();
             });
 
@@ -739,8 +759,8 @@ describe('WebauthnService', () => {
             invalidStateError.name = InvalidStateError.name;
             (invalidStateError as any).code = InvalidStateError.authenticatorCredentialAlreadyRegisteredWithRelyingPartyCode;
 
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockRejectedValue(invalidStateError);
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockRejectedValue(invalidStateError);
 
             await expect(service.addNewPasskey(mockUser)).rejects.toThrow(invalidStateError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.passkeyAlreadyRegistered');
@@ -748,8 +768,8 @@ describe('WebauthnService', () => {
 
         it('should handle generic registration error', async () => {
             const genericError = new Error('Registration failed');
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockRejectedValue(genericError);
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockRejectedValue(genericError);
 
             await expect(service.addNewPasskey(mockUser)).rejects.toThrow(genericError);
             expect(alertService.addErrorAlert).toHaveBeenCalledWith('artemisApp.userSettings.passkeySettingsPage.error.registration');
@@ -757,9 +777,9 @@ describe('WebauthnService', () => {
 
         it('should handle error from webauthnApiService.registerPasskey', async () => {
             const apiError = new Error('API registration error');
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
-            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockResolvedValue(mockPublicKeyCredential);
+            vi.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockPublicKeyCredential as any);
             webauthnApiService.registerPasskey.mockRejectedValue(apiError);
 
             await expect(service.addNewPasskey(mockUser)).rejects.toThrow(apiError);
@@ -767,9 +787,9 @@ describe('WebauthnService', () => {
         });
 
         it('should handle null credential from navigator.credentials.create', async () => {
-            jest.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
-            jest.spyOn(navigator.credentials, 'create').mockResolvedValue(null);
-            jest.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockImplementation(() => {
+            vi.spyOn(credentialOptionUtil, 'createCredentialOptions').mockReturnValue(mockRegistrationOptions);
+            vi.spyOn(navigator.credentials, 'create').mockResolvedValue(null);
+            vi.spyOn(credentialUtil, 'getRegistrationCredentialWithGracefullyHandlingAuthenticatorIssues').mockImplementation(() => {
                 throw new InvalidCredentialError();
             });
 
@@ -794,15 +814,15 @@ describe('WebauthnService', () => {
             setupSuccessfulRegistrationMocks();
 
             // Verify initial state
-            expect(accountService.userIdentity()?.askToSetupPasskey).toBeTrue();
+            expect(accountService.userIdentity()?.askToSetupPasskey).toBe(true);
 
             await service.addNewPasskey(mockUser);
 
             // Verify userIdentity signal was updated
             const updatedIdentity = accountService.userIdentity();
             expect(updatedIdentity).toBeDefined();
-            expect(updatedIdentity!.askToSetupPasskey).toBeFalse();
-            expect(updatedIdentity!.internal).toBeTrue();
+            expect(updatedIdentity!.askToSetupPasskey).toBe(false);
+            expect(updatedIdentity!.internal).toBe(true);
             expect(updatedIdentity!.id).toBe(1);
             expect(updatedIdentity!.email).toBe('test@example.com');
             expect(updatedIdentity!.login).toBe('testuser');
