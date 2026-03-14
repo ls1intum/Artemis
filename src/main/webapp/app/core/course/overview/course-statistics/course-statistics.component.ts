@@ -126,7 +126,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     categoryFilter = inject(ChartCategoryFilter);
 
-    readonly documentationType: DocumentationType = 'Statistics';
+    readonly documentationType: DocumentationType = 'StudentStatistics';
 
     courseId: number;
     private courseExercises: Exercise[];
