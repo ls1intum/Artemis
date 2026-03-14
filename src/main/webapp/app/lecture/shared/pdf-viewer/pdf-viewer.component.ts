@@ -53,6 +53,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     totalPages = signal<number>(0);
     currentPage = signal<number>(1);
     isLoading = signal<boolean>(true);
+    isRendering = signal<boolean>(false);
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
 
@@ -69,7 +70,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private resizeTimeout: number | undefined;
     private pageNavTimeoutId: number | undefined;
     private zoomRetryTimeoutId: number | undefined;
-    private isRendering = false;
     private resizeObserver: ResizeObserver | undefined;
     private lastObservedWidth = 0;
     private isZooming = false;
@@ -116,7 +116,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                     const widthDiff = Math.abs(newWidth - this.lastObservedWidth);
 
                     // Skip if rendering, zooming, or width change < 30px (scrollbar threshold)
-                    if (!this.isRendering && !this.isZooming && widthDiff > PdfViewerComponent.RESIZE_WIDTH_THRESHOLD_PX) {
+                    if (!this.isRendering() && !this.isZooming && widthDiff > PdfViewerComponent.RESIZE_WIDTH_THRESHOLD_PX) {
                         this.lastObservedWidth = newWidth;
                         this.handleResize();
                     }
@@ -188,7 +188,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     private async renderAllPages(): Promise<void> {
-        if (this.isRendering) {
+        if (this.isRendering()) {
             this.pendingRender = true;
             return;
         }
@@ -207,7 +207,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         const anchor = viewerBox ? this.captureAnchorState(viewerBox, container) : undefined;
 
-        this.isRendering = true;
+        this.isRendering.set(true);
 
         try {
             container.innerHTML = '';
@@ -227,7 +227,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             // If no pages rendered successfully, set error state
             if (pagesSucceeded === 0) {
                 this.error.set('error');
-                this.isRendering = false;
+                this.isRendering.set(false);
                 return;
             }
 
@@ -244,7 +244,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 this.updateCurrentPage();
             }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
         } finally {
-            this.isRendering = false;
+            this.isRendering.set(false);
             if (this.pendingRender) {
                 this.pendingRender = false;
                 void this.renderAllPages();
@@ -271,7 +271,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     private performZoom(): void {
         // Wait for rendering to complete
-        if (this.isRendering) {
+        if (this.isRendering()) {
             this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
             this.zoomRetryTimeoutId = window.setTimeout(() => this.performZoom(), PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
             return;
@@ -490,7 +490,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     }
 
     private updateCurrentPage = (): void => {
-        if (this.isRendering) {
+        if (this.isRendering()) {
             return;
         }
 

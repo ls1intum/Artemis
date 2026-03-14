@@ -27,6 +27,7 @@ import {
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -36,7 +37,7 @@ import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
+    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, ArtemisDatePipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
