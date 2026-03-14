@@ -80,23 +80,7 @@ public class TestDataSourcePoolConfig {
                         return bean;
                     }
 
-                    // On CI (Linux), the ephemeral port range is large enough (~28K ports) that
-                    // port exhaustion is not an issue even without connection pooling. Wrapping with
-                    // HikariCP actually causes problems because it caches TCP connections that become
-                    // stale when Zonky swaps the underlying database container between test contexts.
-                    // Zonky's BlockingDatabaseWrapper handles database transitions transparently, but
-                    // HikariCP's pooled connections bypass this blocking mechanism.
-                    //
-                    // On macOS (developer machines with ~16K ports), pooling is needed to prevent
-                    // BindException. We detect this based on the OS.
-                    boolean isMacOS = System.getProperty("os.name", "").toLowerCase().contains("mac");
-
-                    if (!isMacOS) {
-                        log.info("Skipping HikariCP wrapping on non-macOS ({}) — Zonky's BlockingDatabaseWrapper handles connections directly", System.getProperty("os.name"));
-                        return bean;
-                    }
-
-                    log.info("Wrapping '{}' DataSource ({}) with HikariCP connection pool (macOS port exhaustion workaround)", beanName, bean.getClass().getSimpleName());
+                    log.info("Wrapping '{}' DataSource ({}) with HikariCP connection pool", beanName, bean.getClass().getSimpleName());
                     HikariDataSource pooled = new HikariDataSource();
                     pooled.setDataSource(ds);
                     pooled.setMaximumPoolSize(10);
