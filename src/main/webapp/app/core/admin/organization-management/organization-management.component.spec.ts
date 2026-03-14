@@ -48,7 +48,7 @@ describe('OrganizationManagementComponent', () => {
     });
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should load organizations', () => {
