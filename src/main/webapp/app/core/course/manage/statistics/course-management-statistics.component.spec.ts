@@ -30,7 +30,7 @@ describe('CourseManagementStatisticsComponent', () => {
         ],
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [RouterModule.forRoot([]), CourseManagementStatisticsComponent],
             providers: [
@@ -41,13 +41,11 @@ describe('CourseManagementStatisticsComponent', () => {
                 provideHttpClient(),
                 provideNoopAnimationsForTests(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseManagementStatisticsComponent);
-                component = fixture.componentInstance;
-                service = TestBed.inject(StatisticsService);
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseManagementStatisticsComponent);
+        component = fixture.componentInstance;
+        service = TestBed.inject(StatisticsService);
     });
 
     afterEach(() => {

@@ -1,4 +1,4 @@
-import { Component, HostListener, Signal, ViewChild, computed, effect, inject, input, output, signal } from '@angular/core';
+import { Component, HostListener, Signal, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { IconDefinition, faChevronRight, faCog, faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -85,7 +85,7 @@ export class CourseSidebarComponent {
     activeBreakpoints: Signal<string[]>;
     canExpand: Signal<boolean>;
 
-    @ViewChild('itemsDrop') itemsDrop!: NgbDropdown;
+    readonly itemsDrop = viewChild.required<NgbDropdown>('itemsDrop');
 
     // Constants for threshold calculation
     readonly WINDOW_OFFSET: number = 225;
@@ -105,11 +105,11 @@ export class CourseSidebarComponent {
 
         effect(() => {
             const items = this.sidebarItems();
-            if (items.length > 0) {
+            untracked(() => {
                 this.updateVisibleNavbarItems(window.innerHeight);
                 this.sidebarItemsTop.set(items.filter((item) => !item.bottom));
                 this.sidebarItemsBottom.set(items.filter((item) => item.bottom));
-            }
+            });
         });
     }
 
@@ -124,8 +124,9 @@ export class CourseSidebarComponent {
         const threshold = this.calculateThreshold();
         this.applyThreshold(threshold, height);
 
-        if (!this.anyItemHidden() && this.itemsDrop) {
-            this.itemsDrop.close();
+        const itemsDrop = this.itemsDrop();
+        if (!this.anyItemHidden() && itemsDrop) {
+            itemsDrop.close();
         }
     }
 
