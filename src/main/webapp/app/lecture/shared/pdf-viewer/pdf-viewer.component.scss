@@ -13,7 +13,6 @@
         overflow: auto;
         overscroll-behavior: none;
 
-        // Prevent content from expanding the box
         contain: strict;
 
         @media (max-width: 600px) {

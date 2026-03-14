@@ -150,7 +150,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                 this.loadPdf();
             }
         } else {
-            // Clear loaded content and reset state
             this.cancelPendingLoads();
             this.clearLoadedContent();
             this.isLoading.set(false);
@@ -168,7 +167,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     if (!dto || !dto.segments) {
                         return [];
                     }
-                    // Filter segments with required fields
+                    // Filter and map to ensure all required fields are present
                     return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
             )

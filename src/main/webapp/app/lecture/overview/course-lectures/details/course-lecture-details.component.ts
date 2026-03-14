@@ -96,7 +96,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
-    // Deep-linking: target unit and PDF page from URL query params (?unit=X&page=Y)
     readonly targetUnitId = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
@@ -120,7 +119,6 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             }
         });
 
-        // Deep-linking: parse and validate query parameters
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const unitId = Number(params['unit']);
             this.targetUnitId.set(Number.isInteger(unitId) && unitId > 0 ? unitId : undefined);
@@ -150,7 +148,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
-                        // Check if PDF attachments exist in lecture units
+                        this.ensureValidDeepLinkTargets();
                         this.hasPdfLectureUnit = this.lectureUnits.some(
                             (unit) => unit.type === LectureUnitType.ATTACHMENT_VIDEO && (unit as AttachmentVideoUnit).attachment?.link?.toLowerCase().endsWith('.pdf'),
                         );
@@ -216,6 +214,19 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         this.lectureUnitService.completeLectureUnit(this.lecture!, event);
+    }
+
+    private ensureValidDeepLinkTargets(): void {
+        const targetUnitId = this.targetUnitId();
+        if (!targetUnitId) {
+            return;
+        }
+
+        const hasUnit = this.lectureUnits.some((unit) => unit.id === targetUnitId);
+        if (!hasUnit) {
+            this.targetUnitId.set(undefined);
+            this.targetPdfPage.set(undefined);
+        }
     }
 
     createDateInfoBox(date: Dayjs, contentStringName: string): InformationBox {

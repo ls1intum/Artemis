@@ -18,7 +18,6 @@ import { CompetencyContributionComponent } from 'app/atlas/shared/competency-con
     styleUrl: './lecture-unit.component.scss',
 })
 export class LectureUnitComponent implements OnDestroy {
-    // Delay to allow async content (PDFs, videos) to render before scrolling
     private static readonly SCROLL_INTO_VIEW_DELAY_MS = 500;
 
     private router = inject(Router);
@@ -55,13 +54,11 @@ export class LectureUnitComponent implements OnDestroy {
     readonly isStudentPath = computed(() => this.router.url.startsWith('/courses'));
 
     constructor() {
-        // Watch initiallyExpanded signal and trigger expansion/scroll when it becomes true
         effect(
             (onCleanup) => {
                 const shouldAutoExpand = this.initiallyExpanded();
                 if (shouldAutoExpand && !this.autoExpanded) {
                     this.autoExpanded = true;
-                    // Set collapsed state and emit event so parent components can load content
                     if (untracked(() => this.isCollapsed())) {
                         this.isCollapsed.set(false);
                         this.onCollapse.emit(false);
@@ -73,7 +70,6 @@ export class LectureUnitComponent implements OnDestroy {
                     this.autoExpanded = false;
                 }
 
-                // Cleanup: clear timeout if effect re-runs or component is destroyed
                 onCleanup(() => {
                     this.clearScrollTimeout();
                 });
@@ -83,7 +79,6 @@ export class LectureUnitComponent implements OnDestroy {
     }
 
     ngOnDestroy(): void {
-        // Clear any outstanding scroll timeout to avoid callbacks after destruction
         this.clearScrollTimeout();
     }
 

@@ -63,11 +63,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
 
-    // Show toolbar when PDF is loaded, regardless of individual page errors
     showToolbar = computed(() => !this.isLoading() && this.totalPages() > 0);
-    // Disable zoom out when at minimum zoom level
     readonly canZoomOut = computed(() => this.zoomLevel() > PdfViewerComponent.MIN_ZOOM_LEVEL);
-    // Disable zoom in when at maximum zoom level
     readonly canZoomIn = computed(() => this.zoomLevel() < PdfViewerComponent.MAX_ZOOM_LEVEL);
 
     protected readonly faSearchMinus = faSearchMinus;
@@ -120,18 +117,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         if (viewerBox) {
             viewerBox.addEventListener('scroll', this.updateCurrentPage);
 
-            // Detect container size changes (e.g., sidebar collapse)
             this.lastObservedWidth = viewerBox.clientWidth;
             this.resizeObserver = new ResizeObserver((entries) => {
                 for (const entry of entries) {
                     const newWidth = entry.contentRect.width;
                     const widthDiff = Math.abs(newWidth - this.lastObservedWidth);
 
-                    // Skip if rendering, zooming, or width change < 30px (scrollbar threshold)
                     if (!this.isRendering() && !this.isZooming && widthDiff > PdfViewerComponent.RESIZE_WIDTH_THRESHOLD_PX) {
                         const container = this.pdfContainer()?.nativeElement;
                         if (viewerBox && container) {
-                            // Capture only on first resize event to avoid browser scroll adjustments
                             if (!this.isResizing) {
                                 this.isResizing = true;
                                 this.preCapturedAnchor = this.captureAnchorState(viewerBox, container);
@@ -208,6 +202,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
     }
 
+    /**
+     * Re-renders all pages at the current container width and restores the scroll anchor
+     * so the same PDF content stays under the viewport after resize or reload.
+     */
     private async renderAllPages(): Promise<void> {
         if (this.isRendering()) {
             this.pendingRender = true;
@@ -226,7 +224,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const viewerBox = this.pdfViewerBox()?.nativeElement;
         const container = containerRef.nativeElement;
 
-        // Use pre-captured anchor from resize or capture fresh state
         let anchor: PdfViewerAnchorState | undefined;
         if (this.preCapturedAnchor) {
             anchor = this.preCapturedAnchor;
@@ -254,7 +251,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 }
             }
 
-            // If no pages rendered successfully, set error state
             if (pagesSucceeded === 0) {
                 this.error.set('error');
                 this.isRendering.set(false);
@@ -266,9 +262,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                     this.applyZoomToPages();
                 }
 
-                // Wait for one animation frame to ensure layout is stable before measuring positions
                 requestAnimationFrame(() => {
-                    // Restore scroll position to the same top-left PDF content
                     if (viewerBox && anchor) {
                         this.restoreAnchorState(anchor, viewerBox, container);
                     }
@@ -302,8 +296,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         this.setZoom(1.0, true);
     }
 
+    /**
+     * Applies zoom via CSS scaling and preserves the user's scroll position by mapping
+     * old scroll ratios to the new scrollable area.
+     */
     private performZoom(): void {
-        // Wait for rendering to complete
         if (this.isRendering()) {
             this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
             this.zoomRetryTimeoutId = window.setTimeout(() => this.performZoom(), PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
@@ -311,7 +308,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }
         this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
 
-        // Pause observer to prevent scrollbar feedback loop
         this.isZooming = true;
 
         const viewerBox = this.pdfViewerBox()?.nativeElement;
@@ -322,7 +318,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const clientWidth = viewerBox?.clientWidth ?? 0;
         const clientHeight = viewerBox?.clientHeight ?? 0;
 
-        // Calculate center point (horizontal) and top (vertical)
         const centerXRatio = oldScrollWidth > 0 ? (oldScrollLeft + clientWidth / 2) / oldScrollWidth : 0.5;
         const topYRatio = oldScrollHeight > 0 ? oldScrollTop / oldScrollHeight : 0;
 
@@ -349,7 +344,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
             viewerBox.scrollTop = newScrollTop;
         });
 
-        // Resume observer after scrollbar changes settle
         setTimeout(() => {
             if (viewerBox) {
                 this.lastObservedWidth = viewerBox.clientWidth;
@@ -359,7 +353,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }, PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
     }
 
-    /** Navigates to the specified page (1-indexed). */
     goToPage(pageNumber: number): void {
         if (!this.pdfDocument || pageNumber < 1 || pageNumber > this.totalPages()) {
             return;
@@ -390,7 +383,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         this.currentPage.set(pageNumber);
     }
 
-    /** Adjusts page dimensions via CSS without re-rendering canvas pixel data. */
+    /**
+     * Resizes rendered pages without re-rendering canvas pixel data.
+     */
     private applyZoomToPages(): void {
         const container = this.pdfContainer()?.nativeElement;
         if (!container) {
@@ -415,6 +410,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         });
     }
 
+    /**
+     * Computes DOM metrics and PDF scale factors for a rendered page.
+     * Used to translate between scroll offsets and PDF coordinates.
+     */
     private getPageMetrics(
         page: HTMLElement,
         container: HTMLDivElement,
@@ -433,7 +432,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const width = rect.width;
         const height = rect.height;
 
-        // Calculate position in scroll area (viewerBox) or container
         let left: number;
         let top: number;
 
@@ -463,6 +461,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         };
     }
 
+    /**
+     * Captures the current scroll position in PDF coordinates so it can be restored
+     * after a resize or re-render.
+     */
     private captureAnchorState(viewerBox: HTMLDivElement, container: HTMLDivElement): PdfViewerAnchorState {
         const pages = container.querySelectorAll('.pdf-page');
         if (pages.length === 0) {
@@ -486,7 +488,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const page = pages[pageIndex] as HTMLElement;
         const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container, viewerBox);
 
-        // Calculate PDF coordinates; clamp horizontal to prevent negative values
         const rawPdfX = hadHorizontalScroll && scaleX ? (anchorX - left) / scaleX : 0;
         const pdfX = Math.max(0, rawPdfX);
         const pdfY = scaleY ? (anchorY - top) / scaleY : 0;
@@ -499,6 +500,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         };
     }
 
+    /**
+     * Restores the scroll position based on a previously captured anchor state,
+     * respecting whether horizontal scrolling was present.
+     */
     private restoreAnchorState(anchor: PdfViewerAnchorState, viewerBox: HTMLDivElement, container: HTMLDivElement): void {
         const pages = container.querySelectorAll('.pdf-page');
         if (pages.length === 0) {
@@ -509,7 +514,6 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         const page = pages[pageIndex] as HTMLElement;
         const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container, viewerBox);
 
-        // Restore horizontal position only if there was scroll before
         let desiredScrollLeft: number;
         if (!anchor.hadHorizontalScroll) {
             desiredScrollLeft = 0;
@@ -528,8 +532,11 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         viewerBox.scrollTop = clampedScrollTop;
     }
 
+    /**
+     * Debounced resize handler that captures an anchor once per resize sequence
+     * and triggers a re-render at the new width.
+     */
     private handleResize = (): void => {
-        // Capture state on first resize event in sequence
         const viewerBox = this.pdfViewerBox()?.nativeElement;
         const container = this.pdfContainer()?.nativeElement;
         if (viewerBox && container && this.pdfDocument && !this.isResizing) {
@@ -545,10 +552,15 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         }, PdfViewerComponent.RESIZE_DEBOUNCE_MS);
     };
 
+    /**
+     * Delays page navigation until rendering has settled to avoid scroll jitter.
+     */
     private schedulePageNavigation(targetPage: number, totalPages: number): void {
         this.pageNavTimeoutId = PdfViewerComponent.clearTimeoutId(this.pageNavTimeoutId);
-        const validPage = Math.max(1, Math.min(targetPage, totalPages));
-        this.pageNavTimeoutId = window.setTimeout(() => this.goToPage(validPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
+        if (targetPage < 1 || targetPage > totalPages) {
+            return;
+        }
+        this.pageNavTimeoutId = window.setTimeout(() => this.goToPage(targetPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
     }
 
     private setZoom(nextZoom: number, force = false): void {
@@ -560,6 +572,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         this.performZoom();
     }
 
+    /**
+     * Updates the current page based on which page has the largest visible area.
+     */
     private updateCurrentPage = (): void => {
         if (this.isRendering()) {
             return;
@@ -584,12 +599,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         pages.forEach((page, index) => {
             const pageRect = page.getBoundingClientRect();
 
-            // Calculate intersection height between page and viewer
             const intersectionTop = Math.max(pageRect.top, viewerRect.top);
             const intersectionBottom = Math.min(pageRect.bottom, viewerRect.bottom);
             const visibleHeight = Math.max(0, intersectionBottom - intersectionTop);
 
-            // The page with the most visible area is the current page
             if (visibleHeight > maxVisibleArea) {
                 maxVisibleArea = visibleHeight;
                 visiblePageNum = index + 1;
@@ -599,6 +612,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         this.currentPage.set(visiblePageNum);
     };
 
+    /**
+     * Renders a single page to a canvas at device pixel ratio for crisp output.
+     * Returns false if rendering fails.
+     */
     private async renderPage(pageNum: number, container: HTMLDivElement, targetWidth: number): Promise<boolean> {
         if (!this.pdfDocument) {
             return false;
@@ -607,11 +624,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         try {
             const page = await this.pdfDocument.getPage(pageNum);
 
-            // Calculate scale based on target width
             const viewport = page.getViewport({ scale: 1 });
             const scale = targetWidth / viewport.width;
 
-            // Use devicePixelRatio for sharp Retina rendering
             const pixelRatio = window.devicePixelRatio || 1;
             const scaledViewport = page.getViewport({ scale: scale * pixelRatio });
 
@@ -622,17 +637,14 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 return false;
             }
 
-            // Set canvas size in physical pixels
             canvas.height = scaledViewport.height;
             canvas.width = scaledViewport.width;
 
-            // Scale canvas back to CSS pixels for display
             const cssWidth = scaledViewport.width / pixelRatio;
             const cssHeight = scaledViewport.height / pixelRatio;
             canvas.style.width = `${cssWidth}px`;
             canvas.style.height = `${cssHeight}px`;
 
-            // Store original dimensions for zoom
             canvas.dataset.originalWidth = `${cssWidth}`;
             canvas.dataset.originalHeight = `${cssHeight}`;
 
@@ -642,10 +654,8 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
                 canvas: canvas,
             };
 
-            // Render before DOM insertion to prevent flicker
             await page.render(renderContext).promise;
 
-            // Only add to DOM after rendering is complete
             const pageDiv = document.createElement('div');
             pageDiv.className = 'pdf-page';
             pageDiv.style.width = canvas.style.width;

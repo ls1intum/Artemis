@@ -209,6 +209,17 @@ describe('PdfViewerComponent', () => {
             component.goToPage(target);
             expect(component.currentPage()).toBe(expected);
         });
+
+        it('should ignore scheduled navigation when page is outside range', () => {
+            vi.useFakeTimers();
+            const goToPageSpy = vi.spyOn(component as any, 'goToPage');
+
+            (component as any).schedulePageNavigation(10, 5);
+            vi.runAllTimers();
+
+            expect(goToPageSpy).not.toHaveBeenCalled();
+            vi.useRealTimers();
+        });
     });
 
     describe('PDF loading', () => {
