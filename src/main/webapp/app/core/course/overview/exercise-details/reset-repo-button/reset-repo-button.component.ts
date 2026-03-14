@@ -36,7 +36,7 @@ export class ResetRepoButtonComponent {
     readonly participations = input.required<StudentParticipation[]>();
     readonly smallButtons = input.required<boolean>();
 
-    readonly popover = viewChild.required<NgbPopover>('popover');
+    readonly popover = viewChild<NgbPopover>('popover');
 
     private readonly _gradedParticipation = signal<StudentParticipation | undefined>(undefined);
     private readonly _practiceParticipation = signal<StudentParticipation | undefined>(undefined);
@@ -76,7 +76,7 @@ export class ResetRepoButtonComponent {
             .pipe(
                 finalize(() => {
                     this._isLoading.set(false);
-                    this.popover().close();
+                    this.popover()?.close();
                 }),
             )
             .subscribe({
