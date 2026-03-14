@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
 import { MemirisMemoryDataDTO, MemirisMemoryWithRelationsDTO } from 'app/iris/shared/entities/memiris.model';
 
 /**
@@ -34,19 +33,5 @@ export class IrisMemoriesHttpService {
      */
     deleteUserMemory(memoryId: string): Observable<void> {
         return this.http.delete<void>(`${this.apiPrefix}/memory/${encodeURIComponent(memoryId)}`);
-    }
-
-    /**
-     * Deletes all memories for the current user.
-     */
-    deleteAllUserMemories(): Observable<void> {
-        return this.http.delete<void>(`${this.apiPrefix}/memories`);
-    }
-
-    /**
-     * Returns the number of memories stored for the current user.
-     */
-    getUserMemoryCount(): Observable<number> {
-        return this.getUserMemoryData().pipe(map((data) => data.memories?.length ?? 0));
     }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -6,6 +6,7 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
@@ -22,15 +23,10 @@ import {
     faFilePowerpoint,
     faFileVideo,
     faFileWord,
-    faRotateLeft,
-    faSearchMinus,
-    faSearchPlus,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
@@ -38,34 +34,15 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { PdfViewerComponent, PdfViewerModule } from 'ng2-pdf-viewer';
-import { ButtonModule } from 'primeng/button';
-
-type PdfDocumentProxyLike = {
-    numPages?: number | null;
-};
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [
-        LectureUnitComponent,
-        TranslateDirective,
-        SafeResourceUrlPipe,
-        ArtemisTranslatePipe,
-        ArtemisDatePipe,
-        VideoPlayerComponent,
-        FaIconComponent,
-        PdfViewerModule,
-        ButtonModule,
-    ],
+    imports: [LectureUnitComponent, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
 export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
-    protected readonly faSearchMinus = faSearchMinus;
-    protected readonly faSearchPlus = faSearchPlus;
-    protected readonly faRotateLeft = faRotateLeft;
 
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
@@ -82,25 +59,10 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
     readonly pdfLoadError = signal<boolean>(false);
-    readonly pdfZoom = signal<number>(1.0);
-
-    private pdfViewer = viewChild(PdfViewerComponent);
-    private pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
 
     private playlistSubscription?: Subscription;
     private transcriptSubscription?: Subscription;
     private pdfSubscription?: Subscription;
-    private pdfPage = 1;
-    private pdfTotalPages = 0;
-    readonly pdfMinZoom = 0.5;
-    readonly pdfMaxZoom = 3.0;
-    readonly pdfZoomStep = 0.25;
-
-    private resizeObserver?: ResizeObserver;
-    private pendingScrollRestore?: { xRatio: number; yRatio: number };
-    private lastViewportScale = 1;
-    private resizeDebounceTimer?: number;
-    private lastCapturedSnapshot?: { xRatio: number; yRatio: number };
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
@@ -141,11 +103,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return undefined;
     }
 
-    constructor() {
-        super();
-        this.ensurePdfWorkerSrc();
-    }
-
     private logUnitOpenedEvent(): void {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
     }
@@ -156,9 +113,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.revokePdfUrl();
         this.pdfUrl.set(undefined);
         this.pdfLoadError.set(false);
-        this.pdfPage = this.targetPdfPage() ?? 1;
-        this.pdfTotalPages = 0;
-        this.pdfZoom.set(1.0);
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
@@ -200,7 +154,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             this.clearLoadedContent();
             this.isLoading.set(false);
             this.isPdfLoading.set(false);
-            this.cleanupResizeObserver();
         }
     }
 
@@ -247,7 +200,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     this.revokePdfUrl();
                     this.pdfUrl.set(URL.createObjectURL(blob));
                     this.pdfLoadError.set(false);
-                    this.pdfPage = this.targetPdfPage() ?? 1;
                 }
                 this.isPdfLoading.set(false);
             },
@@ -262,7 +214,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     ngOnDestroy(): void {
         this.cancelPendingLoads();
         this.revokePdfUrl();
-        this.cleanupResizeObserver();
     }
 
     private revokePdfUrl(): void {
@@ -279,86 +230,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.transcriptSubscription = undefined;
         this.pdfSubscription?.unsubscribe();
         this.pdfSubscription = undefined;
-    }
-
-    onPdfLoaded(pdf: PdfDocumentProxyLike): void {
-        this.pdfTotalPages = pdf.numPages ?? 0;
-        if (this.pdfPage < 1) {
-            this.pdfPage = 1;
-        }
-        if (this.pdfTotalPages > 0 && this.pdfPage > this.pdfTotalPages) {
-            this.pdfPage = this.pdfTotalPages;
-        }
-        this.setupResizeObserver();
-    }
-
-    onPdfError(): void {
-        this.pdfLoadError.set(true);
-    }
-
-    zoomIn(): void {
-        this.setZoom(this.pdfZoom() + this.pdfZoomStep);
-    }
-
-    zoomOut(): void {
-        this.setZoom(this.pdfZoom() - this.pdfZoomStep);
-    }
-
-    resetZoom(): void {
-        this.setZoom(1.0);
-    }
-
-    private setZoom(nextZoom: number): void {
-        const clamped = Math.max(this.pdfMinZoom, Math.min(this.pdfMaxZoom, nextZoom));
-        if (clamped === this.pdfZoom()) {
-            return;
-        }
-        const scrollSnapshot = this.capturePdfScrollCenter();
-        this.pdfZoom.set(clamped);
-        if (scrollSnapshot) {
-            this.restorePdfScrollCenter(scrollSnapshot);
-        }
-    }
-
-    private capturePdfScrollCenter(): { xRatio: number; yRatio: number } | undefined {
-        const container = this.getPdfScrollContainer();
-        if (!container) {
-            return undefined;
-        }
-        const { scrollWidth, scrollHeight, scrollLeft, scrollTop, clientWidth, clientHeight } = container;
-        if (scrollWidth <= 0 || scrollHeight <= 0) {
-            return undefined;
-        }
-        const centerX = scrollLeft + clientWidth / 2;
-        const centerY = scrollTop + clientHeight / 2;
-        return {
-            xRatio: centerX / scrollWidth,
-            yRatio: centerY / scrollHeight,
-        };
-    }
-
-    private restorePdfScrollCenter(snapshot: { xRatio: number; yRatio: number }): void {
-        const container = this.getPdfScrollContainer();
-        if (!container) {
-            return;
-        }
-        const apply = () => {
-            const { scrollWidth, scrollHeight, clientWidth, clientHeight } = container;
-            if (scrollWidth <= 0 || scrollHeight <= 0) {
-                return;
-            }
-            const centerX = snapshot.xRatio * scrollWidth;
-            const centerY = snapshot.yRatio * scrollHeight;
-            container.scrollLeft = Math.max(0, centerX - clientWidth / 2);
-            container.scrollTop = Math.max(0, centerY - clientHeight / 2);
-        };
-        requestAnimationFrame(() => requestAnimationFrame(apply));
-    }
-
-    private getPdfScrollContainer(): HTMLElement | undefined {
-        const viewer = this.pdfViewer();
-        const viewerContainer = viewer?.pdfViewerContainer?.nativeElement;
-        return viewerContainer ?? this.pdfViewerBox()?.nativeElement;
     }
 
     /**
@@ -411,121 +282,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     hasVideo(): boolean {
         return !!this.lectureUnit().videoSource;
-    }
-
-    get pdfPageCount(): number {
-        return this.pdfTotalPages;
-    }
-
-    get currentPdfPage(): number {
-        return this.pdfPage;
-    }
-
-    set currentPdfPage(page: number) {
-        this.pdfPage = page;
-    }
-
-    private setupResizeObserver(): void {
-        this.cleanupResizeObserver();
-
-        const container = this.getPdfScrollContainer();
-        if (!container) {
-            return;
-        }
-
-        // Initialize viewport scale
-        this.lastViewportScale = window.visualViewport?.scale ?? 1;
-
-        this.resizeObserver = new ResizeObserver(() => {
-            const currentScale = window.visualViewport?.scale ?? 1;
-            const isBrowserZoom = currentScale !== this.lastViewportScale;
-            this.lastViewportScale = currentScale;
-
-            // Only restore scroll position for layout changes, not browser zoom
-            if (!isBrowserZoom) {
-                // Capture snapshot immediately (before resize animation)
-                if (!this.lastCapturedSnapshot) {
-                    this.lastCapturedSnapshot = this.capturePdfScrollCenter();
-                }
-
-                // Clear existing debounce timer
-                if (this.resizeDebounceTimer) {
-                    clearTimeout(this.resizeDebounceTimer);
-                }
-
-                // Wait for resize animation to finish (150ms debounce)
-                this.resizeDebounceTimer = window.setTimeout(() => {
-                    if (this.lastCapturedSnapshot) {
-                        this.pendingScrollRestore = this.lastCapturedSnapshot;
-                        this.attemptScrollRestore();
-                        this.lastCapturedSnapshot = undefined;
-                    }
-                    this.resizeDebounceTimer = undefined;
-                }, 150);
-            }
-        });
-
-        this.resizeObserver.observe(container);
-    }
-
-    private cleanupResizeObserver(): void {
-        if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-            this.resizeObserver = undefined;
-        }
-        if (this.resizeDebounceTimer) {
-            clearTimeout(this.resizeDebounceTimer);
-            this.resizeDebounceTimer = undefined;
-        }
-        this.pendingScrollRestore = undefined;
-        this.lastCapturedSnapshot = undefined;
-    }
-
-    private attemptScrollRestore(): void {
-        if (!this.pendingScrollRestore) {
-            return;
-        }
-
-        const snapshot = this.pendingScrollRestore;
-        const maxAttempts = 30;
-        let attempts = 0;
-
-        const tryRestore = () => {
-            attempts++;
-            const container = this.getPdfScrollContainer();
-            if (!container) {
-                this.pendingScrollRestore = undefined;
-                return;
-            }
-
-            const { scrollWidth, scrollHeight } = container;
-            if (scrollWidth > 0 && scrollHeight > 0) {
-                // PDF has rendered, restore scroll position
-                const centerX = snapshot.xRatio * scrollWidth;
-                const centerY = snapshot.yRatio * scrollHeight;
-                container.scrollLeft = Math.max(0, centerX - container.clientWidth / 2);
-                container.scrollTop = Math.max(0, centerY - container.clientHeight / 2);
-                this.pendingScrollRestore = undefined;
-            } else if (attempts < maxAttempts) {
-                // PDF not ready yet, try again
-                requestAnimationFrame(tryRestore);
-            } else {
-                // Give up after max attempts
-                this.pendingScrollRestore = undefined;
-            }
-        };
-
-        requestAnimationFrame(tryRestore);
-    }
-
-    private ensurePdfWorkerSrc(): void {
-        if (typeof window === 'undefined') {
-            return;
-        }
-        const globalWindow = window as typeof window & { pdfWorkerSrc?: string };
-        if (!globalWindow.pdfWorkerSrc) {
-            globalWindow.pdfWorkerSrc = '/content/scripts/pdf.worker.ng2.min.mjs';
-        }
     }
 
     /**

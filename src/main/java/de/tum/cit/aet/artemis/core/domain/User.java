@@ -207,7 +207,7 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     @NonNull
     @Column(name = "memiris_enabled", nullable = false)
-    private boolean memirisEnabled = true;
+    private boolean memirisEnabled = false;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonIgnoreProperties(value = "user", allowSetters = true)
