@@ -64,8 +64,8 @@ if __name__ == "__main__":
     #     raise
 
     # logging.info("Step 13b: Creating code snapshot ZIP")
-    # version_results_dir = os.path.join(pecv_bench_dir, "results", DATASET_VERSION, approach_id)
-    # create_code_snapshot(version_results_dir)
+    # approach_results_dir = os.path.join(pecv_bench_dir, "results", approach_id)
+    # create_code_snapshot(approach_results_dir, approach_id)
 
     # logging.info("Step 14: Creating pull request with results in pecv-bench")
     # try:

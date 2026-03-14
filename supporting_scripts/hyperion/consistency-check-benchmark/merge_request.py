@@ -68,7 +68,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
 
     branch_name = approach_id
 
-    # Collect report.md from every version that has results for this approach_id
+    # Collect version directories for this approach (used for staging and PR body)
     results_root = os.path.join(pecv_bench_dir, "results")
     approach_results_dir = os.path.join(results_root, approach_id)
     all_versions = sorted(
@@ -83,31 +83,6 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
         text=True,
     ).stdout.strip()
     repo_slug_match = re.search(r"github\.com[:/](.+?)(?:\.git)?$", remote_url)
-
-    combined_parts: list[str] = []
-    for version in all_versions:
-        report_md_path = os.path.join(results_root, approach_id, version, "report.md")
-        if not os.path.exists(report_md_path):
-            logging.warning(f"report.md not found for version {version}, skipping.")
-            continue
-        with open(report_md_path, "r", encoding="utf-8") as f:
-            section = f.read()
-        # Replace relative image paths with raw GitHub URLs per version
-        if repo_slug_match:
-            repo_slug = repo_slug_match.group(1)
-            raw_base = f"https://raw.githubusercontent.com/{repo_slug}/{branch_name}/results/{approach_id}/{version}"
-            section = re.sub(
-                r"!\[([^\]]*)\]\((?!https?://)([^)]+)\)",
-                lambda m: f"![{m.group(1)}]({raw_base}/{m.group(2)})",
-                section,
-            )
-        combined_parts.append(f"## Dataset Version: {version}\n\n{section}")
-
-    if combined_parts:
-        pr_body = "\n\n---\n\n".join(combined_parts)
-    else:
-        logging.warning("No report.md files found. Using default PR body.")
-        pr_body = f"Automated results upload for {approach_id}"
 
     try:
         # Stage results and runs folders BEFORE switching branches so git doesn't
@@ -174,14 +149,40 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
                     text=True,
                 )
         else:
+            # Base the new branch on origin/{PECV_BENCH_BRANCH} so the PR diff
+            # only shows this approach's results, not other locally committed approaches.
             subprocess.run(
-                ["git", "checkout", "-b", branch_name],
+                ["git", "fetch", "origin", PECV_BENCH_BRANCH],
+                cwd=pecv_bench_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            subprocess.run(
+                ["git", "checkout", "-b", branch_name, f"origin/{PECV_BENCH_BRANCH}"],
                 cwd=pecv_bench_dir,
                 check=True,
                 capture_output=True,
                 text=True,
             )
             logging.info(f"Created branch '{branch_name}' in pecv-bench.")
+            # Re-stage results after checkout (checkout cleared the index)
+            subprocess.run(
+                ["git", "add", os.path.join("results", approach_id)],
+                cwd=pecv_bench_dir,
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            runs_dir = os.path.join("runs", approach_id)
+            if os.path.isdir(os.path.join(pecv_bench_dir, runs_dir)):
+                subprocess.run(
+                    ["git", "add", runs_dir],
+                    cwd=pecv_bench_dir,
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
 
         # Commit (skip if nothing new to commit)
         status = subprocess.run(
@@ -210,6 +211,32 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
             text=True,
         )
         logging.info(f"Pushed branch '{branch_name}' to origin.")
+
+        # Build PR body AFTER push so raw GitHub image URLs resolve correctly
+        combined_parts: list[str] = []
+        for version in all_versions:
+            report_md_path = os.path.join(results_root, approach_id, version, "report.md")
+            if not os.path.exists(report_md_path):
+                logging.warning(f"report.md not found for version {version}, skipping.")
+                continue
+            with open(report_md_path, "r", encoding="utf-8") as f:
+                section = f.read()
+            # Replace relative image paths with absolute raw GitHub URLs
+            if repo_slug_match:
+                repo_slug = repo_slug_match.group(1)
+                raw_base = f"https://raw.githubusercontent.com/{repo_slug}/{branch_name}/results/{approach_id}/{version}"
+                section = re.sub(
+                    r"!\[([^\]]*)\]\((?!https?://)([^)]+)\)",
+                    lambda m, base=raw_base: f"![{m.group(1)}]({base}/{m.group(2).lstrip('./')})",
+                    section,
+                )
+            combined_parts.append(f"## {version}\n\n{section}")
+
+        if combined_parts:
+            pr_body = f"# {approach_id}\n\n" + "\n\n---\n\n".join(combined_parts)
+        else:
+            logging.warning("No report.md files found. Using default PR body.")
+            pr_body = f"# {approach_id}\n\nAutomated results upload."
 
         # Create PR, or update body if one already exists for this branch
         pr_check = subprocess.run(
@@ -269,7 +296,7 @@ if __name__ == "__main__":
     if approach_id == "REPLACE_ME":
         logging.error(
             "approach_id is not set. Open merge_request.py and set it to your results folder name.\n"
-            f"  Find it with:  ls {os.path.join(pecv_bench_dir, 'results', DATASET_VERSION)}/"
+            f"  Find it with:  ls {os.path.join(pecv_bench_dir, 'results')}/"
         )
         sys.exit(1)
 

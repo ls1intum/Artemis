@@ -27,10 +27,30 @@ def get_hyperion_source_dir() -> str:
     return hyperion_dir
 
 
-def create_code_snapshot(results_dir: str) -> str | None:
+def get_hyperion_prompts_dir() -> str:
     """
-    Creates a ZIP archive of the Hyperion Java source files relevant to the
-    consistency check feature and stores it in the given results directory.
+    Returns the absolute path to the Hyperion prompt templates directory.
+
+    The benchmark scripts live in:
+        ``<repo>/supporting_scripts/hyperion/consistency-check-benchmark/``
+
+    The prompt templates live in:
+        ``<repo>/src/main/resources/prompts/hyperion/``
+
+    :return: Absolute path to the hyperion prompts directory.
+    :rtype: str
+    """
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # Navigate up from consistency-check-benchmark -> hyperion -> supporting_scripts -> repo root
+    repo_root = os.path.normpath(os.path.join(script_dir, "..", "..", ".."))
+    prompts_dir = os.path.join(repo_root, "src", "main", "resources", "prompts", "hyperion")
+    return prompts_dir
+
+
+def create_code_snapshot(approach_results_dir: str, approach_id: str) -> str | None:
+    """
+    Creates a ZIP archive of the Hyperion Java source files and prompt templates
+    relevant to the consistency check feature and stores it in the approach results directory.
 
     The ZIP preserves the directory structure relative to the ``hyperion/`` folder,
     e.g.::
@@ -40,30 +60,39 @@ def create_code_snapshot(results_dir: str) -> str | None:
             dto/ConsistencyCheckResponseDTO.java
             service/HyperionConsistencyCheckService.java
             web/HyperionProblemStatementResource.java
+            prompts/consistency_check.txt
+            prompts/consistency_system.txt
 
-    Which files to include is controlled by the ``code_snapshot_files`` setting
+    Java source files to include are controlled by the ``code_snapshot_files`` setting
     in ``config.ini`` under ``[PECVConsistencyCheckSettings]``.
 
-    :param str results_dir: The directory where the zip will be stored
-        (e.g. ``pecv-bench/results/V2/{approach_id}/``).
+    Prompt files are taken from ``src/main/resources/prompts/hyperion/`` and filtered
+    to only those whose filename starts with ``consistency_``.
+
+    :param str approach_results_dir: The approach-level directory where the zip will be stored
+        (e.g. ``pecv-bench/results/{approach_id}/``).
+    :param str approach_id: The approach identifier, used as the ZIP filename.
     :return: The path to the created ZIP file, or ``None`` if creation failed.
     :rtype: str | None
     """
     hyperion_dir = get_hyperion_source_dir()
+    prompts_dir = get_hyperion_prompts_dir()
 
     if not os.path.isdir(hyperion_dir):
         logging.error(f"Hyperion source directory not found: {hyperion_dir}")
         return None
 
-    zip_path = os.path.join(results_dir, "hyperion_consistency_check.zip")
+    os.makedirs(approach_results_dir, exist_ok=True)
+
+    zip_path = os.path.join(approach_results_dir, f"{approach_id}.zip")
     added_count = 0
     missing_files: list[str] = []
 
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+        # Java source files
         for subfolder, filenames in CODE_SNAPSHOT_FILES.items():
             for filename in filenames:
                 src_path = os.path.join(hyperion_dir, subfolder, filename)
-                # Archive path preserves the hyperion/ prefix
                 arc_path = os.path.join("hyperion", subfolder, filename)
 
                 if os.path.isfile(src_path):
@@ -72,6 +101,18 @@ def create_code_snapshot(results_dir: str) -> str | None:
                 else:
                     missing_files.append(os.path.join(subfolder, filename))
                     logging.warning(f"Code snapshot: file not found — {src_path}")
+
+        # Prompt templates: only files starting with "consistency_"
+        if os.path.isdir(prompts_dir):
+            for filename in sorted(os.listdir(prompts_dir)):
+                if filename.startswith("consistency_"):
+                    src_path = os.path.join(prompts_dir, filename)
+                    if os.path.isfile(src_path):
+                        arc_path = os.path.join("hyperion", "prompts", filename)
+                        zf.write(src_path, arcname=arc_path)
+                        added_count += 1
+        else:
+            logging.warning(f"Code snapshot: prompts directory not found — {prompts_dir}")
 
     if missing_files:
         logging.warning(
@@ -89,7 +130,7 @@ if __name__ == "__main__":
     #
     # Steps to recover:
     #   1. Update approach_id below to match your results folder name.
-    #      Find it with:  ls pecv-bench/results/<DATASET_VERSION>/
+    #      Find it with:  ls pecv-bench/results/
     #   2. Rerun:            python code_snapshot.py
     pecv_bench_dir = get_pecv_bench_dir()
 
@@ -103,5 +144,5 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
-    results_dir = os.path.join(pecv_bench_dir, "results", approach_id, DATASET_VERSION)
-    create_code_snapshot(results_dir)
+    approach_results_dir = os.path.join(pecv_bench_dir, "results", approach_id)
+    create_code_snapshot(approach_results_dir, approach_id)
