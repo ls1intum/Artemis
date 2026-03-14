@@ -268,11 +268,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 Object releaseDateObj = weaviateProperties.get(ExerciseSchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
                 ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
-                // Compare as instants with a small tolerance because:
-                // 1. PostgreSQL stores timestamps as UTC, losing the original timezone offset
-                // 2. Weaviate may not preserve nanosecond precision
-                // 3. Database round-trips can introduce sub-millisecond rounding
-                assertThat(weaviateReleaseDate.toInstant()).isCloseTo(newReleaseDate.toInstant(), within(1, java.time.temporal.ChronoUnit.SECONDS));
+                // Compare as instants with a small tolerance because Weaviate may not preserve
+                // sub-millisecond precision through the serialization round-trip.
+                assertThat(weaviateReleaseDate.toInstant()).isCloseTo(newReleaseDate.toInstant(), within(100, java.time.temporal.ChronoUnit.MILLIS));
                 assertThat(weaviateReleaseDate.toInstant()).isNotEqualTo(originalReleaseDate.toInstant());
             });
         }
