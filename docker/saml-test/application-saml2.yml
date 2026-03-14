@@ -5,6 +5,7 @@ spring:
             relyingparty:
                 registration:
                     keycloak:
+                        entity-id: artemis
                         assertingparty:
                             metadata-uri: http://keycloak:9080/realms/artemis/protocol/saml/descriptor
 

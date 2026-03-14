@@ -233,7 +233,7 @@ The file path in `private-key-location` is incorrect or the file does not exist.
 
 **Fix:** Use `realpath saml-key-pkcs8.pem` to find the correct absolute path. The path must be prefixed with `file:` (e.g., `file:/Users/you/project/saml-key-pkcs8.pem`).
 
-### "spring.profiles.active is invalid in a profile specific resource" on Startup
+### "spring.profiles.active is invalid in a profile-specific resource" on Startup
 
 You have `spring.profiles.active` set inside `application-local.yml`, which Spring Boot does not allow in profile-specific files.
 
