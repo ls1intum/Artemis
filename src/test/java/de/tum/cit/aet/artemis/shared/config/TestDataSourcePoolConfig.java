@@ -84,22 +84,18 @@ public class TestDataSourcePoolConfig {
                     HikariDataSource pooled = new HikariDataSource();
                     pooled.setDataSource(ds);
                     pooled.setMaximumPoolSize(10);
-                    pooled.setMinimumIdle(2);
+                    pooled.setMinimumIdle(0);
                     // autoCommit=false is required: Artemis integration tests do not use @Transactional,
                     // so Hibernate manages transactions itself and expects connections with autoCommit off.
                     pooled.setAutoCommit(false);
-                    // Recycle connections every 2 minutes. When Zonky swaps the underlying database
+                    // Recycle connections every 30 seconds. When Zonky swaps the underlying database
                     // between test contexts, existing connections become stale TCP sockets pointing at
-                    // a stopped container. Background @Scheduled tasks (e.g. ParticipantScoreScheduleService)
-                    // then hit PSQLException "I/O error occurred while sending to the backend".
-                    // Periodic recycling limits the window for stale connections.
-                    pooled.setMaxLifetime(120_000);
-                    // Evict idle connections after 60 seconds to reduce the number of stale connections
-                    // that can accumulate between test context transitions.
-                    pooled.setIdleTimeout(60_000);
-                    // Proactively validate idle connections every 30 seconds. This detects and evicts
-                    // broken connections (e.g. after a container swap) before a test tries to use them.
-                    pooled.setKeepaliveTime(30_000);
+                    // a stopped container. Aggressive recycling limits the window for stale connections.
+                    pooled.setMaxLifetime(30_000);
+                    // Evict idle connections after 10 seconds to minimize stale connection accumulation.
+                    pooled.setIdleTimeout(10_000);
+                    // Proactively validate idle connections every 10 seconds.
+                    pooled.setKeepaliveTime(10_000);
                     pooled.setConnectionTimeout(30_000);
                     pooled.setPoolName("TestPool");
 
