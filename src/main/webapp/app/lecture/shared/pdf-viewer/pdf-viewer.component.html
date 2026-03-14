@@ -20,7 +20,7 @@
                     [text]="true"
                     severity="secondary"
                     (click)="zoomOut()"
-                    [disabled]="zoomLevel() <= 0.5"
+                    [disabled]="!canZoomOut()"
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
                 >
                     <fa-icon [icon]="faSearchMinus" />
@@ -30,7 +30,7 @@
                     [text]="true"
                     severity="secondary"
                     (click)="zoomIn()"
-                    [disabled]="zoomLevel() >= 3.0"
+                    [disabled]="!canZoomIn()"
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
                 >
                     <fa-icon [icon]="faSearchPlus" />

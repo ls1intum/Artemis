@@ -17,6 +17,11 @@ type PdfViewerAnchorState = {
     hadHorizontalScroll: boolean;
 };
 
+type PDFLoadingTask = {
+    promise: Promise<PDFDocumentProxy>;
+    destroy?: () => Promise<void> | void;
+};
+
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
@@ -60,6 +65,10 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
     // Show toolbar when PDF is loaded, regardless of individual page errors
     showToolbar = computed(() => !this.isLoading() && this.totalPages() > 0);
+    // Disable zoom out when at minimum zoom level
+    readonly canZoomOut = computed(() => this.zoomLevel() > PdfViewerComponent.MIN_ZOOM_LEVEL);
+    // Disable zoom in when at maximum zoom level
+    readonly canZoomIn = computed(() => this.zoomLevel() < PdfViewerComponent.MAX_ZOOM_LEVEL);
 
     protected readonly faSearchMinus = faSearchMinus;
     protected readonly faSearchPlus = faSearchPlus;
@@ -76,12 +85,12 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
     private isZooming = false;
     private pendingRender = false;
     private loadToken = 0;
-    private loadingTask?: { promise: Promise<PDFDocumentProxy>; destroy?: () => Promise<void> | void };
+    private loadingTask?: PDFLoadingTask;
     private preCapturedAnchor: PdfViewerAnchorState | undefined;
     private isResizing = false;
 
     constructor() {
-        (PDFJS.GlobalWorkerOptions as any).workerSrc = '/content/scripts/pdf.worker.min.mjs';
+        PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
 
         effect(() => {
             const url = this.pdfUrl();
@@ -167,7 +176,7 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
         this.currentPage.set(1);
 
         try {
-            const loadingTask = PDFJS.getDocument({ url }) as { promise: Promise<PDFDocumentProxy>; destroy?: () => Promise<void> | void };
+            const loadingTask = PDFJS.getDocument({ url }) as PDFLoadingTask;
             this.loadingTask = loadingTask;
             const pdfDocument = await loadingTask.promise;
             if (token !== this.loadToken) {
@@ -393,9 +402,9 @@ export class PdfViewerComponent implements AfterViewInit, OnDestroy {
 
         pages.forEach((pageElement) => {
             const page = pageElement as HTMLElement;
-            const canvas = page.querySelector('canvas') as HTMLCanvasElement;
+            const canvas = page.querySelector('canvas');
 
-            if (canvas?.dataset.originalWidth && canvas.dataset.originalHeight) {
+            if (canvas instanceof HTMLCanvasElement && canvas.dataset.originalWidth && canvas.dataset.originalHeight) {
                 const width = parseFloat(canvas.dataset.originalWidth) * zoom;
                 const height = parseFloat(canvas.dataset.originalHeight) * zoom;
                 canvas.style.width = `${width}px`;
