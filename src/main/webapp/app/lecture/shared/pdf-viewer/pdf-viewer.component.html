@@ -8,7 +8,7 @@
     }
     @if (error()) {
         <div class="d-flex flex-column align-items-center p-3" role="alert">
-            <fa-icon [icon]="faExclamationTriangle" size="3x" class="text-warning" />
+            <fa-icon [icon]="faExclamationTriangle" [size]="'3x'" class="text-warning" />
             <span class="mt-2" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
             <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailedDetail"></span>
         </div>
@@ -16,7 +16,9 @@
     @if (showToolbar()) {
         <div class="d-flex align-items-center justify-content-between mb-0 small text-secondary">
             <div class="d-flex align-items-center gap-0">
-                <p-button
+                <button
+                    pButton
+                    type="button"
                     [text]="true"
                     severity="secondary"
                     (click)="zoomOut()"
@@ -24,9 +26,11 @@
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
                 >
                     <fa-icon [icon]="faSearchMinus" />
-                </p-button>
+                </button>
                 <span>{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-                <p-button
+                <button
+                    pButton
+                    type="button"
                     [text]="true"
                     severity="secondary"
                     (click)="zoomIn()"
@@ -34,10 +38,17 @@
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
                 >
                     <fa-icon [icon]="faSearchPlus" />
-                </p-button>
-                <p-button [text]="true" severity="secondary" (click)="resetZoom()" [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.resetZoom' | artemisTranslate">
+                </button>
+                <button
+                    pButton
+                    type="button"
+                    [text]="true"
+                    severity="secondary"
+                    (click)="resetZoom()"
+                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.resetZoom' | artemisTranslate"
+                >
                     <fa-icon [icon]="faRotateLeft" />
-                </p-button>
+                </button>
             </div>
             <div class="d-flex align-items-center pe-2">
                 <span>{{ currentPage() }}/{{ totalPages() }}</span>
