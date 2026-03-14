@@ -42,7 +42,7 @@ describe('Exercise Scores Chart Service', () => {
         service.getExerciseScoresForCourse(1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.url).toBe('api/courses/1/charts/exercise-scores');
+        expect(req.request.url).toBe('api/exercise/courses/1/charts/exercise-scores');
         req.flush(returnedFromService);
     });
 });

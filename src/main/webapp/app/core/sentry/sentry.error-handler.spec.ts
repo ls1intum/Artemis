@@ -49,10 +49,10 @@ describe('SentryErrorHandler', () => {
         service = TestBed.inject(SentryErrorHandler);
         localStorageService = TestBed.inject(LocalStorageService);
 
-        // Suppress console.error output during tests
-        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
         vi.clearAllMocks();
+
+        // Suppress console.error output during tests (must come after clearAllMocks)
+        consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     });
 
     afterEach(() => {

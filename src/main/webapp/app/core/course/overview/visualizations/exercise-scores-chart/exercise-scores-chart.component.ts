@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, effect, inject, input, untracked } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, effect, inject, input, untracked } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ExerciseScoresChartService, ExerciseScoresDTO } from 'app/core/course/overview/visualizations/exercise-scores-chart.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -48,6 +49,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     private exerciseScoresChartService = inject(ExerciseScoresChartService);
     exerciseTypeFilter = inject(ChartExerciseTypeFilter);
     private translateService = inject(TranslateService);
+    private destroyRef = inject(DestroyRef);
 
     readonly filteredExerciseIDs = input.required<number[]>();
 
@@ -82,7 +84,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     maxScale = 101;
 
     constructor() {
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
             this.setTranslations();
         });
 
@@ -95,7 +97,7 @@ export class ExerciseScoresChartComponent implements AfterViewInit {
     }
 
     ngAfterViewInit() {
-        this.activatedRoute.parent?.parent?.params.subscribe((params) => {
+        this.activatedRoute.parent?.parent?.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             this.courseId = +params['courseId'];
             if (this.courseId) {
                 this.loadDataAndInitializeChart();

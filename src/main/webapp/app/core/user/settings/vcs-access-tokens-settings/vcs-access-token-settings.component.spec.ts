@@ -5,17 +5,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { User } from 'app/core/user/user.model';
-import { MockNgbModalService } from 'test/helpers/mocks/service/mock-ngb-modal.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
+import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/shared/service/alert.service';
 import { OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { provideHttpClient } from '@angular/common/http';
 import { VcsAccessTokensSettingsComponent } from 'app/core/user/settings/vcs-access-tokens-settings/vcs-access-tokens-settings.component';
-import { DialogService } from 'primeng/dynamicdialog';
-import { MockDialogService } from 'test/helpers/mocks/service/mock-dialog.service';
 
 describe('VcsAccessTokensSettingsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -45,7 +43,6 @@ describe('VcsAccessTokensSettingsComponent', () => {
             providers: [
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: NgbModal, useClass: MockNgbModalService },
                 { provide: AlertService, useValue: alertServiceMock },
                 { provide: DialogService, useClass: MockDialogService },
                 provideHttpClient(),
