@@ -20,7 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
  * - Success/error feedback via alerts
  *
  * This component uses PrimeNG Dialog and is controlled via the open() method.
- * The parent component should use @ViewChild to get a reference and call open().
+ * The parent component should use viewChild() to get a reference and call open().
  */
 @Component({
     selector: 'jhi-admin-data-export-create-modal',
