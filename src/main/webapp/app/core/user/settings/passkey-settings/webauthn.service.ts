@@ -24,10 +24,17 @@ export class WebauthnService {
     private authAbortController = new AbortController();
 
     /**
-     * Tracks the in-flight `getAuthenticationOptions()` request to prevent concurrent
-     * requests from overwriting each other's server-side challenge cookies.
+     * Tracks the in-flight credential request (HTTP fetch + navigator.credentials.get)
+     * to prevent overlapping requests. Only one navigator.credentials.get() can be
+     * active per origin, so we must wait for the previous one to fully resolve/reject
+     * before starting a new one.
      */
-    private pendingOptionsRequest: Promise<unknown> | undefined;
+    private pendingCredentialRequest: Promise<unknown> | undefined;
+
+    /**
+     * Prevents infinite retry loops when re-enabling passkey autocomplete after a user cancellation.
+     */
+    private isRetryingConditionalMediation = false;
 
     /**
      * Aborts any pending credential request (e.g., a conditional mediation request)
@@ -42,11 +49,39 @@ export class WebauthnService {
     }
 
     /**
+     * Starts conditional mediation so that the browser shows passkey suggestions
+     * in the username/password autocomplete dropdown.
+     *
+     * This is managed at the service level (not the component level) to avoid
+     * lifecycle issues when the HomeComponent is destroyed and recreated during
+     * logout navigation. The service ensures only one conditional mediation
+     * request is active at a time.
+     *
+     * @param onSuccess callback invoked when the user selects a passkey and login succeeds
+     */
+    startConditionalMediation(onSuccess: () => void): void {
+        this.isRetryingConditionalMediation = false;
+        this.runConditionalMediation(onSuccess);
+    }
+
+    /**
+     * Stops any active conditional mediation request.
+     * Safe to call even if no conditional mediation is active.
+     */
+    stopConditionalMediation(): void {
+        this.abortPendingCredentialRequest();
+        this.isRetryingConditionalMediation = false;
+    }
+
+    /**
      * Retrieves a credential from the authenticator.
      *
-     * Serializes calls to `getAuthenticationOptions()` so that only one challenge cookie
-     * is active at a time, preventing race conditions where a second request overwrites
-     * the cookie before the first request's `navigator.credentials.get()` completes.
+     * Waits for any pending credential request (including `navigator.credentials.get()`)
+     * to fully resolve or reject before starting a new one, because only one
+     * `navigator.credentials.get()` can be active per origin.
+     *
+     * Captures the abort signal before any async work so that an abort during the
+     * HTTP fetch still correctly cancels the subsequent `navigator.credentials.get()`.
      *
      * @param isConditional when true, uses conditional mediation (required for passkey autofill).
      *        The browser will show passkey suggestions in the username/password autocomplete dropdown
@@ -54,40 +89,28 @@ export class WebauthnService {
      * @returns the credential or undefined if no credential was selected
      */
     async getCredential(isConditional: boolean = false): Promise<PublicKeyCredential | undefined> {
-        if (this.pendingOptionsRequest) {
-            await this.pendingOptionsRequest.catch(() => {});
+        // Capture the abort signal BEFORE any async work. If abortPendingCredentialRequest()
+        // is called while getAuthenticationOptions() is in-flight, it replaces authAbortController
+        // with a fresh one. Reading this.authAbortController.signal after the await would get the
+        // new (non-aborted) signal, creating a dangling navigator.credentials.get() that nobody
+        // can cancel. By capturing up front, the abort correctly propagates.
+        const signal = this.authAbortController.signal;
+
+        // Wait for any previous credential request to fully complete/abort.
+        // This prevents overlapping navigator.credentials.get() calls which
+        // browsers reject (only one can be active per origin).
+        if (this.pendingCredentialRequest) {
+            await this.pendingCredentialRequest.catch(() => {});
         }
 
-        const optionsPromise = this.webauthnApiService.getAuthenticationOptions();
-        this.pendingOptionsRequest = optionsPromise;
-        const publicKeyCredentialOptions = await optionsPromise;
-        this.pendingOptionsRequest = undefined;
+        const credentialPromise = this.doGetCredential(signal, isConditional);
+        this.pendingCredentialRequest = credentialPromise;
 
-        const assertionOptions: PublicKeyCredentialRequestOptions = {
-            challenge: decodeBase64url(publicKeyCredentialOptions.challenge),
-            timeout: publicKeyCredentialOptions.timeout,
-            rpId: publicKeyCredentialOptions.rpId,
-            allowCredentials: publicKeyCredentialOptions.allowCredentials
-                ? publicKeyCredentialOptions.allowCredentials.map((credential) => {
-                      return {
-                          type: credential.type,
-                          id: decodeBase64url(credential.id),
-                          transports: credential.transports,
-                      };
-                  })
-                : undefined,
-            userVerification: publicKeyCredentialOptions.userVerification,
-            extensions: publicKeyCredentialOptions.extensions,
-        };
-
-        const credentialRequestOptions: CredentialRequestOptions = {
-            publicKey: assertionOptions,
-            signal: this.authAbortController.signal,
-            ...(isConditional && { mediation: 'conditional' as CredentialMediationRequirement }),
-        };
-
-        const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
-        return credential as PublicKeyCredential | undefined;
+        try {
+            return await credentialPromise;
+        } finally {
+            this.pendingCredentialRequest = undefined;
+        }
     }
 
     async addNewPasskey(user: User | undefined) {
@@ -184,6 +207,50 @@ export class WebauthnService {
     }
 
     /**
+     * Runs the conditional mediation flow: calls loginWithPasskey(true) and handles
+     * all expected errors (aborts, user cancellations) internally.
+     * Retries once after user cancellation (NotAllowedError) so the browser
+     * re-shows passkey suggestions.
+     */
+    private async runConditionalMediation(onSuccess: () => void): Promise<void> {
+        try {
+            await this.loginWithPasskey(true);
+            onSuccess();
+            this.isRetryingConditionalMediation = false;
+        } catch (error) {
+            this.handleConditionalMediationError(error, onSuccess);
+        }
+    }
+
+    /**
+     * Handles errors from the conditional mediation passkey flow.
+     * Silently ignores abort errors from our own AbortController.
+     * Re-enables autocomplete after user cancellation (once, to prevent infinite loops).
+     */
+    private handleConditionalMediationError(error: unknown, onSuccess: () => void): void {
+        if (error instanceof PasskeyAbortError) {
+            return;
+        }
+
+        if (error instanceof DOMException && error.name === 'AbortError') {
+            return;
+        }
+
+        if (this.isUserCancelledPasskeyError(error) && !this.isRetryingConditionalMediation) {
+            this.isRetryingConditionalMediation = true;
+            this.runConditionalMediation(onSuccess);
+            return;
+        }
+
+        // eslint-disable-next-line no-undef
+        console.warn('Passkey autocomplete error:', error);
+    }
+
+    private isUserCancelledPasskeyError(error: unknown): boolean {
+        return error instanceof DOMException && error.name === 'NotAllowedError';
+    }
+
+    /**
      * Checks whether the error is an expected abort or cancellation during conditional mediation.
      * These errors should not trigger user-visible error alerts.
      */
@@ -195,5 +262,39 @@ export class WebauthnService {
             return error.name === 'AbortError' || error.name === 'NotAllowedError';
         }
         return false;
+    }
+
+    /**
+     * Performs the actual credential retrieval (HTTP fetch + navigator.credentials.get).
+     * Separated from getCredential() so the full promise can be tracked.
+     */
+    private async doGetCredential(signal: AbortSignal, isConditional: boolean): Promise<PublicKeyCredential | undefined> {
+        const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
+
+        const assertionOptions: PublicKeyCredentialRequestOptions = {
+            challenge: decodeBase64url(publicKeyCredentialOptions.challenge),
+            timeout: publicKeyCredentialOptions.timeout,
+            rpId: publicKeyCredentialOptions.rpId,
+            allowCredentials: publicKeyCredentialOptions.allowCredentials
+                ? publicKeyCredentialOptions.allowCredentials.map((credential) => {
+                      return {
+                          type: credential.type,
+                          id: decodeBase64url(credential.id),
+                          transports: credential.transports,
+                      };
+                  })
+                : undefined,
+            userVerification: publicKeyCredentialOptions.userVerification,
+            extensions: publicKeyCredentialOptions.extensions,
+        };
+
+        const credentialRequestOptions: CredentialRequestOptions = {
+            publicKey: assertionOptions,
+            signal,
+            ...(isConditional && { mediation: 'conditional' as CredentialMediationRequirement }),
+        };
+
+        const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
+        return credential as PublicKeyCredential | undefined;
     }
 }

@@ -16,7 +16,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { WebauthnService } from 'app/core/user/settings/passkey-settings/webauthn.service';
-import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/errors/passkey-abort.error';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { ButtonComponent, ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { EARLIEST_SETUP_PASSKEY_REMINDER_DATE_LOCAL_STORAGE_KEY, SetupPasskeyModalComponent } from 'app/core/course/overview/setup-passkey-modal/setup-passkey-modal.component';
@@ -87,11 +86,6 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
     profileInfo: ProfileInfo;
 
     /**
-     * Prevents infinite retry loops when re-enabling passkey autocomplete after a user cancellation.
-     */
-    private isRetryingPasskeyAutocomplete = false;
-
-    /**
      * <p>
      * We want users to use passkey authentication over password authentication.
      * </p>
@@ -122,9 +116,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         this.accountService.identity().then((user) => {
             this.currentUserCallback(user!);
 
-            // Once this has loaded and the user is not defined, we know we need the user to log in
+            // Only start conditional mediation after confirming the user is NOT logged in.
+            // Starting it before the identity check resolves causes race conditions during
+            // logout: the component is briefly created while still authenticated, fires a
+            // challenge request, gets destroyed, and a new instance overwrites the cookie.
             if (!user) {
                 this.loading = false;
+                this.prefillPasskeysIfPossible();
             }
         });
         this.registerAuthenticationSuccess();
@@ -133,16 +131,16 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         if (prefilledUsername) {
             this.username = prefilledUsername;
         }
-
-        this.prefillPasskeysIfPossible();
     }
 
     ngOnDestroy() {
-        this.webauthnService.abortPendingCredentialRequest();
+        this.webauthnService.stopConditionalMediation();
     }
 
     /**
      * Initiates passkey autofill via conditional mediation if the browser supports it.
+     * Delegates lifecycle management to WebauthnService to avoid race conditions
+     * when the component is rapidly destroyed and recreated (e.g., during logout).
      * @see https://www.w3.org/TR/webauthn-3/#client-side-discoverable-credential
      */
     async prefillPasskeysIfPossible() {
@@ -154,56 +152,13 @@ export class HomeComponent implements OnInit, AfterViewChecked, OnDestroy {
         }
         const isAvailable = await PublicKeyCredential.isConditionalMediationAvailable();
         if (isAvailable) {
-            await this.makePasskeyAutocompleteAvailable();
-        }
-    }
-
-    /**
-     * Starts a conditional mediation credential request so that the browser can show
-     * passkey suggestions in the username/password autocomplete dropdown.
-     * If the user selects a passkey from autofill, the login completes automatically.
-     */
-    async makePasskeyAutocompleteAvailable() {
-        try {
-            await this.webauthnService.loginWithPasskey(true);
-            this.handleLoginSuccess();
-            this.isRetryingPasskeyAutocomplete = false;
-        } catch (error) {
-            this.handlePasskeyAutocompleteError(error);
+            this.webauthnService.startConditionalMediation(() => this.handleLoginSuccess());
         }
     }
 
     async loginWithPasskey() {
         await this.webauthnService.loginWithPasskey();
         this.handleLoginSuccess();
-    }
-
-    /**
-     * Handles errors from the conditional mediation passkey flow.
-     * Re-enables autocomplete after user cancellation (once, to prevent infinite loops).
-     * Silently ignores abort errors from our own AbortController.
-     */
-    private handlePasskeyAutocompleteError(error: unknown): void {
-        if (error instanceof PasskeyAbortError) {
-            return;
-        }
-
-        if (error instanceof DOMException && error.name === 'AbortError') {
-            return;
-        }
-
-        if (this.isUserCancelledPasskeyError(error) && !this.isRetryingPasskeyAutocomplete) {
-            this.isRetryingPasskeyAutocomplete = true;
-            this.makePasskeyAutocompleteAvailable();
-            return;
-        }
-
-        // eslint-disable-next-line no-undef
-        console.warn('Passkey autocomplete error:', error);
-    }
-
-    private isUserCancelledPasskeyError(error: unknown): boolean {
-        return error instanceof DOMException && error.name === 'NotAllowedError';
     }
 
     /**

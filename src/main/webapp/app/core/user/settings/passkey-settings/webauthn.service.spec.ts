@@ -362,6 +362,40 @@ describe('WebauthnService', () => {
             expect(capturedSignal!.aborted).toBeTrue();
             expect(capturedSignal!.reason).toBeInstanceOf(PasskeyAbortError);
         });
+
+        it('should abort the signal even when called during pending getAuthenticationOptions', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            let resolveOptions: (value: any) => void;
+            const optionsPromise = new Promise((resolve) => {
+                resolveOptions = resolve;
+            });
+            webauthnApiService.getAuthenticationOptions.mockReturnValue(optionsPromise as any);
+
+            let capturedSignal: AbortSignal | undefined;
+            jest.spyOn(navigator.credentials, 'get').mockImplementation((options: any) => {
+                capturedSignal = options?.signal;
+                return new Promise(() => {}); // never resolves
+            });
+
+            // Start a conditional request — getAuthenticationOptions is still pending
+            const credentialPromise = service.getCredential(true);
+
+            // Abort BEFORE the HTTP response arrives (simulates ngOnDestroy during fetch)
+            service.abortPendingCredentialRequest();
+
+            // Now resolve the HTTP response
+            resolveOptions!({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            });
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            // The signal passed to navigator.credentials.get should be the original (aborted) one
+            expect(capturedSignal).toBeDefined();
+            expect(capturedSignal!.aborted).toBeTrue();
+            expect(capturedSignal!.reason).toBeInstanceOf(PasskeyAbortError);
+        });
     });
 
     describe('loginWithPasskey with conditional mediation', () => {
@@ -524,6 +558,96 @@ describe('WebauthnService', () => {
             expect(callOrder[0]).toBe('first-start');
             expect(callOrder[1]).toBe('first-end');
             expect(callOrder[2]).toBe('second-start');
+        });
+    });
+
+    describe('startConditionalMediation', () => {
+        it('should call loginWithPasskey with conditional=true and invoke onSuccess callback', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+            accountService.identity.mockResolvedValue({} as any);
+
+            const onSuccess = jest.fn();
+            service.startConditionalMediation(onSuccess);
+
+            // Wait for the async flow to complete
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(onSuccess).toHaveBeenCalledOnce();
+        });
+
+        it('should silently handle PasskeyAbortError without calling onSuccess', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new PasskeyAbortError());
+
+            const onSuccess = jest.fn();
+            service.startConditionalMediation(onSuccess);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(onSuccess).not.toHaveBeenCalled();
+        });
+
+        it('should silently handle DOMException AbortError without calling onSuccess', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+
+            const onSuccess = jest.fn();
+            service.startConditionalMediation(onSuccess);
+
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(onSuccess).not.toHaveBeenCalled();
+        });
+
+        it('should retry once on NotAllowedError (user cancelled)', async () => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const notAllowedError = new DOMException('User cancelled', 'NotAllowedError');
+            jest.spyOn(navigator.credentials, 'get').mockRejectedValue(notAllowedError);
+
+            const onSuccess = jest.fn();
+            service.startConditionalMediation(onSuccess);
+
+            // Wait for the retry to complete
+            await new Promise((resolve) => setTimeout(resolve, 10));
+
+            // loginWithPasskey should have been called twice (initial + one retry)
+            expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalledTimes(2);
+            expect(onSuccess).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('stopConditionalMediation', () => {
+        it('should abort pending credential request', () => {
+            const abortSpy = jest.spyOn(service, 'abortPendingCredentialRequest');
+
+            service.stopConditionalMediation();
+
+            expect(abortSpy).toHaveBeenCalledOnce();
         });
     });
 
