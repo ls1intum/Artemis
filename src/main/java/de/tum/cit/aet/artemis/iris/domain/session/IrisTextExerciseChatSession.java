@@ -38,7 +38,7 @@ public class IrisTextExerciseChatSession extends IrisChatSession {
     }
 
     @Override
-    public boolean shouldAcceptExternalLLMUsage() {
+    public boolean shouldSelectLLMUsage() {
         return true;
     }
 

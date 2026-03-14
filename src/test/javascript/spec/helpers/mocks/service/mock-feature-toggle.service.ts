@@ -3,16 +3,13 @@ import { BehaviorSubject, of } from 'rxjs';
 import { distinctUntilChanged, map } from 'rxjs/operators';
 
 export class MockFeatureToggleService {
-    private subject: BehaviorSubject<ActiveFeatureToggles>;
+    private subject = new BehaviorSubject<ActiveFeatureToggles>(Object.values(FeatureToggle));
 
     subscribeFeatureToggleUpdates() {}
 
     unsubscribeFeatureToggleUpdates() {}
 
     getFeatureToggles() {
-        const defaultActiveFeatureState: ActiveFeatureToggles = Object.values(FeatureToggle);
-        this.subject = new BehaviorSubject<ActiveFeatureToggles>(defaultActiveFeatureState);
-
         return this.subject;
     }
 

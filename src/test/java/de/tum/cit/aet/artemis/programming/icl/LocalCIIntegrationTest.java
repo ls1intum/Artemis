@@ -899,7 +899,7 @@ class LocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         BuildAgentInformation buildAgent = new BuildAgentInformation(buildAgentDTO, 0, 0, new ArrayList<>(List.of()), BuildAgentStatus.IDLE, null, null, 100);
         buildAgentInformation.put(memberAddress, buildAgent);
         int consecutiveFailedBuildJobs = 100;
-        BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs);
+        BuildAgentDetailsDTO updatedDetails = new BuildAgentDetailsDTO(0, 0, 0, 0, 0, 0, null, ZonedDateTime.now(), null, consecutiveFailedBuildJobs, null);
         BuildAgentInformation updatedInfo = new BuildAgentInformation(buildAgent.buildAgent(), buildAgent.maxNumberOfConcurrentBuildJobs(), buildAgent.numberOfCurrentBuildJobs(),
                 buildAgent.runningBuildJobs(), BuildAgentStatus.SELF_PAUSED, buildAgent.publicSshKey(), updatedDetails, buildAgent.pauseAfterConsecutiveBuildFailures());
 

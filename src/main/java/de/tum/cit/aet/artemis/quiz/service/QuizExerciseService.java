@@ -1224,7 +1224,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * staff member (either tutor, editor ot student of the {@link Course} associated to the exam).
      * <p>
      * Context: <br>
-     * For {@link QuizExercise}s in {@code QuizMode.INDIVIDUAL} the user can decide when to start the quiz himself.
+     * For {@link QuizExercise}s in {@code QuizMode.INDIVIDUAL} the user can decide when to start the quiz themselves.
      * For {@link QuizExercise}s in {@code QuizMode.BATCHED} the user can join a quiz by using a password. The instructor can then start the quiz manually.
      * For both modes, the period in which the quiz can be held may be constrained by releaseDate (defining a start of the period) or dueDate (defining an end of the period).
      * The dueDate and startDate can be set independent of each other.

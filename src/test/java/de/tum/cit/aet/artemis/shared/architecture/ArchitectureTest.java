@@ -116,7 +116,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void testNoGoogleImport() {
         ArchRule noGoogleDependencies = noClasses().should().dependOnClassesThat().resideInAnyPackage("com.google..")
                 .because("Google libraries (Guava, Gson) are forbidden to reduce incompatibilities, to reduce dependencies and security risks. " + "Alternatives: "
-                        + "Guava Cache -> Spring CacheManager (see CacheConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
+                        + "Guava Cache -> Spring CacheManager (see HazelcastConfiguration), " + "Guava Collections -> Java Collections API (List.of(), Set.of(), Map.of()), "
                         + "Guava Strings -> Apache Commons Lang3 StringUtils or Spring StringUtils, " + "Guava Preconditions -> Objects.requireNonNull() or Spring Assert, "
                         + "Guava Optional -> java.util.Optional, " + "Gson -> Jackson ObjectMapper");
         noGoogleDependencies.check(allClasses);

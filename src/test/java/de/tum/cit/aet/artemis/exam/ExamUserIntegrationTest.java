@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUserDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamUsersNotFoundDTO;
+import de.tum.cit.aet.artemis.exam.dto.ExportExamUserDTO;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTest;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 
@@ -377,6 +378,28 @@ class ExamUserIntegrationTest extends AbstractProgrammingIntegrationLocalCILocal
             course2 = course;
         }
         return studentExams;
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExportExamUsers() throws Exception {
+        List<ExamUserDTO> examUserDTOs = getExamUserDTOS();
+        request.postListWithResponseBody("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/students", examUserDTOs, ExamUserDTO.class, OK);
+
+        List<ExportExamUserDTO> exportedUsers = request.getList("/api/exam/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/export-students", HttpStatus.OK,
+                ExportExamUserDTO.class);
+
+        assertThat(exportedUsers).hasSize(4);
+
+        ExportExamUserDTO user = exportedUsers.stream().filter(u -> (TEST_PREFIX + "student1").equals(u.login())).findFirst().orElseThrow();
+
+        assertThat(user.login()).isEqualTo(TEST_PREFIX + "student1");
+        assertThat(user.matriculationNumber()).isEqualTo("03756882");
+        assertThat(user.name()).isNotBlank();
+        assertThat(user.email()).isNotBlank();
+
+        assertThat(user.room()).isNotNull();
+        assertThat(user.seat()).isNotNull();
     }
 
 }

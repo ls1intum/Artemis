@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 
 /**
@@ -31,7 +32,9 @@ public class LocalCIWebsocketMessagingService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private static final Pattern COURSE_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs)$");
+    private static final Pattern COURSE_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/(queued-jobs|running-jobs|finished-jobs)$");
+
+    private static final Pattern COURSE_BUILD_JOB_DESTINATION_PATTERN = Pattern.compile("^/topic/courses/(\\d+)/build-job/.+$");
 
     /**
      * Constructor for dependency injection
@@ -100,6 +103,56 @@ public class LocalCIWebsocketMessagingService {
         websocketMessagingService.sendMessage(channel, buildAgentInfo);
     }
 
+    /**
+     * Sends an individual build job update over websocket.
+     * Sends to both the admin topic and the course-specific topic.
+     *
+     * @param buildJob the build job to send the update for
+     */
+    public void sendBuildJobUpdate(BuildJobQueueItem buildJob) {
+        String adminChannel = "/topic/admin/build-job/" + buildJob.id();
+        log.debug("Sending build job update on topic {}", adminChannel);
+        websocketMessagingService.sendMessage(adminChannel, buildJob);
+
+        String courseChannel = "/topic/courses/" + buildJob.courseId() + "/build-job/" + buildJob.id();
+        log.debug("Sending build job update on topic {}", courseChannel);
+        websocketMessagingService.sendMessage(courseChannel, buildJob);
+    }
+
+    /**
+     * Sends a finished build job notification over websocket.
+     * This notifies clients that a new finished build job is available and should be added to their list.
+     * Sends to both the admin topic and the course-specific topic.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    public void sendFinishedBuildJobUpdate(FinishedBuildJobDTO finishedBuildJob) {
+        String adminChannel = "/topic/admin/finished-jobs";
+        log.debug("Sending finished build job update on topic {}", adminChannel);
+        websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
+
+        String courseChannel = "/topic/courses/" + finishedBuildJob.courseId() + "/finished-jobs";
+        log.debug("Sending finished build job update on topic {}", courseChannel);
+        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+    }
+
+    /**
+     * Sends a finished build job update to the individual build job topic.
+     * This is used to notify the build job detail page when a job finishes.
+     * Sends to both the admin topic and the course-specific topic.
+     *
+     * @param finishedBuildJob the finished build job DTO to send
+     */
+    public void sendFinishedBuildJobDetailUpdate(FinishedBuildJobDTO finishedBuildJob) {
+        String adminChannel = "/topic/admin/build-job/" + finishedBuildJob.id();
+        log.debug("Sending finished build job detail update on topic {}", adminChannel);
+        websocketMessagingService.sendMessage(adminChannel, finishedBuildJob);
+
+        String courseChannel = "/topic/courses/" + finishedBuildJob.courseId() + "/build-job/" + finishedBuildJob.id();
+        log.debug("Sending finished build job detail update on topic {}", courseChannel);
+        websocketMessagingService.sendMessage(courseChannel, finishedBuildJob);
+    }
+
     public void sendBuildAgentDetails(BuildAgentInformation buildAgentDetails) {
         String channel = "/topic/admin/build-agent/" + buildAgentDetails.buildAgent().name();
         log.debug("Sending message on topic {}: {}", channel, buildAgentDetails);
@@ -108,18 +161,18 @@ public class LocalCIWebsocketMessagingService {
 
     /**
      * Checks if the given destination is a build queue admin destination.
-     * This is the case if the destination is either /topic/admin/queued-jobs or /topic/admin/running-jobs.
+     * This is the case if the destination is /topic/admin/queued-jobs, /topic/admin/running-jobs, or /topic/admin/finished-jobs.
      *
      * @param destination the destination to check
      * @return true if the destination is a build queue admin destination, false otherwise
      */
     public static boolean isBuildQueueAdminDestination(String destination) {
-        return "/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination);
+        return "/topic/admin/queued-jobs".equals(destination) || "/topic/admin/running-jobs".equals(destination) || "/topic/admin/finished-jobs".equals(destination);
     }
 
     /**
-     * Checks if the given destination is a build queue course destination. This is the case if the destination is either
-     * /topic/courses/{courseId}/queued-jobs or /topic/courses/{courseId}/running-jobs.
+     * Checks if the given destination is a build queue course destination. This is the case if the destination is
+     * /topic/courses/{courseId}/queued-jobs, /topic/courses/{courseId}/running-jobs, or /topic/courses/{courseId}/finished-jobs.
      * If the destination is a build queue course destination, the courseId is returned.
      *
      * @param destination the destination to check
@@ -146,5 +199,34 @@ public class LocalCIWebsocketMessagingService {
      */
     public static boolean isBuildAgentDestination(String destination) {
         return "/topic/admin/build-agents".equals(destination);
+    }
+
+    /**
+     * Checks if the given destination is a build job admin detail destination.
+     * This is the case if the destination matches /topic/admin/build-job/{buildJobId}.
+     *
+     * @param destination the destination to check
+     * @return true if the destination is a build job admin detail destination, false otherwise
+     */
+    public static boolean isBuildJobAdminDestination(String destination) {
+        return destination != null && destination.startsWith("/topic/admin/build-job/");
+    }
+
+    /**
+     * Checks if the given destination is a build job course detail destination.
+     * This is the case if the destination matches /topic/courses/{courseId}/build-job/{buildJobId}.
+     *
+     * @param destination the destination to check
+     * @return the course ID if the destination is a build job course detail destination, empty otherwise
+     */
+    public static Optional<Long> isBuildJobCourseDestination(String destination) {
+        if (destination == null) {
+            return Optional.empty();
+        }
+        Matcher matcher = COURSE_BUILD_JOB_DESTINATION_PATTERN.matcher(destination);
+        if (matcher.matches()) {
+            return Optional.of(Long.parseLong(matcher.group(1)));
+        }
+        return Optional.empty();
     }
 }

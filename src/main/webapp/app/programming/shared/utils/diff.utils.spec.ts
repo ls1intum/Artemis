@@ -7,7 +7,7 @@ jest.mock('monaco-editor', () => ({
 }));
 
 import * as monaco from 'monaco-editor';
-import { DiffInformation, FileStatus, __diffUtilsTesting, processRepositoryDiff } from './diff.utils';
+import { DiffInformation, FileStatus, __diffUtilsTesting, convertMonacoLineChanges, processRepositoryDiff } from './diff.utils';
 
 describe('DiffUtils', () => {
     let mockOriginalModel: monaco.editor.ITextModel;
@@ -82,6 +82,10 @@ describe('DiffUtils', () => {
 
         // Mock document.body.appendChild to accept mock elements
         jest.spyOn(document.body, 'appendChild').mockImplementation((node: Node) => node as any);
+    });
+
+    afterEach(() => {
+        jest.restoreAllMocks();
     });
 
     describe('processRepositoryDiff', () => {
@@ -622,6 +626,74 @@ describe('DiffUtils', () => {
         it('should generate stable hashes for identical lines', () => {
             expect(hashLine('same line')).toBe(hashLine('same line'));
             expect(hashLine('same line')).not.toBe(hashLine('different line'));
+        });
+    });
+
+    describe('convertMonacoLineChanges', () => {
+        it('should convert monaco line changes correctly', () => {
+            const mockLineChanges: monaco.editor.ILineChange[] = [
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 2,
+                    modifiedStartLineNumber: 1,
+                    modifiedEndLineNumber: 3,
+                    charChanges: undefined,
+                },
+            ];
+
+            const result = convertMonacoLineChanges(mockLineChanges);
+            expect(result.addedLineCount).toBe(3); // 3 - 1 + 1 = 3
+            expect(result.removedLineCount).toBe(2); // 2 - 1 + 1 = 2
+        });
+
+        it('should handle null monaco line changes', () => {
+            const result = convertMonacoLineChanges(null!);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
+        });
+
+        it('should handle undefined monaco line changes', () => {
+            const result = convertMonacoLineChanges(undefined!);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
+        });
+
+        it('should handle empty monaco line changes array', () => {
+            const result = convertMonacoLineChanges([]);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
+        });
+
+        it('should treat endLineNumber=0 as "no lines on this side"', () => {
+            const mockLineChanges: monaco.editor.ILineChange[] = [
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 2,
+                    modifiedStartLineNumber: 0,
+                    modifiedEndLineNumber: 0, // Monaco signals "no modified lines"
+                    charChanges: undefined,
+                },
+            ];
+
+            const result = convertMonacoLineChanges(mockLineChanges);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(2);
+        });
+
+        it('should treat both sides zero as zero changes', () => {
+            const mockLineChanges: monaco.editor.ILineChange[] = [
+                {
+                    originalStartLineNumber: 0,
+                    originalEndLineNumber: 0,
+                    modifiedStartLineNumber: 0,
+                    modifiedEndLineNumber: 0,
+                    charChanges: undefined,
+                },
+            ];
+
+            const result = convertMonacoLineChanges(mockLineChanges);
+            expect(result.addedLineCount).toBe(0);
+            expect(result.removedLineCount).toBe(0);
         });
     });
 });

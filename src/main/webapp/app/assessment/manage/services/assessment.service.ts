@@ -4,8 +4,8 @@ import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.m
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 
 /**
- * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
- * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+ * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests themself
+ * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor themself
  * For exam test runs, the original assessor is allowed to respond to complaints.
  */
 export const isAllowedToRespondToComplaintAction = (isTestRun: boolean, isAssessor: boolean, complaint: Complaint, exercise?: Exercise): boolean => {

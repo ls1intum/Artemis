@@ -17,9 +17,5 @@ export interface ProblemStatementGenerationResponse {
      * Draft problem statement text
      */
     draftProblemStatement?: string;
-    /**
-     * Error message if generation failed
-     */
-    error?: string;
 }
 

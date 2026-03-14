@@ -31,6 +31,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
@@ -83,6 +84,8 @@ public class LocalCIResultProcessingService {
 
     private final ProgrammingSubmissionMessagingService programmingSubmissionMessagingService;
 
+    private final Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService;
+
     private UUID listenerId;
 
     private final AtomicLong processedResults = new AtomicLong();
@@ -98,7 +101,7 @@ public class LocalCIResultProcessingService {
             BuildJobRepository buildJobRepository, ProgrammingExerciseRepository programmingExerciseRepository, ParticipationRepository participationRepository,
             ProgrammingTriggerService programmingTriggerService, BuildLogEntryService buildLogEntryService,
             ProgrammingExerciseBuildStatisticsRepository programmingExerciseBuildStatisticsRepository, DistributedDataAccessService distributedDataAccessService,
-            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService) {
+            ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, Optional<LocalCIQueueWebsocketService> localCIQueueWebsocketService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseGradingService = programmingExerciseGradingService;
@@ -109,6 +112,7 @@ public class LocalCIResultProcessingService {
         this.programmingExerciseBuildStatisticsRepository = programmingExerciseBuildStatisticsRepository;
         this.distributedDataAccessService = distributedDataAccessService;
         this.programmingSubmissionMessagingService = programmingSubmissionMessagingService;
+        this.localCIQueueWebsocketService = localCIQueueWebsocketService;
     }
 
     /**
@@ -315,7 +319,7 @@ public class LocalCIResultProcessingService {
     }
 
     /**
-     * Save a finished build job to the database.
+     * Save a finished build job to the database and send a WebSocket notification.
      *
      * @param queueItem   the build job object from the queue
      * @param buildStatus the status of the build job (SUCCESSFUL, FAILED, CANCELLED)
@@ -327,7 +331,24 @@ public class LocalCIResultProcessingService {
         try {
             BuildJob buildJob = new BuildJob(queueItem, buildStatus, result);
             buildJobRepository.findByBuildJobId(queueItem.id()).ifPresent(existingBuildJob -> buildJob.setId(existingBuildJob.getId()));
-            return buildJobRepository.save(buildJob);
+            BuildJob savedBuildJob = buildJobRepository.save(buildJob);
+
+            // Send WebSocket notification for the finished build job
+            // Refetch with eager loading to avoid LazyInitializationException
+            final BuildJob finalSavedBuildJob = savedBuildJob;
+            localCIQueueWebsocketService.ifPresent(service -> {
+                try {
+                    buildJobRepository.findWithDataByBuildJobId(finalSavedBuildJob.getBuildJobId()).ifPresent(buildJobWithData -> {
+                        FinishedBuildJobDTO finishedBuildJobDTO = FinishedBuildJobDTO.of(buildJobWithData);
+                        service.sendFinishedBuildJobOverWebsocket(finishedBuildJobDTO);
+                    });
+                }
+                catch (Exception e) {
+                    log.warn("Could not send finished build job notification over WebSocket", e);
+                }
+            });
+
+            return savedBuildJob;
         }
         catch (Exception e) {
             log.error("Could not save build job to database", e);

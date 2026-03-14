@@ -1,0 +1,60 @@
+diff --git a/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs b/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs
+index 6000445..e9d8e80 100644
+--- a/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs
++++ b/node_modules/@eslint/eslintrc/dist/eslintrc-universal.cjs
+@@ -216,6 +216,7 @@ function emitDeprecationWarning(source, errorCode) {
+  * Copyright (c) 2015-2017 Evgeny Poberezkin
+  */
+ const metaSchema = {
++    $id: "http://json-schema.org/draft-04/schema",
+     id: "http://json-schema.org/draft-04/schema#",
+     $schema: "http://json-schema.org/draft-04/schema#",
+     description: "Core schema meta-schema",
+@@ -374,15 +375,13 @@ var ajvOrig = (additionalOptions = {}) => {
+         meta: false,
+         useDefaults: true,
+         validateSchema: false,
+-        missingRefs: "ignore",
+         verbose: true,
+-        schemaId: "auto",
++        strict: false,
++        defaultMeta: metaSchema.$id,
+         ...additionalOptions
+     });
+ 
+     ajv.addMetaSchema(metaSchema);
+-    // eslint-disable-next-line no-underscore-dangle -- part of the API
+-    ajv._opts.defaultMeta = metaSchema.id;
+ 
+     return ajv;
+ };
+diff --git a/node_modules/@eslint/eslintrc/dist/eslintrc.cjs b/node_modules/@eslint/eslintrc/dist/eslintrc.cjs
+index 1b76091..4006c05 100644
+--- a/node_modules/@eslint/eslintrc/dist/eslintrc.cjs
++++ b/node_modules/@eslint/eslintrc/dist/eslintrc.cjs
+@@ -1449,6 +1449,7 @@ function emitDeprecationWarning(source, errorCode) {
+  * Copyright (c) 2015-2017 Evgeny Poberezkin
+  */
+ const metaSchema = {
++    $id: "http://json-schema.org/draft-04/schema",
+     id: "http://json-schema.org/draft-04/schema#",
+     $schema: "http://json-schema.org/draft-04/schema#",
+     description: "Core schema meta-schema",
+@@ -1607,15 +1608,13 @@ var ajvOrig = (additionalOptions = {}) => {
+         meta: false,
+         useDefaults: true,
+         validateSchema: false,
+-        missingRefs: "ignore",
+         verbose: true,
+-        schemaId: "auto",
++        strict: false,
++        defaultMeta: metaSchema.$id,
+         ...additionalOptions
+     });
+ 
+     ajv.addMetaSchema(metaSchema);
+-    // eslint-disable-next-line no-underscore-dangle -- part of the API
+-    ajv._opts.defaultMeta = metaSchema.id;
+ 
+     return ajv;
+ };

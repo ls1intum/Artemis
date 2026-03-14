@@ -254,7 +254,7 @@ public class DataExportExerciseCreationService {
             FileUtils.writeByteArrayToFile(outputDir.resolve(fileName + PDF_FILE_EXTENSION).toFile(), modelAsPdf.readAllBytes());
         }
         catch (Exception e) {
-            log.warn("Failed to include the model as pdf, going to include it as plain JSON file.");
+            log.warn("Failed to include the model as pdf, going to include it as plain JSON file.", e);
             addModelJsonWithExplanationHowToView(modelingSubmission.getModel(), outputDir, fileName);
         }
     }

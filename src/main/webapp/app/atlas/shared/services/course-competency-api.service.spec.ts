@@ -3,8 +3,10 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 import { CourseCompetencyApiService } from 'app/atlas/shared/services/course-competency-api.service';
 import { CompetencyRelation, CompetencyRelationType, CourseCompetencyImportOptionsDTO, UpdateCourseCompetencyRelationDTO } from 'app/atlas/shared/entities/competency.model';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 
 describe('CourseCompetencyApiService', () => {
+    setupTestBed({ zoneless: true });
     let httpClient: HttpTestingController;
     let courseCompetencyApiService: CourseCompetencyApiService;
 

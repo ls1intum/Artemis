@@ -49,9 +49,9 @@
                     }
                     <!-- LECTURE UNITS START-->
                     @if (lecture.lectureUnits) {
-                        <div class="row mb-2 mt-2 align-items-baseline">
+                        <div class="row mb-2 mt-2 align-items-center">
                             <div class="col-auto">
-                                <h3 jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
+                                <h3 class="mb-0" jhiTranslate="artemisApp.courseOverview.lectureDetails.lectureUnits"></h3>
                             </div>
                             @if (hasPdfLectureUnit) {
                                 <button

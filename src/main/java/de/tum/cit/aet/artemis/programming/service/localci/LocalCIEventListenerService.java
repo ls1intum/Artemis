@@ -175,17 +175,33 @@ public class LocalCIEventListenerService {
 
         @Override
         public void entryAdded(MapEntryAddedEvent<String, BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem added to processing jobs: {}", event.value());
-            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.value().courseId());
-            buildJobRepository.updateBuildJobStatusWithBuildStartDate(event.value().id(), BuildStatus.BUILDING, event.value().jobTimingInfo().buildStartDate());
-            notifyUserAboutBuildProcessing(event.value().exerciseId(), event.value().participationId(), event.value().buildConfig().assignmentCommitHash(),
-                    event.value().jobTimingInfo().submissionDate(), event.value().jobTimingInfo().buildStartDate(), event.value().jobTimingInfo().estimatedCompletionDate());
+            BuildJobQueueItem job = event.value();
+            if (job == null) {
+                log.warn("Processing job entryAdded event received with null value");
+                return;
+            }
+            log.debug("CIBuildJobQueueItem added to processing jobs: {}", job);
+            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(job.courseId());
+            localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(job);
+            // Also update build agent summary so the admin page shows accurate running job counts
+            localCIQueueWebsocketService.sendBuildAgentSummaryOverWebsocket();
+            buildJobRepository.updateBuildJobStatusWithBuildStartDate(job.id(), BuildStatus.BUILDING, job.jobTimingInfo().buildStartDate());
+            notifyUserAboutBuildProcessing(job.exerciseId(), job.participationId(), job.buildConfig().assignmentCommitHash(), job.jobTimingInfo().submissionDate(),
+                    job.jobTimingInfo().buildStartDate(), job.jobTimingInfo().estimatedCompletionDate());
         }
 
         @Override
         public void entryRemoved(MapEntryRemovedEvent<String, BuildJobQueueItem> event) {
-            log.debug("CIBuildJobQueueItem removed from processing jobs: {}", event.oldValue());
-            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(event.oldValue().courseId());
+            BuildJobQueueItem job = event.oldValue();
+            if (job == null) {
+                log.warn("Processing job entryRemoved event received with null oldValue");
+                return;
+            }
+            log.debug("CIBuildJobQueueItem removed from processing jobs: {}", job);
+            localCIQueueWebsocketService.sendProcessingJobsOverWebsocket(job.courseId());
+            localCIQueueWebsocketService.sendBuildJobUpdateOverWebsocket(job);
+            // Also update build agent summary so the admin page shows accurate running job counts
+            localCIQueueWebsocketService.sendBuildAgentSummaryOverWebsocket();
         }
 
         @Override

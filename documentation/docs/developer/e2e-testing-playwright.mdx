@@ -32,10 +32,83 @@ To run playwright tests locally, you need to start the Artemis server and client
 This setup should be used for debugging, and creating new tests for your code, but needs intellij to work, and relies on fully setting up your local Artemis instance
 following [the server setup guide](./setup.mdx).
 
-For a quick test setup with only three steps, you can use the scripts provided in `supportingScripts/playwright`.
+For a quick test setup with only three steps, you can use the scripts provided in `supporting_scripts/playwright`.
 The README explains what you need to do.
 It sets up Artemis inside a dockerized environment, creates users and directly starts playwright. The main drawback with this setup is, that you cannot
 easily change the version of Artemis itself.
+
+### Supporting scripts overview
+
+The following helper scripts live in `supporting_scripts/playwright` and can be combined as needed:
+
+- `runArtemisInDocker_macOS.sh` / `runArtemisInDocker_linux.sh`: start the Artemis server/client plus database in Docker.
+- `setupUsers.sh`: create the Playwright test users.
+- `startPlaywright.sh`: run the full Playwright suite headless in the terminal.
+- `startPlaywrightUI.sh`: launch Playwright in UI mode for debugging.
+- `prepareVSCodeForE2ETests.sh`: install dependencies and patch the Playwright config so VS Code can discover and run the E2E tests directly from the Testing view.
+- `checkFlakiness.sh`: repeatedly run tests to investigate flaky behavior.
+
+The three steps for setting up Playwright with these supporting scripts are:
+
+1. Start Artemis by running `runArtemisInDocker_macOS.sh` or `runArtemisInDocker_linux.sh` (depending on your OS). This starts the database, server, and client; keep the client running and use a separate shell for the remaining steps.
+2. Create test users by running `setupUsers.sh` (skip if users already exist).
+3. Run tests either headless with `startPlaywright.sh`, in UI mode with `startPlaywrightUI.sh`, or via VS Code after running `prepareVSCodeForE2ETests.sh`.
+
+### Fast local runner (recommended for development)
+
+For the fastest local development experience, use the `run-e2e-tests-local-fast.sh` script in the repository root.
+Unlike the Docker-based approach above, this script runs only PostgreSQL in Docker while running the server and client directly on the host.
+Services stay running between test runs, so re-runs only take seconds.
+
+**Prerequisites:** Docker, Java 25+, Node.js 24+, npm.
+
+**Architecture:**
+
+- **Docker:** PostgreSQL only (port 5432)
+- **Host:** Spring Boot server via `./gradlew bootRun -x webapp` (port 8080)
+- **Host:** Angular client via `npm start` (port 9000, proxies API calls to 8080)
+- **Host:** Playwright tests connect to `http://localhost:9000`
+
+**First run (starts everything):**
+
+```bash
+./run-e2e-tests-local-fast.sh
+```
+
+This starts PostgreSQL, boots the server (~30-90s), starts the client (~10-20s), then runs all Playwright tests.
+
+**Re-run tests (services already running):**
+
+```bash
+# Run all tests (skips starting services that are already running)
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db
+
+# Run only specific tests
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --filter "Quiz"
+
+# Open Playwright UI for debugging
+./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db --ui
+```
+
+**Stop everything:**
+
+```bash
+./run-e2e-tests-local-fast.sh --stop
+```
+
+**Available options:**
+
+| Flag | Description |
+|------|-------------|
+| `--stop` | Kill server, client, and database; exit |
+| `--filter <pattern>` | Run only tests matching the pattern (e.g., `"Quiz"`) |
+| `--skip-server` | Reuse already-running server |
+| `--skip-client` | Reuse already-running client |
+| `--skip-db` | Reuse already-running PostgreSQL |
+| `--headed` | Run Playwright in headed mode (visible browser) |
+| `--ui` | Open Playwright UI mode for interactive debugging |
+
+Logs and PID files are stored in the `.e2e-local/` directory (gitignored).
 
 If you want to manually install playwright, you can follow these steps:
 
@@ -81,7 +154,7 @@ Make sure `BASE_URL` matches your Artemis client URL and `ADMIN_USERNAME` and
 
 Playwright tests require users with different roles to simulate concurrent user interactions. If you already
 have generated test users, you can skip this step. Generate users with the help of the user creation scripts under the
-`supportingScripts/playwright` folder:
+`supporting_scripts/playwright` folder:
 
 ```bash
 setupUsers.sh
