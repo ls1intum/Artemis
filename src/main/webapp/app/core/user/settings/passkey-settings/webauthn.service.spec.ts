@@ -5,6 +5,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { InvalidCredentialError } from './entities/errors/invalid-credential.error';
 import { UserAbortedPasskeyCreationError } from './entities/errors/user-aborted-passkey-creation.error';
 import { InvalidStateError } from './entities/errors/invalid-state.error';
+import { PasskeyAbortError } from './entities/errors/passkey-abort.error';
 import { User } from 'app/core/user/user.model';
 import * as credentialUtil from './util/credential.util';
 import * as credentialOptionUtil from './util/credential-option.util';
@@ -118,14 +119,17 @@ describe('WebauthnService', () => {
             await service.loginWithPasskey();
 
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalled();
-            expect(navigator.credentials.get).toHaveBeenCalledWith({
-                publicKey: expect.objectContaining({
-                    challenge: expect.any(ArrayBuffer),
-                    timeout: 60000,
-                    rpId: 'example.com',
-                    userVerification: 'preferred',
+            expect(navigator.credentials.get).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    publicKey: expect.objectContaining({
+                        challenge: expect.any(ArrayBuffer),
+                        timeout: 60000,
+                        rpId: 'example.com',
+                        userVerification: 'preferred',
+                    }),
+                    signal: expect.any(AbortSignal),
                 }),
-            });
+            );
             expect(credentialUtil.getLoginCredentialWithGracefullyHandlingAuthenticatorIssues).toHaveBeenCalledWith(mockPublicKeyCredential);
             expect(webauthnApiService.loginWithPasskey).toHaveBeenCalledWith(mockPublicKeyCredential);
             expect(accountService.identity).toHaveBeenCalledWith(true);
@@ -232,11 +236,14 @@ describe('WebauthnService', () => {
 
             expect(result).toBe(mockCredential);
             expect(webauthnApiService.getAuthenticationOptions).toHaveBeenCalled();
-            expect(navigator.credentials.get).toHaveBeenCalledWith({
-                publicKey: expect.objectContaining({
-                    challenge: expect.any(ArrayBuffer),
+            expect(navigator.credentials.get).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    publicKey: expect.objectContaining({
+                        challenge: expect.any(ArrayBuffer),
+                    }),
+                    signal: expect.any(AbortSignal),
                 }),
-            });
+            );
         });
 
         it('should return undefined when credentials.get returns null', async () => {
@@ -271,17 +278,129 @@ describe('WebauthnService', () => {
 
             await service.getCredential();
 
-            expect(navigator.credentials.get).toHaveBeenCalledWith({
-                publicKey: expect.objectContaining({
-                    allowCredentials: expect.arrayContaining([
-                        expect.objectContaining({
-                            type: 'public-key',
-                            id: expect.any(ArrayBuffer),
-                            transports: ['usb', 'nfc'],
-                        }),
-                    ]),
+            expect(navigator.credentials.get).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    publicKey: expect.objectContaining({
+                        allowCredentials: expect.arrayContaining([
+                            expect.objectContaining({
+                                type: 'public-key',
+                                id: expect.any(ArrayBuffer),
+                                transports: ['usb', 'nfc'],
+                            }),
+                        ]),
+                    }),
                 }),
+            );
+        });
+    });
+
+    describe('getCredential with conditional mediation', () => {
+        const setupAuthMock = () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+                userVerification: 'preferred',
+            } as any);
+        };
+
+        beforeEach(() => {
+            setupAuthMock();
+        });
+
+        it('should pass mediation conditional and signal when isConditional is true', async () => {
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
+
+            await service.getCredential(true);
+
+            expect(navigator.credentials.get).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    publicKey: expect.any(Object),
+                    mediation: 'conditional',
+                    signal: expect.any(AbortSignal),
+                }),
+            );
+        });
+
+        it('should not pass mediation when isConditional is false', async () => {
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue({ type: 'public-key' } as PublicKeyCredential);
+
+            await service.getCredential(false);
+
+            const callArgs = (navigator.credentials.get as jest.Mock).mock.calls[0][0];
+            expect(callArgs.mediation).toBeUndefined();
+            expect(callArgs.signal).toEqual(expect.any(AbortSignal));
+        });
+    });
+
+    describe('abortPendingCredentialRequest', () => {
+        it('should abort the current AbortController with PasskeyAbortError', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+
+            let capturedSignal: AbortSignal | undefined;
+            jest.spyOn(navigator.credentials, 'get').mockImplementation((options: any) => {
+                capturedSignal = options?.signal;
+                return new Promise(() => {}); // never resolves
             });
+
+            // Start a conditional request — must await the authentication options fetch
+            const credentialPromise = service.getCredential(true);
+            // Wait for the async getAuthenticationOptions mock to resolve
+            await new Promise((resolve) => setTimeout(resolve, 0));
+
+            expect(capturedSignal).toBeDefined();
+            expect(capturedSignal!.aborted).toBeFalse();
+
+            service.abortPendingCredentialRequest();
+
+            expect(capturedSignal!.aborted).toBeTrue();
+            expect(capturedSignal!.reason).toBeInstanceOf(PasskeyAbortError);
+        });
+    });
+
+    describe('loginWithPasskey with conditional mediation', () => {
+        it('should abort pending requests when called without conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+            accountService.identity.mockResolvedValue({} as any);
+            const abortSpy = jest.spyOn(service, 'abortPendingCredentialRequest');
+
+            await service.loginWithPasskey(false);
+
+            expect(abortSpy).toHaveBeenCalled();
+        });
+
+        it('should not abort pending requests when called with conditional', async () => {
+            const challenge = new Uint8Array([1, 2, 3]);
+            webauthnApiService.getAuthenticationOptions.mockResolvedValue({
+                challenge: encodeAsBase64Url(challenge),
+                timeout: 60000,
+                rpId: 'example.com',
+            } as any);
+            const mockCredential = { type: 'public-key' } as PublicKeyCredential;
+            jest.spyOn(navigator.credentials, 'get').mockResolvedValue(mockCredential);
+            jest.spyOn(credentialUtil, 'getLoginCredentialWithGracefullyHandlingAuthenticatorIssues').mockReturnValue(mockCredential as any);
+            webauthnApiService.loginWithPasskey.mockResolvedValue({ success: true } as any);
+            accountService.identity.mockResolvedValue({} as any);
+            const abortSpy = jest.spyOn(service, 'abortPendingCredentialRequest');
+
+            await service.loginWithPasskey(true);
+
+            expect(abortSpy).not.toHaveBeenCalled();
         });
     });
 

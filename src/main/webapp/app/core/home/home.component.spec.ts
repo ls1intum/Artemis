@@ -26,6 +26,7 @@ import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { Saml2LoginComponent } from './saml2-login/saml2-login.component';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { RouterLink } from '@angular/router';
+import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/errors/passkey-abort.error';
 
 describe('HomeComponent', () => {
     let component: HomeComponent;
@@ -33,6 +34,7 @@ describe('HomeComponent', () => {
     let accountService: AccountService;
     let modalService: NgbModal;
     let loginService: LoginService;
+    let webauthnService: WebauthnService;
     let localStorageService: LocalStorageService;
 
     let router: MockRouter;
@@ -77,6 +79,7 @@ describe('HomeComponent', () => {
         accountService = TestBed.inject(AccountService);
         modalService = TestBed.inject(NgbModal);
         loginService = TestBed.inject(LoginService);
+        webauthnService = TestBed.inject(WebauthnService);
         fixture.detectChanges();
     });
 
@@ -207,6 +210,104 @@ describe('HomeComponent', () => {
             component.openSetupPasskeyModal();
 
             expect(openModalSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('prefillPasskeysIfPossible', () => {
+        it('should call makePasskeyAutocompleteAvailable if passkey is enabled and conditional mediation is available', async () => {
+            component.isPasskeyEnabled = true;
+            const makePasskeyAutocompleteSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable').mockResolvedValue(undefined);
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: jest.fn().mockResolvedValue(true),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(makePasskeyAutocompleteSpy).toHaveBeenCalledOnce();
+        });
+
+        it('should not call makePasskeyAutocompleteAvailable if passkey is disabled', async () => {
+            component.isPasskeyEnabled = false;
+            const makePasskeyAutocompleteSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable');
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(makePasskeyAutocompleteSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not call makePasskeyAutocompleteAvailable if conditional mediation is unavailable', async () => {
+            component.isPasskeyEnabled = true;
+            const makePasskeyAutocompleteSpy = jest.spyOn(component, 'makePasskeyAutocompleteAvailable');
+            (window as any).PublicKeyCredential = {
+                isConditionalMediationAvailable: jest.fn().mockResolvedValue(false),
+            };
+
+            await component.prefillPasskeysIfPossible();
+
+            expect(window.PublicKeyCredential!.isConditionalMediationAvailable).toHaveBeenCalledOnce();
+            expect(makePasskeyAutocompleteSpy).not.toHaveBeenCalled();
+        });
+
+        it('should not throw if PublicKeyCredential is undefined', async () => {
+            component.isPasskeyEnabled = true;
+            (window as any).PublicKeyCredential = undefined;
+
+            await expect(component.prefillPasskeysIfPossible()).resolves.not.toThrow();
+        });
+    });
+
+    describe('makePasskeyAutocompleteAvailable', () => {
+        it('should handle successful conditional mediation login', async () => {
+            jest.spyOn(webauthnService, 'loginWithPasskey').mockResolvedValue(undefined);
+            const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+
+            await component.makePasskeyAutocompleteAvailable();
+
+            expect(webauthnService.loginWithPasskey).toHaveBeenCalledWith(true);
+            expect(handleLoginSuccessSpy).toHaveBeenCalled();
+        });
+
+        it('should silently handle PasskeyAbortError', async () => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+            jest.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(new PasskeyAbortError());
+            const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+
+            await component.makePasskeyAutocompleteAvailable();
+
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+
+        it('should silently handle DOMException AbortError', async () => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+            jest.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(new DOMException('Aborted', 'AbortError'));
+            const handleLoginSuccessSpy = jest.spyOn(component as any, 'handleLoginSuccess');
+
+            await component.makePasskeyAutocompleteAvailable();
+
+            expect(handleLoginSuccessSpy).not.toHaveBeenCalled();
+        });
+
+        it('should retry once on NotAllowedError (user cancelled)', async () => {
+            jest.spyOn(console, 'warn').mockImplementation(() => {});
+            const notAllowedError = new DOMException('User cancelled', 'NotAllowedError');
+            const loginSpy = jest.spyOn(webauthnService, 'loginWithPasskey').mockRejectedValue(notAllowedError);
+
+            await component.makePasskeyAutocompleteAvailable();
+
+            // First call + one retry = 2 calls
+            expect(loginSpy).toHaveBeenCalledTimes(2);
+            expect(loginSpy).toHaveBeenCalledWith(true);
+        });
+    });
+
+    describe('ngOnDestroy', () => {
+        it('should abort pending credential request on destroy', () => {
+            const abortSpy = jest.spyOn(webauthnService, 'abortPendingCredentialRequest');
+
+            component.ngOnDestroy();
+
+            expect(abortSpy).toHaveBeenCalledOnce();
         });
     });
 });

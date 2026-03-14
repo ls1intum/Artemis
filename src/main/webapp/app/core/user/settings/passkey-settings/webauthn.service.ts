@@ -13,6 +13,7 @@ import { getOS } from 'app/shared/util/os-detector.util';
 import { UserAbortedPasskeyCreationError } from 'app/core/user/settings/passkey-settings/entities/errors/user-aborted-passkey-creation.error';
 import { InvalidStateError } from 'app/core/user/settings/passkey-settings/entities/errors/invalid-state.error';
 import { AccountService } from 'app/core/auth/account.service';
+import { PasskeyAbortError } from 'app/core/user/settings/passkey-settings/entities/errors/passkey-abort.error';
 
 @Injectable({ providedIn: 'root' })
 export class WebauthnService {
@@ -20,7 +21,29 @@ export class WebauthnService {
     private readonly accountService = inject(AccountService);
     private readonly webauthnApiService = inject(WebauthnApiService);
 
-    async getCredential(): Promise<PublicKeyCredential | undefined> {
+    private authAbortController = new AbortController();
+
+    /**
+     * Aborts any pending credential request (e.g., a conditional mediation request)
+     * and prepares a fresh AbortController for the next request.
+     *
+     * Only one `navigator.credentials.get()` call can be active at a time per origin.
+     * This must be called before starting a new credential request.
+     */
+    abortPendingCredentialRequest(): void {
+        this.authAbortController.abort(new PasskeyAbortError());
+        this.authAbortController = new AbortController();
+    }
+
+    /**
+     * Retrieves a credential from the authenticator.
+     *
+     * @param isConditional when true, uses conditional mediation (required for passkey autofill).
+     *        The browser will show passkey suggestions in the username/password autocomplete dropdown
+     *        and the returned promise will stay pending until the user selects a passkey.
+     * @returns the credential or undefined if no credential was selected
+     */
+    async getCredential(isConditional: boolean = false): Promise<PublicKeyCredential | undefined> {
         const publicKeyCredentialOptions = await this.webauthnApiService.getAuthenticationOptions();
 
         const assertionOptions: PublicKeyCredentialRequestOptions = {
@@ -42,6 +65,8 @@ export class WebauthnService {
 
         const credentialRequestOptions: CredentialRequestOptions = {
             publicKey: assertionOptions,
+            signal: this.authAbortController.signal,
+            ...(isConditional && { mediation: 'conditional' as CredentialMediationRequirement }),
         };
 
         const credential = (await navigator.credentials.get(credentialRequestOptions)) ?? undefined;
@@ -95,12 +120,16 @@ export class WebauthnService {
     /**
      * Logs in a user using passkey authentication.
      *
+     * @param isConditional when true, uses conditional mediation for passkey autofill
      * @throws InvalidCredentialError if the credential is invalid
      * @throws Error for other authentication errors
      */
-    async loginWithPasskey() {
+    async loginWithPasskey(isConditional: boolean = false) {
         try {
-            const authenticatorCredential = await this.getCredential();
+            if (!isConditional) {
+                this.abortPendingCredentialRequest();
+            }
+            const authenticatorCredential = await this.getCredential(isConditional);
 
             if (!authenticatorCredential || authenticatorCredential.type !== 'public-key') {
                 // noinspection ExceptionCaughtLocallyJS - intended to be caught locally
