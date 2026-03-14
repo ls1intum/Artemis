@@ -8,7 +8,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
-import { ButtonModule } from 'primeng/button';
+import { ButtonDirective } from 'primeng/button';
 
 type PdfViewerAnchorState = {
     pageIndex: number;
@@ -25,7 +25,7 @@ type PDFLoadingTask = {
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, ButtonModule],
+    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, ButtonDirective],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
 })
