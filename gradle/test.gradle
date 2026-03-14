@@ -9,6 +9,12 @@ tasks.withType(Test).configureEach {
     // See: https://github.com/weaviate/java-client?tab=readme-ov-file#gson-and-reflective-access-to-internal-jdk-classes
     // This is harmless: it only opens java.lang to classpath code within the same JVM process and does not expand the attack surface for remote exploits.
     jvmArgs += "--add-opens=java.base/java.lang=ALL-UNNAMED"
+    // Force UTC timezone for the test JVM. PostgreSQL's TIMESTAMP WITHOUT TIME ZONE columns
+    // in @SecondaryTable mappings can shift values by the JVM timezone offset during Hibernate
+    // round-trips. Combined with hibernate.jdbc.time_zone=UTC and the PostgreSQL session
+    // timezone (SET TIME ZONE 'UTC'), this ensures consistent timestamp handling across H2
+    // and PostgreSQL.
+    jvmArgs += "-Duser.timezone=UTC"
 
     // Pass weaviate server version to integration tests
     systemProperty 'weaviate.server.version', findProperty('weaviate_server_version')
