@@ -29,6 +29,10 @@ public class RedissonCodecConfiguration {
             @Override
             protected void init(ObjectMapper objectMapper) {
                 objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            }
+
+            @Override
+            protected void initTypeInclusion(ObjectMapper objectMapper) {
                 // Use EVERYTHING instead of the default NON_FINAL to include Java records (which are final)
                 // in type information. Without this, records like BuildAgentInformation are serialized
                 // without @class and cannot be deserialized back from Object.class.
