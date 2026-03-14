@@ -35,14 +35,32 @@ export class ExerciseTeamsPage {
     }
 
     /**
+     * Searches for a user via an autocomplete input and selects the matching option.
+     * Retries up to 3 times to handle autocomplete timing issues (debounce, API latency).
+     */
+    private async searchAndSelect(inputLocator: ReturnType<Page['locator']>, username: string, role: string) {
+        const listbox = this.page.getByRole('listbox');
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await inputLocator.clear();
+            await inputLocator.fill(username);
+            try {
+                await listbox.waitFor({ state: 'visible', timeout: 8000 });
+                const option = listbox.getByText(new RegExp(username, 'i')).first();
+                await option.waitFor({ state: 'visible', timeout: 5000 });
+                await option.click();
+                return;
+            } catch {
+                if (attempt === 2) throw new Error(`${role} search autocomplete did not appear after 3 attempts for '${username}'`);
+            }
+        }
+    }
+
+    /**
      * Sets the team owner/tutor.
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        const tutorSearchInput = this.page.locator('#owner-search-input');
-        await tutorSearchInput.fill(username);
-        await this.page.getByRole('listbox').waitFor({ state: 'visible' });
-        await tutorSearchInput.press('Enter');
+        await this.searchAndSelect(this.page.locator('#owner-search-input'), username, 'Tutor');
     }
 
     /**
@@ -50,10 +68,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        const studentSearchInput = this.page.locator('#student-search-input');
-        await studentSearchInput.fill(username);
-        await this.page.getByRole('listbox').waitFor({ state: 'visible' });
-        await studentSearchInput.press('Enter');
+        await this.searchAndSelect(this.page.locator('#student-search-input'), username, 'Student');
     }
 
     /**
