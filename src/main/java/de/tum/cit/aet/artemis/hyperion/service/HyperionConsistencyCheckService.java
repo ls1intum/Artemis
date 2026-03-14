@@ -140,7 +140,9 @@ public class HyperionConsistencyCheckService {
      * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
-     * @param exerciseId id of the programming exercise to check consistency for
+     * @param exerciseId        id of the programming exercise to check consistency for
+     * @param skipThreadContext if {@code true}, skips passing existing review-thread context to the AI prompts.
+     *                              This is needed for supporting scripts to evaluate new approaches for consistency check.
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
@@ -156,10 +158,10 @@ public class HyperionConsistencyCheckService {
         var exerciseWithParticipations = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
-        String existingReviewThreads = reviewCommentContextRenderer.renderReviewThreads(exerciseId);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
         Map<String, String> input;
         if (!skipThreadContext) {
+            String existingReviewThreads = reviewCommentContextRenderer.renderReviewThreads(exerciseId);
             input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
         }
         else {

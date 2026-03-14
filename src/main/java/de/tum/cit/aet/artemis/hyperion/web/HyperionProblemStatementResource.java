@@ -84,16 +84,17 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check the consistency of a programming exercise.
+     * POST programming-exercises/{exerciseId}/consistency-check: Check the consistency of a programming exercise.
      * Returns a JSON body with the issues (can be empty list).
      *
      * @param exerciseId        the id of the programming exercise to check
-     * @param skipThreadContext if {@code true}, skips creating review-comment threads after the check (default: {@code false})
+     * @param skipThreadContext if {@code true}, skips injecting existing review-thread context into the AI prompts
+     *                              and skips creating new review-comment threads after the check (default: {@code false})
      * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
-    @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
+    @PostMapping("programming-exercises/{exerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId,
+    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("exerciseId") long exerciseId,
             @RequestParam(required = false, defaultValue = "false") boolean skipThreadContext) {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
         ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId, skipThreadContext);

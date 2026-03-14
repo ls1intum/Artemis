@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for consistency check responses.
+ * issues may be an empty list; NON_NULL ensures it is always serialized for consistent client handling and evaluation script execution.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Response containing consistency check results")
