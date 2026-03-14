@@ -126,6 +126,17 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
+     * Execute structural and semantic consistency checks with existing review-thread context included.
+     * Delegates to {@link #checkConsistency(long, boolean)} with {@code skipThreadContext = false}.
+     *
+     * @param exerciseId id of the programming exercise to check consistency for
+     * @return aggregated consistency issues, timing, token usage, and costs.
+     */
+    public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
+        return checkConsistency(exerciseId, false);
+    }
+
+    /**
      * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
      * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
      *
@@ -133,7 +144,7 @@ public class HyperionConsistencyCheckService {
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
     @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
-    public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
+    public ConsistencyCheckResponseDTO checkConsistency(long exerciseId, boolean skipThreadContext) {
         if (chatClient == null) {
             throw new InternalServerErrorAlertException("AI chat client is not configured", "ConsistencyCheck", "ConsistencyCheck.chatClientNotConfigured");
         }
@@ -147,8 +158,13 @@ public class HyperionConsistencyCheckService {
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
         String existingReviewThreads = reviewCommentContextRenderer.renderReviewThreads(exerciseId);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
-        var input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
-
+        Map<String, String> input;
+        if (!skipThreadContext) {
+            input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
+        }
+        else {
+            input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", "");
+        }
         // Thread-safe collector for usage data from parallel checks
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
 
