@@ -132,6 +132,7 @@ public class HyperionConsistencyCheckService {
      * @param exerciseId id of the programming exercise to check consistency for
      * @return aggregated consistency issues, timing, token usage, and costs.
      */
+    @Observed(name = "hyperion.consistency", contextualName = "consistency check", lowCardinalityKeyValues = { AI_SPAN_KEY, AI_SPAN_VALUE })
     public ConsistencyCheckResponseDTO checkConsistency(long exerciseId) {
         return checkConsistency(exerciseId, false);
     }
@@ -159,14 +160,11 @@ public class HyperionConsistencyCheckService {
 
         String renderedRepositoryContext = exerciseContextRenderer.renderContext(exerciseWithParticipations);
         String programmingLanguage = exerciseWithParticipations.getProgrammingLanguage() != null ? exerciseWithParticipations.getProgrammingLanguage().name() : "JAVA";
-        Map<String, String> input;
-        if (!skipThreadContext) {
-            String existingReviewThreads = reviewCommentContextRenderer.renderReviewThreads(exerciseId);
-            input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", existingReviewThreads);
-        }
-        else {
-            input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads", "");
-        }
+        String existingReviewThreads = skipThreadContext ? "" : reviewCommentContextRenderer.renderReviewThreads(exerciseId);
+
+        Map<String, String> input = Map.of("rendered_context", renderedRepositoryContext, "programming_language", programmingLanguage, "existing_review_threads",
+                existingReviewThreads);
+
         // Thread-safe collector for usage data from parallel checks
         List<LLMRequest> usageCollector = new CopyOnWriteArrayList<>();
 
