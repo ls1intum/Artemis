@@ -1,199 +1,115 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, output, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, computed, signal } from '@angular/core';
+import { MenuItem } from 'primeng/api';
+import { ButtonModule } from 'primeng/button';
+import { MenuModule } from 'primeng/menu';
+import { RippleModule } from 'primeng/ripple';
+import { InputTextModule } from 'primeng/inputtext';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { faChalkboardUser, faCheck, faFolderOpen, faGraduationCap, faKeyboard, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { faArrowLeft, faChalkboardUser, faGraduationCap, faListAlt } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
-import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { Lecture } from 'app/lecture/shared/entities/lecture.model';
-import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
-import { catchError, filter, map, of, switchMap, tap } from 'rxjs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
-type ContextType = 'course' | 'lecture' | 'exercise';
-type ViewState = 'main' | 'lecture-selection' | 'exercise-selection';
-
-// Discriminated union for selection state
-type Selection = { type: 'course' } | { type: 'lecture'; lecture: Lecture } | { type: 'exercise'; exercise: Exercise };
-
-interface ContextOption {
-    type: ContextType;
-    icon: IconDefinition;
-    titleKey: string;
-    descriptionKey: string;
+interface IrisMenuItem extends MenuItem {
+    faIcon?: IconDefinition;
+    items?: IrisMenuItem[];
 }
-
-const DEFAULT_OPTIONS: ContextOption[] = [
-    {
-        type: 'course',
-        icon: faGraduationCap,
-        titleKey: 'artemisApp.iris.contextSelection.entireCourse',
-        descriptionKey: 'artemisApp.iris.contextSelection.entireCourseDescription',
-    },
-    {
-        type: 'lecture',
-        icon: faChalkboardUser,
-        titleKey: 'artemisApp.iris.contextSelection.selectLecture',
-        descriptionKey: 'artemisApp.iris.contextSelection.selectLectureDescription',
-    },
-    {
-        type: 'exercise',
-        icon: faListAlt,
-        titleKey: 'artemisApp.iris.contextSelection.selectExercise',
-        descriptionKey: 'artemisApp.iris.contextSelection.selectExerciseDescription',
-    },
-];
-
-// Maps exercise types that have Iris chat integration to their ChatServiceMode.
-// To add Iris support for a new exercise type, add a single entry here.
-const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
-    [ExerciseType.TEXT]: ChatServiceMode.TEXT_EXERCISE,
-    [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
-};
 
 @Component({
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [FaIconComponent, TranslateDirective, SearchFilterComponent],
+    imports: [ButtonModule, MenuModule, FaIconComponent, RippleModule, InputTextModule, IconFieldModule, InputIconModule, TranslateDirective, ArtemisTranslatePipe],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContextSelectionComponent {
-    private readonly courseManagementService = inject(CourseManagementService);
-    private readonly courseStorageService = inject(CourseStorageService);
-    private readonly chatService = inject(IrisChatService);
-    private readonly destroyRef = inject(DestroyRef);
+    private readonly allItems: IrisMenuItem[] = [
+        {
+            separator: true,
+        },
+        {
+            label: 'artemisApp.iris.contextSelection.courseGroup',
+            items: [
+                {
+                    label: 'Test Course',
+                    faIcon: faGraduationCap,
+                    command: () => {
+                        this.menuLabel.set('Test Course');
+                        this.menuIcon.set(faGraduationCap);
+                    },
+                },
+            ],
+        },
+        {
+            separator: true,
+        },
+        {
+            label: 'artemisApp.iris.contextSelection.lecturesGroup',
+            items: [
+                {
+                    label: 'Lecture 1',
+                    faIcon: faChalkboardUser,
+                    command: () => {
+                        this.menuLabel.set('Lecture 1');
+                        this.menuIcon.set(faChalkboardUser);
+                    },
+                },
+                {
+                    label: 'Lecture 2',
+                    faIcon: faChalkboardUser,
+                    command: () => {
+                        this.menuLabel.set('Lecture 2');
+                        this.menuIcon.set(faChalkboardUser);
+                    },
+                },
+            ],
+        },
+        {
+            separator: true,
+        },
+        {
+            label: 'artemisApp.iris.contextSelection.exercisesGroup',
+            items: [
+                {
+                    label: 'Exercise 1',
+                    faIcon: faKeyboard,
+                    command: () => {
+                        this.menuLabel.set('Exercise 1');
+                        this.menuIcon.set(faKeyboard);
+                    },
+                },
+                {
+                    label: 'Exercise 2',
+                    faIcon: faKeyboard,
+                    command: () => {
+                        this.menuLabel.set('Exercise 2');
+                        this.menuIcon.set(faKeyboard);
+                    },
+                },
+            ],
+        },
+    ];
 
-    // Icons
-    protected readonly faArrowLeft = faArrowLeft;
-    protected readonly faChalkboardUser = faChalkboardUser;
+    readonly menuLabel = signal<string>(this.allItems.find((i) => !i.separator && (i.items?.length ?? 0) > 0)?.items![0].label ?? '');
+    readonly menuIcon = signal<IconDefinition>(this.allItems.find((i) => !i.separator && (i.items?.length ?? 0) > 0)?.items![0].faIcon ?? faGraduationCap);
 
-    // Inputs
-    readonly courseId = input<number>();
-    readonly options = input<ContextOption[]>(DEFAULT_OPTIONS);
+    readonly searchTerm = signal<string>('');
 
-    // Outputs
-    readonly contextSelectionMade = output<boolean>();
-
-    // Consolidated selection state (discriminated union)
-    readonly selection = signal<Selection>({ type: 'course' });
-
-    // UI state
-    readonly currentView = signal<ViewState>('main');
-    readonly searchQuery = signal('');
-    readonly lectures = signal<Lecture[]>([]);
-    readonly exercises = signal<Exercise[]>([]);
-    readonly isLoading = signal(false);
-
-    // Derived state from selection
-    readonly selectedType = computed(() => this.selection().type);
-
-    readonly selectedLecture = computed(() => {
-        const sel = this.selection();
-        return sel.type === 'lecture' ? sel.lecture : undefined;
+    readonly filteredItems = computed<IrisMenuItem[]>(() => {
+        const term = this.searchTerm().trim().toLowerCase();
+        if (!term) return this.allItems;
+        return this.allItems
+            .filter((item) => !item.separator)
+            .map((group) => ({
+                ...group,
+                items: group.items?.filter((sub) => sub.label?.toLowerCase().includes(term)),
+            }))
+            .filter((group) => (group.items?.length ?? 0) > 0);
     });
 
-    readonly selectedExercise = computed(() => {
-        const sel = this.selection();
-        return sel.type === 'exercise' ? sel.exercise : undefined;
-    });
-
-    readonly filteredLectures = computed(() => {
-        const query = this.searchQuery().toLowerCase();
-        if (!query) {
-            return this.lectures();
-        }
-        return this.lectures().filter((lecture) => lecture.title?.toLowerCase().includes(query));
-    });
-
-    readonly supportedExercises = computed(() => this.exercises().filter((exercise) => exercise.type && exercise.type in EXERCISE_TYPE_TO_CHAT_MODE));
-
-    readonly filteredExercises = computed(() => {
-        const query = this.searchQuery().toLowerCase();
-        if (!query) {
-            return this.supportedExercises();
-        }
-        return this.supportedExercises().filter((exercise) => exercise.title?.toLowerCase().includes(query));
-    });
-
-    constructor() {
-        toObservable(this.courseId)
-            .pipe(
-                filter((courseId): courseId is number => courseId !== undefined),
-                tap(() => this.isLoading.set(true)),
-                switchMap((courseId) => {
-                    // Try cache first
-                    const cachedCourse = this.courseStorageService.getCourse(courseId);
-                    if (cachedCourse?.lectures?.length || cachedCourse?.exercises?.length) {
-                        return of({ lectures: cachedCourse.lectures ?? [], exercises: cachedCourse.exercises ?? [] });
-                    }
-                    // Fallback: Load from server
-                    // TODO: Replace with a lighter endpoint that only fetches exercises and lectures (without competencies)
-                    return this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(courseId).pipe(
-                        map((response) => ({
-                            lectures: response.body?.lectures ?? [],
-                            exercises: response.body?.exercises ?? [],
-                        })),
-                        catchError(() => of({ lectures: [] as Lecture[], exercises: [] as Exercise[] })),
-                    );
-                }),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe((data) => {
-                this.lectures.set(data.lectures);
-                this.exercises.set(data.exercises);
-                this.isLoading.set(false);
-            });
-    }
-
-    onOptionClick(type: ContextType): void {
-        if (type === 'course') {
-            this.selection.set({ type: 'course' });
-            const courseId = this.courseId();
-            if (courseId !== undefined) {
-                this.chatService.switchTo(ChatServiceMode.COURSE, courseId, true);
-            }
-        } else if (type === 'lecture') {
-            this.updateView('lecture-selection');
-        } else if (type === 'exercise') {
-            this.updateView('exercise-selection');
-        }
-    }
-
-    selectLecture(lecture: Lecture): void {
-        this.selection.set({ type: 'lecture', lecture });
-        this.updateView('main');
-        if (lecture.id !== undefined) {
-            this.chatService.switchTo(ChatServiceMode.LECTURE, lecture.id, true);
-        }
-    }
-
-    selectExercise(exercise: Exercise): void {
-        this.selection.set({ type: 'exercise', exercise });
-        this.updateView('main');
-        const mode = exercise.type ? EXERCISE_TYPE_TO_CHAT_MODE[exercise.type] : undefined;
-        if (exercise.id !== undefined && mode) {
-            this.chatService.switchTo(mode, exercise.id, true);
-        }
-    }
-
-    goBack(): void {
-        this.updateView('main');
-    }
-
-    onSearch(query: string): void {
-        this.searchQuery.set(query);
-    }
-
-    getExerciseIcon(exercise: Exercise): IconDefinition {
-        return getIcon(exercise.type) as IconDefinition;
-    }
-
-    private updateView(view: ViewState): void {
-        this.searchQuery.set('');
-        this.currentView.set(view);
-        this.contextSelectionMade.emit(view === 'main');
-    }
+    protected readonly faFolderOpen = faFolderOpen;
+    protected readonly faMagnifyingGlass = faMagnifyingGlass;
+    protected readonly faCheck = faCheck;
 }

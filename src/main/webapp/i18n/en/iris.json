@@ -151,7 +151,11 @@
                 "exerciseSelected": "Exercise selected",
                 "noLectures": "No lectures available",
                 "noExercises": "No exercises available",
-                "loading": "Loading..."
+                "loading": "Loading...",
+                "search": "Search...",
+                "courseGroup": "Course",
+                "lecturesGroup": "Lectures",
+                "exercisesGroup": "Exercises"
             },
             "citation": {
                 "inLecture": "in"

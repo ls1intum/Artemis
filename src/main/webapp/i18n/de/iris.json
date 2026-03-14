@@ -151,7 +151,11 @@
                 "exerciseSelected": "Aufgabe ausgewählt",
                 "noLectures": "Keine Vorlesungen verfügbar",
                 "noExercises": "Keine Aufgaben verfügbar",
-                "loading": "Wird geladen..."
+                "loading": "Wird geladen...",
+                "search": "Suchen...",
+                "courseGroup": "Kurs",
+                "lecturesGroup": "Vorlesungen",
+                "exercisesGroup": "Aufgaben"
             },
             "citation": {
                 "inLecture": "in"
