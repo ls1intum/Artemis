@@ -74,6 +74,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
 
     private static final int FACT_SUCCESSFUL_TEST_CASES = 3;
 
+    // TestOutputLSan is excluded because LeakSanitizer requires the SYS_PTRACE capability,
+    // which is unavailable in Docker containers by default (both on CI and many local setups).
+    // TestCompileLeak still validates that the code compiles with leak sanitizer flags.
     private static final List<String> GCC_TEST_CASE_NAMES = List.of("TestCompile", "TestOutput", "TestCompileASan", "TestOutputASan", "TestCompileUBSan", "TestOutputUBSan",
             "TestCompileLeak");
 
@@ -90,8 +93,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private String originalDockerConnectionUri;
 
     private String originalImageArchitecture;
-
-    private String dockerImageArchitecture;
 
     @Autowired
     private BuildAgentDockerService buildAgentDockerService;
@@ -155,8 +156,8 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
         doReturn(realDockerClient).when(buildAgentConfiguration).getDockerClient();
         doReturn(true).when(buildAgentConfiguration).isDockerAvailable();
         dockerClient = realDockerClient;
-        dockerImageArchitecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
-        ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", dockerImageArchitecture);
+        String architecture = normalizeDockerArchitecture(realDockerClient.infoCmd().exec().getArchitecture());
+        ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", architecture);
         distributedDataAccessService.getDistributedBuildJobQueue().clear();
         distributedDataAccessService.getDistributedProcessingJobs().clear();
         distributedDataAccessService.getDistributedBuildResultQueue().clear();
@@ -183,7 +184,6 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
             ReflectionTestUtils.setField(buildAgentDockerService, "imageArchitecture", originalImageArchitecture);
             originalImageArchitecture = null;
         }
-        dockerImageArchitecture = null;
     }
 
     @Test
@@ -246,7 +246,7 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private void replaceExerciseTestCases(ProjectType projectType) {
         List<String> testCaseNames = switch (projectType) {
             case FACT -> FACT_TEST_CASE_NAMES;
-            case GCC -> gccRelevantTestCaseNames();
+            case GCC -> GCC_TEST_CASE_NAMES;
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
 
@@ -420,17 +420,9 @@ class LocalCIDockerImageIntegrationTest extends AbstractProgrammingIntegrationLo
     private int expectedSuccessfulTestCaseCount(ProjectType projectType) {
         return switch (projectType) {
             case FACT -> FACT_SUCCESSFUL_TEST_CASES;
-            case GCC -> gccRelevantTestCaseNames().size();
+            case GCC -> GCC_TEST_CASE_NAMES.size();
             default -> throw new IllegalArgumentException("Unsupported project type: " + projectType);
         };
-    }
-
-    private List<String> gccRelevantTestCaseNames() {
-        // TestOutputLSan is excluded on all architectures because LeakSanitizer
-        // requires SYS_PTRACE capability which is unavailable in Docker containers
-        // by default. The test passes intermittently depending on system load,
-        // making it flaky in CI.
-        return GCC_TEST_CASE_NAMES;
     }
 
     private String normalizeDockerArchitecture(String dockerArchitecture) {
