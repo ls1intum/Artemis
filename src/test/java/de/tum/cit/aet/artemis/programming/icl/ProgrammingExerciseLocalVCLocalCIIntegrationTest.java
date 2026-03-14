@@ -252,7 +252,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
-        assertThat(updatedExercise.getReleaseDate()).isEqualTo(newReleaseDate);
+        // Compare as instants because PostgreSQL stores timestamps as UTC and the
+        // original timezone offset is not preserved through the database round-trip.
+        assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
@@ -266,9 +268,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
                 ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
                 // Truncate to milliseconds since Weaviate may not preserve nanosecond precision
-                assertThat(weaviateReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS)).isEqualTo(newReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
-                assertThat(weaviateReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS))
-                        .isNotEqualTo(originalReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
+                // Compare as instants because PostgreSQL stores timestamps as UTC and the
+                // original timezone offset is not preserved through the database round-trip.
+                assertThat(weaviateReleaseDate.toInstant().truncatedTo(java.time.temporal.ChronoUnit.MILLIS))
+                        .isEqualTo(newReleaseDate.toInstant().truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
+                assertThat(weaviateReleaseDate.toInstant().truncatedTo(java.time.temporal.ChronoUnit.MILLIS))
+                        .isNotEqualTo(originalReleaseDate.toInstant().truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
             });
         }
     }
