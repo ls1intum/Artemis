@@ -269,7 +269,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
     private addExerciseIdToPath(routerUrl: string, targetPath: string[]) {
         const routerPath = routerUrl.split(/[?#]/)[0];
         const pathNumbers = routerPath.match(/\d+/g);
-        const exerciseId = pathNumbers && pathNumbers.length > 1 ? pathNumbers[1] : undefined;
+        const exerciseId = pathNumbers?.[1];
         if (exerciseId) {
             return [...targetPath, exerciseId];
         }

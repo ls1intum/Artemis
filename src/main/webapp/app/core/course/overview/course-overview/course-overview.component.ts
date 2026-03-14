@@ -217,7 +217,25 @@ export class CourseOverviewComponent extends BaseCourseContainerComponent implem
             return routerUrl.includes(route.urlPart) && (!route.permissionCheck || route.permissionCheck());
         });
 
-        this.manageViewLink.set(matchedRoute ? matchedRoute.targetPath : baseManagementPath);
+        if (!matchedRoute) {
+            this.manageViewLink.set(baseManagementPath);
+            return;
+        }
+
+        const targetPath = matchedRoute.urlPart === 'exercises' ? this.addExerciseIdToPath(routerUrl, matchedRoute.targetPath) : matchedRoute.targetPath;
+
+        this.manageViewLink.set(targetPath);
+    }
+
+    private addExerciseIdToPath(routerUrl: string, targetPath: string[]) {
+        const routerPath = routerUrl.split(/[?#]/)[0];
+        const pathNumbers = routerPath.match(/\d+/g);
+        const exerciseId = pathNumbers?.[1];
+        const exercise = this.course()?.exercises?.find((courseExercise) => courseExercise.id?.toString() === exerciseId);
+        if (exerciseId && exercise?.type) {
+            return [...targetPath.slice(0, -1), `${exercise.type}-exercises`, exerciseId];
+        }
+        return targetPath;
     }
 
     /**

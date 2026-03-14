@@ -6,7 +6,7 @@ import { ActivatedRoute, Params, Router, RouterModule } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
-import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ImageComponent } from 'app/shared/image/image.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, TemplateRef, ViewChild } from '@angular/core';
@@ -71,6 +71,7 @@ const visibleDate1 = dayjs().subtract(1, 'days');
 const dueDateStat1: DueDateStat = { inTime: 1, late: 0, total: 1 };
 const exercise1: Exercise = {
     id: 5,
+    type: ExerciseType.PROGRAMMING,
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
     dueDate: dayjs().add(2, 'days'),
@@ -78,6 +79,7 @@ const exercise1: Exercise = {
 };
 const exercise2: Exercise = {
     id: 6,
+    type: ExerciseType.TEXT,
     numberOfAssessmentsOfCorrectionRounds: [dueDateStat1],
     studentAssignedTeamIdComputed: false,
     dueDate: dayjs().add(1, 'days'),
@@ -757,6 +759,24 @@ describe('CourseOverviewComponent', () => {
             jest.spyOn(router, 'url', 'get').mockReturnValue('/course-management/123/exercises/new');
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'exercises']);
+        });
+
+        it('should set exercise detail link when URL includes exercise details', () => {
+            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/5');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 5,
+                        type: ExerciseType.PROGRAMMING,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'programming-exercises', '5']);
         });
 
         it('should set lectures link when URL includes "lectures"', () => {
