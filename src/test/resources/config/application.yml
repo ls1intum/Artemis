@@ -246,7 +246,10 @@ zonky:
     test:
         database:
             prefetching:
-                concurrency: 1
+                # Pre-provision multiple databases ahead of demand so test contexts don't block
+                # waiting for a fresh Docker container. Reduces the window where connections can
+                # go stale during context transitions.
+                concurrency: 3
             # Default: H2 (in-process, no Docker). Override via Gradle tasks:
             #   ./gradlew testPostgres -x webapp  (PostgreSQL via Testcontainers)
             #   ./gradlew testMysql -x webapp     (MySQL via Testcontainers)
