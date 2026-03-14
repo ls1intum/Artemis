@@ -420,6 +420,13 @@ public class AtlasAgentService {
         return chatClient != null && chatMemory != null;
     }
 
+    /**
+     * Retrieves the conversation history for a given session as DTOs.
+     * Filters out internal system messages (delegation markers and briefings) and extracts preview data from messages.
+     *
+     * @param sessionId the session/conversation ID
+     * @return list of conversation history messages as DTOs with preview data
+     */
     public List<AtlasAgentHistoryMessageDTO> getConversationHistoryAsDTO(String sessionId) {
         try {
             if (chatMemory == null) {
