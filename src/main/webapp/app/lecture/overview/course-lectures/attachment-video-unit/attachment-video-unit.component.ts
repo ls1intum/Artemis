@@ -1,4 +1,5 @@
-import { Component, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpClient } from '@angular/common/http';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -45,6 +46,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
 
+    private readonly destroyRef = inject(DestroyRef);
     private readonly fileService = inject(FileService);
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
@@ -61,8 +63,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly isPdfLoading = signal<boolean>(false);
     readonly pdfLoadError = signal<boolean>(false);
 
-    private playlistSubscription?: Subscription;
-    private transcriptSubscription?: Subscription;
     private pdfSubscription?: Subscription;
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
@@ -104,32 +104,32 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return undefined;
     }
 
-    private logUnitOpenedEvent(): void {
-        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
-    }
-
-    private clearLoadedContent(): void {
-        this.transcriptSegments.set([]);
-        this.playlistUrl.set(undefined);
-        this.revokePdfUrl();
-        this.pdfUrl.set(undefined);
-        this.pdfLoadError.set(false);
-    }
-
     override toggleCollapse(isCollapsed: boolean): void {
         super.toggleCollapse(isCollapsed);
 
         if (!isCollapsed) {
-            this.logUnitOpenedEvent();
-            this.cancelPendingLoads();
-            this.clearLoadedContent();
+            this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
+
+            // reset stale state
+            this.transcriptSegments.set([]);
+            this.playlistUrl.set(undefined);
+            this.isLoading.set(true);
 
             const src = this.lectureUnit().videoSource;
 
-            if (src) {
-                this.isLoading.set(true);
+            if (!src) {
+                this.isLoading.set(false);
+                if (this.hasPdf()) {
+                    this.loadPdf();
+                }
+                return;
+            }
 
-                this.playlistSubscription = this.attachmentVideoUnitService.getPlaylistUrl(src).subscribe({
+            // Try to resolve a .m3u8 playlist URL from the server
+            this.attachmentVideoUnitService
+                .getPlaylistUrl(src)
+                .pipe(takeUntilDestroyed(this.destroyRef))
+                .subscribe({
                     next: (resolvedUrl) => {
                         if (resolvedUrl) {
                             this.playlistUrl.set(resolvedUrl);
@@ -142,17 +142,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                         this.isLoading.set(false);
                     },
                 });
-            } else {
-                this.isLoading.set(false);
-            }
-
             if (this.hasPdf()) {
                 this.loadPdf();
             }
         } else {
-            this.cancelPendingLoads();
-            this.clearLoadedContent();
-            this.isLoading.set(false);
+            this.cancelPdfLoad();
+            this.clearPdfState();
             this.isPdfLoading.set(false);
         }
     }
@@ -160,7 +155,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private fetchTranscript(): void {
         const id = this.lectureUnit().id!;
 
-        this.transcriptSubscription = this.lectureTranscriptionService
+        this.lectureTranscriptionService
             .getTranscription(id)
             .pipe(
                 map((dto) => {
@@ -170,6 +165,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                     // Filter and map to ensure all required fields are present
                     return dto.segments.filter((seg): seg is TranscriptSegment => seg.startTime != null && seg.endTime != null && seg.text != null) as TranscriptSegment[];
                 }),
+                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe({
                 next: (segments) => {
@@ -212,8 +208,14 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     ngOnDestroy(): void {
-        this.cancelPendingLoads();
+        this.cancelPdfLoad();
         this.revokePdfUrl();
+    }
+
+    private clearPdfState(): void {
+        this.revokePdfUrl();
+        this.pdfUrl.set(undefined);
+        this.pdfLoadError.set(false);
     }
 
     private revokePdfUrl(): void {
@@ -223,11 +225,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
     }
 
-    private cancelPendingLoads(): void {
-        this.playlistSubscription?.unsubscribe();
-        this.playlistSubscription = undefined;
-        this.transcriptSubscription?.unsubscribe();
-        this.transcriptSubscription = undefined;
+    private cancelPdfLoad(): void {
         this.pdfSubscription?.unsubscribe();
         this.pdfSubscription = undefined;
     }
@@ -246,7 +244,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     /** Downloads student version if available, otherwise instructor version. */
     handleDownload() {
-        this.logUnitOpenedEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = this.getAttachmentLink();
 
@@ -266,7 +264,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     handleOriginalVersion() {
-        this.logUnitOpenedEvent();
+        this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
         const link = addPublicFilePrefix(this.lectureUnit().attachment!.link!);
 
