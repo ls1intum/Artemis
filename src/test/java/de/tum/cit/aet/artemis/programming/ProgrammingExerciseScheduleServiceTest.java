@@ -114,7 +114,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
      * so dates must be in UTC to survive a DB round-trip without shifting.
      */
     private void freezeTime() {
-        frozenNow = ZonedDateTime.now(ZoneOffset.UTC);
+        // Truncate to milliseconds because PostgreSQL DATETIME(3) columns only store
+        // millisecond precision. Without truncation, nanosecond remnants cause Mockito
+        // eq() matchers to fail when comparing the original Java object (with nanoseconds)
+        // against the entity re-loaded from the database (with truncated nanoseconds).
+        frozenNow = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
         TimeUtil.setClock(Clock.fixed(frozenNow.toInstant(), frozenNow.getZone()));
     }
 
