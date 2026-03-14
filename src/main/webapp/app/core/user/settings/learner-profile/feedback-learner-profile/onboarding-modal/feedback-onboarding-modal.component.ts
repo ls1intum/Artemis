@@ -1,4 +1,4 @@
-import { Component, inject, model, output, signal } from '@angular/core';
+import { Component, inject, model, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TextResultComponent } from 'app/text/overview/text-result/text-result.component';
 import { FEEDBACK_EXAMPLES } from 'app/core/user/settings/learner-profile/feedback-learner-profile/onboarding-modal/feedback-examples';
@@ -23,7 +23,6 @@ export class FeedbackOnboardingModalComponent {
     readonly visible = model<boolean>(false);
     readonly completed = output<void>();
 
-    onboardingCompleted = signal<undefined>(undefined);
     step = 0;
     readonly totalSteps = 2;
     selected: (number | undefined)[] = [undefined, undefined];
@@ -105,7 +104,6 @@ export class FeedbackOnboardingModalComponent {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
-            this.onboardingCompleted.set(undefined);
             this.completed.emit();
             this.visible.set(false);
         } catch (error) {

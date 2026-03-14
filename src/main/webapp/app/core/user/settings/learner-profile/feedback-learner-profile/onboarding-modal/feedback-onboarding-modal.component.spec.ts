@@ -98,7 +98,6 @@ describe('FeedbackOnboardingModalComponent', () => {
                 type: AlertType.SUCCESS,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.profileSaved',
             });
-            expect(component.onboardingCompleted()).toBeUndefined();
             expect(completedSpy).toHaveBeenCalledOnce();
             expect(component.visible()).toBe(false);
         });
@@ -112,7 +111,6 @@ describe('FeedbackOnboardingModalComponent', () => {
                 type: AlertType.DANGER,
                 message: 'artemisApp.learnerProfile.feedbackLearnerProfile.error',
             });
-            expect(component.onboardingCompleted()).toBeUndefined();
             expect(component.visible()).toBe(false);
         });
     });

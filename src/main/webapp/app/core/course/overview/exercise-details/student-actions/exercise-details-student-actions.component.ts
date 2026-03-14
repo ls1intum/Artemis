@@ -110,17 +110,17 @@ export class ExerciseDetailsStudentActionsComponent {
     private readonly _isLoading = signal(false);
     private readonly _studentParticipations = signal<StudentParticipation[]>([]);
 
-    readonly uninitializedQuiz = computed(() => this._uninitializedQuiz());
-    readonly quizNotStarted = computed(() => this._quizNotStarted());
-    readonly gradedParticipation = computed(() => this._gradedParticipation());
-    readonly practiceParticipation = computed(() => this._practiceParticipation());
-    readonly programmingExercise = computed(() => this._programmingExercise());
-    readonly isTeamAvailable = computed(() => this._isTeamAvailable());
-    readonly hasRatedGradedResult = computed(() => this._hasRatedGradedResult());
-    readonly editorLabel = computed(() => this._editorLabel());
-    readonly numberOfGradedParticipationResults = computed(() => this._numberOfGradedParticipationResults());
-    readonly isLoading = computed(() => this._isLoading());
-    readonly studentParticipations = computed(() => this._studentParticipations());
+    readonly uninitializedQuiz = this._uninitializedQuiz.asReadonly();
+    readonly quizNotStarted = this._quizNotStarted.asReadonly();
+    readonly gradedParticipation = this._gradedParticipation.asReadonly();
+    readonly practiceParticipation = this._practiceParticipation.asReadonly();
+    readonly programmingExercise = this._programmingExercise.asReadonly();
+    readonly isTeamAvailable = this._isTeamAvailable.asReadonly();
+    readonly hasRatedGradedResult = this._hasRatedGradedResult.asReadonly();
+    readonly editorLabel = this._editorLabel.asReadonly();
+    readonly numberOfGradedParticipationResults = this._numberOfGradedParticipationResults.asReadonly();
+    readonly isLoading = this._isLoading.asReadonly();
+    readonly studentParticipations = this._studentParticipations.asReadonly();
 
     readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
