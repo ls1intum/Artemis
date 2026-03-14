@@ -1,4 +1,4 @@
-import { Component, DestroyRef, WritableSignal, computed, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, WritableSignal, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { DecimalPipe, NgClass } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -141,19 +141,26 @@ export class ChecklistPanelComponent {
 
     constructor() {
         /**
+         * Clear latestProblemStatement once the input signal catches up to the
+         * AI-emitted value, ensuring subsequent manual edits are respected.
+         */
+        effect(() => {
+            const inputPS = this.problemStatement();
+            const latest = this.latestProblemStatement();
+            if (latest !== undefined && inputPS === latest) {
+                untracked(() => this.latestProblemStatement.set(undefined));
+            }
+        });
+
+        /**
          * When the problem statement input changes (external edit), mark all
          * checklist sections as stale so the user knows results may be outdated.
          */
         toObservable(this.problemStatement)
             .pipe(pairwise(), takeUntilDestroyed(this.destroyRef))
             .subscribe(([prev, curr]) => {
-                if (prev !== curr) {
-                    if (this.latestProblemStatement() !== undefined) {
-                        this.latestProblemStatement.set(undefined);
-                    }
-                    if (this.analysisResult()) {
-                        this.staleSections.set(new Set<ChecklistSectionType>(['quality']));
-                    }
+                if (prev !== curr && this.analysisResult()) {
+                    this.staleSections.set(new Set<ChecklistSectionType>(['competencies', 'difficulty', 'quality']));
                 }
             });
     }
@@ -217,17 +224,23 @@ export class ChecklistPanelComponent {
             return;
         }
 
+        const ex = this.exercise();
         this.isLoading.set(true);
+        const request = {
+            problemStatementMarkdown: this.effectiveProblemStatement(),
+            declaredDifficulty: ex.difficulty,
+            language: ex.programmingLanguage,
+            exerciseId: ex.id,
+        };
 
         this.hyperionApiService
-            .analyzeChecklist(cId, this.buildAnalysisRequest())
+            .analyzeChecklist(cId, request)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: ChecklistAnalysisResponse) => {
                     this.analysisResult.set(res);
                     this.isLoading.set(false);
                     this.staleSections.set(new Set());
-                    this.selectedIssueIndices.set(new Set());
                     // New analysis results invalidate previous linking state
                     this.linkedCompetencyTitles.set(new Set());
                     this.createdCompetencyTitles.set(new Set());
@@ -430,9 +443,16 @@ export class ChecklistPanelComponent {
         if (cId == null || this.isLoading() || this.sectionLoading().has(section) || this.isApplyingAction()) return;
 
         this.updateSet(this.sectionLoading, section, 'add');
+        const ex = this.exercise();
+        const request = {
+            problemStatementMarkdown: this.effectiveProblemStatement(),
+            declaredDifficulty: ex.difficulty,
+            language: ex.programmingLanguage,
+            exerciseId: ex.id,
+        };
 
         this.hyperionApiService
-            .analyzeChecklistSection(cId, SECTION_TO_API[section], this.buildAnalysisRequest())
+            .analyzeChecklistSection(cId, SECTION_TO_API[section], request)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: (res: ChecklistAnalysisResponse) => {
@@ -443,7 +463,6 @@ export class ChecklistPanelComponent {
                     } else {
                         this.analysisResult.set(res);
                     }
-                    this.selectedIssueIndices.set(new Set());
                     if (section === 'competencies') {
                         this.linkedCompetencyTitles.set(new Set());
                         this.createdCompetencyTitles.set(new Set());
@@ -481,10 +500,22 @@ export class ChecklistPanelComponent {
     }
 
     fixAllQualityIssues() {
-        this.applyIssuesFix(this.analysisResult()?.qualityIssues || [], 'fix-all', () => {
-            this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] }));
-            this.selectedIssueIndices.set(new Set());
-        });
+        const issues = this.analysisResult()?.qualityIssues || [];
+        const allIssues = issues.map((i, idx) => `${idx + 1}. [${i.category}/${i.severity}] ${i.description} (Fix: ${i.suggestedFix || 'N/A'})`).join('\n');
+
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                problemStatementMarkdown: this.effectiveProblemStatement(),
+                context: { allIssues },
+            },
+            'fix-all',
+            ['competencies', 'difficulty'],
+            () => {
+                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: [] }));
+                this.selectedIssueIndices.set(new Set());
+            },
+        );
     }
 
     /**
@@ -563,10 +594,21 @@ export class ChecklistPanelComponent {
             .sort((a, b) => a - b)
             .map((i) => issues[i])
             .filter(Boolean);
-        this.applyIssuesFix(selectedIssues, 'fix-selected', () => {
-            this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
-            this.selectedIssueIndices.set(new Set());
-        });
+        const allIssues = selectedIssues.map((i, idx) => `${idx + 1}. [${i.category}/${i.severity}] ${i.description} (Fix: ${i.suggestedFix || 'N/A'})`).join('\n');
+
+        this.applyAction(
+            {
+                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
+                problemStatementMarkdown: this.effectiveProblemStatement(),
+                context: { allIssues },
+            },
+            'fix-selected',
+            ['competencies', 'difficulty'],
+            () => {
+                this.updateAnalysisOptimistically((r) => Object.assign({}, r, { qualityIssues: (r.qualityIssues ?? []).filter((_, i) => !selected.has(i)) }));
+                this.selectedIssueIndices.set(new Set());
+            },
+        );
     }
 
     /**
@@ -828,29 +870,6 @@ export class ChecklistPanelComponent {
             n[op](item);
             return n;
         });
-    }
-
-    private buildAnalysisRequest() {
-        const ex = this.exercise();
-        return {
-            problemStatementMarkdown: this.effectiveProblemStatement(),
-            language: ex.programmingLanguage,
-            exerciseId: ex.id,
-        };
-    }
-
-    private applyIssuesFix(issues: QualityIssue[], loadingKey: string, onApplied: () => void) {
-        const allIssues = issues.map((issue, idx) => `${idx + 1}. [${issue.category}/${issue.severity}] ${issue.description} (Fix: ${issue.suggestedFix || 'N/A'})`).join('\n');
-        this.applyAction(
-            {
-                actionType: ChecklistActionRequest.ActionTypeEnum.FixAllQualityIssues,
-                problemStatementMarkdown: this.effectiveProblemStatement(),
-                context: { allIssues },
-            },
-            loadingKey,
-            [],
-            onApplied,
-        );
     }
 
     /** Counts tasks and unique test cases by parsing [task] markers in the problem statement. */
