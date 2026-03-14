@@ -113,11 +113,18 @@ async function createUser(client, userData) {
         return { ...response.data, isNew: true };
     } catch (error) {
         if (error.response?.status === 400 || error.response?.status === 409) {
+            const detail = error.response?.data?.message || error.response?.data?.title || '';
+            // If the error is about email already in use (not login), the login might be free
+            // but a different user has the same email. Log this for debugging.
+            if (detail) {
+                console.log(`    Note: user creation for "${userData.login}" returned 400: ${detail}`);
+            }
             try {
                 const existing = await client.get(`/api/core/admin/users/${userData.login}`);
                 return { ...existing.data, isNew: false };
-            } catch {
-                return { login: userData.login, isNew: false };
+            } catch (fetchError) {
+                console.log(`    Warning: could not fetch existing user "${userData.login}" (${fetchError.response?.status || fetchError.message}). The login may be available but the email "${userData.email}" may conflict with another user.`);
+                return { login: userData.login, isNew: false, fetchFailed: true };
             }
         }
         throw error;
@@ -128,8 +135,14 @@ async function addUserToCourse(client, courseId, group, username) {
     try {
         await client.post(`/api/core/courses/${courseId}/${group}/${username}`);
     } catch (error) {
-        if (error.response?.status !== 400) throw error;
-        // 400 = already in group, that's fine
+        if (error.response?.status === 400) {
+            return; // already in group, that's fine
+        }
+        if (error.response?.status === 404) {
+            console.log(`    Warning: Could not add "${username}" to ${group} — user not found (404). Skipping.`);
+            return;
+        }
+        throw error;
     }
 }
 
