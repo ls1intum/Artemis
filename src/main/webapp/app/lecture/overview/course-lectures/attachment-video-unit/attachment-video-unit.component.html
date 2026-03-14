@@ -19,11 +19,34 @@
         </div>
     }
 
-    @if (lectureUnit()?.description && (!!videoUrl() || hasPdf())) {
-        <hr />
+    @if (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link)) {
+        @if (lectureUnit()?.description) {
+            <hr />
+        }
+        @if (lectureUnit().attachment?.uploadDate) {
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">: </span>
+                {{ lectureUnit().attachment?.uploadDate | artemisDate }}
+            </div>
+        }
+        @if (lectureUnit().attachment?.version) {
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.version">: </span>
+                {{ lectureUnit().attachment?.version }}
+            </div>
+        }
+        @if (lectureUnit().attachment?.link) {
+            <div>
+                <span class="font-weight-bold" jhiTranslate="artemisApp.attachmentVideoUnit.FileName">: </span>
+                {{ getFileName() }}
+            </div>
+        }
     }
 
     @if (!!videoUrl()) {
+        @if (lectureUnit()?.description || (!hasPdf() && (lectureUnit().attachment?.uploadDate || lectureUnit().attachment?.version || lectureUnit().attachment?.link))) {
+            <hr />
+        }
         @if (isLoading()) {
             <div class="d-flex justify-content-center p-3">
                 <div class="spinner-border" role="status">
@@ -42,6 +65,9 @@
     }
 
     @if (hasPdf()) {
+        @if (lectureUnit()?.description || !!videoUrl()) {
+            <hr />
+        }
         @if (isPdfLoading()) {
             <div class="d-flex justify-content-center p-3">
                 <div class="spinner-border" role="status">
