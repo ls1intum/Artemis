@@ -100,7 +100,30 @@ jobs:
         path: build/test-results/test/*.xml
     - name: Print failed tests
       if: failure()
-      run: grep "Test >.* FAILED\$" tests.log || echo "No failed tests."
+      run: |
+        FAILED_TESTS=$(grep "Test >.* FAILED\$" tests.log | grep -v "Starting logs for .* > .*state = FAILED\$" || true)
+        if [ -n "$FAILED_TESTS" ]; then
+          echo "$FAILED_TESTS"
+        else
+          echo "No failed tests."
+        fi
+    - name: Diagnostic info
+      if: success() || failure()
+      run: |
+        echo "=== Docker containers ==="
+        docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+        echo ""
+        echo "=== Memory ==="
+        free -h || true
+        echo ""
+        echo "=== Disk usage ==="
+        df -h /tmp || true
+        echo ""
+        echo "=== PostgreSQL connection errors in test log ==="
+        grep -c "PSQLException\|SQLSTATE(08006)\|Connection.*broken\|I/O error occurred while sending" tests.log || echo "0 connection errors found"
+        echo ""
+        echo "=== Unique PostgreSQL errors ==="
+        grep "PSQLException\|SQLSTATE(08006)" tests.log | sort -u | head -10 || echo "No PostgreSQL errors"
     - name: Annotate Server Test Results
       uses: ashley-taylor/junit-report-annotations-action@f9c1a5cbe28479439f82b80a5402a6d3aa1990ac
       if: always() && github.event.pull_request.user.login != 'dependabot[bot]'

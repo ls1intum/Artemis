@@ -65,7 +65,11 @@ env:
 
 jobs:
 
+  # H2 server tests are disabled while we stabilize the PostgreSQL-based server tests
+  # (see test-postgres.yml). Once PostgreSQL tests are fully stable, H2 tests will be
+  # permanently removed since PostgreSQL matches the production database engine.
   server-tests:
+    if: false # Disabled: PostgreSQL tests (test-postgres.yml) replace H2 tests
     runs-on: aet-large-ubuntu
     timeout-minutes: 80
 
