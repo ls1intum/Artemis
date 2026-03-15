@@ -12,9 +12,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 /**
  * DTO for individual consistency issues.
- * relatedLocations may be an empty list; NON_NULL ensures it is always serialized for consistent client handling and evaluation script execution.
+ * The {@code relatedLocations} field uses a bare {@code @JsonInclude} (no explicit value = ALWAYS) to ensure an empty
+ * list is always serialized as {@code "relatedLocations": []} for consistent client handling.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Individual consistency issue details")
 public record ConsistencyIssueDTO(
 
@@ -26,5 +27,5 @@ public record ConsistencyIssueDTO(
 
         @NotNull @Schema(description = "Suggested fix for the issue", example = "Update problem statement to clarify expected behavior") String suggestedFix,
 
-        @NotNull @Schema(description = "Related locations across artifacts") List<ArtifactLocationDTO> relatedLocations) {
+        @JsonInclude @NotNull @Schema(description = "Related locations across artifacts") List<ArtifactLocationDTO> relatedLocations) {
 }
