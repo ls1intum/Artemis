@@ -5,7 +5,7 @@ import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { AgentChatResponse, AgentHistoryMessage } from 'app/atlas/shared/entities/chat-message.model';
 
-export { AgentChatResponse, AgentHistoryMessage, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from 'app/atlas/shared/entities/chat-message.model';
+export type { AgentChatResponse, AgentHistoryMessage, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from 'app/atlas/shared/entities/chat-message.model';
 
 interface AgentChatRequest {
     message: string;

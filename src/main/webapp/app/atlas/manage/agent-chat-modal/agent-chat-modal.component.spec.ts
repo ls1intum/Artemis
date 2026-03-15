@@ -219,7 +219,7 @@ describe('AgentChatModalComponent', () => {
                 ],
             };
 
-            component.onCreateCompetencies(message);
+            component['onCreateCompetencies'](message);
 
             expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
         });
@@ -240,7 +240,7 @@ describe('AgentChatModalComponent', () => {
                 ],
             };
 
-            component.onCreateCompetencies(message);
+            component['onCreateCompetencies'](message);
 
             expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
         });
@@ -647,7 +647,7 @@ describe('AgentChatModalComponent', () => {
                 configurable: true,
             });
 
-            component.onTextareaInput();
+            component['onTextareaInput']();
 
             // Height should be set to max height (120px) when scrollHeight exceeds it
             expect(mockTextarea.style!.height).toBe('120px');
@@ -660,7 +660,7 @@ describe('AgentChatModalComponent', () => {
                 configurable: true,
             });
 
-            component.onTextareaInput();
+            component['onTextareaInput']();
 
             // Height should be set to scrollHeight when it's less than max height
             expect(mockTextarea.style!.height).toBe('80px');
@@ -671,7 +671,7 @@ describe('AgentChatModalComponent', () => {
                 get: () => () => null,
                 configurable: true,
             });
-            expect(() => component.onTextareaInput()).not.toThrow();
+            expect(() => component['onTextareaInput']()).not.toThrow();
         });
     });
 
@@ -1256,7 +1256,7 @@ describe('AgentChatModalComponent', () => {
                         }),
                     );
                     const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
                     await flushPromises();
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
@@ -1286,7 +1286,7 @@ describe('AgentChatModalComponent', () => {
                     );
                     const emitSpy = vi.spyOn(component.competencyChanged, 'emit');
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
                     await flushPromises();
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
@@ -1299,7 +1299,7 @@ describe('AgentChatModalComponent', () => {
                     message.competencyCreated = true;
                     component.messages.set([message]);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockCompetencyService.create).not.toHaveBeenCalled();
                     expect(mockCompetencyService.update).not.toHaveBeenCalled();
@@ -1313,7 +1313,7 @@ describe('AgentChatModalComponent', () => {
                         timestamp: new Date(),
                     };
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockCompetencyService.create).not.toHaveBeenCalled();
                 });
@@ -1323,7 +1323,7 @@ describe('AgentChatModalComponent', () => {
                     const createFailedText = 'Failed to create competency';
                     const translateSpy = vi.spyOn(mockTranslateService, 'instant').mockReturnValue(createFailedText);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
                     await flushPromises();
 
                     expect(component.isAgentTyping()).toBeFalsy();
@@ -1353,7 +1353,7 @@ describe('AgentChatModalComponent', () => {
                         ],
                     };
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
                     await flushPromises();
 
                     expect(component.isAgentTyping()).toBeFalsy();
@@ -1453,7 +1453,7 @@ describe('AgentChatModalComponent', () => {
                     };
                     component.messages.set([message]);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
                     await flushPromises();
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
@@ -1481,7 +1481,7 @@ describe('AgentChatModalComponent', () => {
                         competencyCreated: true,
                     };
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockCompetencyService.create).not.toHaveBeenCalled();
                 });
@@ -1494,7 +1494,7 @@ describe('AgentChatModalComponent', () => {
                         timestamp: new Date(),
                     };
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockCompetencyService.create).not.toHaveBeenCalled();
                 });
@@ -1508,7 +1508,7 @@ describe('AgentChatModalComponent', () => {
                         competencyPreviews: [],
                     };
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockCompetencyService.create).not.toHaveBeenCalled();
                 });
@@ -1537,7 +1537,7 @@ describe('AgentChatModalComponent', () => {
                     };
                     component.messages.set([message]);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const messages = component.messages();
@@ -1570,7 +1570,7 @@ describe('AgentChatModalComponent', () => {
                     };
                     component.messages.set([message]);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const messages = component.messages();
@@ -1595,7 +1595,7 @@ describe('AgentChatModalComponent', () => {
                     };
                     component.messages.set([message]);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
 
                     expect(mockAgentChatService.sendMessage).toHaveBeenCalledWith('[CREATE_APPROVED_COMPETENCY]', component.courseId());
                     const messages = component.messages();
@@ -1624,7 +1624,7 @@ describe('AgentChatModalComponent', () => {
                     };
                     component.messages.set([message]);
 
-                    component.onCreateCompetencies(message);
+                    component['onCreateCompetencies'](message);
                     await flushPromises();
 
                     expect(component.isAgentTyping()).toBeFalsy();
@@ -1970,7 +1970,7 @@ describe('AgentChatModalComponent', () => {
             const sendSpy = vi.spyOn(component as any, 'sendMessage');
             const event = new KeyboardEvent('keydown', { key: 'a' });
 
-            component.onKeyPress(event);
+            component['onKeyPress'](event);
 
             expect(sendSpy).not.toHaveBeenCalled();
         });
@@ -1979,7 +1979,7 @@ describe('AgentChatModalComponent', () => {
             const sendSpy = vi.spyOn(component as any, 'sendMessage');
             const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: true });
 
-            component.onKeyPress(event);
+            component['onKeyPress'](event);
 
             expect(sendSpy).not.toHaveBeenCalled();
         });
