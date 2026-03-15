@@ -7,14 +7,14 @@ import FileUploadUtilServiceFactory from './assets/FileUpload_UtilService_Factor
 
 This section covers recommended practices for writing Artemis server tests.
 
-**Docker is required** to run server tests. CI runs all tests against PostgreSQL via Testcontainers to match the production database engine.
+**Docker is required** to run server tests. Tests run against PostgreSQL via Testcontainers by default to match the production database engine.
 
 You can execute server tests with the following commands:
 
-* Execute all tests against PostgreSQL (recommended, matches CI): `./gradlew testPostgres -x webapp`
-* Execute tests with a coverage report: `./gradlew testPostgres jacocoTestReport -x webapp`
-* Run a single test against PostgreSQL: `./gradlew test --tests ExamIntegrationTest -x webapp -Dzonky.test.database.type=POSTGRES`
-* Execute all tests against H2 (in-memory, no Docker needed, for quick local iteration): `./gradlew test -x webapp`
+* Execute all tests (PostgreSQL, default): `./gradlew test -x webapp`
+* Execute tests with a coverage report: `./gradlew test jacocoTestReport -x webapp`
+* Run a single test: `./gradlew test --tests ExamIntegrationTest -x webapp`
+* Execute all tests against H2 (in-memory, no Docker needed, for quick local iteration): `./gradlew test -x webapp -Dzonky.test.database.type=H2`
 * Verify code coverage (after tests): `./gradlew jacocoTestCoverageVerification -x webapp`
 
 The code coverage thresholds are defined in [jacoco.gradle](https://github.com/ls1intum/Artemis/blob/develop/gradle/jacoco.gradle).

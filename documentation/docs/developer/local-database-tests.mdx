@@ -11,7 +11,7 @@ import postgresTestsConfig from './assets/intellij-postgres-tests-run-configurat
 
 # Running Server Tests Locally
 
-Server integration tests run against PostgreSQL by default (matching CI) using Docker containers managed by Testcontainers. The Gradle test task automatically pulls the necessary Docker images and starts the containers.
+Server integration tests run against PostgreSQL by default using Docker containers managed by Testcontainers. No additional flags are needed — `./gradlew test -x webapp` uses PostgreSQL automatically. The Gradle test task pulls the necessary Docker images and starts the containers.
 
 ---
 
@@ -46,10 +46,10 @@ Alternatively, you can create a custom configuration.
 
 ## Executing Tests from the Console
 
-### PostgreSQL Tests (recommended, matches CI)
+### PostgreSQL Tests (default)
 
 ```bash
-./gradlew testPostgres -x webapp
+./gradlew test -x webapp
 ```
 
 ### MySQL Tests
@@ -63,5 +63,5 @@ Alternatively, you can create a custom configuration.
 For quick local iteration without Docker, you can run tests against H2. Note that H2 may not catch all Postgres-specific issues.
 
 ```bash
-./gradlew test -x webapp
+./gradlew test -x webapp -Dzonky.test.database.type=H2
 ```

@@ -31,8 +31,9 @@ tasks.withType(Test).configureEach {
     }
 
     // Forward Gradle command-line -D properties to the test JVM for database type selection.
-    // Default: PostgreSQL via Testcontainers (Docker required).
-    // Override: -Dzonky.test.database.type=MYSQL for MySQL, or =H2 for in-process H2 (no Docker).
+    // Default: PostgreSQL via Testcontainers (Docker required). The default is set in
+    // src/test/resources/config/application.yml (zonky.test.database.type: POSTGRES).
+    // Override: -Dzonky.test.database.type=H2 for in-process H2 (no Docker), or =MYSQL for MySQL.
     def dbType = System.getProperty('zonky.test.database.type')
     if (dbType) {
         systemProperty 'zonky.test.database.type', dbType
@@ -42,11 +43,11 @@ tasks.withType(Test).configureEach {
                 systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.MySQLDialect'
                 systemProperty 'spring.jpa.database', 'MYSQL'
                 break
-            case 'POSTGRES':
-                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.PostgreSQLDialect'
-                systemProperty 'spring.jpa.database', 'POSTGRESQL'
+            case 'H2':
+                systemProperty 'spring.jpa.database-platform', 'org.hibernate.dialect.H2Dialect'
+                systemProperty 'spring.jpa.database', 'h2'
                 break
-            // H2 uses the dialect from application.yml, no override needed
+            // PostgreSQL is the default from application.yml, no override needed
         }
     }
 
@@ -146,9 +147,9 @@ test {
 // stopped by Zonky. Connection pooling and timezone handling are configured by
 // TestDataSourcePoolConfig, and PostgreSQL tmpfs is configured by PostgresTmpfsContainerCustomizer.
 //
-// Note: The default 'test' task uses the database type specified via -Dzonky.test.database.type
-// (defaults to H2 in application.yml, but CI passes POSTGRES). For local development with
-// PostgreSQL, use: ./gradlew testPostgres -x webapp
+// Note: The default 'test' task already uses PostgreSQL (configured in application.yml).
+// These convenience tasks are equivalent but explicit. To use H2 instead:
+//   ./gradlew test -x webapp -Dzonky.test.database.type=H2
 ['Mysql': ['MYSQL', 'org.hibernate.dialect.MySQLDialect', 'MYSQL'],
  'Postgres': ['POSTGRES', 'org.hibernate.dialect.PostgreSQLDialect', 'POSTGRESQL']].each { name, config ->
     tasks.register("test${name}", Test) {
