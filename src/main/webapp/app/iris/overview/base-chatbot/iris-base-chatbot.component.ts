@@ -52,6 +52,8 @@ import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-stat
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisOnboardingService } from 'app/iris/overview/iris-onboarding-modal/iris-onboarding.service';
 import { IRIS_PROMPT_CONFIGS } from 'app/iris/shared/iris-prompt.constants';
+import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
+import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
 
 // Session history time bucket boundaries (in days ago)
 const YESTERDAY_OFFSET = 1;
@@ -87,6 +89,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         NgClass,
         SearchFilterComponent,
         IrisCitationTextComponent,
+        IrisChatMemoriesIndicatorComponent,
         ConfirmDialogModule,
     ],
     providers: [ConfirmationService],
@@ -239,6 +242,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
+
+    protected getAccessedMemories(message: IrisMessage): MemirisMemory[] {
+        return message.accessedMemories ?? [];
+    }
+
+    protected getCreatedMemories(message: IrisMessage): MemirisMemory[] {
+        return message.createdMemories ?? [];
+    }
+
+    protected hasMemories(message: IrisMessage): boolean {
+        return this.getAccessedMemories(message).length > 0 || this.getCreatedMemories(message).length > 0;
+    }
 
     constructor() {
         // Initialize user acceptance state

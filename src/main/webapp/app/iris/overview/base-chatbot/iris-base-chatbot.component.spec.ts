@@ -21,7 +21,9 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import {
     mockClientMessage,
+    mockClientMessageWithMemories,
     mockServerMessage,
+    mockServerMessageWithMemories,
     mockServerSessionHttpResponse,
     mockServerSessionHttpResponseWithEmptyConversation,
     mockServerSessionHttpResponseWithId,
@@ -305,6 +307,20 @@ describe('IrisBaseChatbotComponent', () => {
         expect(clientChats).toHaveLength(1);
         expect(myChats).toHaveLength(1);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
+    });
+
+    it('should render memories indicator for messages with memories', async () => {
+        const messagesWithMemories = [mockClientMessageWithMemories, mockServerMessageWithMemories];
+        vi.spyOn(chatService, 'currentMessages').mockReturnValue(of(messagesWithMemories));
+
+        fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+        component = fixture.componentInstance;
+        fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const indicators = fixture.nativeElement.querySelectorAll('[data-testid="memories-indicator-button"]');
+        expect(indicators.length).toBeGreaterThan(0);
     });
 
     it('should not scroll to bottom when there is no new unread messages', async () => {
