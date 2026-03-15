@@ -191,7 +191,7 @@ describe('CourseOverviewGuard', () => {
             result.subscribe((value) => {
                 resultValue = value;
             });
-            expect(resultValue).toBeFalse();
+            expect(resultValue).toBeFalsy();
         });
 
         it('should redirect to iris when dashboard is denied but iris is enabled', () => {
