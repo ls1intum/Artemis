@@ -71,10 +71,8 @@ export class ExamManagementPage {
      * @param timeout timeout of waiting for assessment dashboard button
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
-        await this.page.goto(`/course-management/${courseID}/exams`);
-        const assessmentButton = this.page.locator(`#exercises-button-${examID}`);
-        await assessmentButton.waitFor({ state: 'attached', timeout: timeout });
-        await assessmentButton.click();
+        await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
+        await this.page.waitForLoadState('domcontentloaded');
     }
 
     /**
@@ -131,7 +129,9 @@ export class ExamManagementPage {
     }
 
     async sendAnnouncement() {
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/announcements') && resp.request().method() === 'POST' && resp.ok());
         await this.page.locator('button', { hasText: 'Send Announcement' }).click();
+        await responsePromise;
     }
 
     async openEditWorkingTimeDialog() {

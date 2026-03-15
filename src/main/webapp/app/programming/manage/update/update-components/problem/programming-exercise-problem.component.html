@@ -151,7 +151,10 @@
                 [exercise]="programmingExercise()!"
                 [courseId]="(programmingExercise()?.course?.id ?? programmingExercise()?.exerciseGroup?.exam?.course?.id)!"
                 [problemStatement]="programmingExercise()?.problemStatement ?? ''"
+                [competencyLinks]="activeCompetencyLinks()"
                 (problemStatementDiffRequest)="onChecklistActionDiffRequest($event)"
+                (competencyLinksChange)="onCompetencyLinksChange($event)"
+                (difficultyChange)="onDifficultyChange($event)"
             />
         }
     }

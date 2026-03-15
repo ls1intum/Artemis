@@ -2,25 +2,29 @@
 <li (click)="onCollapseExpand()()" class="list-group-item list-group-item--folder" id="file-browser-folder">
     <fa-icon aria-hidden="true" [icon]="item().collapsed ? faChevronRight : faChevronDown" [fixedWidth]="true" class="me-1" size="xs" />
     <fa-icon aria-hidden="true" [icon]="item().collapsed ? faFolder : faFolderOpen" [fixedWidth]="true" />
-    @if (!isBeingRenamed()) {
-        <span class="ms-1 list-group-item__fileName">{{ item().text }}</span>
-    }
-    <!-- Renaming folder tree item -->
-    @if (isBeingRenamed()) {
-        <span class="ms-1"
-            ><input
-                #renamingInput
-                value="{{ item().text }}"
-                (keyup.enter)="renameNode($event)"
-                (focusout)="renameNode($event)"
-                (keyup.esc)="clearRenamingNode($event)"
-                class="list-group-item__input"
-        /></span>
-    }
-    <!-- File badges -->
-    @for (badge of badges(); track badges().indexOf(badge)) {
-        <jhi-file-browser-badge [badge]="badge" />
-    }
+    <span class="file-label-group">
+        @if (!isBeingRenamed()) {
+            <span class="ms-1 list-group-item__fileName">{{ item().text }}</span>
+        }
+        <!-- Renaming folder tree item -->
+        @if (isBeingRenamed()) {
+            <span class="ms-1 rename-input-wrapper"
+                ><input
+                    #renamingInput
+                    value="{{ item().text }}"
+                    (keyup.enter)="renameNode($event)"
+                    (focusout)="renameNode($event)"
+                    (keyup.esc)="clearRenamingNode($event)"
+                    class="list-group-item__input"
+            /></span>
+        }
+        <!-- File badges -->
+        @if (!isBeingRenamed()) {
+            @for (badge of badges(); track badges().indexOf(badge)) {
+                <jhi-file-browser-badge [badge]="badge" />
+            }
+        }
+    </span>
     <!-- Folder level actions -->
     @if (!disableActions()) {
         <span class="file-icons">
