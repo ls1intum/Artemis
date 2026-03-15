@@ -1,10 +1,13 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.springframework.context.MessageSource;
 
@@ -165,7 +168,9 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         String sessionTitle = AbstractIrisChatSessionService.setSessionTitle(session, statusUpdate.sessionTitle(), irisSessionRepository);
         if (statusUpdate.result() != null) {
             var message = new IrisMessage();
-            message.addContent(parseResultContent(statusUpdate.result()));
+            for (var content : parseResultContents(statusUpdate.result())) {
+                message.addContent(content);
+            }
             var citationInfo = irisCitationService.map(service -> service.resolveCitationInfo(statusUpdate.result())).orElse(List.of());
             message.setAccessedMemories(statusUpdate.accessedMemories());
             message.setCreatedMemories(statusUpdate.createdMemories());
@@ -226,27 +231,121 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
     private static final Set<String> MCQ_CONTENT_TYPES = Set.of("mcq", "mcq-set");
 
     /**
-     * Parses the result string from the LLM response.
-     * If the result is a valid JSON object with a "type" field matching a known MCQ type, it is stored as JSON content.
-     * Otherwise, it is stored as plain text content.
+     * Pattern to find embedded MCQ JSON blocks within mixed text+JSON responses.
+     */
+    private static final Pattern MCQ_JSON_PATTERN = Pattern.compile("\\{\\s*\"type\"\\s*:\\s*\"mcq(?:-set)?\"\\s*,");
+
+    /**
+     * Parses the result string from the LLM into a list of IrisMessageContent.
+     * Handles three cases:
+     * 1. Entire string is valid MCQ JSON -> single IrisJsonMessageContent
+     * 2. Mixed text + embedded JSON -> list of text and JSON content segments
+     * 3. Plain text -> single IrisTextMessageContent
      *
      * @param result The result string from the LLM
-     * @return The appropriate IrisMessageContent (JSON or text)
+     * @return A list of IrisMessageContent (text and/or JSON)
      */
-    private IrisMessageContent parseResultContent(String result) {
+    private List<IrisMessageContent> parseResultContents(String result) {
         String trimmed = result.strip();
+
+        // Case 1: entire string is valid MCQ JSON
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
                 if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
-                    return new IrisJsonMessageContent(jsonNode);
+                    return List.of(new IrisJsonMessageContent(jsonNode));
                 }
             }
             catch (JsonProcessingException e) {
-                // Not valid JSON, fall through to text content
+                // Not valid JSON as a whole, try mixed content below
             }
         }
-        return new IrisTextMessageContent(result);
+
+        // Case 2: scan for embedded MCQ JSON blocks
+        Matcher matcher = MCQ_JSON_PATTERN.matcher(trimmed);
+        if (matcher.find()) {
+            List<IrisMessageContent> contents = new ArrayList<>();
+            int jsonStart = matcher.start();
+
+            // Text before the JSON block
+            if (jsonStart > 0) {
+                String textBefore = trimmed.substring(0, jsonStart).strip();
+                if (!textBefore.isEmpty()) {
+                    contents.add(new IrisTextMessageContent(textBefore));
+                }
+            }
+
+            // Extract the JSON block by finding the matching closing brace
+            String jsonCandidate = extractJsonObject(trimmed, jsonStart);
+            if (jsonCandidate != null) {
+                try {
+                    JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
+                    if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
+                        contents.add(new IrisJsonMessageContent(jsonNode));
+
+                        // Text after the JSON block
+                        int jsonEnd = jsonStart + jsonCandidate.length();
+                        if (jsonEnd < trimmed.length()) {
+                            String textAfter = trimmed.substring(jsonEnd).strip();
+                            if (!textAfter.isEmpty()) {
+                                contents.add(new IrisTextMessageContent(textAfter));
+                            }
+                        }
+
+                        return contents;
+                    }
+                }
+                catch (JsonProcessingException e) {
+                    // Invalid JSON, fall through to plain text
+                }
+            }
+        }
+
+        // Case 3: plain text
+        return List.of(new IrisTextMessageContent(result));
+    }
+
+    /**
+     * Extracts a complete JSON object from a string starting at the given position by counting matching braces.
+     *
+     * @param text  The text containing the JSON object
+     * @param start The position of the opening brace
+     * @return The extracted JSON string, or null if no valid object could be extracted
+     */
+    private static String extractJsonObject(String text, int start) {
+        if (start >= text.length() || text.charAt(start) != '{') {
+            return null;
+        }
+        int depth = 0;
+        boolean inString = false;
+        boolean escaped = false;
+        for (int i = start; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (escaped) {
+                escaped = false;
+                continue;
+            }
+            if (c == '\\' && inString) {
+                escaped = true;
+                continue;
+            }
+            if (c == '"') {
+                inString = !inString;
+                continue;
+            }
+            if (!inString) {
+                if (c == '{') {
+                    depth++;
+                }
+                else if (c == '}') {
+                    depth--;
+                    if (depth == 0) {
+                        return text.substring(start, i + 1);
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     /**
