@@ -238,7 +238,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
                     return new IrisJsonMessageContent(jsonNode);
                 }
             }
@@ -247,6 +247,54 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             }
         }
         return new IrisTextMessageContent(result);
+    }
+
+    /**
+     * Validates that a JSON node has the required MCQ shape expected by the client:
+     * a non-empty "question" string, an "options" array with at least two entries
+     * (each having a "text" string and a "correct" boolean) where exactly one option
+     * is marked correct, and an "explanation" string.
+     *
+     * @param node the JSON node to validate
+     * @return true if the node represents a valid MCQ
+     */
+    private boolean isValidMcqNode(JsonNode node) {
+        JsonNode question = node.get("question");
+        if (question == null || !question.isTextual() || question.asText().isBlank()) {
+            return false;
+        }
+
+        JsonNode options = node.get("options");
+        if (options == null || !options.isArray() || options.size() < 2) {
+            return false;
+        }
+        int correctCount = 0;
+        for (JsonNode option : options) {
+            if (!option.isObject()) {
+                return false;
+            }
+            JsonNode text = option.get("text");
+            JsonNode correct = option.get("correct");
+            if (text == null || !text.isTextual() || text.asText().isBlank()) {
+                return false;
+            }
+            if (correct == null || !correct.isBoolean()) {
+                return false;
+            }
+            if (correct.asBoolean()) {
+                correctCount++;
+            }
+        }
+        if (correctCount != 1) {
+            return false;
+        }
+
+        JsonNode explanation = node.get("explanation");
+        if (explanation == null || !explanation.isTextual() || explanation.asText().isBlank()) {
+            return false;
+        }
+
+        return true;
     }
 
     Optional<ProgrammingSubmission> getLatestSubmissionIfExists(ProgrammingExercise exercise, User user) {

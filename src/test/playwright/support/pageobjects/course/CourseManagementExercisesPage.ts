@@ -113,6 +113,9 @@ export class CourseManagementExercisesPage {
     }
 
     async clickImportExercise(exerciseID: number) {
+        // Search by ID to handle pagination when many exercises exist
+        const searchInput = this.page.locator('input[name="searchExcercise"]');
+        await searchInput.fill(String(exerciseID));
         await this.page.locator(`.exercise-${exerciseID}`).locator('.import').click();
     }
 

@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import { ScoresStorageService } from 'app/core/course/manage/course-scores/scores-storage.service';
 import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';

@@ -25,6 +25,10 @@ export class IrisMcqQuestionComponent {
     // Output event for carousel parent
     answerChanged = output<{ selectedIndex: number | undefined; submitted: boolean }>();
 
+    private readonly instanceId = window.crypto.randomUUID?.() ?? Math.random().toString(36).slice(2);
+    /** Unique id for the question label element, used to link aria-labelledby across instances. */
+    readonly questionLabelId = `mcq-question-label-${this.instanceId}`;
+
     selectedIndex = signal<number | undefined>(undefined);
     submitted = signal(false);
 

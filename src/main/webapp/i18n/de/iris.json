@@ -235,7 +235,17 @@
                 "loadingList": "Lade Erinnerungen...",
                 "empty": "Keine Erinnerungen gefunden.",
                 "delete": "Löschen",
-                "deleting": "Lösche...",
+                "deleting": "Wird gelöscht...",
+                "indicator": {
+                    "usedSingular": "1 Erinnerung verwendet",
+                    "usedPlural": "{{count}} Erinnerungen verwendet",
+                    "createdSingular": "1 erstellt",
+                    "createdPlural": "{{count}} erstellt",
+                    "compactUsed": "{{count}} verwendet",
+                    "compactCreated": "{{count}} erstellt",
+                    "usedSectionTitle": "Verwendete Erinnerungen",
+                    "createdSectionTitle": "Erstellte Erinnerungen"
+                },
                 "conflict": {
                     "warning": "Es gibt Konflikte zwischen Erinnerungen, die gelöst werden müssen.",
                     "resolve": "Auflösen",
