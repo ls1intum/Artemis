@@ -14,7 +14,7 @@
                 (click)="selectOption($index)"
             >
                 <span class="mcq-option-label">{{ optionLabel($index) }}</span>
-                <span class="mcq-option-text">{{ option.text }}</span>
+                <span class="mcq-option-text">{{ cleanOptionText(option.text) }}</span>
             </button>
         }
     </div>

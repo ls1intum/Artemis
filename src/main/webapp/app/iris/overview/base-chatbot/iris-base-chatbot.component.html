@@ -316,6 +316,11 @@
                                 </div>
                             </div>
                         }
+                        @if (activeChatMessage()) {
+                            <div style="width: fit-content; position: relative">
+                                <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
+                            </div>
+                        }
                     </div>
                 </div>
             }
@@ -324,9 +329,6 @@
                     <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                     <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                 </div>
-            }
-            @if (activeChatMessage()) {
-                <jhi-iris-thinking-bubble [message]="activeChatMessage()!" />
             }
             <jhi-chat-status-bar [stages]="stages()" />
             @if (!userAccepted()) {

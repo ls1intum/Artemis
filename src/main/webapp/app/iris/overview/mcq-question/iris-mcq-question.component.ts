@@ -84,6 +84,17 @@ export class IrisMcqQuestionComponent {
     }
 
     /**
+     * Strips leading letter/number prefixes like "A.", "A)", "A:", "1.", "1)" from option text.
+     * Only strips when followed by an explicit delimiter (. ) :), not a plain space,
+     * to avoid removing meaningful text that happens to start with a letter.
+     * @param text the raw option text
+     * @returns the cleaned option text
+     */
+    cleanOptionText(text: string): string {
+        return text.replace(/^[A-Da-d1-4][.):]\s*/u, '');
+    }
+
+    /**
      * Checks whether the currently selected option is the correct answer.
      * @returns true if the selected option is correct, false otherwise
      */

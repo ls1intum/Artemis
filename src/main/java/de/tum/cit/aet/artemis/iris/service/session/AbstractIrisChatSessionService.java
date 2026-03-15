@@ -302,7 +302,7 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         }
 
         // Case 3: plain text
-        return List.of(new IrisTextMessageContent(result));
+        return List.of(new IrisTextMessageContent(trimmed));
     }
 
     /**
@@ -358,6 +358,34 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
      * @return true if the node represents a valid MCQ
      */
     private boolean isValidMcqNode(JsonNode node) {
+        String type = node.has("type") ? node.get("type").asText() : "";
+
+        if ("mcq-set".equals(type)) {
+            JsonNode questions = node.get("questions");
+            if (questions == null || !questions.isArray() || questions.isEmpty()) {
+                return false;
+            }
+            for (JsonNode q : questions) {
+                if (!isValidSingleMcqNode(q)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // Single MCQ ("mcq" type or fallback)
+        return isValidSingleMcqNode(node);
+    }
+
+    /**
+     * Validates that a JSON node has the required single MCQ shape: a non-empty "question" string,
+     * an "options" array with at least two entries (each having a "text" string and a "correct" boolean)
+     * where exactly one option is marked correct, and an "explanation" string.
+     *
+     * @param node the JSON node to validate
+     * @return true if the node represents a valid single MCQ question
+     */
+    private boolean isValidSingleMcqNode(JsonNode node) {
         JsonNode question = node.get("question");
         if (question == null || !question.isTextual() || question.asText().isBlank()) {
             return false;

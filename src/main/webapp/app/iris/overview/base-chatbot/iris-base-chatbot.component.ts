@@ -355,6 +355,13 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
+        // Scroll when thinking bubble appears, only if user is already at the bottom
+        effect(() => {
+            if (this.activeChatMessage() && this.isScrolledToBottom()) {
+                this.scrollToBottom('smooth');
+            }
+        });
+
         // Reset clicked suggestion when new suggestions arrive and scroll to show them
         effect(() => {
             const suggestions = this.suggestions();
