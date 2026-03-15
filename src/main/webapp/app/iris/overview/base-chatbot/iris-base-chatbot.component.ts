@@ -63,6 +63,7 @@ import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.co
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
+import { IrisThinkingBubbleComponent } from 'app/iris/overview/base-chatbot/iris-thinking-bubble/iris-thinking-bubble.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
@@ -108,6 +109,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         IrisMcqQuestionComponent,
         IrisMcqCarouselComponent,
         IrisChatMemoriesIndicatorComponent,
+        IrisThinkingBubbleComponent,
         ConfirmDialogModule,
     ],
     providers: [ConfirmationService],
@@ -186,6 +188,12 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly activeChatMessage = computed(() => {
+        const stages = this.stages();
+        if (!stages) return undefined;
+        const active = stages.find((s) => s.state === IrisStageStateDTO.IN_PROGRESS && s.chatMessage);
+        return active?.chatMessage;
+    });
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
     readonly hasHeaderContent = computed(() => {
         const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
