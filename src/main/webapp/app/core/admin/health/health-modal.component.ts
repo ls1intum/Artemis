@@ -1,10 +1,10 @@
-import { Component, inject, signal } from '@angular/core';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, input, model } from '@angular/core';
 import { HealthDetails, HealthKey } from 'app/core/admin/health/health.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { KeyValuePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CommonModule } from '@angular/common';
+import { DialogModule } from 'primeng/dialog';
 
 /**
  * Represents a formatted build agent for display in the health modal.
@@ -55,12 +55,12 @@ type BuildAgentDetail = SimplifiedBuildAgent | LegacyBuildAgent;
 @Component({
     selector: 'jhi-health-modal',
     templateUrl: './health-modal.component.html',
-    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, CommonModule],
+    imports: [TranslateDirective, KeyValuePipe, ArtemisTranslatePipe, CommonModule, DialogModule],
 })
 export class HealthModalComponent {
-    private readonly activeModal = inject(NgbActiveModal);
+    readonly visible = model<boolean>(false);
 
-    readonly health = signal<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
+    readonly health = input<{ key: HealthKey; value: HealthDetails } | undefined>(undefined);
 
     readableValue(value: any): string {
         if (this.health()?.key === 'diskSpace') {
@@ -203,6 +203,6 @@ export class HealthModalComponent {
     }
 
     dismiss(): void {
-        this.activeModal.dismiss();
+        this.visible.set(false);
     }
 }
