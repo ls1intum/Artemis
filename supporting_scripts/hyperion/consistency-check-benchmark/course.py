@@ -194,7 +194,7 @@ def get_course_id_request(session: requests.Session) -> int:
         if course["shortName"] == course_short_name:
             logging.info(f"Found course ID {course['id']} for course shortName {course_short_name}")
             return course["id"]
-    logging.error(f"Step 8 failed: Course with shortName '{course_short_name}' not found. Verify course_name in config.ini, then execute Step 8 in course.py")
+    logging.error(f"Step 8 failed: Course with shortName '{course_short_name}' not found. Verify course_name in config.ini, execute Step 7 in course.py to create it, then retry Step 8")
     raise Exception(f"Course with shortName {course_short_name} not found")
 
 def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[str, int]:
@@ -229,17 +229,17 @@ def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[
 
         logging.debug(f"Raw exercise titles from server: {list(exercises_map.keys())}")
         transformed = __transform_exercise_json_keys(exercises_map)
-        logging.info(f"Transformed exercise keys: {list(transformed.keys())}")
+        logging.info(f"Retrieved {len(transformed)} programming exercise(s) for the course.")
         if not transformed:
-            logging.error("Step 11 failed: No exercise IDs returned — ensure exercises are imported into the course, then execute Step 11 in course.py")
+            logging.error("Step 11 failed: No exercise IDs returned — ensure exercises are imported via Steps 9–10 in exercises.py, then execute Step 11")
             sys.exit(1)
         return transformed
 
     except requests.exceptions.RequestException as e:
-        logging.error(f"Step 11 failed: Error fetching exercise data: {e}. Execute Step 11 in course.py")
+        logging.error(f"Step 11 failed: Error fetching exercise data: {e}. Execute Step 11")
         sys.exit(1)
     except ValueError as e:
-        logging.error(f"Step 11 failed: Error parsing exercise JSON: {e}. Execute Step 11 in course.py")
+        logging.error(f"Step 11 failed: Error parsing exercise JSON: {e}. Execute Step 11")
         sys.exit(1)
 
 def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]:

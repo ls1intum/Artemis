@@ -4,13 +4,14 @@ from logging_config import logging
 
 from utils import DATASET_VERSION, login_as_admin
 from course import create_course_request, get_course_id_request, get_exercise_ids_request
-from exercises import clone_pecv_bench, clone_pecv_bench_dataset, get_pecv_bench_dataset_dir, install_pecv_bench_dependencies, create_pecv_bench_version_variants, convert_version_varianzs_to_zip, import_exercise_variants, get_pecv_bench_dir
+from exercises import clone_pecv_bench, clone_pecv_bench_dataset, get_pecv_bench_dataset_dir, install_pecv_bench_dependencies, create_pecv_bench_version_variants, convert_version_variants_to_zip, import_exercise_variants, get_pecv_bench_dir
 from report import generate_report_files
 from code_snapshot import create_code_snapshot
 from merge_request import create_results_pull_request
 from consistency_check import consistency_check
 
 if __name__ == "__main__":
+    # Execute all steps in sequence from this file,
     logging.info("Running pecv-bench scripts.")
 
     # ======= EXERCISES.PY ==========
@@ -47,10 +48,10 @@ if __name__ == "__main__":
     # ======= EXERCISES.PY ==========
     # ======= PART 2 ================
     logging.info("Step 9: Converting variants to zip files")
-    convert_version_varianzs_to_zip(course_id=course_id)
+    convert_version_variants_to_zip(course_id=course_id)
 
     logging.info("Step 10: Importing exercise variants")
-    import_exercise_variants(session=session)
+    import_exercise_variants(session=session, course_id=course_id)
 
 
     # ========== CONSISTENCY_CHECK.PY ==========

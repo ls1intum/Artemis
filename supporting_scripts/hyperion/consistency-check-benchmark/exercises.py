@@ -244,10 +244,14 @@ def create_pecv_bench_version_variants() -> None:
         return
 
     variants_to_create = COURSE_EXERCISES.get(DATASET_VERSION, {})
+    total = sum(len(exs) for exs in variants_to_create.values())
+    processed = 0
     for course, exercises in variants_to_create.items():
         for exercise in exercises:
             logging.info(f"Creating variants for {DATASET_VERSION}/{course}/{exercise}...")
             create_exercise_variants(DATASET_VERSION, course, exercise, pecv_bench_dir)
+            processed += 1
+    logging.info(f"Variant creation complete: {processed}/{total} exercise(s) processed for {DATASET_VERSION}.")
 
 def check_pecv_bench_setup(pecv_bench_dir: str) -> bool:
     """
@@ -402,6 +406,7 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
 
     # Create intermediate zip files for solution, template and tests
     zip_files = []
+    missing_repos: List[str] = []
     try:
         for repo_type in repo_types:
             repo_name = f"{variant_id}-{repo_type}"  #001-solution
@@ -409,8 +414,8 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
 
             repo_path = os.path.join(variant_path, repo_type) #001/solution
             if not os.path.exists(repo_path):
-                logging.error(f"Step 9 failed: Required folder {repo_type} does not exist in {variant_path}.")
-                logging.error("Execute Step 4 in exercises.py to recreate variants, then execute Step 9")
+                missing_repos.append(repo_type)
+                logging.error(f"Step 9 failed: Required folder '{repo_type}' does not exist in {variant_path}.")
                 continue
             # Create a zip archive of the folder
             zip_folder_path = shutil.make_archive(base_name = base_name, format = 'zip', root_dir = repo_path)
@@ -419,6 +424,11 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
     except Exception as e:
         logging.exception(f"Step 9 failed: Error while creating intermediate zip files for {variant_id}: {e}")
         logging.error("Execute Step 9 in exercises.py")
+        return False
+
+    if missing_repos:
+        logging.error(f"Step 9 failed: {len(missing_repos)} required folder(s) missing for variant {variant_id}: {', '.join(missing_repos)} — skipping ZIP creation.")
+        logging.error("Execute Step 4 in exercises.py to recreate variants, then execute Step 9")
         return False
 
     # Overwrite problem statement, exercise ID, course ID, title and shortName in the config file
@@ -498,7 +508,7 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
             logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
     return True
 
-def convert_version_varianzs_to_zip(course_id: int) -> None:
+def convert_version_variants_to_zip(course_id: int) -> None:
     """
     Converts all exercise variants for specific VERSION defined in config.ini/COURSE_EXERCISES and VERISON into ZIP files.
 
@@ -512,16 +522,34 @@ def convert_version_varianzs_to_zip(course_id: int) -> None:
     zip_to_create = COURSE_EXERCISES.get(DATASET_VERSION, {})
     pecv_bench_dir = get_pecv_bench_dir()
 
+    succeeded = 0
+    failed = 0
+    failed_labels: List[str] = []
+
     for course, exercises in zip_to_create.items():
         for exercise in exercises:
-            logging.info(f"Creating variants for {DATASET_VERSION}/{course}/{exercise}...")
             variants_dir = os.path.join(pecv_bench_dir, "data", DATASET_VERSION, course, exercise, "variants")
-            variants_list_id = os.listdir(variants_dir)
-            for variant_id in variants_list_id:
-                variant_path = os.path.join(variants_dir, variant_id)
-                if os.path.isdir(variant_path):
-                    logging.info(f"Converting variant {variant_id} to zip...")
-                    convert_variant_to_zip(pecv_bench_dir, DATASET_VERSION, course, exercise, variant_id, course_id)
+            if not os.path.exists(variants_dir):
+                logging.warning(f"Variants directory not found, skipping: {variants_dir}")
+                continue
+            variant_ids = [v for v in os.listdir(variants_dir) if os.path.isdir(os.path.join(variants_dir, v))]
+            logging.info(f"Converting {len(variant_ids)} variant(s) for {DATASET_VERSION}/{course}/{exercise}...")
+            for variant_id in variant_ids:
+                label = f"{course}/{exercise}/{variant_id}"
+                ok = convert_variant_to_zip(pecv_bench_dir, DATASET_VERSION, course, exercise, variant_id, course_id)
+                if ok:
+                    succeeded += 1
+                    logging.info(f"[OK]   {label}")
+                else:
+                    failed += 1
+                    failed_labels.append(label)
+                    logging.error(f"[FAIL] {label}")
+
+    total = succeeded + failed
+    logging.info(f"ZIP conversion: {succeeded}/{total} variants converted successfully.")
+    if failed_labels:
+        logging.error(f"Step 9 failed: {failed} variant(s) failed ZIP creation:\n" + "\n".join(f"  - {v}" for v in sorted(failed_labels)))
+        logging.error("Execute Step 4 in exercises.py to recreate variants, then execute Step 9")
 
 def import_exercise_variant_request(session: requests.Session,
                                                 server_url: str,
@@ -604,7 +632,7 @@ def import_exercise_variant_request(session: requests.Session,
         logging.error("Execute Step 10 in exercises.py")
         return False
 
-def import_exercise_variants(session: requests.Session) -> None:
+def import_exercise_variants(session: requests.Session, course_id: int) -> None:
     """
     Imports all programming exercise (their variants) defined in config.ini/COURSE_EXERCISES into the Artemis server to COURSE_NAME.
 
@@ -613,18 +641,12 @@ def import_exercise_variants(session: requests.Session) -> None:
     Uses multithreading to speed up the import process.
 
     :param requests.Session session: The active requests Session object.
+    :param int course_id: The ID of the course where the exercises will be imported.
     :return: None
     :rtype: None
     """
     exercises_to_import = COURSE_EXERCISES.get(DATASET_VERSION, {})
     pecv_bench_dir = get_pecv_bench_dir()
-
-    try:
-        course_id = get_course_id_request(session=session)
-    except Exception as e:
-        logging.error(f"Step 10 failed: Cannot retrieve course ID — {e}")
-        logging.error("Execute Step 8 in course.py to verify the course exists, then execute Step 10 in exercises.py")
-        return
 
     imported_count = 0
     failed_count = 0
@@ -719,5 +741,5 @@ if __name__ == "__main__":
     # convert_version_varianzs_to_zip(course_id=course_id)
 
     # logging.info("Step 10: Importing exercise variants")
-    # import_exercise_variants(session=session)
+    # import_exercise_variants(session=session, course_id=course_id)
 

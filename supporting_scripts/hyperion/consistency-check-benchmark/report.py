@@ -39,6 +39,7 @@ def generate_report_files(pecv_bench_dir: str, version: str, approach_id: str) -
             logging.error(f"Stdout: {e.stdout.decode('utf-8')}")
             logging.error(f"Stderr: {e.stderr.decode('utf-8')}")
             logging.error(f"Open report.py, set approach_id = \"{approach_id}\", then execute Step 13 in report.py")
+            logging.error("If 'pecv-bench' CLI is not found, execute Step 3 in exercises.py first, then Step 13")
             sys.exit(1)
 
     report_md_path = os.path.join(pecv_bench_dir, "results", approach_id, version, "report.md")
@@ -69,10 +70,15 @@ def summarize_report(report_md_path: str, summary_md_path: str, version: str) ->
 
         new_summary_text = []
         inserted_reference = False
+        reference_row = REFERENCE.get(version)
+        if reference_row is None:
+            logging.warning(f"No reference data found for version '{version}' in config.ini — 'No Data Available' will be shown in the report.")
+            reference_row = "No Data Available"
+
         for line in summary_text:
             if not inserted_reference and line.startswith("| artemis-"):
                 new_summary_text.append(line)
-                new_summary_text.append(REFERENCE.get(version, "No Data Available") + "\n")
+                new_summary_text.append(reference_row + "\n")
                 inserted_reference = True
                 continue
             new_summary_text.append(line)

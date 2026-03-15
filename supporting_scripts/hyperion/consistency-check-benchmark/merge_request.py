@@ -5,7 +5,7 @@ import os
 import sys
 from logging_config import logging
 
-from utils import PECV_BENCH_BRANCH
+from utils import PECV_BENCH_BRANCH, DATASET_VERSION
 from exercises import get_pecv_bench_dir
 
 
