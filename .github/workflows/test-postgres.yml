@@ -86,12 +86,12 @@ jobs:
         fi
 
         echo "Executing all tests"
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=POSTGRES | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification -Dzonky.test.database.type=POSTGRES | tee tests.log
     - name: Java Tests (All)
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=POSTGRES | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification -Dzonky.test.database.type=POSTGRES | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v6
