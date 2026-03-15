@@ -53,12 +53,12 @@ jhi-iris-citation-text {
         left: 50%;
         width: 280px;
         max-width: 70vw;
-        padding: 10px 10px 14px;
-        border-radius: 8px;
+        padding: 12px 16px;
+        border-radius: 16px;
         background-color: var(--iris-citation-summary-bg);
         line-height: 1.4;
         white-space: normal;
-        text-align: center;
+        text-align: left;
         z-index: $citation-base-z-index + 1; // Summary tooltip above citation bubble
         transform: translate(-50%, var(--iris-citation-vertical-offset)) translateX(var(--iris-citation-shift));
         opacity: 0;
@@ -69,8 +69,8 @@ jhi-iris-citation-text {
             visibility 120ms ease;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 8px;
+        align-items: flex-start;
+        gap: 2px;
 
         // When flipped to position below, reverse order to put navigation on top
         &--flipped {
@@ -101,8 +101,8 @@ jhi-iris-citation-text {
     .iris-citation__summary-content {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 4px;
+        align-items: flex-start;
+        gap: 0;
         min-height: 1.2em;
     }
 
@@ -125,6 +125,7 @@ jhi-iris-citation-text {
         font-size: 0.75rem;
         line-height: 1.2;
         color: var(--iris-citation-lecture-color);
+        margin-bottom: 8px;
     }
 
     .iris-citation__summary-text {
@@ -139,6 +140,8 @@ jhi-iris-citation-text {
         gap: 8px;
         padding-top: 6px;
         font-size: 0.9em;
+        align-self: center;
+        transform: translateX(calc(-1 * var(--iris-citation-shift, 0px)));
     }
 
     .iris-citation__nav-button {
