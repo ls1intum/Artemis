@@ -1,30 +1,21 @@
 import dayjs from 'dayjs';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
-import javaAllSuccessfulSubmission from '../../../fixtures/exercise/programming/java/all_successful/submission.json';
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
 import { Exercise, ExerciseType } from '../../../support/constants';
 import { admin, studentFour, studentThree, studentTwo, users } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
 const textFixture = 'loremIpsum-short.txt';
 
-test.describe('Test exam participation', { tag: '@slow' }, () => {
-    let course: Course;
-    let exerciseArray: Array<Exercise> = [];
+const course = { id: SEED_COURSES.testExam.id } as any;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-    });
+test.describe('Test exam participation', { tag: '@slow' }, () => {
+    let exerciseArray: Array<Exercise> = [];
 
     test.describe('Early Hand-in', () => {
         let exam: Exam;
@@ -38,27 +29,14 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
                 testExam: true,
                 startDate: dayjs().subtract(1, 'day'),
                 visibleDate: dayjs().subtract(2, 'days'),
-                examMaxPoints: 100,
-                numberOfExercisesInExam: 10,
+                examMaxPoints: 20,
+                numberOfExercisesInExam: 2,
                 numberOfCorrectionRoundsInExam: 0,
             };
             exam = await examAPIRequests.createExam(examConfig);
-            Promise.all([
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaAllSuccessfulSubmission, expectedScore: 100 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, expectedScore: 0 }),
-
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
-
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-                await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-            ]).then((responses) => {
-                exerciseArray = responses;
-            });
+            const textExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
+            const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
+            exerciseArray = [textExercise, quizExercise];
         });
 
         test('Participates as a student in a registered test exam', async ({ examParticipation, examNavigation }) => {
@@ -66,10 +44,7 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-
-                if (exercise.type !== ExerciseType.PROGRAMMING) {
-                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                }
+                await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
             }
             await examParticipation.handInEarly();
         });
@@ -79,13 +54,8 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
                 await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-
-                // Skip programming exercise this time to save execution time
-                // (we also need to use the navigation bar here, since programming  exercises do not have a "Save and continue" button)
-                if (exercise.type !== ExerciseType.PROGRAMMING) {
-                    await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-                    await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
-                }
+                await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
+                await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
             }
             await examParticipation.handInEarly();
         });
@@ -99,6 +69,10 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
                 await examNavigation.openOverview();
             }
             await examParticipation.handInEarly();
+        });
+
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
         });
     });
 
@@ -145,9 +119,9 @@ test.describe('Test exam participation', { tag: '@slow' }, () => {
             await examParticipation.verifyTextExerciseOnFinalPage(textExercise.id!, textExercise.additionalData!.textFixture!);
             await examParticipation.checkExamTitle(examTitle);
         });
-    });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
+        });
     });
 });

@@ -173,26 +173,49 @@ public class LocalVCServletService {
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
 
         long timeNanoStart = System.nanoTime();
-        // Find the local repository depending on the name.
-        Path repositoryDir = localVCBasePath.resolve(repositoryPath);
+        // Sanitize once for all log statements to prevent CRLF injection
+        String sanitizedPath = repositoryPath.replaceAll("[\\r\\n]", "_");
 
-        log.debug("Path to resolve repository from: {}", repositoryDir);
-        if (!Files.exists(repositoryDir)) {
-            log.error("Could not find local repository with name {}", repositoryPath);
+        // Find the local repository depending on the name.
+        Path normalizedBasePath = localVCBasePath.normalize();
+        Path repositoryDir = normalizedBasePath.resolve(repositoryPath).normalize();
+
+        // Prevent path traversal attacks by ensuring the resolved path stays within the base path
+        if (!repositoryDir.startsWith(normalizedBasePath)) {
+            log.error("Blocked path traversal attempt for repository path: {}", sanitizedPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 
-        log.debug("Opening local repository {}", repositoryPath);
+        log.debug("Path to resolve repository from: {}", sanitizedPath);
+        if (!Files.exists(repositoryDir)) {
+            log.error("Could not find local repository with name {}", sanitizedPath);
+            throw new RepositoryNotFoundException(repositoryPath);
+        }
+
+        // After confirming the path exists, resolve symlinks and verify the real path is still within the base
+        try {
+            Path realBasePath = localVCBasePath.toRealPath();
+            Path realRepositoryDir = repositoryDir.toRealPath();
+            if (!realRepositoryDir.startsWith(realBasePath)) {
+                log.error("Blocked symlink-based path traversal for repository path: {}", sanitizedPath);
+                throw new RepositoryNotFoundException(repositoryPath);
+            }
+        }
+        catch (IOException e) {
+            throw new RepositoryNotFoundException(repositoryPath, e);
+        }
+
+        log.debug("Opening local repository {}", sanitizedPath);
         try {
             Repository repository = FileRepositoryBuilder.create(repositoryDir.toFile());
             // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
             repository.getConfig().setBoolean("http", null, "receivepack", true);
 
-            log.debug("Resolving repository for repository {} took {}", repositoryPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
+            log.debug("Resolving repository for repository {} took {}", sanitizedPath, TimeLogUtil.formatDurationFrom(timeNanoStart));
             return repository;
         }
         catch (IOException e) {
-            log.error("Unable to open local repository {}", repositoryPath);
+            log.error("Unable to open local repository {}", sanitizedPath);
             throw new RepositoryNotFoundException(repositoryPath, e);
         }
     }
