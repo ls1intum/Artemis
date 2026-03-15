@@ -35,7 +35,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${TEXT_EXERCISE_BASE}/*`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(TEXT_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
@@ -44,7 +44,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${MODELING_EXERCISE_BASE}/*`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(MODELING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
@@ -53,7 +53,7 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator(`#delete-quiz-${exercise.id}`).click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${QUIZ_EXERCISE_BASE}/*`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(QUIZ_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
@@ -62,16 +62,19 @@ export class CourseManagementExercisesPage {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${PROGRAMMING_EXERCISE_BASE}/*`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(PROGRAMMING_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
+        // Wait for the delete confirmation dialog to close before asserting DOM changes.
+        // Angular needs time to process the response and remove the exercise from the list.
+        await expect(this.page.getByTestId('delete-dialog-confirm-button')).not.toBeVisible({ timeout: 10000 });
     }
 
     async deleteFileUploadExercise(exercise: Exercise) {
         const exerciseElement = this.getExercise(exercise.id!);
         await exerciseElement.locator('#delete-exercise').click();
         await this.page.locator('#confirm-entity-name').fill(exercise.title!);
-        const responsePromise = this.page.waitForResponse(`${UPLOAD_EXERCISE_BASE}/*`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes(UPLOAD_EXERCISE_BASE) && resp.request().method() === 'DELETE');
         await this.page.getByTestId('delete-dialog-confirm-button').click();
         await responsePromise;
     }
