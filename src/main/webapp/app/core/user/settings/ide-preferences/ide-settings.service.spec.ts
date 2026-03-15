@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { provideHttpClient } from '@angular/common/http';
@@ -6,6 +8,8 @@ import { IdeSettingsService } from 'app/core/user/settings/ide-preferences/ide-s
 import { Ide, IdeMappingDTO } from 'app/core/user/settings/ide-preferences/ide.model';
 
 describe('IdeSettingsService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: IdeSettingsService;
     let httpMock: HttpTestingController;
 
@@ -33,22 +37,21 @@ describe('IdeSettingsService', () => {
         req.flush(mockIdes);
     });
 
-    it('should load IDE preferences', fakeAsync(() => {
+    it('should load IDE preferences', async () => {
         const mockIdeMappingDTO: IdeMappingDTO[] = [
             { programmingLanguage: ProgrammingLanguage.JAVA, ide: { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' } },
         ];
         const expectedMap = new Map<ProgrammingLanguage, Ide>([[ProgrammingLanguage.JAVA, { name: 'VS Code', deepLink: 'vscode://vscode.git/clone?url={cloneUrl}' }]]);
 
-        service.loadIdePreferences().then((ideMap) => {
-            expect(ideMap).toEqual(expectedMap);
-        });
-
-        tick();
+        const promise = service.loadIdePreferences();
 
         const req = httpMock.expectOne(service.ideSettingsUrl);
         expect(req.request.method).toBe('GET');
         req.flush(mockIdeMappingDTO);
-    }));
+
+        const ideMap = await promise;
+        expect(ideMap).toEqual(expectedMap);
+    });
 
     it('should save IDE preference', () => {
         const programmingLanguage = ProgrammingLanguage.JAVA;

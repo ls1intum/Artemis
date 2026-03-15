@@ -29,7 +29,7 @@ plugins {
     id "org.springdoc.openapi-gradle-plugin" version "1.9.0"
     id "org.openapi.generator" version "7.20.0"
     id "com.google.osdetector" version "1.7.3"
-    id "org.cyclonedx.bom" version "3.2.0"
+    id "org.cyclonedx.bom" version "3.2.2"
 }
 
 // Load Docker image versions from .env (single source of truth for Docker, tests, and build dependencies)
@@ -434,8 +434,8 @@ dependencies {
     implementation "com.github.seancfoley:ipaddress:5.6.1"
 
     // used for testing and Java Template Upgrade Service
-    implementation "org.apache.maven:maven-model:3.9.12"
-    implementation "org.apache.pdfbox:pdfbox:3.0.6"
+    implementation "org.apache.maven:maven-model:3.9.14"
+    implementation "org.apache.pdfbox:pdfbox:3.0.7"
     implementation "org.apache.commons:commons-csv:1.14.1"
     implementation "org.commonmark:commonmark:0.27.1"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
@@ -500,7 +500,7 @@ dependencies {
     testImplementation "org.apache.maven.shared:maven-invoker:3.3.0"
     testImplementation "org.gradle:gradle-tooling-api:9.3.1"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.5.5"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.7.1"
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.8.0"
     testImplementation "com.redis:testcontainers-redis:2.2.4"
     testImplementation "org.testcontainers:testcontainers-weaviate:${testcontainers_version}"
     testImplementation "com.icegreen:greenmail-junit5:2.1.8"
@@ -603,10 +603,10 @@ tasks.named("dependencyUpdates").configure {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
-// 2a) Execute tests without coverage report:       ./gradlew test -x webapp
-// 2b) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
-// 2c) Execute tests with Postgres test container:  ./gradlew testPostgres -x webapp  (requires Docker)
+// 2) Execute tests (PostgreSQL default, Docker required): ./gradlew test -x webapp
+// 2a) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
+// 2b) Execute tests with H2 (no Docker needed):    ./gradlew test -x webapp -Dzonky.test.database.type=H2
+// 2c) Execute tests with MySQL test container:     ./gradlew testMysql -x webapp  (requires Docker)
 // 2d) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 2e) Run tests for modules:                       ./gradlew test -DincludeModules=athena,atlas -x webapp (executes all tests in directories ./src/main/test/.../athena and ./src/main/test/.../atlas) + ArchitectureTests
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification -x webapp

@@ -60,7 +60,13 @@ build_and_run_all_tests () {
   # Build and run all tests if the compilation succeeds
   # ------------------------------
   sudo chown artemis_user:artemis_user .
-  gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c || error=true
+  mkdir -p target
+  # Capture GCC warnings to a file for static code analysis
+  gcc -c -Wall ${studentParentWorkingDirectoryName}/*.c 2> target/gcc_warnings.txt || error=true
+  # Convert GCC text output to XML format for the SCA parser
+  if [ -f target/gcc_warnings.txt ] && [ -s target/gcc_warnings.txt ]; then
+      python3 ${testWorkingDirectory}/Converter.py -i target/gcc_warnings.txt -o target/gcc.xml
+  fi
   if [ ! $error ]
   then
       cd ${testWorkingDirectory} || exit 0

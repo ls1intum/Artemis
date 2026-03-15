@@ -339,8 +339,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
     },
-    programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
-        await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    programmingExerciseOverview: async ({ page, courseOverview }, use) => {
+        await use(new ProgrammingExerciseOverviewPage(page, courseOverview));
     },
     programmingExerciseParticipations: async ({ page }, use) => {
         await use(new ProgrammingExerciseParticipationsPage(page));
