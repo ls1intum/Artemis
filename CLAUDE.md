@@ -50,8 +50,8 @@ npm run prettier:write               # Fix formatting
 
 ### Testing
 ```bash
-# Server
-./gradlew test                                                    # All server tests
+# Server (requires Docker — tests run against PostgreSQL via Testcontainers by default)
+./gradlew test -x webapp                                          # All server tests (PostgreSQL)
 ./gradlew test --tests ExamIntegrationTest -x webapp              # Single test class
 ./gradlew test --tests ExamIntegrationTest.testGetExamScore       # Single test method
 
@@ -155,6 +155,7 @@ Organized by feature module:
 
 ## Testing Guidelines
 
+- **Server tests require Docker** — tests run against PostgreSQL via Testcontainers by default (both locally and in CI).
 - Keep tests deterministic; mock external services and WebSockets
 - CI enforces coverage thresholds per module
 - Use `npm run test-diff` for incremental client work
@@ -163,6 +164,7 @@ Organized by feature module:
   - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
   - Run Vitest: `npm run vitest` (watch), `npm run vitest:run` (single run), `npm run vitest:coverage`
 - Name server tests `*Test.java`; reuse module base classes when present
+- When comparing `ZonedDateTime` values in tests, use `toInstant()` for comparisons since PostgreSQL stores timestamps as UTC (timezone offset is not preserved through database round-trips)
 - Add screenshots for UI changes in PRs
 - Verify linting before submitting: `npm run lint`, `./gradlew checkstyleMain -x webapp`
 
