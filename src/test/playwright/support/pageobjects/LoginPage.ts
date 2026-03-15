@@ -62,46 +62,29 @@ export class LoginPage {
      * Asserts that the footer is visible.
      */
     async shouldShowFooter() {
-        expect(await this.page.isVisible('#footer')).toBe(true);
+        await expect(this.page.locator('#footer')).toBeVisible();
     }
 
-    /**
-     * Asserts that the "About Us" link in the footer is visible and has the correct href attribute.
-     */
     async shouldShowAboutUsInFooter() {
-        expect(await this.page.isVisible('#about')).toBe(true);
-        expect(await this.page.getAttribute('#about', 'href')).toBe('/about');
+        await expect(this.page.locator('#about')).toBeVisible();
+        await expect(this.page.locator('#about')).toHaveAttribute('href', '/about');
     }
 
-    /**
-     * Asserts that the "Request Change" link in the footer is visible and has a non-empty href attribute.
-     */
     async shouldShowRequestChangeInFooter() {
-        expect(await this.page.isVisible('#feedback')).toBe(true);
-        expect(await this.page.getAttribute('#feedback', 'href')).toBeTruthy();
+        await expect(this.page.locator('#feedback')).toBeVisible();
     }
 
-    /**
-     * Asserts that the "Release Notes" link in the footer is visible and has a non-empty href attribute.
-     */
     async shouldShowReleaseNotesInFooter() {
-        expect(await this.page.isVisible('#releases')).toBe(true);
-        expect(await this.page.getAttribute('#releases', 'href')).toBeTruthy();
+        await expect(this.page.locator('#releases')).toBeVisible();
     }
 
-    /**
-     * Asserts that the "Privacy Statement" link in the footer is visible and has the correct href attribute.
-     */
     async shouldShowPrivacyStatementInFooter() {
-        expect(await this.page.isVisible('#privacy')).toBe(true);
-        expect(await this.page.getAttribute('#privacy', 'href')).toBe('/privacy');
+        await expect(this.page.locator('#privacy')).toBeVisible();
+        await expect(this.page.locator('#privacy')).toHaveAttribute('href', '/privacy');
     }
 
-    /**
-     * Asserts that the "Imprint" link in the footer is visible and has the correct href attribute.
-     */
     async shouldShowImprintInFooter() {
-        expect(await this.page.isVisible('#imprint')).toBe(true);
-        expect(await this.page.getAttribute('#imprint', 'href')).toBe('/imprint');
+        await expect(this.page.locator('#imprint')).toBeVisible();
+        await expect(this.page.locator('#imprint')).toHaveAttribute('href', '/imprint');
     }
 }

@@ -1,8 +1,10 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import dayjs from 'dayjs/esm';
 import { Subject, of } from 'rxjs';
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { SystemNotification, SystemNotificationType } from 'app/core/shared/entities/system-notification.model';
@@ -16,6 +18,8 @@ import { CLOSED_NOTIFICATION_IDS_STORAGE_KEY, SystemNotificationComponent, WEBSO
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 
 describe('System Notification Component', () => {
+    setupTestBed({ zoneless: true });
+
     let systemNotificationComponent: SystemNotificationComponent;
     let systemNotificationComponentFixture: ComponentFixture<SystemNotificationComponent>;
     let systemNotificationService: SystemNotificationService;
@@ -44,7 +48,7 @@ describe('System Notification Component', () => {
         } as SystemNotification;
     };
 
-    beforeEach(() => {
+    beforeEach(async () => {
         // Clear localStorage to prevent leaking state between tests
         localStorage.removeItem(CLOSED_NOTIFICATION_IDS_STORAGE_KEY);
 
@@ -58,149 +62,155 @@ describe('System Notification Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 provideHttpClient(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                systemNotificationComponentFixture = TestBed.createComponent(SystemNotificationComponent);
-                systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
-                systemNotificationService = TestBed.inject(SystemNotificationService);
-                websocketService = TestBed.inject(WebsocketService);
-                localStorageService = TestBed.inject(LocalStorageService);
-            });
+        });
+        await TestBed.compileComponents();
+        systemNotificationComponentFixture = TestBed.createComponent(SystemNotificationComponent);
+        systemNotificationComponent = systemNotificationComponentFixture.componentInstance;
+        systemNotificationService = TestBed.inject(SystemNotificationService);
+        websocketService = TestBed.inject(WebsocketService);
+        localStorageService = TestBed.inject(LocalStorageService);
     });
 
     afterEach(() => {
         localStorage.removeItem(CLOSED_NOTIFICATION_IDS_STORAGE_KEY);
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
-    it('should get system notifications, display active ones on init, and schedule changes correctly', fakeAsync(() => {
+    it('should get system notifications, display active ones on init, and schedule changes correctly', () => {
+        vi.useFakeTimers();
         const notifications = [
             createActiveNotification(SystemNotificationType.WARNING, 1),
             createActiveNotification(SystemNotificationType.INFO, 2),
             createInactiveNotification(SystemNotificationType.WARNING, 3),
             createInactiveNotification(SystemNotificationType.INFO, 4),
         ];
-        const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
         systemNotificationComponent.ngOnInit();
-        tick(500);
+        vi.advanceTimersByTime(500);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
         expect(systemNotificationComponent.notifications).toEqual(notifications);
         expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[0], notifications[1]]);
 
-        tick(60 * 60 * 1000); // one hour
+        vi.advanceTimersByTime(60 * 60 * 1000); // one hour
 
         expect(systemNotificationComponent.notifications).toEqual(notifications);
         expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[2], notifications[3]]);
 
-        flush();
-    }));
+        vi.useRealTimers();
+    });
 
-    it('should connect to ws on init and update notifications to new array of notifications received through it', fakeAsync(() => {
+    it('should connect to ws on init and update notifications to new array of notifications received through it', () => {
+        vi.useFakeTimers();
         const originalNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createInactiveNotification(SystemNotificationType.INFO, 2)];
         const newNotifications = [createActiveNotification(SystemNotificationType.WARNING, 3), createInactiveNotification(SystemNotificationType.INFO, 4)];
 
-        const subscribeSpy = jest.spyOn(websocketService, 'subscribe').mockReturnValue(of(newNotifications));
-        const getActiveNotificationSpy = jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
+        const subscribeSpy = vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(newNotifications));
+        const getActiveNotificationSpy = vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
         systemNotificationComponent.ngOnInit();
         expect(systemNotificationComponent.notifications).toEqual(originalNotifications);
         expect(systemNotificationComponent.notificationsToDisplay).toEqual([originalNotifications[0]]);
 
-        tick(500);
+        vi.advanceTimersByTime(500);
 
         expect(systemNotificationComponent.notifications).toEqual(newNotifications);
         expect(systemNotificationComponent.notificationsToDisplay).toEqual([newNotifications[0]]);
         expect(subscribeSpy).toHaveBeenCalledOnce();
         expect(subscribeSpy).toHaveBeenCalledWith(WEBSOCKET_CHANNEL);
         expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
-        flush();
-    }));
+        vi.useRealTimers();
+    });
 
     describe('Persistence of dismissed notification IDs', () => {
-        it('should save closed notification IDs to localStorage', fakeAsync(() => {
+        it('should save closed notification IDs to localStorage', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
-            const storeSpy = jest.spyOn(localStorageService, 'store');
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            const storeSpy = vi.spyOn(localStorageService, 'store');
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             systemNotificationComponent.close(notifications[0]);
 
             expect(storeSpy).toHaveBeenCalledWith(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
             expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1]]);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should load closed notification IDs from localStorage on init', fakeAsync(() => {
+        it('should load closed notification IDs from localStorage on init', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             expect(systemNotificationComponent.closedIds).toEqual([1]);
             expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1]]);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should not reset closed IDs on websocket update', fakeAsync(() => {
+        it('should not reset closed IDs on websocket update', () => {
+            vi.useFakeTimers();
             const originalNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
             const updatedNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
 
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            jest.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // After websocket update, notification 1 should still be closed
             expect(systemNotificationComponent.closedIds).toEqual([1]);
             expect(systemNotificationComponent.notificationsToDisplay).toEqual([updatedNotifications[1]]);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should prune stale closed IDs when notifications are updated via websocket', fakeAsync(() => {
+        it('should prune stale closed IDs when notifications are updated via websocket', () => {
+            vi.useFakeTimers();
             const originalNotifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
             // New notifications no longer include notification 1
             const updatedNotifications = [createActiveNotification(SystemNotificationType.INFO, 2), createActiveNotification(SystemNotificationType.WARNING, 3)];
 
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            jest.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // Stale ID 1 should be pruned since it's no longer in the notification list
             expect(systemNotificationComponent.closedIds).toEqual([]);
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([]);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should default to empty array when localStorage has no stored IDs', fakeAsync(() => {
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+        it('should default to empty array when localStorage has no stored IDs', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             expect(systemNotificationComponent.closedIds).toEqual([]);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should accumulate multiple closed IDs in localStorage', fakeAsync(() => {
+        it('should accumulate multiple closed IDs in localStorage', () => {
+            vi.useFakeTimers();
             const notifications = [
                 createActiveNotification(SystemNotificationType.WARNING, 1),
                 createActiveNotification(SystemNotificationType.INFO, 2),
                 createActiveNotification(SystemNotificationType.WARNING, 3),
             ];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             systemNotificationComponent.close(notifications[0]);
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([1]);
@@ -210,10 +220,11 @@ describe('System Notification Component', () => {
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([1, 3]);
             expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[1]]);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should keep valid closed IDs and prune only stale ones on websocket update', fakeAsync(() => {
+        it('should keep valid closed IDs and prune only stale ones on websocket update', () => {
+            vi.useFakeTimers();
             const originalNotifications = [
                 createActiveNotification(SystemNotificationType.WARNING, 1),
                 createActiveNotification(SystemNotificationType.INFO, 2),
@@ -224,29 +235,30 @@ describe('System Notification Component', () => {
 
             // User had closed notifications 1 and 2
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1, 2]);
-            jest.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of(updatedNotifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(originalNotifications));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // ID 1 pruned (not in updated list), ID 2 kept (still in updated list)
             expect(systemNotificationComponent.closedIds).toEqual([2]);
             expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([2]);
             // Only notification 3 should be displayed (2 is closed, 1 was removed)
             expect(systemNotificationComponent.notificationsToDisplay).toEqual([updatedNotifications[1]]);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should persist dismissal across multiple websocket updates', fakeAsync(() => {
+        it('should persist dismissal across multiple websocket updates', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
             const wsSubject = new Subject<SystemNotification[]>();
 
-            jest.spyOn(websocketService, 'subscribe').mockReturnValue(wsSubject);
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(wsSubject);
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // Close notification 1
             systemNotificationComponent.close(notifications[0]);
@@ -259,17 +271,18 @@ describe('System Notification Component', () => {
             expect(systemNotificationComponent.notificationsToDisplay).toHaveLength(1);
             expect(systemNotificationComponent.notificationsToDisplay[0].id).toBe(2);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
     });
 
     describe('CSS variable for notification height', () => {
-        it('should set --system-notification-height CSS variable on the document root after view check', fakeAsync(() => {
+        it('should set --system-notification-height CSS variable on the document root after view check', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             const renderer = systemNotificationComponentFixture.debugElement.injector.get(Renderer2);
-            const setStyleSpy = jest.spyOn(renderer, 'setStyle');
+            const setStyleSpy = vi.spyOn(renderer, 'setStyle');
 
             // Simulate a previous height that differs from the actual element height (0 in jsdom)
             // so that ngAfterViewChecked detects a change and calls setStyle
@@ -277,40 +290,42 @@ describe('System Notification Component', () => {
 
             // Use detectChanges to trigger both ngOnInit and ngAfterViewChecked
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // In jsdom, offsetHeight is 0, so the variable will be set to '0px'
             const setStyleCalls = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height');
             expect(setStyleCalls.length).toBeGreaterThanOrEqual(1);
             expect(setStyleCalls[0]).toEqual([document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase]);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should reset --system-notification-height to 0px on destroy', fakeAsync(() => {
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+        it('should reset --system-notification-height to 0px on destroy', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
 
             const renderer = systemNotificationComponentFixture.debugElement.injector.get(Renderer2);
-            const setStyleSpy = jest.spyOn(renderer, 'setStyle');
+            const setStyleSpy = vi.spyOn(renderer, 'setStyle');
 
             systemNotificationComponent.ngOnInit();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             systemNotificationComponent.ngOnDestroy();
 
             expect(setStyleSpy).toHaveBeenCalledWith(document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase);
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should only update CSS variable when height actually changes', fakeAsync(() => {
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+        it('should only update CSS variable when height actually changes', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
 
             const renderer = systemNotificationComponentFixture.debugElement.injector.get(Renderer2);
-            const setStyleSpy = jest.spyOn(renderer, 'setStyle');
+            const setStyleSpy = vi.spyOn(renderer, 'setStyle');
 
             // First detectChanges triggers ngOnInit + ngAfterViewChecked
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             const callCountAfterFirst = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height').length;
 
@@ -320,70 +335,75 @@ describe('System Notification Component', () => {
             const callCountAfterSecond = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height').length;
             expect(callCountAfterSecond).toBe(callCountAfterFirst);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should update CSS variable when lastNotificationHeight changes', fakeAsync(() => {
+        it('should update CSS variable when lastNotificationHeight changes', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             const renderer = systemNotificationComponentFixture.debugElement.injector.get(Renderer2);
-            const setStyleSpy = jest.spyOn(renderer, 'setStyle');
+            const setStyleSpy = vi.spyOn(renderer, 'setStyle');
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
 
             // Simulate a previous height being different to force the update check to detect a change
             (systemNotificationComponent as any).lastNotificationHeight = 50;
 
-            // Close a notification and trigger change detection
+            // Close a notification and trigger change detection + lifecycle hook
             systemNotificationComponent.close(notifications[0]);
             systemNotificationComponentFixture.detectChanges();
+            systemNotificationComponent.ngAfterViewChecked();
 
             // The height changed (from simulated 50 to actual 0 in jsdom), so setStyle should be called
             const lastCall = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height').pop();
             expect(lastCall).toEqual([document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase]);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
     });
 
     describe('DOM rendering', () => {
-        it('should render notification elements for active notifications', fakeAsync(() => {
+        it('should render notification elements for active notifications', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             const notificationElements = systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification');
             expect(notificationElements).toHaveLength(2);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should not render closed notifications in the DOM', fakeAsync(() => {
+        it('should not render closed notifications in the DOM', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
             localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             const notificationElements = systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification');
             expect(notificationElements).toHaveLength(1);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should remove notification from DOM when close button is clicked', fakeAsync(() => {
+        it('should remove notification from DOM when close button is clicked', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             expect(systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification')).toHaveLength(2);
@@ -395,47 +415,50 @@ describe('System Notification Component', () => {
 
             expect(systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification')).toHaveLength(1);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should apply correct CSS class for warning notifications', fakeAsync(() => {
+        it('should apply correct CSS class for warning notifications', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             const notificationElement = systemNotificationComponentFixture.nativeElement.querySelector('.system-notification');
             expect(notificationElement).toBeTruthy();
-            expect(notificationElement.classList.contains('warning')).toBeTrue();
-            expect(notificationElement.classList.contains('info')).toBeFalse();
+            expect(notificationElement.classList.contains('warning')).toBe(true);
+            expect(notificationElement.classList.contains('info')).toBe(false);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should apply correct CSS class for info notifications', fakeAsync(() => {
+        it('should apply correct CSS class for info notifications', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.INFO, 1)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             const notificationElement = systemNotificationComponentFixture.nativeElement.querySelector('.system-notification');
             expect(notificationElement).toBeTruthy();
-            expect(notificationElement.classList.contains('info')).toBeTrue();
-            expect(notificationElement.classList.contains('warning')).toBeFalse();
+            expect(notificationElement.classList.contains('info')).toBe(true);
+            expect(notificationElement.classList.contains('warning')).toBe(false);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should render no notification elements when all are dismissed', fakeAsync(() => {
+        it('should render no notification elements when all are dismissed', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             expect(systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification')).toHaveLength(1);
@@ -445,15 +468,16 @@ describe('System Notification Component', () => {
 
             expect(systemNotificationComponentFixture.nativeElement.querySelectorAll('.system-notification')).toHaveLength(0);
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
 
-        it('should display notification title and text', fakeAsync(() => {
+        it('should display notification title and text', () => {
+            vi.useFakeTimers();
             const notifications = [createActiveNotification(SystemNotificationType.INFO, 1)];
-            jest.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
 
             systemNotificationComponentFixture.detectChanges();
-            tick(500);
+            vi.advanceTimersByTime(500);
             systemNotificationComponentFixture.detectChanges();
 
             const titleElement = systemNotificationComponentFixture.nativeElement.querySelector('.notification-title');
@@ -462,7 +486,7 @@ describe('System Notification Component', () => {
             const contentElement = systemNotificationComponentFixture.nativeElement.querySelector('.notification-content');
             expect(contentElement.textContent).toContain('Artemis will be unavailable');
 
-            flush();
-        }));
+            vi.useRealTimers();
+        });
     });
 });
