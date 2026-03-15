@@ -55,6 +55,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         this.authSubscription = this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
                 setTimeout(() => {
+                    this.websocketStatusSubscription?.unsubscribe();
                     this.websocketStatusSubscription = this.websocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
                 }, 500);
             } else {
@@ -129,8 +130,11 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     }
 
     close(notification: SystemNotification) {
-        if (!this.closedIds.includes(notification.id!)) {
-            this.closedIds.push(notification.id!);
+        if (notification.id == undefined) {
+            return;
+        }
+        if (!this.closedIds.includes(notification.id)) {
+            this.closedIds.push(notification.id);
         }
         this.localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, this.closedIds);
         this.selectVisibleNotificationsAndScheduleUpdate();
@@ -142,8 +146,11 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
      */
     private pruneClosedIds() {
         const knownIds = new Set(this.notifications.map((n) => n.id));
-        this.closedIds = this.closedIds.filter((id) => knownIds.has(id));
-        this.localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, this.closedIds);
+        const pruned = this.closedIds.filter((id) => knownIds.has(id));
+        if (pruned.length !== this.closedIds.length) {
+            this.closedIds = pruned;
+            this.localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, this.closedIds);
+        }
     }
 
     private updateNotificationHeightCssVariable() {
