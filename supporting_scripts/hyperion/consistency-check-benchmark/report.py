@@ -35,10 +35,10 @@ def generate_report_files(pecv_bench_dir: str, version: str, approach_id: str) -
                 capture_output=True
             )
         except subprocess.CalledProcessError as e:
-            logging.error(f"Command failed: {' '.join(cmd)}")
+            logging.error(f"Step 13 failed: Command failed: {' '.join(cmd)}")
             logging.error(f"Stdout: {e.stdout.decode('utf-8')}")
             logging.error(f"Stderr: {e.stderr.decode('utf-8')}")
-
+            logging.error(f"Open report.py, set approach_id = \"{approach_id}\", then execute Step 13 in report.py")
             sys.exit(1)
 
     report_md_path = os.path.join(pecv_bench_dir, "results", approach_id, version, "report.md")
@@ -55,11 +55,11 @@ def summarize_report(report_md_path: str, summary_md_path: str, version: str) ->
     :param str summary_md_path: The path to the summary markdown file
     """
     if not os.path.exists(report_md_path):
-        logging.error(f"Report file not found at {report_md_path}")
+        logging.error(f"Step 13 failed: Report file not found at {report_md_path}. Execute Step 13 in report.py")
         return
 
     if not os.path.exists(summary_md_path):
-        logging.error(f"Summary file not found at {summary_md_path}")
+        logging.error(f"Step 13 failed: Summary file not found at {summary_md_path}. Execute Step 13 in report.py")
         return
 
     try:
@@ -99,7 +99,7 @@ def summarize_report(report_md_path: str, summary_md_path: str, version: str) ->
         logging.info(f"Successfully injected summary from {os.path.basename(summary_md_path)} into {os.path.basename(report_md_path)}")
 
     except Exception as e:
-        logging.exception(f"Error while injecting summary into report: {e}")
+        logging.exception(f"Step 13 failed: Error while injecting summary into report: {e}. Execute Step 13 in report.py")
 
 
 if __name__ == "__main__":
@@ -107,12 +107,12 @@ if __name__ == "__main__":
     #
     # Steps to recover:
     #   1. Update approach_id below to match your results folder name.
-    #      Find it with:  ls pecv-bench/results/<DATASET_VERSION>/
-    #   2. Rerun:            python report.py
+    #      Find it with:  ls pecv-bench/results/
+    #   2. Execute Step 13 in report.py
     pecv_bench_dir = get_pecv_bench_dir()
 
     # >>> UPDATE THIS to your results folder name before rerunning <<<
-    approach_id = "artemis-feature-hyperion-consistency_check_independent_verification_loop-9cd0b21e4a"
+    approach_id = "REPLACE_ME"
 
     if approach_id == "REPLACE_ME":
         logging.error(

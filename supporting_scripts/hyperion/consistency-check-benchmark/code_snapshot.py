@@ -3,7 +3,7 @@ import sys
 import zipfile
 from logging_config import logging
 
-from utils import CODE_SNAPSHOT_FILES, DATASET_VERSION
+from utils import CODE_SNAPSHOT_FILES
 from exercises import get_pecv_bench_dir
 
 
@@ -79,7 +79,7 @@ def create_code_snapshot(approach_results_dir: str, approach_id: str) -> str | N
     prompts_dir = get_hyperion_prompts_dir()
 
     if not os.path.isdir(hyperion_dir):
-        logging.error(f"Hyperion source directory not found: {hyperion_dir}")
+        logging.error(f"Step 13b failed: Hyperion source directory not found: {hyperion_dir}. Execute Step 13b in code_snapshot.py")
         return None
 
     os.makedirs(approach_results_dir, exist_ok=True)
@@ -131,7 +131,7 @@ if __name__ == "__main__":
     # Steps to recover:
     #   1. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
-    #   2. Rerun:            python code_snapshot.py
+    #   2. Execute Step 13b in code_snapshot.py
     pecv_bench_dir = get_pecv_bench_dir()
 
     # >>> UPDATE THIS to your results folder name before rerunning <<<

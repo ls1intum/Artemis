@@ -5,7 +5,7 @@ import os
 import sys
 from logging_config import logging
 
-from utils import DATASET_VERSION, PECV_BENCH_BRANCH
+from utils import PECV_BENCH_BRANCH
 from exercises import get_pecv_bench_dir
 
 
@@ -13,14 +13,15 @@ def check_gh_cli_installed() -> None:
     """
     Checks if the GitHub CLI (gh) is installed and authenticated.
 
-    :raises SystemExit: if gh is not installed or not authenticated
+    :raises SystemExit: if gh is not installed or not authenticated.
+    :rtype: None
     """
     if not shutil.which("gh"):
         logging.error(
-            "GitHub CLI (gh) is not installed.\n"
+            "Step 14 failed: GitHub CLI (gh) is not installed.\n"
             "  1. Install: brew install gh (macOS) or sudo apt install gh (Linux)\n"
             "  2. Authenticate: gh auth login\n"
-            "  3. Rerun: python merge_request.py"
+            "  3. Execute Step 14 in merge_request.py"
         )
         sys.exit(1)
 
@@ -33,9 +34,9 @@ def check_gh_cli_installed() -> None:
         )
     except subprocess.CalledProcessError:
         logging.error(
-            "GitHub CLI is not authenticated.\n"
+            "Step 14 failed: GitHub CLI is not authenticated.\n"
             "  1. Run: gh auth login\n"
-            "  2. Rerun: python merge_request.py"
+            "  2. Execute Step 14 in merge_request.py"
         )
         sys.exit(1)
 
@@ -55,15 +56,20 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
 
     Can be rerun standalone via: python merge_request.py
 
-    :param str pecv_bench_dir: The root directory of the pecv-bench repository
-    :param str approach_id: The approach identifier (used as branch name and results folder name)
+    :param str pecv_bench_dir: The root directory of the pecv-bench repository.
+    :param str approach_id: The approach identifier (used as branch name and results folder name).
+    :raises SystemExit: if results are missing, or if any git/gh CLI command fails.
+    :rtype: None
     """
     check_gh_cli_installed()
 
-    results_dir = os.path.join(pecv_bench_dir, "results", approach_id, DATASET_VERSION)
-    if not os.path.isdir(results_dir):
-        logging.error(f"Results directory not found: {results_dir}")
-        logging.error("Ensure the analysis has completed and results are generated before creating a PR.")
+    approach_results_dir_check = os.path.join(pecv_bench_dir, "results", approach_id)
+    if not os.path.isdir(approach_results_dir_check) or not any(
+        os.path.isdir(os.path.join(approach_results_dir_check, v))
+        for v in os.listdir(approach_results_dir_check)
+    ):
+        logging.error(f"Step 14 failed: No version results found for approach '{approach_id}' in: {approach_results_dir_check}")
+        logging.error("Ensure the analysis has completed and results are generated before creating a PR. Execute Step 14 in merge_request.py")
         sys.exit(1)
 
     branch_name = approach_id
@@ -271,11 +277,12 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
             logging.info(f"Pull request created: {result.stdout.strip()}")
 
     except subprocess.CalledProcessError as e:
-        logging.error(f"Failed to create pull request: {e}")
+        logging.error(f"Step 14 failed: Failed to create pull request: {e}")
         if e.stdout:
             logging.error(f"Stdout: {e.stdout}")
         if e.stderr:
             logging.error(f"Stderr: {e.stderr}")
+        logging.error(f"Install gh (brew install gh), authenticate (gh auth login), open merge_request.py, set approach_id = \"{approach_id}\", then execute Step 14 in merge_request.py")
         sys.exit(1)
 
 
@@ -286,8 +293,8 @@ if __name__ == "__main__":
     #   1. Install gh:       brew install gh
     #   2. Authenticate gh:  gh auth login
     #   3. Update approach_id below to match your results folder name.
-    #      Find it with:  ls pecv-bench/results/<DATASET_VERSION>/
-    #   4. Rerun:            python merge_request.py
+    #      Find it with:  ls pecv-bench/results/
+    #   4. Execute Step 14 in merge_request.py
     pecv_bench_dir = get_pecv_bench_dir()
 
     # >>> UPDATE THIS to your results folder name before rerunning <<<
