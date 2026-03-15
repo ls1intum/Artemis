@@ -36,15 +36,40 @@ export class ExerciseTeamsPage {
 
     /**
      * Searches for a user via an autocomplete input and selects the matching option.
-     * Retries up to 3 times to handle autocomplete timing issues (debounce, API latency).
+     * Retries up to 3 times to handle autocomplete timing issues.
+     *
+     * @param useFill - When true (tutor search), uses fill() to set the entire username
+     *   in a single input event. This is critical because the tutor typeahead's onSearch
+     *   uses switchMap WITHOUT debounce — every keystroke from pressSequentially cancels
+     *   the previous in-flight HTTP request. fill() dispatches one event, so only one
+     *   HTTP request goes through switchMap and runs to completion.
+     *   When false (student search), the typeahead uses debounceTime(200) which coalesces
+     *   keystrokes into a single HTTP request, so pressSequentially is safe.
      */
-    private async searchAndSelect(inputLocator: ReturnType<Page['locator']>, username: string, role: string) {
+    private async searchAndSelect(inputLocator: ReturnType<Page['locator']>, username: string, role: string, useFill: boolean) {
         const listbox = this.page.getByRole('listbox');
         for (let attempt = 0; attempt < 3; attempt++) {
-            await inputLocator.clear();
-            await inputLocator.fill(username);
+            if (attempt > 0) {
+                await this.page.waitForTimeout(500);
+            }
+
+            if (useFill) {
+                // fill() dispatches a SINGLE input event with the complete username.
+                // The tutor typeahead's switchMap sees one emission → one HTTP request
+                // that runs to completion. pressSequentially would fire N emissions
+                // (one per keystroke), each cancelling the previous HTTP via switchMap.
+                await inputLocator.fill(username);
+            } else {
+                // Student typeahead has debounceTime(200) which coalesces keystrokes
+                // into a single HTTP request after typing stops. Safe to type directly.
+                await inputLocator.click();
+                await inputLocator.fill('');
+                await this.page.waitForTimeout(300);
+                await inputLocator.pressSequentially(username, { delay: 100 });
+            }
+
             try {
-                await listbox.waitFor({ state: 'visible', timeout: 8000 });
+                await listbox.waitFor({ state: 'visible', timeout: 15000 });
                 const option = listbox.getByText(new RegExp(username, 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
                 await option.click();
@@ -60,7 +85,7 @@ export class ExerciseTeamsPage {
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        await this.searchAndSelect(this.page.locator('#owner-search-input'), username, 'Tutor');
+        await this.searchAndSelect(this.page.locator('#owner-search-input'), username, 'Tutor', true);
     }
 
     /**
@@ -68,7 +93,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        await this.searchAndSelect(this.page.locator('#student-search-input'), username, 'Student');
+        await this.searchAndSelect(this.page.locator('#student-search-input'), username, 'Student', false);
     }
 
     /**
