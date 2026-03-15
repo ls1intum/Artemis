@@ -65,11 +65,10 @@ env:
 
 jobs:
 
-  # H2 server tests are disabled while we stabilize the PostgreSQL-based server tests
-  # (see test-postgres.yml). Once PostgreSQL tests are fully stable, H2 tests will be
-  # permanently removed since PostgreSQL matches the production database engine.
+  # Server tests run against PostgreSQL via Testcontainers (Docker required on the runner).
+  # This matches the production database engine and catches SQL dialect issues that
+  # in-memory databases like H2 would miss.
   server-tests:
-    if: false # Disabled: PostgreSQL tests (test-postgres.yml) replace H2 tests
     runs-on: aet-large-ubuntu
     timeout-minutes: 80
 
@@ -104,18 +103,18 @@ jobs:
           TEST_MODULE_TAGS=$(echo "-DincludeModules=${CHANGED_MODULES[*]}")
 
           echo "Executing tests for modules: $CHANGED_MODULES"
-          ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification "$TEST_MODULE_TAGS" 2>&1 | tee tests.log
+          ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification "$TEST_MODULE_TAGS" -Dzonky.test.database.type=POSTGRES 2>&1 | tee tests.log
           exit 0
         fi
 
         echo "Executing all tests"
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification 2>&1 | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification -Dzonky.test.database.type=POSTGRES 2>&1 | tee tests.log
     - name: Java Tests (All)
       # Non-draft pull-request or default branch
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification 2>&1 | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification -Dzonky.test.database.type=POSTGRES 2>&1 | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v6
@@ -151,6 +150,23 @@ jobs:
           fi
           exit 1
         fi
+    - name: Diagnostic info
+      if: success() || failure()
+      run: |
+        echo "=== Docker containers ==="
+        docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+        echo ""
+        echo "=== Memory ==="
+        free -h || true
+        echo ""
+        echo "=== Disk usage ==="
+        df -h /tmp || true
+        echo ""
+        echo "=== PostgreSQL connection errors in test log ==="
+        grep -c "PSQLException\|SQLSTATE(08006)\|Connection.*broken\|I/O error occurred while sending" tests.log || echo "0 connection errors found"
+        echo ""
+        echo "=== Unique PostgreSQL errors ==="
+        grep "PSQLException\|SQLSTATE(08006)" tests.log | sort -u | head -10 || echo "No PostgreSQL errors"
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -168,7 +184,7 @@ jobs:
       uses: dorny/test-reporter@v2
       if: success() || failure()    # run this step even if previous step failed
       with:
-        name: H2 Tests
+        name: Server Tests (PostgreSQL)
         path: build/test-results/test/*.xml
         reporter: java-junit
     - name: Number of Server Starts
@@ -310,4 +326,3 @@ jobs:
       run: npm install
     - name: Compile TypeScript Files With Typechecking
       run: npm run compile
-

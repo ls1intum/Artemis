@@ -50,10 +50,11 @@ npm run prettier:write               # Fix formatting
 
 ### Testing
 ```bash
-# Server
-./gradlew test                                                    # All server tests
-./gradlew test --tests ExamIntegrationTest -x webapp              # Single test class
-./gradlew test --tests ExamIntegrationTest.testGetExamScore       # Single test method
+# Server (requires Docker for PostgreSQL Testcontainers)
+./gradlew testPostgres -x webapp                                  # All server tests (PostgreSQL, recommended)
+./gradlew test --tests ExamIntegrationTest -x webapp -Dzonky.test.database.type=POSTGRES  # Single test class
+./gradlew test --tests ExamIntegrationTest.testGetExamScore -Dzonky.test.database.type=POSTGRES  # Single test method
+./gradlew test -x webapp                                          # All server tests (H2 in-memory, no Docker)
 
 # Client (Vitest - preferred for new tests)
 npm run vitest                       # Watch mode
@@ -155,6 +156,7 @@ Organized by feature module:
 
 ## Testing Guidelines
 
+- **Server tests require Docker** — CI runs all server tests against PostgreSQL via Testcontainers. Run `./gradlew testPostgres -x webapp` locally to match CI behavior. H2 (`./gradlew test -x webapp`) is available for quick local iteration but may miss Postgres-specific issues.
 - Keep tests deterministic; mock external services and WebSockets
 - CI enforces coverage thresholds per module
 - Use `npm run test-diff` for incremental client work
@@ -163,6 +165,7 @@ Organized by feature module:
   - Use `vi.spyOn()`, `vi.fn()`, `vi.clearAllMocks()` instead of Jest equivalents
   - Run Vitest: `npm run vitest` (watch), `npm run vitest:run` (single run), `npm run vitest:coverage`
 - Name server tests `*Test.java`; reuse module base classes when present
+- When comparing `ZonedDateTime` values in tests, use `toInstant()` for comparisons since PostgreSQL stores timestamps as UTC (timezone offset is not preserved through database round-trips)
 - Add screenshots for UI changes in PRs
 - Verify linting before submitting: `npm run lint`, `./gradlew checkstyleMain -x webapp`
 
