@@ -6,16 +6,28 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateService } from '@ngx-translate/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { AgentChatService, CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from '../services/agent-chat.service';
-import { ChatMessage, ExerciseMappingPreview } from 'app/atlas/shared/entities/chat-message.model';
+import { AgentChatService } from '../services/agent-chat.service';
+import { CompetencyPreviewResponse, CompetencyRelationPreviewResponse } from 'app/atlas/shared/entities/chat-message.model';
+import {
+    ChatMessage,
+    CompetencyMappingViewModel,
+    ExerciseMappingPreview,
+    ExerciseMappingPreviewViewModel,
+    RelationGraphPreview,
+} from 'app/atlas/shared/entities/chat-message.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { Competency, CompetencyRelationDTO, CompetencyRelationType, CourseCompetency } from 'app/atlas/shared/entities/competency.model';
-import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 import { CourseCompetenciesRelationGraphComponent } from 'app/atlas/manage/course-competencies-relation-graph/course-competencies-relation-graph.component';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
 import { SelectModule } from 'primeng/select';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+
+interface WeightOption {
+    label: string;
+    value: number;
+}
 
 @Component({
     selector: 'jhi-agent-chat-modal',
@@ -47,7 +59,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     private readonly activeModal = inject(NgbActiveModal);
     private readonly agentChatService = inject(AgentChatService);
     private readonly translateService = inject(TranslateService);
-    private readonly exerciseMappingCheckboxStates = signal(new Map<string, Map<number, boolean>>());
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     courseId = signal<number>(0);
     messages = signal<ChatMessage[]>([]);
@@ -56,13 +68,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
     shouldScrollToBottom = signal(false);
     selectedRelationId = signal<number | undefined>(undefined);
 
-    get weightOptions() {
-        return [
-            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightLow'), value: 0.25 },
-            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightMedium'), value: 0.5 },
-            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightHigh'), value: 1.0 },
-        ];
-    }
+    weightOptions = computed(() => this.computeWeightOptions());
 
     // Event emitted when agent likely created/modified competencies
     competencyChanged = output<void>();
@@ -77,6 +83,15 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         const message = this.currentMessage().trim();
         return !!(message && !this.isAgentTyping() && !this.isMessageTooLong());
     });
+
+    private computeWeightOptions(): WeightOption[] {
+        this.currentLocale();
+        return [
+            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightLow'), value: 0.25 },
+            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightMedium'), value: 0.5 },
+            { label: this.translateService.instant('artemisApp.agent.chat.exerciseMapping.weightHigh'), value: 1.0 },
+        ];
+    }
 
     ngOnInit(): void {
         this.agentChatService.getConversationHistory(this.courseId()).subscribe({
@@ -151,7 +166,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
-    onKeyPress(event: Event): void {
+    protected onKeyPress(event: Event): void {
         const keyboardEvent = event as KeyboardEvent;
         if (keyboardEvent.key === 'Enter' && !keyboardEvent.shiftKey) {
             keyboardEvent.preventDefault();
@@ -159,7 +174,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         }
     }
 
-    onTextareaInput(): void {
+    protected onTextareaInput(): void {
         // Auto-resize textarea
         if (!this.messageInput()?.nativeElement) {
             return;
@@ -173,7 +188,7 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
      * Handles competency creation/update for both single and multiple competencies.
      * Sends approval through the agent pipeline so plan continuation is triggered correctly.
      */
-    onCreateCompetencies(message: ChatMessage): void {
+    protected onCreateCompetencies(message: ChatMessage): void {
         if (message.competencyCreated || !message.competencyPreviews || message.competencyPreviews.length === 0) {
             return;
         }
@@ -300,49 +315,6 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         });
     }
 
-    /**
-     * Gets the checkbox state for a specific competency in exercise mapping
-     */
-    protected getCompetencyCheckboxState(message: ChatMessage, competencyId: number): boolean {
-        const messageStates = this.exerciseMappingCheckboxStates().get(message.id);
-        return messageStates?.get(competencyId) ?? false;
-    }
-
-    /**
-     * Sets the checkbox state for a specific competency in exercise mapping
-     */
-    protected setCompetencyCheckboxState(message: ChatMessage, competencyId: number, checked: boolean): void {
-        const allStates = this.exerciseMappingCheckboxStates();
-        let messageStates = allStates.get(message.id);
-        if (!messageStates) {
-            messageStates = new Map<number, boolean>();
-        }
-        messageStates.set(competencyId, checked);
-        // Create a new outer Map to trigger signal change detection
-        this.exerciseMappingCheckboxStates.set(new Map(allStates).set(message.id, messageStates));
-    }
-
-    /**
-     * Gets the list of selected competencies with their weights for the message
-     */
-    protected getSelectedCompetencies(message: ChatMessage): Array<{ competencyId: number; weight: number }> {
-        if (!message.exerciseMappingPreview) {
-            return [];
-        }
-
-        const messageStates = this.exerciseMappingCheckboxStates().get(message.id);
-        if (!messageStates) {
-            return [];
-        }
-
-        return message.exerciseMappingPreview.competencies
-            .filter((comp) => messageStates.get(comp.competencyId) === true)
-            .map((comp) => ({
-                competencyId: comp.competencyId,
-                weight: comp.weight,
-            }));
-    }
-
     protected onApprovePlan(message: ChatMessage): void {
         if (message.planApproved) {
             return;
@@ -370,6 +342,22 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
                 setTimeout(() => this.messageInput()?.nativeElement?.focus(), this.INPUT_FOCUS_DELAY_MS);
             },
         });
+    }
+
+    /**
+     * Gets the list of selected competencies with their weights for the message.
+     */
+    private getSelectedCompetencies(message: ChatMessage): Array<{ competencyId: number; weight: number }> {
+        if (!message.exerciseMappingPreview) {
+            return [];
+        }
+
+        return message.exerciseMappingPreview.competencies
+            .filter((comp) => comp.selected())
+            .map((comp) => ({
+                competencyId: comp.competencyId,
+                weight: comp.weight,
+            }));
     }
 
     /**
@@ -424,17 +412,29 @@ export class AgentChatModalComponent implements OnInit, AfterViewInit, AfterView
         }
 
         if (exerciseMappingPreview) {
-            message.exerciseMappingPreview = exerciseMappingPreview;
-
-            // Initialize checkbox states: pre-check already-mapped and AI-suggested competencies
-            const checkboxStates = new Map<number, boolean>();
-            exerciseMappingPreview.competencies.forEach((comp) => {
-                checkboxStates.set(comp.competencyId, (comp.alreadyMapped ?? false) || (comp.suggested ?? false));
-            });
-            this.exerciseMappingCheckboxStates.update((allStates) => new Map(allStates).set(message.id, checkboxStates));
+            message.exerciseMappingPreview = this.toExerciseMappingPreviewViewModel(exerciseMappingPreview);
         }
 
         this.finalizeMessage(message, isUser);
+    }
+
+    /**
+     * Converts a raw {@link ExerciseMappingPreview} from the server into a
+     * {@link ExerciseMappingPreviewViewModel} where each competency carries a
+     * reactive `selected` signal pre-initialized based on `alreadyMapped` and `suggested` flags.
+     */
+    private toExerciseMappingPreviewViewModel(preview: ExerciseMappingPreview): ExerciseMappingPreviewViewModel {
+        return {
+            exerciseId: preview.exerciseId,
+            exerciseTitle: preview.exerciseTitle,
+            viewOnly: preview.viewOnly,
+            competencies: preview.competencies.map(
+                (comp): CompetencyMappingViewModel => ({
+                    ...comp,
+                    selected: signal((comp.alreadyMapped ?? false) || (comp.suggested ?? false)),
+                }),
+            ),
+        };
     }
 
     /**

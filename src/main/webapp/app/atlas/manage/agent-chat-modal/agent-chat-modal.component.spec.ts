@@ -8,11 +8,11 @@ import { AgentChatResponse, AgentChatService, AgentHistoryMessage } from '../ser
 import { CompetencyService } from 'app/atlas/manage/services/competency.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChatMessage } from 'app/atlas/shared/entities/chat-message.model';
+import { ChatMessage, CompetencyMappingViewModel, ExerciseMappingPreviewViewModel } from 'app/atlas/shared/entities/chat-message.model';
 import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { throwError } from 'rxjs';
-import { ElementRef } from '@angular/core';
+import { ElementRef, signal } from '@angular/core';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -2250,32 +2250,37 @@ describe('AgentChatModalComponent', () => {
 
     describe('exercise mapping checkbox state', () => {
         let msg: ChatMessage;
+        let comp1Selected: ReturnType<typeof signal<boolean>>;
+        let comp2Selected: ReturnType<typeof signal<boolean>>;
 
         beforeEach(() => {
+            comp1Selected = signal(false);
+            comp2Selected = signal(false);
+            const preview: ExerciseMappingPreviewViewModel = {
+                exerciseId: 10,
+                exerciseTitle: 'Test Exercise',
+                competencies: [
+                    { competencyId: 1, competencyTitle: 'C1', weight: 0.5, selected: comp1Selected },
+                    { competencyId: 2, competencyTitle: 'C2', weight: 1.0, selected: comp2Selected },
+                ],
+            };
             msg = {
                 id: 'msg-box-1',
                 content: 'Exercise mapping',
                 isUser: false,
                 timestamp: new Date(),
-                exerciseMappingPreview: {
-                    exerciseId: 10,
-                    exerciseTitle: 'Test Exercise',
-                    competencies: [
-                        { competencyId: 1, competencyTitle: 'C1', weight: 0.5 },
-                        { competencyId: 2, competencyTitle: 'C2', weight: 1.0 },
-                    ],
-                },
+                exerciseMappingPreview: preview,
             };
         });
 
-        it('defaults to false, set/get round-trips correctly', () => {
-            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeFalsy();
-            component['setCompetencyCheckboxState'](msg, 1, true);
-            expect(component['getCompetencyCheckboxState'](msg, 1)).toBeTruthy();
+        it('defaults to false, toggling signal updates selection', () => {
+            expect(comp1Selected()).toBeFalsy();
+            comp1Selected.set(true);
+            expect(comp1Selected()).toBeTruthy();
         });
 
         it('getSelectedCompetencies returns only checked entries with weights', () => {
-            component['setCompetencyCheckboxState'](msg, 1, true);
+            comp1Selected.set(true);
             const selected = component['getSelectedCompetencies'](msg);
             expect(selected).toEqual([{ competencyId: 1, weight: 0.5 }]);
         });
@@ -2304,16 +2309,19 @@ describe('AgentChatModalComponent', () => {
             component['sendMessage']();
 
             const agentMsg = component.messages().find((m) => m.exerciseMappingPreview !== undefined)!;
-            expect(component['getCompetencyCheckboxState'](agentMsg, 10)).toBeTruthy();
-            expect(component['getCompetencyCheckboxState'](agentMsg, 20)).toBeTruthy();
-            expect(component['getCompetencyCheckboxState'](agentMsg, 30)).toBeFalsy();
+            const comps = agentMsg.exerciseMappingPreview!.competencies as CompetencyMappingViewModel[];
+            expect(comps.find((c) => c.competencyId === 10)!.selected()).toBeTruthy();
+            expect(comps.find((c) => c.competencyId === 20)!.selected()).toBeTruthy();
+            expect(comps.find((c) => c.competencyId === 30)!.selected()).toBeFalsy();
         });
     });
 
     describe('onApproveExerciseMapping', () => {
         let exerciseMsg: ChatMessage;
+        let comp1Selected: ReturnType<typeof signal<boolean>>;
 
         beforeEach(() => {
+            comp1Selected = signal(false);
             exerciseMsg = {
                 id: 'ex-1',
                 content: 'preview',
@@ -2322,7 +2330,7 @@ describe('AgentChatModalComponent', () => {
                 exerciseMappingPreview: {
                     exerciseId: 42,
                     exerciseTitle: 'Algo',
-                    competencies: [{ competencyId: 1, competencyTitle: 'C1', weight: 0.5 }],
+                    competencies: [{ competencyId: 1, competencyTitle: 'C1', weight: 0.5, selected: comp1Selected }],
                 },
             };
             component.messages.set([exerciseMsg]);
@@ -2343,12 +2351,13 @@ describe('AgentChatModalComponent', () => {
             expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
 
             exerciseMsg.exerciseMappingCreated = false;
+            // comp1Selected is false — no selection
             component['onApproveExerciseMapping'](exerciseMsg);
             expect(mockAgentChatService.sendMessage).not.toHaveBeenCalled();
         });
 
         it('sends correct payload, marks created, and emits competencyChanged on success', async () => {
-            component['setCompetencyCheckboxState'](exerciseMsg, 1, true);
+            comp1Selected.set(true);
             mockAgentChatService.sendMessage.mockReturnValue(
                 of({ message: 'done', sessionId: 's', timestamp: '', success: true, competenciesModified: false } as AgentChatResponse),
             );
@@ -2364,7 +2373,7 @@ describe('AgentChatModalComponent', () => {
         });
 
         it('shows error message on failure', async () => {
-            component['setCompetencyCheckboxState'](exerciseMsg, 1, true);
+            comp1Selected.set(true);
             mockAgentChatService.sendMessage.mockReturnValue(throwError(() => new Error('fail')));
 
             component['onApproveExerciseMapping'](exerciseMsg);

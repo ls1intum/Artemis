@@ -129,8 +129,8 @@
                             </div>
                         }
                         @if (message.exerciseMappingPreview) {
-                            <div class="exercise-mapping-preview-container mt-2 border rounded p-3">
-                                <div class="mb-3">
+                            <div class="mt-2 border rounded p-3 d-flex flex-column gap-3">
+                                <div>
                                     <strong>{{ message.exerciseMappingPreview.exerciseTitle }}</strong>
                                     @if (!message.exerciseMappingPreview.viewOnly) {
                                         <small class="text-secondary d-block" jhiTranslate="artemisApp.agent.chat.exerciseMapping.selectHint"></small>
@@ -139,45 +139,37 @@
                                     }
                                 </div>
 
-                                <div class="competency-selection-list">
+                                <div>
                                     @for (competency of message.exerciseMappingPreview.competencies; track competency.competencyId) {
-                                        <div class="competency-item mb-2 p-2 border rounded">
-                                            <div class="d-flex align-items-center">
-                                                <div class="d-flex align-items-center flex-grow-1 gap-2">
-                                                    @if (!message.exerciseMappingPreview.viewOnly) {
-                                                        <p-checkbox
-                                                            [inputId]="'competency-' + message.id + '-' + competency.competencyId"
-                                                            [ngModel]="getCompetencyCheckboxState(message, competency.competencyId)"
-                                                            (ngModelChange)="setCompetencyCheckboxState(message, competency.competencyId, $event)"
-                                                            [binary]="true"
-                                                        />
-                                                    }
-                                                    <label [for]="'competency-' + message.id + '-' + competency.competencyId">
-                                                        {{ competency.competencyTitle }}
-                                                        @if (competency.alreadyMapped) {
-                                                            <span class="badge bg-primary ms-2">
-                                                                <small jhiTranslate="artemisApp.agent.chat.exerciseMapping.existing"></small>
-                                                            </span>
-                                                        }
-                                                        @if (competency.suggested && !competency.alreadyMapped) {
-                                                            <span class="badge bg-success ms-2">
-                                                                <small jhiTranslate="artemisApp.agent.chat.exerciseMapping.aiSuggested"></small>
-                                                            </span>
-                                                        }
-                                                    </label>
-                                                </div>
-
-                                                <div class="ms-3">
-                                                    <p-select
-                                                        [(ngModel)]="competency.weight"
-                                                        [options]="weightOptions"
-                                                        optionLabel="label"
-                                                        optionValue="value"
-                                                        [disabled]="message.exerciseMappingPreview.viewOnly || !getCompetencyCheckboxState(message, competency.competencyId)"
-                                                        styleClass="weight-select-sm"
-                                                    />
-                                                </div>
-                                            </div>
+                                        <div class="mb-2 p-2 border rounded d-flex align-items-center flex-grow-1 gap-2">
+                                            @if (!message.exerciseMappingPreview.viewOnly) {
+                                                <p-checkbox
+                                                    [inputId]="'competency-' + message.id + '-' + competency.competencyId"
+                                                    [(ngModel)]="competency.selected"
+                                                    [binary]="true"
+                                                />
+                                            }
+                                            <label [for]="'competency-' + message.id + '-' + competency.competencyId">
+                                                {{ competency.competencyTitle }}
+                                                @if (competency.alreadyMapped) {
+                                                    <span class="badge bg-primary ms-2">
+                                                        <small jhiTranslate="artemisApp.agent.chat.exerciseMapping.existing"></small>
+                                                    </span>
+                                                }
+                                                @if (competency.suggested && !competency.alreadyMapped) {
+                                                    <span class="badge bg-success ms-2">
+                                                        <small jhiTranslate="artemisApp.agent.chat.exerciseMapping.aiSuggested"></small>
+                                                    </span>
+                                                }
+                                            </label>
+                                            <p-select
+                                                [(ngModel)]="competency.weight"
+                                                [options]="weightOptions()"
+                                                optionLabel="label"
+                                                optionValue="value"
+                                                [disabled]="message.exerciseMappingPreview.viewOnly || !competency.selected()"
+                                                styleClass="weight-select-sm"
+                                            />
                                         </div>
                                     }
                                 </div>
@@ -187,7 +179,7 @@
                                         pButton
                                         type="button"
                                         size="small"
-                                        class="mt-3"
+                                        class="align-self-start"
                                         [severity]="message.exerciseMappingCreated ? 'success' : 'primary'"
                                         (click)="onApproveExerciseMapping(message)"
                                         [disabled]="isAgentTyping() || message.exerciseMappingCreated"
