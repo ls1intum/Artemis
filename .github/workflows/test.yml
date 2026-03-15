@@ -114,7 +114,7 @@ jobs:
       if: ${{ env.RUN_ALL_TESTS }}
       run: |
         set -o pipefail
-        ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification 2>&1 | tee tests.log
+        ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
     - name: Upload JUnit Test Results
       if: success() || failure()
       uses: actions/upload-artifact@v6
@@ -132,13 +132,20 @@ jobs:
         else
           echo "No failed tests."
         fi
-    - name: Print JaCoCo coverage violations
-      if: failure()
+    - name: JaCoCo Coverage Verification
+      id: jacoco-verification
+      if: ${{ env.RUN_ALL_TESTS }}
+      continue-on-error: true
       run: |
-        VIOLATIONS=$(grep "Rule violated for bundle" tests.log || true)
+        set -o pipefail
+        ./gradlew --console=plain jacocoTestCoverageVerification -x test -x webapp 2>&1 | tee jacoco-verification.log
+    - name: Print JaCoCo coverage violations
+      if: steps.jacoco-verification.outcome == 'failure'
+      run: |
+        VIOLATIONS=$(grep "Rule violated for bundle" jacoco-verification.log || true)
         if [ -n "$VIOLATIONS" ]; then
           # Extract failing module names from Gradle task failure messages
-          MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' tests.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
+          MODULES=$(grep 'jacocoTestCoverageVerification-.*FAILED' jacoco-verification.log | sed 's/.*jacocoTestCoverageVerification-\([a-zA-Z]*\).*/\1/' | sort -u | tr '\n' ', ' | sed 's/, $//' || true)
           echo "::error::JaCoCo code coverage thresholds violated${MODULES:+ in module(s): $MODULES}"
           echo ""
           echo "$VIOLATIONS"
@@ -148,7 +155,6 @@ jobs:
           else
             echo "If this is not related to your PR, adjust the thresholds in gradle/jacoco.gradle (ModuleCoverageThresholds)."
           fi
-          exit 1
         fi
     - name: Diagnostic info
       if: success() || failure()

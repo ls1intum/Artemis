@@ -54,7 +54,6 @@ npm run prettier:write               # Fix formatting
 ./gradlew test -x webapp                                          # All server tests (PostgreSQL)
 ./gradlew test --tests ExamIntegrationTest -x webapp              # Single test class
 ./gradlew test --tests ExamIntegrationTest.testGetExamScore       # Single test method
-./gradlew test -x webapp -Dzonky.test.database.type=H2           # All server tests (H2 in-memory, no Docker)
 
 # Client (Vitest - preferred for new tests)
 npm run vitest                       # Watch mode
@@ -156,7 +155,7 @@ Organized by feature module:
 
 ## Testing Guidelines
 
-- **Server tests require Docker** — tests run against PostgreSQL via Testcontainers by default (both locally and in CI). Use `-Dzonky.test.database.type=H2` for quick local iteration without Docker, but note that H2 may miss Postgres-specific issues.
+- **Server tests require Docker** — tests run against PostgreSQL via Testcontainers by default (both locally and in CI).
 - Keep tests deterministic; mock external services and WebSockets
 - CI enforces coverage thresholds per module
 - Use `npm run test-diff` for incremental client work
