@@ -293,9 +293,7 @@ def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]
     return transformed_dict
 
 if __name__ == "__main__":
-    # Steps 5–6 (session/login) and 8 (course ID) are active. Step 7 (create course)
-    # and Step 11 (exercise IDs — uncomment only AFTER exercises are imported via Step 10) are commented.
-    # Run: python course.py
+    # This file can be executed independently
 
     logging.info("Step 5: Creating session")
     session = requests.Session()

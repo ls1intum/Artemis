@@ -684,40 +684,40 @@ def import_exercise_variants(session: requests.Session) -> None:
 
 
 if __name__ == "__main__":
-    # This file can be rerun standalone after run_pecv_bench.py fails on setup steps.
-    #
-    # Steps 1–3 are active. Step 4 (variant creation), Steps 5–6 (session/login),
-    # and 9–10 (zip/import) are commented — uncomment the steps you need and run: python exercises.py
-
-    # logging.info("Step 1: Getting PECV-Bench directories from config")
-    # pecv_bench_dir = get_pecv_bench_dir()
-    # pecv_bench_dataset_dir = get_pecv_bench_dataset_dir()
-
-    # logging.info("Step 2: Cloning pecv-bench and pecv-bench-dataset repositories")
-    # clone_pecv_bench(pecv_bench_dir)
-    # clone_pecv_bench_dataset(pecv_bench_dataset_dir)
-
-    # logging.info("Step 3: Installing pecv-bench dependencies")
-    # install_pecv_bench_dependencies(pecv_bench_dir)
-
-    # logging.info("Step 4: Creating exercise variants")
-    # create_pecv_bench_version_variants()
+    # This file can be executed independently
+    # PART 1 -> COURSE.PY -> PART 2
 
 
+    # ======= PART 1 ================
 
-    # NOTE: Steps 9–10 require a session — always uncomment Steps 5–6 and 8 together with them.
-    logging.info("Step 5: Creating session")
-    session = requests.Session()
+    logging.info("Step 1: Getting PECV-Bench directories from config")
+    pecv_bench_dir = get_pecv_bench_dir()
+    pecv_bench_dataset_dir = get_pecv_bench_dataset_dir()
 
-    logging.info("Step 6: Logging in as admin")
-    login_as_admin(session=session)
+    logging.info("Step 2: Cloning pecv-bench and pecv-bench-dataset repositories")
+    clone_pecv_bench(pecv_bench_dir)
+    clone_pecv_bench_dataset(pecv_bench_dataset_dir)
 
-    logging.info("Step 8: Retrieving Hyperion Benchmark Course ID")
-    course_id = get_course_id_request(session=session)
+    logging.info("Step 3: Installing pecv-bench dependencies")
+    install_pecv_bench_dependencies(pecv_bench_dir)
 
-    logging.info("Step 9: Converting variants to zip files")
-    convert_version_varianzs_to_zip(course_id=course_id)
+    logging.info("Step 4: Creating exercise variants")
+    create_pecv_bench_version_variants()
 
-    logging.info("Step 10: Importing exercise variants")
-    import_exercise_variants(session=session)
+
+    # ======= PART 2 ================
+    # NOTE: Steps 9–10 require a session and course id — always use Steps 5–6 and 8 together with them.
+
+    # logging.info("Step 5: Creating session")
+    # session = requests.Session()
+    # logging.info("Step 6: Logging in as admin")
+    # login_as_admin(session=session)
+    # logging.info("Step 8: Retrieving Hyperion Benchmark Course ID")
+    # course_id = get_course_id_request(session=session)
+
+    # logging.info("Step 9: Converting variants to zip files")
+    # convert_version_varianzs_to_zip(course_id=course_id)
+
+    # logging.info("Step 10: Importing exercise variants")
+    # import_exercise_variants(session=session)
 

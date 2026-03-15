@@ -126,11 +126,12 @@ def create_code_snapshot(approach_results_dir: str, approach_id: str) -> str | N
 
 
 if __name__ == "__main__":
-    # This file can be rerun standalone to create a code snapshot ZIP without regenerating reports.
+    # This file can be executed independently and after run_pecv_bench.py if it fails on snapshot ZIP step. Step 13b
     #
     # Steps to recover:
     #   1. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
+    #      or from terminal output
     #   2. Execute Step 13b in code_snapshot.py
     logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()

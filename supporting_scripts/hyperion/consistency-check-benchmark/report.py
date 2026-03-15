@@ -103,12 +103,13 @@ def summarize_report(report_md_path: str, summary_md_path: str, version: str) ->
 
 
 if __name__ == "__main__":
-    # This file can be rerun standalone after run_pecv_bench.py fails on the report step.
+    # This file can be executed independently and after run_pecv_bench.py if it fails on the report step. Step 13
     #
     # Steps to recover:
     #   1. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
-    #   2. Execute Step 13 in report.py
+    #      or from terminal output
+    #   2. Execute Step 13: python3 report.py
     logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()
     logging.info("Step 3: installing pecv-bench dependencies")

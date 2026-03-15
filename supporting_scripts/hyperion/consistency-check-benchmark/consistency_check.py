@@ -264,15 +264,13 @@ def consistency_check_request(session: requests.Session, server_url: str, exerci
         return None
 
 if __name__ == "__main__":
-    # Steps 5–6 (session/login), 8 (course ID), 11 (exercise IDs), and 12 (consistency check) are active.
-    # Run: python consistency_check.py
+    # This file can be executed independently
+    # NOTE: Steps 11–12 require a session and course id — always use Steps 5–6 and 8 together with them.
 
     logging.info("Step 5: Creating session")
     session = requests.Session()
-
     logging.info("Step 6: Logging in as admin")
     login_as_admin(session=session)
-
     logging.info("Step 8: Retrieving Hyperion Benchmark Course ID")
     course_id = get_course_id_request(session=session)
 
@@ -281,5 +279,6 @@ if __name__ == "__main__":
 
     logging.info("Step 12: Running consistency checks for all programming exercises")
     approach_id = consistency_check(session=session, exercise_ids=exercise_ids)
+
     logging.info(f"Approach ID: {approach_id}")
     logging.info(f"Set approach_id = \"{approach_id}\" in report.py, code_snapshot.py, and merge_request.py before running them.")

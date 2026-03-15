@@ -14,6 +14,7 @@ if __name__ == "__main__":
     logging.info("Running pecv-bench scripts.")
 
     # ======= EXERCISES.PY ==========
+    # ======= PART 1 ================
     logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()
     pecv_bench_dataset_dir = get_pecv_bench_dataset_dir()
@@ -44,6 +45,7 @@ if __name__ == "__main__":
 
 
     # ======= EXERCISES.PY ==========
+    # ======= PART 2 ================
     logging.info("Step 9: Converting variants to zip files")
     convert_version_varianzs_to_zip(course_id=course_id)
 
@@ -73,3 +75,5 @@ if __name__ == "__main__":
     # ======= MERGE_REQUEST.PY ==========
     logging.info("Step 14: Creating pull request with results in pecv-bench")
     create_results_pull_request(pecv_bench_dir, approach_id)
+
+    logging.info("All steps completed successfully! Please check the generated report and code snapshot in pecv-bench, and the created pull request for the results.")

@@ -287,13 +287,13 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
 
 
 if __name__ == "__main__":
-    # This file can be rerun standalone after run_pecv_bench.py fails on the PR step.
-    #
+    # This file can be executed independently and after run_pecv_bench.py if it fails on the PR step. Step 14
     # Steps to recover:
     #   1. Install gh:       brew install gh
     #   2. Authenticate gh:  gh auth login
     #   3. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
+    #      or from terminal output
     #   4. Execute Step 14 in merge_request.py
     logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()
