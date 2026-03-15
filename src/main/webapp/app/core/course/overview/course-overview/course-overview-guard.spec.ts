@@ -197,7 +197,7 @@ describe('CourseOverviewGuard', () => {
         it('should redirect to iris when dashboard is denied but iris is enabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = false;
             mockCourse.irisEnabledInCourse = true;
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
             guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
         });
@@ -205,7 +205,7 @@ describe('CourseOverviewGuard', () => {
         it('should redirect to exercises when dashboard is denied and iris is not enabled', () => {
             mockCourse.studentCourseAnalyticsDashboardEnabled = false;
             mockCourse.irisEnabledInCourse = false;
-            const navigateSpy = jest.spyOn(router, 'navigate');
+            const navigateSpy = vi.spyOn(router, 'navigate');
             guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
             expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
