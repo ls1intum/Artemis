@@ -365,6 +365,168 @@ describe('System Notification Component', () => {
         });
     });
 
+    describe('close() edge cases', () => {
+        it('should not modify closedIds when notification has no ID', () => {
+            vi.useFakeTimers();
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            const storeSpy = vi.spyOn(localStorageService, 'store');
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            // Create a notification without an ID
+            const notificationWithoutId = { ...notifications[0], id: undefined } as SystemNotification;
+            systemNotificationComponent.close(notificationWithoutId);
+
+            // closedIds should remain unchanged, localStorage should NOT be written
+            expect(systemNotificationComponent.closedIds).toEqual([]);
+            expect(storeSpy).not.toHaveBeenCalled();
+            // Original notification should still be displayed
+            expect(systemNotificationComponent.notificationsToDisplay).toEqual([notifications[0]]);
+            vi.useRealTimers();
+        });
+
+        it('should not add duplicate IDs when close is called twice for the same notification', () => {
+            vi.useFakeTimers();
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            systemNotificationComponent.close(notifications[0]);
+            expect(systemNotificationComponent.closedIds).toEqual([1]);
+
+            // Close the same notification again
+            systemNotificationComponent.close(notifications[0]);
+            expect(systemNotificationComponent.closedIds).toEqual([1]);
+            expect(localStorageService.retrieve(CLOSED_NOTIFICATION_IDS_STORAGE_KEY)).toEqual([1]);
+            vi.useRealTimers();
+        });
+    });
+
+    describe('pruneClosedIds optimization', () => {
+        it('should not write to localStorage when no IDs were pruned', () => {
+            vi.useFakeTimers();
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
+            const wsSubject = new Subject<SystemNotification[]>();
+
+            // Pre-store a closed ID that will remain valid after websocket update
+            localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1]);
+
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(wsSubject);
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            // Spy on store AFTER init, then clear any calls from init
+            const storeSpy = vi.spyOn(localStorageService, 'store');
+            storeSpy.mockClear();
+
+            // Websocket sends notifications that still include ID 1 — nothing should be pruned
+            wsSubject.next([createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)]);
+
+            // closedIds should still contain 1, and store should NOT have been called by pruneClosedIds
+            expect(systemNotificationComponent.closedIds).toEqual([1]);
+            expect(storeSpy).not.toHaveBeenCalled();
+            vi.useRealTimers();
+        });
+
+        it('should write to localStorage when IDs are actually pruned', () => {
+            vi.useFakeTimers();
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createActiveNotification(SystemNotificationType.INFO, 2)];
+            const wsSubject = new Subject<SystemNotification[]>();
+
+            // Pre-store closed IDs including one that will become stale
+            localStorageService.store(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [1, 2]);
+
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(wsSubject);
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            const storeSpy = vi.spyOn(localStorageService, 'store');
+            storeSpy.mockClear();
+
+            // Websocket sends notifications without ID 1 — ID 1 should be pruned
+            wsSubject.next([createActiveNotification(SystemNotificationType.INFO, 2), createActiveNotification(SystemNotificationType.WARNING, 3)]);
+
+            expect(systemNotificationComponent.closedIds).toEqual([2]);
+            expect(storeSpy).toHaveBeenCalledWith(CLOSED_NOTIFICATION_IDS_STORAGE_KEY, [2]);
+            vi.useRealTimers();
+        });
+    });
+
+    describe('ngOnDestroy cleanup', () => {
+        it('should clear scheduled timeout on destroy', () => {
+            vi.useFakeTimers();
+            // Use notifications where one will become active in the future, causing a scheduled timeout
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1), createInactiveNotification(SystemNotificationType.INFO, 2)];
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            // A timeout should be scheduled for when notification 2 becomes active
+            expect(systemNotificationComponent.nextUpdateFuture).toBeDefined();
+
+            const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+            systemNotificationComponent.ngOnDestroy();
+
+            expect(clearTimeoutSpy).toHaveBeenCalled();
+            vi.useRealTimers();
+        });
+
+        it('should unsubscribe all subscriptions on destroy', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+            vi.spyOn(websocketService, 'subscribe').mockReturnValue(of([]));
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            // Verify subscriptions exist
+            const wsStatusSub = systemNotificationComponent.websocketStatusSubscription;
+            const sysNotifSub = systemNotificationComponent.systemNotificationSubscription;
+
+            const wsStatusUnsubSpy = wsStatusSub ? vi.spyOn(wsStatusSub, 'unsubscribe') : undefined;
+            const sysNotifUnsubSpy = sysNotifSub ? vi.spyOn(sysNotifSub, 'unsubscribe') : undefined;
+
+            systemNotificationComponent.ngOnDestroy();
+
+            if (wsStatusUnsubSpy) {
+                expect(wsStatusUnsubSpy).toHaveBeenCalledOnce();
+            }
+            if (sysNotifUnsubSpy) {
+                expect(sysNotifUnsubSpy).toHaveBeenCalledOnce();
+            }
+            vi.useRealTimers();
+        });
+
+        it('should reset CSS variable and handle no scheduled timeout gracefully', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+
+            const renderer = systemNotificationComponentFixture.debugElement.injector.get(Renderer2);
+            const setStyleSpy = vi.spyOn(renderer, 'setStyle');
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            // With no notifications, there should be no scheduled timeout
+            expect(systemNotificationComponent.nextUpdateFuture).toBeUndefined();
+
+            // Destroy should not throw even without a scheduled timeout
+            systemNotificationComponent.ngOnDestroy();
+
+            expect(setStyleSpy).toHaveBeenCalledWith(document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase);
+            vi.useRealTimers();
+        });
+    });
+
     describe('DOM rendering', () => {
         it('should render notification elements for active notifications', () => {
             vi.useFakeTimers();
