@@ -40,6 +40,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     systemNotificationSubscription?: Subscription;
 
     nextUpdateFuture?: ReturnType<typeof setTimeout>;
+    private websocketDelayTimeout?: ReturnType<typeof setTimeout>;
     private lastNotificationHeight = 0;
 
     // Icons
@@ -54,7 +55,8 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         this.loadActiveNotification();
         this.authSubscription = this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
-                setTimeout(() => {
+                clearTimeout(this.websocketDelayTimeout);
+                this.websocketDelayTimeout = setTimeout(() => {
                     this.websocketStatusSubscription?.unsubscribe();
                     this.websocketStatusSubscription = this.websocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
                 }, 500);
@@ -72,6 +74,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         if (this.nextUpdateFuture) {
             clearTimeout(this.nextUpdateFuture);
         }
+        clearTimeout(this.websocketDelayTimeout);
         this.authSubscription?.unsubscribe();
         this.websocketStatusSubscription?.unsubscribe();
         this.systemNotificationSubscription?.unsubscribe();
@@ -108,7 +111,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
     private selectVisibleNotificationsAndScheduleUpdate() {
         const now = dayjs();
         this.notificationsToDisplay = this.notifications
-            .filter((notification) => !this.closedIds.includes(notification.id!))
+            .filter((notification) => notification.id == undefined || !this.closedIds.includes(notification.id))
             .filter((notification) => notification.notificationDate?.isSameOrBefore(now) && (notification.expireDate?.isAfter(now) ?? true));
 
         if (this.nextUpdateFuture) {
