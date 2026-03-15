@@ -1,4 +1,4 @@
-import { Component, effect, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { IconDefinition, faClipboard, faGraduationCap, faListAlt, faPersonChalkboard, faQuestion, faSchool, faUser } from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -26,40 +26,38 @@ export class UserManagementDropdownComponent {
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faQuestion = faQuestion;
     protected readonly faUser = faUser;
-    courseId = input<number | undefined>();
-    userAddActions: UserAddAction[] = [];
+    readonly courseId = input<number | undefined>();
 
-    constructor() {
-        effect(() => {
-            if (!this.courseId()) {
-                return;
-            }
-            this.userAddActions = [
-                {
-                    icon: faSchool,
-                    routerLink: [`/course-management/${this.courseId()}/groups/students`],
-                    label: 'entity.action.addStudent',
-                    id: 'add-student',
-                },
-                {
-                    icon: faPersonChalkboard,
-                    routerLink: [`/course-management/${this.courseId()}/groups/tutors`],
-                    label: 'entity.action.addTutor',
-                    id: 'add-tutor',
-                },
-                {
-                    icon: faListAlt,
-                    routerLink: [`/course-management/${this.courseId()}/groups/editors`],
-                    label: 'entity.action.addEditor',
-                    id: 'add-editor',
-                },
-                {
-                    icon: faGraduationCap,
-                    routerLink: [`/course-management/${this.courseId()}/groups/instructors`],
-                    label: 'entity.action.addInstructor',
-                    id: 'add-instructor',
-                },
-            ];
-        });
-    }
+    readonly userAddActions = computed<UserAddAction[]>(() => {
+        const id = this.courseId();
+        if (!id) {
+            return [];
+        }
+        return [
+            {
+                icon: faSchool,
+                routerLink: [`/course-management/${id}/groups/students`],
+                label: 'entity.action.addStudent',
+                id: 'add-student',
+            },
+            {
+                icon: faPersonChalkboard,
+                routerLink: [`/course-management/${id}/groups/tutors`],
+                label: 'entity.action.addTutor',
+                id: 'add-tutor',
+            },
+            {
+                icon: faListAlt,
+                routerLink: [`/course-management/${id}/groups/editors`],
+                label: 'entity.action.addEditor',
+                id: 'add-editor',
+            },
+            {
+                icon: faGraduationCap,
+                routerLink: [`/course-management/${id}/groups/instructors`],
+                label: 'entity.action.addInstructor',
+                id: 'add-instructor',
+            },
+        ];
+    });
 }

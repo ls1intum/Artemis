@@ -1,27 +1,26 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 
-import javaBuildErrorSubmission from '../../../fixtures/exercise/programming/java/build_error/submission.json';
-import { Exercise, ExerciseType } from '../../../support/constants';
+import cBuildErrorSubmission from '../../../fixtures/exercise/programming/c/build_error/submission.json';
+import { Exercise, ExerciseType, ProgrammingLanguage } from '../../../support/constants';
 import { admin, instructor } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
 
 // Common primitives
 const textFixture = 'loremIpsum.txt';
 const examTitle = 'exam' + generateUUID();
 
+const course = { id: SEED_COURSES.testExam.id } as any;
+
 test.describe('Test exam test run', { tag: '@slow' }, () => {
-    let course: Course;
     let exam: Exam;
     let exerciseArray: Array<Exercise> = [];
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, examAPIRequests, examExerciseGroupCreation }) => {
+    test.beforeEach('Create exam', async ({ login, examAPIRequests, examExerciseGroupCreation }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
         const examConfig = {
             course,
             title: examTitle,
@@ -30,14 +29,17 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
             numberOfExercisesInExam: 4,
         };
         exam = await examAPIRequests.createExam(examConfig);
-        Promise.all([
+        exerciseArray = [
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture }),
-            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission: javaBuildErrorSubmission, practiceMode: true }),
+            await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
+                submission: cBuildErrorSubmission,
+                practiceMode: true,
+                skipBuildResultCheck: true,
+                programmingLanguage: ProgrammingLanguage.C,
+            }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 }),
             await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING),
-        ]).then((responses) => {
-            exerciseArray = responses;
-        });
+        ];
     });
 
     test('Creates a test run', async ({ login, page, examManagement, examTestRun }) => {
@@ -104,7 +106,7 @@ test.describe('Test exam test run', { tag: '@slow' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
     });
 });
