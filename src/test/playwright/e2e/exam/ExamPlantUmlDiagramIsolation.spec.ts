@@ -118,19 +118,27 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         await examParticipation.startParticipation(studentTwo, course, exam);
 
         // Navigate to each exercise to trigger rendering.
-        // In exam mode, all exercises stay in the DOM (hidden), so visiting each one
+        // In exam mode, all exercises stay in the DOM (hidden via [hidden]), so visiting each one
         // ensures the component initializes and fires its PlantUML render cycle.
+        //
+        // CRITICAL: Wait for each exercise's PlantUML container to appear before navigating
+        // to the next exercise. The PlantUML containers are created during component
+        // initialization (updateMarkdown → renderMarkdown). If we navigate too quickly,
+        // Angular may not have time to create and initialize the component before the next
+        // navigation triggers, leaving some exercises without rendered containers.
         await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
-        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
-        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0`)).toBeAttached({ timeout: 30000 });
 
-        // Give time for all async PlantUML SVG HTTP requests to complete.
-        // The server renders PlantUML source to SVG; this is an async operation per diagram.
-        // With 4 diagrams total (1+1+2) and server-side rendering, allow generous timeout.
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await expect(page.locator(`#plantUml-${exerciseB.id}-0`)).toBeAttached({ timeout: 30000 });
+
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+        await expect(page.locator(`#plantUml-${exerciseC.id}-0`)).toBeAttached({ timeout: 30000 });
+
+        // All containers are now in the DOM. Verify content and cross-contamination.
 
         // --- Exercise A: 1 diagram with ClassAlpha ---
         const containerA = page.locator(`#plantUml-${exerciseA.id}-0`);
-        await expect(containerA).toBeAttached({ timeout: 30000 });
         const svgA = containerA.locator('svg');
         await expect(svgA).toBeAttached({ timeout: 30000 });
         const svgTextA = await svgA.textContent();

@@ -59,8 +59,23 @@ export class ProgrammingExerciseOverviewPage {
         if (!(await button.isVisible())) {
             await this.getCodeButton().click();
         }
-        // Wait for the button to be enabled — starts disabled until VCS access token loads
-        await expect(button).toBeEnabled({ timeout: 10000 });
+        // Wait for the button to be enabled — starts disabled until VCS access token loads.
+        // The token is fetched via an async HTTP call triggered by an effect() in code-button.component.ts.
+        // Under parallel test load, this can take longer than 10s, so use a generous timeout.
+        try {
+            await expect(button).toBeEnabled({ timeout: 30000 });
+        } catch {
+            // For SSH cloning, the copyEnabled signal depends on doesUserHaveSSHkeys() which
+            // is set asynchronously in ngOnInit(). If the Code button was opened before this
+            // check completed, copyEnabled was set to false and never re-evaluated.
+            // Re-opening the popover triggers onClick() → useSshUrl() which re-reads the
+            // now-updated doesUserHaveSSHkeys signal.
+            await this.getCodeButton().click();
+            await this.page.waitForTimeout(500);
+            await this.getCodeButton().click();
+            await this.page.locator('.popover-body').waitFor({ state: 'visible' });
+            await expect(button).toBeEnabled({ timeout: 15000 });
+        }
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
