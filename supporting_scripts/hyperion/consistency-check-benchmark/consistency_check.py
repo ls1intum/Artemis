@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from datetime import datetime, timezone
 import json
 import os
 import subprocess
@@ -30,6 +31,9 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
     if not os.listdir(pecv_bench_dir):
         logging.error(f"Step 12 failed: PECV-bench directory at {pecv_bench_dir} is empty. Execute Step 1 and Step 2 in exercises.py first")
         sys.exit(1)
+
+    branch_name = "unknown"
+    short_commit = "unknown"
     approach_id = ""
     try:
         branch_name = subprocess.check_output(
@@ -46,8 +50,7 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
         logging.warning("Failed to determine git branch or commit. Using default approach ID.")
         approach_id = "artemis-default"
 
-    model_name = MODEL_NAME
-    run_id = f"{model_name}-{MODEL_EFFORT}"
+    run_id = f"{MODEL_NAME}-{datetime.now(timezone.utc).strftime('%Y-%m-%d-%H%M')}-{short_commit}"
 
     # Map exercise name -> (course, version) so the correct version is used per exercise
     consistency_check_exercises_dict: Dict[str, tuple[str, str]] = {}
@@ -66,8 +69,13 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
     failed_count = 0
     failed_checks: list[str] = []
 
+    # Per-version counters for run YAML
+    version_executed: Dict[str, int] = {}
+    version_failed: Dict[str, int] = {}
+
     with ThreadPoolExecutor(max_workers=MAX_THREADS) as executor:
         future_to_local_id = {}
+        future_to_version: Dict[Any, str] = {}
 
         for local_id, server_id in exercise_ids_filtered.items():
             exercise_name = local_id.split(':')[0]
@@ -92,11 +100,14 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
                 run_id
             )
             future_to_local_id[future] = local_id
+            future_to_version[future] = dataset_version
 
         logging.info(f"Total variants to check: {len(future_to_local_id)}")
 
         for future in as_completed(future_to_local_id):
             local_id = future_to_local_id[future]
+            ver = future_to_version[future]
+            version_executed[ver] = version_executed.get(ver, 0) + 1
             try:
                 result = future.result()
                 if "success" in result:
@@ -105,17 +116,88 @@ def consistency_check(session: requests.Session, exercise_ids: Dict[str, int]) -
                 else:
                     failed_count += 1
                     failed_checks.append(local_id)
+                    version_failed[ver] = version_failed.get(ver, 0) + 1
                     logging.error(f"[FAIL] {result}")
             except Exception as e:
                 failed_count += 1
                 failed_checks.append(local_id)
+                version_failed[ver] = version_failed.get(ver, 0) + 1
                 logging.exception(f"[FAIL] {local_id} — thread error: {e}")
 
     logging.info(f"Consistency checks completed: {succeeded_count}/{len(future_to_local_id)} succeeded.")
     if failed_checks:
         logging.error(f"Step 12 failed: {failed_count} consistency check(s) failed:\n" + "\n".join(f"  - {v}" for v in sorted(failed_checks)))
         logging.error("Execute Step 12 in consistency_check.py to retry")
+
+    # Write a run YAML for each version that was processed
+    for ver, executed in version_executed.items():
+        create_run_yaml(
+            pecv_bench_dir=pecv_bench_dir,
+            approach_id=approach_id,
+            version=ver,
+            run_id=run_id,
+            branch_name=branch_name,
+            short_commit=short_commit,
+            cases_executed=executed,
+            cases_failed=version_failed.get(ver, 0),
+        )
+
     return approach_id
+
+
+def create_run_yaml(
+    pecv_bench_dir: str,
+    approach_id: str,
+    version: str,
+    run_id: str,
+    branch_name: str,
+    short_commit: str,
+    cases_executed: int,
+    cases_failed: int,
+) -> None:
+    """
+    Creates a YAML metadata file for a completed consistency check run.
+
+    Stored at ``runs/{approach_id}/{version}/{run_id}.yaml`` inside the pecv-bench directory, e.g.::
+
+        runs/artemis-develop-e2ee1d1f1c/V2/azure-openai-gpt-5-mini-2026-03-12-2132-e2ee1d1f1c.yaml
+
+    :param str pecv_bench_dir: The root directory of the pecv-bench repository.
+    :param str approach_id: The approach identifier (e.g. ``artemis-develop-e2ee1d1f1c``).
+    :param str version: The dataset version identifier (e.g. ``V2``).
+    :param str run_id: The run identifier (e.g. ``azure-openai-gpt-5-mini-2026-03-12-2132-e2ee1d1f1c``).
+    :param str branch_name: The git branch name (e.g. ``develop``).
+    :param str short_commit: The short git commit hash (e.g. ``e2ee1d1f1c``).
+    :param int cases_executed: Total number of cases executed (succeeded + failed).
+    :param int cases_failed: Number of cases that failed.
+    :rtype: None
+    """
+    runs_dir = os.path.join(pecv_bench_dir, "runs", approach_id, version)
+    os.makedirs(runs_dir, exist_ok=True)
+    yaml_path = os.path.join(runs_dir, f"{run_id}.yaml")
+
+    generated_at = datetime.now(timezone.utc).isoformat()
+
+    content = (
+        f"approach_id: {approach_id}\n"
+        f"run_id: {run_id}\n"
+        f"args:\n"
+        f"  model: {MODEL_NAME}\n"
+        f"  reasoning_effort: {MODEL_EFFORT}\n"
+        f"generated_at: '{generated_at}'\n"
+        f"version: {version}\n"
+        f"cases_executed: {cases_executed}\n"
+        f"cases_failed: {cases_failed}\n"
+        f"artemis:\n"
+        f"  branch: {branch_name}\n"
+        f"  commit: {short_commit}\n"
+    )
+
+    with open(yaml_path, "w", encoding="utf-8") as f:
+        f.write(content)
+
+    logging.info(f"Run YAML created: {yaml_path}")
+
 
 def consistency_check_io(session: Session, server_url: str, exercise_local_id: str, exercise_server_id: int, exercise_results_dir: str, dataset_version: str, course_name: str, run_id: str) -> str:
     """
@@ -198,4 +280,6 @@ if __name__ == "__main__":
     exercise_ids = get_exercise_ids_request(session=session, course_id=course_id)
 
     logging.info("Step 12: Running consistency checks for all programming exercises")
-    consistency_check(session=session, exercise_ids=exercise_ids)
+    approach_id = consistency_check(session=session, exercise_ids=exercise_ids)
+    logging.info(f"Approach ID: {approach_id}")
+    logging.info(f"Set approach_id = \"{approach_id}\" in report.py, code_snapshot.py, and merge_request.py before running them.")

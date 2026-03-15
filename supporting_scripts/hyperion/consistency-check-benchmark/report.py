@@ -3,7 +3,7 @@ import os
 import sys
 from logging_config import logging
 from utils import REFERENCE, DATASET_VERSION
-from exercises import get_pecv_bench_dir
+from exercises import get_pecv_bench_dir, install_pecv_bench_dependencies
 
 
 def generate_report_files(pecv_bench_dir: str, version: str, approach_id: str) -> None:
@@ -109,7 +109,10 @@ if __name__ == "__main__":
     #   1. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
     #   2. Execute Step 13 in report.py
+    logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()
+    logging.info("Step 3: installing pecv-bench dependencies")
+    install_pecv_bench_dependencies(pecv_bench_dir)
 
     # >>> UPDATE THIS to your results folder name before rerunning <<<
     approach_id = "REPLACE_ME"
@@ -121,4 +124,5 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
+    logging.info("Step 13: Generating benchmark report")
     generate_report_files(pecv_bench_dir, DATASET_VERSION, approach_id)

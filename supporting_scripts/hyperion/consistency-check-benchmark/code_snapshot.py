@@ -132,6 +132,7 @@ if __name__ == "__main__":
     #   1. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
     #   2. Execute Step 13b in code_snapshot.py
+    logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()
 
     # >>> UPDATE THIS to your results folder name before rerunning <<<
@@ -144,5 +145,6 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
+    logging.info("Step 13b: Creating code snapshot ZIP")
     approach_results_dir = os.path.join(pecv_bench_dir, "results", approach_id)
     create_code_snapshot(approach_results_dir, approach_id)

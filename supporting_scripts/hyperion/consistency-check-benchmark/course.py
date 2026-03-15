@@ -293,8 +293,8 @@ def __transform_exercise_json_keys(input_dict: Dict[str, int]) -> Dict[str, int]
     return transformed_dict
 
 if __name__ == "__main__":
-    # Steps 5–6 (session/login) and 8, 11 are active. Step 7 (create course) is
-    # commented — uncomment only if the course needs to be recreated.
+    # Steps 5–6 (session/login) and 8 (course ID) are active. Step 7 (create course)
+    # and Step 11 (exercise IDs — uncomment only AFTER exercises are imported via Step 10) are commented.
     # Run: python course.py
 
     logging.info("Step 5: Creating session")
@@ -303,12 +303,8 @@ if __name__ == "__main__":
     logging.info("Step 6: Logging in as admin")
     login_as_admin(session=session)
 
-    # logging.info("Step 7: Creating Hyperion Benchmark Course")
-    # create_course_request(session=session)
+    logging.info("Step 7: Creating Hyperion Benchmark Course")
+    create_course_request(session=session)
 
     logging.info("Step 8: Retrieving Hyperion Benchmark Course ID")
     course_id = get_course_id_request(session=session)
-
-    logging.info("Step 11: Retrieving programming exercise IDs for the course")
-    exercise_ids = get_exercise_ids_request(session=session, course_id=course_id)
-    logging.info(f"Retrieved exercise IDs: {exercise_ids}")

@@ -295,6 +295,7 @@ if __name__ == "__main__":
     #   3. Update approach_id below to match your results folder name.
     #      Find it with:  ls pecv-bench/results/
     #   4. Execute Step 14 in merge_request.py
+    logging.info("Step 1: Getting PECV-Bench directories from config")
     pecv_bench_dir = get_pecv_bench_dir()
 
     # >>> UPDATE THIS to your results folder name before rerunning <<<
@@ -307,4 +308,5 @@ if __name__ == "__main__":
         )
         sys.exit(1)
 
+    logging.info("Step 14: Creating pull request with results in pecv-bench")
     create_results_pull_request(pecv_bench_dir, approach_id)

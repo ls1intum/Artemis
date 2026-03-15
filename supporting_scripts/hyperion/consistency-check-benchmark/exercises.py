@@ -498,26 +498,19 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
             logging.info(f"Removed temporary zip file: {os.path.basename(temp_zip)}")
     return True
 
-def convert_variant_to_zip_all(session: requests.Session) -> None:
+def convert_version_varianzs_to_zip(course_id: int) -> None:
     """
-    Converts all exercise variants defined in config.ini/COURSE_EXERCISES into ZIP files.
+    Converts all exercise variants for specific VERSION defined in config.ini/COURSE_EXERCISES and VERISON into ZIP files.
 
     Iterates over all courses and exercises in the current DATASET_VERSION,
     retrieves the course ID from the server, and calls :func:`convert_variant_to_zip`
     for each variant directory found.
 
-    :param requests.Session session: The active requests Session object.
+    :param int course_id: The ID of the course to which the exercises belong.
     :raises SystemExit: if the course ID cannot be retrieved.
     """
     zip_to_create = COURSE_EXERCISES.get(DATASET_VERSION, {})
     pecv_bench_dir = get_pecv_bench_dir()
-
-    try:
-        course_id = get_course_id_request(session=session)
-    except Exception as e:
-        logging.error(f"Step 9 failed: Cannot retrieve course ID — {e}")
-        logging.error("Execute Step 8 in course.py to verify the course exists, then execute Step 9 in exercises.py")
-        return
 
     for course, exercises in zip_to_create.items():
         for exercise in exercises:
@@ -696,28 +689,35 @@ if __name__ == "__main__":
     # Steps 1–3 are active. Step 4 (variant creation), Steps 5–6 (session/login),
     # and 9–10 (zip/import) are commented — uncomment the steps you need and run: python exercises.py
 
-    logging.info("Step 1: Getting PECV-Bench directories from config")
-    pecv_bench_dir = get_pecv_bench_dir()
-    pecv_bench_dataset_dir = get_pecv_bench_dataset_dir()
+    # logging.info("Step 1: Getting PECV-Bench directories from config")
+    # pecv_bench_dir = get_pecv_bench_dir()
+    # pecv_bench_dataset_dir = get_pecv_bench_dataset_dir()
 
-    logging.info("Step 2: Cloning pecv-bench and pecv-bench-dataset repositories")
-    clone_pecv_bench(pecv_bench_dir)
-    clone_pecv_bench_dataset(pecv_bench_dataset_dir)
+    # logging.info("Step 2: Cloning pecv-bench and pecv-bench-dataset repositories")
+    # clone_pecv_bench(pecv_bench_dir)
+    # clone_pecv_bench_dataset(pecv_bench_dataset_dir)
 
-    logging.info("Step 3: Installing pecv-bench dependencies")
-    install_pecv_bench_dependencies(pecv_bench_dir)
+    # logging.info("Step 3: Installing pecv-bench dependencies")
+    # install_pecv_bench_dependencies(pecv_bench_dir)
 
     # logging.info("Step 4: Creating exercise variants")
     # create_pecv_bench_version_variants()
 
-    # logging.info("Step 5: Creating session")
-    # session = requests.Session()
 
-    # logging.info("Step 6: Logging in as admin")
-    # login_as_admin(session=session)
 
-    # logging.info("Step 9: Converting variants to zip files")
-    # convert_variant_to_zip_all(session=session)
+    # NOTE: Steps 9–10 require a session — always uncomment Steps 5–6 and 8 together with them.
+    logging.info("Step 5: Creating session")
+    session = requests.Session()
 
-    # logging.info("Step 10: Importing exercise variants")
-    # import_exercise_variants(session=session)
+    logging.info("Step 6: Logging in as admin")
+    login_as_admin(session=session)
+
+    logging.info("Step 8: Retrieving Hyperion Benchmark Course ID")
+    course_id = get_course_id_request(session=session)
+
+    logging.info("Step 9: Converting variants to zip files")
+    convert_version_varianzs_to_zip(course_id=course_id)
+
+    logging.info("Step 10: Importing exercise variants")
+    import_exercise_variants(session=session)
+
