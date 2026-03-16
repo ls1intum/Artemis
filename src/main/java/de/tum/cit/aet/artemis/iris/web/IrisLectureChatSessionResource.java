@@ -98,6 +98,7 @@ public class IrisLectureChatSessionResource {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
             irisCitationService.enrichSessionWithCitationInfo(session);
+            session.setEntityName(lecture.getTitle());
             return ResponseEntity.ok(session);
         }
 
@@ -130,6 +131,7 @@ public class IrisLectureChatSessionResource {
         var session = new IrisLectureChatSession(lecture, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         session = irisLectureChatSessionRepository.save(session);
+        session.setEntityName(lecture.getTitle());
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

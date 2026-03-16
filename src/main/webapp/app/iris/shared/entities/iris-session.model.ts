@@ -15,4 +15,5 @@ export class IrisSession implements BaseEntity {
     entityId: number;
     type?: string;
     citationInfo?: IrisCitationMetaDTO[];
+    entityName?: string;
 }

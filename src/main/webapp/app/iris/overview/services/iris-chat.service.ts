@@ -383,7 +383,7 @@ export class IrisChatService implements OnDestroy {
             creationDate: newIrisSession.creationDate,
             chatMode: chatMode,
             entityId: newIrisSession.entityId,
-            entityName: '',
+            entityName: newIrisSession.entityName ?? '',
             title: newIrisSession.title,
         };
 

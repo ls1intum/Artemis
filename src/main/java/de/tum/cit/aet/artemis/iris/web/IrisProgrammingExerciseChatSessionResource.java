@@ -87,6 +87,7 @@ public class IrisProgrammingExerciseChatSessionResource {
 
         var session = irisExerciseChatSessionService.getCurrentSessionOrCreateIfNotExists(programmingExercise, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
+        session.setEntityName(programmingExercise.getShortName());
         return ResponseEntity.ok(session);
     }
 
@@ -128,6 +129,7 @@ public class IrisProgrammingExerciseChatSessionResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
         var session = irisExerciseChatSessionService.createSession(programmingExercise, user);
+        session.setEntityName(programmingExercise.getShortName());
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);

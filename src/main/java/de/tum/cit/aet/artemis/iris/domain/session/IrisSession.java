@@ -76,6 +76,13 @@ public abstract class IrisSession extends DomainObject {
     @Transient
     private List<IrisCitationMetaDTO> citationInfo;
 
+    /**
+     * The display name of the entity (lecture title, exercise short name) associated with this session.
+     * This information is derived at runtime and not persisted.
+     */
+    @Transient
+    private String entityName;
+
     public IrisMessage newMessage() {
         var message = new IrisMessage();
         message.setSession(this);
@@ -121,6 +128,15 @@ public abstract class IrisSession extends DomainObject {
 
     public void setCitationInfo(List<IrisCitationMetaDTO> citationInfo) {
         this.citationInfo = citationInfo;
+    }
+
+    @JsonProperty("entityName")
+    public String getEntityName() {
+        return entityName;
+    }
+
+    public void setEntityName(String entityName) {
+        this.entityName = entityName;
     }
 
     public abstract boolean shouldSelectLLMUsage();

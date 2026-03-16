@@ -91,6 +91,7 @@ public class IrisTextExerciseChatSessionResource {
             var session = sessionOptional.get();
             irisSessionService.checkHasAccessToIrisSession(session, user);
             irisCitationService.enrichSessionWithCitationInfo(session);
+            session.setEntityName(exercise.getShortName());
             return ResponseEntity.ok(session);
         }
 
@@ -118,6 +119,7 @@ public class IrisTextExerciseChatSessionResource {
         var session = new IrisTextExerciseChatSession(textExercise, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         session = irisTextExerciseChatSessionRepository.save(session);
+        session.setEntityName(textExercise.getShortName());
         var uriString = "/api/iris/sessions/" + session.getId();
 
         return ResponseEntity.created(new URI(uriString)).body(session);
