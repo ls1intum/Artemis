@@ -1,13 +1,14 @@
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { expect } from '@playwright/test';
-import { admin, studentTwo, instructor } from '../../support/users';
+import { admin, studentTwo } from '../../support/users';
 import { generateUUID } from '../../support/utils';
 import dayjs from 'dayjs';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { Visibility } from 'app/programming/shared/entities/programming-exercise-test-case.model';
+import { ProgrammingLanguage } from '../../support/constants';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
+import { SEED_COURSES } from '../../support/seedData';
 
 /**
  * CRITICAL REGRESSION TEST: PlantUML diagram isolation in exam mode.
@@ -42,8 +43,9 @@ const IDENTIFIER_B = 'ClassBeta';
 const IDENTIFIER_C0 = 'ClassGamma';
 const IDENTIFIER_C1 = 'ClassDelta';
 
+const course = { id: SEED_COURSES.examManagement.id } as any;
+
 test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
-    let course: Course;
     let exam: Exam;
     let exerciseA: ProgrammingExercise;
     let exerciseB: ProgrammingExercise;
@@ -51,13 +53,6 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
     let groupTitleA: string;
     let groupTitleB: string;
     let groupTitleC: string;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-        await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-    });
 
     test.beforeEach('Create exam with 3 programming exercises', async ({ login, examAPIRequests, exerciseAPIRequests }) => {
         await login(admin);
@@ -76,6 +71,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             exerciseGroup: exerciseGroupA,
             title: 'Exercise Alpha ' + generateUUID(),
             problemStatement: problemStatementA,
+            programmingLanguage: ProgrammingLanguage.C,
         });
 
         groupTitleB = 'Group Beta ' + generateUUID();
@@ -84,6 +80,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             exerciseGroup: exerciseGroupB,
             title: 'Exercise Beta ' + generateUUID(),
             problemStatement: problemStatementB,
+            programmingLanguage: ProgrammingLanguage.C,
         });
 
         groupTitleC = 'Group Gamma ' + generateUUID();
@@ -92,6 +89,7 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
             exerciseGroup: exerciseGroupC,
             title: 'Exercise Gamma ' + generateUUID(),
             problemStatement: problemStatementC,
+            programmingLanguage: ProgrammingLanguage.C,
         });
 
         // Wait for CI pipelines to complete by checking test case availability
@@ -120,19 +118,27 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         await examParticipation.startParticipation(studentTwo, course, exam);
 
         // Navigate to each exercise to trigger rendering.
-        // In exam mode, all exercises stay in the DOM (hidden), so visiting each one
+        // In exam mode, all exercises stay in the DOM (hidden via [hidden]), so visiting each one
         // ensures the component initializes and fires its PlantUML render cycle.
+        //
+        // CRITICAL: Wait for each exercise's PlantUML container to appear before navigating
+        // to the next exercise. The PlantUML containers are created during component
+        // initialization (updateMarkdown → renderMarkdown). If we navigate too quickly,
+        // Angular may not have time to create and initialize the component before the next
+        // navigation triggers, leaving some exercises without rendered containers.
         await examNavigation.openOrSaveExerciseByTitle(groupTitleA);
-        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
-        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+        await expect(page.locator(`#plantUml-${exerciseA.id}-0`)).toBeAttached({ timeout: 30000 });
 
-        // Give time for all async PlantUML SVG HTTP requests to complete.
-        // The server renders PlantUML source to SVG; this is an async operation per diagram.
-        // With 4 diagrams total (1+1+2) and server-side rendering, allow generous timeout.
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleB);
+        await expect(page.locator(`#plantUml-${exerciseB.id}-0`)).toBeAttached({ timeout: 30000 });
+
+        await examNavigation.openOrSaveExerciseByTitle(groupTitleC);
+        await expect(page.locator(`#plantUml-${exerciseC.id}-0`)).toBeAttached({ timeout: 30000 });
+
+        // All containers are now in the DOM. Verify content and cross-contamination.
 
         // --- Exercise A: 1 diagram with ClassAlpha ---
         const containerA = page.locator(`#plantUml-${exerciseA.id}-0`);
-        await expect(containerA).toBeAttached({ timeout: 30000 });
         const svgA = containerA.locator('svg');
         await expect(svgA).toBeAttached({ timeout: 30000 });
         const svgTextA = await svgA.textContent();
@@ -204,12 +210,12 @@ test.describe('Exam PlantUML diagram isolation', { tag: '@slow' }, () => {
         expect(ids).toContain(`plantUml-${exerciseC.id}-1`);
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
     });
 });
 
-async function createExam(course: Course, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
+async function createExam(course: any, examAPIRequests: ExamAPIRequests, customExamConfig?: any) {
     const defaultExamConfig = {
         course,
         title: 'exam' + generateUUID(),

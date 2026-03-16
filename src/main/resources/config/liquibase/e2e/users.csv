@@ -1,0 +1,8 @@
+id;login;password_hash;first_name;last_name;email;activated;lang_key;created_by;is_internal;is_deleted
+100;artemis_admin;$2b$04$zNlvBbWjGe82R2fqvcaMf.vXguPSF5eHRpEQ5xZL2EA7txn9HfcXi;Admin;User;artemis_admin@localhost;true;en;system;true;false
+101;artemis_test_user_1;$2b$04$kNopCvKD4p485O4RbPwlXeq.c8AC6BQVJ1a9A9monvfu49BCzZNv.;Student;One;artemis_test_user_1@localhost;true;en;system;true;false
+102;artemis_test_user_2;$2b$04$jD5p1kTVquFrabzJ0/ZoNuLKlnU4ReklOGjgZTp/osDw8Y7BxrlG2;Student;Two;artemis_test_user_2@localhost;true;en;system;true;false
+103;artemis_test_user_3;$2b$04$rx6aCSzlrS6XnXcfVat.HOO065Rqn6lfrfUEZWIG70/v/98/WVdfu;Student;Three;artemis_test_user_3@localhost;true;en;system;true;false
+104;artemis_test_user_4;$2b$04$ybveGpy/IM2q6BEpMAl.k.YnIV17NZneK6lnmyHXTFaU3yV7T52Y.;Student;Four;artemis_test_user_4@localhost;true;en;system;true;false
+106;artemis_test_user_6;$2b$04$zQKV6g1PArFhe3GqPC62I.8BC6ouKzodndUrehvKzTYmi5HPn0ZNi;Tutor;User;artemis_test_user_6@localhost;true;en;system;true;false
+116;artemis_test_user_16;$2b$04$S27nRGGIDENJ7PgZeklDsOPSRcxFWyYoSDy2Ri7pRGzX.S9uMWdv2;Instructor;User;artemis_test_user_16@localhost;true;en;system;true;false
