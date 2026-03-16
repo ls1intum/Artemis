@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ActivatedRouteSnapshot, Route, Router, RouterModule } from '@angular/router';
@@ -18,22 +20,24 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
 describe('UserRouteAccessService', () => {
+    setupTestBed({ zoneless: true });
+
     const routeStateMock: any = { snapshot: {}, url: '/courses/20/exercises/4512' };
     const route = 'courses/:courseId/exercises/:exerciseId';
     let service: UserRouteAccessService;
 
     let accountService: AccountService;
-    let accountServiceStub: jest.SpyInstance;
+    let accountServiceStub: ReturnType<typeof vi.spyOn>;
 
     let sessionStorageService: SessionStorageService;
     let router: Router;
 
-    let alertServiceStub: jest.SpyInstance;
+    let alertServiceStub: ReturnType<typeof vi.spyOn>;
     let alertService: AlertService;
 
     const url = 'test';
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             imports: [
                 RouterModule.forRoot([
@@ -53,25 +57,23 @@ describe('UserRouteAccessService', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideTemplate(CourseExerciseDetailsComponent, '')
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(UserRouteAccessService);
-                TestBed.createComponent(CourseExerciseDetailsComponent);
-                accountService = TestBed.inject(AccountService);
-                sessionStorageService = TestBed.inject(SessionStorageService);
-                router = TestBed.inject(Router);
-            });
-
+        }).overrideTemplate(CourseExerciseDetailsComponent, '');
+        await TestBed.compileComponents();
+        service = TestBed.inject(UserRouteAccessService);
+        TestBed.createComponent(CourseExerciseDetailsComponent);
+        accountService = TestBed.inject(AccountService);
+        sessionStorageService = TestBed.inject(SessionStorageService);
+        router = TestBed.inject(Router);
         alertService = TestBed.inject(AlertService);
     });
 
-    afterEach(() => jest.restoreAllMocks());
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     it('should create alert and prefill username for existing LTI users', () => {
-        alertServiceStub = jest.spyOn(alertService, 'success');
-        accountServiceStub = jest.spyOn(accountService, 'setPrefilledUsername');
+        alertServiceStub = vi.spyOn(alertService, 'success');
+        accountServiceStub = vi.spyOn(accountService, 'setPrefilledUsername');
 
         const snapshot = TestBed.inject(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
@@ -86,8 +88,8 @@ describe('UserRouteAccessService', () => {
     });
 
     it('should not create alert and not prefill username for new LTI users', () => {
-        alertServiceStub = jest.spyOn(alertService, 'success');
-        accountServiceStub = jest.spyOn(accountService, 'setPrefilledUsername');
+        alertServiceStub = vi.spyOn(alertService, 'success');
+        accountServiceStub = vi.spyOn(accountService, 'setPrefilledUsername');
 
         const snapshot = TestBed.inject(ActivatedRouteSnapshot) as Mutable<ActivatedRouteSnapshot>;
         const routeConfig = snapshot.routeConfig as Route;
@@ -101,25 +103,25 @@ describe('UserRouteAccessService', () => {
     });
 
     it('should return true if authorities are omitted', async () => {
-        await expect(service.checkLogin([], url)).resolves.toBeTrue();
+        await expect(service.checkLogin([], url)).resolves.toBe(true);
     });
 
     it('should return false if it does not have authority', async () => {
-        jest.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
-        const storeSpy = jest.spyOn(sessionStorageService, 'store');
+        vi.spyOn(accountService, 'hasAnyAuthority').mockReturnValue(Promise.resolve(false));
+        const storeSpy = vi.spyOn(sessionStorageService, 'store');
 
         const result = await service.checkLogin([Authority.EDITOR], url);
 
-        expect(result).toBeFalse();
+        expect(result).toBe(false);
         expect(storeSpy).not.toHaveBeenCalled();
     });
 
     it('should store url if identity is undefined', async () => {
-        jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
-        const storeSpy = jest.spyOn(sessionStorageService, 'store');
-        const navigateMock = jest.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+        vi.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(undefined));
+        const storeSpy = vi.spyOn(sessionStorageService, 'store');
+        const navigateMock = vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
 
-        await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBeFalse();
+        await expect(service.checkLogin([Authority.EDITOR], url)).resolves.toBe(false);
         expect(storeSpy).toHaveBeenCalledOnce();
         expect(storeSpy).toHaveBeenCalledWith('previousUrl', url);
         expect(navigateMock).toHaveBeenCalledTimes(2);

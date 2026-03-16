@@ -60,6 +60,23 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programming Exercise Metadata",
+                    "noProgrammingData": "This version does not contain programming-specific metadata.",
+                    "emptyValueHint": "Not available in this snapshot",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker Flags",
+                    "theiaImage": "Online IDE Image",
+                    "postDueDateHandling": "Post Due Date Handling",
+                    "assignmentCheckoutPath": "Assignment Checkout Path",
+                    "solutionCheckoutPath": "Solution Checkout Path",
+                    "testsCheckoutPath": "Tests Checkout Path",
+                    "buildPlanConfiguration": "Build Plan Configuration (JSON)",
+                    "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
+                    "noBuildScript": "No build script in this snapshot"
+                }
+            },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
                 "description": "The file must be a zip file containing the exercise configuration in JSON format at the root level and a zip file for each of the repositories (template, solution, tests). You can get such a file by exporting a programming exercise.",
@@ -217,8 +234,12 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "projectKey": "Project Key",
             "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
+            "testsCommitId": "Tests Commit Id",
+            "templateCommitId": "Template Commit Id",
+            "solutionCommitId": "Solution Commit Id",
             "theiaImage": {
                 "title": "Configuration for Online IDE",
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
@@ -820,6 +841,64 @@
                 "error": {
                     "export": "Unable to export programming exercise: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "competencies": {
+                    "title": "Estimated Learning Goals",
+                    "empty": "No competencies inferred.",
+                    "primary": "Primary",
+                    "evidence": "Evidence:",
+                    "relatedTasks": "Related tasks:",
+                    "linked": "Linked",
+                    "applyCompetencies": "Apply Competencies",
+                    "applyHint": "Links matching course competencies and creates new ones for unmatched learning goals.",
+                    "syncSuccess": "Competencies applied to the exercise successfully.",
+                    "allLinked": "All inferred competencies are already linked.",
+                    "syncError": "Failed to apply competencies. Please try again.",
+                    "showDetails": "Details",
+                    "hideDetails": "Hide"
+                },
+                "difficulty": {
+                    "title": "Difficulty Assessment",
+                    "suggested": "Suggested:",
+                    "vsDeclared": "vs. Declared:",
+                    "tasks": "Tasks:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Harder than declared",
+                    "easierThanDeclared": "Easier than declared",
+                    "matchesDeclared": "Matches declared",
+                    "unknown": "Unknown"
+                },
+                "quality": {
+                    "title": "Quality Assessment",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix",
+                    "fixSelected": "Fix Selected",
+                    "suggestedFix": "Suggested fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue",
+                    "discardIssue": "Dismiss this issue",
+                    "discarded": "Issue dismissed.",
+                    "discardSelected": "Dismiss Selected",
+                    "discardedMultiple": "Selected issues dismissed.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "radarChartLabel": "Quality scores radar chart"
+                },
+                "actions": {
+                    "success": "Problem statement updated successfully.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action.",
+                    "adaptTo": "Adapt to:",
+                    "current": "(current)",
+                    "adaptedReasoning": "Adapted to {{ difficulty }}. Re-analyze for an updated assessment."
+                },
+                "outdated": "Outdated",
+                "reanalyze": "Re-analyze"
             }
         },
         "error": {

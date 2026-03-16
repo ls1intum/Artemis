@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertEx
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertProgrammingExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -252,7 +253,9 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
         ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
 
-        assertThat(updatedExercise.getReleaseDate()).isEqualTo(newReleaseDate);
+        // Compare as instants because PostgreSQL stores timestamps as UTC and the
+        // original timezone offset is not preserved through the database round-trip.
+        assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
@@ -265,10 +268,10 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 Object releaseDateObj = weaviateProperties.get(ExerciseSchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
                 ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
-                // Truncate to milliseconds since Weaviate may not preserve nanosecond precision
-                assertThat(weaviateReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS)).isEqualTo(newReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
-                assertThat(weaviateReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS))
-                        .isNotEqualTo(originalReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
+                // Compare as instants with a small tolerance because Weaviate may not preserve
+                // sub-millisecond precision through the serialization round-trip.
+                assertThat(weaviateReleaseDate.toInstant()).isCloseTo(newReleaseDate.toInstant(), within(100, java.time.temporal.ChronoUnit.MILLIS));
+                assertThat(weaviateReleaseDate.toInstant()).isNotEqualTo(originalReleaseDate.toInstant());
             });
         }
     }
