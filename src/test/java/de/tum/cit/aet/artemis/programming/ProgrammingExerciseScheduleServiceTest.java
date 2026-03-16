@@ -114,7 +114,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
      * so dates must be in UTC to survive a DB round-trip without shifting.
      */
     private void freezeTime() {
-        frozenNow = ZonedDateTime.now(ZoneOffset.UTC);
+        // Truncate to milliseconds because PostgreSQL DATETIME(3) columns only store
+        // millisecond precision. Without truncation, nanosecond remnants cause Mockito
+        // eq() matchers to fail when comparing the original Java object (with nanoseconds)
+        // against the entity re-loaded from the database (with truncated nanoseconds).
+        frozenNow = ZonedDateTime.now(ZoneOffset.UTC).truncatedTo(ChronoUnit.MILLIS);
         TimeUtil.setClock(Clock.fixed(frozenNow.toInstant(), frozenNow.getZone()));
     }
 
@@ -342,9 +346,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractProgrammingIntegrat
     void scheduleIndividualDueDateAfterBuildAndTestDate() {
         freezeTime();
 
-        setupProgrammingExerciseDates(frozenNow, 5000L, 5000L);
+        // Use clearly separated dates to avoid edge cases with equal or close timestamps.
+        // The build-and-test date (15s) must be strictly before the individual due date (30s).
+        setupProgrammingExerciseDates(frozenNow, 10000L, 15000L);
         // individual due date after build and test date
-        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 10000L, TEST_PREFIX + "student3");
+        var participationIndividualDueDate = setupParticipationWithIndividualDueDate(frozenNow, 30000L, TEST_PREFIX + "student3");
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsAndBuildConfigById(programmingExercise.getId()).orElseThrow();
 
         instanceMessageReceiveService.processScheduleProgrammingExercise(programmingExercise.getId());
