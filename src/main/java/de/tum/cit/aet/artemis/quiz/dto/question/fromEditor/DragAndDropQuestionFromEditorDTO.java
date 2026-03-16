@@ -71,9 +71,9 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         question.setBackgroundFilePath(backgroundFilePath);
 
-        List<DropLocation> locations = new java.util.ArrayList<>(dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList());
-        List<DragItem> items = new java.util.ArrayList<>(dragItems.stream().map(DragItemFromEditorDTO::toDomainObject).toList());
-        List<DragAndDropMapping> mappings = new java.util.ArrayList<>(correctMappings.stream().map(DragAndDropMappingFromEditorDTO::toDomainObject).toList());
+        List<DropLocation> locations = dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList();
+        List<DragItem> items = dragItems.stream().map(DragItemFromEditorDTO::toDomainObject).toList();
+        List<DragAndDropMapping> mappings = correctMappings.stream().map(DragAndDropMappingFromEditorDTO::toDomainObject).toList();
         question.setDropLocations(locations);
         question.setDragItems(items);
         question.setCorrectMappings(mappings);
