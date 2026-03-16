@@ -18,8 +18,10 @@ describe('TutorialEditLanguagesInputComponent', () => {
     let component: TutorialEditLanguagesInputComponent;
     let fixture: ComponentFixture<TutorialEditLanguagesInputComponent>;
     let overlayContainer: OverlayContainer;
+    let originalScrollIntoViewDescriptor: PropertyDescriptor | undefined;
 
     beforeEach(async () => {
+        originalScrollIntoViewDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollIntoView');
         Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
             configurable: true,
             value: vi.fn(),
@@ -39,6 +41,11 @@ describe('TutorialEditLanguagesInputComponent', () => {
 
     afterEach(() => {
         vi.restoreAllMocks();
+        if (originalScrollIntoViewDescriptor) {
+            Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', originalScrollIntoViewDescriptor);
+        } else {
+            Reflect.deleteProperty(HTMLElement.prototype, 'scrollIntoView');
+        }
         overlayContainer.getContainerElement().innerHTML = '';
     });
 

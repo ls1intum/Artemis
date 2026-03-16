@@ -1,4 +1,4 @@
-import { Component, ElementRef, TemplateRef, ViewContainerRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { Validation, ValidationStatus } from 'app/shared/util/validation';
@@ -16,7 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     templateUrl: './tutorial-edit-languages-input.component.html',
     styleUrl: './tutorial-edit-languages-input.component.scss',
 })
-export class TutorialEditLanguagesInputComponent {
+export class TutorialEditLanguagesInputComponent implements OnDestroy {
     protected readonly TutorialEditValidationStatus = ValidationStatus;
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
@@ -30,8 +30,13 @@ export class TutorialEditLanguagesInputComponent {
     languageValidationResult = computed<Validation>(() => this.computeLanguageValidation());
     suggestionHighlightIndex = signal<number | undefined>(undefined);
 
+    ngOnDestroy(): void {
+        this.closePanel();
+    }
+
     openPanel(): void {
         if (!this.alreadyUsedLanguages()) return;
+        if (this.overlayRef?.hasAttached()) return;
 
         const searchInput = this.searchInput()?.nativeElement;
         const panelTemplate = this.panelTemplate();
@@ -93,9 +98,9 @@ export class TutorialEditLanguagesInputComponent {
 
     onKeyDown(event: KeyboardEvent) {
         if (event.key === 'Enter') {
+            event.preventDefault();
             const suggestionIndex = this.suggestionHighlightIndex();
             if (suggestionIndex !== undefined) {
-                event.preventDefault();
                 this.selectSuggestedLanguage(suggestionIndex);
             }
             this.closePanel();

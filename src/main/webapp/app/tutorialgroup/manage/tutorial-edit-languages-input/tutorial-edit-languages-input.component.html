@@ -30,6 +30,7 @@
             @for (suggestedLanguage of alreadyUsedLanguages(); track suggestedLanguage; let index = $index) {
                 <button
                     class="language-row"
+                    type="button"
                     [class.active]="suggestionHighlightIndex() === index"
                     (mousedown)="selectSuggestedLanguage(index)"
                     (mousemove)="suggestionHighlightIndex.set(index)"
