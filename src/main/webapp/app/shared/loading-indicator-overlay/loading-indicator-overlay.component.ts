@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-loading-indicator-overlay',
-    imports: [TranslateDirective],
+    imports: [ProgressSpinnerModule, ArtemisTranslatePipe],
     templateUrl: './loading-indicator-overlay.component.html',
 })
 export class LoadingIndicatorOverlayComponent {}
