@@ -24,6 +24,7 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            toggleGroupResolvedInContext: vi.fn(),
             threads: signal([]),
         };
 
@@ -177,6 +178,26 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(comp.showThreadBody()).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should resolve all threads in the group and collapse current thread', () => {
+        const collapseSpy = vi.fn();
+        comp.onToggleCollapse.subscribe(collapseSpy);
+        fixture.componentRef.setInput('thread', { id: 1, groupId: 10, resolved: false, comments: [] } as any);
+
+        comp.resolveGroup();
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).toHaveBeenCalledWith(10, true);
+        expect(comp.showThreadBody()).toBe(false);
+        expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should not resolve group when the thread has no group', () => {
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false, comments: [] } as any);
+
+        comp.resolveGroup();
+
+        expect(reviewCommentService.toggleGroupResolvedInContext).not.toHaveBeenCalled();
     });
 
     it('should detect edited comments', () => {

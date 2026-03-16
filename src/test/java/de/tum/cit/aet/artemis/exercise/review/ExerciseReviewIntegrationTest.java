@@ -14,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
@@ -224,6 +225,33 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void shouldUpdateThreadGroupResolvedState() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThreadDTO first = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("First")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO second = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Second")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+        CommentThreadDTO ungrouped = request.postWithResponseBody(reviewThreadsPath(exercise.getId()), buildThreadDTO(buildUserComment("Ungrouped")), CommentThreadDTO.class,
+                HttpStatus.CREATED);
+
+        CreateCommentThreadGroupDTO groupRequest = new CreateCommentThreadGroupDTO(List.of(first.id(), second.id()));
+        CommentThreadGroupDTO group = request.postWithResponseBody(reviewThreadGroupsPath(exercise.getId()), groupRequest, CommentThreadGroupDTO.class, HttpStatus.CREATED);
+
+        UpdateThreadResolvedStateDTO update = new UpdateThreadResolvedStateDTO(true);
+        var mvcResult = request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewThreadGroupResolvedPath(exercise.getId(), group.id())))
+                .contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(update))).andExpect(status().isOk()).andReturn();
+        List<CommentThreadDTO> updatedGroupThreads = objectMapper.readValue(mvcResult.getResponse().getContentAsString(), new TypeReference<>() {
+        });
+
+        assertThat(updatedGroupThreads).hasSize(2).allMatch(CommentThreadDTO::resolved);
+
+        var threads = request.getList(reviewThreadsPath(exercise.getId()), HttpStatus.OK, CommentThreadDTO.class);
+        assertThat(threads.stream().filter(thread -> List.of(first.id(), second.id()).contains(thread.id()))).allMatch(CommentThreadDTO::resolved);
+        assertThat(threads.stream().filter(thread -> thread.id().equals(ungrouped.id())).findFirst().orElseThrow().resolved()).isFalse();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRejectThreadWithoutInitialComment() throws Exception {
         TextExercise exercise = createExerciseWithVersion();
@@ -356,6 +384,27 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
         CommentThread persisted = commentThreadRepository.findById(createdThread.id()).orElseThrow();
         assertThat(persisted.isResolved()).isFalse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldForbidThreadGroupResolvedUpdateForStudent() throws Exception {
+        TextExercise exercise = createExerciseWithVersion();
+        CommentThread first = commentThreadRepository.save(buildThreadEntity(exercise));
+        CommentThread second = commentThreadRepository.save(buildThreadEntity(exercise));
+        CommentThreadGroup group = new CommentThreadGroup();
+        group.setExercise(exercise);
+        group = commentThreadGroupRepository.save(group);
+        first.setGroup(group);
+        second.setGroup(group);
+        commentThreadRepository.saveAll(List.of(first, second));
+
+        UpdateThreadResolvedStateDTO update = new UpdateThreadResolvedStateDTO(true);
+        request.performMvcRequest(MockMvcRequestBuilders.put(new URI(reviewThreadGroupResolvedPath(exercise.getId(), group.getId()))).contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(update))).andExpect(status().isForbidden());
+
+        assertThat(commentThreadRepository.findById(first.getId())).get().extracting(CommentThread::isResolved).isEqualTo(false);
+        assertThat(commentThreadRepository.findById(second.getId())).get().extracting(CommentThread::isResolved).isEqualTo(false);
     }
 
     @Test
@@ -633,6 +682,10 @@ class ExerciseReviewIntegrationTest extends AbstractSpringIntegrationIndependent
 
     private String reviewThreadGroupPath(long exerciseId, long groupId) {
         return reviewThreadGroupsPath(exerciseId) + "/" + groupId;
+    }
+
+    private String reviewThreadGroupResolvedPath(long exerciseId, long groupId) {
+        return reviewThreadGroupPath(exerciseId, groupId) + "/resolved";
     }
 
     private void assertBadRequest(String path, Object body, String expectedMessage, String expectedParams) throws Exception {

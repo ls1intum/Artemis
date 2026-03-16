@@ -5,7 +5,9 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -256,6 +258,48 @@ public class ExerciseReviewService {
         thread.setResolved(dto.resolved());
         CommentThread saved = commentThreadRepository.save(thread);
         return commentThreadRepository.findWithCommentsById(saved.getId()).orElse(saved);
+    }
+
+    /**
+     * Update the resolved flag of all threads in a thread group.
+     *
+     * @param exerciseId the exercise id from the request path
+     * @param groupId    the thread group id
+     * @param dto        whether the group threads are resolved
+     * @return updated group threads with comments
+     * @throws EntityNotFoundException  if the group does not exist
+     * @throws BadRequestAlertException if validation fails or the group exercise does not match the request exercise
+     */
+    public List<CommentThread> updateGroupResolvedState(long exerciseId, long groupId, UpdateThreadResolvedStateDTO dto) {
+        ExerciseReviewValidationUtil.validateResolvedStatePayload(dto, THREAD_GROUP_ENTITY_NAME);
+        CommentThreadGroup group = commentThreadGroupRepository.findById(groupId).orElseThrow(() -> new EntityNotFoundException("CommentThreadGroup", groupId));
+        ExerciseReviewValidationUtil.validateExerciseIdMatchesRequest(exerciseId, group.getExercise().getId(), THREAD_GROUP_ENTITY_NAME);
+
+        List<CommentThread> fetchedThreads = commentThreadRepository.findWithCommentsByGroupId(groupId);
+        if (fetchedThreads.isEmpty()) {
+            return List.of();
+        }
+        Map<Long, CommentThread> uniqueThreadsById = new LinkedHashMap<>();
+        for (CommentThread thread : fetchedThreads) {
+            if (thread.getId() != null) {
+                uniqueThreadsById.putIfAbsent(thread.getId(), thread);
+            }
+        }
+        List<CommentThread> threads = new ArrayList<>(uniqueThreadsById.values());
+
+        boolean desiredResolvedState = dto.resolved();
+        boolean modified = false;
+        for (CommentThread thread : threads) {
+            if (thread.isResolved() != desiredResolvedState) {
+                thread.setResolved(desiredResolvedState);
+                modified = true;
+            }
+        }
+        if (modified) {
+            commentThreadRepository.saveAll(threads);
+        }
+
+        return threads.stream().sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder()))).toList();
     }
 
     /**

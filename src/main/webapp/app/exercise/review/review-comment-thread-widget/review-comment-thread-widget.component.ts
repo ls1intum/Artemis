@@ -22,7 +22,7 @@ import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowUpRightFromSquare, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { faArrowUpRightFromSquare, faChevronDown, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { Comment, CommentType } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentContent, CommentContentType, ConsistencyIssueCommentContent, InlineCodeChange } from 'app/exercise/shared/entities/review/comment-content.model';
@@ -47,6 +47,7 @@ interface RelatedThreadLocation {
     encapsulation: ViewEncapsulation.None,
     standalone: true,
     imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
+    providers: [ConfirmationService],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
@@ -63,6 +64,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     protected readonly faPen = faPen;
     protected readonly faTrash = faTrash;
     protected readonly faArrowUpRightFromSquare = faArrowUpRightFromSquare;
+    protected readonly faChevronDown = faChevronDown;
     readonly showThreadBody = signal(true);
     readonly languageVersion = signal(0);
     readonly editingCommentId = signal<number | undefined>(undefined);
@@ -70,6 +72,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly editText = signal('');
     userCommentMenuItems: MenuItem[] = [];
     nonUserCommentMenuItems: MenuItem[] = [];
+    resolveGroupMenuItems: MenuItem[] = [];
     readonly commentMenus = viewChildren<Menu>('commentMenu');
     readonly suggestedInlineFixDiffEditor = viewChild(MonacoDiffEditorComponent);
 
@@ -103,6 +106,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly isConsistencyIssueThread = computed(() => this.firstConsistencyIssueContent() !== undefined);
     readonly consistencySuggestedInlineFix = computed<InlineCodeChange | undefined>(() => this.firstConsistencyIssueContent()?.suggestedFix);
     readonly showInlineFixOutdatedWarning = signal(false);
+    readonly canResolveGroup = computed(() => {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return false;
+        }
+        return this.reviewCommentService.threads().some((thread) => thread.groupId === groupId && !thread.resolved);
+    });
     readonly relatedGroupLocations = computed<RelatedThreadLocation[]>(() => {
         // Recompute related location labels when language changes because repository labels are translated.
         this.languageVersion();
@@ -224,6 +234,19 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Resolves all threads in the current thread group.
+     */
+    resolveGroup(): void {
+        const groupId = this.thread().groupId;
+        if (groupId === undefined) {
+            return;
+        }
+        this.reviewCommentService.toggleGroupResolvedInContext(groupId, true);
+        this.showThreadBody.set(false);
+        this.onToggleCollapse.emit(true);
+    }
+
+    /**
      * Toggles the thread body and emits the collapsed state.
      */
     toggleThreadBody(): void {
@@ -325,6 +348,17 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Handles a selected resolve-group menu action.
+     *
+     * @param actionId The selected menu action identifier.
+     */
+    handleResolveGroupMenuAction(actionId: string | undefined): void {
+        if (actionId === 'resolve-group') {
+            this.resolveGroup();
+        }
+    }
+
+    /**
      * Checks whether a comment was authored by a user.
      *
      * @param comment The comment to check.
@@ -379,6 +413,7 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             { id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') },
         ];
         this.nonUserCommentMenuItems = [{ id: 'delete', label: this.translateService.instant('artemisApp.review.deleteComment') }];
+        this.resolveGroupMenuItems = [{ id: 'resolve-group', label: this.translateService.instant('artemisApp.review.resolveThreadGroup') }];
     }
 
     private getThreadLocationLabel(thread: CommentThread): string | undefined {

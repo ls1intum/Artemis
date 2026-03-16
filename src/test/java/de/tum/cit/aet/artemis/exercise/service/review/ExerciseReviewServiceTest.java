@@ -418,6 +418,22 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldUpdateThreadGroupResolvedState() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread ungrouped = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
+
+        List<CommentThread> updatedThreads = exerciseReviewService.updateGroupResolvedState(programmingExercise.getId(), group.getId(), new UpdateThreadResolvedStateDTO(true));
+
+        assertThat(updatedThreads).hasSize(2).allMatch(CommentThread::isResolved);
+        assertThat(commentThreadRepository.findById(first.getId())).get().extracting(CommentThread::isResolved).isEqualTo(true);
+        assertThat(commentThreadRepository.findById(second.getId())).get().extracting(CommentThread::isResolved).isEqualTo(true);
+        assertThat(commentThreadRepository.findById(ungrouped.getId())).get().extracting(CommentThread::isResolved).isEqualTo(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateThreadGroupWithTwoThreads() {
         CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
@@ -496,6 +512,17 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
         CommentThread thread = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> exerciseReviewService.updateThreadResolvedState(programmingExercise.getId(), thread.getId(), null));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectThreadGroupResolvedUpdateWithNullBody() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.updateGroupResolvedState(programmingExercise.getId(), group.getId(), null));
     }
 
     @Test
@@ -645,6 +672,18 @@ class ExerciseReviewServiceTest extends AbstractProgrammingIntegrationLocalCILoc
 
         assertThatExceptionOfType(BadRequestAlertException.class)
                 .isThrownBy(() -> exerciseReviewService.updateThreadResolvedState(mismatchingExerciseId, thread.getId(), new UpdateThreadResolvedStateDTO(true)));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldRejectUpdateResolvedStateWhenExerciseIdDoesNotMatchThreadGroup() {
+        CommentThread first = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        CommentThread second = exerciseReviewService.createThread(programmingExercise.getId(), buildThreadDto()).thread();
+        var group = exerciseReviewService.createGroup(programmingExercise.getId(), new CreateCommentThreadGroupDTO(List.of(first.getId(), second.getId())));
+        long mismatchingExerciseId = programmingExercise.getId() + 1;
+
+        assertThatExceptionOfType(BadRequestAlertException.class)
+                .isThrownBy(() -> exerciseReviewService.updateGroupResolvedState(mismatchingExerciseId, group.getId(), new UpdateThreadResolvedStateDTO(true)));
     }
 
     @Test

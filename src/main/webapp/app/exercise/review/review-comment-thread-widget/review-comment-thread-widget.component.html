@@ -205,13 +205,43 @@
                 rows="1"
             ></textarea>
             <div class="monaco-review-comment-actions">
-                <button pButton type="button" severity="secondary" size="small" (click)="toggleResolved()">
-                    @if (thread().resolved) {
-                        {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
-                    } @else {
-                        {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
+                <div class="monaco-review-comment-resolve-controls">
+                    <button pButton type="button" severity="secondary" size="small" class="monaco-review-comment-resolve-main-button" (click)="toggleResolved()">
+                        @if (thread().resolved) {
+                            {{ 'artemisApp.review.unresolveThread' | artemisTranslate }}
+                        } @else {
+                            {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
+                        }
+                    </button>
+                    @if (canResolveGroup()) {
+                        <button
+                            pButton
+                            type="button"
+                            severity="secondary"
+                            size="small"
+                            class="monaco-review-comment-resolve-menu-trigger"
+                            [attr.aria-label]="'artemisApp.review.resolveThreadOptions' | artemisTranslate"
+                            [title]="'artemisApp.review.resolveThreadOptions' | artemisTranslate"
+                            (click)="resolveGroupMenu.toggle($event)"
+                        >
+                            <fa-icon [icon]="faChevronDown" />
+                        </button>
+                        <p-menu #resolveGroupMenu [popup]="true" appendTo="body" styleClass="monaco-review-comment-menu-overlay" [model]="resolveGroupMenuItems">
+                            <ng-template #item let-item>
+                                <button
+                                    pButton
+                                    type="button"
+                                    text
+                                    size="small"
+                                    class="monaco-review-comment-menu-item"
+                                    (click)="handleResolveGroupMenuAction(item.id); resolveGroupMenu.hide()"
+                                >
+                                    <span>{{ item.label }}</span>
+                                </button>
+                            </ng-template>
+                        </p-menu>
                     }
-                </button>
+                </div>
                 <button pButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
                 </button>

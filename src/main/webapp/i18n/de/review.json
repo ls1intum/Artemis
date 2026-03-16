@@ -25,6 +25,8 @@
             "threadLocationWarning": "Kommentare können an einer falschen Position stehen. Bitte Änderungen absenden, um den Kommentar zu aktualisieren.",
             "resolveThread": "Erledigen",
             "unresolveThread": "Wieder öffnen",
+            "resolveThreadOptions": "Erledigen-Optionen",
+            "resolveThreadGroup": "Gruppe erledigen",
             "resolveFailed": "Der Thread-Status konnte nicht aktualisiert werden.",
             "threadResolved": "Erledigt",
             "threadOutdated": "Veraltet",

@@ -257,6 +257,37 @@ export class ExerciseReviewCommentService {
     }
 
     /**
+     * Toggles resolved state for all threads in a group in the active exercise and reconciles local thread state.
+     *
+     * @param groupId The thread-group id.
+     * @param resolved The desired resolved state for all group threads.
+     */
+    toggleGroupResolvedInContext(groupId: number, resolved: boolean): void {
+        const exerciseId = this.activeExerciseId;
+        if (!exerciseId) {
+            return;
+        }
+        this.updateThreadGroupResolvedState(exerciseId, groupId, resolved).subscribe({
+            next: (response) => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                const updatedThreads = response.body ?? [];
+                if (!updatedThreads.length) {
+                    return;
+                }
+                this.threads.update((threads) => this.replaceThreadsInThreads(threads, updatedThreads));
+            },
+            error: () => {
+                if (this.activeExerciseId !== exerciseId) {
+                    return;
+                }
+                this.alertService.error('artemisApp.review.resolveFailed');
+            },
+        });
+    }
+
+    /**
      * Creates a new review comment thread.
      *
      * @param exerciseId The exercise that owns the thread.
@@ -310,6 +341,19 @@ export class ExerciseReviewCommentService {
     updateThreadResolvedState(exerciseId: number, threadId: number, resolved: boolean): Observable<CommentThreadResponseType> {
         const body: UpdateThreadResolvedState = { resolved };
         return this.http.put<CommentThread>(`${this.resourceUrl}/${exerciseId}/review-threads/${threadId}/resolved`, body, { observe: 'response' });
+    }
+
+    /**
+     * Updates the resolved state of all threads in a group.
+     *
+     * @param exerciseId The exercise that owns the group.
+     * @param groupId The group to update.
+     * @param resolved The new resolved state.
+     * @returns The HTTP response observable containing the updated threads.
+     */
+    updateThreadGroupResolvedState(exerciseId: number, groupId: number, resolved: boolean): Observable<CommentThreadArrayResponseType> {
+        const body: UpdateThreadResolvedState = { resolved };
+        return this.http.put<CommentThread[]>(`${this.resourceUrl}/${exerciseId}/review-thread-groups/${groupId}/resolved`, body, { observe: 'response' });
     }
 
     /**
@@ -421,6 +465,21 @@ export class ExerciseReviewCommentService {
             return threads;
         }
         return threads.map((thread) => (thread.id === updatedThread.id ? updatedThread : thread));
+    }
+
+    /**
+     * Replaces multiple threads in the list with updated server versions.
+     *
+     * @param threads The current list of threads.
+     * @param updatedThreads Updated threads returned by the server.
+     * @returns The updated thread list.
+     */
+    replaceThreadsInThreads(threads: CommentThread[], updatedThreads: CommentThread[]): CommentThread[] {
+        if (!updatedThreads.length) {
+            return threads;
+        }
+        const updatedById = new Map(updatedThreads.filter((thread) => thread.id !== undefined).map((thread) => [thread.id, thread]));
+        return threads.map((thread) => updatedById.get(thread.id) ?? thread);
     }
 
     /**

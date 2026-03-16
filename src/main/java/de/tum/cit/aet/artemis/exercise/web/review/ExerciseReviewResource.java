@@ -167,6 +167,24 @@ public class ExerciseReviewResource {
     }
 
     /**
+     * PUT /exercises/:exerciseId/review-thread-groups/:groupId/resolved : Update the resolved state of all threads in a group.
+     *
+     * @param exerciseId the exercise id
+     * @param groupId    the group id
+     * @param dto        the resolved state
+     * @return updated group threads
+     */
+    @PutMapping("exercises/{exerciseId}/review-thread-groups/{groupId}/resolved")
+    @EnforceAtLeastEditorInExercise
+    public ResponseEntity<List<CommentThreadDTO>> updateThreadGroupResolvedState(@PathVariable long exerciseId, @PathVariable long groupId,
+            @Valid @NotNull @RequestBody UpdateThreadResolvedStateDTO dto) {
+        log.debug("REST request to update resolved state of thread group {} for exercise {}", groupId, exerciseId);
+        List<CommentThreadDTO> updatedThreads = exerciseReviewService.updateGroupResolvedState(exerciseId, groupId, dto).stream()
+                .map(thread -> new CommentThreadDTO(thread, mapComments(thread))).toList();
+        return ResponseEntity.ok(updatedThreads);
+    }
+
+    /**
      * PUT /exercises/:exerciseId/review-comments/:commentId : Update a user comment's content.
      *
      * @param exerciseId the exercise id
