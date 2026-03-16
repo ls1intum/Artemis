@@ -8,6 +8,7 @@ import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-
 import { DOCUMENT, NgClass } from '@angular/common';
 import { Subscription, filter } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
+import { updateHeaderHeight } from 'app/shared/util/navbar.util';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -161,6 +162,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy, AfterView
         if (height !== this.lastNotificationHeight) {
             this.lastNotificationHeight = height;
             this.renderer.setStyle(this.document.documentElement, '--system-notification-height', `${height}px`, RendererStyleFlags2.DashCase);
+            updateHeaderHeight();
         }
     }
 }
