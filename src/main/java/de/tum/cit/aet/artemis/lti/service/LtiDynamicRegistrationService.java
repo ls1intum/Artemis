@@ -111,16 +111,18 @@ public class LtiDynamicRegistrationService {
             throw new BadRequestAlertException("URL must contain a valid host", "LTI", "invalidUrl");
         }
 
-        InetAddress address;
         try {
-            address = InetAddress.getByName(host);
+            // Use getAllByName to check ALL resolved addresses, not just the first one.
+            // A hostname may resolve to multiple IPs; an attacker could mix public and private addresses.
+            InetAddress[] addresses = InetAddress.getAllByName(host);
+            for (InetAddress address : addresses) {
+                if (isPrivateOrReservedAddress(address)) {
+                    throw new BadRequestAlertException("URLs pointing to internal or loopback addresses are not allowed", "LTI", "invalidUrl");
+                }
+            }
         }
         catch (UnknownHostException e) {
             throw new BadRequestAlertException("URL host could not be resolved", "LTI", "invalidUrl");
-        }
-
-        if (isPrivateOrReservedAddress(address)) {
-            throw new BadRequestAlertException("URLs pointing to internal or loopback addresses are not allowed", "LTI", "invalidUrl");
         }
     }
 
@@ -187,61 +189,6 @@ public class LtiDynamicRegistrationService {
         }
 
         return false;
-    }
-
-    /**
-     * Validates that the given URL is a safe external URL for outbound HTTP requests.
-     * <p>
-     * The URL must:
-     * <ul>
-     *     <li>Use the {@code http} or {@code https} scheme.</li>
-     *     <li>Have a non-null host component.</li>
-     *     <li>Resolve to at least one IP address that is not private, loopback, link-local, multicast,
-     *     or otherwise reserved as determined by {@link #isPrivateOrReservedAddress(InetAddress)}.</li>
-     * </ul>
-     *
-     * @param url the URL string to validate
-     * @throws BadRequestAlertException if the URL is invalid or not allowed
-     */
-    private void validateExternalUrl(String url) {
-        if (url == null || url.isBlank()) {
-            throw new BadRequestAlertException("Missing external URL", "LTI", "missingExternalUrl");
-        }
-
-        final URI uri;
-        try {
-            uri = URI.create(url);
-        }
-        catch (IllegalArgumentException ex) {
-            log.warn("Rejected external URL due to invalid syntax: {}", url, ex);
-            throw new BadRequestAlertException("Invalid external URL", "LTI", "invalidExternalUrl");
-        }
-
-        String scheme = uri.getScheme();
-        if (scheme == null || (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme))) {
-            log.warn("Rejected external URL due to unsupported scheme: {}", url);
-            throw new BadRequestAlertException("Unsupported URL scheme", "LTI", "invalidExternalUrl");
-        }
-
-        String host = uri.getHost();
-        if (host == null || host.isBlank()) {
-            log.warn("Rejected external URL due to missing host: {}", url);
-            throw new BadRequestAlertException("URL must include a host", "LTI", "invalidExternalUrl");
-        }
-
-        try {
-            InetAddress[] addresses = InetAddress.getAllByName(host);
-            for (InetAddress address : addresses) {
-                if (isPrivateOrReservedAddress(address)) {
-                    log.warn("Rejected external URL because it resolves to a private or reserved address: {} -> {}", url, address);
-                    throw new BadRequestAlertException("URL points to a disallowed address", "LTI", "invalidExternalUrl");
-                }
-            }
-        }
-        catch (UnknownHostException ex) {
-            log.warn("Rejected external URL because host could not be resolved: {}", url, ex);
-            throw new BadRequestAlertException("Unknown host in external URL", "LTI", "invalidExternalUrl");
-        }
     }
 
     private Lti13PlatformConfiguration getLti13PlatformConfiguration(String openIdConfigurationUrl) {
