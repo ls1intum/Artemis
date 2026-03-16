@@ -39,8 +39,6 @@
     </div>
     @if (course()?.isAtLeastInstructor) {
         <jhi-user-management-dropdown [courseId]="course()?.id" />
-    }
-    @if (course()?.isAtLeastInstructor) {
         <div class="header-actions">
             <button class="header-action-btn" (click)="openImportDialog()">
                 <fa-icon [icon]="faFileImport" />

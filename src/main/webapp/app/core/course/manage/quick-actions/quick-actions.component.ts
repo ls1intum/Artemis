@@ -1,7 +1,7 @@
 import { Component, inject, input, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faRocket, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faBullseye, faChalkboardTeacher, faCode, faFileAlt, faFileImport, faQuestion, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { UserManagementDropdownComponent } from 'app/core/course/manage/user-management-dropdown/user-management-dropdown.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgTemplateOutlet } from '@angular/common';
@@ -184,7 +184,6 @@ export class QuickActionsComponent {
     protected readonly faBullseye = faBullseye;
     protected readonly faUsers = faUsers;
     protected readonly faFileImport = faFileImport;
-    protected readonly faRocket = faRocket;
     protected readonly CourseManagementSection = CourseManagementSection;
     course = input.required<Course>();
     private router = inject(Router);

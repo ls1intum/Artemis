@@ -79,7 +79,7 @@ export class CourseOnboardingComponent implements OnInit {
 
     goToStep(index: number) {
         if (index !== this.activeStep() && !this.isSaving()) {
-            if (!this.validateCurrentStep()) {
+            if (index > this.activeStep() && !this.validateCurrentStep()) {
                 return;
             }
             this.saveAndNavigate(index);

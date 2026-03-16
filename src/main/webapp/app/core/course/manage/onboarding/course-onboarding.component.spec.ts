@@ -394,7 +394,7 @@ describe('CourseOnboardingComponent', () => {
             expect(updateSpy).not.toHaveBeenCalled();
         });
 
-        it('should not navigate via goToStep if validation fails', () => {
+        it('should not navigate forward via goToStep if validation fails', () => {
             const c = comp.course();
             c.startDate = dayjs().add(1, 'day');
             c.endDate = dayjs().subtract(1, 'day');
@@ -402,6 +402,19 @@ describe('CourseOnboardingComponent', () => {
 
             comp.goToStep(2);
             expect(comp.activeStep()).toBe(0);
+        });
+
+        it('should allow backward navigation via goToStep even if validation fails', () => {
+            advanceToStep(3);
+
+            const c = comp.course();
+            c.accuracyOfScores = -1;
+            comp.course.set(c);
+
+            const updateSpy = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: c })));
+            updateSpy.mockClear();
+            comp.goToStep(1);
+            expect(comp.activeStep()).toBe(1);
         });
     });
 
