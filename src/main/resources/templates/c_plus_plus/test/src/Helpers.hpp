@@ -92,6 +92,12 @@ namespace Helpers {
         }
     } // namespace Normalize
 
+    struct StreamGuard {
+        std::ostream& stream;
+        std::streambuf* original;
+        ~StreamGuard() { stream.rdbuf(); }
+    };
+
     /**
      * @brief Executes a function and captures its std::cout output.
      *
@@ -110,13 +116,13 @@ namespace Helpers {
     template<typename Fn, typename... Args>
     std::string GetOutput(Fn&& fn, Args&&... args) {
         std::streambuf* originalCout = std::cout.rdbuf();
+        StreamGuard guard{std::cout, originalCout};
 
         std::ostringstream out;
         std::cout.rdbuf(out.rdbuf());
 
         std::forward<Fn>(fn)(std::forward<Args>(args)...);
 
-        std::cout.rdbuf(originalCout);
         return out.str();
     }
 
@@ -155,6 +161,8 @@ namespace Helpers {
     std::string GetIO(Fn&& fn, Args&&... inputArgs) {
         std::streambuf* originalCout = std::cout.rdbuf();
         std::streambuf* originalCin  = std::cin.rdbuf();
+        StreamGuard coutGuard{std::cout, originalCout};
+        StreamGuard cinGuard{std::cin, originalCin};
 
         std::istringstream in(buildInput(std::forward<Args>(inputArgs)...));
         std::ostringstream out;
@@ -163,9 +171,6 @@ namespace Helpers {
         std::cin.rdbuf(in.rdbuf());
 
         std::forward<Fn>(fn)();
-
-        std::cout.rdbuf(originalCout);
-        std::cin.rdbuf(originalCin);
 
         return out.str();
     }

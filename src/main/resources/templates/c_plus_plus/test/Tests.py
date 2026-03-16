@@ -16,7 +16,7 @@ def main() -> None:
     # Therefore, get all written tests
     test_filenames = {}
     for root, dirs, filenames in os.walk("."):
-        dirs[:] = [d for d in dirs if d not in ['assignment']]
+        dirs[:] = [d for d in dirs if d not in ['assignment', 'build']]
 
         for f in filenames:
             if f.endswith(".cpp") or f.endswith(".c"):
@@ -30,7 +30,7 @@ def main() -> None:
     # And adjust CMakeLists.txt accordingly
     cmake_file = os.path.join('.', "CMakeLists.txt")
     if not os.path.isfile(cmake_file):
-        raise FileNotFoundError(f"CMakeLists.txt not found")
+        raise FileNotFoundError("CMakeLists.txt not found")
 
     with open(cmake_file, "r", encoding="utf-8") as f:
         lines = f.readlines()
@@ -62,7 +62,7 @@ def main() -> None:
                                                   "-DCMAKE_EXE_LINKER_FLAGS=-fsanitize=address"])
     tester.addTest(testConfigure)
 
-    for test_name, test_path_name in test_filenames.items():
+    for test_name, _ in test_filenames.items():
         tester.addTest(TestCompile(buildDir, test_name, requirements=[testConfigure.name], name=f"Compile_{test_name}"))
         tester.addTest(TestCatch2(buildDir, test_name, ["Compile_" + test_name]))
 
