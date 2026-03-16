@@ -24,6 +24,7 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+import { EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
@@ -38,7 +39,7 @@ import {
     NgbNavOutlet,
     NgbTooltip,
 } from '@ng-bootstrap/ng-bootstrap';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorAction, TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
@@ -103,6 +104,7 @@ export enum MarkdownEditorHeight {
 }
 
 interface MarkdownActionsByGroup {
+    style: TextStyleTextEditorAction[];
     standard: TextEditorAction[];
     header: HeadingAction[];
     color?: ColorAction;
@@ -360,6 +362,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
     displayedActions: MarkdownActionsByGroup = {
+        style: [],
         standard: [],
         header: [],
         color: undefined,
@@ -368,6 +371,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
+    readonly showTextStyleActions = signal<boolean>(true);
+    readonly showNonTextStyleActions = signal<boolean>(true);
 
     /**
      * Color mapping from hex codes to CSS class names.
@@ -474,7 +479,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
-            standard: this.filterDisplayedActions(this.defaultActions),
+            style: this.filterDisplayedActions(this.defaultActions).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions).filter((action) => !(action instanceof TextStyleTextEditorAction)),
             header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
@@ -554,8 +560,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        // Set up selection change listener for inline comments/refinement
+
+        if (this.isInCommunication()) {
+            this.showTextStyleActions.set(false);
+        }
+
+        // Set up selection change listener for inline comments/refinement and hiding/showing actions in communication mode
         this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (this.isInCommunication()) {
+                this.updateEditorActionsVisibility(selection);
+            }
             if (selection) {
                 // Get selected text for inline refinement
                 const model = this.monacoEditor.getModel();
@@ -659,6 +673,19 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onTextChanged(event: { text: string; fileName: string }): void {
         this.markdown = event.text;
         this.markdownChange.emit(event.text);
+    }
+
+    /**
+     * Hides actions that are not applicable in the given context, and shows actions that can be used.
+     * @param selection Currently selected text
+     */
+    updateEditorActionsVisibility(selection: EditorRange | undefined): void {
+        const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
+        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+            return;
+        }
+        this.showTextStyleActions.set(!isEmpty);
+        this.showNonTextStyleActions.set(isEmpty);
     }
 
     /**

@@ -18,8 +18,9 @@ import { FormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ButtonDirective } from 'primeng/button';
-import { MenuItem } from 'primeng/api';
+import { ConfirmationService, MenuItem } from 'primeng/api';
 import { Menu, MenuModule } from 'primeng/menu';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faArrowUpRightFromSquare, faEllipsisVertical, faPen, faTrash, faTriangleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
@@ -45,7 +46,7 @@ interface RelatedThreadLocation {
     // Monaco view zones render outside Angular's host tree, so styles must stay global.
     encapsulation: ViewEncapsulation.None,
     standalone: true,
-    imports: [FormsModule, ButtonDirective, MenuModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
+    imports: [FormsModule, ButtonDirective, MenuModule, ConfirmDialogModule, ArtemisTranslatePipe, ArtemisDatePipe, FaIconComponent, MonacoDiffEditorComponent],
 })
 export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     readonly thread = input.required<CommentThread>();
@@ -76,6 +77,8 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
     private readonly translateService = inject(TranslateService);
     private readonly changeDetectorRef = inject(ChangeDetectorRef);
     private readonly reviewCommentService = inject(ExerciseReviewCommentService);
+    private readonly confirmationService = inject(ConfirmationService);
+    readonly deleteCommentDialogKey = computed(() => `review-comment-delete-${this.thread().id}`);
     readonly orderedComments = computed(() => sortCommentsByCreatedDateThenId(this.thread().comments));
     readonly renderedComments = computed(() => {
         return this.orderedComments().map((comment) => ({
@@ -150,7 +153,13 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
      * @param commentId The id of the comment to delete.
      */
     deleteComment(commentId: number): void {
-        this.reviewCommentService.deleteCommentInContext(commentId);
+        this.confirmationService.confirm({
+            key: this.deleteCommentDialogKey(),
+            header: this.translateService.instant('artemisApp.review.deleteCommentConfirmTitle'),
+            message: this.translateService.instant('artemisApp.review.deleteCommentConfirmText'),
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => this.reviewCommentService.deleteCommentInContext(commentId),
+        });
     }
 
     /**
@@ -309,7 +318,9 @@ export class ReviewCommentThreadWidgetComponent implements OnInit, OnDestroy {
             return;
         }
         if (actionId === 'delete') {
-            this.deleteComment(comment.id);
+            if (comment.id !== undefined) {
+                this.deleteComment(comment.id);
+            }
         }
     }
 
