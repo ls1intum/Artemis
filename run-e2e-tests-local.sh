@@ -11,7 +11,7 @@ set -e
 #   --skip-build        Skip building the WAR file (use existing one)
 #   --skip-cleanup      Skip Docker cleanup before running
 #   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
-#   --db <mysql|postgres> Select database for E2E tests (default: mysql)
+#   --db <postgres>       Select database for E2E tests (default: postgres)
 #   --help              Show this help message
 # =============================================================================
 
@@ -43,11 +43,11 @@ while [[ $# -gt 0 ]]; do
             ;;
         --db)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
-                echo -e "${RED}ERROR: --db requires a database value (mysql or postgres)${NC}"
+                echo -e "${RED}ERROR: --db requires a database value (postgres)${NC}"
                 exit 1
             fi
-            if [[ "$2" != "mysql" && "$2" != "postgres" ]]; then
-                echo -e "${RED}ERROR: invalid --db value: $2 (use mysql or postgres)${NC}"
+            if [[ "$2" != "postgres" ]]; then
+                echo -e "${RED}ERROR: invalid --db value: $2 (only postgres is supported)${NC}"
                 exit 1
             fi
             DB_TYPE="$2"
@@ -55,8 +55,8 @@ while [[ $# -gt 0 ]]; do
             ;;
         --db=*)
             DB_TYPE="${1#*=}"
-            if [[ "$DB_TYPE" != "mysql" && "$DB_TYPE" != "postgres" ]]; then
-                echo -e "${RED}ERROR: invalid --db value: $DB_TYPE (use mysql or postgres)${NC}"
+            if [[ "$DB_TYPE" != "postgres" ]]; then
+                echo -e "${RED}ERROR: invalid --db value: $DB_TYPE (only postgres is supported)${NC}"
                 exit 1
             fi
             shift
@@ -107,13 +107,8 @@ fi
 # Step 2: Cleanup
 if [ "$SKIP_CLEANUP" = false ]; then
     echo -e "${BLUE}Step 2: Cleaning Docker environment...${NC}"
-    if [ "$DB_TYPE" = "postgres" ]; then
-        COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
-        DB_VOLUME="artemis-postgres-data"
-    else
-        COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
-        DB_VOLUME="artemis-mysql-data"
-    fi
+    COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
+    DB_VOLUME="artemis-postgres-data"
     cd docker
     docker compose --env-file ../.env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
     cd ..
@@ -127,11 +122,7 @@ fi
 echo -e "${BLUE}Step 3: Running E2E tests...${NC}"
 echo ""
 
-if [ "$DB_TYPE" = "postgres" ]; then
-    CONFIGURATION="postgres-localci"
-else
-    CONFIGURATION="mysql-localci"
-fi
+CONFIGURATION="postgres-localci"
 
 .ci/E2E-tests/execute-locally.sh "$CONFIGURATION" "$TEST_FILTER"
 
