@@ -150,6 +150,7 @@
                 "deleteMessage": "Nachricht löschen",
                 "replyMessage": "Antworten im Thread",
                 "forwardMessage": "Nachricht weiterleiten",
+                "markAsUnread": "Als ungelesen markieren",
                 "deletedContent": "Beitrag wird in {{ progress }} Sekunde(n) gelöscht.",
                 "undoDelete": "Löschen umkehren",
                 "bookmarkPost": "Beitrag speichern",

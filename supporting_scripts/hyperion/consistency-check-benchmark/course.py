@@ -99,7 +99,6 @@ def create_course_request(session: requests.Session) -> requests.Response:
 
     response: requests.Response = session.post(url, data=body, headers=headers)
 
-    # TODO better error handling for course creation: what if error 400 but it s not about existing course?
     if response.status_code == 400:
         logging.error(f"Course with shortName {course_short_name} already exists")
 

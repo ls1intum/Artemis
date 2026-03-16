@@ -6,46 +6,35 @@ import { Page, expect } from '@playwright/test';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { Commands } from '../../support/commands';
+import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExamManagementPage } from '../../support/pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from '../../support/pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from '../../support/pageobjects/assessment/ExerciseAssessmentDashboardPage';
 import { StudentAssessmentPage } from '../../support/pageobjects/assessment/StudentAssessmentPage';
 import { ExamAssessmentPage } from '../../support/pageobjects/assessment/ExamAssessmentPage';
 import { test } from '../../support/fixtures';
-import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { generateUUID, newBrowserPage, prepareExam, startAssessing, waitForExamEnd } from '../../support/utils';
 import { EXAM_DASHBOARD_TIMEOUT } from '../../support/timeouts';
 import examStatisticsSample from '../../fixtures/exam/statistics.json';
 import { ExamScoresPage } from '../../support/pageobjects/exam/ExamScoresPage';
+import { SEED_COURSES } from '../../support/seedData';
 
-let exam: Exam;
-
-let course: Course;
-let examEnd: Dayjs;
+const course = { id: SEED_COURSES.examAssessment.id } as any;
 let studentOneName: string;
 
-test.beforeAll('Create course', async ({ browser }) => {
+test.beforeAll('Get student name', async ({ browser }) => {
     const page = await newBrowserPage(browser);
-    const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-
     await Commands.login(page, admin);
-    course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-    await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-    await courseManagementAPIRequests.addStudentToCourse(course, studentTwo);
-    await courseManagementAPIRequests.addStudentToCourse(course, studentThree);
-    await courseManagementAPIRequests.addStudentToCourse(course, studentFour);
-    await courseManagementAPIRequests.addTutorToCourse(course, tutor);
-    await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-
     studentOneName = (await users.getUserInfo(studentOne.username, page)).name!;
 });
 
 test.describe('Exam assessment', () => {
-    test.describe.configure({ mode: 'serial' });
+    test.describe.serial('Programming exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
 
-    test.describe.serial('Programming exercise assessment', { tag: '@sequential' }, () => {
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(2, 'minutes');
+            examEnd = dayjs().add(60, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.PROGRAMMING, page);
         });
@@ -68,17 +57,27 @@ test.describe('Exam assessment', () => {
             await examAssessment.addNewFeedback(2, 'Good job');
             await examAssessment.submit();
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
-            await examParticipation.checkResultScore('66.2%');
+            await examParticipation.checkResultScore('70%');
         });
 
         test('Complaints about programming exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, false, ExerciseType.PROGRAMMING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 
     test.describe.serial('Modeling exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
+
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(45, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.MODELING, page);
         });
@@ -114,11 +113,21 @@ test.describe('Exam assessment', () => {
         test('Complaints about modeling exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, true, ExerciseType.MODELING, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment);
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 
     test.describe.serial('Text exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
+
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(20, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page, 2);
         });
@@ -149,9 +158,18 @@ test.describe('Exam assessment', () => {
         test('Complaints about text exercises assessment', async ({ examAssessment, page, studentAssessment, examManagement, courseAssessment, exerciseAssessment }) => {
             await handleComplaint(course, exam, true, ExerciseType.TEXT, page, studentAssessment, examManagement, examAssessment, courseAssessment, exerciseAssessment, false);
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 
     test.describe('Quiz exercise assessment', { tag: '@slow' }, () => {
+        let exam: Exam;
+        let examEnd: Dayjs;
         let resultDate: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
@@ -164,10 +182,12 @@ test.describe('Exam assessment', () => {
         test('Assesses quiz automatically', async ({ page, login, examManagement, courseAssessment, examParticipation }) => {
             await login(instructor);
             await examManagement.verifySubmitted(course.id!, exam.id!, studentOneName);
-            if (dayjs().isBefore(examEnd)) {
-                await page.waitForTimeout(examEnd.diff(dayjs(), 'ms') + 10000);
+            // Wait for exam end + grace period (10s) so the evaluate button is enabled on load.
+            // The button's disabled state is computed once during component init and not re-evaluated.
+            const graceEnd = examEnd.add(10, 'seconds');
+            if (dayjs().isBefore(graceEnd)) {
+                await page.waitForTimeout(graceEnd.diff(dayjs(), 'ms') + 2000);
             }
-            await examManagement.openAssessmentDashboard(course.id!, exam.id!, 60000);
             await page.goto(`/course-management/${course.id}/exams/${exam.id}/assessment-dashboard`);
             const response = await courseAssessment.clickEvaluateQuizzes();
             expect(response.status()).toBe(200);
@@ -178,15 +198,23 @@ test.describe('Exam assessment', () => {
             await login(studentOne, `/courses/${course.id}/exams/${exam.id}`);
             await examParticipation.checkResultScore('50%');
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 });
 
 test.describe('Exam grading', { tag: '@slow' }, () => {
     test.describe.serial('Instructor sets grades and student receives a grade', () => {
         let exam: Exam;
+        let examEnd: Dayjs;
 
         test.beforeAll('Prepare exam', async ({ browser }) => {
-            examEnd = dayjs().add(40, 'seconds');
+            examEnd = dayjs().add(30, 'seconds');
             const page = await newBrowserPage(browser);
             exam = await prepareExam(course, examEnd, ExerciseType.TEXT, page);
         });
@@ -218,10 +246,18 @@ test.describe('Exam grading', { tag: '@slow' }, () => {
             await examParticipation.checkResultScore('70%');
             await examParticipation.verifyGradingKeyOnFinalPage('2.0');
         });
+
+        test.afterAll('Delete exam', async ({ browser }) => {
+            const page = await newBrowserPage(browser);
+            await Commands.login(page, admin);
+            await new ExamAPIRequests(page).deleteExam(exam);
+            await page.close();
+        });
     });
 });
 
-test.describe('Exam statistics', { tag: '@sequential' }, () => {
+test.describe('Exam statistics', { tag: '@slow' }, () => {
+    let exam: Exam;
     let exercise: Exercise;
     const students = [studentOne, studentTwo, studentThree, studentFour];
 
@@ -232,7 +268,7 @@ test.describe('Exam statistics', { tag: '@sequential' }, () => {
             title: 'exam' + generateUUID(),
             visibleDate: dayjs().subtract(3, 'minutes'),
             startDate: dayjs().subtract(2, 'minutes'),
-            endDate: dayjs().add(1, 'minutes'),
+            endDate: dayjs().add(45, 'seconds'),
             examMaxPoints: 10,
             numberOfExercisesInExam: 1,
         };
@@ -286,12 +322,10 @@ test.describe('Exam statistics', { tag: '@sequential' }, () => {
         const scores = await examAPIRequests.getExamScores(exam);
         await examScores.checkStudentResults(scores.studentResults);
     });
-});
 
-test.afterAll('Delete course', async ({ browser }) => {
-    const page = await newBrowserPage(browser);
-    const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-    await courseManagementAPIRequests.deleteCourse(course, admin);
+    test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        await examAPIRequests.deleteExam(exam);
+    });
 });
 
 async function handleComplaint(

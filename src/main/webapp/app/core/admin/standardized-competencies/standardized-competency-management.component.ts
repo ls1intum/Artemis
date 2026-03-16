@@ -24,8 +24,7 @@ import { AdminStandardizedCompetencyService } from 'app/core/admin/standardized-
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Subject, forkJoin, map } from 'rxjs';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { getIcon } from 'app/atlas/shared/entities/competency.model';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -45,6 +44,7 @@ import { StandardizedCompetencyFilterPageComponent } from 'app/atlas/shared/stan
 import { StandardizedCompetencyService } from 'app/atlas/shared/standardized-competencies/standardized-competency.service';
 import { AdminTitleBarTitleDirective } from 'app/core/admin/shared/admin-title-bar-title.directive';
 import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title-bar-actions.directive';
+import { DialogModule } from 'primeng/dialog';
 
 @Component({
     selector: 'jhi-standardized-competency-management',
@@ -67,13 +67,13 @@ import { AdminTitleBarActionsDirective } from 'app/core/admin/shared/admin-title
         ArtemisTranslatePipe,
         AdminTitleBarTitleDirective,
         AdminTitleBarActionsDirective,
+        DialogModule,
     ],
 })
 export class StandardizedCompetencyManagementComponent extends StandardizedCompetencyFilterPageComponent implements OnInit, AfterViewInit, OnDestroy, ComponentCanDeactivate {
     private adminStandardizedCompetencyService = inject(AdminStandardizedCompetencyService);
     private standardizedCompetencyService = inject(StandardizedCompetencyService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
     private translateService = inject(TranslateService);
 
     /** Reference to the knowledge area tree component for tree control */
@@ -100,6 +100,13 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     /** width of the detail panel in px, persisted across panel switches */
     protected readonly detailPanelWidth = signal<number | undefined>(undefined);
+  
+    // Cancel confirmation dialog state (replaces NgbModal + ConfirmAutofocusModalComponent)
+    protected readonly confirmDialogVisible = signal(false);
+    protected readonly confirmDialogTitle = signal('');
+    protected readonly confirmDialogTextKey = signal('');
+    protected readonly confirmDialogTextParams = signal<Record<string, string>>({});
+    private confirmDialogCallback: () => void = () => {};
 
     // Icons
     protected readonly faChevronRight = faChevronRight;
@@ -493,11 +500,20 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
     // utility functions
 
     private openCancelModal(title: string, entityType: 'standardizedCompetency' | 'knowledgeArea', callback: () => void) {
-        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
-        modalRef.componentInstance.textIsMarkdown = true;
-        modalRef.componentInstance.title = `artemisApp.${entityType}.manage.cancelModal.title`;
-        modalRef.componentInstance.text = this.translateService.instant(`artemisApp.${entityType}.manage.cancelModal.text`, { title: title });
-        modalRef.result.then(() => callback());
+        this.confirmDialogTitle.set(`artemisApp.${entityType}.manage.cancelModal.title`);
+        this.confirmDialogTextKey.set(`artemisApp.${entityType}.manage.cancelModal.text`);
+        this.confirmDialogTextParams.set({ title: title });
+        this.confirmDialogCallback = callback;
+        this.confirmDialogVisible.set(true);
+    }
+
+    protected onConfirmDialogConfirm(): void {
+        this.confirmDialogVisible.set(false);
+        this.confirmDialogCallback();
+    }
+
+    protected onConfirmDialogCancel(): void {
+        this.confirmDialogVisible.set(false);
     }
 
     private refreshTree() {
