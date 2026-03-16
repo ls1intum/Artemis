@@ -10,6 +10,7 @@ Rules:
 - Generate a concise, meaningful title for each question.
 - Keep wording clear, concise, and unambiguous.
 - Ensure answer options are plausible and non-duplicated.
+- The question text must not hint at or reveal the correct answer.
 - Titles must be in the requested language, short (ideally 3-10 words), and unique within the response.
 - For `single-choice`: exactly one option must be correct.
 - For `multiple-choice`: at least one option must be correct.
