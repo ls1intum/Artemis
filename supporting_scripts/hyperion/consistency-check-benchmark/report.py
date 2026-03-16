@@ -54,6 +54,7 @@ def summarize_report(report_md_path: str, summary_md_path: str, version: str) ->
 
     :param str report_md_path: The path to the report markdown file
     :param str summary_md_path: The path to the summary markdown file
+    :param str version: The dataset version identifier for reference row lookup
     """
     if not os.path.exists(report_md_path):
         logging.error(f"Step 13 failed: Report file not found at {report_md_path}. Execute Step 13 in report.py")

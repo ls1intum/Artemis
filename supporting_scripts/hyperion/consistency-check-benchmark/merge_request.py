@@ -9,6 +9,32 @@ from utils import PECV_BENCH_BRANCH, DATASET_VERSION
 from exercises import get_pecv_bench_dir
 
 
+def _stage_results_and_runs(pecv_bench_dir: str, approach_id: str) -> None:
+    """
+    Stage the results and (if present) runs directories for a given approach.
+
+    :param str pecv_bench_dir: The root directory of the pecv-bench repository.
+    :param str approach_id: The approach identifier used as the folder name.
+    :rtype: None
+    """
+    subprocess.run(
+        ["git", "add", os.path.join("results", approach_id)],
+        cwd=pecv_bench_dir,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    runs_dir = os.path.join("runs", approach_id)
+    if os.path.isdir(os.path.join(pecv_bench_dir, runs_dir)):
+        subprocess.run(
+            ["git", "add", runs_dir],
+            cwd=pecv_bench_dir,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+
 def check_gh_cli_installed() -> None:
     """
     Checks if the GitHub CLI (gh) is installed and authenticated.
@@ -93,22 +119,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
     try:
         # Stage results and runs folders BEFORE switching branches so git doesn't
         # refuse to checkout due to "untracked files would be overwritten".
-        subprocess.run(
-            ["git", "add", os.path.join("results", approach_id)],
-            cwd=pecv_bench_dir,
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-        runs_dir = os.path.join("runs", approach_id)
-        if os.path.isdir(os.path.join(pecv_bench_dir, runs_dir)):
-            subprocess.run(
-                ["git", "add", runs_dir],
-                cwd=pecv_bench_dir,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
+        _stage_results_and_runs(pecv_bench_dir, approach_id)
 
         # Check if the remote branch already exists (e.g. from a previous version's run)
         remote_check = subprocess.run(
@@ -138,22 +149,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
             )
             logging.info(f"Checked out existing remote branch '{branch_name}'.")
             # Re-stage results after checkout (checkout cleared the index)
-            subprocess.run(
-                ["git", "add", os.path.join("results", approach_id)],
-                cwd=pecv_bench_dir,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            runs_dir = os.path.join("runs", approach_id)
-            if os.path.isdir(os.path.join(pecv_bench_dir, runs_dir)):
-                subprocess.run(
-                    ["git", "add", runs_dir],
-                    cwd=pecv_bench_dir,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                )
+            _stage_results_and_runs(pecv_bench_dir, approach_id)
         else:
             # Base the new branch on origin/{PECV_BENCH_BRANCH} so the PR diff
             # only shows this approach's results, not other locally committed approaches.
@@ -173,22 +169,7 @@ def create_results_pull_request(pecv_bench_dir: str, approach_id: str) -> None:
             )
             logging.info(f"Created branch '{branch_name}' in pecv-bench.")
             # Re-stage results after checkout (checkout cleared the index)
-            subprocess.run(
-                ["git", "add", os.path.join("results", approach_id)],
-                cwd=pecv_bench_dir,
-                check=True,
-                capture_output=True,
-                text=True,
-            )
-            runs_dir = os.path.join("runs", approach_id)
-            if os.path.isdir(os.path.join(pecv_bench_dir, runs_dir)):
-                subprocess.run(
-                    ["git", "add", runs_dir],
-                    cwd=pecv_bench_dir,
-                    check=True,
-                    capture_output=True,
-                    text=True,
-                )
+            _stage_results_and_runs(pecv_bench_dir, approach_id)
 
         # Commit (skip if nothing new to commit)
         status = subprocess.run(

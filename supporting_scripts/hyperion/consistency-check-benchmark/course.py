@@ -231,7 +231,7 @@ def get_exercise_ids_request(session: requests.Session, course_id: int) -> Dict[
         transformed = __transform_exercise_json_keys(exercises_map)
         logging.info(f"Retrieved {len(transformed)} programming exercise(s) for the course.")
         if not transformed:
-            logging.error("Step 11 failed: No exercise IDs returned — ensure exercises are imported via Steps 9–10 in exercises.py, then execute Step 11")
+            logging.error("Step 11 failed: No exercise IDs returned - ensure exercises are imported via Steps 9-10 in exercises.py, then execute Step 11")
             sys.exit(1)
         return transformed
 

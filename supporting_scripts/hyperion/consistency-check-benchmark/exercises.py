@@ -303,7 +303,7 @@ def create_exercise_variants(version: str, course: str, exercise: str, pecv_benc
         from cli.utils import ExerciseIdentifier
         logging.info("Successfully imported VariantManager and ExerciseIdentifier from pecv-bench.")
     except ImportError as e:
-        logging.error(f"Step 4 failed: Failed to import VariantManager and ExerciseIdentifier from pecv-bench.")
+        logging.error("Step 4 failed: Failed to import VariantManager and ExerciseIdentifier from pecv-bench.")
         logging.error("Execute Step 3 in exercises.py to install dependencies, then execute Step 4")
         raise e
 
@@ -510,7 +510,7 @@ def convert_variant_to_zip(pecv_bench_dir: str, version: str, course: str, exerc
 
 def convert_version_variants_to_zip(course_id: int) -> None:
     """
-    Converts all exercise variants for specific VERSION defined in config.ini/COURSE_EXERCISES and VERISON into ZIP files.
+    Converts all exercise variants for specific VERSION defined in config.ini/COURSE_EXERCISES and VERSION into ZIP files.
 
     Iterates over all courses and exercises in the current DATASET_VERSION,
     retrieves the course ID from the server, and calls :func:`convert_variant_to_zip`
@@ -728,7 +728,7 @@ if __name__ == "__main__":
 
 
     # ======= PART 2 ================
-    # NOTE: Steps 9–10 require a session and course id — always use Steps 5–6 and 8 together with them.
+    # NOTE: Steps 9-10 require a session and course id - always use Steps 5-6 and 8 together with them.
 
     # logging.info("Step 5: Creating session")
     # session = requests.Session()
@@ -738,7 +738,7 @@ if __name__ == "__main__":
     # course_id = get_course_id_request(session=session)
 
     # logging.info("Step 9: Converting variants to zip files")
-    # convert_version_varianzs_to_zip(course_id=course_id)
+    # convert_version_variants_to_zip(course_id=course_id)
 
     # logging.info("Step 10: Importing exercise variants")
     # import_exercise_variants(session=session, course_id=course_id)

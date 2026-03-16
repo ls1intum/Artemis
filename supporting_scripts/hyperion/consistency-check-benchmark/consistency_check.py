@@ -265,7 +265,7 @@ def consistency_check_request(session: requests.Session, server_url: str, exerci
 
 if __name__ == "__main__":
     # This file can be executed independently
-    # NOTE: Steps 11–12 require a session and course id — always use Steps 5–6 and 8 together with them.
+    # NOTE: Steps 11–12 require a session and course id - always use Steps 5-6 and 8 together with them.
 
     logging.info("Step 5: Creating session")
     session = requests.Session()
