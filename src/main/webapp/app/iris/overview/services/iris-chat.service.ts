@@ -574,6 +574,8 @@ export class IrisChatService implements OnDestroy {
         this.sessionCreationIdentifier = newIdentifier;
         if (isDifferent) {
             this.close();
+            this.currentChatModeSubject.next(mode);
+            this.currentRelatedEntityIdSubject.next(id);
             if (this.sessionCreationIdentifier) {
                 this.start(forceNew);
             }
