@@ -16,6 +16,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { Renderer2, RendererStyleFlags2 } from '@angular/core';
 import { CLOSED_NOTIFICATION_IDS_STORAGE_KEY, SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/core/notification/system-notification/system-notification.component';
 import { SystemNotificationService } from 'app/core/notification/system-notification/system-notification.service';
+import * as navbarUtil from 'app/shared/util/navbar.util';
 
 describe('System Notification Component', () => {
     setupTestBed({ zoneless: true });
@@ -360,6 +361,45 @@ describe('System Notification Component', () => {
             // The height changed (from simulated 50 to actual 0 in jsdom), so setStyle should be called
             const lastCall = setStyleSpy.mock.calls.filter((call) => call[1] === '--system-notification-height').pop();
             expect(lastCall).toEqual([document.documentElement, '--system-notification-height', '0px', RendererStyleFlags2.DashCase]);
+
+            vi.useRealTimers();
+        });
+
+        it('should call updateHeaderHeight when notification height changes', () => {
+            vi.useFakeTimers();
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+
+            const updateHeaderHeightSpy = vi.spyOn(navbarUtil, 'updateHeaderHeight').mockImplementation(() => {});
+
+            // Simulate a previous height that differs from the actual element height (0 in jsdom)
+            (systemNotificationComponent as any).lastNotificationHeight = 40;
+
+            systemNotificationComponentFixture.detectChanges();
+            vi.advanceTimersByTime(500);
+
+            // updateHeaderHeight should have been called because height changed (40 -> 0)
+            expect(updateHeaderHeightSpy).toHaveBeenCalled();
+
+            vi.useRealTimers();
+        });
+
+        it('should not call updateHeaderHeight when notification height has not changed', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+
+            const updateHeaderHeightSpy = vi.spyOn(navbarUtil, 'updateHeaderHeight').mockImplementation(() => {});
+
+            // First detectChanges triggers ngOnInit + ngAfterViewChecked
+            systemNotificationComponentFixture.detectChanges();
+            vi.advanceTimersByTime(500);
+            updateHeaderHeightSpy.mockClear();
+
+            // Trigger another change detection cycle — height hasn't changed, so updateHeaderHeight should NOT be called
+            systemNotificationComponentFixture.detectChanges();
+            systemNotificationComponent.ngAfterViewChecked();
+
+            expect(updateHeaderHeightSpy).not.toHaveBeenCalled();
 
             vi.useRealTimers();
         });
