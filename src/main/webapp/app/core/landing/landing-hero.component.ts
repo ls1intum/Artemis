@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
 
 @Component({
     selector: 'jhi-landing-hero',
     standalone: true,
-    imports: [TranslateDirective, VisibleOnScrollDirective],
+    imports: [TranslateDirective, ArtemisTranslatePipe, VisibleOnScrollDirective],
     template: `
         <section class="hero-section">
             <main class="hero-main" jhiVisibleOnScroll [threshold]="0.05">
@@ -35,7 +36,7 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
                 </div>
 
                 <div class="hero-screenshot">
-                    <img src="content/images/landing/screen.png" alt="Artemis Platform Screenshot" class="screenshot-img" />
+                    <img src="content/images/landing/screen.png" [alt]="'landing.hero.screenshotAlt' | artemisTranslate" class="screenshot-img" />
                 </div>
             </main>
 
@@ -43,7 +44,7 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
                 <h2 class="used-by" jhiTranslate="landing.hero.usedBy"></h2>
                 <div class="logos-grid">
                     @for (logo of universityLogos; track logo.name) {
-                        <a [href]="logo.href" [title]="logo.name" class="logo-item" target="_blank" rel="noopener">
+                        <a [href]="logo.href" [title]="logo.name" class="logo-item" target="_blank" rel="noopener noreferrer">
                             <img [src]="'content/images/landing/user-logos/' + logo.file" [alt]="logo.name" class="university-logo" loading="lazy" />
                         </a>
                     }
@@ -263,6 +264,15 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
             .hero-title {
                 font-size: 4.5rem;
                 letter-spacing: -0.05em;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .hero-main,
+            .university-logos {
+                transition: none;
+                opacity: 1;
+                transform: none;
             }
         }
     `,

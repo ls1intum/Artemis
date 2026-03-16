@@ -90,7 +90,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                             <a
                                 href="https://docs.artemis.tum.de/user/student-guides/intro"
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 class="mobile-link mobile-doc-item"
                                 (click)="closeMenu()"
                                 jhiTranslate="landing.navbar.docStudent"
@@ -98,7 +98,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                             <a
                                 href="https://docs.artemis.tum.de/user/instructor-guides/intro"
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 class="mobile-link mobile-doc-item"
                                 (click)="closeMenu()"
                                 jhiTranslate="landing.navbar.docInstructor"
@@ -106,7 +106,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                             <a
                                 href="https://docs.artemis.tum.de/admin/intro"
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 class="mobile-link mobile-doc-item"
                                 (click)="closeMenu()"
                                 jhiTranslate="landing.navbar.docAdmin"
@@ -114,7 +114,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                             <a
                                 href="https://docs.artemis.tum.de/dev/intro"
                                 target="_blank"
-                                rel="noopener"
+                                rel="noopener noreferrer"
                                 class="mobile-link mobile-doc-item"
                                 (click)="closeMenu()"
                                 jhiTranslate="landing.navbar.docDeveloper"
@@ -126,7 +126,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
                         <span class="lang-sep">/</span>
                         <button class="lang-btn" [class.active]="!isEnglish()" (click)="changeLanguage('de')">DE</button>
                     </div>
-                    <button class="mobile-link sign-in" (click)="navigateToSignIn(); closeMenu()" jhiTranslate="landing.navbar.signIn"></button>
+                    <button type="button" class="mobile-link sign-in" (click)="navigateToSignIn(); closeMenu()" jhiTranslate="landing.navbar.signIn"></button>
                 </div>
             }
         </nav>

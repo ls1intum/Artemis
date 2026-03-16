@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -37,7 +37,7 @@ import { ILLUSTRATION_COLORS, LANGUAGE_ICONS_RAW, LandingFeatureSection, Languag
                             <img [src]="section().imageSrc!" [alt]="section().imageAltKey! | artemisTranslate" loading="lazy" />
                         </div>
                     } @else {
-                        <div class="illustration-card" [style.--glow-color]="glowColor" [attr.data-feature]="section().id" aria-hidden="true">
+                        <div class="illustration-card" [style.--glow-color]="glowColor()" [attr.data-feature]="section().id" aria-hidden="true">
                             <div class="illustration-glow"></div>
                             <div class="illustration-grid"></div>
                             <div class="illustration-icon" [innerHTML]="section().illustrationIcon"></div>
@@ -1152,7 +1152,5 @@ export class LandingFeatureSectionComponent {
         icon: this.sanitizer.bypassSecurityTrustHtml(lang.svg),
     }));
 
-    get glowColor(): string {
-        return ILLUSTRATION_COLORS[this.section().id] ?? '#3b82f6';
-    }
+    readonly glowColor = computed(() => ILLUSTRATION_COLORS[this.section().id] ?? '#3b82f6');
 }

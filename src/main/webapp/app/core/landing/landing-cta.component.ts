@@ -112,6 +112,14 @@ import { VisibleOnScrollDirective } from './visible-on-scroll.directive';
                 line-height: 1.75rem;
             }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+            .cta-card {
+                transition: none;
+                opacity: 1;
+                transform: none;
+            }
+        }
     `,
 })
 export class LandingCtaComponent {}
