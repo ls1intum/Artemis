@@ -30,6 +30,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
     private viewportScrollSubscription: Subscription | undefined = undefined;
+    private loadFirstPageSubscription: Subscription | undefined = undefined;
     private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
@@ -71,6 +72,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     }
 
     ngOnDestroy(): void {
+        this.loadFirstPageSubscription?.unsubscribe();
         this.closePanel();
     }
 
@@ -211,22 +213,27 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     }
 
     private loadFirstPage(trimmedSearchString: string) {
+        this.loadFirstPageSubscription?.unsubscribe();
         this.resetSuggestedStudentsState();
 
         this.firstSuggestedStudentsPageLoading.set(true);
 
-        this.tutorialGroupsService.getUnregisteredStudentDTOs(this.courseId(), this.tutorialGroupId(), trimmedSearchString, 0, this.PAGE_SIZE).subscribe({
-            next: (page) => {
-                this.suggestedStudents.set(page);
-                this.nextSuggestedStudentsPageIndex.set(1);
-                this.hasMorePages.set(page.length === this.PAGE_SIZE);
-                this.firstSuggestedStudentsPageLoading.set(false);
-            },
-            error: () => {
-                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
-                this.firstSuggestedStudentsPageLoading.set(false);
-            },
-        });
+        this.loadFirstPageSubscription = this.tutorialGroupsService
+            .getUnregisteredStudentDTOs(this.courseId(), this.tutorialGroupId(), trimmedSearchString, 0, this.PAGE_SIZE)
+            .subscribe({
+                next: (page) => {
+                    this.suggestedStudents.set(page);
+                    this.nextSuggestedStudentsPageIndex.set(1);
+                    this.hasMorePages.set(page.length === this.PAGE_SIZE);
+                    this.firstSuggestedStudentsPageLoading.set(false);
+                    this.loadFirstPageSubscription = undefined;
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.registerSearchBar.fetchSuggestionsError');
+                    this.firstSuggestedStudentsPageLoading.set(false);
+                    this.loadFirstPageSubscription = undefined;
+                },
+            });
     }
 
     private loadNextPage() {
