@@ -106,6 +106,10 @@ export class CourseRegistrationComponent implements OnInit {
                 if (sort.length === 2) {
                     this.predicate = sort[0];
                     this.ascending = sort[1] === ASC;
+                } else {
+                    // Invalid format - use defaults
+                    this.predicate = 'title';
+                    this.ascending = true;
                 }
             } else {
                 this.predicate = 'title';
