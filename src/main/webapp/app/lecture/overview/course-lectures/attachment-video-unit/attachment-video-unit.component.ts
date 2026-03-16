@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -48,6 +48,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
 
+    targetTimestamp = input<number | undefined>(undefined);
+
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
@@ -61,6 +63,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Return the URL of the video source
      */
     readonly videoUrl = computed(() => this.computeVideoUrl());
+    readonly videoUrlWithTimestamp = computed(() => this.appendTimestamp(this.videoUrl(), this.targetTimestamp()));
 
     /**
      * Computes the video URL based on the video source.
@@ -83,6 +86,40 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return undefined;
+    }
+
+    private appendTimestamp(url: string | undefined, timestamp: number | undefined): string | undefined {
+        if (!url) {
+            return undefined;
+        }
+
+        const normalizedTimestamp = this.normalizeTimestamp(timestamp);
+        if (normalizedTimestamp === undefined) {
+            return url;
+        }
+
+        try {
+            const urlObj = new URL(url, window.location.origin);
+            const parsed = urlParser.parse(url);
+            if (parsed?.provider === 'youtube') {
+                urlObj.searchParams.set('start', String(normalizedTimestamp));
+            } else if (parsed?.provider === 'vimeo') {
+                urlObj.hash = `t=${normalizedTimestamp}s`;
+            } else {
+                urlObj.searchParams.set('t', String(normalizedTimestamp));
+            }
+            return urlObj.toString();
+        } catch {
+            const separator = url.includes('?') ? '&' : '?';
+            return `${url}${separator}t=${normalizedTimestamp}`;
+        }
+    }
+
+    private normalizeTimestamp(timestamp: number | undefined): number | undefined {
+        if (timestamp === undefined || !Number.isFinite(timestamp) || timestamp < 0) {
+            return undefined;
+        }
+        return Math.floor(timestamp);
     }
 
     override toggleCollapse(isCollapsed: boolean): void {
