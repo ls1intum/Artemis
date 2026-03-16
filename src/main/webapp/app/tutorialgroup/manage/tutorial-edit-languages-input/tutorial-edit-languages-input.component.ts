@@ -98,9 +98,9 @@ export class TutorialEditLanguagesInputComponent implements OnDestroy {
 
     onKeyDown(event: KeyboardEvent) {
         if (event.key === 'Enter') {
+            event.preventDefault();
             const suggestionIndex = this.suggestionHighlightIndex();
             if (suggestionIndex !== undefined) {
-                event.preventDefault();
                 this.selectSuggestedLanguage(suggestionIndex);
             }
             this.closePanel();
