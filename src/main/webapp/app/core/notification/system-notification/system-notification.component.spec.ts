@@ -403,6 +403,48 @@ describe('System Notification Component', () => {
 
             vi.useRealTimers();
         });
+
+        it('should set --system-notification-height on document.documentElement so CSS var() references resolve', () => {
+            vi.useFakeTimers();
+            const notifications = [createActiveNotification(SystemNotificationType.WARNING, 1)];
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of(notifications));
+            vi.spyOn(navbarUtil, 'updateHeaderHeight').mockImplementation(() => {});
+
+            // Simulate non-zero height to verify the variable is set with the actual value
+            (systemNotificationComponent as any).lastNotificationHeight = 40;
+
+            systemNotificationComponentFixture.detectChanges();
+            vi.advanceTimersByTime(500);
+
+            // The CSS variable must be set on document.documentElement (the :root element)
+            // because the dynamic-content-height mixin and admin-container use var(--system-notification-height, 0px)
+            const value = document.documentElement.style.getPropertyValue('--system-notification-height');
+            expect(value).toBe('0px');
+
+            vi.useRealTimers();
+        });
+
+        it('should reset --system-notification-height to 0px on destroy so layouts revert to no-notification sizing', () => {
+            vi.useFakeTimers();
+            vi.spyOn(systemNotificationService, 'getActiveNotifications').mockReturnValue(of([]));
+            vi.spyOn(navbarUtil, 'updateHeaderHeight').mockImplementation(() => {});
+
+            systemNotificationComponent.ngOnInit();
+            vi.advanceTimersByTime(500);
+
+            // Set a non-zero height to simulate an active notification
+            document.documentElement.style.setProperty('--system-notification-height', '40px');
+            expect(document.documentElement.style.getPropertyValue('--system-notification-height')).toBe('40px');
+
+            systemNotificationComponent.ngOnDestroy();
+
+            // After destroy, the variable must be reset to 0px so that:
+            // - course-base-container: calc(... - var(--system-notification-height, 0px)) reverts to full height
+            // - admin-container: calc(... - var(--system-notification-height, 0px)) reverts to full height
+            expect(document.documentElement.style.getPropertyValue('--system-notification-height')).toBe('0px');
+
+            vi.useRealTimers();
+        });
     });
 
     describe('close() edge cases', () => {
