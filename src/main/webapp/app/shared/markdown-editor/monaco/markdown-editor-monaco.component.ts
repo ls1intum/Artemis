@@ -750,6 +750,16 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
+     * Called when a nav tab is shown. Adjusts editor dimensions and focuses the editor if the edit tab is active.
+     */
+    onTabShown(): void {
+        if (this.inEditMode) {
+            this.adjustEditorDimensions();
+            this.monacoEditor.focus();
+        }
+    }
+
+    /**
      * Called when the user changes the active tab. If the preview tab is selected, emits the onPreviewSelect event.
      * @param event The event that contains the new active tab.
      */
@@ -772,18 +782,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         // Parse the markdown when switching away from the edit tab or from visual to preview mode, as the visual mode may make changes to the markdown.
         if (event.activeId === this.TAB_EDIT || (event.activeId === this.TAB_VISUAL && this.inPreviewMode)) {
             this.parseMarkdown();
-        }
-    }
-
-    /**
-     * Called after the NgbNav tab pane transition completes (the (shown) event).
-     * This is the correct time to re-layout the Monaco editor, because the edit pane is fully visible and DOM measurements are accurate.
-     * @param navId The id of the nav that was just shown.
-     */
-    onNavShown(navId: string) {
-        if (navId === this.TAB_EDIT) {
-            this.adjustEditorDimensions();
-            this.monacoEditor.focus();
         }
     }
 

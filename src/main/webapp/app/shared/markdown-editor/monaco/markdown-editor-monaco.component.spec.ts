@@ -102,17 +102,28 @@ describe('MarkdownEditorMonacoComponent', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
         const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
-        // The (shown) event fires after the NgbNav tab pane transition completes
-        comp.onNavShown(MarkdownEditorMonacoComponent.TAB_EDIT);
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            activeId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
+            preventDefault: jest.fn(),
+        });
+        comp.onTabShown();
         expect(adjustEditorDimensionsSpy).toHaveBeenCalledOnce();
         expect(focusSpy).toHaveBeenCalledOnce();
     });
 
-    it('should not layout when a non-edit tab is shown', () => {
+    it('should not layout or focus the editor when a non-edit tab is shown', () => {
         fixture.detectChanges();
         const adjustEditorDimensionsSpy = jest.spyOn(comp, 'adjustEditorDimensions');
-        comp.onNavShown(MarkdownEditorMonacoComponent.TAB_PREVIEW);
+        const focusSpy = jest.spyOn(comp.monacoEditor, 'focus');
+        comp.onNavChanged({
+            nextId: MarkdownEditorMonacoComponent.TAB_PREVIEW,
+            activeId: MarkdownEditorMonacoComponent.TAB_EDIT,
+            preventDefault: jest.fn(),
+        });
+        comp.onTabShown();
         expect(adjustEditorDimensionsSpy).not.toHaveBeenCalled();
+        expect(focusSpy).not.toHaveBeenCalled();
     });
 
     it('should emit when leaving the visual tab', () => {
