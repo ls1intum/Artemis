@@ -136,7 +136,7 @@
                                 role="button"
                                 tabindex="0"
                                 (keydown.enter)="openAboutIrisModal()"
-                                (keydown.space)="openAboutIrisModal()"
+                                (keydown.space)="$event.preventDefault(); openAboutIrisModal()"
                             >
                                 <fa-icon [icon]="faCircleInfo" />
                                 <span jhiTranslate="artemisApp.iris.chatHistory.aboutIris"></span>
