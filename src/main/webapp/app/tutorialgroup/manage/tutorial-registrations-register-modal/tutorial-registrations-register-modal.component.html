@@ -15,6 +15,7 @@
                 pButton
                 class="p-button-primary p-button-sm"
                 jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.registerModal.registerAllButtonLabel"
+                [disabled]="registerAllButtonDisabled()"
                 (click)="registerAll()"
             ></button>
         </div>
