@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDTO;
 
 @Conditional(TutorialGroupEnabled.class)
@@ -167,7 +167,7 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
     Optional<RawTutorialGroupDTO> getRawTutorialGroupDTO(@Param("tutorialGroupId") long tutorialGroupId, @Param("courseId") long courseId);
 
     @Query("""
-                    SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO(
+                    SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO(
                         student.id,
                         TRIM(CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, ''))),
                         student.imageUrl,
@@ -180,7 +180,7 @@ public interface TutorialGroupRepository extends ArtemisJpaRepository<TutorialGr
                         JOIN registration.student student
                     WHERE tutorialGroup.id = :tutorialGroupId
             """)
-    Set<TutorialGroupRegisteredStudentDTO> getRegisteredStudentsOfTutorialGroup(@Param("tutorialGroupId") long tutorialGroupId);
+    Set<TutorialGroupStudentDTO> getRegisteredStudentsOfTutorialGroup(@Param("tutorialGroupId") long tutorialGroupId);
 
     default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
         return getValueElseThrow(findByIdWithSessions(tutorialGroupId), tutorialGroupId);

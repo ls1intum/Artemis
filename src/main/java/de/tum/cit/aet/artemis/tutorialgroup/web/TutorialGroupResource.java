@@ -59,10 +59,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateAndUpdateTutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisterStudentDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegistrationImportDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupExportDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegistrationsImportDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRegistrationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
@@ -182,9 +183,9 @@ public class TutorialGroupResource {
      * @throws AccessForbiddenException     {@code 403 (Forbidden)} if the requesting user is not part of the course
      * @throws InternalServerErrorException {@code 500 (Internal Server Error)} if no time zone is set for the course
      */
-    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/dto")
+    @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastStudentInCourse
-    public ResponseEntity<TutorialGroupDTO> getTutorialGroupDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
+    public ResponseEntity<TutorialGroupDTO> getTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         Optional<String> timeZoneString = courseRepository.getTimeZoneOfCourseById(courseId);
         if (timeZoneString.isEmpty()) {
@@ -200,7 +201,7 @@ public class TutorialGroupResource {
 
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/schedule")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<TutorialGroupScheduleDTO> getTutorialGroupScheduleDTO(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
+    public ResponseEntity<TutorialGroupScheduleDTO> getTutorialGroupSchedule(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         log.debug("REST request to get tutorial group schedule: {} of course: {}", tutorialGroupId, courseId);
         if (!tutorialGroupRepository.existsByIdAndCourse_Id(tutorialGroupId, courseId)) {
             throw new EntityNotFoundException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
@@ -348,9 +349,9 @@ public class TutorialGroupResource {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-via-login")
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/batch-register")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> registerMultipleStudentsViaLogin(@PathVariable long courseId, @PathVariable long tutorialGroupId, @RequestBody List<String> logins) {
+    public ResponseEntity<Void> batchRegister(@PathVariable long courseId, @PathVariable long tutorialGroupId, @RequestBody List<String> logins) {
         log.debug("REST request to register {} to tutorial group {}", logins, tutorialGroupId);
         var tutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
@@ -395,7 +396,7 @@ public class TutorialGroupResource {
 
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/unregistered-students")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<TutorialGroupRegisteredStudentDTO>> searchUnregisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId,
+    public ResponseEntity<List<TutorialGroupStudentDTO>> searchUnregisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId,
             @RequestParam String loginOrName, @RequestParam int pageIndex, @RequestParam int pageSize) {
         if (!tutorialGroupRepository.existsByIdAndCourse_Id(tutorialGroupId, courseId)) {
             throw new EntityNotFoundException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
@@ -409,7 +410,7 @@ public class TutorialGroupResource {
         }
 
         String studentGroupName = courseRepository.getStudentGroupNameById(courseId);
-        List<TutorialGroupRegisteredStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, studentGroupName, loginOrName,
+        List<TutorialGroupStudentDTO> foundStudents = tutorialGroupRegistrationRepository.searchUnregisteredStudents(tutorialGroupId, studentGroupName, loginOrName,
                 PageRequest.of(pageIndex, pageSize));
 
         return ResponseEntity.ok().body(foundStudents);
@@ -417,7 +418,7 @@ public class TutorialGroupResource {
 
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/registered-students")
     @EnforceAtLeastTutorInCourse
-    public ResponseEntity<Set<TutorialGroupRegisteredStudentDTO>> getRegisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
+    public ResponseEntity<Set<TutorialGroupStudentDTO>> getRegisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
         if (!tutorialGroupRepository.existsByIdAndCourse_Id(tutorialGroupId, courseId)) {
             throw new EntityNotFoundException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
         }
@@ -435,16 +436,16 @@ public class TutorialGroupResource {
      * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
      *         course
      */
-    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple") // TODO: rename to .../import-registrations
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/import-registrations")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<TutorialGroupRegisterStudentDTO>> importRegistrations(@PathVariable long courseId, @PathVariable long tutorialGroupId,
-            @RequestBody List<TutorialGroupRegisterStudentDTO> studentDTOs) {
+    public ResponseEntity<List<TutorialGroupRegistrationsImportDTO>> importRegistrations(@PathVariable long courseId, @PathVariable long tutorialGroupId,
+            @RequestBody List<TutorialGroupRegistrationsImportDTO> studentDTOs) {
         log.debug("REST request to register {} to tutorial group {}", studentDTOs, tutorialGroupId);
         var tutorialGroup = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         checkIfGroupMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
         User user = userRepository.getUser();
 
-        List<TutorialGroupRegisterStudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudentsViaLoginOrRegistrationNumber(tutorialGroup, studentDTOs,
+        List<TutorialGroupRegistrationsImportDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudentsViaLoginOrRegistrationNumber(tutorialGroup, studentDTOs,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION, user);
         return ResponseEntity.ok().body(notFoundStudentDtos);
     }
@@ -458,13 +459,13 @@ public class TutorialGroupResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/import")
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<TutorialGroupRegistrationImportDTO>> importTutorialGroupWithRegistrations(@PathVariable Long courseId,
-            @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {
+    public ResponseEntity<List<TutorialGroupImportDTO>> importTutorialGroupWithRegistrations(@PathVariable Long courseId,
+            @RequestBody @Valid Set<TutorialGroupImportDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
         var courseFromDatabase = this.courseRepository.findByIdElseThrow(courseId);
 
         var registrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
-        var sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupRegistrationImportDTO::title)).toList();
+        var sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupImportDTO::title)).toList();
         return ResponseEntity.ok().body(sortedRegistrations);
     }
 
@@ -508,7 +509,7 @@ public class TutorialGroupResource {
      */
     @GetMapping(value = "courses/{courseId}/tutorial-groups/export/json", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastInstructorInCourse
-    public ResponseEntity<List<TutorialGroupService.TutorialGroupExportDTO>> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
+    public ResponseEntity<List<TutorialGroupExportDTO>> exportTutorialGroupsToJSON(@PathVariable Long courseId, @RequestParam List<String> fields) {
         log.debug("REST request to export TutorialGroups to JSON for course: {}", courseId);
         var exportInformation = tutorialGroupService.exportTutorialGroupInformation(courseId, fields);
         return ResponseEntity.ok().body(exportInformation);

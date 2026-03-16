@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.config.TutorialGroupEnabled;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 
 @Conditional(TutorialGroupEnabled.class)
 @Lazy
@@ -72,7 +72,7 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
     List<TutorialGroupRegistration> findAllByStudentIdWithTutorialGroupAndCourse(@Param("userId") long userId);
 
     @Query("""
-            SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegisteredStudentDTO(
+            SELECT new de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO(
                     student.id,
                     CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, '')),
                     student.imageUrl,
@@ -94,6 +94,6 @@ public interface TutorialGroupRegistrationRepository extends ArtemisJpaRepositor
                 CONCAT(COALESCE(student.firstName, ''), ' ', COALESCE(student.lastName, '')) ASC,
                 student.id ASC
             """)
-    List<TutorialGroupRegisteredStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("studentGroupName") String studentGroupName,
+    List<TutorialGroupStudentDTO> searchUnregisteredStudents(@Param("tutorialGroupId") long tutorialGroupId, @Param("studentGroupName") String studentGroupName,
             @Param("loginOrName") String loginOrName, Pageable pageable);
 }

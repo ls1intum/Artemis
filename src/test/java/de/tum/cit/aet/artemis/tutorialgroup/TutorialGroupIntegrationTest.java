@@ -51,7 +51,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegistrationImportDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupUpdateDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
@@ -650,15 +650,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var freshTitleTwo = "freshTitleTwo";
 
         var existingTitle = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow().getTitle();
-        var regNullStudent = new TutorialGroupRegistrationImportDTO(freshTitleOne, null, null, null, null, null, null);
-        var regBlankStudent = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO("", "", "", "", ""), null, null, null, null, null);
-        var regStudentPropertiesNull = new TutorialGroupRegistrationImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
-        var regExistingTutorialGroup = new TutorialGroupRegistrationImportDTO(existingTitle, null, null, null, null, null, null);
+        var regNullStudent = new TutorialGroupImportDTO(freshTitleOne, null, null, null, null, null, null);
+        var regBlankStudent = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO("", "", "", "", ""), null, null, null, null, null);
+        var regStudentPropertiesNull = new TutorialGroupImportDTO(freshTitleOne, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
+        var regExistingTutorialGroup = new TutorialGroupImportDTO(existingTitle, null, null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(freshTitleOne);
         assertTutorialWithTitleDoesNotExistInDb(freshTitleTwo);
         assertTutorialGroupWithTitleExistsInDb(existingTitle);
 
-        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
         tutorialGroupRegistrations.add(regNullStudent);
         tutorialGroupRegistrations.add(regBlankStudent);
         tutorialGroupRegistrations.add(regExistingTutorialGroup);
@@ -667,7 +667,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
         assertThat(importResult).hasSize(4);
-        var regBlankExpected = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
+        var regBlankExpected = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
         assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, regStudentPropertiesNull);
 
         assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
@@ -701,22 +701,22 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // student 1 from existing group1 to existing group 2
         // + test if identifying just with login works
-        var student1Reg = new TutorialGroupRegistrationImportDTO(group2.getTitle(), new StudentDTO(student1.getLogin(), student1.getFirstName(), student1.getLastName(), "", ""),
-                null, null, null, null, null);
+        var student1Reg = new TutorialGroupImportDTO(group2.getTitle(), new StudentDTO(student1.getLogin(), student1.getFirstName(), student1.getLastName(), "", ""), null, null,
+                null, null, null);
 
         // student 3 to existing group 1
         // + test if identifying just with registration number works
-        var student3Reg = new TutorialGroupRegistrationImportDTO(group1.getTitle(),
+        var student3Reg = new TutorialGroupImportDTO(group1.getTitle(),
                 new StudentDTO("", student3.getFirstName(), student3.getLastName(), student3.getRegistrationNumber(), student3.getEmail()), null, null, null, null, null);
 
         // student 4 to fresh tutorial group
         // + test if identifying with both login and registration number works
-        var student4Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student4), null, null, null, null, null);
+        var student4Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student4), null, null, null, null, null);
 
         // student 2 to fresh tutorial group
-        var student2Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student2), null, null, null, null, null);
+        var student2Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student2), null, null, null, null, null);
 
-        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
         tutorialGroupRegistrations.add(student1Reg);
         tutorialGroupRegistrations.add(student3Reg);
         tutorialGroupRegistrations.add(student4Reg);
@@ -725,8 +725,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         var importResult = sendImportRequest(tutorialGroupRegistrations);
         // then
         assertThat(importResult.size()).isEqualTo(4);
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(true));
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(Objects::isNull);
+        assertThat(importResult.stream().map(TutorialGroupImportDTO::importSuccessful)).allMatch(status -> status.equals(true));
+        assertThat(importResult.stream().map(TutorialGroupImportDTO::error)).allMatch(Objects::isNull);
         assertThat(importResult.stream()).containsExactlyInAnyOrder(student1Reg, student3Reg, student4Reg, student2Reg);
 
         assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student1);
@@ -747,10 +747,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         // given
         var emptyTitle = "";
-        var reg = new TutorialGroupRegistrationImportDTO(emptyTitle, new StudentDTO(student1), null, null, null, null, null);
+        var reg = new TutorialGroupImportDTO(emptyTitle, new StudentDTO(student1), null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
 
-        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
         tutorialGroupRegistrations.add(reg);
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
@@ -769,10 +769,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void importRegistrations_titleButNonExistingStudent_shouldStillCreateTutorialGroupButNoRegistration() throws Exception {
         // given
         var freshTitle = generateRandomTitle();
-        var reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO("notExisting", "firstName", "firstName1", "", ""), null, null, null, null, null);
+        var reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO("notExisting", "firstName", "firstName1", "", ""), null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
 
-        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
         tutorialGroupRegistrations.add(reg);
         // when
         var importResult = sendImportRequest(tutorialGroupRegistrations);
@@ -808,14 +808,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
         assertUserIsNotRegisteredInATutorialGroup(student3);
 
-        var reg1 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1), null, null, null, null, null);
-        var reg2 = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(student1), null, null, null, null, null);
-        var reg3 = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student3), null, null, null, null, null);
-        var reg4 = new TutorialGroupRegistrationImportDTO(freshTitleTwo, new StudentDTO(student3), null, null, null, null, null);
+        var reg1 = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student1), null, null, null, null, null);
+        var reg2 = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(student1), null, null, null, null, null);
+        var reg3 = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student3), null, null, null, null, null);
+        var reg4 = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(student3), null, null, null, null, null);
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
         assertTutorialWithTitleDoesNotExistInDb(freshTitleTwo);
 
-        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
         tutorialGroupRegistrations.add(reg1);
         tutorialGroupRegistrations.add(reg2);
         tutorialGroupRegistrations.add(reg3);
@@ -825,8 +825,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // then
         assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
         assertThat(importResult).hasSize(4);
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
-        assertThat(importResult.stream().map(TutorialGroupRegistrationImportDTO::error)).allMatch(TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS::equals);
+        assertThat(importResult.stream().map(TutorialGroupImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
+        assertThat(importResult.stream().map(TutorialGroupImportDTO::error)).allMatch(TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS::equals);
         assertThat(importResult.stream()).containsExactlyInAnyOrder(reg1, reg2, reg3, reg4);
         // should still be registered in the old tutorial group
         assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
@@ -897,10 +897,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void importRegistrations_withAdditionalHeaders_shouldCreateTutorialGroupWithDetails() throws Exception {
 
         var freshTitle = "freshTitle";
-        var student1Reg = new TutorialGroupRegistrationImportDTO(freshTitle, new StudentDTO(student1), "Main Campus", 30, "German", "Some info", true);
+        var student1Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student1), "Main Campus", 30, "German", "Some info", true);
         assertTutorialWithTitleDoesNotExistInDb(freshTitle);
 
-        var tutorialGroupRegistrations = new ArrayList<TutorialGroupRegistrationImportDTO>();
+        var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
         tutorialGroupRegistrations.add(student1Reg);
 
         var importResult = sendImportRequest(tutorialGroupRegistrations);
@@ -912,9 +912,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertTutorialGroupWithTitleInDB(freshTitle, Set.of(student1), true, "Some info", 30, "Main Campus", "German", instructor1);
     }
 
-    private List<TutorialGroupRegistrationImportDTO> sendImportRequest(List<TutorialGroupRegistrationImportDTO> tutorialGroupRegistrations) throws Exception {
-        return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "/import", tutorialGroupRegistrations, TutorialGroupRegistrationImportDTO.class,
-                HttpStatus.OK);
+    private List<TutorialGroupImportDTO> sendImportRequest(List<TutorialGroupImportDTO> tutorialGroupRegistrations) throws Exception {
+        return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "/import", tutorialGroupRegistrations, TutorialGroupImportDTO.class, HttpStatus.OK);
     }
 
     private void assertTutorialWithTitleDoesNotExistInDb(String title) {
