@@ -111,7 +111,7 @@ jobs:
 
       - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
         id: run-tests-phase1
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
@@ -260,7 +260,7 @@ jobs:
 
       - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
         id: run-tests-phase2
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
@@ -410,9 +410,9 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           test-notice: "Running all tests (infrastructure/config changes detected)"
 
-      - name: Run E2E Playwright tests (MySQL, Local)
+      - name: Run E2E Playwright tests (PostgreSQL, Local)
         id: run-tests-all-pr
-        run: .ci/E2E-tests/execute.sh mysql-localci playwright
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright
         env:
           FAST_TEST_TIMEOUT_SECONDS: 60
 
@@ -546,7 +546,7 @@ jobs:
           workflow-head-sha: ${{ github.event.workflow_run.head_sha }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run E2E Playwright tests (MySQL, Local, Multi-Node)
+      - name: Run E2E Playwright tests (PostgreSQL, Local, Multi-Node)
         id: run-tests-all-non-pr
         run: .ci/E2E-tests/execute.sh multi-node playwright
         env:
