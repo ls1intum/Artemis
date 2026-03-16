@@ -6,6 +6,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -88,7 +89,7 @@ public class ExerciseReviewResource {
         log.debug("REST request to get exercise review threads for exercise {}", exerciseId);
         List<CommentThreadDTO> threads = exerciseReviewService.findThreadsWithCommentsByExerciseId(exerciseId).stream()
                 .sorted(Comparator.comparing(CommentThread::getId, Comparator.nullsLast(Comparator.naturalOrder())))
-                .map(thread -> new CommentThreadDTO(thread, CommentDTO.fromThread(thread))).toList();
+                .map(thread -> new CommentThreadDTO(thread, CommentDTO.fromThread(thread))).collect(Collectors.toUnmodifiableList());
         return ResponseEntity.ok(threads);
     }
 
@@ -105,7 +106,7 @@ public class ExerciseReviewResource {
             @Valid @NotNull @RequestBody CreateCommentThreadGroupDTO createCommentThreadGroupDTO) throws URISyntaxException {
         log.debug("REST request to create exercise review thread group for exercise {}", exerciseId);
         CommentThreadGroup savedGroup = exerciseReviewService.createGroup(exerciseId, createCommentThreadGroupDTO);
-        List<Long> savedThreadIds = savedGroup.getThreads().stream().map(CommentThread::getId).sorted().toList();
+        List<Long> savedThreadIds = savedGroup.getThreads().stream().map(CommentThread::getId).sorted().collect(Collectors.toUnmodifiableList());
         exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.groupUpdated(savedThreadIds, savedGroup.getId()));
         return ResponseEntity.created(new URI("/api/exercise/exercises/" + exerciseId + "/review-thread-groups/" + savedGroup.getId())).body(new CommentThreadGroupDTO(savedGroup));
     }
