@@ -396,6 +396,10 @@
                 "uploadTitle": "Ein Bild hinzufügen"
             },
             "overview": "Übersicht",
+            "quickActions": {
+                "title": "Schnellaktionen",
+                "description": "Kursinhalte und Teilnehmende auf einen Blick verwalten."
+            },
             "onboarding": {
                 "title": "Kurs-Einrichtungsassistent",
                 "subtitle": "Richte deinen Kurs Schritt für Schritt ein. Du kannst die Einstellungen jederzeit später anpassen.",

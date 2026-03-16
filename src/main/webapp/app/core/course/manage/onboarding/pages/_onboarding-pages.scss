@@ -26,6 +26,28 @@
         box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
     }
 
+    .step-hero-action {
+        margin-left: auto;
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.85rem;
+        border: 1px solid var(--bs-border-color);
+        border-radius: 0.5rem;
+        background: var(--bs-body-bg);
+        color: var(--bs-body-color);
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: all 0.2s ease;
+        flex-shrink: 0;
+
+        &:hover {
+            background: var(--bs-tertiary-bg);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+    }
+
     .step-hero-text {
         h4 {
             margin: 0 0 0.15rem;

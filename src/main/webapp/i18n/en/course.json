@@ -396,6 +396,10 @@
                 "uploadTitle": "Add an icon"
             },
             "overview": "Overview",
+            "quickActions": {
+                "title": "Quick Actions",
+                "description": "Manage your course content and participants at a glance."
+            },
             "onboarding": {
                 "title": "Course Setup Wizard",
                 "subtitle": "Let's set up your course step by step. You can adjust settings later at any time.",

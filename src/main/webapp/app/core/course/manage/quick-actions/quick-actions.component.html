@@ -1,5 +1,8 @@
 <div class="quick-actions-header">
     <div class="user-stats">
+        @if (course()?.isAtLeastInstructor) {
+            <jhi-user-management-dropdown [courseId]="course()?.id" />
+        }
         <ng-container
             *ngTemplateOutlet="
                 courseStatItem;
@@ -37,15 +40,6 @@
             "
         />
     </div>
-    @if (course()?.isAtLeastInstructor) {
-        <jhi-user-management-dropdown [courseId]="course()?.id" />
-        <div class="header-actions">
-            <button class="header-action-btn" (click)="openImportDialog()">
-                <fa-icon [icon]="faFileImport" />
-                <span jhiTranslate="artemisApp.course.import.button"></span>
-            </button>
-        </div>
-    }
 </div>
 
 <div class="quick-actions-grid">

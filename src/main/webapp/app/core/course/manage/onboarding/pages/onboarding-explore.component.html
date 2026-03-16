@@ -7,6 +7,12 @@
             <h4 jhiTranslate="artemisApp.course.onboarding.explore.title"></h4>
             <p jhiTranslate="artemisApp.course.onboarding.explore.description"></p>
         </div>
+        @if (showOnboardingLink()) {
+            <a class="step-hero-action" [routerLink]="['/course-management', course().id, 'onboarding']">
+                <fa-icon [icon]="faRocket" class="me-1" />
+                <span jhiTranslate="artemisApp.course.onboarding.actions.restartSetup"></span>
+            </a>
+        }
     </div>
     <div class="step-body">
         <div class="explore-grid">

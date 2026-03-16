@@ -15,14 +15,14 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
         `
             :host {
                 display: block;
-                max-width: 920px;
-                margin: 0 auto;
             }
 
             .explore-grid {
                 display: grid;
                 grid-template-columns: repeat(3, 1fr);
                 gap: 1.25rem;
+                max-width: 920px;
+                margin: 0 auto;
             }
 
             .explore-card {
@@ -128,6 +128,7 @@ export class OnboardingExploreComponent {
     private readonly profileService = inject(ProfileService);
 
     readonly course = input.required<Course>();
+    readonly showOnboardingLink = input(false);
 
     readonly lectureEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_LECTURE);
     readonly atlasEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_ATLAS);
