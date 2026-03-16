@@ -7,10 +7,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -31,11 +36,14 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationAuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.service.ParticipationService;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for retrieving information about participations.
@@ -186,6 +194,32 @@ public class ParticipationRetrievalResource {
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/participations/search : get paginated participation scores for the exercise scores view.
+     *
+     * @param exerciseId the exercise to query
+     * @param search     search parameters including pagination, sorting, search term, filter, and score range
+     * @return a paginated list of ParticipationScoreDTO with pagination headers
+     */
+    @GetMapping("exercises/{exerciseId}/participations/search")
+    @EnforceAtLeastTutor
+    public ResponseEntity<List<ParticipationScoreDTO>> searchParticipations(@PathVariable Long exerciseId, @Valid ParticipationScoreSearchDTO search) {
+        log.debug("REST request to search Participations for Exercise {}", exerciseId);
+
+        Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+        if (exercise.isCourseExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+        }
+        else if (exercise.isExamExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+        }
+
+        Page<ParticipationScoreDTO> page = participationService.findParticipationScoresForExercise(exercise, search);
+
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return ResponseEntity.ok().headers(headers).body(page.getContent());
     }
 
 }

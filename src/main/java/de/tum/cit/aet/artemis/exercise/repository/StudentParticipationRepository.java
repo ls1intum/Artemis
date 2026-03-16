@@ -46,7 +46,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long> {
+public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long>, CustomStudentParticipationRepository {
 
     /**
      * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
@@ -1597,4 +1597,74 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             """)
     List<StudentParticipation> findByStudentIdsAndIndividualExercisesWithEagerLatestSubmissionResultIgnoreTestRuns(@Param("studentIds") Collection<Long> studentIds,
             @Param("exercises") Collection<Exercise> exercises);
+
+    /**
+     * Load participations by their IDs with the latest submission (individual mode).
+     * Used as the data-loading step after the paginated ID query.
+     *
+     * @param ids the participation IDs to load
+     * @return participations with student and latest submission eagerly fetched
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.student
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id IN :ids
+                AND (s.id IS NULL
+                    OR s.id = (
+                        SELECT MAX(s2.id)
+                        FROM Submission s2
+                        WHERE s2.participation = p
+                    ))
+            """)
+    List<StudentParticipation> findByIdsWithLatestSubmission(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Load participations by their IDs with the latest submission (team mode).
+     * Used as the data-loading step after the paginated ID query.
+     *
+     * @param ids the participation IDs to load
+     * @return participations with team, team students, and latest submission eagerly fetched
+     */
+    @Query("""
+            SELECT DISTINCT p
+            FROM StudentParticipation p
+                LEFT JOIN FETCH p.team t
+                LEFT JOIN FETCH t.students
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id IN :ids
+                AND (s.id IS NULL
+                    OR s.id = (
+                        SELECT MAX(s2.id)
+                        FROM Submission s2
+                        WHERE s2.participation = p
+                    ))
+            """)
+    List<StudentParticipation> findByIdsWithLatestSubmissionWithTeamInformation(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Count the number of submissions for each participation identified by the given IDs.
+     *
+     * @param ids the participation IDs to count submissions for
+     * @return tuples of participation id and submission count
+     */
+    @Query("""
+            SELECT p.id, COUNT(s)
+            FROM StudentParticipation p
+                LEFT JOIN p.submissions s
+            WHERE p.id IN :ids
+            GROUP BY p.id
+            """)
+    List<long[]> countSubmissionsPerParticipationByIds(@Param("ids") Collection<Long> ids);
+
+    /**
+     * Get a mapping of participation ids to the number of submissions for the given participation IDs.
+     *
+     * @param ids the participation IDs
+     * @return a map of participation id to submission count
+     */
+    default Map<Long, Integer> countSubmissionsPerParticipationByIdsAsMap(Collection<Long> ids) {
+        return convertListOfCountsIntoMap(countSubmissionsPerParticipationByIds(ids));
+    }
 }
