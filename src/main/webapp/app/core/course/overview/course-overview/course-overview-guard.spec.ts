@@ -46,6 +46,7 @@ describe('CourseOverviewGuard', () => {
         courseStorageService = TestBed.inject(CourseStorageService);
         courseManagementService = TestBed.inject(CourseManagementService);
         router = TestBed.inject(Router);
+        vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
     });
 
     afterEach(() => {
