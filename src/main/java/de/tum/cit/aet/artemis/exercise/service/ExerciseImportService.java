@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +64,8 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
-        newExercise.setCompetencyLinks(importedExercise.getCompetencyLinks());
+        // Create a new set to avoid sharing the collection reference with the managed entity (Hibernate orphan removal protection)
+        newExercise.setCompetencyLinks(new HashSet<>(importedExercise.getCompetencyLinks()));
 
         if (importedExercise.getPlagiarismDetectionConfig() != null) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));
