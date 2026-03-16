@@ -61,13 +61,13 @@ public class PyrisStatusUpdateService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final PyrisTranscriptionStatusUpdateHandler transcriptionStatusUpdateHandler;
+    private final PyrisTranscriptionStatusUpdateService transcriptionStatusUpdateHandler;
 
     public PyrisStatusUpdateService(PyrisJobService pyrisJobService, IrisExerciseChatSessionService irisExerciseChatSessionService,
             IrisTextExerciseChatSessionService irisTextExerciseChatSessionService, IrisCourseChatSessionService courseChatSessionService,
             IrisCompetencyGenerationService competencyGenerationService, IrisLectureChatSessionService irisLectureChatSessionService,
             IrisTutorSuggestionSessionService irisTutorSuggestionSessionService, Optional<ProcessingStateCallbackApi> processingStateCallbackApi,
-            WebsocketMessagingService websocketMessagingService, PyrisTranscriptionStatusUpdateHandler transcriptionStatusUpdateHandler) {
+            WebsocketMessagingService websocketMessagingService, PyrisTranscriptionStatusUpdateService transcriptionStatusUpdateHandler) {
         this.pyrisJobService = pyrisJobService;
         this.irisExerciseChatSessionService = irisExerciseChatSessionService;
         this.irisTextExerciseChatSessionService = irisTextExerciseChatSessionService;
@@ -213,7 +213,7 @@ public class PyrisStatusUpdateService {
 
     /**
      * Handles the status update of a video transcription job.
-     * Delegates to {@link PyrisTranscriptionStatusUpdateHandler}.
+     * Delegates to {@link PyrisTranscriptionStatusUpdateService}.
      *
      * @param job          the job that is updated
      * @param statusUpdate the status update

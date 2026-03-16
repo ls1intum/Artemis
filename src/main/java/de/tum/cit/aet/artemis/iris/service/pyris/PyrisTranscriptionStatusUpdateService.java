@@ -31,9 +31,9 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 @Lazy
 @Service
 @Conditional(IrisEnabled.class)
-public class PyrisTranscriptionStatusUpdateHandler {
+public class PyrisTranscriptionStatusUpdateService {
 
-    private static final Logger log = LoggerFactory.getLogger(PyrisTranscriptionStatusUpdateHandler.class);
+    private static final Logger log = LoggerFactory.getLogger(PyrisTranscriptionStatusUpdateService.class);
 
     private final PyrisJobService pyrisJobService;
 
@@ -45,7 +45,7 @@ public class PyrisTranscriptionStatusUpdateHandler {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    public PyrisTranscriptionStatusUpdateHandler(PyrisJobService pyrisJobService, Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi,
+    public PyrisTranscriptionStatusUpdateService(PyrisJobService pyrisJobService, Optional<LectureTranscriptionsRepositoryApi> lectureTranscriptionsRepositoryApi,
             Optional<ProcessingStateCallbackApi> processingStateCallbackApi, ObjectMapper objectMapper, WebsocketMessagingService websocketMessagingService) {
         this.pyrisJobService = pyrisJobService;
         this.lectureTranscriptionsRepositoryApi = lectureTranscriptionsRepositoryApi;
