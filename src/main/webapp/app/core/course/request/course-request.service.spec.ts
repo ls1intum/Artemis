@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
@@ -7,6 +9,8 @@ import { CourseRequestService } from 'app/core/course/request/course-request.ser
 import { BaseCourseRequest, CourseRequestStatus } from 'app/core/shared/entities/course-request.model';
 
 describe('CourseRequestService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CourseRequestService;
     let httpMock: HttpTestingController;
 
@@ -24,6 +28,7 @@ describe('CourseRequestService', () => {
 
     afterEach(() => {
         httpMock.verify();
+        vi.restoreAllMocks();
     });
 
     describe('create', () => {
@@ -68,7 +73,7 @@ describe('CourseRequestService', () => {
             expect(req.request.body.title).toBe('Test Course');
             expect(req.request.body.shortName).toBe('TC001');
             expect(req.request.body.semester).toBe('WS2025');
-            expect(req.request.body.testCourse).toBeFalse();
+            expect(req.request.body.testCourse).toBe(false);
             expect(req.request.body.reason).toBe('I need this course for teaching.');
             expect(req.request.body.startDate).toBeDefined();
             expect(req.request.body.endDate).toBeDefined();
@@ -96,7 +101,7 @@ describe('CourseRequestService', () => {
             service.create(baseCourseRequest).subscribe((result) => {
                 expect(result.id).toBe(2);
                 expect(result.title).toBe('Minimal Course');
-                expect(result.testCourse).toBeTrue();
+                expect(result.testCourse).toBe(true);
                 expect(result.semester).toBeUndefined();
                 expect(result.startDate).toBeUndefined();
                 expect(result.endDate).toBeUndefined();
@@ -271,9 +276,9 @@ describe('CourseRequestService', () => {
 
             service.findAdminOverview().subscribe((result) => {
                 const request = result.pendingRequests[0];
-                expect(request.startDate?.isValid()).toBeTrue();
-                expect(request.endDate?.isValid()).toBeTrue();
-                expect(request.createdDate?.isValid()).toBeTrue();
+                expect(request.startDate?.isValid()).toBe(true);
+                expect(request.endDate?.isValid()).toBe(true);
+                expect(request.createdDate?.isValid()).toBe(true);
             });
 
             const req = httpMock.expectOne({ method: 'GET', url: `${adminResourceUrl}/overview?decidedPage=0&decidedPageSize=20` });

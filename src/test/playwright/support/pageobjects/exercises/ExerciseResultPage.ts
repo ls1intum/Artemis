@@ -26,7 +26,11 @@ export class ExerciseResultPage {
 
     async shouldShowScore(percentage: number) {
         await Commands.reloadUntilFound(this.page, this.page.locator('jhi-course-exercise-details #submission-result-graded'), 4000, 60000);
-        await expect(this.page.locator('#exercise-headers-information').getByText(`${percentage}%`)).toBeVisible();
+        // The score percentage appears in the exercise headers information box after Angular's
+        // ngOnChanges fires on the headers component with the updated participation/result data.
+        // Under load, there can be a delay between the graded result element appearing and the
+        // score text rendering, so use a generous timeout instead of the default 5s.
+        await expect(this.page.locator('#exercise-headers-information').getByText(`${percentage}%`)).toBeVisible({ timeout: 30000 });
     }
 
     async clickOpenExercise(exerciseId: number) {
