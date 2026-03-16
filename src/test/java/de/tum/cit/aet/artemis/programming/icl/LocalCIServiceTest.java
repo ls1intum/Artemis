@@ -49,7 +49,7 @@ class LocalCIServiceTest extends AbstractProgrammingIntegrationLocalCILocalVCTes
     private RepositoryCheckoutService repositoryCheckoutService;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws InterruptedException {
         queuedJobs = distributedDataAccessService.getDistributedBuildJobQueue();
         processingJobs = distributedDataAccessService.getDistributedProcessingJobs();
 
