@@ -36,3 +36,9 @@ export interface CourseCompetencyFilter {
 }
 
 export interface CompetencyPageableSearch extends PageableSearch, CourseCompetencyFilter {}
+
+export interface ParticipationScoreSearch extends SearchTermPageableSearch {
+    filterProp?: string;
+    scoreRangeLower?: number;
+    scoreRangeUpper?: number;
+}

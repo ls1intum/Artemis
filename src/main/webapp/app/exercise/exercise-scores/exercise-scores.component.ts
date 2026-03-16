@@ -1,8 +1,7 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
+import { KeyValuePipe } from '@angular/common';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Participation } from 'app/exercise/shared/entities/participation/participation.model';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -13,20 +12,13 @@ import { ProgrammingSubmissionService } from 'app/programming/shared/services/pr
 import { areManualResultsAllowed } from 'app/exercise/util/exercise.utils';
 import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
-import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
-import dayjs from 'dayjs/esm';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { isManualResult } from 'app/exercise/result/result.utils';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { FormsModule } from '@angular/forms';
@@ -35,18 +27,23 @@ import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exe
 import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/programming/manage/assess/repo-export/export-button/programming-assessment-repo-export-button.component';
 import { SubmissionExportButtonComponent } from 'app/exercise/submission-export/button/submission-export-button.component';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
-import { ResultComponent } from '../result/result.component';
 import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
 import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { ManageAssessmentButtonsComponent } from './manage-assessment-buttons/manage-assessment-buttons.component';
-import { DecimalPipe, KeyValuePipe } from '@angular/common';
+import { ResultComponent } from '../result/result.component';
+import { Participation, ParticipationType } from 'app/exercise/shared/entities/participation/participation.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
+import { CellRendererParams, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { ParticipationScoreDTO } from './participation-score-dto.model';
+import { ParticipationScoreSearch } from 'app/shared/table/pageable-table';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
+import { ExerciseService } from 'app/exercise/services/exercise.service';
+import dayjs from 'dayjs/esm';
 
 /**
  * Filter properties for a result
@@ -80,14 +77,11 @@ export enum FilterProp {
         ExerciseScoresExportButtonComponent,
         ProgrammingAssessmentRepoExportButtonComponent,
         SubmissionExportButtonComponent,
-        DataTableComponent,
-        NgxDatatableModule,
-        ResultComponent,
-        NgbTooltip,
+        TableViewComponent,
         CodeButtonComponent,
         FeatureToggleLinkDirective,
         ManageAssessmentButtonsComponent,
-        DecimalPipe,
+        ResultComponent,
         KeyValuePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -106,25 +100,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly ExerciseType = ExerciseType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly AssessmentType = AssessmentType;
-    protected readonly assessmentNoteSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentNote?.note';
-    protected readonly durationSortFieldProperty = 'submissions?.last()?.results?.last()?.durationInMinutes';
-    protected readonly submissionCountSortFieldProperty = 'submissionCount';
-    protected readonly testRunSortFieldProperty = 'testRun';
-    protected readonly teamShortNameSortFieldProperty = 'team.shortName';
-    protected readonly studentLoginSortFieldProperty = 'student.login';
-    protected readonly completionDateSortFieldProperty = 'submissions?.last()?.results?.last()?.completionDate';
-    protected readonly resultSortFieldProperty = 'submissions?.last()?.results?.last()?.score';
-    protected readonly assessmentTypeSortFieldProperty = 'submissions?.last()?.results?.last()?.assessmentType';
     readonly FilterProp = FilterProp;
 
-    private route = inject(ActivatedRoute);
-    private courseService = inject(CourseManagementService);
-    private exerciseService = inject(ExerciseService);
-    private resultService = inject(ResultService);
-    private programmingSubmissionService = inject(ProgrammingSubmissionService);
-    private participationService = inject(ParticipationService);
-    private profileService = inject(ProfileService);
-    protected nameSortFieldProperty: string;
+    private readonly route = inject(ActivatedRoute);
+    private readonly courseService = inject(CourseManagementService);
+    private readonly exerciseService = inject(ExerciseService);
+    private readonly resultService = inject(ResultService);
+    private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
+    private readonly participationService = inject(ParticipationService);
+    private readonly profileService = inject(ProfileService);
 
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
@@ -140,156 +124,189 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         new Range(90, 100),
     ];
 
-    @ViewChild('exportPopover')
-    private exportPopover: NgbPopover;
+    readonly course = signal<Course | undefined>(undefined);
+    readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly participations = signal<ParticipationScoreDTO[]>([]);
+    readonly totalRows = signal(0);
+    readonly isLoading = signal(false);
+    readonly afterDueDate = signal(false);
+    readonly newManualResultAllowed = signal(false);
+    readonly localCIEnabled = signal(true);
+    readonly rangeFilter = signal<Range | undefined>(undefined);
+    readonly activeFilter = signal<FilterProp>(FilterProp.ALL);
 
-    course: Course;
-    exercise: Exercise;
+    private lastLazyEvent: TableLazyLoadEvent | undefined;
     paramSub: Subscription;
-    reverse: boolean;
-    participations: Participation[] = [];
-    filteredParticipations: Participation[] = [];
-    eventSubscriber: Subscription;
-    newManualResultAllowed: boolean;
-    rangeFilter?: Range;
 
-    resultCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
-    participationsPerFilter: Map<FilterProp, number> = new Map();
+    // Template refs for cell rendering
+    readonly nameCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('nameCellTemplate');
+    readonly idCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('idCellTemplate');
+    readonly completionDateTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('completionDateTemplate');
+    readonly lastResultTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('lastResultTemplate');
+    readonly assessmentTypeTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('assessmentTypeTemplate');
+    readonly assessmentNoteTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('assessmentNoteTemplate');
+    readonly practiceTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('practiceTemplate');
+    readonly submissionCountTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('submissionCountTemplate');
+    readonly durationTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('durationTemplate');
+    readonly filterActionsTemplate = viewChild<TemplateRef<unknown>>('filterDropdownTemplate');
+    readonly exportPopover = viewChild<NgbPopover>('exportPopover');
 
-    isLoading: boolean;
-    afterDueDate = false;
+    readonly columns = computed<ColumnDef<ParticipationScoreDTO>[]>(() => {
+        const ex = this.exercise();
+        if (!ex) return [];
 
-    localCIEnabled = true;
+        const cols: ColumnDef<ParticipationScoreDTO>[] = [
+            {
+                headerKey: 'artemisApp.exercise.name',
+                field: 'participantName',
+                width: '180px',
+                sort: true,
+                templateRef: this.nameCellTemplate(),
+            },
+            {
+                headerKey: ex.teamMode ? 'artemisApp.exercise.teamShortName' : 'artemisApp.exercise.studentId',
+                field: 'participantIdentifier',
+                width: '110px',
+                sort: true,
+                templateRef: this.idCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.completionDate',
+                field: 'completionDate',
+                width: '160px',
+                sort: true,
+                templateRef: this.completionDateTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.lastResult',
+                field: 'score',
+                width: '260px',
+                sort: true,
+                templateRef: this.lastResultTemplate(),
+            },
+        ];
 
-    /**
-     * Fetches the course and exercise from the server
-     */
+        if (this.newManualResultAllowed() || ex.allowComplaintsForAutomaticAssessments) {
+            cols.push({
+                headerKey: 'artemisApp.exercise.type',
+                width: '140px',
+                templateRef: this.assessmentTypeTemplate(),
+            });
+        }
+
+        if (ex.assessmentType === AssessmentType.MANUAL || ex.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
+            cols.push({
+                headerKey: 'artemisApp.assessment.assessmentNote',
+                width: '100px',
+                templateRef: this.assessmentNoteTemplate(),
+            });
+        }
+
+        if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.practice',
+                width: '110px',
+                templateRef: this.practiceTemplate(),
+            });
+        }
+
+        cols.push(
+            {
+                headerKey: 'artemisApp.exercise.submissionCount',
+                width: '110px',
+                templateRef: this.submissionCountTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.duration',
+                width: '90px',
+                templateRef: this.durationTemplate(),
+            },
+        );
+
+        return cols;
+    });
+
     ngOnInit() {
-        this.localCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.localCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
         this.paramSub = this.route.params.subscribe((params) => {
-            this.isLoading = true;
-            const findCourse = this.courseService.find(params['courseId']);
-            const findExercise = this.exerciseService.find(params['exerciseId']);
+            this.isLoading.set(true);
             const filterValue = this.route.snapshot.queryParamMap.get('scoreRangeFilter');
             if (filterValue) {
-                this.rangeFilter = this.scoreRanges[Number(filterValue)];
+                this.rangeFilter.set(this.scoreRanges[Number(filterValue)]);
             }
 
-            forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
-                this.course = courseRes.body!;
-                this.exercise = exerciseRes.body!;
-                this.nameSortFieldProperty = this.exercise.teamMode ? 'team.name' : 'student.name';
-                this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
-                // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
-                    this.handleNewParticipations(participationsResponse);
-                });
-
-                this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
+            forkJoin([this.courseService.find(params['courseId']), this.exerciseService.find(params['exerciseId'])]).subscribe(([courseRes, exerciseRes]) => {
+                this.course.set(courseRes.body!);
+                const ex = exerciseRes.body!;
+                this.exercise.set(ex);
+                this.afterDueDate.set(!!ex.dueDate && dayjs().isAfter(ex.dueDate));
+                this.newManualResultAllowed.set(areManualResultsAllowed(ex));
+                // Initial data load will be triggered by the table's lazy load event
+                this.isLoading.set(false);
             });
+        });
+    }
+
+    onLazyLoad(event: TableLazyLoadEvent) {
+        this.lastLazyEvent = event;
+        this.loadPage();
+    }
+
+    private loadPage() {
+        const ex = this.exercise();
+        if (!ex?.id || !this.lastLazyEvent) return;
+
+        this.isLoading.set(true);
+        const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
+        const search: ParticipationScoreSearch = {
+            ...base,
+            filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
+            scoreRangeLower: this.rangeFilter()?.lowerBound,
+            scoreRangeUpper: this.rangeFilter()?.upperBound,
+        };
+
+        this.participationService.searchParticipationScores(ex.id, search).subscribe((result) => {
+            this.participations.set(result.content);
+            this.totalRows.set(result.totalElements);
+            this.isLoading.set(false);
         });
     }
 
     getExerciseParticipationsLink(participationId: number): string[] {
-        return this.exercise.exerciseGroup
+        const ex = this.exercise()!;
+        const course = this.course()!;
+        return ex.exerciseGroup
             ? [
                   '/course-management',
-                  this.course.id!.toString(),
+                  course.id!.toString(),
                   'exams',
-                  this.exercise.exerciseGroup!.exam!.id!.toString(),
+                  ex.exerciseGroup!.exam!.id!.toString(),
                   'exercise-groups',
-                  this.exercise.exerciseGroup!.id!.toString(),
-                  this.exercise.type + '-exercises',
-                  this.exercise.id!.toString(),
+                  ex.exerciseGroup!.id!.toString(),
+                  ex.type + '-exercises',
+                  ex.id!.toString(),
                   'participations',
                   participationId.toString(),
               ]
-            : [
-                  '/course-management',
-                  this.course.id!.toString(),
-                  this.exercise.type + '-exercises',
-                  this.exercise.id!.toString(),
-                  'participations',
-                  participationId.toString(),
-                  'submissions',
-              ];
+            : ['/course-management', course.id!.toString(), ex.type + '-exercises', ex.id!.toString(), 'participations', participationId.toString(), 'submissions'];
     }
 
-    private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
-        this.participations = participationsResponse.body ?? [];
-        this.participations.forEach((participation) => {
-            const results = getAllResultsOfAllSubmissions(participation.submissions);
-            results?.forEach((result) => {
-                result.durationInMinutes = dayjs(result.completionDate).diff(participation.initializationDate, 'seconds');
-            });
-            // sort the results from old to new.
-            // the result of the first correction round will be at index 0,
-            // the result of a complaints or the second correction at index 1.
-            results?.sort((result1, result2) => (result1.id ?? 0) - (result2.id ?? 0));
-            const resultsWithoutAthena = results?.filter((result) => result.assessmentType !== AssessmentType.AUTOMATIC_ATHENA);
-            if (resultsWithoutAthena?.length != 0 && participation?.submissions?.[0]) {
-                participation!.submissions[0]!.results = results;
-            }
-        });
-        this.filteredParticipations = this.filterByScoreRange(this.participations);
-
-        for (const filter of Object.values(FilterProp)) {
-            if (this.isFilterRelevantForConfiguration(filter)) {
-                this.participationsPerFilter.set(filter, this.filteredParticipations.filter((participation) => this.filterParticipationsByProp(participation, filter)).length);
-            }
-        }
-
-        this.isLoading = false;
-    }
-
-    /**
-     * Updates the criteria by which to filter results
-     * @param newValue New filter prop value
-     */
     updateParticipationFilter(newValue: FilterProp) {
-        this.isLoading = true;
-        setTimeout(() => {
-            this.resultCriteria.filterProp = newValue;
-            this.isLoading = false;
-        });
+        this.activeFilter.set(newValue);
+        this.loadPage();
     }
-
-    /**
-     * Predicate used to filter participations by the current filter prop setting
-     * @param participation Participation for which to evaluate the predicate
-     * @param filterProp the filter that should be used to determine if the participation should be included or excluded
-     */
-    filterParticipationsByProp = (participation: Participation, filterProp = this.resultCriteria.filterProp): boolean => {
-        const results = getAllResultsOfAllSubmissions(participation.submissions);
-        const latestResult = results?.last();
-        switch (filterProp) {
-            case FilterProp.SUCCESSFUL:
-                return !!latestResult?.successful;
-            case FilterProp.UNSUCCESSFUL:
-                return !latestResult?.successful;
-            case FilterProp.BUILD_FAILED:
-                return !!(participation.submissions?.[0] && (participation.submissions?.[0] as ProgrammingSubmission).buildFailed);
-            case FilterProp.MANUAL:
-                return !!latestResult && isManualResult(latestResult);
-            case FilterProp.AUTOMATIC:
-                return latestResult?.assessmentType === AssessmentType.AUTOMATIC;
-            case FilterProp.LOCKED:
-                return !!latestResult && !latestResult.completionDate;
-            case FilterProp.ALL:
-            default:
-                return true;
-        }
-    };
 
     isFilterRelevantForConfiguration(filterProp: FilterProp): boolean {
+        const ex = this.exercise();
+        if (!ex) return false;
         switch (filterProp) {
             case FilterProp.BUILD_FAILED:
-                return this.exercise.type === ExerciseType.PROGRAMMING;
+                return ex.type === ExerciseType.PROGRAMMING;
             case FilterProp.MANUAL:
             case FilterProp.AUTOMATIC:
-                return this.newManualResultAllowed || !!this.exercise.allowComplaintsForAutomaticAssessments;
+                return this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
             case FilterProp.LOCKED:
-                return this.newManualResultAllowed && !!this.exercise.isAtLeastInstructor;
+                return this.newManualResultAllowed() && !!ex.isAtLeastInstructor;
             default:
                 return true;
         }
@@ -297,44 +314,40 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     /**
      * Returns the build plan id for a participation
-     * @param participation Participation for which to return the build plan id
      */
-    buildPlanId(participation: Participation) {
-        return (participation as ProgrammingExerciseStudentParticipation)?.buildPlanId;
+    buildPlanId(dto: ParticipationScoreDTO) {
+        return dto.buildPlanId;
     }
 
     /**
      * Returns the project key of the exercise
      */
     projectKey(): string {
-        return (this.exercise as ProgrammingExercise).projectKey!;
+        return (this.exercise() as ProgrammingExercise).projectKey!;
     }
 
     /**
      * Returns the link to the repository of a participation
-     * @param participation Participation for which to get the link for
      */
-    getRepositoryLink(participation: Participation) {
-        return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
+    getRepositoryLink(dto: ParticipationScoreDTO) {
+        return dto.repositoryUri;
     }
 
     /**
      * Exports the names of exercise participants as a csv file
      */
     exportNames() {
-        if (this.participations.length) {
+        const participations = this.participations();
+        if (participations.length) {
             const rows: string[] = [];
-            this.participations.forEach((participation, index) => {
-                const studentParticipation = participation as StudentParticipation;
-                const { participantName } = studentParticipation;
-                if (studentParticipation.team) {
+            participations.forEach((dto, index) => {
+                if (dto.teamId) {
                     if (index === 0) {
                         rows.push('Team Name,Team Short Name,Students');
                     }
-                    const { name, shortName, students } = studentParticipation.team;
-                    rows.push(`${name},${shortName},"${students?.map((s) => s.name).join(', ')}"`);
+                    rows.push(dto.participantName ?? '');
                 } else {
-                    rows.push(participantName!);
+                    rows.push(dto.participantName ?? '');
                 }
             });
             this.resultService.triggerDownloadCSV(rows, 'results-names.csv');
@@ -342,93 +355,79 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Formats the participations in the autocomplete overlay.
-     *
-     * @param participation
-     */
-    searchParticipationFormatter = (participation: Participation): string => {
-        const studentParticipation = participation as StudentParticipation;
-        if (studentParticipation.student) {
-            const { login, name } = studentParticipation.student;
-            return `${login} (${name})`;
-        } else if (studentParticipation.team) {
-            return formatTeamAsSearchResult(studentParticipation.team);
-        }
-        return '';
-    };
-
-    /**
-     * Converts a result object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param participation
-     */
-    searchTextFromParticipation = (participation: Participation): string => {
-        return (participation as StudentParticipation).participantIdentifier || '';
-    };
-
-    /**
-     * Triggers a re-fetch of the results from the server
+     * Triggers a re-fetch of the current page from the server
      */
     refresh() {
-        this.isLoading = true;
-        this.participations = [];
-        this.filteredParticipations = [];
-        this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
-            this.handleNewParticipations(participationsResponse);
-        });
+        this.loadPage();
     }
 
-    /**
-     * Unsubscribes from all subscriptions
-     */
     ngOnDestroy() {
         this.paramSub.unsubscribe();
-        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
+        const ex = this.exercise();
+        if (ex) {
+            this.programmingSubmissionService.unsubscribeAllWebsocketTopics(ex);
+        }
     }
 
     /**
-     * filters the displayable participations based on the given range filter
-     * @param participations all participations for the given exercise
-     * @returns participations falling into the given score range
-     */
-    filterByScoreRange(participations: Participation[]): Participation[] {
-        if (!this.rangeFilter) {
-            return participations;
-        }
-        let filterFunction;
-        // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
-        if (this.rangeFilter.upperBound === 100) {
-            filterFunction = (participation: Participation) => {
-                const results = getAllResultsOfAllSubmissions(participation.submissions);
-                const result = results?.last();
-                return !!result?.score && result?.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
-            };
-        } else {
-            // For any other range, the score must be strictly below the upper bound
-            filterFunction = (participation: Participation) => {
-                const results = getAllResultsOfAllSubmissions(participation.submissions);
-                const result = results?.last();
-                return result?.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
-            };
-        }
-
-        return participations.filter(filterFunction);
-    }
-
-    /**
-     * resets the score range filter
+     * Resets the score range filter and active filter, then reloads data
      */
     resetFilterOptions(): void {
-        this.rangeFilter = undefined;
-        this.filteredParticipations = this.participations;
-        this.resultCriteria.filterProp = FilterProp.ALL;
+        this.rangeFilter.set(undefined);
+        this.activeFilter.set(FilterProp.ALL);
+        this.loadPage();
+    }
+
+    /**
+     * Builds a Result object from the flat DTO fields for use with jhi-result.
+     */
+    toResult(dto: ParticipationScoreDTO): Result | undefined {
+        if (!dto.resultId) return undefined;
+        const result = new Result();
+        result.id = dto.resultId;
+        result.score = dto.score;
+        result.successful = dto.successful;
+        result.completionDate = dto.completionDate;
+        result.assessmentType = dto.assessmentType;
+        return result;
+    }
+
+    /**
+     * Builds a minimal Participation-like object from the flat DTO so that
+     * manage-assessment-buttons can render assessment links and cancel buttons.
+     */
+    toParticipation(dto: ParticipationScoreDTO): Participation {
+        const ex = this.exercise();
+        return {
+            id: dto.participationId,
+            type: ex?.type === ExerciseType.PROGRAMMING ? ParticipationType.PROGRAMMING : ParticipationType.STUDENT,
+            exercise: ex,
+            submissionCount: dto.submissionCount,
+            submissions: dto.submissionId
+                ? [
+                      {
+                          id: dto.submissionId,
+                          results: dto.resultId
+                              ? [
+                                    {
+                                        id: dto.resultId,
+                                        score: dto.score,
+                                        successful: dto.successful,
+                                        completionDate: dto.completionDate,
+                                        assessmentType: dto.assessmentType,
+                                    },
+                                ]
+                              : [],
+                      },
+                  ]
+                : [],
+        } as Participation;
     }
 
     /**
      * Close popover for export options, since it would obstruct the newly opened modal
      */
     closeExportPopover() {
-        this.exportPopover?.close();
+        this.exportPopover()?.close();
     }
 }

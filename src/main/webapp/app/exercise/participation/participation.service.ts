@@ -3,6 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
+import { PageableResult, ParticipationScoreSearch } from 'app/shared/table/pageable-table';
+import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -93,6 +95,36 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+    }
+
+    searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        if (search.filterProp) {
+            params['filterProp'] = search.filterProp;
+        }
+        if (search.scoreRangeLower !== undefined) {
+            params['scoreRangeLower'] = search.scoreRangeLower;
+        }
+        if (search.scoreRangeUpper !== undefined) {
+            params['scoreRangeUpper'] = search.scoreRangeUpper;
+        }
+        return this.http
+            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/search`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: HttpResponse<ParticipationScoreDTO[]>) => ({
+                    content: res.body ?? [],
+                    totalElements: Number(res.headers.get('X-Total-Count') ?? 0),
+                })),
+            );
     }
 
     delete(participationId: number, req?: any): Observable<HttpResponse<void>> {
