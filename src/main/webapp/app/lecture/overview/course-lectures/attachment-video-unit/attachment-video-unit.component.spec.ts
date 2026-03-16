@@ -220,7 +220,6 @@ describe('AttachmentVideoUnitComponent', () => {
         expect(component.videoUrl()).toBeUndefined();
         parseSpy.mockRestore();
     });
-
     it('toggleCollapse(false): resets state, resolves playlist, fetches transcript (happy path)', async () => {
         // Arrange BEFORE first detectChanges so the computed() caches the right value
         const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';

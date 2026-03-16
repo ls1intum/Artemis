@@ -251,7 +251,10 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
 
     private applyInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
         const duration = videoElement.duration;
-        const clamped = Number.isFinite(duration) ? Math.min(seconds, Math.max(0, duration)) : seconds;
+        if (Number.isFinite(duration) && seconds > duration) {
+            return;
+        }
+        const clamped = Number.isFinite(duration) ? Math.max(0, seconds) : seconds;
         videoElement.currentTime = clamped;
         this.updateCurrentSegment(clamped);
     }
