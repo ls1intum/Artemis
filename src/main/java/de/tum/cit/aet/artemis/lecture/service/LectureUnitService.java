@@ -218,6 +218,39 @@ public class LectureUnitService {
     }
 
     /**
+     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
+     *
+     * @param lectureUnit The lecture unit to reconnect the competency links
+     */
+    public void reconnectCompetencyLectureUnitLinks(LectureUnit lectureUnit) {
+        lectureUnit.getCompetencyLinks().forEach(link -> link.setLectureUnit(lectureUnit));
+    }
+
+    /**
+     * Saves the exercise and links it to the competencies.
+     *
+     * @param lectureUnit  the lecture unit to save
+     * @param saveFunction function to save the exercise
+     * @param <T>          type of the lecture unit
+     * @return saved exercise
+     */
+    public <T extends LectureUnit> T saveWithCompetencyLinks(T lectureUnit, Function<T, T> saveFunction) {
+        // persist lecture Unit before linking it to the competency
+        Set<CompetencyLectureUnitLink> links = lectureUnit.getCompetencyLinks();
+        lectureUnit.setCompetencyLinks(new HashSet<>());
+
+        T savedLectureUnit = saveFunction.apply(lectureUnit);
+
+        if (Hibernate.isInitialized(links) && links != null && !links.isEmpty()) {
+            savedLectureUnit.setCompetencyLinks(links);
+            reconnectCompetencyLectureUnitLinks(savedLectureUnit);
+            competencyRelationApi.ifPresent(api -> savedLectureUnit.setCompetencyLinks(new HashSet<>(api.saveAllLectureUnitLinks(links))));
+        }
+
+        return savedLectureUnit;
+    }
+
+    /**
      * Update the competency links of an existing text unit based on the provided DTO.
      * Supports removing links, updating weights of existing ones, and adding new links.
      * This method ensures that the managed entity's collection is updated correctly to avoid JPA issues and unnecessary database operations.
