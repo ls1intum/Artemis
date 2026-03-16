@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +14,6 @@ import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ExampleSubmissionRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.FeedbackService;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
@@ -66,13 +64,8 @@ public abstract class ExerciseImportService {
         newExercise.setDifficulty(importedExercise.getDifficulty());
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
-        // Copy competency links as NEW unmanaged objects (not sharing managed entities from the template)
-        Set<CompetencyExerciseLink> copiedLinks = new HashSet<>();
-        for (CompetencyExerciseLink link : importedExercise.getCompetencyLinks()) {
-            // Create a new link with just the competency reference and weight (exercise will be set later)
-            copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
-        }
-        newExercise.setCompetencyLinks(copiedLinks);
+        // Create a new set to avoid sharing the collection reference with the managed entity (Hibernate orphan removal protection)
+        newExercise.setCompetencyLinks(new HashSet<>(importedExercise.getCompetencyLinks()));
 
         if (importedExercise.getPlagiarismDetectionConfig() != null) {
             newExercise.setPlagiarismDetectionConfig(new PlagiarismDetectionConfig(importedExercise.getPlagiarismDetectionConfig()));

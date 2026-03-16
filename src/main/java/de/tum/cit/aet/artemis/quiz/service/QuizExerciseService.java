@@ -86,7 +86,6 @@ import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
-import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
@@ -1107,8 +1106,20 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
         }
         if (updateQuizExerciseDTO.quizQuestions() != null) {
+            // Build a map of existing questions by ID so we can preserve statistics
+            Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
+                    .collect(Collectors.toMap(QuizQuestion::getId, Function.identity()));
+
             // Convert DTOs to new entities to avoid detached entity issues
-            List<QuizQuestion> newQuestions = updateQuizExerciseDTO.quizQuestions().stream().map(QuizQuestionFromEditorDTO::toDomainObject).toList();
+            List<QuizQuestion> newQuestions = new ArrayList<>(updateQuizExerciseDTO.quizQuestions().stream().map(dto -> {
+                QuizQuestion newQuestion = dto.toDomainObject();
+                // For existing questions, preserve statistics from the managed entity
+                if (newQuestion.getId() != null && existingQuestionsById.containsKey(newQuestion.getId())) {
+                    QuizQuestion existingQuestion = existingQuestionsById.get(newQuestion.getId());
+                    newQuestion.setQuizQuestionStatistic(existingQuestion.getQuizQuestionStatistic());
+                }
+                return newQuestion;
+            }).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
         exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
