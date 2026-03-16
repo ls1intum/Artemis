@@ -760,7 +760,7 @@ describe('CourseOverviewComponent', () => {
         });
 
         it('should set exercise detail link when URL includes exercise details', () => {
-            jest.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/5');
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/5');
             component.course.set({
                 isAtLeastTutor: true,
                 exercises: [
@@ -775,6 +775,78 @@ describe('CourseOverviewComponent', () => {
             });
             component.determineManageViewLink();
             expect(component.manageViewLink()).toEqual(['/course-management', '123', 'programming-exercises', '5']);
+        });
+
+        it('should set modeling exercise detail link when URL includes modeling exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/6');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 6,
+                        type: ExerciseType.MODELING,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'modeling-exercises', '6']);
+        });
+
+        it('should set quiz exercise detail link when URL includes quiz exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/7');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 7,
+                        type: ExerciseType.QUIZ,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'quiz-exercises', '7']);
+        });
+
+        it('should set text exercise detail link when URL includes text exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/8');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 8,
+                        type: ExerciseType.TEXT,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'text-exercises', '8']);
+        });
+
+        it('should set file upload exercise detail link when URL includes file upload exercise details', () => {
+            vi.spyOn(router, 'url', 'get').mockReturnValue('/courses/123/exercises/9');
+            component.course.set({
+                isAtLeastTutor: true,
+                exercises: [
+                    {
+                        id: 9,
+                        type: ExerciseType.FILE_UPLOAD,
+                        numberOfAssessmentsOfCorrectionRounds: [],
+                        studentAssignedTeamIdComputed: false,
+                        secondCorrectionEnabled: false,
+                    },
+                ],
+            });
+            component.determineManageViewLink();
+            expect(component.manageViewLink()).toEqual(['/course-management', '123', 'file-upload-exercises', '9']);
         });
 
         it('should set lectures link when URL includes "lectures"', () => {
