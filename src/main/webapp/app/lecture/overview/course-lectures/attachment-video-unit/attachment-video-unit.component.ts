@@ -63,7 +63,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
      * Return the URL of the video source
      */
     readonly videoUrl = computed(() => this.computeVideoUrl());
-    readonly videoUrlWithTimestamp = computed(() => this.appendTimestamp(this.videoUrl(), this.targetTimestamp()));
 
     /**
      * Computes the video URL based on the video source.
@@ -86,40 +85,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return undefined;
-    }
-
-    private appendTimestamp(url: string | undefined, timestamp: number | undefined): string | undefined {
-        if (!url) {
-            return undefined;
-        }
-
-        const normalizedTimestamp = this.normalizeTimestamp(timestamp);
-        if (normalizedTimestamp === undefined) {
-            return url;
-        }
-
-        try {
-            const urlObj = new URL(url, window.location.origin);
-            const parsed = urlParser.parse(url);
-            if (parsed?.provider === 'youtube') {
-                urlObj.searchParams.set('start', String(normalizedTimestamp));
-            } else if (parsed?.provider === 'vimeo') {
-                urlObj.hash = `t=${normalizedTimestamp}s`;
-            } else {
-                urlObj.searchParams.set('t', String(normalizedTimestamp));
-            }
-            return urlObj.toString();
-        } catch {
-            const separator = url.includes('?') ? '&' : '?';
-            return `${url}${separator}t=${normalizedTimestamp}`;
-        }
-    }
-
-    private normalizeTimestamp(timestamp: number | undefined): number | undefined {
-        if (timestamp === undefined || !Number.isFinite(timestamp) || timestamp < 0) {
-            return undefined;
-        }
-        return Math.floor(timestamp);
     }
 
     override toggleCollapse(isCollapsed: boolean): void {

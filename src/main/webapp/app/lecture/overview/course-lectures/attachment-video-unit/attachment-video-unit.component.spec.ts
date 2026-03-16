@@ -221,17 +221,6 @@ describe('AttachmentVideoUnitComponent', () => {
         parseSpy.mockRestore();
     });
 
-    it('videoUrlWithTimestamp: appends timestamp to allow-listed URL', () => {
-        const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
-        component.lectureUnit().videoSource = src;
-        fixture.componentRef.setInput('targetTimestamp', 42.9);
-        fixture.detectChanges();
-
-        const withTimestamp = component.videoUrlWithTimestamp();
-        expect(withTimestamp).toBeDefined();
-        const parsed = new URL(withTimestamp!);
-        expect(parsed.searchParams.get('t')).toBe('42');
-    });
     it('toggleCollapse(false): resets state, resolves playlist, fetches transcript (happy path)', async () => {
         // Arrange BEFORE first detectChanges so the computed() caches the right value
         const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
