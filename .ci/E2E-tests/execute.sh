@@ -3,24 +3,21 @@
 CONFIGURATION=$1
 TEST_FRAMEWORK=$2
 TEST_PATHS=$3  # Optional: space-separated list of test paths to run (passed through as-is, e.g., "e2e/exam/ e2e/atlas/")
-DB="mysql"
+DB="postgres"
 
 echo "CONFIGURATION:"
 echo "$CONFIGURATION"
 
-if [ "$CONFIGURATION" = "mysql" ]; then
-    COMPOSE_FILE="playwright-E2E-tests-mysql.yml"
-  elif [ "$CONFIGURATION" = "postgres" ]; then
+if [ "$CONFIGURATION" = "postgres" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres.yml"
-    DB="postgres"
-  elif [ "$CONFIGURATION" = "mysql-localci" ]; then
-    echo "Running for playwright (single node) with mysql-localci"
-    COMPOSE_FILE="playwright-E2E-tests-mysql-localci.yml"
+  elif [ "$CONFIGURATION" = "postgres-localci" ]; then
+    echo "Running for playwright (single node) with postgres-localci"
+    COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
   elif [ "$CONFIGURATION" = "multi-node" ]; then
     echo "Running for playwright (multi-node)"
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
   else
-      echo "Invalid configuration. Please choose among mysql, postgres, mysql-localci or multi-node."
+      echo "Invalid configuration. Please choose among postgres, postgres-localci or multi-node."
       exit 1
 fi
 
