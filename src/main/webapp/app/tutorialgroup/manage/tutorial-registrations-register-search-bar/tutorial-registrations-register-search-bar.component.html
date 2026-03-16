@@ -18,9 +18,9 @@
 
 <ng-template #panelTemplate>
     <div class="search-panel">
-        @let somethingWasSearchedFor = this.searchString().trim().length !== 0;
-        @let initialSearchComplete = !this.firstSuggestedStudentsPageLoading();
-        @let noSuggestionsFound = this.suggestedStudents().length === 0;
+        @let somethingWasSearchedFor = searchString().trim().length !== 0;
+        @let initialSearchComplete = !firstSuggestedStudentsPageLoading();
+        @let noSuggestionsFound = suggestedStudents().length === 0;
         @if (somethingWasSearchedFor && initialSearchComplete && noSuggestionsFound) {
             <div class="no-results">
                 <i class="pi pi-exclamation-circle"></i>
