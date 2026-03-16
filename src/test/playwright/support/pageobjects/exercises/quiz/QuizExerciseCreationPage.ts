@@ -131,10 +131,11 @@ export class QuizExerciseCreationPage extends AbstractExerciseCreationPage {
     async saveQuiz() {
         const saveButton = this.page.locator('#quiz-save');
         await saveButton.scrollIntoViewIfNeeded();
-        // Wait for the save button to be enabled before clicking
+        // Wait for the save button to be visible AND enabled.
+        // After complex question creation (DnD drag operations, image uploads, Monaco editor),
+        // Angular's form validation may take several seconds to complete.
         await saveButton.waitFor({ state: 'visible', timeout: 30000 });
-        // Ensure the page has finished any pending operations
-        await this.page.waitForLoadState('domcontentloaded');
+        await expect(saveButton).toBeEnabled({ timeout: 30000 });
         const responsePromise = this.page.waitForResponse(QUIZ_EXERCISE_BASE_CREATION, { timeout: 60000 });
         await saveButton.click();
         return await responsePromise;

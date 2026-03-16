@@ -1,12 +1,11 @@
-<div class="modal-header">
-    @if (health(); as h) {
-        <h4 class="modal-title" id="showHealthLabel">
-            {{ 'health.indicator.' + h.key | artemisTranslate }}
-        </h4>
-    }
-    <button aria-label="Close" data-dismiss="modal" class="btn-close" type="button" (click)="dismiss()"></button>
-</div>
-<div class="modal-body pad">
+<p-dialog [(visible)]="visible" [modal]="true" [closable]="true" [dismissableMask]="true" [draggable]="false" [appendTo]="'body'" [style]="{ width: '35dvw' }">
+    <ng-template #header>
+        @if (health(); as h) {
+            <h4 id="showHealthLabel">
+                {{ 'health.indicator.' + h.key | artemisTranslate }}
+            </h4>
+        }
+    </ng-template>
     @if (health(); as h) {
         <div>
             <h5 jhiTranslate="health.details.properties"></h5>
@@ -74,7 +73,7 @@
             </div>
         </div>
     }
-</div>
-<div class="modal-footer">
-    <button data-dismiss="modal" class="btn btn-secondary float-left" type="button" (click)="dismiss()">Done</button>
-</div>
+    <ng-template #footer>
+        <button class="btn btn-secondary float-left" type="button" (click)="dismiss()">Done</button>
+    </ng-template>
+</p-dialog>
