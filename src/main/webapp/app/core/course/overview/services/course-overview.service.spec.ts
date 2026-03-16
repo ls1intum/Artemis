@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
@@ -20,6 +22,8 @@ import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 
 describe('CourseOverviewService', () => {
+    setupTestBed({ zoneless: true });
+
     let courseOverviewService: CourseOverviewService;
     let localStorageService: LocalStorageService;
     let pastExercise: Exercise;
@@ -142,17 +146,21 @@ describe('CourseOverviewService', () => {
         generalChannel2.subType = ChannelSubType.GENERAL;
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should return true if sidebar collapse state is stored as true in localStorage', () => {
         const storageId = 'testId';
         localStorageService.store<boolean>('sidebar.collapseState.' + storageId, true);
 
-        expect(courseOverviewService.getSidebarCollapseStateFromStorage(storageId)).toBeTrue();
+        expect(courseOverviewService.getSidebarCollapseStateFromStorage(storageId)).toBe(true);
     });
 
     it('should return false if there is no stored sidebar collapse state in localStorage', () => {
         const storageId = 'testId';
 
-        expect(courseOverviewService.getSidebarCollapseStateFromStorage(storageId)).toBeFalse();
+        expect(courseOverviewService.getSidebarCollapseStateFromStorage(storageId)).toBe(false);
     });
 
     it('should sort lectures by startDate and by title if startDates are equal or undefined', () => {
@@ -176,9 +184,9 @@ describe('CourseOverviewService', () => {
     it('should group lectures by start date and map to sidebar card elements', () => {
         const sortedLectures = [futureLecture, pastLecture, currentLecture];
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingLectureGroupByDate');
+        vi.spyOn(courseOverviewService, 'getCorrespondingLectureGroupByDate');
 
-        jest.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'mapLectureToSidebarCardElement');
         const groupedLectures = courseOverviewService.groupLecturesByStartDate(sortedLectures);
 
         expect(groupedLectures['current'].entityData).toHaveLength(1);
@@ -250,7 +258,7 @@ describe('CourseOverviewService', () => {
 
     it('should map lectures correctly to sidebar card elements', () => {
         const translateService = TestBed.inject(TranslateService);
-        jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
+        vi.spyOn(translateService, 'instant').mockReturnValue('No Date');
         const firstLectureStart = dayjs('2025-01-01T00:00:00Z');
         const lectures: Lecture[] = [
             { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z') },
@@ -279,7 +287,7 @@ describe('CourseOverviewService', () => {
 
     it('should map tutorial lectures correctly to sidebar card elements', () => {
         const translateService = TestBed.inject(TranslateService);
-        jest.spyOn(translateService, 'instant').mockReturnValue('No Date');
+        vi.spyOn(translateService, 'instant').mockReturnValue('No Date');
         const firstLectureStart = dayjs('2025-01-01T00:00:00Z');
         const lectures: Lecture[] = [
             { id: 1, title: 'Lecture 1', startDate: dayjs('2025-01-01T00:00:00Z'), isTutorialLecture: true },
@@ -311,9 +319,9 @@ describe('CourseOverviewService', () => {
     it('should group exercises by start date and map to sidebar card elements', () => {
         const sortedExercises = [futureExercise, pastExercise, dueSoonExercise, currentExercise, futureExercise2, currentExerciseNoDueDate];
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingExerciseGroupByDate');
+        vi.spyOn(courseOverviewService, 'getCorrespondingExerciseGroupByDate');
 
-        jest.spyOn(courseOverviewService, 'mapExerciseToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'mapExerciseToSidebarCardElement');
         const groupedExercises = courseOverviewService.groupExercisesByDueDate(sortedExercises);
 
         expect(groupedExercises['current'].entityData).toHaveLength(1);
@@ -388,9 +396,9 @@ describe('CourseOverviewService', () => {
         ];
         const sortedExercises = courseOverviewService.sortExercises(pastExercises);
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingExerciseGroupByDate');
+        vi.spyOn(courseOverviewService, 'getCorrespondingExerciseGroupByDate');
 
-        jest.spyOn(courseOverviewService, 'mapExerciseToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'mapExerciseToSidebarCardElement');
         const groupedExercises = courseOverviewService.groupExercisesByDueDate(sortedExercises);
 
         expect(groupedExercises['past'].entityData).toHaveLength(3);
@@ -520,8 +528,8 @@ describe('CourseOverviewService', () => {
     it('should group conversations by conversation types and map to sidebar card elements', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel];
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
-        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        vi.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
         const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(1);
@@ -536,8 +544,8 @@ describe('CourseOverviewService', () => {
     it('should group conversations together when having the same type', () => {
         const conversations = [generalChannel, generalChannel2];
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
-        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        vi.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
         const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(2);
@@ -549,10 +557,10 @@ describe('CourseOverviewService', () => {
     it('should group favorite and archived conversations correctly', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel, generalChannel2, favoriteChannel, hiddenChannel];
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
-        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
-        jest.spyOn(courseOverviewService, 'getConversationGroup');
-        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        vi.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        vi.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'getConversationGroup');
+        vi.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
         const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['generalChannels'].entityData).toHaveLength(3);
@@ -575,9 +583,9 @@ describe('CourseOverviewService', () => {
     it('should not remove favorite conversations from their original section but keep them at the top of the related section', () => {
         const conversations = [generalChannel, examChannel, exerciseChannel, favoriteChannel];
 
-        jest.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
-        jest.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
-        jest.spyOn(courseOverviewService, 'getConversationGroup');
+        vi.spyOn(courseOverviewService, 'getCorrespondingChannelSubType');
+        vi.spyOn(courseOverviewService, 'mapConversationToSidebarCardElement');
+        vi.spyOn(courseOverviewService, 'getConversationGroup');
         const groupedConversations = courseOverviewService.groupConversationsByChannelType(course, conversations, true);
 
         expect(groupedConversations['favoriteChannels'].entityData).toContainEqual(expect.objectContaining({ id: favoriteChannel.id }));
@@ -615,8 +623,8 @@ describe('CourseOverviewService', () => {
         const sidebarCardWithinRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationWithinRange);
         const sidebarCardOutsideRange = courseOverviewService.mapConversationToSidebarCardElement(course, conversationOutsideRange);
 
-        expect(sidebarCardWithinRange.isCurrent).toBeTrue();
-        expect(sidebarCardOutsideRange.isCurrent).toBeFalse();
+        expect(sidebarCardWithinRange.isCurrent).toBe(true);
+        expect(sidebarCardOutsideRange.isCurrent).toBe(false);
     });
 
     it('should return faBullhorn for announcement channels', () => {

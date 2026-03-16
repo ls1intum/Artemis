@@ -42,7 +42,7 @@ describe('OrganizationManagementUpdateComponent', () => {
     });
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     describe('onInit', () => {

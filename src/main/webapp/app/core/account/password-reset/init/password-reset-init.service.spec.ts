@@ -17,16 +17,15 @@ describe('PasswordResetInitService', () => {
 
     const postURL = 'api/core/public/account/reset-password/init';
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [{ provide: HttpClient, useClass: MockHttpService }],
-        })
-            .compileComponents()
-            .then(() => {
-                service = TestBed.inject(PasswordResetInitService);
-                httpClient = TestBed.inject(HttpClient);
-                postSpy = vi.spyOn(httpClient, 'post');
-            });
+        });
+        await TestBed.compileComponents();
+
+        service = TestBed.inject(PasswordResetInitService);
+        httpClient = TestBed.inject(HttpClient);
+        postSpy = vi.spyOn(httpClient, 'post');
     });
 
     afterEach(() => {
