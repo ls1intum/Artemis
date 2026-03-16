@@ -6,6 +6,7 @@ import { CourseManagementService } from 'app/core/course/manage/services/course-
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
+import { Course } from 'app/core/course/shared/entities/course.model';
 
 describe('Course Exercise Card Component', () => {
     setupTestBed({ zoneless: true });
@@ -21,6 +22,9 @@ describe('Course Exercise Card Component', () => {
             add: { imports: [MockDirective(TranslateDirective)] },
         });
         fixture = TestBed.createComponent(CourseExerciseCardComponent);
+        fixture.componentRef.setInput('headingJhiTranslate', 'test.heading');
+        fixture.componentRef.setInput('exerciseCount', 5);
+        fixture.componentRef.setInput('course', { id: 1, title: 'Test Course' } as Course);
     });
 
     afterEach(() => {

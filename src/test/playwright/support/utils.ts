@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import { v4 as uuidv4 } from 'uuid';
-import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, TIME_FORMAT } from './constants';
+import { Exercise, ExerciseType, ProgrammingExerciseAssessmentType, ProgrammingLanguage, TIME_FORMAT } from './constants';
 import * as fs from 'fs';
 import { dirname } from 'path';
 import { Browser, Locator, Page, expect } from '@playwright/test';
@@ -21,7 +21,7 @@ import { ExamStartEndPage } from './pageobjects/exam/ExamStartEndPage';
 import { ExamParticipationPage } from './pageobjects/exam/ExamParticipationPage';
 import { Commands } from './commands';
 import { admin, studentOne } from './users';
-import javaPartiallySuccessful from '../fixtures/exercise/programming/java/partially_successful/submission.json';
+import cPartiallySuccessful from '../fixtures/exercise/programming/c/partially_successful/submission.json';
 import { ExamManagementPage } from './pageobjects/exam/ExamManagementPage';
 import { CourseAssessmentDashboardPage } from './pageobjects/assessment/CourseAssessmentDashboardPage';
 import { ExerciseAssessmentDashboardPage } from './pageobjects/assessment/ExerciseAssessmentDashboardPage';
@@ -359,7 +359,7 @@ export async function createFileWithContent(filePath: string, content: string) {
 }
 
 export async function newBrowserPage(browser: Browser) {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ ignoreHTTPSErrors: true });
     return await context.newPage();
 }
 
@@ -430,8 +430,9 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     switch (exerciseType) {
         case ExerciseType.PROGRAMMING:
             additionalData = {
-                submission: javaPartiallySuccessful,
+                submission: cPartiallySuccessful,
                 progExerciseAssessmentType: ProgrammingExerciseAssessmentType.SEMI_AUTOMATIC,
+                programmingLanguage: ProgrammingLanguage.C,
             };
             break;
         case ExerciseType.TEXT:
@@ -463,7 +464,7 @@ export async function makeExamSubmission(
     await examParticipation.startParticipation(studentOne, course, exam);
     await examNavigation.openOrSaveExerciseByTitle(exercise.exerciseGroup!.title!);
     await examParticipation.makeSubmission(exercise.id!, exercise.type!, exercise.additionalData);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
     await examNavigation.handInEarly();
     await examStartEnd.finishExam();
 }
