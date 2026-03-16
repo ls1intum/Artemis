@@ -59,23 +59,24 @@ export HOST_HOSTNAME="nginx"
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
 
 # Set platform for ARM64 Macs (Apple Silicon)
-# Note: We keep DOCKER_DEFAULT_PLATFORM for building the Artemis app natively on ARM,
-# but we do NOT set ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE. This allows LocalCI
-# to use amd64 images (the default) which Docker Desktop can emulate via Rosetta.
-# This is necessary because some exercise images (e.g., sharingcodeability/fact) only provide amd64.
+# Build the Artemis app natively on ARM and tell LocalCI to use arm64 exercise images.
+# Most exercise images (C, Java, Python) support arm64 natively for better performance.
 if [ "$(uname -m)" = "arm64" ]; then
     export DOCKER_DEFAULT_PLATFORM="linux/arm64"
-    echo "Detected ARM64 architecture, using linux/arm64 platform for Artemis build"
-    echo "LocalCI will use amd64 images (emulated via Rosetta when needed)"
+    export ARTEMIS_CONTINUOUSINTEGRATION_IMAGEARCHITECTURE="arm64"
+    echo "Detected ARM64 architecture, using linux/arm64 for Artemis build and exercise images"
 fi
 
 # Change to docker directory
 cd "$(dirname "$0")/../../docker"
 
-# Create override file if test filter is specified
-OVERRIDE_ARGS=""
+# Clean up stale JUnit XML files from previous runs to avoid double-counting
+rm -f ../src/test/playwright/test-reports/results*.xml
+
+# Create override file for local test execution.
+echo "Creating local test override..."
 if [ -n "$TEST_FILTER" ]; then
-    echo "Creating test filter override..."
+    # With a filter, use a single npx command (--grep works across all projects)
     cat > playwright-local-override.yml << EOF
 # AUTO-GENERATED - DO NOT COMMIT
 services:
@@ -91,6 +92,8 @@ services:
             '
 EOF
     OVERRIDE_ARGS="-f playwright-local-override.yml"
+else
+    OVERRIDE_ARGS=""
 fi
 
 # Cleanup function
@@ -103,12 +106,12 @@ trap cleanup EXIT
 # Pull required images (except artemis-app which we build)
 echo ""
 echo "Pulling Docker images..."
-docker compose -f $COMPOSE_FILE pull $DB nginx 2>/dev/null || true
+docker compose --env-file ../.env -f $COMPOSE_FILE pull $DB nginx 2>/dev/null || true
 
 # Build Artemis image from external WAR file
 echo ""
 echo "Building Artemis Docker image from WAR file..."
-docker compose -f $COMPOSE_FILE build \
+docker compose --env-file ../.env -f $COMPOSE_FILE build \
     --build-arg WAR_FILE_STAGE=external_builder \
     --no-cache \
     --pull \
@@ -122,7 +125,7 @@ echo ""
 
 # Disable exit on error to capture exit code
 set +e
-docker compose -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
 EXIT_CODE=$?
 set -e
 
@@ -140,22 +143,33 @@ TOTAL_FAILURES=0
 TOTAL_ERRORS=0
 TOTAL_SKIPPED=0
 
-for xml_file in "$REPORT_DIR"/results*.xml; do
-    if [ -f "$xml_file" ]; then
-        # Extract and sum test counts from ALL testsuites in the JUnit XML
-        # Each spec file creates a separate <testsuite> element
-        while IFS= read -r line; do
-            tests=$(echo "$line" | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
-            failures=$(echo "$line" | grep -o 'failures="[0-9]*"' | grep -o '[0-9]*')
-            errors=$(echo "$line" | grep -o 'errors="[0-9]*"' | grep -o '[0-9]*')
-            skipped=$(echo "$line" | grep -o 'skipped="[0-9]*"' | grep -o '[0-9]*')
+# Determine which XML files to parse to avoid double-counting.
+# The test runner generates results-parallel.xml + results-sequential.xml,
+# then merges them into results.xml. If the merged file exists, use only that.
+# Otherwise fall back to individual files.
+XML_FILES=()
+if [ -f "$REPORT_DIR/results.xml" ]; then
+    XML_FILES=("$REPORT_DIR/results.xml")
+else
+    for f in "$REPORT_DIR"/results-parallel.xml "$REPORT_DIR"/results-sequential.xml; do
+        [ -f "$f" ] && XML_FILES+=("$f")
+    done
+fi
 
-            TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
-            TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
-            TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
-            TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
-        done < <(grep '<testsuite ' "$xml_file")
-    fi
+for xml_file in "${XML_FILES[@]}"; do
+    # Extract and sum test counts from ALL testsuites in the JUnit XML
+    # Each spec file creates a separate <testsuite> element
+    while IFS= read -r line; do
+        tests=$(echo "$line" | grep -o 'tests="[0-9]*"' | grep -o '[0-9]*')
+        failures=$(echo "$line" | grep -o 'failures="[0-9]*"' | grep -o '[0-9]*')
+        errors=$(echo "$line" | grep -o 'errors="[0-9]*"' | grep -o '[0-9]*')
+        skipped=$(echo "$line" | grep -o 'skipped="[0-9]*"' | grep -o '[0-9]*')
+
+        TOTAL_TESTS=$((TOTAL_TESTS + ${tests:-0}))
+        TOTAL_FAILURES=$((TOTAL_FAILURES + ${failures:-0}))
+        TOTAL_ERRORS=$((TOTAL_ERRORS + ${errors:-0}))
+        TOTAL_SKIPPED=$((TOTAL_SKIPPED + ${skipped:-0}))
+    done < <(grep '<testsuite ' "$xml_file")
 done
 
 TOTAL_PASSED=$((TOTAL_TESTS - TOTAL_FAILURES - TOTAL_ERRORS - TOTAL_SKIPPED))
@@ -173,13 +187,11 @@ if [ $TOTAL_TESTS -gt 0 ]; then
         echo ""
         echo "FAILED TESTS:"
         echo "-------------"
-        for xml_file in "$REPORT_DIR"/results*.xml; do
-            if [ -f "$xml_file" ]; then
-                # Extract failed test names from failure message attributes
-                # The message attribute contains the test file and name
-                grep '<failure message=' "$xml_file" 2>/dev/null | \
-                    sed 's/.*message="\([^"]*\)".*/  - \1/' || true
-            fi
+        for xml_file in "${XML_FILES[@]}"; do
+            # Extract failed test names from failure message attributes
+            # The message attribute contains the test file and name
+            grep '<failure message=' "$xml_file" 2>/dev/null | \
+                sed 's/.*message="\([^"]*\)".*/  - \1/' || true
         done
         echo ""
     fi
