@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
@@ -16,6 +18,8 @@ import { CourseGroupComponent } from 'app/core/course/shared/course-group/course
 import { ExportUserInformationRow } from 'app/shared/user-import/helpers/write-users-to-csv';
 
 describe('CourseGroupComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let userService: UserService;
@@ -28,7 +32,7 @@ describe('CourseGroupComponent', () => {
     const courseGroupUser = new User(1, 'user');
     const courseGroupUser2 = new User(2, 'user2');
 
-    beforeEach(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
             providers: [
                 { provide: ActivatedRoute, useValue: route },
@@ -38,22 +42,20 @@ describe('CourseGroupComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(CourseGroupComponent);
-                comp = fixture.componentInstance;
-                userService = TestBed.inject(UserService);
-                // Set required inputs using ComponentRef
-                fixture.componentRef.setInput('course', course);
-                fixture.componentRef.setInput('courseGroup', courseGroup);
-                fixture.componentRef.setInput('exportFileName', 'test-export');
-                fixture.componentRef.setInput('userSearch', (searchTerm: string) => userService.search(searchTerm));
-            });
+        });
+        await TestBed.compileComponents();
+        fixture = TestBed.createComponent(CourseGroupComponent);
+        comp = fixture.componentInstance;
+        userService = TestBed.inject(UserService);
+        // Set required inputs using ComponentRef
+        fixture.componentRef.setInput('course', course);
+        fixture.componentRef.setInput('courseGroup', courseGroup);
+        fixture.componentRef.setInput('exportFileName', 'test-export');
+        fixture.componentRef.setInput('userSearch', (searchTerm: string) => userService.search(searchTerm));
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize', () => {
@@ -64,12 +66,12 @@ describe('CourseGroupComponent', () => {
     describe('searchAllUsers', () => {
         let loginOrName: string;
         let loginStream: Observable<{ text: string; entities: User[] }>;
-        let searchStub: jest.SpyInstance;
+        let searchStub: ReturnType<typeof vi.spyOn>;
 
         beforeEach(() => {
             loginOrName = 'testLoginOrName';
             loginStream = of({ text: loginOrName, entities: [] });
-            searchStub = jest.spyOn(userService, 'search');
+            searchStub = vi.spyOn(userService, 'search');
         });
 
         it('should search users for given login or name', () => {
@@ -86,7 +88,7 @@ describe('CourseGroupComponent', () => {
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });
-            expect(comp.searchNoResults()).toBeTrue();
+            expect(comp.searchNoResults()).toBe(true);
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
             expect(searchStub).toHaveBeenCalledOnce();
         });
@@ -105,7 +107,7 @@ describe('CourseGroupComponent', () => {
             comp.searchAllUsers(loginStream).subscribe((users: any) => {
                 expect(users).toEqual([]);
             });
-            expect(comp.searchFailed()).toBeTrue();
+            expect(comp.searchFailed()).toBe(true);
             expect(searchStub).toHaveBeenCalledWith(loginOrName);
             expect(searchStub).toHaveBeenCalledOnce();
         });
@@ -121,7 +123,7 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should add the selected user to course group', () => {
-            const fake = jest.fn();
+            const fake = vi.fn();
             comp.onAutocompleteSelect(user, fake);
             expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
@@ -129,7 +131,7 @@ describe('CourseGroupComponent', () => {
         });
 
         it('should call callback if user is already in the group', () => {
-            const fake = jest.fn();
+            const fake = vi.fn();
             comp.allGroupUsers.set([user]);
             comp.onAutocompleteSelect(user, fake);
             expect(comp.allGroupUsers()).toEqual([courseGroupUser]);
@@ -139,16 +141,16 @@ describe('CourseGroupComponent', () => {
 
         it('should handle error when adding user to group', () => {
             fixture.componentRef.setInput('addUserToGroup', () => throwError(() => new Error('Add failed')));
-            const fake = jest.fn();
+            const fake = vi.fn();
             comp.onAutocompleteSelect(user, fake);
-            expect(comp.isTransitioning()).toBeFalse();
+            expect(comp.isTransitioning()).toBe(false);
             expect(fake).not.toHaveBeenCalled();
         });
 
         it('should not add user without login', () => {
             const userWithoutLogin = { ...courseGroupUser };
             delete userWithoutLogin.login;
-            const fake = jest.fn();
+            const fake = vi.fn();
             comp.onAutocompleteSelect(userWithoutLogin, fake);
             expect(fake).toHaveBeenCalledWith(userWithoutLogin);
         });
@@ -205,7 +207,7 @@ describe('CourseGroupComponent', () => {
 
     it('should generate csv correctly', () => {
         comp.allGroupUsers.set([courseGroupUser, courseGroupUser2]);
-        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+        const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
         comp.exportUserInformation();
 
@@ -231,7 +233,7 @@ describe('CourseGroupComponent', () => {
 
     it('should not export csv when there are no users', () => {
         comp.allGroupUsers.set([]);
-        const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+        const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
         comp.exportUserInformation();
 
@@ -251,18 +253,18 @@ describe('CourseGroupComponent', () => {
 
     describe('flashRowClass', () => {
         beforeEach(() => {
-            jest.useFakeTimers();
+            vi.useFakeTimers();
         });
 
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should set and then clear the row class', () => {
             comp.flashRowClass('flash-class');
             expect(comp['rowClass']()).toBe('flash-class');
 
-            jest.runAllTimers();
+            vi.runAllTimers();
             expect(comp['rowClass']()).toBe('');
         });
     });
@@ -273,7 +275,7 @@ describe('CourseGroupComponent', () => {
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
 
             // Mock URL.createObjectURL since it's not available in test environment
-            const createObjectURLMock = jest.fn().mockReturnValue('blob:mock-url');
+            const createObjectURLMock = vi.fn().mockReturnValue('blob:mock-url');
             global.URL.createObjectURL = createObjectURLMock;
 
             // The function should not throw
@@ -285,54 +287,54 @@ describe('CourseGroupComponent', () => {
         it('should set isSearching during search', () => {
             const loginOrName = 'testUser';
             const loginStream = of({ text: loginOrName, entities: [] });
-            jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
 
             // Subscribe to trigger the search
             comp.searchAllUsers(loginStream).subscribe();
 
             // After search completes, isSearching should be false
-            expect(comp.isSearching()).toBeFalse();
+            expect(comp.isSearching()).toBe(false);
         });
     });
 
     describe('searchAllUsers setTimeout callback', () => {
         beforeEach(() => {
-            jest.useFakeTimers();
+            vi.useFakeTimers();
         });
 
         afterEach(() => {
-            jest.useRealTimers();
+            vi.useRealTimers();
         });
 
         it('should handle when dataTable is undefined', () => {
             const loginOrName = 'testUser';
             const loginStream = of({ text: loginOrName, entities: [] });
-            jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
+            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
 
             // dataTable() returns undefined by default since we haven't set up the view
             comp.searchAllUsers(loginStream).subscribe();
 
             // Run the setTimeout callback - should not throw when dataTable is undefined
-            expect(() => jest.runAllTimers()).not.toThrow();
+            expect(() => vi.runAllTimers()).not.toThrow();
         });
 
         it('should process typeahead buttons when dataTable exists', () => {
             const loginOrName = 'testUser';
             const loginStream = of({ text: loginOrName, entities: [] });
             const returnedUser = { ...courseGroupUser, id: 1 };
-            jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
+            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
 
             // Mock the dataTable with typeahead buttons
             const mockButton = document.createElement('button');
             const mockDataTable = {
                 typeaheadButtons: [mockButton],
             };
-            jest.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
+            vi.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
 
             // User is not in group - should add 'users-plus' icon
             comp.allGroupUsers.set([]);
             comp.searchAllUsers(loginStream).subscribe();
-            jest.runAllTimers();
+            vi.runAllTimers();
 
             // Button should have had HTML inserted (users-plus icon)
             expect(mockButton.innerHTML).toContain('fa-icon');
@@ -342,29 +344,29 @@ describe('CourseGroupComponent', () => {
             const loginOrName = 'testUser';
             const loginStream = of({ text: loginOrName, entities: [] });
             const returnedUser = { ...courseGroupUser, id: 1 };
-            jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
+            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
 
             // Mock the dataTable with typeahead buttons
             const mockButton = document.createElement('button');
             const mockDataTable = {
                 typeaheadButtons: [mockButton],
             };
-            jest.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
+            vi.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
 
             // User is already in group
             comp.allGroupUsers.set([returnedUser]);
             comp.searchAllUsers(loginStream).subscribe();
-            jest.runAllTimers();
+            vi.runAllTimers();
 
             // Button should have the already-member class
-            expect(mockButton.classList.contains('already-member')).toBeTrue();
+            expect(mockButton.classList.contains('already-member')).toBe(true);
         });
 
         it('should not insert icon HTML when button already has icon', () => {
             const loginOrName = 'testUser';
             const loginStream = of({ text: loginOrName, entities: [] });
             const returnedUser = { ...courseGroupUser, id: 1 };
-            jest.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
+            vi.spyOn(userService, 'search').mockReturnValue(of(new HttpResponse({ body: [returnedUser] })));
 
             // Mock the dataTable with a button that already has an fa-icon
             const mockButton = document.createElement('button');
@@ -375,11 +377,11 @@ describe('CourseGroupComponent', () => {
             const mockDataTable = {
                 typeaheadButtons: [mockButton],
             };
-            jest.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
+            vi.spyOn(comp as any, 'dataTable').mockReturnValue(mockDataTable);
 
             comp.allGroupUsers.set([]);
             comp.searchAllUsers(loginStream).subscribe();
-            jest.runAllTimers();
+            vi.runAllTimers();
 
             // Button should not have additional HTML inserted since it already has an icon
             expect(mockButton.innerHTML).toBe(originalHTML);
@@ -395,7 +397,7 @@ describe('CourseGroupComponent', () => {
                 visibleRegistrationNumber: '  12345  ',
             };
             comp.allGroupUsers.set([userWithAllProps]);
-            const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
@@ -412,7 +414,7 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedName = { ...courseGroupUser };
             delete (userWithUndefinedName as any).name;
             comp.allGroupUsers.set([userWithUndefinedName]);
-            const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
@@ -427,7 +429,7 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedEmail = { ...courseGroupUser, name: 'Test' };
             delete (userWithUndefinedEmail as any).email;
             comp.allGroupUsers.set([userWithUndefinedEmail]);
-            const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
@@ -442,7 +444,7 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedRegNum = { ...courseGroupUser, name: 'Test' };
             delete (userWithUndefinedRegNum as any).visibleRegistrationNumber;
             comp.allGroupUsers.set([userWithUndefinedRegNum]);
-            const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
@@ -457,7 +459,7 @@ describe('CourseGroupComponent', () => {
             const userWithUndefinedLogin = { ...courseGroupUser, name: 'Test' };
             delete (userWithUndefinedLogin as any).login;
             comp.allGroupUsers.set([userWithUndefinedLogin]);
-            const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv').mockImplementation();
+            const exportAsCsvMock = vi.spyOn(comp, 'exportAsCsv').mockImplementation(() => {});
 
             comp.exportUserInformation();
 
