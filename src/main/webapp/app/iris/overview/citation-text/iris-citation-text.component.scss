@@ -133,6 +133,10 @@ jhi-iris-citation-text {
         font-size: 0.85rem;
     }
 
+    .iris-citation__summary-title + .iris-citation__summary-text {
+        margin-top: 8px;
+    }
+
     .iris-citation__nav {
         display: flex;
         align-items: center;
