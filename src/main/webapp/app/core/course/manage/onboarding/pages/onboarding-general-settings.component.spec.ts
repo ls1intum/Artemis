@@ -3,7 +3,7 @@ import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -19,6 +19,7 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { of } from 'rxjs';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('OnboardingGeneralSettingsComponent', () => {
     setupTestBed({ zoneless: true });
@@ -46,6 +47,7 @@ describe('OnboardingGeneralSettingsComponent', () => {
                         updateCourseSettings: () => of({ body: { settings: { enabled: false } } }),
                     },
                 },
+                MockProvider(DialogService),
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],

@@ -421,6 +421,11 @@
                 "validation": {
                     "startDateBeforeEndDate": "Das Startdatum muss vor dem Enddatum liegen.",
                     "enrollmentStartDateBeforeEndDate": "Das Einschreibungsstartdatum muss vor dem Einschreibungsenddatum liegen.",
+                    "enrollmentRequiresCourseDates": "Einschreibungsdaten erfordern ein Start- und Enddatum des Kurses. Bitte im Schritt Allgemein festlegen.",
+                    "enrollmentEndDateBeforeCourseEndDate": "Das Einschreibungsenddatum darf nicht nach dem Kursenddatum liegen.",
+                    "unenrollmentRequiresEnrollmentDates": "Das Abmeldungsenddatum erfordert ein Einschreibungsstart- und -enddatum.",
+                    "unenrollmentAfterEnrollmentEnd": "Das Abmeldungsenddatum muss nach dem Einschreibungsenddatum liegen.",
+                    "unenrollmentBeforeCourseEndDate": "Das Abmeldungsenddatum darf nicht nach dem Kursenddatum liegen.",
                     "accuracyOfScoresRange": "Dezimalstellen für Bewertungsberechnungen müssen zwischen 0 und 5 liegen.",
                     "maxPointsPositive": "Maximale Punkte müssen größer als 0 sein."
                 },

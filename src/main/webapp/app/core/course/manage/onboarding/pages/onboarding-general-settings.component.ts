@@ -16,6 +16,8 @@ import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
 
 @Component({
     selector: 'jhi-onboarding-general-settings',
@@ -39,6 +41,8 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private dialogService = inject(DialogService);
+    private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
     readonly course = input.required<Course>();
     readonly courseUpdated = output<Course>();
@@ -111,5 +115,21 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         const current = this.course();
         current.color = color;
         this.courseUpdated.emit(Course.from(current));
+    }
+
+    openAboutIrisModal(): void {
+        this.aboutIrisDialogRef?.close();
+        this.aboutIrisDialogRef =
+            this.dialogService.open(AboutIrisModalComponent, {
+                modal: true,
+                closable: false,
+                dismissableMask: true,
+                showHeader: false,
+                styleClass: 'about-iris-dialog',
+                maskStyleClass: 'about-iris-dialog',
+                width: '40rem',
+                breakpoints: { '640px': '95vw' },
+                data: { hideTryButton: true },
+            }) ?? undefined;
     }
 }

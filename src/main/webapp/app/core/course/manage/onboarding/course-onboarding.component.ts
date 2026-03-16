@@ -134,15 +134,36 @@ export class CourseOnboardingComponent implements OnInit {
                 break;
             }
             case 1: {
-                // Enrollment: enrollmentStartDate < enrollmentEndDate
-                if (
-                    current.enrollmentEnabled &&
-                    current.enrollmentStartDate &&
-                    current.enrollmentEndDate &&
-                    dayjs(current.enrollmentStartDate).isAfter(dayjs(current.enrollmentEndDate))
-                ) {
-                    this.alertService.error('artemisApp.course.onboarding.validation.enrollmentStartDateBeforeEndDate');
-                    return false;
+                if (!current.enrollmentEnabled) {
+                    break;
+                }
+                if (current.enrollmentStartDate && current.enrollmentEndDate) {
+                    if (!dayjs(current.enrollmentStartDate).isBefore(dayjs(current.enrollmentEndDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.enrollmentStartDateBeforeEndDate');
+                        return false;
+                    }
+                    if (!current.startDate || !current.endDate) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.enrollmentRequiresCourseDates');
+                        return false;
+                    }
+                    if (dayjs(current.enrollmentEndDate).isAfter(dayjs(current.endDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.enrollmentEndDateBeforeCourseEndDate');
+                        return false;
+                    }
+                }
+                if (current.unenrollmentEnabled && current.unenrollmentEndDate) {
+                    if (!current.enrollmentStartDate || !current.enrollmentEndDate) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.unenrollmentRequiresEnrollmentDates');
+                        return false;
+                    }
+                    if (!dayjs(current.enrollmentEndDate).isBefore(dayjs(current.unenrollmentEndDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.unenrollmentAfterEnrollmentEnd');
+                        return false;
+                    }
+                    if (current.endDate && dayjs(current.unenrollmentEndDate).isAfter(dayjs(current.endDate))) {
+                        this.alertService.error('artemisApp.course.onboarding.validation.unenrollmentBeforeCourseEndDate');
+                        return false;
+                    }
                 }
                 break;
             }

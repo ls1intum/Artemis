@@ -196,6 +196,7 @@
                 "sessionMenuAriaLabel": "Chat session actions"
             },
             "aboutIrisModal": {
+                "learnMore": "Learn more",
                 "meetIris": "Meet Iris",
                 "subtitle": "Your AI tutor, built right into Artemis.",
                 "description": "As part of the EduTelligence suite of AI features in Artemis, Iris helps with course-related programming questions and lecture content using your current context.",

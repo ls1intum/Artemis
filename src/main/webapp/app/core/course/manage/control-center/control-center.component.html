@@ -4,8 +4,8 @@
             <div class="iris-title">
                 <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
                 <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
+                <a class="iris-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
             </div>
-            <jhi-help-icon text="artemisApp.iris.controlCenter.tooltip" />
         </div>
         <div class="iris-toggle">
             <jhi-iris-enabled [course]="course()" />

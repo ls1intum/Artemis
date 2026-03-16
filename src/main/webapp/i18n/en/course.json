@@ -421,6 +421,11 @@
                 "validation": {
                     "startDateBeforeEndDate": "The start date must be before the end date.",
                     "enrollmentStartDateBeforeEndDate": "The enrollment start date must be before the enrollment end date.",
+                    "enrollmentRequiresCourseDates": "Enrollment dates require the course to have a start and end date. Please set them in the General Settings step.",
+                    "enrollmentEndDateBeforeCourseEndDate": "The enrollment end date must not be after the course end date.",
+                    "unenrollmentRequiresEnrollmentDates": "The unenrollment end date requires enrollment start and end dates to be set.",
+                    "unenrollmentAfterEnrollmentEnd": "The unenrollment end date must be after the enrollment end date.",
+                    "unenrollmentBeforeCourseEndDate": "The unenrollment end date must not be after the course end date.",
                     "accuracyOfScoresRange": "Decimal places for score calculations must be between 0 and 5.",
                     "maxPointsPositive": "Max points must be greater than 0."
                 },
