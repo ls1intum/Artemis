@@ -48,6 +48,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -71,6 +72,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -143,6 +145,8 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -150,7 +154,7 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -175,6 +179,7 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     /**
@@ -927,5 +932,77 @@ public class ExerciseService {
             }
         }
         return events;
+    }
+
+    /**
+     * Updates the competency links of an exercise based on the DTO values.
+     * Reuses existing managed links where possible, creates new ones for new competencies,
+     * and removes links that are no longer present.
+     *
+     * @param dto    the DTO containing the new competency link state
+     * @param entity the exercise entity to update
+     */
+    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
+        }
+        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+            entity.getCompetencyLinks().clear();
+        }
+        else {
+            final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+
+            Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
+
+            for (var dtoLink : dto.competencyLinks()) {
+                long competencyId = dtoLink.competency().id();
+                double weight = dtoLink.weight();
+
+                var existingLink = existingLinksByCompetencyId.get(competencyId);
+                if (existingLink != null) {
+                    existingLink.setWeight(weight);
+                    updatedLinks.add(existingLink);
+                }
+                else {
+                    var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    var newLink = new CompetencyExerciseLink(competency, entity, weight);
+                    updatedLinks.add(newLink);
+                }
+            }
+
+            entity.getCompetencyLinks().clear();
+            entity.getCompetencyLinks().addAll(updatedLinks);
+        }
+    }
+
+    /**
+     * Extracts competency links from a new exercise before its first save.
+     * The links are cleared from the exercise so it can be saved without them
+     * (since they need the exercise ID which doesn't exist yet).
+     *
+     * @param exercise the new exercise (not yet saved) from which to extract competency links
+     * @return the extracted competency links (may be empty)
+     */
+    public Set<CompetencyExerciseLink> extractCompetencyLinksForCreation(Exercise exercise) {
+        Set<CompetencyExerciseLink> competencyLinks = new HashSet<>(exercise.getCompetencyLinks());
+        exercise.getCompetencyLinks().clear();
+        return competencyLinks;
+    }
+
+    /**
+     * Restores competency links to a saved exercise.
+     * Must be called AFTER the exercise has been saved and has an ID.
+     *
+     * @param exercise        the saved exercise (must have an ID)
+     * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
+     */
+    public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
+        if (competencyLinks == null || competencyLinks.isEmpty()) {
+            return;
+        }
+        for (CompetencyExerciseLink link : competencyLinks) {
+            link.setExercise(exercise);
+        }
+        exercise.setCompetencyLinks(competencyLinks);
     }
 }

@@ -39,8 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.api.CourseCompetencyApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
@@ -55,7 +53,6 @@ import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.calendar.QuizExerciseCalendarEventDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.SearchTermPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
-import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.CalendarEventType;
@@ -83,12 +80,13 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.CompetencyExerciseLinkFromEditorDTO;
-import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseFromEditorDTO;
+import de.tum.cit.aet.artemis.quiz.dto.QuizBatchFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithoutQuestionsDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
+import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.AnswerOptionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragAndDropQuestionReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.reevaluate.DragItemReEvaluateDTO;
@@ -141,14 +139,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
-    private final Optional<CourseCompetencyApi> courseCompetencyApi;
-
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi, Optional<CourseCompetencyApi> courseCompetencyApi) {
+            Optional<SlideApi> slideApi) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -164,7 +160,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
-        this.courseCompetencyApi = courseCompetencyApi;
     }
 
     /**
@@ -573,18 +568,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalQuizExercise);
         boolean questionsChanged = applyBaseQuizQuestionData(quizExerciseDTO, originalQuizExercise);
         questionsChanged = applyQuizQuestionsFromDTOAndCheckIfChanged(quizExerciseDTO, originalQuizExercise) || questionsChanged;
-        validateQuizExerciseFiles(originalQuizExercise, files);
+        validateQuizExerciseFiles(originalQuizExercise, files, oldPaths);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
-        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, Function.identity()));
-        for (var question : originalQuizExercise.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
-                handleDndQuestionUpdate(dragAndDropQuestion, oldPaths, filesToRemove, fileMap, dragAndDropQuestion);
-            }
-        }
-        var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
-                .toList();
-        FileUtil.deleteFiles(allFilesToRemoveMerged);
+
+        deleteOldFiles(originalQuizExercise, files, oldPaths, filesToRemove);
+
         originalQuizExercise.setMaxPoints(originalQuizExercise.getOverallQuizPoints());
         originalQuizExercise.reconnectJSONIgnoreAttributes();
         updateResultsOnQuizChanges(originalQuizExercise);
@@ -748,24 +736,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param originalExercise the original quiz exercise
      * @param files            the provided files
      */
-    public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, List<MultipartFile> files) throws IOException {
-        List<MultipartFile> nullsafeFiles = files == null ? new ArrayList<>() : files;
-        validateQuizExerciseFiles(updatedExercise, nullsafeFiles);
+    public void handleDndQuizFileUpdates(QuizExercise updatedExercise, QuizExercise originalExercise, @NonNull List<MultipartFile> files) throws IOException {
         Map<FilePathType, Set<String>> oldPaths = getAllPathsFromDragAndDropQuestionsOfExercise(originalExercise);
+        validateQuizExerciseFiles(updatedExercise, files, oldPaths);
         Map<FilePathType, Set<String>> filesToRemove = new HashMap<>(oldPaths);
 
-        Map<String, MultipartFile> fileMap = nullsafeFiles.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+        deleteOldFiles(updatedExercise, files, oldPaths, filesToRemove);
+    }
 
-        for (var question : updatedExercise.getQuizQuestions()) {
+    private void deleteOldFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> files, Map<FilePathType, Set<String>> oldPaths,
+            Map<FilePathType, Set<String>> filesToRemove) throws IOException {
+        Map<String, MultipartFile> fileMap = files.stream().collect(Collectors.toMap(MultipartFile::getOriginalFilename, file -> file));
+        for (var question : quizExercise.getQuizQuestions()) {
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 handleDndQuestionUpdate(dragAndDropQuestion, oldPaths, filesToRemove, fileMap, dragAndDropQuestion);
             }
         }
-
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
-                .toList();
-
+                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).toList();
         FileUtil.deleteFiles(allFilesToRemoveMerged);
     }
 
@@ -824,6 +812,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param providedFiles the provided files to validate
      */
     public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles) {
+        validateQuizExerciseFiles(quizExercise, providedFiles, null);
+    }
+
+    /**
+     * Verifies that the provided files match the provided filenames in the exercise entity.
+     *
+     * @param quizExercise  the quiz exercise to validate
+     * @param providedFiles the provided files to validate
+     * @param oldPaths      Optional map of paths that already existed in the original exercise (should not require new files)
+     */
+    public void validateQuizExerciseFiles(QuizExercise quizExercise, @NonNull List<MultipartFile> providedFiles, @Nullable Map<FilePathType, Set<String>> oldPaths) {
         long fileCount = providedFiles.size();
 
         Map<FilePathType, Set<String>> exerciseFilePathsMap = getAllPathsFromDragAndDropQuestionsOfExercise(quizExercise);
@@ -832,7 +831,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         for (Map.Entry<FilePathType, Set<String>> entry : exerciseFilePathsMap.entrySet()) {
             FilePathType type = entry.getKey();
             Set<String> paths = entry.getValue();
-            Set<String> newPaths = new HashSet<>();
             for (String path : paths) {
                 FileUtil.sanitizeFilePathByCheckingForInvalidCharactersElseThrow(path);
                 URI uri = URI.create(path);
@@ -840,15 +838,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
                 if (Files.exists(fsPath)) {
                     URI intendedSubPath = type == FilePathType.DRAG_AND_DROP_BACKGROUND ? URI.create(FileUtil.BACKGROUND_FILE_SUBPATH) : URI.create(FileUtil.PICTURE_FILE_SUBPATH);
-                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(uri, intendedSubPath);
+                    FileUtil.sanitizeByCheckingIfPathStartsWithSubPathElseThrow(URI.create(path), intendedSubPath);
                 }
-                else {
-                    newPaths.add(path);
-                }
-            }
 
-            if (!newPaths.isEmpty()) {
-                newFilePathsMap.put(type, newPaths);
+                // A path is "new" if it doesn't exist on disk AND it wasn't in the original exercise
+                Set<String> oldPathsForType = oldPaths != null ? oldPaths.getOrDefault(type, Set.of()) : Set.of();
+                Set<String> newPaths = paths.stream().filter(filePath -> !Files.exists(FilePathConverter.fileSystemPathForExternalUri(URI.create(filePath), type)))
+                        .filter(filePath -> !oldPathsForType.contains(filePath)).collect(Collectors.toSet());
+
+                if (!newPaths.isEmpty()) {
+                    newFilePathsMap.put(type, newPaths);
+                }
             }
         }
 
@@ -940,7 +940,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         // make sure the pointers in the statistics are correct
         quizExercise.recalculatePointCounters();
 
-        QuizExercise savedQuizExercise = exerciseService.saveWithCompetencyLinks(quizExercise, super::save);
+        QuizExercise savedQuizExercise = super.save(quizExercise);
 
         if (savedQuizExercise.isCourseExercise()) {
             // only schedule quizzes for course exercises, not for exam exercises
@@ -1015,7 +1015,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
      *                                      quiz has already started, or conversion between exam/course types).
      */
-    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, List<MultipartFile> files, String notificationText) throws IOException {
+    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText) throws IOException {
 
         if (!updatedQuiz.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is not valid", ENTITY_NAME, "invalidQuiz");
@@ -1057,88 +1057,61 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Method to update competency exercise links for a quiz exercise.
-     *
-     * @param quizExercise The quiz exercise to update the competency links for
-     * @param competencies The competency links from the editor DTO
-     * @param course       The course the quiz exercise belongs to
-     * @return The updated set of competency exercise links
-     */
-    private Set<CompetencyExerciseLink> updateCompetencyExerciseLinks(QuizExercise quizExercise, Set<CompetencyExerciseLinkFromEditorDTO> competencies, Course course) {
-        if (courseCompetencyApi.isEmpty()) {
-            return Set.of();
-        }
-        CourseCompetencyApi courseCompetencyApi = this.courseCompetencyApi.get();
-        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
-        Set<Long> competencyIds = competencies.stream().map(CompetencyExerciseLinkFromEditorDTO::competencyId).collect(Collectors.toSet());
-        Set<Competency> foundCompetencies = courseCompetencyApi.findCourseCompetenciesByIdsAndCourseId(competencyIds, course.getId());
-        for (CompetencyExerciseLinkFromEditorDTO dto : competencies) {
-            Optional<Competency> matchingCompetency = foundCompetencies.stream().filter(c -> c.getId().equals(dto.competencyId())).findFirst();
-            if (matchingCompetency.isPresent()) {
-                CompetencyExerciseLink link = new CompetencyExerciseLink();
-                link.setCompetency(matchingCompetency.get());
-                link.setWeight(dto.weight());
-                link.setExercise(quizExercise);
-                updatedLinks.add(link);
-            }
-            else {
-                throw new EntityNotFoundException("Competency with id " + dto.competencyId() + " not found in course " + course.getId());
-            }
-        }
-        return updatedLinks;
-    }
-
-    /**
      * Merges the properties of the QuizExerciseFromEditorDTO into the QuizExercise domain object.
+     * This method converts DTOs to new entity objects to avoid Hibernate detached entity issues.
      *
-     * @param quizExercise              The QuizExercise domain object to be updated
-     * @param quizExerciseFromEditorDTO The DTO containing the properties to be merged into the domain object.
-     * @param course                    The course the quiz exercise belongs to
+     * @param quizExercise          The QuizExercise domain object to be updated
+     * @param updateQuizExerciseDTO The DTO containing the properties to be merged into the domain object.
      */
-    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, QuizExerciseFromEditorDTO quizExerciseFromEditorDTO, Course course) {
-        if (quizExerciseFromEditorDTO.title() != null) {
-            quizExercise.setTitle(quizExerciseFromEditorDTO.title());
+    public void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
+        if (updateQuizExerciseDTO.title() != null) {
+            quizExercise.setTitle(updateQuizExerciseDTO.title());
         }
-        if (quizExerciseFromEditorDTO.channelName() != null) {
-            quizExercise.setChannelName(quizExerciseFromEditorDTO.channelName());
+        if (updateQuizExerciseDTO.channelName() != null) {
+            quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
         }
-        if (quizExerciseFromEditorDTO.categories() != null) {
-            quizExercise.setCategories(quizExerciseFromEditorDTO.categories());
+        // TODO: we must support empty competency links, so checking for null here might be a problem
+        if (updateQuizExerciseDTO.categories() != null) {
+            quizExercise.setCategories(updateQuizExerciseDTO.categories());
         }
-        if (quizExerciseFromEditorDTO.competencyLinks() != null) {
-            quizExercise.setCompetencyLinks(updateCompetencyExerciseLinks(quizExercise, quizExerciseFromEditorDTO.competencyLinks(), course));
+
+        if (updateQuizExerciseDTO.difficulty() != null) {
+            quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
         }
-        if (quizExerciseFromEditorDTO.difficulty() != null) {
-            quizExercise.setDifficulty(quizExerciseFromEditorDTO.difficulty());
+        if (updateQuizExerciseDTO.duration() != null) {
+            quizExercise.setDuration(updateQuizExerciseDTO.duration());
         }
-        if (quizExerciseFromEditorDTO.duration() != null) {
-            quizExercise.setDuration(quizExerciseFromEditorDTO.duration());
+        if (updateQuizExerciseDTO.randomizeQuestionOrder() != null) {
+            quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
         }
-        if (quizExerciseFromEditorDTO.randomizeQuestionOrder() != null) {
-            quizExercise.setRandomizeQuestionOrder(quizExerciseFromEditorDTO.randomizeQuestionOrder());
+        if (updateQuizExerciseDTO.quizMode() != null) {
+            quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
         }
-        if (quizExerciseFromEditorDTO.quizMode() != null) {
-            quizExercise.setQuizMode(quizExerciseFromEditorDTO.quizMode());
-        }
-        if (quizExerciseFromEditorDTO.quizBatches() != null) {
+        // TODO: should it really be possible to update quiz batches in the quiz exercise update endpoint?
+        if (updateQuizExerciseDTO.quizBatches() != null) {
+            // Convert DTOs to new entities to avoid detached entity issues
+            Set<QuizBatch> newBatches = updateQuizExerciseDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
             quizExercise.getQuizBatches().clear();
-            quizExercise.getQuizBatches().addAll(quizExerciseFromEditorDTO.quizBatches());
+            quizExercise.getQuizBatches().addAll(newBatches);
         }
-        if (quizExerciseFromEditorDTO.releaseDate() != null) {
-            quizExercise.setReleaseDate(quizExerciseFromEditorDTO.releaseDate());
+        if (updateQuizExerciseDTO.releaseDate() != null) {
+            quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
         }
-        if (quizExerciseFromEditorDTO.startDate() != null) {
-            quizExercise.setStartDate(quizExerciseFromEditorDTO.startDate());
+        if (updateQuizExerciseDTO.startDate() != null) {
+            quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
         }
-        if (quizExerciseFromEditorDTO.dueDate() != null) {
-            quizExercise.setDueDate(quizExerciseFromEditorDTO.dueDate());
+        if (updateQuizExerciseDTO.dueDate() != null) {
+            quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
         }
-        if (quizExerciseFromEditorDTO.includedInOverallScore() != null) {
-            quizExercise.setIncludedInOverallScore(quizExerciseFromEditorDTO.includedInOverallScore());
+        if (updateQuizExerciseDTO.includedInOverallScore() != null) {
+            quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
         }
-        if (quizExerciseFromEditorDTO.quizQuestions() != null) {
-            quizExercise.setQuizQuestions(quizExerciseFromEditorDTO.quizQuestions());
+        if (updateQuizExerciseDTO.quizQuestions() != null) {
+            // Convert DTOs to new entities to avoid detached entity issues
+            List<QuizQuestion> newQuestions = updateQuizExerciseDTO.quizQuestions().stream().map(QuizQuestionFromEditorDTO::toDomainObject).toList();
+            quizExercise.setQuizQuestions(newQuestions);
         }
+        exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
     /**
@@ -1308,20 +1281,31 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     /**
      * Creates a new quiz exercise, handling validation, file processing, saving, and related updates.
      *
-     * @param quizExercise the quiz exercise domain object to create
-     * @param files        the files for drag and drop questions (optional)
-     * @param isExam       true if creating for an exam, false for a course
+     * @param quizExercise    the quiz exercise domain object to create (without competency links)
+     * @param files           the files for drag and drop questions (optional)
+     * @param isExam          true if creating for an exam, false for a course
+     * @param competencyLinks the competency links to associate with the exercise (can be null or empty)
      * @return the created and saved quiz exercise
      * @throws IOException if there is an error handling the files
      */
-    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam) throws IOException {
+    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyExerciseLink> competencyLinks) throws IOException {
         resolveQuizQuestionMappings(quizExercise);
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
         quizExercise.validateGeneralSettings();
         handleDndQuizFileCreation(quizExercise, files);
-        QuizExercise result = save(quizExercise);
+
+        // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
+        QuizExercise savedExercise = save(quizExercise);
+
+        // Restore competency links with proper exercise reference and save again
+        if (competencyLinks != null && !competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = save(savedExercise);
+        }
+
+        QuizExercise result = savedExercise;
         if (!isExam) {
             channelService.createExerciseChannel(result, Optional.ofNullable(quizExercise.getChannelName()));
         }
