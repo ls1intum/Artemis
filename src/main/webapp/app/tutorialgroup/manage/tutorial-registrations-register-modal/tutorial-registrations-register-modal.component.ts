@@ -51,6 +51,7 @@ export class TutorialRegistrationsRegisterModalComponent {
     isLoading = signal(false);
     header = computed<string>(() => this.computeHeader());
     selectedStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    registerAllButtonDisabled = computed(() => this.selectedStudents().length === 0);
 
     open() {
         this.isOpen.set(true);
