@@ -1,10 +1,18 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import dayjs from 'dayjs/esm';
 
 describe('NgbDateDayjsAdapter', () => {
+    setupTestBed({ zoneless: true });
+
     let adapter: NgbDateDayjsAdapter;
 
     beforeEach(() => (adapter = new NgbDateDayjsAdapter()));
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     it('should convert valid dates to struct', () => {
         const date = dayjs('2022-02-20');

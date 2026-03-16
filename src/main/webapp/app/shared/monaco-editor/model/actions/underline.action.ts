@@ -1,5 +1,5 @@
 import { faUnderline } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 import { TextEditorKeyCode, TextEditorKeyModifier, TextEditorKeybinding } from 'app/shared/monaco-editor/model/actions/adapter/text-editor-keybinding.model';
 
@@ -9,7 +9,7 @@ const UNDERLINE_CLOSE_DELIMITER = '</ins>';
 /**
  * Action to toggle underline text in the editor. It wraps the selected text with the underline delimiter, e.g. switching between text and <ins>text</ins>.
  */
-export class UnderlineAction extends TextEditorAction {
+export class UnderlineAction extends TextStyleTextEditorAction {
     static readonly ID = 'underline.action';
     constructor() {
         super(UnderlineAction.ID, 'artemisApp.multipleChoiceQuestion.editor.underline', faUnderline, [

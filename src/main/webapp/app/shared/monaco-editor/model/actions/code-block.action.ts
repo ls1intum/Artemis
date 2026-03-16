@@ -1,5 +1,5 @@
 import { faFileCode } from '@fortawesome/free-solid-svg-icons';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { TextEditor } from 'app/shared/monaco-editor/model/actions/adapter/text-editor.interface';
 
 const CODE_BLOCK_DELIMITER = '```';
@@ -7,7 +7,7 @@ const CODE_BLOCK_DELIMITER = '```';
 /**
  * Action to toggle code block in the editor. It wraps the selected text with the code block delimiters and inserts newlines, e.g. for the default language java, switching between text and ```java\n text \n```.
  */
-export class CodeBlockAction extends TextEditorAction {
+export class CodeBlockAction extends TextStyleTextEditorAction {
     static readonly ID = 'code-block.action';
 
     constructor(private readonly defaultLanguage?: string) {
