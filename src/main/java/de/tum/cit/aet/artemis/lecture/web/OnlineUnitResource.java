@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.lecture.web;
 
 import java.io.IOException;
 import java.net.IDN;
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -113,7 +114,7 @@ public class OnlineUnitResource {
 
         // Validation
         checkOnlineUnitCourseAndLecture(existingOnlineUnit, lectureId);
-        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnitDto.source());
+        validateUrlStringAndReturnUrl(onlineUnitDto.source());
 
         // Precompute original competency IDs for progress update below
         Set<Long> originalCompetencyIds = existingOnlineUnit.getCompetencyLinks().stream().map(CompetencyLearningObjectLink::getCompetency).map(CourseCompetency::getId)
@@ -160,7 +161,7 @@ public class OnlineUnitResource {
             throw new BadRequestAlertException("A new online unit cannot have an id", ENTITY_NAME, "idExists");
         }
 
-        lectureUnitService.validateUrlStringAndReturnUrl(onlineUnit.getSource());
+        validateUrlStringAndReturnUrl(onlineUnit.getSource());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null || (onlineUnit.getLecture() != null && !lecture.getId().equals(onlineUnit.getLecture().getId()))) {
@@ -210,7 +211,7 @@ public class OnlineUnitResource {
     @EnforceAtLeastEditor
     public ResponseEntity<OnlineResourceDTO> getOnlineResource(@RequestParam("link") String link) {
         // Ensure that the link is a correctly formed URL
-        URL url = lectureUnitService.validateUrlStringAndReturnUrl(link);
+        URL url = validateUrlStringAndReturnUrl(link);
 
         if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
             throw new BadRequestException("The specified link uses an unsupported protocol");
@@ -261,12 +262,28 @@ public class OnlineUnitResource {
      * @param onlineUnit The online unit to check
      * @param lectureId  The id of the lecture to check against
      */
-    private void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
+    private static void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
         if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
             throw new BadRequestAlertException("Lecture unit must be associated to a lecture of a course", ENTITY_NAME, "lectureOrCourseMissing");
         }
         if (!onlineUnit.getLecture().getId().equals(lectureId)) {
             throw new BadRequestAlertException("Requested lecture unit is not part of the specified lecture", ENTITY_NAME, "lectureIdMismatch");
+        }
+    }
+
+    /**
+     * Validates the given URL string and returns the URL object
+     *
+     * @param urlString The URL string to validate
+     * @return The URL object
+     * @throws BadRequestException If the URL string is invalid
+     */
+    private static URL validateUrlStringAndReturnUrl(String urlString) {
+        try {
+            return new URI(urlString).toURL();
+        }
+        catch (URISyntaxException | MalformedURLException | IllegalArgumentException e) {
+            throw new BadRequestException();
         }
     }
 }

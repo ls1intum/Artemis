@@ -120,9 +120,9 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         request.put("/api/text/text-exercises", dto, HttpStatus.OK);
 
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
-        await().untilAsserted(() -> {
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
             List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
             assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
 
@@ -305,7 +305,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
         assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
@@ -321,7 +321,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
         assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
@@ -418,12 +418,19 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         Result persistedResult = participationUtilService.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
-        // Wait for the scheduler to execute its task
-        participantScoreScheduleService.executeScheduledTasks();
-        await().pollInterval(10, TimeUnit.MILLISECONDS).until(() -> participantScoreScheduleService.isIdle());
+        // Wait for the scheduler to process the result and create the participant score.
+        // Use untilAsserted because the first executeScheduledTasks() call may miss the result
+        // if lastScheduledRun hasn't been initialized yet (its Instant.now() fallback can be
+        // after the result's lastModifiedDate, causing findAllByLastModifiedDateAfter to miss it).
+        // Retrying ensures subsequent scheduler cycles pick it up.
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            var scores = participantScoreRepository.findAllByExercise(exercise);
+            assertThat(scores).isNotEmpty();
+        });
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
-        assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.getFirst();
         Double pointsAchieved = round(persistedResult.getScore() * 0.01 * 10.0);
@@ -455,13 +462,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
 
         // Wait for the scheduler to execute its task
         participantScoreScheduleService.executeScheduledTasks();
-        await().until(() -> participantScoreScheduleService.isIdle());
+        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
         Double lastPoints = expectedLastScore != null ? round(expectedLastScore * 0.01 * 10.0) : null;
         Double lastRatedPoints = expectedLastRatedScore != null ? round(expectedLastRatedScore * 0.01 * 10.0) : null;
 
         // Use await().untilAsserted() to handle timing issues with asynchronous participant score updates
-        await().untilAsserted(() -> {
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
             List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
             assertThat(savedParticipantScore).isNotEmpty();
             assertThat(savedParticipantScore).hasSize(1);

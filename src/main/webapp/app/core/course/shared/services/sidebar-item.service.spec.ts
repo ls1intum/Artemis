@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
@@ -20,12 +22,18 @@ import {
 import { CourseSidebarItemService } from 'app/core/course/shared/services/sidebar-item.service';
 
 describe('CourseSidebarItemService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: CourseSidebarItemService;
     const courseId = 123;
 
     beforeEach(() => {
         TestBed.configureTestingModule({});
         service = TestBed.inject(CourseSidebarItemService);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
     });
 
     describe('getManagementDefaultItems', () => {
@@ -232,6 +240,18 @@ describe('CourseSidebarItemService', () => {
             expect(item.featureToggle).toBe(FeatureToggle.StudentCourseAnalyticsDashboard);
         });
 
+        it('getIrisItem should return correct item', () => {
+            const item = service.getIrisItem();
+
+            expect(item).toEqual({
+                routerLink: 'iris',
+                icon: faRobot,
+                title: 'Iris',
+                translation: 'artemisApp.courseOverview.menu.iris',
+                hidden: false,
+            });
+        });
+
         it('getFaqManagementItem should return correct item', () => {
             const item = service.getFaqManagementItem(courseId);
 
@@ -297,9 +317,9 @@ describe('CourseSidebarItemService', () => {
             const item = service.getBuildQueueItem(courseId);
 
             expect(item).toEqual({
-                routerLink: `${courseId}/build-queue`,
+                routerLink: `${courseId}/build-overview`,
                 icon: faList,
-                title: 'Build Queue',
+                title: 'Build Overview',
                 translation: 'artemisApp.buildQueue.title',
                 hidden: false,
             });

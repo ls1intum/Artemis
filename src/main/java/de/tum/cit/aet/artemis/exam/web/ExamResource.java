@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -88,6 +87,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
 import de.tum.cit.aet.artemis.exam.domain.SuspiciousSessionsAnalysisOptions;
+import de.tum.cit.aet.artemis.exam.dto.ActiveExamDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamChecklistDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exam.dto.ExamImportDTO;
@@ -110,6 +110,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
@@ -267,6 +268,7 @@ public class ExamResource {
         var originalExamDuration = originalExam.getDuration();
         ZonedDateTime originalVisibleDate = originalExam.getVisibleDate();
         ZonedDateTime originalStartDate = originalExam.getStartDate();
+        ZonedDateTime originalEndDate = originalExam.getEndDate();
 
         // The Exam Mode cannot be changed after creation -> Compare request with version in the database
         if (examUpdateDTO.testExam() != originalExam.isTestExam()) {
@@ -290,9 +292,11 @@ public class ExamResource {
         // NOTE: We have to get exercises and groups as we need them for re-scheduling
         Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId(), false);
 
-        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
-        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
-        if (comparator.compare(originalVisibleDate, savedExam.getVisibleDate()) != 0 || comparator.compare(originalStartDate, savedExam.getStartDate()) != 0) {
+        Comparator<ZonedDateTime> comparator = ExamDateUtil.truncatedComparator();
+        boolean visibleOrStartDateChanged = comparator.compare(originalVisibleDate, savedExam.getVisibleDate()) != 0
+                || comparator.compare(originalStartDate, savedExam.getStartDate()) != 0;
+        boolean endDateChanged = comparator.compare(originalEndDate, savedExam.getEndDate()) != 0;
+        if (visibleOrStartDateChanged) {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -304,6 +308,8 @@ public class ExamResource {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
+
+        examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
 
         if (updatedChannel != null) {
             savedExam.setChannelName(examUpdateDTO.channelName());
@@ -343,6 +349,9 @@ public class ExamResource {
 
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+
+        // 3. Update Weaviate exercise metadata since the exam end date changed
+        examService.syncExamExercisesMetadata(exam);
 
         return ResponseEntity.ok(exam);
     }
@@ -574,20 +583,9 @@ public class ExamResource {
      */
     @GetMapping("exams/active")
     @EnforceAtLeastTutor
-    // TODO use a DTO/DAO record in the future, this could be directly instantiated in the database to avoid fetching additional data:
-    // ActiveExamDTO {
-    // id: long
-    // title: String
-    // startDate: ZonedDateTime
-    // endDate: ZonedDateTime
-    // course: {
-    // id: long
-    // title: String},
-    // testExam: boolean
-    // }
-    public ResponseEntity<List<Exam>> getAllActiveExams(Pageable pageable) {
+    public ResponseEntity<List<ActiveExamDTO>> getAllActiveExams(Pageable pageable) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        Page<Exam> page = examService.getAllActiveExams(pageable, user);
+        Page<ActiveExamDTO> page = examService.getAllActiveExams(pageable, user);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
     }

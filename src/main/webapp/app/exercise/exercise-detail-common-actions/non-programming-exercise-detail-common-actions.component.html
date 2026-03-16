@@ -1,4 +1,4 @@
-@if (exercise) {
+@if (exercise(); as exercise) {
     <div class="d-flex flex-wrap gap-2">
         <!-- Edit -->
         @if (exercise.isAtLeastEditor) {
@@ -8,7 +8,7 @@
             </a>
         }
         <!-- Participations  -->
-        @if (course) {
+        @if (course() && canAccessParticipationsAndScores()) {
             <a [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm">
                 <fa-icon [icon]="faListAlt" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
@@ -28,7 +28,7 @@
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exerciseAssessmentDashboard"></span>
             </a>
         }
-        @if (course && exercise.isAtLeastTutor) {
+        @if (course() && canAccessParticipationsAndScores()) {
             <!-- Scores -->
             <a [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm">
                 <fa-icon [icon]="faTable" />
@@ -40,7 +40,7 @@
                 <span class="d-none d-md-inline" jhiTranslate="statistics.statistics-title"></span>
             </a>
         }
-        @if (irisEnabled && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise) {
+        @if (irisEnabled && exercise.type === ExerciseType.TEXT && exercise.isAtLeastInstructor && exercise.course && !isExamExercise()) {
             <!-- Iris Settings -->
             <a
                 [routerLink]="baseResource + 'iris-settings'"

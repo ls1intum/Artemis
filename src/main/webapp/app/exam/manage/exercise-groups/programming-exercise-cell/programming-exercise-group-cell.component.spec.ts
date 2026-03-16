@@ -7,7 +7,7 @@ import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.mod
 import { By } from '@angular/platform-browser';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { PROFILE_THEIA } from 'app/app.constants';
+import { MODULE_FEATURE_THEIA } from 'app/app.constants';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -54,7 +54,7 @@ describe('Programming Exercise Group Cell Component', () => {
                 profileService = TestBed.inject(ProfileService);
                 jest.spyOn(profileService, 'getProfileInfo').mockReturnValue({
                     buildPlanURLTemplate: 'https://example.com/{buildPlanId}/{projectKey}',
-                    activeProfiles: [PROFILE_THEIA],
+                    activeModuleFeatures: [MODULE_FEATURE_THEIA],
                 } as ProfileInfo);
             });
     });

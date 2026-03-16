@@ -241,8 +241,8 @@ export class ComplaintsForTutorComponent implements OnInit {
     }
 
     /**
-     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests himself
-     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
+     * For team exercises, the team tutor is the assessor and handles both complaints and feedback requests themself
+     * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor themself
      * For exam test runs, the original assessor is allowed to respond to complaints.
      */
     get isAllowedToRespond(): boolean {

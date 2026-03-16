@@ -46,11 +46,12 @@ describe('ExerciseUnitComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should initialize and set input of course exercise row correctly', () => {
-        exerciseUnitComponentFixture.detectChanges();
+    it('should initialize and set input of course exercise row correctly', async () => {
+        exerciseUnitComponentFixture.autoDetectChanges();
+        await exerciseUnitComponentFixture.whenStable();
         const courseExerciseRowComponent: CourseExerciseRowComponent = exerciseUnitComponentFixture.debugElement.query(By.directive(CourseExerciseRowComponent)).componentInstance;
 
-        expect(courseExerciseRowComponent.course).toEqual(exerciseUnitComponent.course());
-        expect(courseExerciseRowComponent.exercise).toEqual(exerciseUnitComponent.exerciseUnit().exercise);
+        expect(courseExerciseRowComponent.course()).toEqual(exerciseUnitComponent.course());
+        expect(courseExerciseRowComponent.exercise()).toEqual(exerciseUnitComponent.exerciseUnit().exercise);
     });
 });

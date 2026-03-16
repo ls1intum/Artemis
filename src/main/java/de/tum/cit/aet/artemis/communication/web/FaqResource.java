@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.communication.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -244,7 +243,6 @@ public class FaqResource {
      * @param faqId    If this id is present then only ingest this one faq of the respective course
      * @return the ResponseEntity with status 200 (OK) and a message success or null if the operation failed
      */
-    @Profile(PROFILE_IRIS)
     @PostMapping("courses/{courseId}/faqs/ingest")
     @EnforceAtLeastInstructorInCourse
     public ResponseEntity<Void> ingestFaqInIris(@PathVariable long courseId, @RequestParam(required = false) Optional<Long> faqId) {

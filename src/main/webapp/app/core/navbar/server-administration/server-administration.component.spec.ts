@@ -1,29 +1,36 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
 import { ServerAdministrationComponent } from './server-administration.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { By } from '@angular/platform-browser';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { Component } from '@angular/core';
 import { MockHasAnyAuthorityDirective } from 'test/helpers/mocks/directive/mock-has-any-authority.directive';
-
-@Component({ template: '' })
-class MockEmptyComponent {}
+import { MockComponent, MockDirective } from 'ng-mocks';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 describe('ServerAdministrationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ServerAdministrationComponent;
     let fixture: ComponentFixture<ServerAdministrationComponent>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ServerAdministrationComponent, TranslateModule.forRoot()],
-            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([{ path: '**', component: MockEmptyComponent }])],
+            imports: [ServerAdministrationComponent],
         })
             .overrideComponent(ServerAdministrationComponent, {
-                remove: { imports: [HasAnyAuthorityDirective] },
-                add: { imports: [MockHasAnyAuthorityDirective] },
+                remove: { imports: [HasAnyAuthorityDirective, TranslateDirective, FaIconComponent, RouterLink, RouterLinkActive] },
+                add: {
+                    imports: [
+                        MockHasAnyAuthorityDirective,
+                        MockDirective(TranslateDirective),
+                        MockComponent(FaIconComponent),
+                        MockDirective(RouterLink),
+                        MockDirective(RouterLinkActive),
+                    ],
+                },
             })
             .compileComponents();
 
@@ -31,12 +38,17 @@ describe('ServerAdministrationComponent', () => {
         component = fixture.componentInstance;
     });
 
+    afterEach(() => {
+        fixture.destroy();
+        vi.restoreAllMocks();
+    });
+
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
     it('should emit collapseNavbarListener when collapseNavbar is called', () => {
-        const collapseNavbarSpy = jest.spyOn(component.collapseNavbarListener, 'emit');
+        const collapseNavbarSpy = vi.spyOn(component.collapseNavbarListener, 'emit');
 
         component.collapseNavbar();
 
@@ -46,8 +58,8 @@ describe('ServerAdministrationComponent', () => {
     it('should have default input values as false', () => {
         fixture.detectChanges();
 
-        expect(component.isExamActive()).toBeFalse();
-        expect(component.isExamStarted()).toBeFalse();
+        expect(component.isExamActive()).toBe(false);
+        expect(component.isExamStarted()).toBe(false);
     });
 
     it('should handle input properties correctly', () => {
@@ -56,8 +68,8 @@ describe('ServerAdministrationComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.isExamActive()).toBeTrue();
-        expect(component.isExamStarted()).toBeTrue();
+        expect(component.isExamActive()).toBe(true);
+        expect(component.isExamStarted()).toBe(true);
     });
 
     it('should not show admin link when exam is active', () => {
@@ -84,7 +96,7 @@ describe('ServerAdministrationComponent', () => {
     });
 
     it('should collapse navbar when link is clicked', () => {
-        const collapseNavbarSpy = jest.spyOn(component.collapseNavbarListener, 'emit');
+        const collapseNavbarSpy = vi.spyOn(component.collapseNavbarListener, 'emit');
 
         component.onLinkClick();
 

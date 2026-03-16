@@ -1,0 +1,51 @@
+{
+    "artemisApp": {
+        "review": {
+            "addCommentTitle": "Start a thread",
+            "addCommentPlaceholder": "Initial comment...",
+            "addCommentSubmit": "Start thread",
+            "addCommentCancel": "Cancel",
+            "saveFailed": "Could not save the review comment.",
+            "loadFailed": "Could not load review comments.",
+            "commentMenu": "Comment actions",
+            "deleteComment": "Delete",
+            "deleteCommentConfirmTitle": "Delete comment",
+            "deleteCommentConfirmText": "This will permanently delete the comment. This action cannot be undone.",
+            "deleteFailed": "Could not delete the review comment.",
+            "replyPlaceholder": "Add reply...",
+            "replySubmit": "Reply",
+            "requestedBy": "Requested by: {{name}}",
+            "commentedOn": "commented on {{date}}",
+            "lastEdited": "last edited: {{date}}",
+            "systemAuthor": "Artemis User",
+            "editComment": "Edit",
+            "editCancel": "Cancel",
+            "editSubmit": "Update",
+            "threadTitle": "Comment thread",
+            "threadLocationWarning": "Comments may be not in the correct location. Submit changes to update the comment.",
+            "resolveThread": "Resolve",
+            "unresolveThread": "Unresolve",
+            "resolveFailed": "Could not update the thread status.",
+            "threadResolved": "Resolved",
+            "threadOutdated": "Outdated",
+            "threadConsistencyIssue": "Consistency issue",
+            "threadConsistencySeverity": "{{severity}} Severity",
+            "relatedLocationsTitle": "Related locations:",
+            "goToRelatedLocation": "Go to location",
+            "relatedLocationRepository": {
+                "problemStatement": "Problem statement",
+                "template": "Template",
+                "solution": "Solution",
+                "tests": "Tests",
+                "auxiliary": "Auxiliary",
+                "repository": "Repository"
+            },
+            "consistencySeverity": {
+                "LOW": "Low",
+                "MEDIUM": "Medium",
+                "HIGH": "High"
+            },
+            "submitBeforeComment": "Submit the exercise before starting a thread."
+        }
+    }
+}

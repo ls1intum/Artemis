@@ -27,6 +27,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseType;
 import de.tum.cit.aet.artemis.fileupload.api.FileUploadImportApi;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
 import de.tum.cit.aet.artemis.modeling.api.ModelingExerciseImportApi;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -73,12 +74,14 @@ public class ExamImportService {
 
     private final ChannelService channelService;
 
+    private final Optional<ExerciseWeaviateService> exerciseWeaviateService;
+
     public ExamImportService(Optional<TextExerciseImportApi> textExerciseImportApi, Optional<ModelingExerciseImportApi> modelingExerciseImportApi, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
             Optional<FileUploadImportApi> fileUploadImportApi, GradingCriterionRepository gradingCriterionRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService) {
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ChannelService channelService, Optional<ExerciseWeaviateService> exerciseWeaviateService) {
         this.textExerciseImportApi = textExerciseImportApi;
         this.modelingExerciseImportApi = modelingExerciseImportApi;
         this.examRepository = examRepository;
@@ -93,6 +96,7 @@ public class ExamImportService {
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
         this.channelService = channelService;
+        this.exerciseWeaviateService = exerciseWeaviateService;
     }
 
     /**
@@ -116,7 +120,12 @@ public class ExamImportService {
         // 2nd: Copy the exercise groups to the exam
         copyExerciseGroupsWithExercisesToExam(exerciseGroupsToCopy, examCopied);
         channelService.createExamChannel(examCopied, Optional.ofNullable(examToCopy.getChannelName()));
-        return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
+        Exam examWithExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examCopied.getId());
+
+        // 3rd: Index all imported exercises in Weaviate
+        exerciseWeaviateService.ifPresent(service -> service.updateExamExercisesAsync(examWithExercises));
+
+        return examWithExercises;
     }
 
     /**

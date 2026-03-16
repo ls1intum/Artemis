@@ -2,7 +2,7 @@ import { ComponentFixture, ComponentFixtureAutoDetect, TestBed } from '@angular/
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 import { BuildOverviewComponent } from 'app/buildagent/build-queue/build-overview.component';
 import { BuildOverviewService } from 'app/buildagent/build-queue/build-overview.service';
@@ -229,7 +229,7 @@ describe('BuildQueueComponent', () => {
             buildSubmissionDate: dayjs('2023-01-05'),
             buildStartDate: dayjs('2023-01-05'),
             buildCompletionDate: dayjs('2023-01-05'),
-            buildDuration: '0.000s',
+            buildDuration: '0.0s',
             commitHash: 'abc127',
         },
         {
@@ -246,7 +246,7 @@ describe('BuildQueueComponent', () => {
             triggeredByPushTo: TriggeredByPushTo.USER,
             buildStartDate: dayjs('2023-01-06'),
             buildCompletionDate: dayjs('2023-01-06'),
-            buildDuration: '0.000s',
+            buildDuration: '0.0s',
             commitHash: 'abc128',
         },
     ];
@@ -570,7 +570,10 @@ describe('BuildQueueComponent', () => {
         for (const finishedBuildJob of component.finishedBuildJobs()) {
             const { buildDuration, buildCompletionDate, buildStartDate } = finishedBuildJob;
             if (buildDuration && buildCompletionDate && buildStartDate) {
-                expect(buildDuration).toEqual((buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000).toFixed(3) + 's');
+                // Component formats with 1 decimal place for durations under 60s
+                const durationSeconds = buildCompletionDate.diff(buildStartDate, 'milliseconds') / 1000;
+                const expectedDuration = durationSeconds.toFixed(1) + 's';
+                expect(buildDuration).toEqual(expectedDuration);
             }
         }
     });
@@ -677,5 +680,73 @@ describe('BuildQueueComponent', () => {
             expect(HTMLAnchorElement.prototype.click).toHaveBeenCalled();
             expect(alertSpy).not.toHaveBeenCalled();
         });
+    });
+
+    it('should navigate to job detail page in admin view', () => {
+        routeStub.setParamMap({});
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        component.ngOnInit();
+        component.navigateToJobDetail('test-job-123');
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/admin', 'build-overview', 'test-job-123', 'job-details']);
+    });
+
+    it('should navigate to job detail page in course view', () => {
+        routeStub.setParamMap({ courseId: testCourseId.toString() });
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        component.ngOnInit();
+        component.navigateToJobDetail('test-job-123');
+
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', testCourseId, 'build-overview', 'test-job-123', 'job-details']);
+    });
+
+    it('should not navigate if jobId is undefined', () => {
+        routeStub.setParamMap({});
+        const router = TestBed.inject(Router);
+        const navigateSpy = vi.spyOn(router, 'navigate');
+
+        component.ngOnInit();
+        component.navigateToJobDetail(undefined);
+
+        expect(navigateSpy).not.toHaveBeenCalled();
+    });
+
+    it('should format finished duration correctly for under 60 seconds', () => {
+        expect(component.formatFinishedDuration(45.333)).toBe('45.3s');
+        expect(component.formatFinishedDuration(0)).toBe('0.0s');
+        expect(component.formatFinishedDuration(59.99)).toBe('60.0s');
+    });
+
+    it('should format finished duration correctly for 60+ seconds', () => {
+        expect(component.formatFinishedDuration(60)).toBe('1m 0s');
+        expect(component.formatFinishedDuration(90)).toBe('1m 30s');
+        expect(component.formatFinishedDuration(125)).toBe('2m 5s');
+    });
+
+    it('should calculate waiting time correctly for seconds', () => {
+        const submissionDate = dayjs().subtract(30, 'seconds');
+        const result = component.calculateWaitingTime(submissionDate);
+        expect(result).toMatch(/^\d+s$/);
+    });
+
+    it('should calculate waiting time correctly for minutes', () => {
+        const submissionDate = dayjs().subtract(5, 'minutes');
+        const result = component.calculateWaitingTime(submissionDate);
+        expect(result).toMatch(/^\d+m \d+s$/);
+    });
+
+    it('should calculate waiting time correctly for hours', () => {
+        const submissionDate = dayjs().subtract(2, 'hours');
+        const result = component.calculateWaitingTime(submissionDate);
+        expect(result).toMatch(/^\d+h \d+m$/);
+    });
+
+    it('should return dash for undefined submission date', () => {
+        const result = component.calculateWaitingTime(undefined);
+        expect(result).toBe('-');
     });
 });

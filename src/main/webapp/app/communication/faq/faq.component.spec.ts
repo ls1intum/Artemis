@@ -17,7 +17,7 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { AccountService } from 'app/core/auth/account.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_IRIS } from 'app/app.constants';
+import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
@@ -282,7 +282,7 @@ describe('FaqComponent', () => {
     it('should set irisEnabled based on service response', () => {
         faqComponent.faqs = [faq1];
         const profileInfoResponse = {
-            activeProfiles: [PROFILE_IRIS],
+            activeModuleFeatures: [MODULE_FEATURE_IRIS],
         } as ProfileInfo;
         const irisSettingsResponse = {
             courseId: faqComponent.courseId,
@@ -296,7 +296,7 @@ describe('FaqComponent', () => {
             applicationRateLimitDefaults: { requests: 50, timeframeHours: 12 },
         } as IrisCourseSettingsWithRateLimitDTO;
         jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(profileInfoResponse);
-        jest.spyOn(profileService, 'isProfileActive').mockReturnValue(true);
+        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
         jest.spyOn(irisSettingsService, 'getCourseSettingsWithRateLimit').mockImplementation(() => of(irisSettingsResponse));
         faqComponent.ngOnInit();
         expect(irisSettingsService.getCourseSettingsWithRateLimit).toHaveBeenCalledWith(faqComponent.courseId);

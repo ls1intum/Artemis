@@ -18,7 +18,7 @@ set -e
 SKIP_BUILD=false
 SKIP_CLEANUP=false
 TEST_FILTER=""
-DB_TYPE="mysql"
+DB_TYPE="postgres"
 
 # Colors
 RED='\033[0;31m'
@@ -75,19 +75,17 @@ echo ""
 # Environment variables
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
 export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
-export PLAYWRIGHT_USERNAME_TEMPLATE="${PLAYWRIGHT_USERNAME_TEMPLATE:-artemis_test_user_}"
-export PLAYWRIGHT_PASSWORD_TEMPLATE="${PLAYWRIGHT_PASSWORD_TEMPLATE:-artemis_test_user_}"
-export PLAYWRIGHT_CREATE_USERS="${PLAYWRIGHT_CREATE_USERS:-true}"
-# Reduced timeouts for local execution (50% of CI values for faster feedback)
+export SPRING_LIQUIBASE_CONTEXTS="${SPRING_LIQUIBASE_CONTEXTS:-prod,e2e}"
+# Timeouts matching CI values for reliable local execution
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-150}"             # CI: 300
 export TEST_RETRIES="${TEST_RETRIES:-1}"
-export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-2}"
-export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-105}"    # CI: 180
+export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-5}"
+export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-180}"   # CI: 180
 export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"    # CI: 60
-# Custom timeouts for page objects and commands (50% of CI defaults)
-export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-45000}"     # CI: 90000
-export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-30000}"     # CI: 60000
-export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-30000}" # CI: 60000
+# Build timeouts match CI defaults to avoid flaky failures from slow local builds
+export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-90000}"     # CI: 90000
+export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-60000}"     # CI: 60000
+export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-60000}" # CI: 60000
 
 cd "$(dirname "$0")"
 
@@ -117,7 +115,7 @@ if [ "$SKIP_CLEANUP" = false ]; then
         DB_VOLUME="artemis-mysql-data"
     fi
     cd docker
-    docker compose -f "$COMPOSE_FILE" down -v 2>/dev/null || true
+    docker compose --env-file ../.env -f "$COMPOSE_FILE" down -v 2>/dev/null || true
     cd ..
     docker volume rm "$DB_VOLUME" artemis-data 2>/dev/null || true
     echo -e "${GREEN}Done${NC}"

@@ -44,11 +44,11 @@ public class AttachmentVideoUnitService {
 
     private final LectureUnitService lectureUnitService;
 
-    private final LectureContentProcessingService contentProcessingService;
+    private final Optional<LectureContentProcessingService> contentProcessingService;
 
     public AttachmentVideoUnitService(SlideSplitterService slideSplitterService, AttachmentVideoUnitRepository attachmentVideoUnitRepository,
             AttachmentRepository attachmentRepository, FileService fileService, Optional<CompetencyProgressApi> competencyProgressApi, LectureUnitService lectureUnitService,
-            LectureContentProcessingService contentProcessingService) {
+            Optional<LectureContentProcessingService> contentProcessingService) {
         this.attachmentVideoUnitRepository = attachmentVideoUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -76,7 +76,7 @@ public class AttachmentVideoUnitService {
         }
 
         // Trigger automated content processing (transcription and ingestion)
-        contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+        contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
 
         return savedAttachmentVideoUnit;
     }
@@ -116,7 +116,7 @@ public class AttachmentVideoUnitService {
 
         if (updateAttachment == null) {
             // Trigger processing for video-only updates (video source change detection is done inside the service)
-            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
             prepareAttachmentVideoUnitForClient(existingAttachmentVideoUnit);
             return existingAttachmentVideoUnit;
         }
@@ -127,7 +127,7 @@ public class AttachmentVideoUnitService {
                 slideSplitterService.splitAttachmentVideoUnitIntoSingleSlides(savedAttachmentVideoUnit);
             }
             // Trigger processing for newly added attachment
-            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
         else if (existingAttachment != null) {
             updateAttachment(existingAttachment, updateAttachment, savedAttachmentVideoUnit, hiddenPages);
@@ -151,7 +151,7 @@ public class AttachmentVideoUnitService {
             }
 
             // Trigger automated content processing (transcription and ingestion)
-            contentProcessingService.triggerProcessing(savedAttachmentVideoUnit);
+            contentProcessingService.ifPresent(api -> api.triggerProcessing(savedAttachmentVideoUnit));
         }
 
         prepareAttachmentVideoUnitForClient(savedAttachmentVideoUnit);

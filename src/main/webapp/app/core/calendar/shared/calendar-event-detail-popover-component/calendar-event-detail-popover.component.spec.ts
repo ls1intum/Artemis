@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
@@ -5,14 +7,23 @@ import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CalendarEvent, CalendarEventType } from 'app/core/calendar/shared/entities/calendar-event.model';
 import { CalendarEventDetailPopoverComponent } from './calendar-event-detail-popover.component';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 describe('CalendarEventDetailPopoverComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let fixture: ComponentFixture<CalendarEventDetailPopoverComponent>;
     let component: CalendarEventDetailPopoverComponent;
     let fakeMouseEvent: MouseEvent;
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CalendarEventDetailPopoverComponent, MockDirective(TranslateDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CalendarEventDetailPopoverComponent);
@@ -20,7 +31,7 @@ describe('CalendarEventDetailPopoverComponent', () => {
         const anchorElement = document.createElement('div');
         fakeMouseEvent = {
             currentTarget: anchorElement,
-            stopPropagation: jest.fn(),
+            stopPropagation: vi.fn(),
         } as unknown as MouseEvent;
     });
 

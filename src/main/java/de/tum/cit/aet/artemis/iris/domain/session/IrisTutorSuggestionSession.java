@@ -42,7 +42,7 @@ public class IrisTutorSuggestionSession extends IrisChatSession {
     }
 
     @Override
-    public boolean shouldAcceptExternalLLMUsage() {
+    public boolean shouldSelectLLMUsage() {
         return false;
     }
 

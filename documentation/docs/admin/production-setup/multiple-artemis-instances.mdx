@@ -519,18 +519,19 @@ The previously mentioned steps concerning the multiple Artemis instance setup re
 
 ### Core nodes
 
-Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the [CI Management](https://artemis-platform.readthedocs.io/en/latest/dev/system-design.html#ci-management),
-responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the [Local VC system](https://artemis-platform.readthedocs.io/en/latest/user/icl/local-version-control.html#local-version-control).
+Core nodes serve the main functionality of Artemis. In ICL, this additionally includes the [CI Management](/developer/system-design#ci-management),
+responsible for managing and interacting with the build job queue (adding, cancelling and viewing build jobs), and the [Local VC system](/developer/system-design#version-control-subsystem).
 
 For ICL, the run configuration for core nodes need to include the additional profiles `core`, `localvc` and `localci`, e.g.:
 
 ```bash
---spring.profiles.active=prod,core,ldap,localvc,localci,athena,scheduling,iris
+--spring.profiles.active=prod,core,ldap,localvc,localci,athena,scheduling
 ```
 
 To enable LTI integration, add `--artemis.lti.enabled=true` to your configuration.
+To enable Iris integration, add `--artemis.iris.enabled=true` to your configuration.
 
-Core nodes do not require further adjustments to the `application-prod.yml`, as long as you have added the necessary variables as described in the [Integrated Code Lifecycle Setup](https://artemis-platform.readthedocs.io/en/latest/dev/setup/integrated-code-lifecycle.html).
+Core nodes do not require further adjustments to the `application-prod.yml`, as long as you have added the necessary variables as described in the [Integrated Code Lifecycle Setup](/admin/production-setup/integrated-code-lifecycle-setup).
 
 
 ### Build Agents

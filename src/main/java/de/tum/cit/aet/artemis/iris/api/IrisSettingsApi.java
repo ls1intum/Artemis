@@ -1,16 +1,15 @@
 package de.tum.cit.aet.artemis.iris.api;
 
-import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_IRIS;
-
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 
 import de.tum.cit.aet.artemis.core.dto.export.IrisChatSessionExportDTO;
 import de.tum.cit.aet.artemis.core.dto.export.IrisMessageExportDTO;
+import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisCourseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisCourseSettingsWithRateLimitDTO;
@@ -18,7 +17,7 @@ import de.tum.cit.aet.artemis.iris.repository.IrisCourseChatSessionRepository;
 import de.tum.cit.aet.artemis.iris.repository.IrisCourseSettingsRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
-@Profile(PROFILE_IRIS)
+@Conditional(IrisEnabled.class)
 @Controller
 @Lazy
 public class IrisSettingsApi extends AbstractIrisApi {
@@ -76,10 +75,10 @@ public class IrisSettingsApi extends AbstractIrisApi {
      * Finds all Iris course chat sessions with messages for export.
      *
      * @param courseId the ID of the course
-     * @return list of chat session export DTOs with messages
+     * @return list of chat session export DTOs with messages, sorted by creation date
      */
     public List<IrisChatSessionExportDTO> findCourseChatSessionsForExport(long courseId) {
-        List<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseId(courseId);
+        List<IrisCourseChatSession> sessions = irisCourseChatSessionRepository.findAllWithMessagesByCourseIdSortedByCreationDate(courseId);
         return sessions.stream().map(this::convertToExportDTO).toList();
     }
 

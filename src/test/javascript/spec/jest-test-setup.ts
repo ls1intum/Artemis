@@ -1,3 +1,4 @@
+import '@angular/compiler';
 import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/shared/util/array.extension';
@@ -20,14 +21,11 @@ if (typeof CSS === 'undefined') {
 }
 
 /*
- * In the Jest configuration, we only import the basic features of monaco (editor.api.js) instead
- * of the full module (editor.main.js) because of a ReferenceError in the language features of Monaco.
- * The following import imports the core features of the monaco editor, but leaves out the language
- * features. It contains an unchecked call to queryCommandSupported, so the function has to be set
- * on the document.
+ * Monaco-editor is mocked via moduleNameMapper in jest.config.js (pointing to mock-monaco-editor.ts)
+ * to avoid loading the heavy real module (~50MB) which causes SIGSEGV crashes in Jest workers.
+ * The queryCommandSupported stub is kept for any remaining code that may call it.
  */
 document.queryCommandSupported = () => false;
-import 'monaco-editor/esm/vs/editor/edcore.main'; // Do not move this import.
 
 failOnConsole({
     shouldFailOnWarn: true,
@@ -83,12 +81,22 @@ Object.defineProperty(window, 'matchMedia', {
 // PrimeNG UIX motion relies on matchMedia; mock it globally to avoid setup in individual specs.
 jest.mock('@primeuix/motion', () => ({
     __esModule: true,
+    ANIMATION: 'animation',
+    TRANSITION: 'transition',
+    DEFAULT_MOTION_OPTIONS: {},
     createMotion: jest.fn(() => ({
         enter: jest.fn(() => Promise.resolve()),
         leave: jest.fn(() => Promise.resolve()),
         cancel: jest.fn(),
         update: jest.fn(),
     })),
+    resolveDuration: jest.fn(() => 0),
+    resolveClassNames: jest.fn(() => ({ enter: { from: '', active: '', to: '' }, leave: { from: '', active: '', to: '' } })),
+    getMotionHooks: jest.fn(() => ({})),
+    getMotionMetadata: jest.fn(() => ({ type: undefined, timeout: 0, count: 0 })),
+    shouldSkipMotion: jest.fn(() => true),
+    mergeOptions: jest.fn((opts: any) => opts || {}),
+    setAutoDimensionVariables: jest.fn(),
 }));
 
 // Prevents errors with the monaco editor tests
