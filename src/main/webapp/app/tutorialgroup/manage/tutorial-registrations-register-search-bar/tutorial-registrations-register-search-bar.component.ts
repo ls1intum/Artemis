@@ -1,5 +1,4 @@
-import { Component, DestroyRef, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -14,6 +13,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-search-bar',
@@ -29,7 +29,7 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
     private alertService = inject(AlertService);
     private overlay = inject(Overlay);
     private overlayRef: OverlayRef | undefined = undefined;
-    private destroyRef = inject(DestroyRef);
+    private viewportScrollSubscription: Subscription | undefined = undefined;
     private viewContainerRef = inject(ViewContainerRef);
     private searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
     private panelTemplate = viewChild<TemplateRef<unknown>>('panelTemplate');
@@ -195,18 +195,17 @@ export class TutorialRegistrationsRegisterSearchBarComponent implements OnDestro
         const viewport = this.viewport();
         if (!viewport) return;
 
-        viewport
-            .elementScrolled()
-            .pipe(takeUntilDestroyed(this.destroyRef))
-            .subscribe(() => {
-                const distanceToBottom = viewport.measureScrollOffset('bottom');
-                if (distanceToBottom < 40) {
-                    this.loadNextPage();
-                }
-            });
+        this.viewportScrollSubscription = viewport.elementScrolled().subscribe(() => {
+            const distanceToBottom = viewport.measureScrollOffset('bottom');
+            if (distanceToBottom < 40) {
+                this.loadNextPage();
+            }
+        });
     }
 
     private closePanel() {
+        this.viewportScrollSubscription?.unsubscribe();
+        this.viewportScrollSubscription = undefined;
         this.overlayRef?.dispose();
         this.overlayRef = undefined;
     }

@@ -36,6 +36,7 @@ export class TutorialEditLanguagesInputComponent implements OnDestroy {
 
     openPanel(): void {
         if (!this.alreadyUsedLanguages()) return;
+        if (this.overlayRef?.hasAttached()) return;
 
         const searchInput = this.searchInput()?.nativeElement;
         const panelTemplate = this.panelTemplate();
