@@ -12,7 +12,7 @@ docker container stop $(docker ps -a -q) || true
 docker container rm $(docker ps -a -q) || true
 docker volume rm $(docker volume ls -q) || true
 
-docker compose -f ./docker/playwright-E2E-tests-mysql.yml down -v
+docker compose -f ./docker/playwright-E2E-tests-postgres-localci.yml down -v
 docker compose -f ./docker/playwright-E2E-tests-multi-node.yml down -v
 
 # show all running docker containers and volumes after the cleanup to detect issues

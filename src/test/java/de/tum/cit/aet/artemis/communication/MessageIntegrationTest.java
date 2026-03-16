@@ -720,6 +720,107 @@ class MessageIntegrationTest extends AbstractSpringIntegrationIndependentTest {
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsUnread() throws Exception {
+        var student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        var student2 = userTestRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
+
+        Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
+        Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, Post.class, HttpStatus.CREATED);
+
+        // Create a second message in the same conversation to validate that marking one as unread increments the unread count
+        Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave2 = new CreatePostDTO(postToSave2.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
+        Post createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, Post.class, HttpStatus.CREATED);
+
+        userUtilService.changeUser(TEST_PREFIX + "student2");
+        // we read the messages by "getting" them from the server as student
+        String conversationId = createdPost1.getConversation().getId().toString();
+        String messageId = createdPost1.getId().toString();
+
+        // establish baseline: mark conversation as read and verify unread count is 0
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/mark-as-read", null, HttpStatus.OK);
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isZero();
+        });
+
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.OK);
+
+        await().untilAsserted(() -> {
+            SecurityUtils.setAuthorizationObject();
+            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student2)).isEqualTo(2);
+            assertThat(getUnreadMessagesCount(createdPost1.getConversation(), student1)).isZero();
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsUnreadNonMemberForbidden() throws Exception {
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+
+        String conversationId = createdPost.getConversation().getId().toString();
+        String messageId = createdPost.getId().toString();
+
+        userUtilService.changeUser(TEST_PREFIX + "student3");
+        // student3 is not a participant in this conversation, should get 403 Forbidden
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsUnreadInvalidMessageIdNotFound() throws Exception {
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+
+        String conversationId = createdPost.getConversation().getId().toString();
+        long invalidMessageId = 99999L; // Non-existent message ID
+
+        // Attempt to mark a non-existent message as unread, should get 404 Not Found
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + invalidMessageId + "/mark-as-unread", null,
+                HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkMessageAsUnreadMessageNotBelongingToConversationNotFound() throws Exception {
+        // Create message in first conversation
+        Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave1 = new CreatePostDTO(postToSave1.getContent(), "", false, new CreatePostConversationDTO(postToSave1.getConversation().getId()));
+        Post createdPost1 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave1, Post.class, HttpStatus.CREATED);
+
+        // Create message in a different conversation
+        Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
+        CreatePostDTO postDTOToSave2 = new CreatePostDTO(postToSave2.getContent(), "", false, new CreatePostConversationDTO(postToSave2.getConversation().getId()));
+        Post createdPost2 = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave2, Post.class, HttpStatus.CREATED);
+
+        String conversationId1 = createdPost1.getConversation().getId().toString();
+        String messageId2 = createdPost2.getId().toString();
+
+        // Try to mark a message from a different conversation as unread, should get 404 Not Found
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId1 + "/messages/" + messageId2 + "/mark-as-unread", null, HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testMarkOwnMessageAsUnreadBadRequest() throws Exception {
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        postToSave.setAuthor(userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
+        CreatePostDTO postDTOToSave = new CreatePostDTO(postToSave.getContent(), "", false, new CreatePostConversationDTO(postToSave.getConversation().getId()));
+        Post createdPost = request.postWithResponseBody("/api/communication/courses/" + courseId + "/messages", postDTOToSave, Post.class, HttpStatus.CREATED);
+
+        String conversationId = createdPost.getConversation().getId().toString();
+        String messageId = createdPost.getId().toString();
+
+        // Author attempting to mark their own message as unread should get 400 Bad Request
+        request.patch("/api/communication/courses/" + courseId + "/conversations/" + conversationId + "/messages/" + messageId + "/mark-as-unread", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCourseWideMessagesWithPinnedOnly() throws Exception {
         Channel channel = conversationUtilService.createCourseWideChannel(course, "channel-for-pinned-test", false);
