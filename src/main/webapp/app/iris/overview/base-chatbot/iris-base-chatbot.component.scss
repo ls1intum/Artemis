@@ -547,6 +547,23 @@ pre {
         justify-content: flex-start;
         padding: 0 8px 8px;
 
+        .about-iris-button {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            cursor: pointer;
+            border-radius: var(--bs-border-radius-lg);
+            background-color: transparent;
+            border: none;
+            color: var(--bs-body-color);
+            font-size: 0.85rem;
+
+            &:hover {
+                background-color: var(--iris-accent-background);
+            }
+        }
+
         .info-button {
             cursor: pointer;
             vertical-align: middle;

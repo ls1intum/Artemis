@@ -133,11 +133,12 @@
                             <div class="chat-history-info-link">
                                 <button
                                     type="button"
-                                    class="collapsed-icon-button"
+                                    class="about-iris-button"
                                     (click)="openAboutIrisModal()"
                                     [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate"
                                 >
                                     <fa-icon [icon]="faCircleInfo" class="info-button" />
+                                    <span jhiTranslate="artemisApp.iris.chatHistory.aboutIris"></span>
                                 </button>
                             </div>
                         </div>
@@ -174,6 +175,11 @@
                         }
                     }
                     <div class="toolbox">
+                        @if (!isChatHistoryAvailable() && !isChatGptWrapper()) {
+                            <button (click)="openAboutIrisModal()" class="header-control" [attr.aria-label]="'artemisApp.iris.chatHistory.aboutIris' | artemisTranslate">
+                                <fa-icon [icon]="faCircleInfo" />
+                            </button>
+                        }
                         @if (!isChatHistoryAvailable() && messages().length >= 1) {
                             <button id="clear-chat-button" (click)="openNewSession()" class="header-control">
                                 <fa-icon [icon]="faPenToSquare" />
