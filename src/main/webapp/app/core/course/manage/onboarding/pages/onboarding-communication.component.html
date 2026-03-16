@@ -15,7 +15,13 @@
         <div class="d-flex align-items-center gap-3 mb-1">
             <strong jhiTranslate="artemisApp.course.courseCommunicationSetting.communicationEnabled.label"></strong>
             <div class="feature-toggle">
-                <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': communicationEnabled }" (click)="!communicationEnabled && toggleCommunication()">
+                <button
+                    type="button"
+                    id="onboarding_communicationEnabled"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-enabled': communicationEnabled }"
+                    (click)="!communicationEnabled && toggleCommunication()"
+                >
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                 </button>

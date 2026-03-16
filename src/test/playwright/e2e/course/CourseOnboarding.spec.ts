@@ -16,9 +16,12 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         course = await courseManagementAPIRequests.createCourse({ courseName: 'Onboarding ' + uid, courseShortName: 'pw' + uid });
     });
 
-    test('Auto-redirects to onboarding for new course', async ({ page }) => {
+    test('Admin is NOT auto-redirected to onboarding', async ({ page }) => {
         await page.goto(`/course-management/${course.id}`);
-        await page.waitForURL(`**/course-management/${course.id}/onboarding`);
+        // Admin users should stay on the course detail page (no redirect)
+        await expect(page.locator('.onboarding-wizard')).toBeHidden();
+        // But admin can still access onboarding manually
+        await page.goto(`/course-management/${course.id}/onboarding`);
         await expect(page.locator('.onboarding-wizard')).toBeVisible();
     });
 
@@ -98,8 +101,8 @@ test.describe('Course onboarding wizard', { tag: '@fast' }, () => {
         await courseOnboarding.clickGoToCourse();
         await page.waitForURL(`**/course-management/${course.id}**`);
 
-        // Find and click the "Course Onboarding" button to replay the wizard
-        const replayButton = page.locator('button', { hasText: 'Course Onboarding' });
+        // Find and click the "Course Onboarding" link to replay the wizard
+        const replayButton = page.locator('a', { hasText: 'Course Onboarding' });
         await expect(replayButton).toBeVisible();
         await replayButton.click();
 

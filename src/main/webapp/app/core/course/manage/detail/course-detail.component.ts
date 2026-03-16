@@ -10,7 +10,7 @@ import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/c
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
-import { faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faChartBar, faClipboard, faEye, faFlag, faGraduationCap, faListAlt, faQuestion, faRocket, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
@@ -23,6 +23,9 @@ import { CourseDetailLineChartComponent } from './course-detail-line-chart.compo
 import { QuickActionsComponent } from 'app/core/course/manage/quick-actions/quick-actions.component';
 import { ControlCenterComponent } from 'app/core/course/manage/control-center/control-center.component';
 import { OnboardingExploreComponent } from 'app/core/course/manage/onboarding/pages/onboarding-explore.component';
+import { RouterLink } from '@angular/router';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -46,6 +49,9 @@ export enum DoughnutChartType {
         QuickActionsComponent,
         ControlCenterComponent,
         OnboardingExploreComponent,
+        RouterLink,
+        FaIconComponent,
+        TranslateDirective,
     ],
 })
 export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -62,6 +68,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     protected readonly faClipboard = faClipboard;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faQuestion = faQuestion;
+    protected readonly faRocket = faRocket;
 
     private eventManager = inject(EventManager);
     private courseManagementService = inject(CourseManagementService);
@@ -113,7 +120,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.route.data.subscribe(({ course }) => {
             if (course) {
-                if (course.onboardingDone === false && course.isAtLeastInstructor) {
+                if (course.onboardingDone === false && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
                     this.router.navigate(['course-management', course.id, 'onboarding']);
                     return;
                 }

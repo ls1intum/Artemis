@@ -38,16 +38,14 @@
         />
     </div>
     @if (course()?.isAtLeastInstructor) {
+        <jhi-user-management-dropdown [courseId]="course()?.id" />
+    }
+    @if (course()?.isAtLeastInstructor) {
         <div class="header-actions">
-            <jhi-user-management-dropdown [courseId]="course()?.id" />
             <button class="header-action-btn" (click)="openImportDialog()">
                 <fa-icon [icon]="faFileImport" />
                 <span jhiTranslate="artemisApp.course.import.button"></span>
             </button>
-            <a class="header-action-btn" [routerLink]="['/course-management', course()?.id, 'onboarding']">
-                <fa-icon [icon]="faRocket" />
-                <span jhiTranslate="artemisApp.course.onboarding.actions.restartSetup"></span>
-            </a>
         </div>
     }
 </div>

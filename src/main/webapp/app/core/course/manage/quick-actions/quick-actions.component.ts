@@ -101,8 +101,8 @@ export enum CourseManagementSection {
             .quick-action-card {
                 display: flex;
                 align-items: center;
-                gap: 0.75rem;
-                padding: 0.625rem 1rem;
+                gap: 0.5rem;
+                padding: 0.4rem 0.75rem;
                 border: 1px solid var(--bs-border-color);
                 border-radius: 0.75rem;
                 background: var(--bs-body-bg);
@@ -154,9 +154,9 @@ export enum CourseManagementSection {
             }
 
             .quick-action-icon {
-                width: 36px;
-                height: 36px;
-                border-radius: 10px;
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
                 display: inline-flex;
                 align-items: center;
                 justify-content: center;
@@ -164,12 +164,12 @@ export enum CourseManagementSection {
                 color: var(--bs-white);
                 background: var(--card-accent, var(--bs-primary));
                 box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-                font-size: 0.9rem;
+                font-size: 0.75rem;
             }
 
             .quick-action-label {
                 font-weight: 600;
-                font-size: 0.88rem;
+                font-size: 0.8rem;
                 white-space: nowrap;
             }
         `,

@@ -414,6 +414,12 @@
                     "restartSetup": "Course Onboarding",
                     "saving": "Saving..."
                 },
+                "validation": {
+                    "startDateBeforeEndDate": "The start date must be before the end date.",
+                    "enrollmentStartDateBeforeEndDate": "The enrollment start date must be before the enrollment end date.",
+                    "accuracyOfScoresRange": "Decimal places for score calculations must be between 0 and 5.",
+                    "maxPointsPositive": "Max points must be greater than 0."
+                },
                 "generalSettings": {
                     "title": "General",
                     "description": "Configure the basic settings for your course such as description, dates, and language preferences.",

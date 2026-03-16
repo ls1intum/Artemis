@@ -36,7 +36,13 @@
         <div class="d-flex align-items-center gap-3 mb-1">
             <strong jhiTranslate="artemisApp.course.enrollmentEnabled.title"></strong>
             <div class="feature-toggle">
-                <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': course().enrollmentEnabled }" (click)="!course().enrollmentEnabled && toggleEnrollment()">
+                <button
+                    type="button"
+                    id="onboarding_enrollmentEnabled"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-enabled': course().enrollmentEnabled }"
+                    (click)="!course().enrollmentEnabled && toggleEnrollment()"
+                >
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                 </button>

@@ -414,6 +414,12 @@
                     "restartSetup": "Kurs-Onboarding",
                     "saving": "Speichern..."
                 },
+                "validation": {
+                    "startDateBeforeEndDate": "Das Startdatum muss vor dem Enddatum liegen.",
+                    "enrollmentStartDateBeforeEndDate": "Das Einschreibungsstartdatum muss vor dem Einschreibungsenddatum liegen.",
+                    "accuracyOfScoresRange": "Dezimalstellen für Bewertungsberechnungen müssen zwischen 0 und 5 liegen.",
+                    "maxPointsPositive": "Maximale Punkte müssen größer als 0 sein."
+                },
                 "generalSettings": {
                     "title": "Allgemein",
                     "description": "Konfiguriere die grundlegenden Einstellungen wie Beschreibung, Zeitraum und Spracheinstellungen.",

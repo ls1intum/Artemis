@@ -7,6 +7,13 @@
         </div>
         @if (course()!.isAtLeastInstructor) {
             <div #exploreSection class="col-12 p-2" [class.explore-animate]="fromOnboarding()">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h5 jhiTranslate="artemisApp.course.onboarding.explore.title"></h5>
+                    <a class="btn btn-sm btn-outline-primary" [routerLink]="['/course-management', course()!.id, 'onboarding']">
+                        <fa-icon [icon]="faRocket" class="me-1" />
+                        <span jhiTranslate="artemisApp.course.onboarding.actions.restartSetup"></span>
+                    </a>
+                </div>
                 <jhi-onboarding-explore [course]="course()!" />
             </div>
         }

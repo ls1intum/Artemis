@@ -14,6 +14,7 @@ import { OnboardingExploreComponent } from './pages/onboarding-explore.component
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChartLine, faCheck, faChevronLeft, faChevronRight, faCog, faComments, faRocket, faUserPlus } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-course-onboarding',
@@ -63,23 +64,32 @@ export class CourseOnboardingComponent implements OnInit {
 
     nextStep() {
         if (this.activeStep() < this.totalSteps - 1) {
+            if (!this.validateCurrentStep()) {
+                return;
+            }
             this.saveAndAdvance();
         }
     }
 
     previousStep() {
         if (this.activeStep() > 0) {
-            this.activeStep.update((s) => s - 1);
+            this.saveAndNavigate(this.activeStep() - 1);
         }
     }
 
     goToStep(index: number) {
         if (index !== this.activeStep() && !this.isSaving()) {
-            this.activeStep.set(index);
+            if (!this.validateCurrentStep()) {
+                return;
+            }
+            this.saveAndNavigate(index);
         }
     }
 
     finishSetup() {
+        if (!this.validateCurrentStep()) {
+            return;
+        }
         const current = this.course();
         current.onboardingDone = true;
         if (!current.id) {
@@ -110,6 +120,48 @@ export class CourseOnboardingComponent implements OnInit {
         this.course.set(updatedCourse);
     }
 
+    validateCurrentStep(): boolean {
+        const current = this.course();
+        const step = this.activeStep();
+
+        switch (step) {
+            case 0: {
+                // General Settings: startDate < endDate
+                if (current.startDate && current.endDate && dayjs(current.startDate).isAfter(dayjs(current.endDate))) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.startDateBeforeEndDate');
+                    return false;
+                }
+                break;
+            }
+            case 1: {
+                // Enrollment: enrollmentStartDate < enrollmentEndDate
+                if (
+                    current.enrollmentEnabled &&
+                    current.enrollmentStartDate &&
+                    current.enrollmentEndDate &&
+                    dayjs(current.enrollmentStartDate).isAfter(dayjs(current.enrollmentEndDate))
+                ) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.enrollmentStartDateBeforeEndDate');
+                    return false;
+                }
+                break;
+            }
+            case 3: {
+                // Assessment: accuracyOfScores 0-5, maxPoints > 0
+                if (current.accuracyOfScores !== undefined && (current.accuracyOfScores < 0 || current.accuracyOfScores > 5)) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.accuracyOfScoresRange');
+                    return false;
+                }
+                if (current.maxPoints !== undefined && current.maxPoints <= 0) {
+                    this.alertService.error('artemisApp.course.onboarding.validation.maxPointsPositive');
+                    return false;
+                }
+                break;
+            }
+        }
+        return true;
+    }
+
     private saveAndAdvance() {
         const current = this.course();
         if (!current.id) {
@@ -124,6 +176,28 @@ export class CourseOnboardingComponent implements OnInit {
                     this.course.set(response.body);
                 }
                 this.activeStep.update((s) => s + 1);
+            },
+            error: (error: HttpErrorResponse) => {
+                this.isSaving.set(false);
+                onError(this.alertService, error);
+            },
+        });
+    }
+
+    private saveAndNavigate(targetStep: number) {
+        const current = this.course();
+        if (!current.id) {
+            this.activeStep.set(targetStep);
+            return;
+        }
+        this.isSaving.set(true);
+        this.courseManagementService.update(current.id, current).subscribe({
+            next: (response) => {
+                this.isSaving.set(false);
+                if (response.body) {
+                    this.course.set(response.body);
+                }
+                this.activeStep.set(targetStep);
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);
