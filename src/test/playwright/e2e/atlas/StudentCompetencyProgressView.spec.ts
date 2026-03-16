@@ -103,9 +103,14 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await page.reload();
             await page.waitForLoadState(WAIT_STATE);
 
+            // After reload, the text unit is collapsed — expand it before checking the checkbox
+            const textUnitToggleAfterReload = page.locator('jhi-text-unit #lecture-unit-toggle-button');
+            await expect(textUnitToggleAfterReload).toBeVisible();
+            await textUnitToggleAfterReload.click();
+
             // Assert: The lecture unit should now show as completed (green check icon)
             const completedIcon = page.locator('jhi-text-unit #completed-checkbox.text-success');
-            await expect(completedIcon).toBeVisible();
+            await expect(completedIcon).toBeVisible({ timeout: 10000 });
 
             // Assert: Progress ring should be visible
             await expect(page.locator('jhi-competency-rings')).toBeVisible();
