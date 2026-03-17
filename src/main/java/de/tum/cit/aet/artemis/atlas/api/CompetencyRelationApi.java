@@ -87,4 +87,12 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     public void deleteAllLectureUnitLinksByLectureId(Long lectureId) {
         lectureUnitLinkRepository.deleteAllByLectureId(lectureId);
     }
+
+    public CourseCompetency findCompetencyOrPrerequisiteByIdElseThrow(long competencyId) {
+        return courseCompetencyRepository.findByIdElseThrow(competencyId);
+    }
+
+    public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
+        return courseCompetencyRepository.findAllById(ids);
+    }
 }

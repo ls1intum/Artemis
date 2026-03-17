@@ -139,7 +139,8 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Load the existing exercise from the database with all necessary associations
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        var programmingExerciseBeforeUpdate = programmingExerciseRepository
+                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndCompetenciesAndPlagiarismDetectionConfigAndBuildConfigElseThrow(updateDTO.id());
 
         // Validate that courseId or exerciseGroupId hasn't changed
         // For course exercises: courseId must match

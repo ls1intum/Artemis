@@ -38,7 +38,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @AfterEach
     void tearDown() {
-        conversationMessageRepository.deleteAllInBatch();
+        conversationMessageRepository.deleteAll();
         conversationRepository.deleteAllByCourseId(exampleCourseId);
     }
 
