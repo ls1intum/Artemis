@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.tutorialgroup.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -17,8 +18,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO.TeachingAssista
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TutorialGroupUpdateDataDTO(@NotNull Long id, @NotBlank @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
-        @Nullable String additionalInformation, @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus,
-        @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule) {
+        @Nullable String additionalInformation, @Min(1) @Nullable Integer capacity, @NotNull Boolean isOnline, @Size(min = 1, max = 256) @Nullable String language,
+        @Size(min = 1, max = 256) @Nullable String campus, @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule) {
 
     public TutorialGroupDTO toTutorialGroupDTO() {
         return new TutorialGroupDTO(id, title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus);

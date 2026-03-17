@@ -475,6 +475,33 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_withInvalidCapacity_shouldReturnBadRequest() throws Exception {
+        var tutorialGroupDTO = new TutorialGroupDTO(null, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + "tutor1"), null, 0, false,
+                Language.ENGLISH.name(), "Garching");
+
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_withTooLongCampus_shouldReturnBadRequest() throws Exception {
+        var tutorialGroupDTO = new TutorialGroupDTO(null, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + "tutor1"), null, 15, false,
+                Language.ENGLISH.name(), "a".repeat(257));
+
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_withTooLongLanguage_shouldReturnBadRequest() throws Exception {
+        var tutorialGroupDTO = new TutorialGroupDTO(null, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + "tutor1"), null, 15, false, "a".repeat(257),
+                "Garching");
+
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_withUnknownTeachingAssistant_shouldReturnBadRequest() throws Exception {
         var tutorialGroupDTO = new TutorialGroupDTO(null, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO("does-not-exist"), null, 15, false,
                 Language.ENGLISH.name(), "Garching");
@@ -603,6 +630,54 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
         tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
         tutorialGroupUpdateData.put("title", generateRandomTitle());
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withInvalidCapacity_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("title", generateRandomTitle());
+        tutorialGroupUpdateData.put("isOnline", false);
+        tutorialGroupUpdateData.put("capacity", 0);
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withTooLongLanguage_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("title", generateRandomTitle());
+        tutorialGroupUpdateData.put("isOnline", false);
+        tutorialGroupUpdateData.put("language", "a".repeat(257));
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withTooLongCampus_shouldReturnBadRequest() throws Exception {
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("title", generateRandomTitle());
+        tutorialGroupUpdateData.put("isOnline", false);
+        tutorialGroupUpdateData.put("campus", "a".repeat(257));
 
         Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
         tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
