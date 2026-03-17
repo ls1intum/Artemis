@@ -9,10 +9,8 @@
  */
 
 
-export interface TutorialGroupSessionRequest { 
-    date?: string;
-    startTime?: string;
-    endTime?: string;
-    location?: string;
+export interface TutorialGroupRegistrationsImport { 
+    login?: string;
+    registrationNumber?: string;
 }
 

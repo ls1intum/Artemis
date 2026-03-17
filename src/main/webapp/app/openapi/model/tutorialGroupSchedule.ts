@@ -9,7 +9,11 @@
  */
 
 
-export interface TeachingAssistant { 
-    login?: string;
+export interface TutorialGroupSchedule { 
+    firstSessionStart: string;
+    firstSessionEnd: string;
+    repetitionFrequency: number;
+    tutorialPeriodEnd: string;
+    location: string;
 }
 

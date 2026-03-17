@@ -9,7 +9,11 @@
  */
 
 
-export interface TutorialGroupStatus { 
-    status_explanation?: string;
+export interface CreateOrUpdateTutorialGroupSession { 
+    date: string;
+    startTime: string;
+    endTime: string;
+    location?: string;
+    attendance?: number;
 }
 

@@ -7,21 +7,23 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { TutorialGroupDetailSession } from './tutorialGroupDetailSession';
+import { TutorialGroupSession } from './tutorialGroupSession';
 
 
-export interface TutorialGroupDetailGroup { 
-    id?: number;
+export interface TutorialGroupDetail { 
+    id: number;
     title: string;
     language: string;
-    isOnline?: boolean;
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
-    teachingAssistantImageUrl?: string;
+    isOnline: boolean;
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
-    sessions: Array<TutorialGroupDetailSession>;
+    sessions: Array<TutorialGroupSession>;
 }
 

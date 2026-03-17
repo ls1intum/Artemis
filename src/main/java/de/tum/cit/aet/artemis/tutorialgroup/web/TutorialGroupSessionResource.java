@@ -102,7 +102,7 @@ public class TutorialGroupSessionResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<TutorialGroupSession> updateSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -154,7 +154,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSessionDTO> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+    public ResponseEntity<TutorialGroupSessionDTO> createSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -191,7 +191,7 @@ public class TutorialGroupSessionResource {
      */
     @DeleteMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
+    public ResponseEntity<Void> deleteSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
         log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
@@ -219,7 +219,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<TutorialGroupSession> cancelSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody TutorialGroupCancelExplanationDTO tutorialGroupCancelExplanationDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -255,7 +255,8 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> activate(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupSession> activateSession(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId)
+            throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);

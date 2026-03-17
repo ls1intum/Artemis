@@ -170,7 +170,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const { courseId, tutorialGroupId } = deletionEvent;
         this.isLoading.set(true);
         this.tutorialGroupApiService
-            .delete(courseId, tutorialGroupId, 'response')
+            .deleteTutorialGroup(courseId, tutorialGroupId, 'response')
             .pipe(
                 catchError((_) => {
                     this.isLoading.set(false);

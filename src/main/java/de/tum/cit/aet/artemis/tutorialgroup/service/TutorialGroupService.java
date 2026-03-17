@@ -56,7 +56,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupExportDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupImportDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupRegistrationsImportDTO;
@@ -638,10 +638,10 @@ public class TutorialGroupService {
      * @param tutorialGroupId the ID of the tutorial group to fetch
      * @param courseId        the ID of the course of the tutorial group
      * @param courseTimeZone  the time zone of the course, used for session status evaluation
-     * @return a {@link TutorialGroupDTO}
+     * @return a {@link TutorialGroupDetailDTO}
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
-    public TutorialGroupDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
+    public TutorialGroupDetailDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
         RawTutorialGroupDTO rawGroupDTOs = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
                 .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
 
@@ -668,7 +668,7 @@ public class TutorialGroupService {
             sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupSessionDTO::from).toList();
         }
 
-        return TutorialGroupDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
+        return TutorialGroupDetailDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
     }
 
     /**

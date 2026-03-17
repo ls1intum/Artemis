@@ -9,7 +9,8 @@
  */
 
 
-export interface TutorialGroupDetailSession { 
+export interface TutorialGroupSession { 
+    id: number;
     start: string;
     end: string;
     location: string;

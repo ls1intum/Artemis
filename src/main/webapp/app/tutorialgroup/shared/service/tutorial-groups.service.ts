@@ -17,9 +17,9 @@ import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tu
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
-import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
 import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
 import { HttpParams } from '@angular/common/http';
+import { TutorialGroupImport } from 'app/openapi/model/tutorialGroupImport';
 
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
@@ -57,7 +57,7 @@ export class TutorialGroupsService {
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupApiService.delete(courseId, tutorialGroupId, 'response');
+        return this.tutorialGroupApiService.deleteTutorialGroup(courseId, tutorialGroupId, 'response');
     }
 
     getTutorialGroupScheduleDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupScheduleDTO | undefined> {
@@ -97,8 +97,8 @@ export class TutorialGroupsService {
         return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-via-login`, logins, { observe: 'response' });
     }
 
-    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
-        return this.tutorialGroupApiService.importRegistrations(courseId, tutorialGroups, 'response');
+    import(courseId: number, tutorialGroups: TutorialGroupImport[]): Observable<HttpResponse<Array<TutorialGroupImport>>> {
+        return this.tutorialGroupApiService.importTutorialGroupsWithRegistrations(courseId, tutorialGroups, 'response');
     }
 
     exportTutorialGroupsToCSV(courseId: number, fields: string[]): Observable<Blob> {

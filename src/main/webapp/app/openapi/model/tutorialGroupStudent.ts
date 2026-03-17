@@ -7,12 +7,14 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
-import { TutorialGroup } from './tutorialGroup';
 
 
-export interface TutorialGroupUpdate { 
-    tutorialGroup: TutorialGroup;
-    notificationText?: string;
-    updateTutorialGroupChannelName?: boolean;
+export interface TutorialGroupStudent { 
+    id: number;
+    name?: string;
+    profilePictureUrl?: string;
+    login: string;
+    email?: string;
+    registrationNumber?: string;
 }
 

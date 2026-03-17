@@ -10,18 +10,18 @@
 import { Student } from './student';
 
 
-export interface TutorialGroupRegistrationImport { 
+export interface TutorialGroupImport { 
     title?: string;
     student?: Student;
     importSuccessful?: boolean;
-    error?: TutorialGroupRegistrationImport.ErrorEnum;
+    error?: TutorialGroupImport.ErrorEnum;
     campus?: string;
     capacity?: number;
     language?: string;
     additionalInformation?: string;
     isOnline?: boolean;
 }
-export namespace TutorialGroupRegistrationImport {
+export namespace TutorialGroupImport {
     export const ErrorEnum = {
         NoTitle: 'NO_TITLE',
         NoUserFound: 'NO_USER_FOUND',

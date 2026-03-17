@@ -15,7 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart, @NotNull LocalDateTime firstSessionEnd, @Min(1) int repetitionFrequency,
+public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart, @NotNull LocalDateTime firstSessionEnd, @NotNull @Min(1) Integer repetitionFrequency,
         @NotNull LocalDate tutorialPeriodEnd, @NotNull String location) {
 
     public static TutorialGroupSchedule toTutorialGroupSchedule(TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
