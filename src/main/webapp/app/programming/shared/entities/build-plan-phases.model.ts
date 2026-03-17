@@ -3,8 +3,9 @@
  * Note: Matches BuildPhaseCondition.java
  */
 export const BUILD_PHASE_CONDITION = {
-    ALWAYS: 'always',
-    AFTER_DUE_DATE: 'after due date',
+    ALWAYS: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.always',
+    AFTER_DUE_DATE: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.afterDueDate',
+    FORCE_RUN: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.forceRun',
 };
 
 export type BuildPhaseCondition = keyof typeof BUILD_PHASE_CONDITION;

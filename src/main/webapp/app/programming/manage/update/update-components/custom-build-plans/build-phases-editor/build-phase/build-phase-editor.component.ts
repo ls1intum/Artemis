@@ -66,10 +66,13 @@ export class BuildPhaseEditorComponent {
 
     readonly conditionOptions = computed(() => {
         this.currentLocale();
-        return Object.keys(BUILD_PHASE_CONDITION).map((key) => ({
-            value: key as BuildPhaseCondition,
-            label: this.translateService.instant(`artemisApp.programmingExercise.buildPhasesEditor.conditions.${key}`) as string,
-        }));
+        return Object.keys(BUILD_PHASE_CONDITION).map((key) => {
+            const value = key as BuildPhaseCondition;
+            return {
+                value: value,
+                label: this.translateService.instant(BUILD_PHASE_CONDITION[value]) as string,
+            };
+        });
     });
 
     readonly delete = output<void>();

@@ -162,8 +162,9 @@
                 "moveDown": "Nach unten verschieben",
                 "delete": "Löschen",
                 "conditions": {
-                    "ALWAYS": "Immer",
-                    "AFTER_DUE_DATE": "Nach Abgabefrist"
+                    "always": "Immer",
+                    "afterDueDate": "Nach Abgabefrist",
+                    "forceRun": "Ausführung erzwingen"
                 }
             },
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",

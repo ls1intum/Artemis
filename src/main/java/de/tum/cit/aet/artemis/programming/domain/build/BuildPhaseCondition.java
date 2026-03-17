@@ -11,5 +11,8 @@ public enum BuildPhaseCondition {
     ALWAYS,
 
     @JsonProperty("AFTER_DUE_DATE")
-    AFTER_DUE_DATE
+    AFTER_DUE_DATE,
+
+    @JsonProperty("AFTER_DUE_DATE")
+    FORCE_RUN
 }

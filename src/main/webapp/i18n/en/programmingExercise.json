@@ -175,8 +175,9 @@
                 "moveDown": "Move down",
                 "delete": "Delete",
                 "conditions": {
-                    "ALWAYS": "Always",
-                    "AFTER_DUE_DATE": "After due date"
+                    "always": "Always",
+                    "afterDueDate": "After due date",
+                    "forceRun": "Force run"
                 }
             },
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",
