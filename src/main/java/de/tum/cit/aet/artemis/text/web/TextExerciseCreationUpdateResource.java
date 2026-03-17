@@ -154,7 +154,13 @@ public class TextExerciseCreationUpdateResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        TextExercise result = exerciseService.saveWithCompetencyLinks(textExercise, textExerciseRepository::save);
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(textExercise);
+        TextExercise savedExercise = textExerciseRepository.save(textExercise);
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = textExerciseRepository.save(savedExercise);
+        }
+        final TextExercise result = savedExercise;
 
         channelService.createExerciseChannel(result, Optional.ofNullable(textExercise.getChannelName()));
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
@@ -242,7 +248,7 @@ public class TextExerciseCreationUpdateResource {
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
-        TextExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, textExerciseRepository::save);
+        TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
 
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
