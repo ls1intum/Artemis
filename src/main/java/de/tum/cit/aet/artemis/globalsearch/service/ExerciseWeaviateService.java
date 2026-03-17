@@ -21,6 +21,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
@@ -40,8 +41,11 @@ public class ExerciseWeaviateService {
 
     private final WeaviateService weaviateService;
 
-    public ExerciseWeaviateService(WeaviateService weaviateService) {
+    private final boolean useHybridSearch;
+
+    public ExerciseWeaviateService(WeaviateService weaviateService, WeaviateConfigurationProperties properties) {
         this.weaviateService = weaviateService;
+        this.useHybridSearch = !WeaviateConfigurationProperties.VECTORIZER_NONE.equals(properties.vectorizerModule());
     }
 
     /**
@@ -350,15 +354,26 @@ public class ExerciseWeaviateService {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            var result = collection.query.hybrid(query, h -> {
-                h.limit(limit);
-                if (filter != null) {
-                    h.filters(filter);
-                }
-                return h;
-            });
-
-            return result.objects().stream().map(obj -> obj.properties()).toList();
+            if (useHybridSearch) {
+                var result = collection.query.hybrid(query, h -> {
+                    h.limit(limit);
+                    if (filter != null) {
+                        h.filters(filter);
+                    }
+                    return h;
+                });
+                return result.objects().stream().map(obj -> obj.properties()).toList();
+            }
+            else {
+                var result = collection.query.bm25(query, b -> {
+                    b.limit(limit);
+                    if (filter != null) {
+                        b.filters(filter);
+                    }
+                    return b;
+                });
+                return result.objects().stream().map(obj -> obj.properties()).toList();
+            }
         }
         catch (Exception e) {
             log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
