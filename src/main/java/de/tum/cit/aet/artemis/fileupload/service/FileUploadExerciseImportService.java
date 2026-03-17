@@ -61,7 +61,13 @@ public class FileUploadExerciseImportService extends ExerciseImportService {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
 
-        FileUploadExercise newFileUploadExercise = exerciseService.saveWithCompetencyLinks(newExercise, fileUploadExerciseRepository::save);
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(newExercise);
+        FileUploadExercise savedExercise = fileUploadExerciseRepository.save(newExercise);
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = fileUploadExerciseRepository.save(savedExercise);
+        }
+        final FileUploadExercise newFileUploadExercise = savedExercise;
 
         channelService.createExerciseChannel(newFileUploadExercise, Optional.ofNullable(importedExercise.getChannelName()));
 

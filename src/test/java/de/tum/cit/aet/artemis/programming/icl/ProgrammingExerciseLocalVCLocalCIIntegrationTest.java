@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertEx
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertProgrammingExerciseExistsInWeaviate;
 import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExerciseProperties;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
@@ -250,9 +251,12 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
 
-        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        ProgrammingExercise updatedExercise = request.putWithResponseBody("/api/programming/programming-exercises",
+                de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class, HttpStatus.OK);
 
-        assertThat(updatedExercise.getReleaseDate()).isEqualTo(newReleaseDate);
+        // Compare as instants because PostgreSQL stores timestamps as UTC and the
+        // original timezone offset is not preserved through the database round-trip.
+        assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
         verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
@@ -265,24 +269,17 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
                 Object releaseDateObj = weaviateProperties.get(ExerciseSchema.Properties.RELEASE_DATE);
                 assertThat(releaseDateObj).as("Release date should be updated in Weaviate").isNotNull();
                 ZonedDateTime weaviateReleaseDate = ZonedDateTime.parse(releaseDateObj.toString());
-                // Truncate to milliseconds since Weaviate may not preserve nanosecond precision
-                assertThat(weaviateReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS)).isEqualTo(newReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
-                assertThat(weaviateReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS))
-                        .isNotEqualTo(originalReleaseDate.truncatedTo(java.time.temporal.ChronoUnit.MILLIS));
+                // Compare as instants with a small tolerance because Weaviate may not preserve
+                // sub-millisecond precision through the serialization round-trip.
+                assertThat(weaviateReleaseDate.toInstant()).isCloseTo(newReleaseDate.toInstant(), within(100, java.time.temporal.ChronoUnit.MILLIS));
+                assertThat(weaviateReleaseDate.toInstant()).isNotEqualTo(originalReleaseDate.toInstant());
             });
         }
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testUpdateProgrammingExercise_templateRepositoryUriIsInvalid() throws Exception {
-        programmingExercise.setTemplateRepositoryUri("http://localhost:9999/some/invalid/url.git");
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
-
-        programmingExercise.setTemplateRepositoryUri(
-                "http://localhost:49152/invalidUrlMapping/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey().toLowerCase() + "-exercise.git");
-        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
-    }
+    // Note: testUpdateProgrammingExercise_templateRepositoryUriIsInvalid was removed because
+    // UpdateProgrammingExerciseDTO intentionally doesn't include templateRepositoryUri.
+    // Repository URIs are immutable after exercise creation and cannot be modified through the update endpoint.
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
