@@ -46,6 +46,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupUpdateDataDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
@@ -299,6 +300,10 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return new TutorialGroupDTO(null, title, new TutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(), "Garching");
     }
 
+    TutorialGroupResource.TutorialGroupUpdateDTO buildTutorialGroupUpdateDTO(TutorialGroup tutorialGroup, String notificationText, boolean updateTutorialGroupChannelName) {
+        return new TutorialGroupResource.TutorialGroupUpdateDTO(TutorialGroupUpdateDataDTO.from(tutorialGroup), notificationText, updateTutorialGroupChannelName);
+    }
+
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
         var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var newTutorialGroup = new TutorialGroup();
@@ -321,7 +326,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         var persistedTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
         persistedTutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var updateDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
+        var updateDTO = buildTutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
         request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         var newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);

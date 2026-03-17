@@ -330,11 +330,6 @@ public class TutorialGroupResource {
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroupUpdateDataDTO tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
             @Nullable Boolean updateTutorialGroupChannelName) {
-
-        public TutorialGroupUpdateDTO(@Valid @NotNull TutorialGroup tutorialGroup, @Size(min = 1, max = 1000) @Nullable String notificationText,
-                @Nullable Boolean updateTutorialGroupChannelName) {
-            this(TutorialGroupUpdateDataDTO.from(tutorialGroup), notificationText, updateTutorialGroupChannelName);
-        }
     }
 
     /**

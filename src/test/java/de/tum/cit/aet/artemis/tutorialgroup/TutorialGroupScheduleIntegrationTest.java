@@ -12,7 +12,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.web.TutorialGroupResource;
 
 class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -44,7 +43,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // Then add schedule via update
         var scheduleToCreate = this.buildExampleSchedule(mondayBeforeDSTSwitch, mondayAfterDSTSwitch);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
@@ -72,7 +71,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, THIRD_AUGUST_MONDAY);
         scheduleToCreate.setRepetitionFrequency(2); // repeat every two weeks
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
@@ -100,7 +99,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // Then add schedule via update
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
@@ -132,28 +131,28 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var scheduleWithWrongFrom = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongFrom.setValidFromInclusive("2022-11-25T23:00:00.000Z"); // wrong format as not uuuu-MM-dd
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongFrom);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Test wrong format for validToInclusive
         var scheduleWithWrongTo = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongTo.setValidToInclusive("2022-11-25T23:00:00.000Z"); // wrong format as not uuuu-MM-dd
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongTo);
-        dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Test wrong format for startTime
         var scheduleWithWrongStartTime = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongStartTime.setStartTime("23:00:00.000Z"); // wrong format as not hh:mm:ss
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongStartTime);
-        dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
         // Test wrong format for endTime
         var scheduleWithWrongEndTime = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         scheduleWithWrongEndTime.setEndTime("23:00:00.000Z"); // wrong format as not hh:mm:ss
         tutorialGroup.setTutorialGroupSchedule(scheduleWithWrongEndTime);
-        dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
     }
 
@@ -165,7 +164,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var newSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
 
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
@@ -191,7 +190,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var newSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
 
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
 
@@ -210,7 +209,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // Add schedule via update
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // Get the persisted session and schedule IDs for later comparison
@@ -223,7 +222,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroupId).orElseThrow();
         tutorialGroup.setTutorialGroupSchedule(persistedSchedule);
         tutorialGroup.setCapacity(2000);
-        dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
@@ -243,7 +242,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // Add schedule via update
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // Get the persisted session and schedule IDs for later comparison
@@ -256,7 +255,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var persistedSchedule = tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroupId).orElseThrow();
         persistedSchedule.setLocation("updated");
         tutorialGroup.setTutorialGroupSchedule(persistedSchedule);
-        dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // then
@@ -279,7 +278,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // Add initial schedule via update
         var initialSchedule = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(initialSchedule);
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         // Add an individual session
@@ -295,7 +294,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         newSchedule.setRepetitionFrequency(2); // repeat every two weeks
         tutorialGroup.setTutorialGroupSchedule(newSchedule);
 
-        dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         // when
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroupId), dto, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
@@ -327,7 +326,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var addScheduleDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var addScheduleDTO = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroupId), addScheduleDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
@@ -335,7 +334,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         // when
         tutorialGroup.setTutorialGroupSchedule(null);
 
-        var dto = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var dto = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         var updatedTutorialGroupResponse = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), dto, TutorialGroupResponseDTO.class,
                 HttpStatus.OK);
         // then
@@ -356,7 +355,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var tutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
         var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY, SECOND_AUGUST_MONDAY);
         tutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-        var addScheduleDTO = new TutorialGroupResource.TutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
+        var addScheduleDTO = buildTutorialGroupUpdateDTO(tutorialGroup, "Lorem Ipsum", true);
         request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroupId), addScheduleDTO, TutorialGroupResponseDTO.class, HttpStatus.OK);
 
         this.buildAndSaveExampleIndividualTutorialGroupSession(persistedTutorialGroupId, THIRD_AUGUST_MONDAY_00_00);
