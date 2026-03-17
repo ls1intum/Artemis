@@ -47,7 +47,6 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -144,8 +143,6 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
-    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
-
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -153,7 +150,7 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+            ParticipationFilterService participationFilterService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -178,7 +175,6 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
-        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     /**
@@ -909,7 +905,7 @@ public class ExerciseService {
      * @param entity the exercise entity to update
      */
     public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
-        if (competencyRepositoryApi.isEmpty()) {
+        if (competencyRelationApi.isEmpty()) {
             return;
         }
         if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
@@ -930,7 +926,7 @@ public class ExerciseService {
                     updatedLinks.add(existingLink);
                 }
                 else {
-                    var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    var competency = competencyRelationApi.get().findCompetencyByIdElseThrow(competencyId);
                     var newLink = new CompetencyExerciseLink(competency, entity, weight);
                     updatedLinks.add(newLink);
                 }
@@ -970,12 +966,12 @@ public class ExerciseService {
         if (competencyLinks == null || competencyLinks.isEmpty()) {
             return;
         }
-        if (competencyRepositoryApi.isEmpty()) {
+        if (competencyRelationApi.isEmpty()) {
             return;
         }
         // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
         Set<Long> competencyIds = competencyLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-        Map<Long, CourseCompetency> managedCompetencies = competencyRepositoryApi.get().findAllCompetenciesById(competencyIds).stream()
+        Map<Long, CourseCompetency> managedCompetencies = competencyRelationApi.get().findAllCompetenciesById(competencyIds).stream()
                 .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
 
         Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();

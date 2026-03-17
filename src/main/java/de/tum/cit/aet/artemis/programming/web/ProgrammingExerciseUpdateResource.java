@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -140,6 +141,10 @@ public class ProgrammingExerciseUpdateResource {
 
         // Load the existing exercise from the database with all necessary associations
         var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        // Initialize additional associations needed for the update that are not in the EntityGraph
+        Hibernate.initialize(programmingExerciseBeforeUpdate.getTemplateParticipation());
+        Hibernate.initialize(programmingExerciseBeforeUpdate.getSolutionParticipation());
+        Hibernate.initialize(programmingExerciseBeforeUpdate.getPlagiarismDetectionConfig());
 
         // Validate that courseId or exerciseGroupId hasn't changed
         // For course exercises: courseId must match
@@ -154,6 +159,9 @@ public class ProgrammingExerciseUpdateResource {
 
         // Create a copy for "before update" state to track changes
         var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        Hibernate.initialize(originalExercise.getTemplateParticipation());
+        Hibernate.initialize(originalExercise.getSolutionParticipation());
+        Hibernate.initialize(originalExercise.getPlagiarismDetectionConfig());
 
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
