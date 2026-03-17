@@ -9,11 +9,13 @@ import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
@@ -46,12 +48,44 @@ public class WeaviateService {
 
     private final String vectorizerModule;
 
+    private final boolean weaviateEnabled;
+
+    private final String weaviateHost;
+
+    private final int weaviateHttpPort;
+
+    private final int weaviateGrpcPort;
+
+    private final String weaviateScheme;
+
+    private final String weaviateApiEmbeddingModel;
+
+    private final String weaviateApiBaseUrl;
+
+    private final String weaviateApiKey;
+
     private final boolean isTestProfile;
 
-    public WeaviateService(WeaviateClient client, WeaviateConfigurationProperties properties, Environment environment) {
+    public WeaviateService(WeaviateClient client, Environment environment, @Value("${artemis.weaviate.enabled:false}") boolean weaviateEnabled,
+            @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost,
+            @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviateHttpPort,
+            @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme,
+            @Value("${artemis.weaviate.collection-prefix:" + WeaviateConfigurationProperties.DEFAULT_COLLECTION_PREFIX + "}") String collectionPrefix,
+            @Value("${artemis.weaviate.vectorizer-module:none}") String vectorizerModule,
+            @Value("${artemis.weaviate.api-embedding-model:#{null}}") String weaviateApiEmbeddingModel,
+            @Value("${artemis.weaviate.api-base-url:#{null}}") String weaviateApiBaseUrl, @Value("${artemis.weaviate.api-key:#{null}}") String weaviateApiKey) {
         this.client = client;
-        this.collectionPrefix = properties.collectionPrefix();
-        this.vectorizerModule = properties.vectorizerModule();
+        this.weaviateEnabled = weaviateEnabled;
+        this.weaviateHost = weaviateHost;
+        this.weaviateHttpPort = weaviateHttpPort;
+        this.weaviateGrpcPort = weaviateGrpcPort;
+        this.weaviateScheme = weaviateScheme;
+        this.collectionPrefix = collectionPrefix;
+        this.vectorizerModule = vectorizerModule;
+        this.weaviateApiEmbeddingModel = weaviateApiEmbeddingModel;
+        this.weaviateApiBaseUrl = weaviateApiBaseUrl;
+        this.weaviateApiKey = weaviateApiKey;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 
@@ -71,7 +105,13 @@ public class WeaviateService {
      */
     @PostConstruct
     public void initializeCollections() {
-        log.info("Initializing Weaviate collections with vectorizer module: {}", vectorizerModule);
+        if (!weaviateEnabled) {
+            log.debug("Skipping Weaviate collection initialization because integration is disabled");
+            return;
+        }
+
+        log.info("Initializing Weaviate collections at {}://{}:{} (gRPC: {}) with vectorizer module: {}", weaviateScheme, weaviateHost, weaviateHttpPort, weaviateGrpcPort,
+                vectorizerModule);
 
         for (WeaviateCollectionSchema schema : WeaviateSchemas.ALL_SCHEMAS) {
             ensureCollectionExists(schema);
@@ -100,9 +140,19 @@ public class WeaviateService {
                 // Configure vectorizer based on deployment setup
                 // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
-                if (VectorConfig.Kind.TEXT2VEC_OLLAMA.jsonValue().equals(vectorizerModule)) {
-                    log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_OLLAMA.jsonValue());
-                    collection.vectorConfig(VectorConfig.text2vecOllama());
+                if (VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue().equals(vectorizerModule)) {
+                    log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue());
+                    collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
+                        if (StringUtils.hasText(weaviateApiBaseUrl)) {
+                            builder.baseUrl(weaviateApiBaseUrl);
+                        }
+                        if (StringUtils.hasText(weaviateApiEmbeddingModel)) {
+                            builder.model(weaviateApiEmbeddingModel);
+                        }
+                        return builder;
+                    }));
+                    log.debug("OpenAI vectorizer config for '{}': baseUrl configured = {}, model configured = {}, api key configured = {}", collectionName,
+                            StringUtils.hasText(weaviateApiBaseUrl), StringUtils.hasText(weaviateApiEmbeddingModel), StringUtils.hasText(weaviateApiKey));
                 }
                 else if (VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue().equals(vectorizerModule)) {
                     log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue());
