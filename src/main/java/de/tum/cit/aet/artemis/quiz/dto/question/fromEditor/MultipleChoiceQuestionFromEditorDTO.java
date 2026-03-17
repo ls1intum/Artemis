@@ -65,7 +65,7 @@ public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title
         question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         question.setSingleChoice(singleChoice);
 
-        List<AnswerOption> options = new java.util.ArrayList<>(answerOptions.stream().map(AnswerOptionFromEditorDTO::toDomainObject).toList());
+        List<AnswerOption> options = answerOptions.stream().map(AnswerOptionFromEditorDTO::toDomainObject).toList();
         question.setAnswerOptions(options);
         return question;
     }

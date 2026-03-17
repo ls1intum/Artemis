@@ -285,28 +285,24 @@ public class ExamImportService {
         for (Exercise exerciseToCopy : exerciseGroupToCopy.getExercises()) {
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
-            // Extract the source exercise ID and clear it from the skeleton exercise to avoid
-            // Hibernate conflicts with managed entities that have the same ID in the persistence context
-            Long sourceExerciseId = exerciseToCopy.getId();
-            exerciseToCopy.setId(null);
             Optional<? extends Exercise> exerciseCopied = switch (exerciseToCopy.getExerciseType()) {
                 case MODELING -> {
                     if (modelingExerciseImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield modelingExerciseImportApi.get().importModelingExercise(sourceExerciseId, (ModelingExercise) exerciseToCopy);
+                    yield modelingExerciseImportApi.get().importModelingExercise(exerciseToCopy.getId(), (ModelingExercise) exerciseToCopy);
                 }
 
                 case TEXT -> {
                     if (textExerciseImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield textExerciseImportApi.get().importTextExercise(sourceExerciseId, (TextExercise) exerciseToCopy);
+                    yield textExerciseImportApi.get().importTextExercise(exerciseToCopy.getId(), (TextExercise) exerciseToCopy);
                 }
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(sourceExerciseId);
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndBuildConfig(exerciseToCopy.getId());
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         yield Optional.empty();
                     }
@@ -325,13 +321,13 @@ public class ExamImportService {
                     if (fileUploadImportApi.isEmpty()) {
                         yield Optional.empty();
                     }
-                    yield fileUploadImportApi.get().importFileUploadExercise(sourceExerciseId, (FileUploadExercise) exerciseToCopy);
+                    yield fileUploadImportApi.get().importFileUploadExercise(exerciseToCopy.getId(), (FileUploadExercise) exerciseToCopy);
                 }
 
                 case QUIZ -> {
                     // Use a query that eagerly loads quiz questions, grading criteria, and other needed associations
                     final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository
-                            .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(sourceExerciseId);
+                            .findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(exerciseToCopy.getId());
                     if (optionalOriginalQuizExercise.isEmpty()) {
                         yield Optional.empty();
                     }

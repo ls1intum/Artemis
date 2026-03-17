@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEdito
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record UpdateQuizExerciseDTO(String title, String channelName, Set<String> categories, Set<CompetencyLinkDTO> competencyLinks, DifficultyLevel difficulty, Integer duration,
         Boolean randomizeQuestionOrder, QuizMode quizMode, Set<@Valid QuizBatchFromEditorDTO> quizBatches, ZonedDateTime releaseDate, ZonedDateTime startDate,
-        ZonedDateTime dueDate, IncludedInOverallScore includedInOverallScore, List<@Valid QuizQuestionFromEditorDTO> quizQuestions) implements CompetencyLinksHolderDTO {
+        ZonedDateTime dueDate, IncludedInOverallScore includedInOverallScore, List<@Valid ? extends QuizQuestionFromEditorDTO> quizQuestions) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates a QuizExerciseFromEditorDTO from the given QuizExercise domain object.

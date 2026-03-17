@@ -74,9 +74,9 @@ public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setSimilarityValue(similarityValue);
         question.setMatchLetterCase(matchLetterCase);
 
-        List<ShortAnswerSpot> shortAnswerSpots = new java.util.ArrayList<>(spots.stream().map(ShortAnswerSpotFromEditorDTO::toDomainObject).toList());
-        List<ShortAnswerSolution> shortAnswerSolutions = new java.util.ArrayList<>(solutions.stream().map(ShortAnswerSolutionFromEditorDTO::toDomainObject).toList());
-        List<ShortAnswerMapping> shortAnswerMappings = new java.util.ArrayList<>(correctMappings.stream().map(ShortAnswerMappingFromEditorDTO::toDomainObject).toList());
+        List<ShortAnswerSpot> shortAnswerSpots = spots.stream().map(ShortAnswerSpotFromEditorDTO::toDomainObject).toList();
+        List<ShortAnswerSolution> shortAnswerSolutions = solutions.stream().map(ShortAnswerSolutionFromEditorDTO::toDomainObject).toList();
+        List<ShortAnswerMapping> shortAnswerMappings = correctMappings.stream().map(ShortAnswerMappingFromEditorDTO::toDomainObject).toList();
         question.setSpots(shortAnswerSpots);
         question.setSolutions(shortAnswerSolutions);
         question.setCorrectMappings(shortAnswerMappings);
