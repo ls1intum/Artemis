@@ -51,10 +51,10 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     }
 
     /**
-     * Saves all given competency exercise links.
+     * Saves all given competency exercise links by directly delegating to {@link CompetencyExerciseLinkRepository#saveAll(Iterable)}.
      *
-     * @param competencyExerciseLinks the exercise links to save
-     * @return the saved exercise links
+     * @param competencyExerciseLinks the links to save
+     * @return the saved links
      */
     public List<CompetencyExerciseLink> saveAllExerciseLinks(Iterable<CompetencyExerciseLink> competencyExerciseLinks) {
         List<CompetencyExerciseLink> links = StreamSupport.stream(competencyExerciseLinks.spliterator(), false).toList();
