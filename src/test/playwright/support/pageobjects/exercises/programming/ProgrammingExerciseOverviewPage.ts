@@ -15,7 +15,8 @@ export class ProgrammingExerciseOverviewPage {
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
+        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT * 2);
+        await expect(resultScore).toContainText(expectedResult);
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {

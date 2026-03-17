@@ -12,7 +12,7 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
-import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../timeouts';
+import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
 
 export class ExamParticipationPage extends ExamParticipationActions {
     private readonly examNavigation: ExamNavigationBar;
@@ -117,7 +117,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
     }
 
     async checkExerciseScore(exerciseID: number, expectedResult: string) {
+        // In exam mode, page.reload() navigates away from the active exercise tab,
+        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
         const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
-        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
+        await expect(resultScore).toContainText(expectedResult, { timeout: BUILD_RESULT_TIMEOUT });
     }
 }
