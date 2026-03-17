@@ -59,14 +59,14 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = toExamUpdateDTO({ id: 1 });
+        const expectedBody = toExamUpdateDTO({ id: 1 });
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toEqual(mockCopyExam);
+        expect(req.request.body).toEqual(expectedBody);
 
         // CLEANUP
         req.flush(mockExam);
@@ -76,14 +76,14 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = toExamUpdateDTO({ id: 1 });
+        const expectedBody = toExamUpdateDTO({ id: 1 });
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toEqual(mockCopyExam);
+        expect(req.request.body).toEqual(expectedBody);
 
         // CLEANUP
         req.flush(mockExam);
@@ -93,14 +93,14 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertExamToImportDTO({ id: 1 }, course.id!);
+        const expectedBody = ExamManagementService.convertExamToImportDTO({ id: 1 }, course.id!);
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
-        expect(req.request.body).toEqual(mockCopyExam);
+        expect(req.request.body).toEqual(expectedBody);
 
         // CLEANUP
         req.flush(mockExam);
