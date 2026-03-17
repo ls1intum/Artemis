@@ -35,7 +35,8 @@ export class ChatStatusBarComponent {
             if (firstUnfinished) {
                 this.open.set(true);
                 this.activeStage.set(firstUnfinished);
-                this.stageMessage.set(this.translateLabel(firstUnfinished.message || firstUnfinished.name));
+                const label = firstUnfinished.message || firstUnfinished.name;
+                this.stageMessage.set(label ? this.translateLabel(label) : undefined);
             } else {
                 this.activeStage.set(undefined);
                 if (this.open()) {
