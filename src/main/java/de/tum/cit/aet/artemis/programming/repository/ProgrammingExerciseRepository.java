@@ -93,9 +93,20 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
     @EntityGraph(type = LOAD, attributePaths = "auxiliaryRepositories")
     Optional<ProgrammingExercise> findWithAuxiliaryRepositoriesById(long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories", "competencyLinks.competency", "buildConfig",
-            "categories", "plagiarismDetectionConfig" })
-    Optional<ProgrammingExercise> findForUpdateById(long exerciseId);
+    @Query("""
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.templateParticipation
+                LEFT JOIN FETCH pe.solutionParticipation
+                LEFT JOIN FETCH pe.auxiliaryRepositories
+                LEFT JOIN FETCH pe.competencyLinks cl
+                LEFT JOIN FETCH cl.competency
+                LEFT JOIN FETCH pe.buildConfig
+                LEFT JOIN FETCH pe.categories
+                LEFT JOIN FETCH pe.plagiarismDetectionConfig
+            WHERE pe.id = :exerciseId
+            """)
+    Optional<ProgrammingExercise> findForUpdateById(@Param("exerciseId") long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "submissionPolicy")
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(long exerciseId);
