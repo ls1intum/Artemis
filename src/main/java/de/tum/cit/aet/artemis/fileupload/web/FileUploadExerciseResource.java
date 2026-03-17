@@ -192,7 +192,13 @@ public class FileUploadExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
 
-        FileUploadExercise result = exerciseService.saveWithCompetencyLinks(fileUploadExercise, fileUploadExerciseRepository::save);
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(fileUploadExercise);
+        FileUploadExercise savedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = fileUploadExerciseRepository.save(savedExercise);
+        }
+        final FileUploadExercise result = savedExercise;
 
         channelService.createExerciseChannel(result, Optional.ofNullable(fileUploadExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(fileUploadExercise);
@@ -408,7 +414,7 @@ public class FileUploadExerciseResource {
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         // ========== 3. Persist changes ==========
-        var persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, fileUploadExerciseRepository::save);
+        var persistedExercise = fileUploadExerciseRepository.save(updatedExercise);
         exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
         // ========== 4. Handle side effects based on what changed ==========
