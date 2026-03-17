@@ -780,13 +780,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReevaluateStatistics() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
-
-        // we expect a bad request because the quiz has not ended yet
-        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
-        quizExerciseService.endQuiz(quizExercise);
-        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
 
         // generate rated submissions for each student
         int numberOfParticipants = 10;
@@ -885,18 +879,13 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReevaluateStatistics_Practice() throws Exception {
-        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
-        // use the exact other scoring types to cover all combinations in the tests
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(5), ZonedDateTime.now().minusHours(2), QuizMode.SYNCHRONIZED);
+        // Modify scoring types directly in the database (quiz has already started, so we can't use the update endpoint)
         quizExercise.getQuizQuestions().getFirst().setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // MC
         quizExercise.getQuizQuestions().get(1).setScoringType(ScoringType.ALL_OR_NOTHING);              // DnD
         quizExercise.getQuizQuestions().get(2).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // SA
-
-        // we expect a bad request because the quiz has not ended yet
-        reevalQuizExerciseWithFiles(quizExercise, quizExercise.getId(), List.of(), HttpStatus.BAD_REQUEST);
-        quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         quizExercise.setDuration(3600);
-        quizExerciseService.endQuiz(quizExercise);
-        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+        quizExerciseTestRepository.saveAndFlush(quizExercise);
 
         // generate unrated submissions for each student
         int numberOfParticipants = 10;
@@ -925,7 +914,8 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(resultRepository.findAllBySubmissionParticipationExerciseId(quizExercise.getId())).hasSize(10);
 
         // calculate statistics
-        quizExercise = request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, QuizExercise.class);
+        request.get("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", OK, Object.class);
+        quizExercise = quizExerciseTestRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
 
         log.debug("QuizPointStatistic before re-evaluate: {}", quizExercise.getQuizPointStatistic());
 
