@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import java.util.List;
 import java.util.Set;
 
 import org.springframework.context.annotation.Conditional;
@@ -32,5 +33,9 @@ public class CompetencyRepositoryApi extends AbstractAtlasApi {
 
     public CourseCompetency findCompetencyOrPrerequisiteByIdElseThrow(long competencyId) {
         return courseCompetencyRepository.findByIdElseThrow(competencyId);
+    }
+
+    public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
+        return courseCompetencyRepository.findAllById(ids);
     }
 }
