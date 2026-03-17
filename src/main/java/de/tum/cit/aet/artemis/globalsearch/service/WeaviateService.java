@@ -100,19 +100,21 @@ public class WeaviateService {
                 // Configure vectorizer based on deployment setup
                 // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
-                switch (vectorizerModule) {
-                    case WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS -> {
-                        log.debug("Configuring collection '{}' with text2vec-transformers vectorizer", collectionName);
-                        collection.vectorConfig(VectorConfig.text2vecTransformers());
-                    }
-                    case WeaviateConfigurationProperties.VECTORIZER_NONE -> {
-                        log.debug("Configuring collection '{}' with self-provided vectors", collectionName);
-                        collection.vectorConfig(VectorConfig.selfProvided());
-                    }
-                    default -> {
-                        log.warn("Unknown vectorizer module '{}', defaulting to self-provided vectors", vectorizerModule);
-                        collection.vectorConfig(VectorConfig.selfProvided());
-                    }
+                if (VectorConfig.Kind.TEXT2VEC_OLLAMA.jsonValue().equals(vectorizerModule)) {
+                    log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_OLLAMA.jsonValue());
+                    collection.vectorConfig(VectorConfig.text2vecOllama());
+                }
+                else if (VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue().equals(vectorizerModule)) {
+                    log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue());
+                    collection.vectorConfig(VectorConfig.text2vecTransformers());
+                }
+                else if (VectorConfig.Kind.NONE.jsonValue().equals(vectorizerModule)) {
+                    log.debug("Configuring collection '{}' with self-provided vectors", collectionName);
+                    collection.vectorConfig(VectorConfig.selfProvided());
+                }
+                else {
+                    log.warn("Unknown vectorizer module '{}', defaulting to self-provided vectors", vectorizerModule);
+                    collection.vectorConfig(VectorConfig.selfProvided());
                 }
 
                 // Add properties
