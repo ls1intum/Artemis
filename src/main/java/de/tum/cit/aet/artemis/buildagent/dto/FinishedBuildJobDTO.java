@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 /**
  * A DTO representing a finished build job
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record FinishedBuildJobDTO(String id, String name, String buildAgentAddress, long participationId, long courseId, long exerciseId, BuildStatus status,
         RepositoryType repositoryType, String repositoryName, RepositoryType triggeredByPushTo, ZonedDateTime buildSubmissionDate, ZonedDateTime buildStartDate,
         ZonedDateTime buildCompletionDate, String commitHash, ResultDTO submissionResult) implements BuildJobDTO {
@@ -25,7 +25,7 @@ public record FinishedBuildJobDTO(String id, String name, String buildAgentAddre
     /**
      * A DTO representing a result
      */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record ResultDTO(Long id, ZonedDateTime completionDate, Boolean successful, Double score, Boolean rated, ParticipationDTO participation, SubmissionDTO submission,
             AssessmentType assessmentType, Integer testCaseCount, Integer passedTestCaseCount, Integer codeIssueCount) {
 

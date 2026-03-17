@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.dto.BuildJobInterface;
  * @param failedTests     list of failed tests.
  * @param successfulTests list of successful tests.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record LocalCIJobDTO(List<LocalCITestJobDTO> failedTests, List<LocalCITestJobDTO> successfulTests) implements BuildJobInterface, Serializable {
 
     public LocalCIJobDTO {

@@ -13,7 +13,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 // TODO: reduce the amount of parameters and combine some in smaller record DTOs
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record BuildConfig(String buildScript, String dockerImage, String commitHashToBuild, String assignmentCommitHash, String testCommitHash, String branch,
         ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean scaEnabled, boolean sequentialTestRunsEnabled, List<String> resultPaths, int timeoutSeconds,
         String assignmentCheckoutPath, String testCheckoutPath, String solutionCheckoutPath, DockerRunConfig dockerRunConfig) implements Serializable {

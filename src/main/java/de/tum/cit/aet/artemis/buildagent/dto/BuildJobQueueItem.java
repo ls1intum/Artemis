@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.programming.dto.ResultDTO;
 // NOTE: this data structure is used in shared code between core and build agent nodes. Changing it requires that the shared data structures in Hazelcast (or potentially Redis)
 // in the future are migrated or cleared. Changes should be communicated in release notes as potentially breaking changes.
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record BuildJobQueueItem(@NonNull String id, @NonNull String name, @NonNull BuildAgentDTO buildAgent, long participationId, long courseId, long exerciseId, int retryCount,
         int priority, @Nullable BuildStatus status, @NonNull RepositoryInfo repositoryInfo, @NonNull JobTimingInfo jobTimingInfo, @NonNull BuildConfig buildConfig,
         @Nullable ResultDTO submissionResult) implements BuildJobDTO, Serializable, Comparable<BuildJobQueueItem> {

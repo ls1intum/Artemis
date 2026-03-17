@@ -14,7 +14,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * on reflective construction of arbitrary JDK or third-party exception types.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public final class BuildResultQueueException extends RuntimeException implements Serializable {
 
     @Serial
