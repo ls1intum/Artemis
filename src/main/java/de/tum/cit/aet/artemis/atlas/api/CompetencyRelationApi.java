@@ -41,14 +41,50 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
+    /**
+     * Deletes all competency relations for the given course.
+     *
+     * @param courseId the id of the course
+     */
     public void deleteAllByCourseId(Long courseId) {
         competencyRelationRepository.deleteAllByCourseId(courseId);
     }
 
+    /**
+     * Deletes the given exercise links.
+     *
+     * @param competencyExerciseLinks the links to delete
+     */
     public void deleteAllExerciseLinks(Iterable<CompetencyExerciseLink> competencyExerciseLinks) {
         competencyExerciseLinkRepository.deleteAll(competencyExerciseLinks);
     }
 
+    /**
+     * Finds a competency or prerequisite by id or throws an EntityNotFoundException.
+     *
+     * @param competencyId the id of the competency
+     * @return the found competency
+     */
+    public CourseCompetency findCompetencyByIdElseThrow(long competencyId) {
+        return courseCompetencyRepository.findByIdElseThrow(competencyId);
+    }
+
+    /**
+     * Finds all competencies by their ids.
+     *
+     * @param ids the ids of the competencies
+     * @return the found competencies
+     */
+    public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
+        return courseCompetencyRepository.findAllById(ids);
+    }
+
+    /**
+     * Saves all exercise links, ensuring referenced competencies are managed entities.
+     *
+     * @param competencyExerciseLinks the links to save
+     * @return the saved links
+     */
     public List<CompetencyExerciseLink> saveAllExerciseLinks(Iterable<CompetencyExerciseLink> competencyExerciseLinks) {
         List<CompetencyExerciseLink> links = StreamSupport.stream(competencyExerciseLinks.spliterator(), false).toList();
 
@@ -69,10 +105,21 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
         return competencyExerciseLinkRepository.saveAll(links);
     }
 
+    /**
+     * Saves all lecture unit links.
+     *
+     * @param lectureUnitLinks the links to save
+     * @return the saved links
+     */
     public List<CompetencyLectureUnitLink> saveAllLectureUnitLinks(Iterable<CompetencyLectureUnitLink> lectureUnitLinks) {
         return lectureUnitLinkRepository.saveAll(lectureUnitLinks);
     }
 
+    /**
+     * Deletes all lecture unit links for the given lecture.
+     *
+     * @param lectureId the id of the lecture
+     */
     public void deleteAllLectureUnitLinksByLectureId(Long lectureId) {
         lectureUnitLinkRepository.deleteAllByLectureId(lectureId);
     }
