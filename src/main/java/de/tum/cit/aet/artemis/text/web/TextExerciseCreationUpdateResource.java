@@ -413,11 +413,7 @@ public class TextExerciseCreationUpdateResource {
         Set<CompetencyExerciseLink> updated = new HashSet<>();
         for (var linkDto : dto.competencyLinks()) {
 
-            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-            }
-
-            var competencyDto = linkDto.courseCompetencyDTO();
+            var competencyDto = linkDto.competency();
             Long competencyId = competencyDto.id();
 
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);

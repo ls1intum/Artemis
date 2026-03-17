@@ -811,12 +811,13 @@ export class ExerciseAPIRequests {
      */
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
-        const team: Team = {
+        // The server expects TeamInputDTO with user IDs, not full User objects
+        const teamDTO = {
             name: `Team ${teamId}`,
             shortName: `team${teamId}`,
-            students,
-            owner: tutor,
+            students: students.map((s: any) => s.id),
+            ownerId: tutor.id,
         };
-        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: team });
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: teamDTO });
     }
 }
