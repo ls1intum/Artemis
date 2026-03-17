@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LlmUsageSettingsComponent } from './llm-usage-settings.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -9,8 +11,12 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/
 import { MockDirective, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('LlmUsageSettingsComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LlmUsageSettingsComponent;
     let fixture: ComponentFixture<LlmUsageSettingsComponent>;
     let irisChatService: IrisChatService;
@@ -26,16 +32,16 @@ describe('LlmUsageSettingsComponent', () => {
 
     beforeEach(async () => {
         const irisChatServiceMock = {
-            updateLLMUsageConsent: jest.fn(),
+            updateLLMUsageConsent: vi.fn(),
         };
 
         const accountServiceMock = {
-            userIdentity: jest.fn().mockReturnValue(mockUser),
-            setUserLLMSelectionDecision: jest.fn(),
+            userIdentity: vi.fn().mockReturnValue(mockUser),
+            setUserLLMSelectionDecision: vi.fn(),
         };
 
         const llmModalServiceMock = {
-            open: jest.fn(),
+            open: vi.fn(),
         };
 
         await TestBed.configureTestingModule({
@@ -44,6 +50,7 @@ describe('LlmUsageSettingsComponent', () => {
                 { provide: IrisChatService, useValue: irisChatServiceMock },
                 { provide: AccountService, useValue: accountServiceMock },
                 { provide: LLMSelectionModalService, useValue: llmModalServiceMock },
+                { provide: TranslateService, useClass: MockTranslateService },
             ],
         }).compileComponents();
 
@@ -55,7 +62,7 @@ describe('LlmUsageSettingsComponent', () => {
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -64,7 +71,7 @@ describe('LlmUsageSettingsComponent', () => {
 
     describe('ngOnInit', () => {
         it('should call updateLLMUsageDecision on init', () => {
-            const updateSpy = jest.spyOn(component as any, 'updateLLMUsageDecision');
+            const updateSpy = vi.spyOn(component as any, 'updateLLMUsageDecision');
 
             component.ngOnInit();
 
@@ -84,7 +91,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should set undefined when user has no LLM selection decision', () => {
-            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+            (accountService.userIdentity as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
                 selectedLLMUsage: undefined,
                 selectedLLMUsageTimestamp: undefined,
             } as User);
@@ -99,8 +106,8 @@ describe('LlmUsageSettingsComponent', () => {
     describe('openSelectionModal', () => {
         it('should handle CLOUD_AI choice', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
-            const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLMSelectionDecision.CLOUD_AI);
+            const updateSpy = vi.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
@@ -110,8 +117,8 @@ describe('LlmUsageSettingsComponent', () => {
 
         it('should handle LOCAL_AI choice', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
-            const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLMSelectionDecision.LOCAL_AI);
+            const updateSpy = vi.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
@@ -122,8 +129,8 @@ describe('LlmUsageSettingsComponent', () => {
 
         it('should handle NO_AI choice', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLMSelectionDecision.NO_AI);
-            const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLMSelectionDecision.NO_AI);
+            const updateSpy = vi.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
@@ -133,8 +140,8 @@ describe('LlmUsageSettingsComponent', () => {
 
         it('should not update when choice is NONE', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
-            const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLM_MODAL_DISMISSED);
+            const updateSpy = vi.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
@@ -144,8 +151,8 @@ describe('LlmUsageSettingsComponent', () => {
 
         it('should not update when choice is null', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(null);
-            const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(null);
+            const updateSpy = vi.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
@@ -155,8 +162,8 @@ describe('LlmUsageSettingsComponent', () => {
 
         it('should not update when choice is undefined', async () => {
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(undefined);
-            const updateSpy = jest.spyOn(component, 'updateLLMSelectionDecision');
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(undefined);
+            const updateSpy = vi.spyOn(component, 'updateLLMSelectionDecision');
 
             await component.openSelectionModal();
 
@@ -165,12 +172,12 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should pass current selection to modal when user has LOCAL_AI selected', async () => {
-            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+            (accountService.userIdentity as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
                 ...mockUser,
                 selectedLLMUsage: LLMSelectionDecision.LOCAL_AI,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLM_MODAL_DISMISSED);
 
             await component.openSelectionModal();
 
@@ -178,12 +185,12 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should pass current selection to modal when user has NO_AI selected', async () => {
-            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+            (accountService.userIdentity as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
                 ...mockUser,
                 selectedLLMUsage: LLMSelectionDecision.NO_AI,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLM_MODAL_DISMISSED);
 
             await component.openSelectionModal();
 
@@ -191,12 +198,12 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should pass undefined to modal when user has no selection', async () => {
-            (accountService.userIdentity as unknown as jest.Mock).mockReturnValue({
+            (accountService.userIdentity as unknown as ReturnType<typeof vi.fn>).mockReturnValue({
                 ...mockUser,
                 selectedLLMUsage: undefined,
             } as User);
             component.ngOnInit();
-            (llmModalService.open as jest.Mock).mockResolvedValue(LLM_MODAL_DISMISSED);
+            (llmModalService.open as ReturnType<typeof vi.fn>).mockResolvedValue(LLM_MODAL_DISMISSED);
 
             await component.openSelectionModal();
 
@@ -218,7 +225,7 @@ describe('LlmUsageSettingsComponent', () => {
         });
 
         it('should update internal state after updating decision', () => {
-            const updateSpy = jest.spyOn(component as any, 'updateLLMUsageDecision');
+            const updateSpy = vi.spyOn(component as any, 'updateLLMUsageDecision');
 
             component.updateLLMSelectionDecision(LLMSelectionDecision.NO_AI);
 

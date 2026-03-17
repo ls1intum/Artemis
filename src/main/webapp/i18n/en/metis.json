@@ -150,6 +150,7 @@
                 "deleteMessage": "Delete message",
                 "replyMessage": "Reply in thread",
                 "forwardMessage": "Forward message",
+                "markAsUnread": "Mark as unread",
                 "deletedContent": "Post is being deleted in {{ progress }} second(s).",
                 "undoDelete": "Undo delete",
                 "bookmarkPost": "Save post for later",

@@ -2,24 +2,21 @@ import { expect } from '@playwright/test';
 import { admin, instructor, studentOne } from '../../support/users';
 import { generateUUID, newBrowserPage } from '../../support/utils';
 import { test } from '../../support/fixtures';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
 import { Commands } from '../../support/commands';
-import { CourseManagementAPIRequests } from '../../support/requests/CourseManagementAPIRequests';
 import { ExamAPIRequests } from '../../support/requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from '../../support/requests/ExerciseAPIRequests';
+import { SEED_COURSES } from '../../support/seedData';
+
+const course = { id: SEED_COURSES.examManagement.id } as any;
 
 test.describe('Exam management', { tag: '@fast' }, () => {
     test.describe('Exercise group', () => {
-        let course: Course;
         let exam: Exam;
 
-        test.beforeEach('Create exam', async ({ login, courseManagementAPIRequests, examAPIRequests }) => {
+        test.beforeEach('Create exam', async ({ login, examAPIRequests }) => {
             await login(admin);
-            course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
             exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
         });
 
@@ -34,9 +31,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             });
 
-            test('Adds a text exercise', async ({ page, examManagement, textExerciseCreation, examExerciseGroups }) => {
-                await page.goto(`/course-management/${course.id}/exams`);
-                await examManagement.openExerciseGroups(exam.id!);
+            test('Adds a text exercise', async ({ page, textExerciseCreation, examExerciseGroups }) => {
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
                 await examExerciseGroups.clickAddTextExercise(exerciseGroup.id!);
                 const textExerciseTitle = 'Text ' + generateUUID();
                 await textExerciseCreation.setTitle(textExerciseTitle);
@@ -47,9 +43,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, textExerciseTitle);
             });
 
-            test('Adds a quiz exercise', async ({ page, examManagement, quizExerciseCreation, examExerciseGroups }) => {
-                await page.goto(`/course-management/${course.id}/exams`);
-                await examManagement.openExerciseGroups(exam.id!);
+            test('Adds a quiz exercise', async ({ page, quizExerciseCreation, examExerciseGroups }) => {
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
                 await examExerciseGroups.clickAddQuizExercise(exerciseGroup.id!);
                 const quizExerciseTitle = 'Quiz ' + generateUUID();
                 await quizExerciseCreation.setTitle(quizExerciseTitle);
@@ -60,9 +55,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, quizExerciseTitle);
             });
 
-            test('Adds a modeling exercise', async ({ page, examManagement, modelingExerciseCreation, examExerciseGroups }) => {
-                await page.goto(`/course-management/${course.id}/exams`);
-                await examManagement.openExerciseGroups(exam.id!);
+            test('Adds a modeling exercise', async ({ page, modelingExerciseCreation, examExerciseGroups }) => {
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
                 await examExerciseGroups.clickAddModelingExercise(exerciseGroup.id!);
                 const modelingExerciseTitle = 'Modeling ' + generateUUID();
                 await modelingExerciseCreation.setTitle(modelingExerciseTitle);
@@ -73,9 +67,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, modelingExerciseTitle);
             });
 
-            test('Adds a programming exercise', async ({ page, examManagement, programmingExerciseCreation, examExerciseGroups }) => {
-                await page.goto(`/course-management/${course.id}/exams`);
-                await examManagement.openExerciseGroups(exam.id!);
+            test('Adds a programming exercise', async ({ page, programmingExerciseCreation, examExerciseGroups }) => {
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
                 await examExerciseGroups.clickAddProgrammingExercise(exerciseGroup.id!);
                 const uid = generateUUID();
                 const programmingExerciseTitle = 'Programming ' + uid;
@@ -91,9 +84,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 await examExerciseGroups.shouldContainExerciseWithTitle(exerciseGroup.id!, programmingExerciseTitle);
             });
 
-            test('Edits an exercise group', async ({ page, examManagement, examExerciseGroups, examExerciseGroupCreation }) => {
-                await page.goto(`/course-management/${course.id}/exams`);
-                await examManagement.openExerciseGroups(exam.id!);
+            test('Edits an exercise group', async ({ page, examExerciseGroups, examExerciseGroupCreation }) => {
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
                 await examExerciseGroups.shouldHaveTitle(exerciseGroup.id!, exerciseGroup.title!);
                 await examExerciseGroups.clickEditGroup(exerciseGroup.id!);
                 const newGroupName = 'Group 3';
@@ -103,11 +95,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
                 exerciseGroup.title = newGroupName;
             });
 
-            test('Delete an exercise group', async ({ page, navigationBar, courseManagement, examManagement, examExerciseGroups }) => {
-                await page.goto('/');
-                await navigationBar.openCourseManagement();
-                await courseManagement.openExamsOfCourse(course.id!);
-                await examManagement.openExerciseGroups(exam.id!);
+            test('Delete an exercise group', async ({ page, examExerciseGroups }) => {
+                await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
                 // If the group in the "Create group test" was created successfully, we delete it so there is no group with no exercise
                 const group = exerciseGroup;
                 await examExerciseGroups.clickDeleteGroup(group.id!, group.title!);
@@ -119,11 +108,8 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             });
         });
 
-        test('Create exercise group', async ({ page, navigationBar, courseManagement, examManagement, examExerciseGroups, examExerciseGroupCreation }) => {
-            await page.goto('/');
-            await navigationBar.openCourseManagement();
-            await courseManagement.openExamsOfCourse(course.id!);
-            await examManagement.openExerciseGroups(exam.id!);
+        test('Create exercise group', async ({ page, examExerciseGroups, examExerciseGroupCreation }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/exercise-groups`);
             await examExerciseGroups.shouldShowNumberOfExerciseGroups(0);
             await examExerciseGroups.clickAddExerciseGroup();
             const groupName = 'Group 1';
@@ -134,25 +120,20 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             await examExerciseGroups.shouldShowNumberOfExerciseGroups(1);
         });
 
-        test.afterEach(async ({ courseManagementAPIRequests }) => {
-            await courseManagementAPIRequests.deleteCourse(course, admin);
+        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            await examAPIRequests.deleteExam(exam);
         });
     });
 
     test.describe.serial('Manage Students', () => {
         let exam: Exam;
-        let course: Course;
 
         test.beforeAll('Create exam and exercises', async ({ browser }) => {
             const page = await newBrowserPage(browser);
-            const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
             const examAPIRequests = new ExamAPIRequests(page);
             const exerciseAPIRequests = new ExerciseAPIRequests(page);
 
             await Commands.login(page, admin);
-            course = await courseManagementAPIRequests.createCourse({ customizeGroups: true });
-            await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-            await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
             exam = await examAPIRequests.createExam({ course, title: 'Exam ' + generateUUID() });
             const exerciseGroup = await examAPIRequests.addExerciseGroupForExam(exam);
             await exerciseAPIRequests.createTextExercise({ exerciseGroup });
@@ -162,26 +143,25 @@ test.describe('Exam management', { tag: '@fast' }, () => {
             await login(instructor);
         });
 
-        test('Registers the course students for the exam', async ({ page, examManagement, studentExamManagement }) => {
-            await page.goto(`/course-management/${course.id}/exams`);
-            await examManagement.openStudentRegistration(exam.id!);
+        test('Registers the course students for the exam', async ({ page, studentExamManagement }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/students`);
             const response = await studentExamManagement.clickRegisterCourseStudents();
             expect(response.status()).toBe(200);
             await studentExamManagement.checkStudent(studentOne.username);
         });
 
-        test('Generates student exams', async ({ page, examManagement, studentExamManagement }) => {
-            await page.goto(`/course-management/${course.id}/exams`);
-            await examManagement.openStudentExams(exam.id!);
+        test('Generates student exams', async ({ page, studentExamManagement }) => {
+            await page.goto(`/course-management/${course.id}/exams/${exam.id!}/student-exams`);
             await studentExamManagement.clickGenerateStudentExams();
             await page.waitForLoadState('domcontentloaded');
             await expect(studentExamManagement.getGenerateMissingStudentExamsButton()).toBeDisabled();
         });
 
-        test.afterAll(async ({ browser }) => {
+        test.afterAll('Delete exam', async ({ browser }) => {
             const page = await newBrowserPage(browser);
-            const courseManagementAPIRequests = new CourseManagementAPIRequests(page);
-            await courseManagementAPIRequests.deleteCourse(course, admin);
+            const examAPIRequests = new ExamAPIRequests(page);
+            await Commands.login(page, admin);
+            await examAPIRequests.deleteExam(exam);
         });
     });
 });

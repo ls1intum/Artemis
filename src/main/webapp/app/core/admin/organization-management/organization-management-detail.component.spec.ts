@@ -55,7 +55,7 @@ describe('OrganizationManagementDetailComponent', () => {
     });
 
     beforeEach(() => {
-        vi.clearAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should initialize and load organization metadata from route', () => {
