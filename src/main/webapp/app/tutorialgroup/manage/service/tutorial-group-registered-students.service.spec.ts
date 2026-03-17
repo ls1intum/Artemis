@@ -116,7 +116,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     });
 
     it('should deregister a student and remove them from the state', () => {
-        service.registeredStudents.set([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')]);
+        service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')]);
         const response$ = new Subject<HttpResponse<void>>();
         vi.spyOn(tutorialGroupsService, 'deregisterStudent').mockReturnValue(response$);
 
@@ -135,7 +135,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
 
     it('should show an error alert when deregistering a student fails', () => {
         const existingStudents = [createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob')];
-        service.registeredStudents.set(existingStudents);
+        service.addStudentsToRegisteredStudentsState(existingStudents);
         vi.spyOn(tutorialGroupsService, 'deregisterStudent').mockReturnValue(throwError(() => new Error('network error')));
 
         service.deregisterStudent(courseId, tutorialGroupId, studentLogin);
@@ -147,7 +147,7 @@ describe('TutorialGroupRegisteredStudentsService', () => {
     });
 
     it('should add only students that are not already present', () => {
-        service.registeredStudents.set([createRegisteredStudent(1, 'alice')]);
+        service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice')]);
 
         service.addStudentsToRegisteredStudentsState([createRegisteredStudent(1, 'alice'), createRegisteredStudent(2, 'bob'), createRegisteredStudent(3, 'carol')]);
 
