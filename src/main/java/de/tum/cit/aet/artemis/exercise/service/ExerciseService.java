@@ -20,7 +20,6 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -832,39 +831,6 @@ public class ExerciseService {
     }
 
     /**
-     * Saves the exercise and links it to the competencies.
-     *
-     * @param exercise     exercise to save
-     * @param saveFunction function to save the exercise
-     * @param <T>          type of the exercise
-     * @return saved exercise
-     */
-    public <T extends Exercise> T saveWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
-        // persist exercise before linking it to the competency
-        Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
-        exercise.setCompetencyLinks(new HashSet<>());
-
-        T savedExercise = saveFunction.apply(exercise);
-
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
-            savedExercise.setCompetencyLinks(links);
-            reconnectCompetencyExerciseLinks(savedExercise);
-            competencyRelationApi.ifPresent(api -> savedExercise.setCompetencyLinks(new HashSet<>(api.saveAllExerciseLinks(links))));
-        }
-
-        return savedExercise;
-    }
-
-    /**
-     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
-     *
-     * @param exercise exercise to reconnect the links
-     */
-    public void reconnectCompetencyExerciseLinks(Exercise exercise) {
-        exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
-    }
-
-    /**
      * Retrieves a {@link NonQuizExerciseCalendarEventDTO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
      * and {@link ProgrammingExercise} associated to the given courseId. Each DTO encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
      * of the respective exercise.
@@ -990,8 +956,12 @@ public class ExerciseService {
     }
 
     /**
-     * Restores competency links to a saved exercise.
-     * Must be called AFTER the exercise has been saved and has an ID.
+     * Restores competency links to a saved exercise and persists them.
+     * <p>
+     * This method must be called AFTER the exercise has been saved and has an ID.
+     * It sets the proper exercise reference on each link (required for @MapsId) and
+     * adds them to the exercise. The caller must save the exercise again after this call
+     * to persist the links via cascade.
      *
      * @param exercise        the saved exercise (must have an ID)
      * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
@@ -1000,9 +970,21 @@ public class ExerciseService {
         if (competencyLinks == null || competencyLinks.isEmpty()) {
             return;
         }
-        for (CompetencyExerciseLink link : competencyLinks) {
-            link.setExercise(exercise);
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
         }
-        exercise.setCompetencyLinks(competencyLinks);
+        // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
+        Set<Long> competencyIds = competencyLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        Map<Long, CourseCompetency> managedCompetencies = competencyRepositoryApi.get().findAllCompetenciesById(competencyIds).stream()
+                .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
+
+        Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
+        for (CompetencyExerciseLink link : competencyLinks) {
+            CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
+            if (managedCompetency != null) {
+                resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
+            }
+        }
+        exercise.setCompetencyLinks(resolvedLinks);
     }
 }
