@@ -35,81 +35,47 @@ export class ExerciseTeamsPage {
     }
 
     /**
-     * Searches for a tutor via the owner typeahead.
+     * Searches for a user via an autocomplete input and selects the matching option.
+     * Retries up to 3 times to handle autocomplete timing issues.
      *
-     * The tutor typeahead (team-owner-search) uses switchMap WITHOUT debounce.
-     * Every keystroke cancels the previous in-flight HTTP. Under heavy parallel
-     * test load, the server can take 10-30s to respond, so the final HTTP from
-     * the last keystroke may not complete within the test timeout.
-     *
-     * Solution: pre-fetch the tutor list via Playwright's request API (a single
-     * HTTP call not subject to switchMap cancellation), then install a page.route()
-     * intercept that serves the cached response instantly to all typeahead requests.
-     * This makes the typeahead popup appear immediately after typing.
+     * @param useFill - When true (tutor search), uses fill() to set the entire username
+     *   in a single input event. This is critical because the tutor typeahead's onSearch
+     *   uses switchMap WITHOUT debounce — every keystroke from pressSequentially cancels
+     *   the previous in-flight HTTP request. fill() dispatches one event, so only one
+     *   HTTP request goes through switchMap and runs to completion.
+     *   When false (student search), the typeahead uses debounceTime(200) which coalesces
+     *   keystrokes into a single HTTP request, so pressSequentially is safe.
      */
-    private async searchTutor(inputLocator: ReturnType<Page['locator']>, username: string) {
-        const listbox = this.page.getByRole('listbox');
-
-        // Pre-fetch tutor data and install route intercept for instant responses
-        const courseIdMatch = this.page.url().match(/\/course-management\/(\d+)/);
-        const courseId = courseIdMatch?.[1];
-        let routeInstalled = false;
-
-        if (courseId) {
-            try {
-                const apiResponse = await this.page.request.get(`api/core/courses/${courseId}/tutors`);
-                if (apiResponse.ok()) {
-                    const body = await apiResponse.body();
-                    const routePattern = `**/api/core/courses/${courseId}/tutors`;
-                    await this.page.route(routePattern, (route) => route.fulfill({ status: 200, contentType: 'application/json', body }));
-                    routeInstalled = true;
-                }
-            } catch {
-                // Pre-fetch failed; fall through to normal typeahead behavior
-            }
-        }
-
-        try {
-            // Use fill() for a single input emission — with the route intercept serving
-            // instant cached responses, the HTTP completes before Angular's change detection
-            // can interfere via inputFormatter/writeValue.
-            await inputLocator.fill(username);
-            await listbox.waitFor({ state: 'visible', timeout: 30000 });
-            const option = listbox.getByText(new RegExp(username, 'i')).first();
-            await option.waitFor({ state: 'visible', timeout: 5000 });
-            await option.click();
-        } finally {
-            if (routeInstalled && courseId) {
-                await this.page.unroute(`**/api/core/courses/${courseId}/tutors`);
-            }
-        }
-    }
-
-    /**
-     * Searches for a student via the student typeahead.
-     * The student typeahead uses debounceTime(200) which coalesces keystrokes
-     * into a single HTTP request after typing stops, so pressSequentially is safe.
-     */
-    private async searchStudent(inputLocator: ReturnType<Page['locator']>, username: string) {
+    private async searchAndSelect(inputLocator: ReturnType<Page['locator']>, username: string, role: string, useFill: boolean) {
         const listbox = this.page.getByRole('listbox');
         for (let attempt = 0; attempt < 3; attempt++) {
             if (attempt > 0) {
                 await this.page.waitForTimeout(500);
             }
 
-            await inputLocator.click();
-            await inputLocator.fill('');
-            await this.page.waitForTimeout(300);
-            await inputLocator.pressSequentially(username, { delay: 100 });
+            if (useFill) {
+                // fill() dispatches a SINGLE input event with the complete username.
+                // The tutor typeahead's switchMap sees one emission → one HTTP request
+                // that runs to completion. pressSequentially would fire N emissions
+                // (one per keystroke), each cancelling the previous HTTP via switchMap.
+                await inputLocator.fill(username);
+            } else {
+                // Student typeahead has debounceTime(200) which coalesces keystrokes
+                // into a single HTTP request after typing stops. Safe to type directly.
+                await inputLocator.click();
+                await inputLocator.fill('');
+                await this.page.waitForTimeout(300);
+                await inputLocator.pressSequentially(username, { delay: 100 });
+            }
 
             try {
-                await listbox.waitFor({ state: 'visible', timeout: 10000 });
+                await listbox.waitFor({ state: 'visible', timeout: 15000 });
                 const option = listbox.getByText(new RegExp(username, 'i')).first();
                 await option.waitFor({ state: 'visible', timeout: 5000 });
                 await option.click();
                 return;
             } catch {
-                if (attempt === 2) throw new Error(`Student search autocomplete did not appear after 3 attempts for '${username}'`);
+                if (attempt === 2) throw new Error(`${role} search autocomplete did not appear after 3 attempts for '${username}'`);
             }
         }
     }
@@ -119,7 +85,7 @@ export class ExerciseTeamsPage {
      * @param username - the tutor username.
      */
     async setTeamTutor(username: string) {
-        await this.searchTutor(this.page.locator('#owner-search-input'), username);
+        await this.searchAndSelect(this.page.locator('#owner-search-input'), username, 'Tutor', true);
     }
 
     /**
@@ -127,7 +93,7 @@ export class ExerciseTeamsPage {
      * @param username - the student username.
      */
     async addStudentToTeam(username: string) {
-        await this.searchStudent(this.page.locator('#student-search-input'), username);
+        await this.searchAndSelect(this.page.locator('#student-search-input'), username, 'Student', false);
     }
 
     /**
