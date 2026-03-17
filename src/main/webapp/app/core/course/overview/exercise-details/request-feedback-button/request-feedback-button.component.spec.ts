@@ -296,7 +296,7 @@ describe('RequestFeedbackButtonComponent', () => {
             await vi.advanceTimersByTimeAsync(0);
 
             expect(modalSpy).not.toHaveBeenCalled();
-            expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id);
+            expect(processFeedbackSpy).toHaveBeenCalledWith(exercise.id, participation.id);
         });
     });
 
@@ -522,7 +522,8 @@ describe('RequestFeedbackButtonComponent', () => {
     });
 
     it('should return true for programming exercises in assureConditionsSatisfied', () => {
-        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false);
+        const participation = createParticipation();
+        const exercise = createBaseExercise(ExerciseType.PROGRAMMING, false, participation);
         fixture.componentRef.setInput('exercise', exercise);
 
         const result = component.assureConditionsSatisfied();

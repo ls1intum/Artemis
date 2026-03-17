@@ -307,6 +307,11 @@ public class ParticipationResource {
                     "feedbackRequest.athenaProfileRequired");
         }
 
+        if (exercise.getDueDate() != null && now().isAfter(exercise.getDueDate()) && !participation.isPracticeMode()) {
+            throw new BadRequestAlertException("Feedback requests are not allowed after the due date for graded participations", ENTITY_NAME,
+                    "dueDateOver.feedbackRequestAfterDueDate");
+        }
+
         if (exercise instanceof ProgrammingExercise) {
             ((ProgrammingExercise) exercise).validateSettingsForFeedbackRequest();
         }
