@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.context.annotation.Lazy;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
@@ -58,25 +60,15 @@ public class LocalCIBuildConfigurationService {
      * @return the build script
      */
     public String createBuildScript(ProgrammingExercise programmingExercise, List<BuildPhaseDTO> activePhases) {
-
-        StringBuilder buildScriptBuilder = new StringBuilder();
         ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
 
+        String buildScript;
         if (activePhases != null) {
-            // Phases path: assemble script from active phases with set -e for fail-fast behavior
-            buildScriptBuilder.append("#!/usr/bin/env bash\n");
-            buildScriptBuilder.append("set -e\n");
-            final String testingDirectory = LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir";
-            final String goIntoTestingDirectoryCommand = "cd " + testingDirectory + "\n";
-
-            for (BuildPhaseDTO phase : activePhases) {
-                buildScriptBuilder.append("# ===== Phase: ").append(phase.name()).append(" =====\n");
-                buildScriptBuilder.append(goIntoTestingDirectoryCommand);
-                buildScriptBuilder.append(phase.script()).append("\n");
-            }
+            buildScript = computeAeolusStyleScript(activePhases);
         }
         else {
-            // else keep the other logic the same
+            StringBuilder buildScriptBuilder = new StringBuilder();
+            // else keep the other logic the same for now
             buildScriptBuilder.append("#!/bin/bash\n");
             buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
 
@@ -111,9 +103,87 @@ public class LocalCIBuildConfigurationService {
                     }
                 });
             }
+            buildScript = buildScriptBuilder.toString();
         }
 
-        return buildScriptProviderService.replacePlaceholders(buildScriptBuilder.toString(), buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
+        return buildScriptProviderService.replacePlaceholders(buildScript, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
                 buildConfig.getTestCheckoutPath());
+    }
+
+    private static String computeAeolusStyleScript(List<BuildPhaseDTO> activePhases) {
+        List<BuildPhaseDTO> nonForceRunPhases = new ArrayList<>();
+        List<BuildPhaseDTO> forceRunPhases = new ArrayList<>();
+
+        for (BuildPhaseDTO phase : activePhases) {
+            if (phase.condition() == BuildPhaseCondition.FORCE_RUN) {
+                forceRunPhases.add(phase);
+            }
+            else {
+                nonForceRunPhases.add(phase);
+            }
+        }
+
+        StringBuilder scriptBuilder = new StringBuilder();
+        scriptBuilder.append("#!/usr/bin/env bash\n");
+        scriptBuilder.append("set -e\n");
+        scriptBuilder.append("export AEOLUS_INITIAL_DIRECTORY=${PWD}\n");
+
+        for (BuildPhaseDTO phase : activePhases) {
+            appendPhaseFunction(scriptBuilder, phase);
+        }
+
+        if (!forceRunPhases.isEmpty()) {
+            appendForceRunPostPhase(scriptBuilder, forceRunPhases);
+        }
+
+        appendMainFunction(scriptBuilder, nonForceRunPhases, !forceRunPhases.isEmpty());
+
+        scriptBuilder.append("main \"${@}\"\n");
+        return scriptBuilder.toString();
+    }
+
+    private static void appendPhaseFunction(StringBuilder scriptBuilder, BuildPhaseDTO phase) {
+        scriptBuilder.append(phase.name()).append(" () {\n");
+        scriptBuilder.append("  echo '\\u2699\\uFE0F executing ").append(phase.name()).append("'\n");
+        if (phase.script() != null && !phase.script().isBlank()) {
+            List<String> scriptLines = phase.script().lines().toList();
+            for (String line : scriptLines) {
+                scriptBuilder.append("  ").append(line).append("\n");
+            }
+        }
+        scriptBuilder.append("}\n\n");
+    }
+
+    private static void appendForceRunPostPhase(StringBuilder scriptBuilder, List<BuildPhaseDTO> forceRunPhase) {
+        scriptBuilder.append("final_aeolus_post_action () {\n");
+        scriptBuilder.append("  set +e # from now on, we don't exit on errors\n");
+        scriptBuilder.append("  echo '\\u2699\\uFE0F executing final_aeolus_post_action'\n");
+        for (BuildPhaseDTO phase : forceRunPhase) {
+            scriptBuilder.append("  cd \"${AEOLUS_INITIAL_DIRECTORY}\"\n");
+            scriptBuilder.append("  ").append(phase.name()).append("\n");
+        }
+        scriptBuilder.append("}\n\n");
+    }
+
+    private static void appendMainFunction(StringBuilder scriptBuilder, List<BuildPhaseDTO> nonForceRunPhase, boolean hasRunAlwaysActions) {
+        scriptBuilder.append("main () {\n");
+        scriptBuilder.append("  if [[ \"${1}\" == \"aeolus_sourcing\" ]]; then\n");
+        scriptBuilder.append("    return 0 # just source to use the methods in the subshell, no execution\n");
+        scriptBuilder.append("  fi\n");
+        scriptBuilder.append("  local _script_name\n");
+        scriptBuilder.append("  _script_name=${BASH_SOURCE[0]:-$0}\n");
+        if (hasRunAlwaysActions) {
+            scriptBuilder.append("  trap final_aeolus_post_action EXIT\n");
+        }
+        if (!nonForceRunPhase.isEmpty()) {
+            scriptBuilder.append("\n");
+        }
+
+        for (BuildPhaseDTO phase : nonForceRunPhase) {
+            scriptBuilder.append("  cd \"${AEOLUS_INITIAL_DIRECTORY}\"\n");
+            scriptBuilder.append("  bash -c \"source ${_script_name} aeolus_sourcing; ").append(phase.name()).append("\"\n");
+        }
+
+        scriptBuilder.append("}\n\n");
     }
 }
