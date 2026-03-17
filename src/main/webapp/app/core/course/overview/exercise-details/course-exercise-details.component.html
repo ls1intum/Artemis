@@ -1,5 +1,9 @@
 @if (exercise) {
-    <div id="course-exercise-details" class="px-3 pt-2 pb-3 scrollable-content">
+    <div class="p-3 rounded-3 module-bg mb-4">
+        <jhi-exercise-header [exercise]="exercise" [courseId]="courseId" [studentParticipation]="gradedStudentParticipation()" [submissionPolicy]="submissionPolicy()" />
+    </div>
+
+    <div id="course-exercise-details" class="px-3 pt-2 pb-3 scrollable-content module-bg">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex">
                 @if (exerciseIcon()) {

@@ -1,0 +1,24 @@
+<div id="exercise-header-panel">
+    <div class="d-flex align-items-center justify-content-between gap-2">
+        <div class="d-flex">
+            @if (exerciseIcon()) {
+                <h5 class="mb-0" id="exercise-header">
+                    @if (exerciseIcon()) {
+                        <fa-icon class="me-2" [icon]="exerciseIcon()!" />
+                    }
+                    {{ exercise().title }}
+                </h5>
+            }
+        </div>
+        <jhi-exercise-header-actions [courseId]="courseId()" [exercise]="exercise()" />
+    </div>
+
+    <hr />
+
+    <jhi-exercise-headers-information
+        [exercise]="exercise()"
+        [studentParticipation]="studentParticipation()"
+        [submissionPolicy]="submissionPolicy()"
+        [course]="exercise().course"
+    />
+</div>

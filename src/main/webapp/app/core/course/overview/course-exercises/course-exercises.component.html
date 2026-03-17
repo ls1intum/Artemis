@@ -27,11 +27,7 @@
         }
 
         @if (exerciseSelected()) {
-            <div
-                [ngClass]="{ 'content-sidebar-width': !isCollapsed }"
-                class="content-width module-bg rounded-3"
-                [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}"
-            >
+            <div [ngClass]="{ 'content-sidebar-width': !isCollapsed }" class="content-width" [ngStyle]="isShownViaLti() ? { height: '90vh', position: 'relative' } : {}">
                 <router-outlet (deactivate)="onSubRouteDeactivate()" />
             </div>
         } @else {
