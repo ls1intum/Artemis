@@ -12,7 +12,7 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
-import { getExercise } from '../../utils';
+import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../timeouts';
 
 export class ExamParticipationPage extends ExamParticipationActions {
     private readonly examNavigation: ExamNavigationBar;
@@ -117,8 +117,7 @@ export class ExamParticipationPage extends ExamParticipationActions {
     }
 
     async checkExerciseScore(exerciseID: number, expectedResult: string) {
-        const resultBadge = getExercise(this.page, exerciseID).locator('#result-score-badge');
-        await expect(resultBadge).toContainText('GRADED', { timeout: 90000 });
-        await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID)).toContainText(expectedResult, { timeout: 30000 });
+        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
+        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT);
     }
 }
