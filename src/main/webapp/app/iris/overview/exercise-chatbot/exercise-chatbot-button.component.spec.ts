@@ -96,6 +96,7 @@ describe('ExerciseChatbotButtonComponent', () => {
                     provide: TranslateService,
                     useValue: {
                         get: vi.fn().mockReturnValue(of('')),
+                        instant: vi.fn((key: string) => key),
                         onTranslationChange: new Subject(),
                         onLangChange: new Subject(),
                         onDefaultLangChange: new Subject(),

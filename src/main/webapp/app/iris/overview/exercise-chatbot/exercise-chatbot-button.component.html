@@ -1,11 +1,11 @@
 @if (!chatOpen()) {
     @if (newIrisMessage()) {
-        <div class="message-bubble" (click)="handleButtonClick()">
+        <button type="button" class="message-bubble" (click)="handleButtonClick()">
             <span class="preview-text">{{ newIrisMessage() }}</span>
-        </div>
+        </button>
     }
     @if (isProcessing() && !newIrisMessage()) {
-        <div class="status-indicator" (click)="handleButtonClick()">
+        <button type="button" class="status-indicator" (click)="handleButtonClick()">
             <span class="visually-hidden" role="status" aria-live="polite">{{ stageDisplayName() }}</span>
             <span class="status-label" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ stageDisplayName() }}</span>
             <div class="typing-dots" aria-hidden="true">
@@ -13,7 +13,7 @@
                 <span class="dot"></span>
                 <span class="dot"></span>
             </div>
-        </div>
+        </button>
     }
     <div class="chatbot-button">
         <jhi-iris-logo [size]="IrisLogoSize.MEDIUM" [look]="IrisLogoLookDirection.LEFT" (click)="handleButtonClick()" />

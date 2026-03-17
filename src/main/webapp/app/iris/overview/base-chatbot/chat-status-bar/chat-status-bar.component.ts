@@ -1,8 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, effect, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, input, signal, untracked } from '@angular/core';
 import { faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-chat-status-bar',
@@ -12,9 +13,10 @@ import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.compone
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatStatusBarComponent {
+    private readonly translateService = inject(TranslateService);
     readonly open = signal(false);
     readonly activeStage = signal<IrisStageDTO | undefined>(undefined);
-    readonly errorMessage = signal<string | undefined>(undefined);
+    readonly stageMessage = signal<string | undefined>(undefined);
 
     readonly animToggle = signal(false);
     readonly displayName = signal('');
@@ -33,12 +35,12 @@ export class ChatStatusBarComponent {
             if (firstUnfinished) {
                 this.open.set(true);
                 this.activeStage.set(firstUnfinished);
-                this.errorMessage.set(firstUnfinished.message || firstUnfinished.name);
+                this.stageMessage.set(this.translateLabel(firstUnfinished.message || firstUnfinished.name));
             } else {
                 this.activeStage.set(undefined);
                 if (this.open()) {
                     this.open.set(false);
-                    this.errorMessage.set(undefined);
+                    this.stageMessage.set(undefined);
                 }
             }
         });
@@ -47,8 +49,8 @@ export class ChatStatusBarComponent {
         effect(() => {
             const stage = this.activeStage();
             const name = stage?.name ?? '';
-            if (name && name !== this.displayName()) {
-                this.displayName.set(name);
+            if (name && name !== untracked(() => this.displayName())) {
+                this.displayName.set(this.translateLabel(name));
                 this.animToggle.update((v) => !v);
             } else if (!name) {
                 this.displayName.set('');
@@ -58,5 +60,10 @@ export class ChatStatusBarComponent {
 
     isStageFinished(stage: IrisStageDTO) {
         return stage.state === IrisStageStateDTO.DONE || stage.state === IrisStageStateDTO.SKIPPED;
+    }
+
+    private translateLabel(key: string): string {
+        const translated = this.translateService.instant(key);
+        return typeof translated === 'string' && translated.startsWith('translation-not-found[') ? key : translated;
     }
 }

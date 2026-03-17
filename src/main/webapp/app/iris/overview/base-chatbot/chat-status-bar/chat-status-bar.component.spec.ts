@@ -7,6 +7,8 @@ import { By } from '@angular/platform-browser';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { MockComponent } from 'ng-mocks';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateService } from '@ngx-translate/core';
+import { Subject } from 'rxjs';
 
 describe('ChatStatusBarComponent', () => {
     setupTestBed({ zoneless: true });
@@ -17,6 +19,17 @@ describe('ChatStatusBarComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [FontAwesomeModule, ChatStatusBarComponent, MockComponent(IrisLogoComponent)],
+            providers: [
+                {
+                    provide: TranslateService,
+                    useValue: {
+                        instant: vi.fn((key: string) => key),
+                        onTranslationChange: new Subject(),
+                        onLangChange: new Subject(),
+                        onDefaultLangChange: new Subject(),
+                    },
+                },
+            ],
         })
             .overrideComponent(ChatStatusBarComponent, {
                 remove: { imports: [IrisLogoComponent] },

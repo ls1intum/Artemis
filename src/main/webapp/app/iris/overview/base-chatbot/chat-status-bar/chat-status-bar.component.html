@@ -2,7 +2,7 @@
     @if (isError()) {
         <div class="display error">
             <fa-icon [icon]="faCircleXmark" />
-            <div>{{ errorMessage() }}</div>
+            <div>{{ stageMessage() }}</div>
         </div>
     } @else {
         <div class="thinking-state">

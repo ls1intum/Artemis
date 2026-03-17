@@ -32,6 +32,9 @@
     width: 350px;
     max-height: 240px;
     cursor: pointer;
+    border: none;
+    font: inherit;
+    color: inherit;
     overflow-wrap: break-word;
     transform-origin: bottom right;
     transition:
@@ -67,6 +70,9 @@
     bottom: 96px;
     animation: status-bubble-enter 300ms ease-out;
     cursor: pointer;
+    border: none;
+    font: inherit;
+    color: inherit;
 }
 
 @keyframes slideUpFade {

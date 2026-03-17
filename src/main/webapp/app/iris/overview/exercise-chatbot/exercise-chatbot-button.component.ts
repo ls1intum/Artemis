@@ -13,6 +13,7 @@ import { removeCitationBlocks } from 'app/iris/overview/citation-text/iris-citat
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -29,6 +30,7 @@ export class IrisExerciseChatbotButtonComponent {
     private readonly chatService = inject(IrisChatService);
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
+    private readonly translateService = inject(TranslateService);
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -53,7 +55,10 @@ export class IrisExerciseChatbotButtonComponent {
 
     // Active stage and display name for minimized indicator
     readonly activeStage = computed(() => this.currentStages().find((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
-    readonly stageDisplayName = computed(() => this.activeStage()?.name ?? '');
+    readonly stageDisplayName = computed(() => {
+        const name = this.activeStage()?.name;
+        return name ? this.translateLabel(name) : '';
+    });
     readonly animToggle = signal(false);
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
@@ -206,5 +211,10 @@ export class IrisExerciseChatbotButtonComponent {
     private handleDialogClose() {
         this.chatOpen.set(false);
         this.newIrisMessage.set(undefined);
+    }
+
+    private translateLabel(key: string): string {
+        const translated = this.translateService.instant(key);
+        return typeof translated === 'string' && translated.startsWith('translation-not-found[') ? key : translated;
     }
 }

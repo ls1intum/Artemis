@@ -146,6 +146,10 @@
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
             },
+            "stages": {
+                "thinking": "Thinking hard",
+                "analyzing": "Analyzing context"
+            },
             "chatBubble": {
                 "seeFull": "See full message"
             },
