@@ -349,22 +349,11 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
      */
     private findCorrespondingSubmissionForTimestamp(timestamp: number): SubmissionVersion | ProgrammingSubmission | FileUploadSubmission | undefined {
         const comparisonObject = dayjs(timestamp);
-        for (const submissionVersion of this.submissionVersions) {
-            if (submissionVersion.createdDate.isSame(comparisonObject)) {
-                return submissionVersion;
-            }
-        }
-        for (const programmingSubmission of this.programmingSubmissions) {
-            if (programmingSubmission.submissionDate?.isSame(comparisonObject)) {
-                return programmingSubmission;
-            }
-        }
-        for (const fileUploadSubmission of this.fileUploadSubmissions) {
-            if (fileUploadSubmission.submissionDate?.isSame(comparisonObject)) {
-                return fileUploadSubmission;
-            }
-        }
-        return undefined;
+        return (
+            this.submissionVersions.find((sv) => sv.createdDate.isSame(comparisonObject)) ??
+            this.programmingSubmissions.find((ps) => ps.submissionDate?.isSame(comparisonObject)) ??
+            this.fileUploadSubmissions.find((fs) => fs.submissionDate?.isSame(comparisonObject))
+        );
     }
 
     /**
@@ -377,52 +366,46 @@ export class StudentExamTimelineComponent implements OnInit, AfterViewInit, OnDe
             return this.fileUploadSubmissions.find((submission) => submission.participation?.exercise?.id === exercise.id);
         }
         if (exercise.type === ExerciseType.PROGRAMMING) {
-            const timestampWithSmallestDiff = this.findClosestTimestampForExerciseInSubmissionArray(exercise, this.programmingSubmissions);
+            const timestampWithSmallestDiff = this.findClosestTimestampForExercise(
+                this.programmingSubmissions,
+                (s) => s.participation?.exercise?.id,
+                (s) => s.submissionDate!,
+                exercise.id!,
+            );
             return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff);
         }
-        const timestampWithSmallestDiff = this.findClosestTimestampForSubmissionVersions(exercise);
+        const timestampWithSmallestDiff = this.findClosestTimestampForExercise(
+            this.submissionVersions,
+            (s) => s.submission?.participation?.exercise?.id,
+            (s) => s.createdDate,
+            exercise.id!,
+        );
         return this.findCorrespondingSubmissionForTimestamp(timestampWithSmallestDiff);
     }
 
     /**
-     * Finds the closest timestamp for a submission version of a given exercise.
+     * Generic helper to find the closest timestamp to the current selected timestamp
+     * for items belonging to a given exercise.
+     *
+     * @param items array of submissions or submission versions
+     * @param getExerciseId function to extract the exercise ID from an item
+     * @param getTimestamp function to extract the dayjs timestamp from an item
+     * @param exerciseId the exercise ID to filter by
      */
-    private findClosestTimestampForSubmissionVersions(exercise: Exercise): number {
+    private findClosestTimestampForExercise<T>(items: T[], getExerciseId: (item: T) => number | undefined, getTimestamp: (item: T) => dayjs.Dayjs, exerciseId: number): number {
         const comparisonObject = dayjs(this.selectedTimestamp);
         let smallestDiff = Infinity;
         let timestampWithSmallestDiff = 0;
-        const numberOfSubmissionsForExercise = this.submissionVersions.filter((submission) => submission.submission?.participation?.exercise?.id === exercise.id).length;
-        for (const submissionVersion of this.submissionVersions) {
+        const numberOfSubmissionsForExercise = items.filter((item) => getExerciseId(item) === exerciseId).length;
+        for (const item of items) {
+            const itemTimestamp = getTimestamp(item);
             if (
-                Math.abs(submissionVersion.createdDate.diff(comparisonObject)) < smallestDiff &&
-                submissionVersion.submission.participation?.exercise?.id === exercise.id &&
-                (!submissionVersion.createdDate.isSame(comparisonObject) || numberOfSubmissionsForExercise === 1)
+                Math.abs(itemTimestamp.diff(comparisonObject)) < smallestDiff &&
+                getExerciseId(item) === exerciseId &&
+                (!itemTimestamp.isSame(comparisonObject) || numberOfSubmissionsForExercise === 1)
             ) {
-                smallestDiff = Math.abs(submissionVersion.createdDate.diff(comparisonObject));
-                timestampWithSmallestDiff = submissionVersion.createdDate.valueOf();
-            }
-        }
-        return timestampWithSmallestDiff;
-    }
-
-    /**
-     * Finds the closest timestamp for a submission of a given exercise in a given submission array
-     */
-    private findClosestTimestampForExerciseInSubmissionArray(exercise: Exercise, submissions: Submission[]): number {
-        const comparisonObject = dayjs(this.selectedTimestamp);
-        let smallestDiff = Infinity;
-        let timestampWithSmallestDiff = 0;
-        const numberOfSubmissionsForExercise = submissions.filter(
-            (submission: ProgrammingSubmission | FileUploadSubmission) => submission.participation?.exercise?.id === exercise.id,
-        ).length;
-        for (const submission of submissions) {
-            if (
-                submission.submissionDate!.diff(comparisonObject) < smallestDiff &&
-                submission.participation?.exercise?.id === exercise.id &&
-                (!submission.submissionDate?.isSame(comparisonObject) || numberOfSubmissionsForExercise === 1)
-            ) {
-                smallestDiff = submission.submissionDate!.diff(comparisonObject);
-                timestampWithSmallestDiff = submission.submissionDate!.valueOf();
+                smallestDiff = Math.abs(itemTimestamp.diff(comparisonObject));
+                timestampWithSmallestDiff = itemTimestamp.valueOf();
             }
         }
         return timestampWithSmallestDiff;

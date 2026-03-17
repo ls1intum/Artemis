@@ -268,27 +268,9 @@ public class ProgrammingExerciseUpdateResource {
             throw new BadRequestAlertException("No programming exercise was provided.", ENTITY_NAME, "isNull");
         }
 
-        // Update base exercise fields
-        exercise.setTitle(dto.title());
-        exercise.validateTitle();
-        exercise.setShortName(dto.shortName());
-
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
-
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        updateBaseFields(dto, exercise);
+        updateScoringFields(dto, exercise);
+        updateDateFields(dto, exercise);
 
         applyOptionalBaseExerciseFields(dto, exercise);
 
@@ -297,18 +279,8 @@ public class ProgrammingExerciseUpdateResource {
 
         applyOptionalProgrammingFields(dto, exercise);
 
-        exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
-        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
-
-        exercise.setSubmissionPolicy(dto.submissionPolicy());
-        exercise.setProjectType(dto.projectType());
-        exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
-
-        // Update auxiliary repositories
-        if (dto.auxiliaryRepositories() != null) {
-            List<AuxiliaryRepository> auxRepos = dto.auxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
-            exercise.setAuxiliaryRepositories(new ArrayList<>(auxRepos));
-        }
+        updateProgrammingSpecificFields(dto, exercise);
+        updateAuxiliaryRepositories(dto, exercise);
 
         // Update build config
         updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
@@ -320,6 +292,48 @@ public class ProgrammingExerciseUpdateResource {
         exerciseService.updateCompetencyLinks(dto, exercise);
 
         return exercise;
+    }
+
+    private static void updateBaseFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        exercise.setTitle(dto.title());
+        exercise.validateTitle();
+        exercise.setShortName(dto.shortName());
+
+        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
+        exercise.setProblemStatement(newProblemStatement);
+
+        exercise.setChannelName(dto.channelName());
+        exercise.setCategories(dto.categories());
+        exercise.setDifficulty(dto.difficulty());
+    }
+
+    private static void updateScoringFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setBonusPoints(dto.bonusPoints());
+        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+    }
+
+    private static void updateDateFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        exercise.setReleaseDate(dto.releaseDate());
+        exercise.setStartDate(dto.startDate());
+        exercise.setDueDate(dto.dueDate());
+        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+    }
+
+    private static void updateProgrammingSpecificFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
+        exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
+        exercise.setSubmissionPolicy(dto.submissionPolicy());
+        exercise.setProjectType(dto.projectType());
+        exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
+    }
+
+    private static void updateAuxiliaryRepositories(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
+        if (dto.auxiliaryRepositories() != null) {
+            List<AuxiliaryRepository> auxRepos = dto.auxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
+            exercise.setAuxiliaryRepositories(new ArrayList<>(auxRepos));
+        }
     }
 
     private static void applyOptionalBaseExerciseFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
@@ -364,16 +378,23 @@ public class ProgrammingExerciseUpdateResource {
             return;
         }
 
+        applyOptionalBuildConfigFields(dto, buildConfig);
+        applyDirectBuildConfigFields(dto, buildConfig);
+    }
+
+    private static void applyOptionalBuildConfigFields(UpdateProgrammingExerciseBuildConfigDTO dto, ProgrammingExerciseBuildConfig buildConfig) {
         if (dto.sequentialTestRuns() != null) {
             buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
         }
-        // Note: branch is preserved from original (immutable during update)
         if (dto.buildPlanConfiguration() != null) {
             buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
         }
         if (dto.buildScript() != null) {
             buildConfig.setBuildScript(dto.buildScript());
         }
+    }
+
+    private static void applyDirectBuildConfigFields(UpdateProgrammingExerciseBuildConfigDTO dto, ProgrammingExerciseBuildConfig buildConfig) {
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());

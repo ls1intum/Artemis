@@ -283,26 +283,10 @@ public class TextExerciseCreationUpdateResource {
         if (dto == null) {
             throw new BadRequestAlertException("No text exercise was provided.", ENTITY_NAME, "isNull");
         }
-        exercise.setTitle(dto.title());
+        updateBaseFields(dto, exercise);
         exercise.validateTitle();
-        exercise.setShortName(dto.shortName());
-        // problemStatement: null -> empty string
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
-
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        updateScoringFields(dto, exercise);
+        updateDateFields(dto, exercise);
 
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
@@ -318,6 +302,40 @@ public class TextExerciseCreationUpdateResource {
         updateCompetencyLinks(dto, exercise);
 
         return exercise;
+    }
+
+    /**
+     * Applies base fields (title, shortName, problemStatement, channelName, categories, difficulty) from the DTO to the exercise.
+     */
+    private static void updateBaseFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        exercise.setTitle(dto.title());
+        exercise.setShortName(dto.shortName());
+        // problemStatement: null -> empty string
+        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
+        exercise.setProblemStatement(newProblemStatement);
+        exercise.setChannelName(dto.channelName());
+        exercise.setCategories(dto.categories());
+        exercise.setDifficulty(dto.difficulty());
+    }
+
+    /**
+     * Applies scoring fields (maxPoints, bonusPoints, includedInOverallScore) from the DTO to the exercise.
+     */
+    private static void updateScoringFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setBonusPoints(dto.bonusPoints());
+        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+    }
+
+    /**
+     * Applies date fields (releaseDate, startDate, dueDate, assessmentDueDate, exampleSolutionPublicationDate) from the DTO to the exercise.
+     */
+    private static void updateDateFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        exercise.setReleaseDate(dto.releaseDate());
+        exercise.setStartDate(dto.startDate());
+        exercise.setDueDate(dto.dueDate());
+        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
     }
 
     /**
@@ -409,21 +427,10 @@ public class TextExerciseCreationUpdateResource {
      * Sets courseId/exerciseGroupId as proxy objects so that
      * {@link CourseService#retrieveCourseOverExerciseGroupOrCourseId} can resolve them.
      */
-    private void applyDtoToNewExercise(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        exercise.setTitle(dto.title());
-        exercise.setShortName(dto.shortName());
-        exercise.setProblemStatement(dto.problemStatement());
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+    private static void applyDtoToNewExercise(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        updateBaseFields(dto, exercise);
+        updateScoringFields(dto, exercise);
+        updateDateFields(dto, exercise);
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());

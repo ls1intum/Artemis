@@ -956,10 +956,7 @@ public class ExerciseService {
      * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
      */
     public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        if (competencyLinks == null || competencyLinks.isEmpty()) {
-            return;
-        }
-        if (competencyRelationApi.isEmpty()) {
+        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRelationApi.isEmpty()) {
             return;
         }
         // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
@@ -967,6 +964,10 @@ public class ExerciseService {
         Map<Long, CourseCompetency> managedCompetencies = competencyRelationApi.get().findAllCompetenciesById(competencyIds).stream()
                 .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
 
+        exercise.setCompetencyLinks(resolveCompetencyLinks(competencyLinks, managedCompetencies, exercise));
+    }
+
+    private Set<CompetencyExerciseLink> resolveCompetencyLinks(Set<CompetencyExerciseLink> competencyLinks, Map<Long, CourseCompetency> managedCompetencies, Exercise exercise) {
         Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
         for (CompetencyExerciseLink link : competencyLinks) {
             CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
@@ -974,6 +975,6 @@ public class ExerciseService {
                 resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
             }
         }
-        exercise.setCompetencyLinks(resolvedLinks);
+        return resolvedLinks;
     }
 }
