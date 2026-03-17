@@ -296,9 +296,10 @@ export class CourseOverviewService {
         for (const conversation of conversations) {
             const conversationGroups = this.getConversationGroup(conversation);
             const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
+            const isDmOrGroupChat = conversation.type === ConversationType.ONE_TO_ONE || conversation.type === ConversationType.GROUP_CHAT;
 
-            // Add all unread messages to the "unreadMessages" group
-            if ((conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden) {
+            // Add all unread messages from DMs or Groupchats to the "unreadMessages" group
+            if ((conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden && isDmOrGroupChat) {
                 groupedConversationGroups.unreadMessages.entityData.push(conversationCardItem);
             }
 
