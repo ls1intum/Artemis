@@ -85,6 +85,8 @@ elif [ -f ./test-reports/results-parallel.xml ]; then
     cp ./test-reports/results-parallel.xml ./test-reports/results.xml
 elif [ -f ./test-reports/results-sequential.xml ]; then
     cp ./test-reports/results-sequential.xml ./test-reports/results.xml
+else
+    echo 'Warning: No JUnit report files found to merge'
 fi
 npm run merge-coverage-reports || true
 
