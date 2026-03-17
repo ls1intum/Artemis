@@ -183,8 +183,7 @@ public class PyrisJobService {
         var token = generateJobIdToken();
         var job = new TranscriptionWebhookJob(token, courseId, lectureId, lectureUnitId);
         getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
-        log.info("Added transcription job to Hazelcast: token={}, courseId={}, lectureId={}, lectureUnitId={}, ttl={}s, mapSize={}", token, courseId, lectureId, lectureUnitId,
-                ingestionJobTimeout, getPyrisJobMap().size());
+        log.info("Added transcription job to Hazelcast: courseId={}, lectureId={}, lectureUnitId={}, ttl={}s", courseId, lectureId, lectureUnitId, ingestionJobTimeout);
         return token;
     }
 
@@ -239,7 +238,7 @@ public class PyrisJobService {
      */
     public PyrisJob getJob(String token) {
         var job = getPyrisJobMap().get(token);
-        log.info("Looking up job in Hazelcast: token={}, found={}, mapSize={}", token, job != null, getPyrisJobMap().size());
+        log.debug("Looking up job in Hazelcast: found={}", job != null);
         return job;
     }
 

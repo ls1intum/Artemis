@@ -255,11 +255,12 @@ public class LectureTranscriptionService {
             // Authorization header is automatically added by PyrisAuthorizationInterceptor
             HttpEntity<NebulaTranscriptionRequestDTO> entity = new HttpEntity<>(fullRequest, headers);
 
+            // Create placeholder transcription before firing the webhook so any fast
+            // callback from Pyris always finds an existing DB row.
+            createEmptyTranscription(lectureId, lectureUnitId, jobToken);
+
             String url = irisBaseUrl + "/api/v1/webhooks/transcription/video";
             templateToUse.exchange(url, HttpMethod.POST, entity, Void.class);
-
-            // Create placeholder transcription with our generated token as jobId
-            createEmptyTranscription(lectureId, lectureUnitId, jobToken);
 
             log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, jobToken);
             return jobToken;

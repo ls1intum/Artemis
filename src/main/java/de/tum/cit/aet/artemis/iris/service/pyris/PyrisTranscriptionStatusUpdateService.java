@@ -62,12 +62,18 @@ public class PyrisTranscriptionStatusUpdateService {
      * @param statusUpdate the status update
      */
     public void handleStatusUpdate(TranscriptionWebhookJob job, PyrisTranscriptionStatusUpdateDTO statusUpdate) {
+        if (statusUpdate.stages() == null || statusUpdate.stages().isEmpty()) {
+            pyrisJobService.updateJob(job);
+            websocketMessagingService.sendMessage("/topic/lectures/" + job.lectureId() + "/ingestion-status", Map.of("lectureUnitId", job.lectureUnitId()));
+            return;
+        }
+
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
-            pyrisJobService.removeJob(job);
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
             saveTranscriptionResult(job.jobId(), success, statusUpdate.result());
+            pyrisJobService.removeJob(job);
         }
         else {
             pyrisJobService.updateJob(job);
