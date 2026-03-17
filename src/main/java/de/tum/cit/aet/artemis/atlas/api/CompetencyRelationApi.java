@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -81,5 +82,25 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
 
     public void deleteAllLectureUnitLinksByLectureId(Long lectureId) {
         lectureUnitLinkRepository.deleteAllByLectureId(lectureId);
+    }
+
+    /**
+     * Finds a competency or prerequisite by its id, or throws if not found.
+     *
+     * @param competencyId the id of the competency
+     * @return the found competency
+     */
+    public CourseCompetency findCompetencyOrPrerequisiteByIdElseThrow(long competencyId) {
+        return courseCompetencyRepository.findByIdElseThrow(competencyId);
+    }
+
+    /**
+     * Finds all competencies by their ids.
+     *
+     * @param ids the ids of the competencies
+     * @return the found competencies
+     */
+    public List<CourseCompetency> findAllCompetenciesById(Collection<Long> ids) {
+        return courseCompetencyRepository.findAllById(ids);
     }
 }
