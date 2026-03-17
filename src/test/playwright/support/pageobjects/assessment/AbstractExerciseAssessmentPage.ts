@@ -85,9 +85,13 @@ export abstract class AbstractExerciseAssessmentPage {
 
     private async handleComplaint(response: string, accept: boolean, exerciseType: ExerciseType, examMode: boolean) {
         if (exerciseType !== ExerciseType.MODELING && !examMode) {
-            await this.page.locator('#show-complaint').click();
+            await this.page.locator('#show-complaint').first().click();
         }
-        await this.page.locator('#responseTextArea').fill(response);
+        // The response textarea starts as readonly/disabled while the complaint data loads.
+        // Wait for it to become editable before filling.
+        const responseTextArea = this.page.locator('#responseTextArea');
+        await expect(responseTextArea).toBeEnabled({ timeout: 15000 });
+        await responseTextArea.fill(response);
 
         let responsePromise;
         switch (exerciseType) {
