@@ -170,6 +170,7 @@ jobs:
   check-database-migration-approval:
     name: Check Database Migration Approval
     runs-on: [self-hosted, deploy-artemis]
+    needs: [determine-build-context]
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     steps:
       - name: Checkout Repository
