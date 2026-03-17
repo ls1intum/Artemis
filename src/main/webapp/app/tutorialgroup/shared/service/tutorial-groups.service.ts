@@ -4,7 +4,7 @@ import {
     CreateOrUpdateTutorialGroupDTO,
     RawTutorialGroupDTO,
     TutorialGroup,
-    TutorialGroupDTO,
+    TutorialGroupDetailDTO,
     TutorialGroupRegisterStudentDTO,
     TutorialGroupRegisteredStudentDTO,
     TutorialGroupScheduleDTO,
@@ -32,20 +32,16 @@ export class TutorialGroupsService {
 
     private resourceURL = 'api/tutorialgroup';
 
-    getUniqueLanguageValues(courseId: number): Observable<string[]> {
-        return this.tutorialGroupApiService.getUniqueLanguageValues(courseId, 'response').pipe(map((response) => response.body ?? []));
-    }
-
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupResponseArrayDatesFromServer(res)));
     }
 
-    getTutorialGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDTO> {
+    getTutorialGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDetailDTO> {
         return this.httpClient
             .get<RawTutorialGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`)
-            .pipe(map((rawDto) => new TutorialGroupDTO(rawDto)));
+            .pipe(map((rawDto) => new TutorialGroupDetailDTO(rawDto)));
     }
 
     create(courseId: number, createTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO): Observable<void> {

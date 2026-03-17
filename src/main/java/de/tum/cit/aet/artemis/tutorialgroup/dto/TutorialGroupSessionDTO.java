@@ -18,8 +18,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.util.RawTutorialGroupDetailSessionDTO;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupSessionDTO(@NotNull long id, @NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull String location, boolean isCancelled,
-        boolean locationChanged, boolean timeChanged, boolean dateChanged, @Nullable Integer attendanceCount) {
+public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime start, @NotNull ZonedDateTime end, @NotNull String location, @NotNull Boolean isCancelled,
+        @NotNull Boolean locationChanged, @NotNull Boolean timeChanged, @NotNull Boolean dateChanged, @Nullable Integer attendanceCount) {
 
     /**
      * Builds a {@link TutorialGroupSessionDTO} for a {@link TutorialGroupSession} of which the {@link TutorialGroup} has a {@link TutorialGroupSchedule}. Uses:

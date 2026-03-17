@@ -19,7 +19,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 import { MockProfileService } from 'test/helpers/mocks/service/mock-profile.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { RawTutorialGroupDTO, TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDTO, TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 
 import { CourseTutorialGroupDetailStubComponent } from 'test/helpers/stubs/tutorialgroup/course-tutorial-group-detail-stub.component';
 
@@ -30,7 +30,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
     let component: CourseTutorialGroupDetailContainerComponent;
     let tutorialGroupService: TutorialGroupsService;
     let courseManagementService: CourseManagementService;
-    let tutorialGroupOfResponse: TutorialGroupDTO;
+    let tutorialGroupOfResponse: TutorialGroupDetailDTO;
     let courseOfResponse: Course;
     let findStub: ReturnType<typeof vi.spyOn>;
     let findByIdStub: ReturnType<typeof vi.spyOn>;
@@ -81,7 +81,7 @@ describe('CourseTutorialGroupDetailContainerComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        tutorialGroupOfResponse = new TutorialGroupDTO(raw);
+        tutorialGroupOfResponse = new TutorialGroupDetailDTO(raw);
 
         courseOfResponse = { id: 2 } as Course;
 

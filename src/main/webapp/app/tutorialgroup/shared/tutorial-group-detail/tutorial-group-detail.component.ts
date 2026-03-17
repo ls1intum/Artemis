@@ -1,7 +1,7 @@
 import { Component, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
 import dayjs, { Dayjs } from 'dayjs/esm';
-import { TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -134,7 +134,7 @@ export class TutorialGroupDetailComponent {
     private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
     activatedRoute = inject(ActivatedRoute);
-    tutorialGroup = input.required<TutorialGroupDTO>();
+    tutorialGroup = input.required<TutorialGroupDetailDTO>();
     courseId = input.required<number>();
     isMessagingEnabled = input.required<boolean>();
     loggedInUserIsAtLeastTutorOfGroup = input.required<boolean>();

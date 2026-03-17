@@ -34,7 +34,7 @@ export class TutorialGroup implements BaseEntity {
     public averageAttendance?: number;
 }
 
-export class TutorialGroupDTO {
+export class TutorialGroupDetailDTO {
     id: number;
     title: string;
     language: string;

@@ -14,10 +14,10 @@ export interface TutorialGroupSession {
     start: string;
     end: string;
     location: string;
-    isCancelled?: boolean;
-    locationChanged?: boolean;
-    timeChanged?: boolean;
-    dateChanged?: boolean;
+    isCancelled: boolean;
+    locationChanged: boolean;
+    timeChanged: boolean;
+    dateChanged: boolean;
     attendanceCount?: number;
 }
 

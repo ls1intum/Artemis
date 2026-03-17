@@ -10,7 +10,7 @@ import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
 import { ButtonModule } from 'primeng/button';
 import { RouterLink } from '@angular/router';
-import { CreateOrUpdateTutorialGroupDTO, TutorialGroupDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { CreateOrUpdateTutorialGroupDTO, TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialEditLanguagesInputComponent } from 'app/tutorialgroup/manage/tutorial-edit-languages-input/tutorial-edit-languages-input.component';
 import dayjs from 'dayjs/esm';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -18,9 +18,9 @@ import { ConfirmationService } from 'primeng/api';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { Validation, ValidationStatus } from 'app/shared/util/validation';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 enum Mode {
     ONLINE = 'Online',
@@ -65,7 +65,7 @@ export class TutorialCreateOrEditComponent {
     private readonly titleRegex = /^[A-Za-z0-9][A-Za-z0-9: -]*$/;
     protected readonly ValidationStatus = ValidationStatus;
     private confirmationService = inject(ConfirmationService);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
@@ -73,7 +73,7 @@ export class TutorialCreateOrEditComponent {
     courseId = input.required<number>();
     tutorialGroupId = input<number>();
     tutors = input.required<TutorialGroupTutorDTO[]>();
-    tutorialGroup = input<TutorialGroupDTO>();
+    tutorialGroup = input<TutorialGroupDetailDTO>();
     schedule = input<TutorialGroupScheduleDTO>();
 
     title = signal('');
@@ -143,7 +143,7 @@ export class TutorialCreateOrEditComponent {
             }
         });
         effect(() => {
-            this.tutorialGroupsService.getUniqueLanguageValues(this.courseId()).subscribe({
+            this.tutorialGroupApiService.getUniqueLanguageValues(this.courseId(), 'body').subscribe({
                 next: (languages) => {
                     this.alreadyUsedLanguages.set(languages);
                 },
@@ -344,7 +344,7 @@ export class TutorialCreateOrEditComponent {
         return false;
     }
 
-    private checkIfTutorialGroupChanged(tutorialGroup: TutorialGroupDTO, schedule?: TutorialGroupScheduleDTO): boolean {
+    private checkIfTutorialGroupChanged(tutorialGroup: TutorialGroupDetailDTO, schedule?: TutorialGroupScheduleDTO): boolean {
         const titleChanged = this.title() !== tutorialGroup.title;
         const tutorChanged = this.selectedTutorId() !== tutorialGroup.tutorId;
         const languageChanged = this.selectedLanguage() !== tutorialGroup.language;

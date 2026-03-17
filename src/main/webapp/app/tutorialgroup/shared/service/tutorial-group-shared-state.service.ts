@@ -1,5 +1,5 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -14,7 +14,7 @@ export class TutorialGroupSharedStateService {
     private alertService = inject(AlertService);
 
     isTutorialGroupLoading = signal(false);
-    tutorialGroup = signal<TutorialGroupDTO | undefined>(undefined);
+    tutorialGroup = signal<TutorialGroupDetailDTO | undefined>(undefined);
     isCourseLoading = signal(false);
     course = signal<Course | undefined>(undefined);
 

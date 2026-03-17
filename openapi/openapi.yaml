@@ -1292,7 +1292,8 @@ components:
         timeChanged: {type: boolean}
         dateChanged: {type: boolean}
         attendanceCount: {type: integer, format: int32}
-      required: [end, id, location, start]
+      required: [dateChanged, end, id, isCancelled, location, locationChanged, start,
+        timeChanged]
     QualityIssueLocation:
       type: object
       description: Location of a quality issue within the problem statement

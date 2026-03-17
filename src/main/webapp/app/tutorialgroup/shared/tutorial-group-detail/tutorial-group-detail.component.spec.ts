@@ -12,7 +12,7 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { RawTutorialGroupDTO, TutorialGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { RawTutorialGroupDTO, TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { RawTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
 import { By } from '@angular/platform-browser';
@@ -91,7 +91,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -117,7 +117,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -143,7 +143,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: undefined,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const groupChannelLink = fixture.debugElement.query(By.css('[data-testid="group-channel-link"]'));
@@ -165,7 +165,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const tutorChatLink = fixture.debugElement.query(By.css('[data-testid="tutor-chat-link"]'));
@@ -189,7 +189,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: undefined,
             tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const currentTutorialLectureLink = fixture.debugElement.query(By.css('[data-testid="tutorial-lecture-link"]'));
@@ -211,7 +211,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupLanguage()).toBe(testTutorialGroup.language);
@@ -232,7 +232,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('10');
@@ -253,7 +253,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCapacity()).toBe('-');
@@ -274,7 +274,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.online');
@@ -295,7 +295,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupMode()).toBe('artemisApp.generic.offline');
@@ -316,7 +316,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe(testTutorialGroup.campus);
@@ -337,7 +337,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         expect(component.tutorialGroupCampus()).toBe('-');
@@ -390,7 +390,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -425,7 +425,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
         const nextSession = component.nextSession();
@@ -479,7 +479,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -534,7 +534,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -588,7 +588,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -642,7 +642,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -696,7 +696,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -758,7 +758,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -817,7 +817,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -856,7 +856,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -893,7 +893,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -930,7 +930,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -967,7 +967,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1004,7 +1004,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1041,7 +1041,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1066,7 +1066,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1091,7 +1091,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1114,7 +1114,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1139,7 +1139,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: undefined,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1162,7 +1162,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
@@ -1185,7 +1185,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             groupChannelId: 2,
             tutorChatId: 3,
         };
-        const testTutorialGroup = new TutorialGroupDTO(raw);
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
         fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
         fixture.detectChanges();
 
