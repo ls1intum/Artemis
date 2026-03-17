@@ -422,7 +422,10 @@ public class ProgrammingExerciseUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateProgrammingExercise(updateDTO, null);
+        var updatedResponse = updateProgrammingExercise(updateDTO, null);
+        // Re-fetch with grading criteria and example submissions needed for re-evaluation
+        var updatedExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(exerciseId);
+        exerciseService.reEvaluateExercise(updatedExercise, Boolean.TRUE.equals(deleteFeedbackAfterGradingInstructionUpdate));
+        return updatedResponse;
     }
 }

@@ -253,11 +253,17 @@ public class BonusResource {
                 .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonusId));
 
         boolean isSourceGradeScaleUpdated = false;
-        if (updatedBonus.getSourceGradingScale() != null && !existingBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
-            if (updatedBonus.getSourceGradingScale().getId() == null) {
+        GradingScale existingSourceScale = existingBonus.getSourceGradingScale();
+        GradingScale updatedSourceScale = updatedBonus.getSourceGradingScale();
+
+        boolean sourceScaleChanged = (updatedSourceScale != null && existingSourceScale == null)
+                || (updatedSourceScale != null && existingSourceScale != null && !existingSourceScale.getId().equals(updatedSourceScale.getId()));
+
+        if (sourceScaleChanged) {
+            if (updatedSourceScale.getId() == null) {
                 throw new BadRequestAlertException("Source grading scale id must not be null", ENTITY_NAME, "nullSourceGradingScaleId");
             }
-            var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
+            var sourceFromDb = gradingScaleRepository.findById(updatedSourceScale.getId()).orElseThrow();
             existingBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
             isSourceGradeScaleUpdated = true;
