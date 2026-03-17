@@ -6,7 +6,6 @@ import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroup } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { provideHttpClient } from '@angular/common/http';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
@@ -28,17 +27,8 @@ describe('TutorialGroupService', () => {
         const spySessionService = {
             convertTutorialGroupSessionDatesFromServer: vi.fn(),
         };
-        const spyConfigService = {
-            convertTutorialGroupsConfigurationDatesFromServer: vi.fn(),
-        };
-
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: TutorialGroupSessionService, useValue: spySessionService },
-                { provide: TutorialGroupsConfigurationService, useValue: spyConfigService },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TutorialGroupSessionService, useValue: spySessionService }],
         });
         service = TestBed.inject(TutorialGroupsService);
         httpMock = TestBed.inject(HttpTestingController);
@@ -48,6 +38,7 @@ describe('TutorialGroupService', () => {
         elemDefault = new TutorialGroup();
         elemDefault.id = 0;
         elemDefault.title = 'Test';
+        elemDefault.isOnline = false;
     });
 
     afterEach(() => {
@@ -247,8 +238,8 @@ describe('TutorialGroupService', () => {
 
     it('should convert tutorial group array dates from server', () => {
         const tutorialGroups: TutorialGroup[] = [
-            { id: 1, title: 'Group A' },
-            { id: 2, title: 'Group B' },
+            { id: 1, title: 'Group A', isOnline: false },
+            { id: 2, title: 'Group B', isOnline: false },
         ];
 
         service.convertTutorialGroupArrayDatesFromServer(tutorialGroups);
@@ -259,6 +250,7 @@ describe('TutorialGroupService', () => {
         const tutorialGroup: TutorialGroup = {
             id: 1,
             title: 'Group A',
+            isOnline: false,
             tutorialGroupSessions: [{ id: 1, start: '2020-01-01T00:00:00Z', end: '2020-01-01T01:00:00Z' }] as unknown as TutorialGroupSession[],
         };
 

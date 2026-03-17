@@ -6,7 +6,6 @@ import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupRegistrationImport } from 'app/openapi/model/tutorialGroupRegistrationImport';
@@ -19,7 +18,6 @@ type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 export class TutorialGroupsService {
     private httpClient = inject(HttpClient);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
-    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
 
     private resourceURL = 'api/tutorialgroup';
@@ -142,13 +140,6 @@ export class TutorialGroupsService {
         if (tutorialGroup.nextSession) {
             tutorialGroup.nextSession = this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
         }
-
-        if (tutorialGroup.course?.tutorialGroupsConfiguration) {
-            tutorialGroup.course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
-                tutorialGroup.course?.tutorialGroupsConfiguration,
-            );
-        }
-
         return tutorialGroup;
     }
 
@@ -164,11 +155,6 @@ export class TutorialGroupsService {
         }
         if (res.body?.nextSession) {
             res.body.nextSession = this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(res?.body.nextSession);
-        }
-        if (res.body?.course?.tutorialGroupsConfiguration) {
-            res.body.course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
-                res.body?.course?.tutorialGroupsConfiguration,
-            );
         }
         return res;
     }
