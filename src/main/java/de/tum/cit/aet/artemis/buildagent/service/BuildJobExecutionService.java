@@ -263,10 +263,6 @@ public class BuildJobExecutionService {
         }
 
         String[] auxiliaryRepositoryUriList = buildJob.repositoryInfo().auxiliaryRepositoryUris();
-        if(auxiliaryRepositoryUriList == null) {
-            auxiliaryRepositoryUriList = new String[0];
-        }
-
         Path[] auxiliaryRepositoriesPaths = new Path[auxiliaryRepositoryUriList.length];
         LocalVCRepositoryUri[] auxiliaryRepositoriesUris = new LocalVCRepositoryUri[auxiliaryRepositoryUriList.length];
 

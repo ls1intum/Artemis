@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -86,6 +87,7 @@ public record TestResultsDTO(@JsonProperty("successful") int successful, @JsonPr
         return filterBuildLogs(buildLogs);
     }
 
+    @JsonIgnore
     @Override
     public List<? extends BuildJobInterface> jobs() {
         return results();
