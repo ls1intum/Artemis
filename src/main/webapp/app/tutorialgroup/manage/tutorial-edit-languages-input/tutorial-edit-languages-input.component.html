@@ -1,11 +1,12 @@
 <div class="label-and-input">
-    <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.language"></label>
+    <label for="tutorial-edit-language-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.language"></label>
     <p-inputgroup>
         @let languageValidation = languageValidationResult();
         <p-inputgroup-addon>
             <i class="pi pi-flag"></i>
         </p-inputgroup-addon>
         <input
+            id="tutorial-edit-language-input"
             #searchInput
             pInputText
             [placeholder]="('artemisApp.pages.createOrEditTutorialGroup.inputLabel.language' | artemisTranslate) + ' *'"
