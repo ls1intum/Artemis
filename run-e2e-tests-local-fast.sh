@@ -79,6 +79,20 @@ kill_tree() {
     kill "$pid" 2>/dev/null || true
 }
 
+check_port_available() {
+    local port=$1
+    local service_name=$2
+    local listeners
+
+    listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+    if [ -n "$listeners" ]; then
+        echo -e "${RED}ERROR: Port ${port} is already in use by another process, so the ${service_name} cannot start.${NC}"
+        echo "$listeners"
+        echo "Stop the conflicting process or rerun with the corresponding --skip-* flag if you intentionally want to reuse that service."
+        exit 1
+    fi
+}
+
 # =============================================================================
 # --stop: Tear everything down
 # =============================================================================
@@ -196,6 +210,9 @@ if [ "$SKIP_SERVER" = false ]; then
         fi
     fi
 
+    check_port_available 8080 "Artemis server"
+    check_port_available 7921 "local VC SSH server"
+
     # Server environment variables
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/Artemis?sslmode=disable"
@@ -266,6 +283,8 @@ if [ "$SKIP_CLIENT" = false ]; then
             sleep 2
         fi
     fi
+
+    check_port_available 9000 "Angular client"
 
     npm start > "$LOCAL_DIR/client.log" 2>&1 &
     CLIENT_PID=$!

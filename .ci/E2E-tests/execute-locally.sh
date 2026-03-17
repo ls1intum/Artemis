@@ -31,10 +31,13 @@ echo ""
 # Determine compose file based on configuration
 if [ "$CONFIGURATION" = "postgres" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres.yml"
+    BUILD_SERVICES=("artemis-app")
 elif [ "$CONFIGURATION" = "postgres-localci" ]; then
     COMPOSE_FILE="playwright-E2E-tests-postgres-localci.yml"
+    BUILD_SERVICES=("artemis-app")
 elif [ "$CONFIGURATION" = "multi-node" ]; then
     COMPOSE_FILE="playwright-E2E-tests-multi-node.yml"
+    BUILD_SERVICES=("artemis-app-node-1" "artemis-app-node-2" "artemis-app-node-3")
 else
     echo "Invalid configuration. Choose: postgres, postgres-localci, or multi-node"
     exit 1
@@ -51,6 +54,13 @@ export HOST_HOSTNAME="nginx"
 
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
+export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
+export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
+export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-360}"
+export TEST_RETRIES="${TEST_RETRIES:-1}"
+export TEST_WORKER_PROCESSES="${TEST_WORKER_PROCESSES:-4}"
+export SLOW_TEST_TIMEOUT_SECONDS="${SLOW_TEST_TIMEOUT_SECONDS:-180}"
+export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-75}"
 
 # Set platform for ARM64 Macs (Apple Silicon)
 # Build the Artemis app natively on ARM and tell LocalCI to use arm64 exercise images.
@@ -109,7 +119,7 @@ docker compose --env-file ../.env -f $COMPOSE_FILE build \
     --build-arg WAR_FILE_STAGE=external_builder \
     --no-cache \
     --pull \
-    artemis-app
+    "${BUILD_SERVICES[@]}"
 
 # Run the tests
 echo ""
@@ -137,17 +147,13 @@ TOTAL_FAILURES=0
 TOTAL_ERRORS=0
 TOTAL_SKIPPED=0
 
-# Determine which XML files to parse to avoid double-counting.
-# The test runner generates results-parallel.xml + results-sequential.xml,
-# then merges them into results.xml. If the merged file exists, use only that.
-# Otherwise fall back to individual files.
+# The test runner moves results-parallel.xml to results.xml after the run.
+# Fall back to results-parallel.xml if the rename didn't happen.
 XML_FILES=()
 if [ -f "$REPORT_DIR/results.xml" ]; then
     XML_FILES=("$REPORT_DIR/results.xml")
-else
-    for f in "$REPORT_DIR"/results-parallel.xml "$REPORT_DIR"/results-sequential.xml; do
-        [ -f "$f" ] && XML_FILES+=("$f")
-    done
+elif [ -f "$REPORT_DIR/results-parallel.xml" ]; then
+    XML_FILES=("$REPORT_DIR/results-parallel.xml")
 fi
 
 for xml_file in "${XML_FILES[@]}"; do

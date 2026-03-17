@@ -77,9 +77,11 @@ else
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
 fi
 
-# Merge reports
-echo "--- Merging test reports ---"
-npm run merge-junit-reports || true
+# Move parallel results to final location (overwrites init test's results.xml)
+echo "--- Finalizing test reports ---"
+if [ -f ./test-reports/results-parallel.xml ]; then
+    mv ./test-reports/results-parallel.xml ./test-reports/results.xml
+fi
 npm run merge-coverage-reports || true
 
 # Write marker file if reporter failed but tests passed (picked up by execute.sh for CI reporting).

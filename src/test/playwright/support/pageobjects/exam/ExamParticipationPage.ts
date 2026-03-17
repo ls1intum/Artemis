@@ -4,8 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { CoursesPage } from '../course/CoursesPage';
-import { CourseOverviewPage } from '../course/CourseOverviewPage';
 import { ExamNavigationBar } from './ExamNavigationBar';
 import { ExamStartEndPage } from './ExamStartEndPage';
 import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
@@ -14,10 +12,9 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
+import { getExercise } from '../../utils';
 
 export class ExamParticipationPage extends ExamParticipationActions {
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
     private readonly examStartEnd: ExamStartEndPage;
     private readonly modelingExerciseEditor: ModelingEditor;
@@ -26,8 +23,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
     private readonly textExerciseEditor: TextEditorPage;
 
     constructor(
-        courseList: CoursesPage,
-        courseOverview: CourseOverviewPage,
         examNavigation: ExamNavigationBar,
         examStartEnd: ExamStartEndPage,
         modelingExerciseEditor: ModelingEditor,
@@ -37,8 +32,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         page: Page,
     ) {
         super(page);
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
         this.examNavigation = examNavigation;
         this.examStartEnd = examStartEnd;
         this.modelingExerciseEditor = modelingExerciseEditor;
@@ -123,9 +116,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(expectedResult: string) {
-        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+    async checkExerciseScore(exerciseID: number, expectedResult: string) {
+        const resultBadge = getExercise(this.page, exerciseID).locator('#result-score-badge');
+        await expect(resultBadge).toContainText('GRADED', { timeout: 90000 });
+        await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID)).toContainText(expectedResult, { timeout: 30000 });
     }
 }
