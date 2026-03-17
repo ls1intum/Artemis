@@ -20,6 +20,7 @@ set -e
 #   --ui                Open Playwright UI mode
 #   --video             Enable video recording (off by default to save CPU)
 #   --coverage          Enable coverage collection (off by default, requires extra memory)
+#   --debug             Show server and client output inline (normally only in log files)
 #   --help              Show this help message
 # =============================================================================
 
@@ -35,6 +36,7 @@ STOP=false
 SKIP_SERVER=false
 SKIP_CLIENT=false
 SKIP_DB=false
+DEBUG=false
 TEST_FILTER=""
 PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
@@ -50,6 +52,7 @@ while [[ $# -gt 0 ]]; do
         --ui) PLAYWRIGHT_EXTRA_ARGS+=("--ui"); shift ;;
         --video) unset PLAYWRIGHT_VIDEO_MODE; shift ;;
         --coverage) unset PLAYWRIGHT_COVERAGE; export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"; shift ;;
+        --debug) DEBUG=true; shift ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -60,7 +63,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -20 "$0" | tail -16; exit 0 ;;
+        --help) head -21 "$0" | tail -17; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -257,7 +260,11 @@ if [ "$SKIP_SERVER" = false ]; then
     fi
 
     # Start server in background
-    ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
+    if [ "$DEBUG" = true ]; then
+        ./gradlew bootRun -x webapp 2>&1 | tee "$LOCAL_DIR/server.log" &
+    else
+        ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
+    fi
     SERVER_PID=$!
     echo "$SERVER_PID" > "$LOCAL_DIR/server.pid"
     echo "Server starting (PID $SERVER_PID), log: $LOCAL_DIR/server.log"
@@ -286,7 +293,11 @@ if [ "$SKIP_CLIENT" = false ]; then
 
     check_port_available 9000 "Angular client"
 
-    npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    if [ "$DEBUG" = true ]; then
+        npm start 2>&1 | tee "$LOCAL_DIR/client.log" &
+    else
+        npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    fi
     CLIENT_PID=$!
     echo "$CLIENT_PID" > "$LOCAL_DIR/client.pid"
     echo "Client starting (PID $CLIENT_PID), log: $LOCAL_DIR/client.log"
@@ -591,6 +602,8 @@ else
     echo "  Time: ${TEST_MINS}m ${TEST_SECS}s"
 fi
 
+echo ""
+echo -e "${BLUE}Logs:${NC} $LOCAL_DIR/ (server.log, client.log, cpu-usage.csv)"
 echo ""
 echo -e "${BLUE}Services are still running. Quick re-run:${NC}"
 echo "  ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db [--filter \"Test\"]"

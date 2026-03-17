@@ -9,6 +9,10 @@
 #   configuration: postgres-localci (default), postgres, multi-node
 #   test-filter: optional grep pattern to filter tests (e.g., "Quiz")
 #
+# Environment:
+#   E2E_DEBUG=true    Show all Docker container output (default: only Playwright)
+#   E2E_LOG_DIR=path  Directory to store logs (default: .e2e-local)
+#
 # Prerequisites:
 #   - WAR file must exist in build/libs/
 #   - Docker must be running
@@ -20,6 +24,8 @@ set -e
 CONFIGURATION=${1:-postgres-localci}
 TEST_FILTER=$2
 DB="postgres"
+DEBUG="${E2E_DEBUG:-false}"
+LOG_DIR="${E2E_LOG_DIR:-.e2e-local}"
 
 echo "========================================"
 echo "  Artemis E2E Local Test Runner"
@@ -124,6 +130,9 @@ docker compose --env-file ../.env -f $COMPOSE_FILE build \
     --pull \
     "${BUILD_SERVICES[@]}"
 
+# Ensure log directory exists (relative to project root)
+mkdir -p "../$LOG_DIR"
+
 # Run the tests
 echo ""
 echo "Starting containers and running tests..."
@@ -132,9 +141,17 @@ echo ""
 
 # Disable exit on error to capture exit code
 set +e
-docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+if [ "$DEBUG" = true ]; then
+    docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --exit-code-from artemis-playwright
+else
+    # Only show Playwright output; other service logs are saved to the log directory
+    docker compose --env-file ../.env -f $COMPOSE_FILE $OVERRIDE_ARGS up --attach artemis-playwright --exit-code-from artemis-playwright
+fi
 EXIT_CODE=$?
 set -e
+
+# Save all container logs for later inspection
+docker compose --env-file ../.env -f $COMPOSE_FILE logs --no-color > "../$LOG_DIR/docker-compose.log" 2>&1 || true
 
 # Test reports are in the mounted volume (no need to copy from container)
 REPORT_DIR="../src/test/playwright/test-reports"
@@ -211,6 +228,9 @@ else
     echo "Tests failed! View HTML report:"
     echo "  cd src/test/playwright && npx playwright show-report test-reports/monocart-report"
 fi
+
+echo ""
+echo "Full Docker logs: $LOG_DIR/docker-compose.log"
 
 # Exit with failure if any tests failed
 if [ $((TOTAL_FAILURES + TOTAL_ERRORS)) -gt 0 ]; then
