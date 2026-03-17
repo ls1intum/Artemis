@@ -8,9 +8,13 @@ import org.springframework.boot.test.context.TestConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -46,6 +50,9 @@ public class JacksonDeserializerInitializationConfig {
     public void initializeDeserializers() {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
+        // Initialize User first since it's referenced by many other entities
+        initializeUser();
+
         // Initialize Organization with nested User and Course
         initializeOrganization();
 
@@ -55,7 +62,33 @@ public class JacksonDeserializerInitializationConfig {
         // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
         initializeExam();
 
+        // Initialize TutorialGroup with nested registrations containing User references
+        initializeTutorialGroup();
+
+        // Initialize Post and Reaction with nested User references (used via @JsonIncludeProperties)
+        initializePostAndReaction();
+
         log.debug("Successfully initialized Jackson deserializers");
+    }
+
+    private void initializeUser() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "login": "testuser",
+                        "firstName": "Test",
+                        "lastName": "User",
+                        "email": "test@test.com",
+                        "activated": true,
+                        "imageUrl": null
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, User.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize User deserializer: {}", e.getMessage());
+        }
     }
 
     private void initializeOrganization() {
@@ -138,6 +171,86 @@ public class JacksonDeserializerInitializationConfig {
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializeTutorialGroup() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "title": "Test Group",
+                        "capacity": 10,
+                        "isOnline": false,
+                        "campus": "Test Campus",
+                        "language": "ENGLISH",
+                        "registrations": [{
+                            "id": 1,
+                            "student": {
+                                "id": 1,
+                                "login": "testuser",
+                                "firstName": "Test",
+                                "lastName": "User"
+                            },
+                            "type": "INSTRUCTOR_REGISTRATION"
+                        }],
+                        "teachingAssistant": {
+                            "id": 2,
+                            "login": "tutor1",
+                            "firstName": "Tutor",
+                            "lastName": "One"
+                        }
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, TutorialGroup.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializePostAndReaction() {
+        try {
+            // Initialize Reaction with User via @JsonIncludeProperties path
+            String reactionJson = """
+                    {
+                        "id": 1,
+                        "emojiId": "smiley",
+                        "user": {
+                            "id": 1,
+                            "name": "Test User"
+                        },
+                        "post": {
+                            "id": 1
+                        }
+                    }
+                    """;
+            objectMapper.readValue(reactionJson, Reaction.class);
+
+            // Initialize Post with nested reactions
+            String postJson = """
+                    {
+                        "id": 1,
+                        "content": "Test",
+                        "reactions": [{
+                            "id": 1,
+                            "emojiId": "smiley",
+                            "user": {
+                                "id": 1,
+                                "name": "Test User"
+                            }
+                        }],
+                        "author": {
+                            "id": 1,
+                            "name": "Author",
+                            "imageUrl": null
+                        }
+                    }
+                    """;
+            objectMapper.readValue(postJson, Post.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize Post/Reaction deserializer: {}", e.getMessage());
         }
     }
 }
