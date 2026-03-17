@@ -9,15 +9,16 @@ import { AlertService } from 'app/shared/service/alert.service';
 export class TutorialGroupRegisteredStudentsService {
     private tutorialGroupsService = inject(TutorialGroupsService);
     private alertService = inject(AlertService);
+    private registeredStudentsInternal = signal<TutorialGroupRegisteredStudentDTO[]>([]);
 
     isLoading = signal(false);
-    registeredStudents = signal<TutorialGroupRegisteredStudentDTO[]>([]);
+    registeredStudents = this.registeredStudentsInternal.asReadonly();
 
     deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string) {
         this.isLoading.set(true);
         this.tutorialGroupsService.deregisterStudent(courseId, tutorialGroupId, studentLogin).subscribe({
             next: () => {
-                this.registeredStudents.update((registeredStudents) => {
+                this.registeredStudentsInternal.update((registeredStudents) => {
                     return registeredStudents.filter((student) => student.login !== studentLogin);
                 });
                 this.isLoading.set(false);
@@ -33,7 +34,7 @@ export class TutorialGroupRegisteredStudentsService {
         this.isLoading.set(true);
         this.tutorialGroupsService.getRegisteredStudentDTOs(courseId, tutorialGroupId).subscribe({
             next: (registeredStudents) => {
-                this.registeredStudents.set(registeredStudents);
+                this.registeredStudentsInternal.set(registeredStudents);
                 this.isLoading.set(false);
             },
             error: () => {
@@ -44,7 +45,7 @@ export class TutorialGroupRegisteredStudentsService {
     }
 
     addStudentsToRegisteredStudentsState(students: TutorialGroupRegisteredStudentDTO[]) {
-        this.registeredStudents.update((registeredStudents) => {
+        this.registeredStudentsInternal.update((registeredStudents) => {
             const existingStudentIds = new Set(registeredStudents.map((student) => student.id));
             const newStudents: TutorialGroupRegisteredStudentDTO[] = students.filter((student) => {
                 if (existingStudentIds.has(student.id)) {
