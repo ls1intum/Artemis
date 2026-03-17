@@ -100,8 +100,12 @@ public class SharedQueueManagementService {
      * Handles the disconnection of a client (build agent) from the cluster.
      * Removes the build agent's entry from the distributed map, which triggers
      * the MapEntryRemovedEvent and the orphan job handling.
+     * <p>
+     * Note: The clientName parameter is the Redis client name (memberAddress, e.g. "artemis-1003"),
+     * not the build agent short name (map key, e.g. "artemis-build-agent-3").
+     * We need to find the matching agent by memberAddress and remove by the correct map key.
      *
-     * @param clientName the name of the disconnected client (build agent short name)
+     * @param clientName the name of the disconnected client (Redis client name / memberAddress)
      */
     private void handleClientDisconnection(String clientName) {
         if (StringUtils.isBlank(clientName)) {
@@ -109,12 +113,33 @@ public class SharedQueueManagementService {
             return;
         }
         log.warn("Build agent client disconnected: {}. Removing from build agent information map.", clientName);
-        var removedAgent = this.distributedDataAccessService.getDistributedBuildAgentInformation().remove(clientName);
-        if (removedAgent != null) {
-            log.info("Removed build agent {} from distributed map. MapEntryRemovedEvent will trigger orphan job handling.", clientName);
+
+        // The clientName is the Redis client name (memberAddress), but the map is keyed by build agent short name.
+        // Find the agent whose memberAddress matches the disconnected client name and remove by its map key.
+        var agentMap = this.distributedDataAccessService.getDistributedBuildAgentInformation();
+        var mapCopy = this.distributedDataAccessService.getBuildAgentInformationMap();
+        boolean found = false;
+        for (var entry : mapCopy.entrySet()) {
+            var agent = entry.getValue();
+            if (agent != null && agent.buildAgent() != null && clientName.equals(agent.buildAgent().memberAddress())) {
+                var removedAgent = agentMap.remove(entry.getKey());
+                if (removedAgent != null) {
+                    log.info("Removed build agent {} (key='{}', memberAddress='{}') from distributed map. MapEntryRemovedEvent will trigger orphan job handling.",
+                            agent.buildAgent().name(), entry.getKey(), clientName);
+                }
+                found = true;
+                break;
+            }
         }
-        else {
-            log.debug("Build agent {} was not found in the distributed map (may have already been removed).", clientName);
+        if (!found) {
+            // Fallback: try direct removal by clientName in case it matches the map key
+            var removedAgent = agentMap.remove(clientName);
+            if (removedAgent != null) {
+                log.info("Removed build agent {} from distributed map by direct key match.", clientName);
+            }
+            else {
+                log.debug("Build agent with memberAddress {} was not found in the distributed map (may have already been removed).", clientName);
+            }
         }
     }
 

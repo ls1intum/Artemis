@@ -28,10 +28,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
-import de.tum.cit.aet.artemis.buildagent.dto.BuildResultQueueException;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildLogDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResult;
+import de.tum.cit.aet.artemis.buildagent.dto.BuildResultQueueException;
 import de.tum.cit.aet.artemis.buildagent.dto.FinishedBuildJobDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;

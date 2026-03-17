@@ -238,7 +238,7 @@ public class DistributedDataAccessService {
         // Get current processing jobs to enrich agent information with accurate running jobs data
         List<BuildJobQueueItem> currentProcessingJobs = getProcessingJobs();
 
-        // Get connected client names from Hazelcast (only available on core nodes)
+        // Get connected client names (Redis client names correspond to memberAddress, not build agent name)
         Set<String> connectedClients = distributedDataProvider.getConnectedClientNames();
 
         // Enrich and filter agents
@@ -246,7 +246,8 @@ public class DistributedDataAccessService {
                 // Guard against null entries from distributed map
                 .filter(agent -> agent != null && agent.buildAgent() != null)
                 // Filter to only connected agents if we can determine connectivity
-                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().name()))
+                // Connected client names match the memberAddress (e.g. "artemis-1003"), not the agent name (e.g. "artemis-build-agent-3")
+                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().memberAddress()))
                 // Enrich with current processing jobs for accurate runningBuildJobs data
                 .map(agent -> enrichWithCurrentProcessingJobs(agent, currentProcessingJobs)).toList();
     }
