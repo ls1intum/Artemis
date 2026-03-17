@@ -95,7 +95,13 @@ public class TextExerciseImportService extends ExerciseImportService {
             newExercise.setFeedbackSuggestionModule(null);
         }
 
-        TextExercise newTextExercise = exerciseService.saveWithCompetencyLinks(newExercise, textExerciseRepository::save);
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(newExercise);
+        TextExercise savedExercise = textExerciseRepository.save(newExercise);
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = textExerciseRepository.save(savedExercise);
+        }
+        final TextExercise newTextExercise = savedExercise;
 
         channelService.createExerciseChannel(newTextExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));

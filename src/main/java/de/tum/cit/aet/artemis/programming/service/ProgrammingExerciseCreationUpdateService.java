@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.domain.Repository;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.SolutionProgrammingExerciseParticipation;
 import de.tum.cit.aet.artemis.programming.domain.TemplateProgrammingExerciseParticipation;
+import de.tum.cit.aet.artemis.programming.dto.ProgrammingExerciseTimelineUpdateDTO;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseBuildConfigRepository;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
@@ -181,11 +182,14 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.setTemplateParticipation(null);
         programmingExercise.getBuildConfig().setId(null);
 
+        // Extract competency links before first save - they require the exercise ID which doesn't exist yet
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(programmingExercise);
+
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
         programmingExercise.setBuildConfig(savedBuildConfig);
 
-        var savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(programmingExercise, programmingExerciseRepository::saveForCreation);
+        var savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         savedProgrammingExercise.getBuildConfig().setProgrammingExercise(savedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(savedProgrammingExercise.getBuildConfig());
@@ -222,6 +226,9 @@ public class ProgrammingExerciseCreationUpdateService {
 
         programmingExerciseCreationScheduleService.performScheduleOperationsAndCheckNotifications(savedProgrammingExercise);
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
+
+        // Restore competency links with proper exercise reference before final save
+        exerciseService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -307,7 +314,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
         programmingExerciseBuildConfigRepository.save(updatedProgrammingExercise.getBuildConfig());
 
-        ProgrammingExercise savedProgrammingExercise = exerciseService.saveWithCompetencyLinks(updatedProgrammingExercise, programmingExerciseRepository::save);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
@@ -352,14 +359,14 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * Updates the timeline attributes of the given programming exercise
+     * Updates the timeline attributes of the given programming exercise with the values from the DTO.
      *
-     * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText           optional text for a notification to all students about the update
+     * @param timelineUpdateDTO containing the timeline changes that have to be saved
+     * @param notificationText  optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
+    public ProgrammingExercise updateTimeline(ProgrammingExerciseTimelineUpdateDTO timelineUpdateDTO, @Nullable String notificationText) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(timelineUpdateDTO.id());
 
         // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
@@ -367,13 +374,8 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
         programmingExerciseBeforeUpdate.setAssessmentDueDate(programmingExercise.getAssessmentDueDate());
 
-        programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
-        programmingExercise.setStartDate(updatedProgrammingExercise.getStartDate());
-        programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
-        programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
-        programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
-        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
+        // Apply the DTO values to the existing exercise
+        timelineUpdateDTO.applyTo(programmingExercise);
 
         programmingExercise.validateDates();
 
