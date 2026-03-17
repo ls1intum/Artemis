@@ -44,7 +44,7 @@ export class TutorialGroupsService {
 
     getTutorialGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDTO> {
         return this.httpClient
-            .get<RawTutorialGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/dto`)
+            .get<RawTutorialGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`)
             .pipe(map((rawDto) => new TutorialGroupDTO(rawDto)));
     }
 
