@@ -60,17 +60,22 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
 
         // Load all competencies from database to ensure they are managed entities
         // Hibernate 6.6+ requires all referenced entities to be managed during persist/merge
-        Set<Long> competencyIds = links.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        Set<Long> competencyIds = links.stream().map(link -> {
+            if (link.getCompetency() == null || link.getCompetency().getId() == null) {
+                throw new IllegalArgumentException("Each competency exercise link must reference a competency with a non-null id");
+            }
+            return link.getCompetency().getId();
+        }).collect(Collectors.toSet());
         Map<Long, CourseCompetency> competencyMap = courseCompetencyRepository.findAllById(competencyIds).stream()
                 .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
 
+        Set<Long> missingIds = competencyIds.stream().filter(id -> !competencyMap.containsKey(id)).collect(Collectors.toSet());
+        if (!missingIds.isEmpty()) {
+            throw new IllegalArgumentException("Unknown competency ids: " + missingIds);
+        }
+
         // Replace detached competencies with managed entities
-        links.forEach(link -> {
-            CourseCompetency managedCompetency = competencyMap.get(link.getCompetency().getId());
-            if (managedCompetency != null) {
-                link.setCompetency(managedCompetency);
-            }
-        });
+        links.forEach(link -> link.setCompetency(competencyMap.get(link.getCompetency().getId())));
 
         return competencyExerciseLinkRepository.saveAll(links);
     }

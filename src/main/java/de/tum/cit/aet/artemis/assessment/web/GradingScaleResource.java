@@ -257,7 +257,7 @@ public class GradingScaleResource {
         GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
 
         // Update exam max points if provided
-        if (dto.examMaxPoints() != null && dto.examMaxPoints() != exam.getExamMaxPoints()) {
+        if (dto.examMaxPoints() != null && !dto.examMaxPoints().equals(exam.getExamMaxPoints())) {
             exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }

@@ -254,6 +254,9 @@ public class BonusResource {
 
         boolean isSourceGradeScaleUpdated = false;
         if (updatedBonus.getSourceGradingScale() != null && !existingBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
+            if (updatedBonus.getSourceGradingScale().getId() == null) {
+                throw new BadRequestAlertException("Source grading scale id must not be null", ENTITY_NAME, "nullSourceGradingScaleId");
+            }
             var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
             existingBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
