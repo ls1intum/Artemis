@@ -19,7 +19,6 @@ import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import { MockProvider } from 'ng-mocks';
 import { SafeHtml } from '@angular/platform-browser';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-
 import { AccountService } from 'app/core/auth/account.service';
 import { provideHttpClient } from '@angular/common/http';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
