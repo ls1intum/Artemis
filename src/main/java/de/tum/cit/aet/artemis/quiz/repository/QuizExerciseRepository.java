@@ -111,8 +111,18 @@ public interface QuizExerciseRepository extends ArtemisJpaRepository<QuizExercis
      * @param exerciseId the id of the exercise to fetch
      * @return {@link QuizExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
-    Optional<QuizExercise> findForVersioningById(Long exerciseId);
+    @Query("""
+            SELECT qe
+            FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizQuestions
+                LEFT JOIN FETCH qe.competencyLinks
+                LEFT JOIN FETCH qe.categories
+                LEFT JOIN FETCH qe.teamAssignmentConfig
+                LEFT JOIN FETCH qe.gradingCriteria
+                LEFT JOIN FETCH qe.plagiarismDetectionConfig
+            WHERE qe.id = :exerciseId
+            """)
+    Optional<QuizExercise> findForVersioningById(@Param("exerciseId") Long exerciseId);
 
     /**
      * Finds a quiz exercise by its title and course id and throws a NoUniqueQueryException if multiple exercises are found.
