@@ -955,11 +955,9 @@ public class ExerciseService {
     }
 
     /**
-     * Extracts competency links from a new exercise before its first save.
-     * The links are cleared from the exercise so it can be saved without them
-     * (since they need the exercise ID which doesn't exist yet).
+     * Extracts competency links from a new exercise before its first save, clearing them from the exercise.
      *
-     * @param exercise the new exercise (not yet saved) from which to extract competency links
+     * @param exercise the new exercise (not yet saved)
      * @return the extracted competency links (may be empty)
      */
     public Set<CompetencyExerciseLink> extractCompetencyLinksForCreation(Exercise exercise) {
@@ -969,24 +967,15 @@ public class ExerciseService {
     }
 
     /**
-     * Restores competency links to a saved exercise and persists them.
-     * <p>
-     * This method must be called AFTER the exercise has been saved and has an ID.
-     * It sets the proper exercise reference on each link (required for @MapsId) and
-     * adds them to the exercise. The caller must save the exercise again after this call
-     * to persist the links via cascade.
+     * Restores competency links to a saved exercise and persists them. Must be called after the exercise has an ID.
      *
      * @param exercise        the saved exercise (must have an ID)
-     * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
+     * @param competencyLinks the links previously extracted via {@link #extractCompetencyLinksForCreation}
      */
     public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        if (competencyLinks == null || competencyLinks.isEmpty()) {
+        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRepositoryApi.isEmpty()) {
             return;
         }
-        if (competencyRepositoryApi.isEmpty()) {
-            return;
-        }
-        // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
         Set<Long> competencyIds = competencyLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
         Map<Long, CourseCompetency> managedCompetencies = competencyRepositoryApi.get().findAllCompetenciesById(competencyIds).stream()
                 .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
