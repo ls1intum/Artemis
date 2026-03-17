@@ -87,29 +87,25 @@ export class AdminImportStandardizedCompetenciesComponent {
     //Other constants
     protected readonly getIcon = getIcon;
     protected readonly ButtonType = ButtonType;
-    protected readonly importExample = `\`\`\`
+    protected readonly importExample = `\`\`\`json
 {
     "knowledgeAreas": [{
         "title": "Artificial Intelligence",
         "shortTitle": "AI",
-        "description": "AI is a field in computer science...", //(optional)
+        "description": "AI is a field in computer science...",
         "competencies": [{
             "title": "Machine Learning",
-            "description": "1. Explain examples of machine learning tasks \\n2. ....", //(optional)
-            //(optional) one of REMEMBER, UNDERSTAND, APPLY, ANALYZE, EVALUATE, CREATE
+            "description": "1. Explain examples of machine learning tasks \\n2. ....",
             "taxonomy": "UNDERSTAND",
-            //(optional) must match a source below if it exists
-            "sourceId": 1,
+            "sourceId": 1
         }],
-        "children": [{
-            //nested knowledge areas...
-        }],
+        "children": []
     }],
     "sources": [{
         "id": 1,
         "title": "Book about machine learning",
         "author": "Doe, Mustermann, et al.",
-        "uri": "http://localhost" //(optional)
+        "uri": "http://localhost"
     }]
 }
 \`\`\``;
