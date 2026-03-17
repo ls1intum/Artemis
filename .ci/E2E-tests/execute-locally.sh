@@ -54,6 +54,9 @@ export HOST_HOSTNAME="nginx"
 
 # Set Docker tag (required by compose file, but we build locally so value doesn't matter)
 export ARTEMIS_DOCKER_TAG="${ARTEMIS_DOCKER_TAG:-local}"
+# Admin credentials configure the Artemis server (via docker/artemis/config/playwright.env)
+# and are passed to the Playwright container (via docker/playwright.yml).
+# Playwright test code uses matching hardcoded defaults in support/users.ts.
 export ARTEMIS_ADMIN_USERNAME="${ARTEMIS_ADMIN_USERNAME:-artemis_admin}"
 export ARTEMIS_ADMIN_PASSWORD="${ARTEMIS_ADMIN_PASSWORD:-artemis_admin}"
 export TEST_TIMEOUT_SECONDS="${TEST_TIMEOUT_SECONDS:-360}"

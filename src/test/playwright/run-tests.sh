@@ -77,8 +77,10 @@ else
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
 fi
 
-# Move parallel results to final location (overwrites init test's results.xml)
+# Remove any stale results.xml (e.g. from playwright:setup init test) before
+# moving the real report into place, so CI never consumes an outdated report.
 echo "--- Finalizing test reports ---"
+rm -f ./test-reports/results.xml
 if [ -f ./test-reports/results-parallel.xml ]; then
     mv ./test-reports/results-parallel.xml ./test-reports/results.xml
 fi
