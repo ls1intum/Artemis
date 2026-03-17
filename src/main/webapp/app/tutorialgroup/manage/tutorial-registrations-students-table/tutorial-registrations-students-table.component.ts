@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { Component, computed, input } from '@angular/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
@@ -16,8 +16,11 @@ export interface TutorialRegistrationsStudentsTableRemoveActionColumnInfo {
     styleUrl: './tutorial-registrations-students-table.component.scss',
 })
 export class TutorialRegistrationsStudentsTableComponent {
-    protected readonly addPublicFilePrefix = addPublicFilePrefix;
-
     students = input.required<TutorialGroupRegisteredStudentDTO[]>();
     removeActionColumnInfo = input<TutorialRegistrationsStudentsTableRemoveActionColumnInfo>();
+    studentsWithCompleteProfilePictureUrl = computed(() => this.computeStudentsWithCompleteProfilePictureUrl());
+
+    private computeStudentsWithCompleteProfilePictureUrl(): TutorialGroupRegisteredStudentDTO[] {
+        return this.students().map((student) => ({ ...student, profilePictureUrl: addPublicFilePrefix(student.profilePictureUrl) }));
+    }
 }

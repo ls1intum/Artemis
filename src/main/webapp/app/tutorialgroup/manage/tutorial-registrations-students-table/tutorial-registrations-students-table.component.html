@@ -16,22 +16,22 @@
     <div class="scroll-container">
         <table class="table-body">
             <tbody>
-                @for (student of students(); track student.id) {
+                @for (student of studentsWithCompleteProfilePictureUrl(); track student.id) {
                     <tr class="table-row">
                         <td>
-                            <div class="student-property">
-                                <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="addPublicFilePrefix(student.profilePictureUrl)" />
+                            <span class="student-property">
+                                <jhi-profile-picture imageSizeInRem="3.5" [isBoxShadow]="true" [imageUrl]="student.profilePictureUrl" />
                                 {{ student.name }}
-                            </div>
+                            </span>
                         </td>
                         <td>
-                            <div class="student-property">{{ student.login }}</div>
+                            <span class="student-property">{{ student.login }}</span>
                         </td>
                         <td>
-                            <div class="student-property">{{ student.email }}</div>
+                            <span class="student-property">{{ student.email }}</span>
                         </td>
                         <td>
-                            <div class="student-property">{{ student.registrationNumber }}</div>
+                            <span class="student-property">{{ student.registrationNumber }}</span>
                         </td>
                         @if (actionColumn) {
                             <td class="action-column">

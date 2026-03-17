@@ -1,6 +1,5 @@
 import { Component, ElementRef, OnDestroy, TemplateRef, ViewContainerRef, computed, inject, input, model, signal, viewChild } from '@angular/core';
 import { Overlay, OverlayRef } from '@angular/cdk/overlay';
-import { TemplatePortal } from '@angular/cdk/portal';
 import { Validation, ValidationStatus } from 'app/shared/util/validation';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
@@ -9,6 +8,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { createPanelOverlay } from 'app/tutorialgroup/shared/util/search-input-overlay';
 
 @Component({
     selector: 'jhi-tutorial-edit-languages-input',
@@ -37,41 +37,7 @@ export class TutorialEditLanguagesInputComponent implements OnDestroy {
     openPanel(): void {
         if (!this.alreadyUsedLanguages()) return;
         if (this.overlayRef?.hasAttached()) return;
-
-        const searchInput = this.searchInput()?.nativeElement;
-        const panelTemplate = this.panelTemplate();
-        if (!searchInput || !panelTemplate) return;
-
-        const positionStrategy = this.overlay
-            .position()
-            .flexibleConnectedTo(searchInput)
-            .withPositions([
-                {
-                    originX: 'start',
-                    originY: 'bottom',
-                    overlayX: 'start',
-                    overlayY: 'top',
-                },
-                {
-                    originX: 'start',
-                    originY: 'top',
-                    overlayX: 'start',
-                    overlayY: 'bottom',
-                },
-            ])
-            .withFlexibleDimensions(false)
-            .withPush(false);
-
-        this.overlayRef = this.overlay.create({
-            positionStrategy,
-            scrollStrategy: this.overlay.scrollStrategies.reposition(),
-        });
-
-        this.overlayRef.updateSize({
-            width: searchInput.offsetWidth,
-        });
-
-        this.overlayRef.attach(new TemplatePortal(panelTemplate, this.viewContainerRef));
+        this.overlayRef = createPanelOverlay(this.overlay, this.searchInput()?.nativeElement, this.panelTemplate(), this.viewContainerRef);
     }
 
     closePanel() {
