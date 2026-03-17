@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -108,6 +109,8 @@ public class QuizExerciseCreationUpdateResource {
             @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
+        // Competency links are passed separately for proper two-phase persistence
+        quizExercise.setCompetencyLinks(new HashSet<>());
 
         // We create a new ExerciseGroup with the given id
         // The exercise group is replaced when retrieveCourseOverExerciseGroupOrCourseId
@@ -149,6 +152,9 @@ public class QuizExerciseCreationUpdateResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         quizExercise.setCourse(course);
+        // Competency links are passed separately to createQuizExercise for proper two-phase persistence;
+        // clear them from the exercise to prevent cascading detached entity references during the first save
+        quizExercise.setCompetencyLinks(new HashSet<>());
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, false, quizExerciseDTO.competencyLinks());
 

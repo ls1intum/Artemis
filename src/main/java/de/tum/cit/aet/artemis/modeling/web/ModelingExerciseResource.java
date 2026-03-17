@@ -263,10 +263,12 @@ public class ModelingExerciseResource {
         // Important: use the original exercise for permission check
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
         // Forbid changing the course the exercise belongs to.
-        if (updateModelingExerciseDTO.courseId() == null) {
-            throw new BadRequestAlertException("The courseId is required.", ENTITY_NAME, "courseIdMissing");
+        if (updateModelingExerciseDTO.courseId() == null && updateModelingExerciseDTO.exerciseGroupId() == null) {
+            throw new BadRequestAlertException("Either courseId or exerciseGroupId is required.", ENTITY_NAME, "courseOrExerciseGroupMissing");
         }
-        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
+        // For course exercises, verify the courseId matches; for exam exercises, courseId is null (exerciseGroupId is used instead)
+        if (updateModelingExerciseDTO.courseId() != null
+                && !Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateModelingExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "forbidChangeCourseId");
         }
 
