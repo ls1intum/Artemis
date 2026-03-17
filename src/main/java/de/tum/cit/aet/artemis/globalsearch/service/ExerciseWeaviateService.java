@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -355,24 +356,24 @@ public class ExerciseWeaviateService {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
             if (useHybridSearch) {
-                var result = collection.query.hybrid(query, h -> {
-                    h.limit(limit);
+                var result = collection.query.hybrid(query, hybridQueryBuilder -> {
+                    hybridQueryBuilder.limit(limit);
                     if (filter != null) {
-                        h.filters(filter);
+                        hybridQueryBuilder.filters(filter);
                     }
-                    return h;
+                    return hybridQueryBuilder;
                 });
-                return result.objects().stream().map(obj -> obj.properties()).toList();
+                return result.objects().stream().map(WeaviateObject::properties).toList();
             }
             else {
-                var result = collection.query.bm25(query, b -> {
-                    b.limit(limit);
+                var result = collection.query.bm25(query, bm25QueryBuilder -> {
+                    bm25QueryBuilder.limit(limit);
                     if (filter != null) {
-                        b.filters(filter);
+                        bm25QueryBuilder.filters(filter);
                     }
-                    return b;
+                    return bm25QueryBuilder;
                 });
-                return result.objects().stream().map(obj -> obj.properties()).toList();
+                return result.objects().stream().map(WeaviateObject::properties).toList();
             }
         }
         catch (Exception e) {
@@ -393,15 +394,15 @@ public class ExerciseWeaviateService {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            var result = collection.query.fetchObjects(q -> {
-                q.limit(limit);
+            var result = collection.query.fetchObjects(queryBuilder -> {
+                queryBuilder.limit(limit);
                 if (filter != null) {
-                    q.filters(filter);
+                    queryBuilder.filters(filter);
                 }
-                return q;
+                return queryBuilder;
             });
 
-            return result.objects().stream().map(obj -> obj.properties()).toList();
+            return result.objects().stream().map(WeaviateObject::properties).toList();
         }
         catch (Exception e) {
             log.error("Failed to fetch exercises: {}", e.getMessage(), e);
