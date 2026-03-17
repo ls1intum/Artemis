@@ -127,8 +127,10 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
         const expected: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
+
         // WHEN
-        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
+        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
 
         // THEN
         const req = httpMock.expectOne({
@@ -146,8 +148,10 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
+
         // WHEN
-        service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
+        service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
 
         // THEN
         const req = httpMock.expectOne({
