@@ -64,7 +64,7 @@ public class LocalCIBuildConfigurationService {
 
         if (activePhases != null) {
             // Phases path: assemble script from active phases with set -e for fail-fast behavior
-            buildScriptBuilder.append("#!/bin/bash\n");
+            buildScriptBuilder.append("#!/usr/bin/env bash\n");
             buildScriptBuilder.append("set -e\n");
             final String testingDirectory = LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir";
             final String goIntoTestingDirectoryCommand = "cd " + testingDirectory + "\n";

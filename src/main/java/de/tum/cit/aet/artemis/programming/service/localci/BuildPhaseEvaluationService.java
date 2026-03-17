@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.programming.service.localci;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
@@ -30,9 +32,6 @@ public class BuildPhaseEvaluationService {
         this.exerciseDateService = exerciseDateService;
     }
 
-    public record EvaluatedBuildPlan(List<BuildPhaseDTO> activePhases, List<String> resultPaths) {
-    }
-
     /**
      * Evaluates which build phases are active for the given participation.
      * <p>
@@ -44,14 +43,16 @@ public class BuildPhaseEvaluationService {
      * @param participation the participation for which the build is being triggered
      * @return the evaluated build plan with active phases and result paths
      */
-    public EvaluatedBuildPlan evaluate(BuildPlanPhasesDTO phases, ProgrammingExerciseParticipation participation) {
-        boolean allPhasesActive = isInstructorParticipation(participation) || exerciseDateService.isAfterDueDate(participation);
+    public List<BuildPhaseDTO> evaluate(BuildPlanPhasesDTO phases, ProgrammingExerciseParticipation participation) {
+        final boolean allPhasesActive = isInstructorParticipation(participation) || exerciseDateService.isAfterDueDate(participation);
+        return phases.phases() != null ? phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList() : List.of();
+    }
 
-        List<BuildPhaseDTO> activePhases = phases.phases() != null ? phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList() : List.of();
-
-        List<String> resultPaths = activePhases.stream().filter(phase -> phase.resultPaths() != null).flatMap(phase -> phase.resultPaths().stream()).toList();
-
-        return new EvaluatedBuildPlan(activePhases, resultPaths);
+    public static Set<String> gatherResultPaths(List<BuildPhaseDTO> activePhases) {
+        if (activePhases == null) {
+            return Set.of();
+        }
+        return activePhases.stream().filter(phase -> phase.resultPaths() != null).flatMap(phase -> phase.resultPaths().stream()).collect(Collectors.toSet());
     }
 
     private boolean isInstructorParticipation(ProgrammingExerciseParticipation participation) {

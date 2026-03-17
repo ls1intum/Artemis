@@ -6,6 +6,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -37,6 +38,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProjectType;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildJob;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 import de.tum.cit.aet.artemis.programming.repository.AuxiliaryRepositoryRepository;
@@ -353,7 +355,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled,
             DockerRunConfig dockerRunConfig) {
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan evaluated = buildPhaseEvaluationService.evaluate(buildPlanPhasesDTO, participation);
+        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(buildPlanPhasesDTO, participation);
 
         // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
         String dockerImage = buildPlanPhasesDTO.dockerImage();
@@ -361,11 +363,12 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             dockerImage = programmingLanguageConfiguration.getImage(programmingExercise.getProgrammingLanguage(), Optional.ofNullable(programmingExercise.getProjectType()));
         }
 
-        List<String> resultPaths = evaluated.resultPaths().stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
+        final Set<String> gatheredGlobResultPaths = BuildPhaseEvaluationService.gatherResultPaths(activePhases);
+        List<String> resultPaths = gatheredGlobResultPaths.stream().map(path -> LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/" + path).toList();
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
         programmingExercise.setBuildConfig(buildConfig);
-        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise, evaluated.activePhases());
+        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise, activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
