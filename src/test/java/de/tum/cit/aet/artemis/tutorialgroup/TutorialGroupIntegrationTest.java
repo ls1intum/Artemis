@@ -553,7 +553,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void update_asInstructor_withOnlyRequiredFields_shouldSucceed() throws Exception {
+    void update_asInstructor_withOnlyRequiredFields_shouldClearOptionalFields() throws Exception {
         var existingTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
 
         Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
@@ -577,6 +577,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         assertThat(updatedTutorialGroup.language()).isNull();
         assertThat(updatedTutorialGroup.campus()).isNull();
         assertThat(updatedTutorialGroup.tutorialGroupSchedule()).isNull();
+
+        var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
+        assertThat(persistedTutorialGroup.getTeachingAssistant()).isNull();
+        assertThat(persistedTutorialGroup.getAdditionalInformation()).isNull();
+        assertThat(persistedTutorialGroup.getCapacity()).isNull();
+        assertThat(persistedTutorialGroup.getLanguage()).isNull();
+        assertThat(persistedTutorialGroup.getCampus()).isNull();
+        assertThat(persistedTutorialGroup.getTutorialGroupSchedule()).isNull();
     }
 
     @Test

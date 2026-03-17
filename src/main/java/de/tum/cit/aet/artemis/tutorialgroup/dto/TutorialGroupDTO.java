@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param campus                the campus where the tutorial group is held
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupDTO(@Nullable Long id, @NotBlank @Size(max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant, @Nullable String additionalInformation,
-        @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus) {
+public record TutorialGroupDTO(@Nullable Long id, @NotBlank @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
+        @Nullable String additionalInformation, @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus) {
 
     /**
      * Minimal DTO for the teaching assistant, only containing the login needed to look up the user.

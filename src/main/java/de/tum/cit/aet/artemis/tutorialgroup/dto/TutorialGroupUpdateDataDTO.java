@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO.TeachingAssista
  * DTO for updating tutorial groups. Builds on the create DTO data with schedule information.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupUpdateDataDTO(@NotNull Long id, @NotBlank @Size(max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
+public record TutorialGroupUpdateDataDTO(@NotNull Long id, @NotBlank @Size(min = 1, max = 19) String title, @Nullable TeachingAssistantDTO teachingAssistant,
         @Nullable String additionalInformation, @Nullable Integer capacity, @NotNull Boolean isOnline, @Nullable String language, @Nullable String campus,
         @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule) {
 

@@ -208,12 +208,12 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void update_shouldReturnNotFoundWhenConfigurationIdMismatch() throws Exception {
+    void update_shouldReturnBadRequestWhenConfigurationIdMismatch() throws Exception {
         var configuration = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, FIRST_AUGUST_MONDAY, FIRST_SEPTEMBER_MONDAY);
 
         var dto = TutorialGroupConfigurationDTO.of(configuration);
 
-        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.NOT_FOUND);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath(courseId, configuration.getId() + 5), dto, TutorialGroupConfigurationDTO.class, HttpStatus.BAD_REQUEST);
     }
 
     /**
