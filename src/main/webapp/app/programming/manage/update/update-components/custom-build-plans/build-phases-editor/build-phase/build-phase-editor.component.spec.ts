@@ -46,10 +46,10 @@ describe('BuildPhaseEditorComponent', () => {
     const getPhaseNameInput = () => fixture.debugElement.nativeElement.querySelector('#phase-name-input-1') as HTMLInputElement;
     const getScriptEditor = () => fixture.debugElement.query(By.css('[data-testid="script-editor"]'));
     const getResultPathInput = (index: number) => fixture.debugElement.nativeElement.querySelector(`[data-testid="result-path-input-${index}"]`) as HTMLInputElement | null;
-    const getMoveUpButton = () => fixture.debugElement.nativeElement.querySelector('#move-up-button') as HTMLButtonElement;
-    const getMoveDownButton = () => fixture.debugElement.nativeElement.querySelector('#move-down-button') as HTMLButtonElement;
-    const getDeletePhaseButton = () => fixture.debugElement.nativeElement.querySelector('#delete-phase-button') as HTMLButtonElement;
-    const getAddResultPathButton = () => fixture.debugElement.nativeElement.querySelector('#add-result-path-button') as HTMLButtonElement;
+    const getMoveUpButton = () => fixture.debugElement.nativeElement.querySelector(`#move-up-button-${component.index()}`) as HTMLButtonElement;
+    const getMoveDownButton = () => fixture.debugElement.nativeElement.querySelector(`#move-down-button-${component.index()}`) as HTMLButtonElement;
+    const getDeletePhaseButton = () => fixture.debugElement.nativeElement.querySelector(`#delete-phase-button-${component.index()}`) as HTMLButtonElement;
+    const getAddResultPathButton = () => fixture.debugElement.nativeElement.querySelector(`#add-result-path-button-${component.index()}`) as HTMLButtonElement;
     const getDeleteResultPathButton = (index: number) =>
         fixture.debugElement.nativeElement.querySelector(`[data-testid="delete-result-path-button-${index}"]`) as HTMLButtonElement | null;
 
