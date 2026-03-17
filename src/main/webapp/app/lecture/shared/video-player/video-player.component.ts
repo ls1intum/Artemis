@@ -77,6 +77,7 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
             const timestamp = this.initialTimestamp();
             if (timestamp === undefined || !Number.isFinite(timestamp) || timestamp < 0) {
                 this.lastInitialTimestamp = undefined;
+                this.pendingInitialSeek = undefined;
                 return;
             }
 
