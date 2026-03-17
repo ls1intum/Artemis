@@ -3,7 +3,8 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { catchError, timeout } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
-import { CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyRelationType, CompetencyTaxonomy } from 'app/atlas/shared/entities/competency.model';
+import { RelationGraphPreview } from 'app/atlas/shared/entities/chat-message.model';
 
 interface AgentChatRequest {
     message: string;
@@ -18,17 +19,31 @@ export interface CompetencyPreviewResponse {
     viewOnly?: boolean;
 }
 
+export interface CompetencyRelationPreviewResponse {
+    relationId?: number;
+    tailCompetencyId: number;
+    tailCompetencyTitle: string;
+    headCompetencyId: number;
+    headCompetencyTitle: string;
+    relationType: CompetencyRelationType;
+    viewOnly?: boolean;
+}
+
 export interface AgentChatResponse {
     message: string;
     timestamp: string;
     competenciesModified: boolean;
     competencyPreviews?: CompetencyPreviewResponse[];
+    relationPreviews?: CompetencyRelationPreviewResponse[];
+    relationGraphPreview?: RelationGraphPreview;
 }
 
 export interface AgentHistoryMessage {
     content: string;
     isUser: boolean;
     competencyPreviews?: CompetencyPreviewResponse[];
+    relationPreviews?: CompetencyRelationPreviewResponse[];
+    relationGraphPreview?: RelationGraphPreview;
 }
 
 @Injectable({

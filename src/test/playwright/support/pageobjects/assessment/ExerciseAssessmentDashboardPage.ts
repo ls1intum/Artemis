@@ -10,7 +10,9 @@ export class ExerciseAssessmentDashboardPage {
     }
 
     async clickHaveReadInstructionsButton() {
-        await this.page.click('#participate-in-assessment');
+        const participateButton = this.page.locator('#participate-in-assessment');
+        await Commands.reloadUntilFound(this.page, participateButton);
+        await participateButton.click();
     }
 
     async clickStartNewAssessment(assessmentRound: number = 1) {
