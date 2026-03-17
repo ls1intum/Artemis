@@ -75,6 +75,10 @@
                     padding: 0;
                     color: var(--danger);
 
+                    span {
+                        font-size: 1.25rem;
+                    }
+
                     &:hover {
                         opacity: 0.8;
                     }
