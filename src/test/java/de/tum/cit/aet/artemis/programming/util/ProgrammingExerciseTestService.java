@@ -2723,12 +2723,14 @@ public class ProgrammingExerciseTestService {
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(7);
         exercise.setPlagiarismDetectionConfig(config);
 
-        request.putWithResponseBody("/api/programming/programming-exercises", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(exercise),
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
 
         // Test invalid response period lower bound
         config.setSimilarityThreshold(50);
         config.setContinuousPlagiarismControlPlagiarismCaseStudentResponsePeriod(6); // invalid: below 7
-        request.putWithResponseBody("/api/programming/programming-exercises", exercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(exercise),
+                ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     // TEST
