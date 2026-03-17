@@ -195,7 +195,13 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
-        ModelingExercise result = exerciseService.saveWithCompetencyLinks(modelingExercise, modelingExerciseRepository::save);
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(modelingExercise);
+        ModelingExercise savedExercise = modelingExerciseRepository.save(modelingExercise);
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = modelingExerciseRepository.save(savedExercise);
+        }
+        final ModelingExercise result = savedExercise;
 
         channelService.createExerciseChannel(result, Optional.ofNullable(modelingExercise.getChannelName()));
         groupNotificationScheduleService.checkNotificationsForNewExerciseAsync(modelingExercise);
@@ -283,7 +289,7 @@ public class ModelingExerciseResource {
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
-        ModelingExercise persistedExercise = exerciseService.saveWithCompetencyLinks(updatedExercise, modelingExerciseRepository::save);
+        ModelingExercise persistedExercise = modelingExerciseRepository.save(updatedExercise);
 
         exerciseService.logUpdate(updatedExercise, updatedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);

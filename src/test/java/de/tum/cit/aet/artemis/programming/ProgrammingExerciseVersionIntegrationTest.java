@@ -261,7 +261,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
 
-        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
@@ -278,7 +279,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         final var endpoint = "/api/programming/programming-exercises/" + programmingExercise.getId() + "/re-evaluate?deleteFeedback=false";
-        request.putWithResponseBody(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody(endpoint, de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise), ProgrammingExercise.class,
+                HttpStatus.OK);
 
         ExerciseVersion newVersion = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(newVersion.getId()).isNotEqualTo(originalVersion.getId());
@@ -430,7 +432,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
         ExerciseVersion version1 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
 
         ExerciseVersion version2 = exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
         assertThat(version2.getId()).isNotEqualTo(version1.getId());
@@ -481,7 +484,8 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExerciseVersions_includesPaginationHeaders() throws Exception {
         ExerciseVersionUtilService.updateExercise(programmingExercise);
-        request.putWithResponseBody("/api/programming/programming-exercises", programmingExercise, ProgrammingExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/programming/programming-exercises", de.tum.cit.aet.artemis.programming.dto.UpdateProgrammingExerciseDTO.of(programmingExercise),
+                ProgrammingExercise.class, HttpStatus.OK);
         exerciseVersionUtilService.verifyExerciseVersionCreated(programmingExercise.getId(), TEST_PREFIX + "instructor1", ExerciseType.PROGRAMMING);
 
         MvcResult mvcResult = request
