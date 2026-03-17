@@ -187,7 +187,12 @@ public class ProgrammingExerciseImportBasicService {
             }
         }
 
-        final ProgrammingExercise importedExercise = exerciseService.saveWithCompetencyLinks(newProgrammingExercise, programmingExerciseRepository::save);
+        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(newProgrammingExercise);
+        ProgrammingExercise importedExercise = programmingExerciseRepository.save(newProgrammingExercise);
+        if (!competencyLinks.isEmpty()) {
+            exerciseService.addCompetencyLinksForCreation(importedExercise, competencyLinks);
+            importedExercise = programmingExerciseRepository.save(importedExercise);
+        }
 
         final Map<Long, Long> newTestCaseIdByOldId = importTestCases(originalProgrammingExercise, importedExercise);
         importTasks(originalProgrammingExercise, importedExercise, newTestCaseIdByOldId);
