@@ -41,11 +41,17 @@ public record TutorialGroupResponseDTO(@NotNull Long id, @NotBlank @Size(min = 1
     public static TutorialGroupResponseDTO from(TutorialGroup tutorialGroup) {
         return new TutorialGroupResponseDTO(tutorialGroup.getId(), tutorialGroup.getTitle(), CourseDTO.from(tutorialGroup.getCourse()), tutorialGroup.getCapacity(),
                 tutorialGroup.getCampus(), tutorialGroup.getLanguage(), tutorialGroup.getAdditionalInformation(), tutorialGroup.getIsOnline(),
-                UserDTO.from(tutorialGroup.getTeachingAssistant()), TutorialGroupScheduleDTO.from(tutorialGroup.getTutorialGroupSchedule()), tutorialGroupSessions(tutorialGroup),
-                registrations(tutorialGroup), tutorialGroup.getChannel(), tutorialGroup.getIsUserRegistered(), tutorialGroup.getIsUserTutor(),
-                tutorialGroup.getNumberOfRegisteredUsers(), tutorialGroup.getTeachingAssistantName(), tutorialGroup.getTeachingAssistantId(),
-                tutorialGroup.getTeachingAssistantImageUrl(), tutorialGroup.getCourseTitle(), TutorialGroupSessionDTO.from(tutorialGroup.getNextSession()),
-                tutorialGroup.getAverageAttendance());
+                UserDTO.from(tutorialGroup.getTeachingAssistant()), tutorialGroupSchedule(tutorialGroup), tutorialGroupSessions(tutorialGroup), registrations(tutorialGroup),
+                tutorialGroup.getChannel(), tutorialGroup.getIsUserRegistered(), tutorialGroup.getIsUserTutor(), tutorialGroup.getNumberOfRegisteredUsers(),
+                tutorialGroup.getTeachingAssistantName(), tutorialGroup.getTeachingAssistantId(), tutorialGroup.getTeachingAssistantImageUrl(), tutorialGroup.getCourseTitle(),
+                TutorialGroupSessionDTO.from(tutorialGroup.getNextSession()), tutorialGroup.getAverageAttendance());
+    }
+
+    private static TutorialGroupScheduleDTO tutorialGroupSchedule(TutorialGroup tutorialGroup) {
+        if (!getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSchedule") || tutorialGroup.getTutorialGroupSchedule() == null) {
+            return null;
+        }
+        return TutorialGroupScheduleDTO.from(tutorialGroup.getTutorialGroupSchedule());
     }
 
     private static List<TutorialGroupSessionDTO> tutorialGroupSessions(TutorialGroup tutorialGroup) {
