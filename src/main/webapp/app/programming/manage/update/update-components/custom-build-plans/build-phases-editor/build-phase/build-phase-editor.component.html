@@ -1,11 +1,11 @@
 <p-card class="mb-2 border">
     <div class="d-flex align-items-center gap-2 mb-2">
-        <p-badge [value]="index() + 1" badgeSize="large" />
+        <p-badge [value]="displayedNumber()" badgeSize="large" />
         <span class="bold">{{ 'artemisApp.programmingExercise.buildPhasesEditor.phase' | artemisTranslate }}: {{ phase().name }}</span>
 
         <div class="d-flex gap-1 ms-auto">
             <button
-                id="move-up-button"
+                [id]="'move-up-button-' + index()"
                 pButton
                 [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveUp' | artemisTranslate"
                 tooltipPosition="bottom"
@@ -20,7 +20,7 @@
             </button>
 
             <button
-                id="move-down-button"
+                [id]="'move-down-button-' + index()"
                 pButton
                 [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.moveDown' | artemisTranslate"
                 tooltipPosition="bottom"
@@ -35,7 +35,7 @@
             </button>
 
             <button
-                id="delete-phase-button"
+                [id]="'delete-phase-button-' + index()"
                 class="ms-2"
                 pButton
                 [pTooltip]="'artemisApp.programmingExercise.buildPhasesEditor.delete' | artemisTranslate"
@@ -123,7 +123,7 @@
         }
 
         <div>
-            <button id="add-result-path-button" pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
+            <button [id]="'add-result-path-button-' + index()" pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
                 <fa-icon [icon]="faPlus" pButtonIcon />
                 <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addResultPath"></span>
             </button>

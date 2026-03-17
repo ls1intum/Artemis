@@ -56,6 +56,7 @@ export class BuildPhaseEditorComponent {
     readonly index = input.required<number>();
     readonly isLast = input.required<boolean>();
 
+    readonly displayedNumber = computed(() => this.index() + 1);
     readonly isFirst = computed(() => this.index() === 0);
     readonly isOnly = computed(() => this.isFirst() && this.isLast());
 
