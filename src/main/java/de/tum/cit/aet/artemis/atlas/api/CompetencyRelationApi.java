@@ -82,4 +82,24 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     public void deleteAllLectureUnitLinksByLectureId(Long lectureId) {
         lectureUnitLinkRepository.deleteAllByLectureId(lectureId);
     }
+
+    /**
+     * Finds a competency or prerequisite by its ID or throws an exception.
+     *
+     * @param competencyId the ID of the competency
+     * @return the found competency
+     */
+    public CourseCompetency findCompetencyOrPrerequisiteByIdElseThrow(long competencyId) {
+        return courseCompetencyRepository.findByIdElseThrow(competencyId);
+    }
+
+    /**
+     * Finds all competencies by their IDs.
+     *
+     * @param ids the IDs of the competencies
+     * @return the found competencies
+     */
+    public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
+        return courseCompetencyRepository.findAllById(ids);
+    }
 }
