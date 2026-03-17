@@ -49,6 +49,12 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
         competencyExerciseLinkRepository.deleteAll(competencyExerciseLinks);
     }
 
+    /**
+     * Save all exercise links, ensuring referenced competencies are managed entities.
+     *
+     * @param competencyExerciseLinks the exercise links to save
+     * @return the saved exercise links
+     */
     public List<CompetencyExerciseLink> saveAllExerciseLinks(Iterable<CompetencyExerciseLink> competencyExerciseLinks) {
         List<CompetencyExerciseLink> links = StreamSupport.stream(competencyExerciseLinks.spliterator(), false).toList();
 
