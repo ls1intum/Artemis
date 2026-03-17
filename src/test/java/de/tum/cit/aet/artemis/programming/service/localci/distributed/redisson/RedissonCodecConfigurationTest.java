@@ -87,6 +87,22 @@ class RedissonCodecConfigurationTest {
         assertThat(deserialized.exception()).isNull();
     }
 
+    @Test
+    void roundTripEmptyTestMessagesNotNull() throws Exception {
+        ObjectMapper objectMapper = configuredMapper();
+
+        // Successful test with empty testMessages — this is the common case
+        var testJob = new LocalCITestJobDTO("TestCompile", List.of());
+
+        // Serialize as Object.class like Redisson does internally
+        String json = objectMapper.writerFor(Object.class).writeValueAsString(testJob);
+        Object raw = objectMapper.readValue(json, Object.class);
+        LocalCITestJobDTO deserialized = objectMapper.convertValue(raw, LocalCITestJobDTO.class);
+
+        assertThat(deserialized.name()).isEqualTo("TestCompile");
+        assertThat(deserialized.testMessages()).isNotNull().isEmpty();
+    }
+
     private static ObjectMapper configuredMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
         RedissonCodecConfiguration.configureObjectMapper(objectMapper);

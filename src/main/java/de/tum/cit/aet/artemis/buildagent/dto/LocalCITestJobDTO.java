@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.buildagent.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -15,4 +17,8 @@ import de.tum.cit.aet.artemis.programming.dto.TestCaseBase;
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public record LocalCITestJobDTO(String name, List<String> testMessages) implements TestCaseBase, Serializable {
+
+    public LocalCITestJobDTO {
+        testMessages = Objects.requireNonNullElse(testMessages, new ArrayList<>());
+    }
 }
