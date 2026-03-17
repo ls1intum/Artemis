@@ -389,6 +389,7 @@ public class PyrisPipelineService {
         // @formatter:off
         executePipeline(
             "autonomous-tutor",
+            null,
             variant,
             Optional.empty(),
             pyrisJobService.addAutonomousTutorJob(post.id(), course.getId()),

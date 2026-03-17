@@ -64,6 +64,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class User extends AbstractAuditingEntity implements Participant {
 
+    public static final String IRIS_BOT_LOGIN = "iris_bot";
+
     @NonNull
     @Pattern(regexp = Constants.LOGIN_REGEX)
     @Size(min = USERNAME_MIN_LENGTH, max = USERNAME_MAX_LENGTH)
@@ -450,6 +452,11 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setInternal(boolean internal) {
         this.internal = internal;
+    }
+
+    @JsonIgnore
+    public boolean isBot() {
+        return IRIS_BOT_LOGIN.equals(this.login);
     }
 
     public boolean isDeleted() {
