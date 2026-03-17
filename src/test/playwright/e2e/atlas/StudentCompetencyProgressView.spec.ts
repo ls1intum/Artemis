@@ -346,16 +346,22 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const quizExercise = await createResponse.json();
 
             // Make quiz visible and start it immediately
-            await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
-            await exerciseAPIRequests.startQuizNow(quizExercise.id!);
+            const visibleResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}/set-visible`);
+            expect(visibleResponse.ok(), `setQuizVisible failed: ${visibleResponse.status()}`).toBeTruthy();
+            const startResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}/start-now`);
+            expect(startResponse.ok(), `startQuizNow failed: ${startResponse.status()}`).toBeTruthy();
 
             // Login as student and navigate directly to quiz exercise
             await login(studentOne);
             await page.goto(`/courses/${nestedCourse.id}/exercises/${quizExercise.id}`);
-            await page.waitForLoadState('domcontentloaded');
+            await page.waitForLoadState('networkidle');
 
             // Start the exercise
             await courseOverview.startExercise(quizExercise.id!);
+
+            // Wait for quiz participation page to load with questions
+            await page.waitForSelector(`#exercise-${quizExercise.id}`, { timeout: 10000 });
+            await page.waitForSelector('#answer-option-0', { timeout: 10000 });
 
             // Answer the multiple choice question - tick the first two options (correct answers)
             await quizExerciseMultipleChoice.tickAnswerOption(quizExercise.id!, 0);
