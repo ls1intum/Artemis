@@ -49,10 +49,11 @@ export class ChatStatusBarComponent {
         effect(() => {
             const stage = this.activeStage();
             const name = stage?.name ?? '';
-            if (name && name !== untracked(() => this.displayName())) {
-                this.displayName.set(this.translateLabel(name));
+            const translated = name ? this.translateLabel(name) : '';
+            if (translated && translated !== untracked(() => this.displayName())) {
+                this.displayName.set(translated);
                 this.animToggle.update((v) => !v);
-            } else if (!name) {
+            } else if (!translated) {
                 this.displayName.set('');
             }
         });
