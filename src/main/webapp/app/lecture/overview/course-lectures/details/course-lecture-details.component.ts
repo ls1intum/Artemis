@@ -1,4 +1,5 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MODULE_FEATURE_IRIS, addPublicFilePrefix } from 'app/app.constants';
@@ -72,6 +73,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     private readonly profileService = inject(ProfileService);
     private readonly irisSettingsService = inject(IrisSettingsService);
     private readonly scienceService = inject(ScienceService);
+    private readonly destroyRef = inject(DestroyRef);
 
     protected readonly LectureUnitType = LectureUnitType;
     protected readonly isCommunicationEnabled = isCommunicationEnabled;
@@ -94,6 +96,9 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     irisEnabled = false;
     informationBoxData: InformationBox[] = [];
 
+    readonly targetUnitId = signal<number | undefined>(undefined);
+    readonly targetVideoTimestamp = signal<number | undefined>(undefined);
+
     ngOnInit(): void {
         this.irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
 
@@ -111,6 +116,22 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             if (this.lectureId) {
                 this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN, this.lectureId);
                 this.loadData();
+            }
+        });
+
+        this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+            const unitId = Number(params['unit']);
+            if (Number.isInteger(unitId) && unitId > 0) {
+                this.targetUnitId.set(unitId);
+                const timestamp = Number(params['timestamp']);
+                this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
+            } else {
+                this.targetUnitId.set(undefined);
+                this.targetVideoTimestamp.set(undefined);
+            }
+
+            if (this.lectureUnits.length > 0) {
+                this.ensureValidDeepLinkTargets();
             }
         });
     }
@@ -135,6 +156,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
                         });
 
                         this.lectureUnits = this.lecture?.lectureUnits ?? [];
+                        this.ensureValidDeepLinkTargets();
                         if (this.lectureUnits?.length) {
                             // Check if PDF attachments exist in lecture units
                             this.hasPdfLectureUnit =
@@ -216,6 +238,24 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             content: boxContentStartDate,
             isContentComponent: true,
         };
+    }
+
+    private ensureValidDeepLinkTargets(): void {
+        const targetUnitId = this.targetUnitId();
+        if (!targetUnitId) {
+            return;
+        }
+
+        const targetUnit = this.lectureUnits.find((unit) => unit.id === targetUnitId);
+        if (!targetUnit) {
+            this.targetUnitId.set(undefined);
+            this.targetVideoTimestamp.set(undefined);
+            return;
+        }
+
+        if (targetUnit.type !== LectureUnitType.ATTACHMENT_VIDEO) {
+            this.targetVideoTimestamp.set(undefined);
+        }
     }
 
     ngOnDestroy() {
