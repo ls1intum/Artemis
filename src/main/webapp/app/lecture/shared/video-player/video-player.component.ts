@@ -58,6 +58,9 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
     /** Store reference to window resize handler for cleanup */
     private resizeHandler: (() => void) | undefined = undefined;
 
+    /** Store reference to loadedmetadata handler for cleanup */
+    private loadedmetadataHandler: (() => void) | undefined = undefined;
+
     /** ResizeObserver for syncing transcript height with video column */
     private resizeObserver: ResizeObserver | undefined = undefined;
 
@@ -237,17 +240,23 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         }
 
         this.pendingInitialSeek = target;
-        videoElement.addEventListener(
-            'loadedmetadata',
-            () => {
-                const pending = this.pendingInitialSeek;
-                this.pendingInitialSeek = undefined;
-                if (pending !== undefined) {
-                    this.applyInitialSeek(videoElement, pending);
-                }
-            },
-            { once: true },
-        );
+
+        // Remove any existing listener before adding a new one
+        if (this.loadedmetadataHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
+        }
+
+        // Create a named listener function that can be removed later
+        this.loadedmetadataHandler = () => {
+            const pending = this.pendingInitialSeek;
+            this.pendingInitialSeek = undefined;
+            this.loadedmetadataHandler = undefined; // Clear reference after firing
+            if (pending !== undefined) {
+                this.applyInitialSeek(videoElement, pending);
+            }
+        };
+
+        videoElement.addEventListener('loadedmetadata', this.loadedmetadataHandler, { once: true });
     }
 
     private applyInitialSeek(videoElement: HTMLVideoElement, seconds: number): void {
@@ -288,6 +297,13 @@ export class VideoPlayerComponent implements AfterViewInit, OnDestroy {
         if (videoElement && this.timeupdateHandler) {
             videoElement.removeEventListener('timeupdate', this.timeupdateHandler);
             this.timeupdateHandler = undefined;
+        }
+
+        // Remove loadedmetadata listener to prevent memory leaks
+        if (videoElement && this.loadedmetadataHandler) {
+            videoElement.removeEventListener('loadedmetadata', this.loadedmetadataHandler);
+            this.loadedmetadataHandler = undefined;
+            this.pendingInitialSeek = undefined; // Clear pending seek as well
         }
 
         // Destroy HLS instance
