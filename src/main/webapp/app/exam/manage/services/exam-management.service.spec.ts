@@ -20,7 +20,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;
@@ -59,7 +58,7 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = toExamUpdateDTO({ id: 1 } as Exam);
+        const expectedBody = ExamManagementService.convertExamDatesFromClient({ id: 1 } as Exam);
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -76,7 +75,7 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = toExamUpdateDTO({ id: 1 } as Exam);
+        const expectedBody = ExamManagementService.convertExamDatesFromClient({ id: 1 } as Exam);
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -93,7 +92,7 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
+        const expectedBody = ExamManagementService.convertExamDatesFromClient({ id: 1 } as Exam);
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));

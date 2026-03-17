@@ -40,7 +40,7 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     }
 
     /**
-     * Saves all given competency exercise links, ensuring referenced competencies are managed entities.
+     * Saves all given competency exercise links by directly delegating to {@link CompetencyExerciseLinkRepository#saveAll(Iterable)}.
      *
      * @param competencyExerciseLinks the links to save
      * @return the saved links
