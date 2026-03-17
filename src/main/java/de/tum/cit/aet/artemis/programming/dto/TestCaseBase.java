@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.programming.dto;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 /**
@@ -23,6 +22,5 @@ public interface TestCaseBase {
      *
      * @return the messages of the test case
      */
-    @JsonIgnore
     List<String> testMessages();
 }

@@ -75,7 +75,9 @@ class RedissonCodecConfigurationTest {
         assertThat(deserialized.buildResult().assignmentRepoCommitHash()).isEqualTo("abc123");
         assertThat(deserialized.buildResult().jobs()).hasSize(1);
         assertThat(deserialized.buildResult().jobs().getFirst().failedTests()).hasSize(1);
+        assertThat(deserialized.buildResult().jobs().getFirst().failedTests().getFirst().testMessages()).containsExactly("Expected 'Hello world!' but received read ''");
         assertThat(deserialized.buildResult().jobs().getFirst().successfulTests()).hasSize(2);
+        assertThat(deserialized.buildResult().jobs().getFirst().successfulTests().getFirst().testMessages()).isNotNull().isEmpty();
         assertThat(deserialized.buildResult().buildLogEntries()).hasSize(2);
 
         // Verify BuildJobQueueItem

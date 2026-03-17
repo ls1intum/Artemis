@@ -27,6 +27,7 @@ public record TestCaseDTO(String name, String classname, double time, @JsonPrope
         return ObjectUtils.isEmpty(errors) && ObjectUtils.isEmpty(failures);
     }
 
+    @JsonIgnore
     @Override
     public List<String> testMessages() {
         return extractMessage().map(Collections::singletonList).orElse(Collections.emptyList());
