@@ -298,9 +298,12 @@ export class CourseOverviewService {
             const conversationCardItem = this.mapConversationToSidebarCardElement(course, conversation);
             const isDmOrGroupChat = conversation.type === ConversationType.ONE_TO_ONE || conversation.type === ConversationType.GROUP_CHAT;
 
-            // Add all unread messages from DMs or Groupchats to the "unreadMessages" group
-            if ((conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden && isDmOrGroupChat) {
+            const isUnreadDmOrGroupChat = (conversation.unreadMessagesCount ?? 0) > 0 && !conversation.isHidden && isDmOrGroupChat;
+
+            // Add all unread messages from DMs or Groupchats to the "unreadMessages" group, remove them from all other sidebar groups
+            if (isUnreadDmOrGroupChat) {
                 groupedConversationGroups.unreadMessages.entityData.push(conversationCardItem);
+                continue;
             }
 
             // Add the conversation card to all applicable sidebar groups
