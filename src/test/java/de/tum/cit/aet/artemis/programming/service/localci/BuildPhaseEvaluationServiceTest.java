@@ -40,11 +40,11 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.activePhases()).containsExactly(compile, test);
-        assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
+        assertThat(activePhases).hasSize(2);
+        assertThat(activePhases).containsExactly(compile, test);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactly("target/surefire-reports/*.xml");
     }
 
     @Test
@@ -55,11 +55,11 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(1);
-        assertThat(result.activePhases()).containsExactly(compile);
-        assertThat(result.resultPaths()).isEmpty();
+        assertThat(activePhases).hasSize(1);
+        assertThat(activePhases).containsExactly(compile);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
     }
 
     @Test
@@ -70,11 +70,11 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.activePhases()).containsExactly(compile, test);
-        assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
+        assertThat(activePhases).hasSize(2);
+        assertThat(activePhases).containsExactly(compile, test);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactly("target/surefire-reports/*.xml");
     }
 
     @Test
@@ -83,10 +83,10 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).isEmpty();
-        assertThat(result.resultPaths()).isEmpty();
+        assertThat(activePhases).isEmpty();
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
     }
 
     @Test
@@ -97,10 +97,10 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).isEmpty();
-        assertThat(result.resultPaths()).isEmpty();
+        assertThat(activePhases).isEmpty();
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
     }
 
     @Test
@@ -111,11 +111,11 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.activePhases()).containsExactly(test1, test2);
-        assertThat(result.resultPaths()).containsExactlyInAnyOrder("module1/target/*.xml", "module2/target/*.xml");
+        assertThat(activePhases).hasSize(2);
+        assertThat(activePhases).containsExactly(test1, test2);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactlyInAnyOrder("module1/target/*.xml", "module2/target/*.xml");
     }
 
     @Test
@@ -126,10 +126,10 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.resultPaths()).containsExactly("compile-results/*.xml", "test-results/*.xml", "integration/*.xml");
+        assertThat(activePhases).hasSize(2);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactlyInAnyOrder("compile-results/*.xml", "test-results/*.xml", "integration/*.xml");
     }
 
     @Test
@@ -139,11 +139,11 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(1);
-        assertThat(result.activePhases()).containsExactly(compile);
-        assertThat(result.resultPaths()).isEmpty();
+        assertThat(activePhases).hasSize(1);
+        assertThat(activePhases).containsExactly(compile);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
     }
 
     @Test
@@ -153,10 +153,10 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
-        assertThat(result.activePhases()).hasSize(1);
-        assertThat(result.resultPaths()).isEmpty();
+        assertThat(activePhases).hasSize(1);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
     }
 
     @Test
@@ -169,12 +169,12 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
         // Before due date: only compile runs, no result paths
-        assertThat(result.activePhases()).hasSize(1);
-        assertThat(result.activePhases()).containsExactly(compile);
-        assertThat(result.resultPaths()).isEmpty();
+        assertThat(activePhases).hasSize(1);
+        assertThat(activePhases).containsExactly(compile);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).isEmpty();
     }
 
     @Test
@@ -187,12 +187,12 @@ class BuildPhaseEvaluationServiceTest {
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, participation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, participation);
 
         // After due date: all phases run, result paths present
-        assertThat(result.activePhases()).hasSize(3);
-        assertThat(result.activePhases()).containsExactly(compile, test, sca);
-        assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
+        assertThat(activePhases).hasSize(3);
+        assertThat(activePhases).containsExactly(compile, test, sca);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactlyInAnyOrder("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
     }
 
     @Test
@@ -204,11 +204,11 @@ class BuildPhaseEvaluationServiceTest {
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         // ExerciseDateService should not even be consulted for template participations
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, templateParticipation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, templateParticipation);
 
-        assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.activePhases()).containsExactly(compile, test);
-        assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml");
+        assertThat(activePhases).hasSize(2);
+        assertThat(activePhases).containsExactly(compile, test);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactly("target/surefire-reports/*.xml");
     }
 
     @Test
@@ -221,11 +221,11 @@ class BuildPhaseEvaluationServiceTest {
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test, sca), "ubuntu:latest");
 
         // ExerciseDateService should not even be consulted for solution participations
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, solutionParticipation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, solutionParticipation);
 
-        assertThat(result.activePhases()).hasSize(3);
-        assertThat(result.activePhases()).containsExactly(compile, test, sca);
-        assertThat(result.resultPaths()).containsExactly("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
+        assertThat(activePhases).hasSize(3);
+        assertThat(activePhases).containsExactly(compile, test, sca);
+        assertThat(BuildPhaseEvaluationService.gatherResultPaths(activePhases)).containsExactlyInAnyOrder("target/surefire-reports/*.xml", "target/checkstyle-result.xml");
     }
 
     @Test
@@ -236,9 +236,9 @@ class BuildPhaseEvaluationServiceTest {
         BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module2/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(test1, test2), "ubuntu:latest");
 
-        BuildPhaseEvaluationService.EvaluatedBuildPlan result = buildPhaseEvaluationService.evaluate(phases, templateParticipation);
+        List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, templateParticipation);
 
-        assertThat(result.activePhases()).hasSize(2);
-        assertThat(result.activePhases()).containsExactly(test1, test2);
+        assertThat(activePhases).hasSize(2);
+        assertThat(activePhases).containsExactly(test1, test2);
     }
 }

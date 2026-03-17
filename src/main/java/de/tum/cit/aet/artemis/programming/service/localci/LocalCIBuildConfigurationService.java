@@ -110,7 +110,7 @@ public class LocalCIBuildConfigurationService {
                 buildConfig.getTestCheckoutPath());
     }
 
-    private static String computeAeolusStyleScript(List<BuildPhaseDTO> activePhases) {
+    protected static String computeAeolusStyleScript(List<BuildPhaseDTO> activePhases) {
         List<BuildPhaseDTO> nonForceRunPhases = new ArrayList<>();
         List<BuildPhaseDTO> forceRunPhases = new ArrayList<>();
 
@@ -144,7 +144,7 @@ public class LocalCIBuildConfigurationService {
 
     private static void appendPhaseFunction(StringBuilder scriptBuilder, BuildPhaseDTO phase) {
         scriptBuilder.append(phase.name()).append(" () {\n");
-        scriptBuilder.append("  echo '\\u2699\\uFE0F executing ").append(phase.name()).append("'\n");
+        scriptBuilder.append("  echo '⚙️ executing ").append(phase.name()).append("'\n");
         if (phase.script() != null && !phase.script().isBlank()) {
             List<String> scriptLines = phase.script().lines().toList();
             for (String line : scriptLines) {
@@ -157,7 +157,7 @@ public class LocalCIBuildConfigurationService {
     private static void appendForceRunPostPhase(StringBuilder scriptBuilder, List<BuildPhaseDTO> forceRunPhase) {
         scriptBuilder.append("final_aeolus_post_action () {\n");
         scriptBuilder.append("  set +e # from now on, we don't exit on errors\n");
-        scriptBuilder.append("  echo '\\u2699\\uFE0F executing final_aeolus_post_action'\n");
+        scriptBuilder.append("  echo '⚙️ executing final_aeolus_post_action'\n");
         for (BuildPhaseDTO phase : forceRunPhase) {
             scriptBuilder.append("  cd \"${AEOLUS_INITIAL_DIRECTORY}\"\n");
             scriptBuilder.append("  ").append(phase.name()).append("\n");
