@@ -211,12 +211,7 @@ public class TextExerciseCreationUpdateResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalExercise, user);
 
         // Forbid changing the course the exercise belongs to.
-        if (updateTextExerciseDTO.courseId() == null && updateTextExerciseDTO.exerciseGroupId() == null) {
-            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be provided.", ENTITY_NAME, "courseOrExerciseGroupMissing");
-        }
-        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateTextExerciseDTO.courseId())) {
-            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
-        }
+        validateCourseUnchanged(updateTextExerciseDTO, originalExercise);
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
         ZonedDateTime oldAssessmentDueDate = originalExercise.getAssessmentDueDate();
@@ -338,19 +333,7 @@ public class TextExerciseCreationUpdateResource {
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
 
-        // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        applyOptionalBooleanFields(dto, exercise);
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
@@ -469,18 +452,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        applyOptionalBooleanFields(dto, exercise);
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {
@@ -492,6 +464,33 @@ public class TextExerciseCreationUpdateResource {
             var exerciseGroup = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
+        }
+    }
+
+    private void validateCourseUnchanged(UpdateTextExerciseDTO dto, TextExercise originalExercise) {
+        if (dto.courseId() == null && dto.exerciseGroupId() == null) {
+            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be provided.", ENTITY_NAME, "courseOrExerciseGroupMissing");
+        }
+        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), dto.courseId())) {
+            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        }
+    }
+
+    /**
+     * Applies optional boolean fields from the DTO to the exercise.
+     */
+    private static void applyOptionalBooleanFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        if (dto.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
+        }
+        if (dto.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
+        }
+        if (dto.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
     }
 

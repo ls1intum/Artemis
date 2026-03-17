@@ -910,30 +910,23 @@ public class ExerciseService {
         }
         if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
             entity.getCompetencyLinks().clear();
+            return;
         }
-        else {
-            final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
 
-            Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
+        final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+        entity.getCompetencyLinks().clear();
 
-            for (var dtoLink : dto.competencyLinks()) {
-                long competencyId = dtoLink.competency().id();
-                double weight = dtoLink.weight();
-
-                var existingLink = existingLinksByCompetencyId.get(competencyId);
-                if (existingLink != null) {
-                    existingLink.setWeight(weight);
-                    updatedLinks.add(existingLink);
-                }
-                else {
-                    var competency = competencyRelationApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
-                    var newLink = new CompetencyExerciseLink(competency, entity, weight);
-                    updatedLinks.add(newLink);
-                }
+        for (var dtoLink : dto.competencyLinks()) {
+            long competencyId = dtoLink.competency().id();
+            var existingLink = existingLinksByCompetencyId.get(competencyId);
+            if (existingLink != null) {
+                existingLink.setWeight(dtoLink.weight());
+                entity.getCompetencyLinks().add(existingLink);
             }
-
-            entity.getCompetencyLinks().clear();
-            entity.getCompetencyLinks().addAll(updatedLinks);
+            else {
+                var competency = competencyRelationApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                entity.getCompetencyLinks().add(new CompetencyExerciseLink(competency, entity, dtoLink.weight()));
+            }
         }
     }
 
