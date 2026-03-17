@@ -51,6 +51,7 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
 
     /**
      * Saves all competency exercise links, ensuring referenced competencies are managed entities.
+     * Hibernate 6.6+ requires all referenced entities to be managed during persist/merge.
      *
      * @param competencyExerciseLinks the links to save
      * @return the saved links
