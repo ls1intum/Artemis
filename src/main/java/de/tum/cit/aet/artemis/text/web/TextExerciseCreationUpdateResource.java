@@ -31,10 +31,12 @@ import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -223,42 +225,14 @@ public class TextExerciseCreationUpdateResource {
 
         // Apply the DTO to the original exercise
         TextExercise updatedExercise = update(updateTextExerciseDTO, originalExercise);
-        // Valid exercises have set either a course or an exerciseGroup
-        updatedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
-        // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedExercise, originalExercise, ENTITY_NAME);
-
-        // Validate plagiarism detection config
-        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedExercise, ENTITY_NAME);
-
-        // Check that only allowed athena modules are used
-        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalExercise);
-        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedExercise, course, ENTITY_NAME), () -> updatedExercise.setFeedbackSuggestionModule(null));
-        // Changing Athena module after the due date has passed is not allowed
-        // Use a proxy exercise with the old module for comparison since update() mutates the original
-        TextExercise exerciseWithOldModule = new TextExercise();
-        exerciseWithOldModule.setFeedbackSuggestionModule(oldFeedbackSuggestionModule);
-        exerciseWithOldModule.setDueDate(oldDueDate);
-        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedExercise, ENTITY_NAME));
+        validateUpdatedExercise(updatedExercise, originalExercise, oldFeedbackSuggestionModule, oldDueDate);
 
         channelService.updateExerciseChannel(originalExercise, updatedExercise);
 
         TextExercise persistedExercise = textExerciseRepository.save(updatedExercise);
 
-        exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
-        instanceMessageSendService.sendTextExerciseSchedule(persistedExercise.getId());
-        exerciseService.checkExampleSubmissions(persistedExercise);
-        exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
-        slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
-
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
-
-        // Notify AtlasML about the text exercise update
-        notifyAtlasML(persistedExercise, OperationTypeDTO.UPDATE, "text exercise update");
-
-        exerciseVersionService.createExerciseVersion(persistedExercise);
+        handlePostUpdateActions(persistedExercise, originalExercise, oldMaxPoints, oldBonusPoints, oldDueDate, oldReleaseDate, oldAssessmentDueDate, oldProblemStatement,
+                notificationText, user);
 
         return ResponseEntity.ok(persistedExercise);
     }
@@ -395,29 +369,30 @@ public class TextExerciseCreationUpdateResource {
 
         Set<CompetencyExerciseLink> updated = new HashSet<>();
         for (var linkDto : dto.competencyLinks()) {
-
-            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-            }
-
-            var competencyDto = linkDto.courseCompetencyDTO();
-            Long competencyId = competencyDto.id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
+            updated.add(resolveCompetencyLink(linkDto, existingByCompetencyId, exerciseCourseId, exercise, api));
         }
 
         managedLinks.clear();
         managedLinks.addAll(updated);
+    }
+
+    private CompetencyExerciseLink resolveCompetencyLink(CompetencyExerciseLinkDTO linkDto, Map<Long, CompetencyExerciseLink> existingByCompetencyId, Long exerciseCourseId,
+            TextExercise exercise, CompetencyApi api) {
+        if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
+            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
+        }
+
+        Long competencyId = linkDto.courseCompetencyDTO().id();
+        CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
+        if (link == null) {
+            Competency competencyRef = api.loadCompetency(competencyId);
+            competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
+            link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+        }
+        else {
+            link.setWeight(linkDto.weight());
+        }
+        return link;
     }
 
     /**
@@ -465,6 +440,36 @@ public class TextExerciseCreationUpdateResource {
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
         }
+    }
+
+    private void validateUpdatedExercise(TextExercise updatedExercise, TextExercise originalExercise, String oldFeedbackSuggestionModule, ZonedDateTime oldDueDate) {
+        updatedExercise.checkCourseAndExerciseGroupExclusivity(ENTITY_NAME);
+        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedExercise, originalExercise, ENTITY_NAME);
+        PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedExercise, ENTITY_NAME);
+
+        Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(originalExercise);
+        athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedExercise, course, ENTITY_NAME), () -> updatedExercise.setFeedbackSuggestionModule(null));
+
+        TextExercise exerciseWithOldModule = new TextExercise();
+        exerciseWithOldModule.setFeedbackSuggestionModule(oldFeedbackSuggestionModule);
+        exerciseWithOldModule.setDueDate(oldDueDate);
+        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedExercise, ENTITY_NAME));
+    }
+
+    private void handlePostUpdateActions(TextExercise persistedExercise, TextExercise originalExercise, Double oldMaxPoints, Double oldBonusPoints, ZonedDateTime oldDueDate,
+            ZonedDateTime oldReleaseDate, ZonedDateTime oldAssessmentDueDate, String oldProblemStatement, String notificationText, User user) {
+        exerciseService.logUpdate(persistedExercise, persistedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(oldMaxPoints, oldBonusPoints, persistedExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(persistedExercise, oldDueDate);
+        instanceMessageSendService.sendTextExerciseSchedule(persistedExercise.getId());
+        exerciseService.checkExampleSubmissions(persistedExercise);
+        exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
+        slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
+
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
+
+        notifyAtlasML(persistedExercise, OperationTypeDTO.UPDATE, "text exercise update");
+        exerciseVersionService.createExerciseVersion(persistedExercise);
     }
 
     private void validateCourseUnchanged(UpdateTextExerciseDTO dto, TextExercise originalExercise) {

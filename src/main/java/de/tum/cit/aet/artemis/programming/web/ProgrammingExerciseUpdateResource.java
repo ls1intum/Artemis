@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -147,34 +148,44 @@ public class ProgrammingExerciseUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(updatedProgrammingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
+        validateExerciseConstraints(updateDTO, originalExercise, updatedProgrammingExercise, course);
+
+        prepareExerciseForSave(originalExercise, updatedProgrammingExercise);
+
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(originalExercise, updatedProgrammingExercise,
+                notificationText);
+
+        handlePostUpdateActions(originalExercise, updatedProgrammingExercise, savedProgrammingExercise, user);
+        return ResponseEntity.ok(savedProgrammingExercise);
+    }
+
+    private void validateExerciseConstraints(UpdateProgrammingExerciseDTO updateDTO, ProgrammingExercise originalExercise, ProgrammingExercise updatedProgrammingExercise,
+            Course course) {
         programmingExerciseValidationService.checkProgrammingExerciseForError(updatedProgrammingExercise);
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
         validateImmutableFields(updateDTO, originalExercise);
         validateParticipationModes(updateDTO);
 
-        // Verify that the checkout directories have not been changed
         programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(originalExercise, updatedProgrammingExercise);
         programmingExerciseValidationService.validateDockerFlags(updatedProgrammingExercise);
 
-        // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
             throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
         }
 
-        // Forbid changing the course the exercise belongs to
         if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
 
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, originalExercise, ENTITY_NAME);
 
-        // Check that only allowed Athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(originalExercise, updatedProgrammingExercise, ENTITY_NAME));
+    }
 
-        // Ignore changes to the default branch - preserve the original
+    private void prepareExerciseForSave(ProgrammingExercise originalExercise, ProgrammingExercise updatedProgrammingExercise) {
         updatedProgrammingExercise.getBuildConfig().setBranch(originalExercise.getBuildConfig().getBranch());
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
@@ -187,15 +198,14 @@ public class ProgrammingExerciseUpdateResource {
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             updatedProgrammingExercise.setBonusPoints(0.0);
         }
+    }
 
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(originalExercise, updatedProgrammingExercise,
-                notificationText);
-
+    private void handlePostUpdateActions(ProgrammingExercise originalExercise, ProgrammingExercise updatedProgrammingExercise, ProgrammingExercise savedProgrammingExercise,
+            User user) {
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalExercise, updatedProgrammingExercise);
         slideApi.ifPresent(api -> api.handleDueDateChange(originalExercise, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
-        return ResponseEntity.ok(savedProgrammingExercise);
     }
 
     private void validateUpdateDTOIds(UpdateProgrammingExerciseDTO updateDTO) {
