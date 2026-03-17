@@ -295,9 +295,6 @@
                         <jhi-iris-logo [size]="IrisLogoSize.SMALL" />
                         <h3 jhiTranslate="artemisApp.iris.chat.helpOffer"></h3>
                     }
-                    @if (showContextSelection()) {
-                        <jhi-context-selection [courseId]="courseId()" />
-                    }
                 </div>
             }
             <jhi-chat-status-bar [stages]="stages()" />
@@ -361,20 +358,23 @@
                                 #messageTextarea
                             >
                             </textarea>
-                            <jhi-button
-                                id="irisSendButton"
-                                class="send-button"
-                                (onClick)="onSend()"
-                                [btnType]="ButtonType.SUCCESS_OUTLINE"
-                                [icon]="faPaperPlane"
-                                [disabled]="
-                                    !newMessageTextContent().trim() ||
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
-                            />
+                            <div class="textarea-actions">
+                                <jhi-context-selection [courseId]="courseId()" />
+                                <jhi-button
+                                    id="irisSendButton"
+                                    class="send-button"
+                                    (onClick)="onSend()"
+                                    [btnType]="ButtonType.SUCCESS_OUTLINE"
+                                    [icon]="faPaperPlane"
+                                    [disabled]="
+                                        !newMessageTextContent().trim() ||
+                                        isLoading() ||
+                                        !active() ||
+                                        (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
+                                        hasActiveStage()
+                                    "
+                                />
+                            </div>
                         </div>
                     </div>
                     @if (!isChatGptWrapper()) {

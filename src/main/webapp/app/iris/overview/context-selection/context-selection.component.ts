@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
+import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MenuItem } from 'primeng/api';
 import { ButtonModule } from 'primeng/button';
 import { MenuModule } from 'primeng/menu';
@@ -31,6 +31,8 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
     [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
 };
 
+const CONTEXT_STORAGE_KEY_PREFIX = 'iris-context-';
+
 @Component({
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
@@ -43,6 +45,9 @@ export class ContextSelectionComponent {
     private readonly courseStorageService = inject(CourseStorageService);
     private readonly chatService = inject(IrisChatService);
     private readonly destroyRef = inject(DestroyRef);
+
+    private readonly currentMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
+    private readonly currentEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
 
     readonly courseId = input<number>();
     readonly isLoading = signal(false);
@@ -74,8 +79,7 @@ export class ContextSelectionComponent {
                             label: courseName,
                             faIcon: faGraduationCap,
                             command: () => {
-                                this.menuLabel.set(courseName);
-                                this.menuIcon.set(faGraduationCap);
+                                this.saveContextToStorage(ChatServiceMode.COURSE, courseId);
                                 if (courseId !== undefined) {
                                     this.chatService.switchTo(ChatServiceMode.COURSE, courseId, true);
                                 }
@@ -95,8 +99,7 @@ export class ContextSelectionComponent {
                         label: lecture.title,
                         faIcon: faChalkboardUser,
                         command: () => {
-                            this.menuLabel.set(lecture.title!);
-                            this.menuIcon.set(faChalkboardUser);
+                            this.saveContextToStorage(ChatServiceMode.LECTURE, lecture.id);
                             if (lecture.id !== undefined) {
                                 this.chatService.switchTo(ChatServiceMode.LECTURE, lecture.id, true);
                             }
@@ -115,10 +118,9 @@ export class ContextSelectionComponent {
                         label: exercise.title,
                         faIcon: getIcon(exercise.type) as IconDefinition,
                         command: () => {
-                            this.menuLabel.set(exercise.title!);
-                            this.menuIcon.set(getIcon(exercise.type) as IconDefinition);
                             const mode = exercise.type ? EXERCISE_TYPE_TO_CHAT_MODE[exercise.type] : undefined;
                             if (exercise.id !== undefined && mode) {
+                                this.saveContextToStorage(mode, exercise.id);
                                 this.chatService.switchTo(mode, exercise.id, true);
                             }
                         },
@@ -175,9 +177,45 @@ export class ContextSelectionComponent {
                 this.courseName.set(data.courseName);
                 this.lectures.set(data.lectures);
                 this.exercises.set(data.exercises);
-                this.menuLabel.set(data.courseName);
-                this.menuIcon.set(faGraduationCap);
                 this.isLoading.set(false);
             });
+
+        effect(() => {
+            const mode = this.currentMode();
+            const entityId = this.currentEntityId();
+            const courseName = this.courseName();
+            const lectures = this.lectures();
+            const exercises = this.supportedExercises();
+
+            if (!courseName) return;
+
+            if (mode === ChatServiceMode.LECTURE && entityId !== undefined) {
+                const lecture = lectures.find((l) => l.id === entityId);
+                if (lecture?.title) {
+                    this.menuLabel.set(lecture.title);
+                    this.menuIcon.set(faChalkboardUser);
+                    return;
+                }
+            }
+
+            if ((mode === ChatServiceMode.PROGRAMMING_EXERCISE || mode === ChatServiceMode.TEXT_EXERCISE) && entityId !== undefined) {
+                const exercise = exercises.find((e) => e.id === entityId);
+                if (exercise?.title) {
+                    this.menuLabel.set(exercise.title);
+                    this.menuIcon.set(getIcon(exercise.type) as IconDefinition);
+                    return;
+                }
+            }
+
+            this.menuLabel.set(courseName);
+            this.menuIcon.set(faGraduationCap);
+        });
+    }
+
+    private saveContextToStorage(mode: ChatServiceMode, entityId?: number): void {
+        const courseId = this.courseId();
+        if (courseId !== undefined) {
+            sessionStorage.setItem(CONTEXT_STORAGE_KEY_PREFIX + courseId, JSON.stringify({ mode, entityId }));
+        }
     }
 }

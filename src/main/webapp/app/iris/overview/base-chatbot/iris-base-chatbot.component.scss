@@ -421,7 +421,7 @@ pre {
     textarea {
         background-color: var(--iris-secondary-background);
         flex: 1 0 auto;
-        padding: 16px 56px 36px 16px;
+        padding: 16px 56px 60px 16px;
         resize: none;
         border-radius: 8px;
         min-height: 72px;
@@ -450,6 +450,19 @@ pre {
         position: relative;
         display: flex;
         flex: 1;
+    }
+
+    .textarea-actions {
+        position: absolute;
+        bottom: 8px;
+        left: 8px;
+        right: 8px;
+        display: flex;
+        align-items: center;
+
+        .send-button {
+            margin-left: auto;
+        }
     }
 }
 
@@ -664,9 +677,6 @@ pre {
 }
 
 #irisSendButton {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
     margin-bottom: 0;
     transform: none;
 

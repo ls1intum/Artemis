@@ -228,7 +228,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly fullSize = input<boolean>();
     readonly showCloseButton = input<boolean>(false);
     readonly isChatGptWrapper = input<boolean>(false);
-    readonly showContextSelection = input<boolean>(false);
     readonly layout = input<'client' | 'widget'>('client');
     readonly fullSizeToggle = output<void>();
     readonly closeClicked = output<void>();

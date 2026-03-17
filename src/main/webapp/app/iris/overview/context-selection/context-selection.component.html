@@ -1,38 +1,36 @@
-<div class="card flex justify-center">
-    <p-menu #menu [model]="filteredItems()" [popup]="true" appendTo="body" (onHide)="searchTerm.set('')">
-        <ng-template #start>
-            <div class="p-2">
-                <p-iconfield iconPosition="left" class="w-full">
-                    <p-inputicon>
-                        <fa-icon [icon]="faMagnifyingGlass" />
-                    </p-inputicon>
-                    <input
-                        pInputText
-                        type="text"
-                        [value]="searchTerm()"
-                        (input)="searchTerm.set($any($event.target).value)"
-                        [placeholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
-                        class="w-full"
-                    />
-                </p-iconfield>
-            </div>
-        </ng-template>
-        <ng-template #submenuheader let-item>
-            <span [jhiTranslate]="item.label"></span>
-        </ng-template>
-        <ng-template #item let-item>
-            <a pRipple class="flex items-center gap-2 p-menu-item-link">
-                <fa-icon [icon]="item.faIcon" />
-                <span>{{ item.label }}</span>
-                @if (item.label === menuLabel()) {
-                    <fa-icon [icon]="faCheck" class="ms-auto text-primary" />
-                }
-            </a>
-        </ng-template>
-    </p-menu>
-    <p-button (click)="menu.toggle($event)" [label]="menuLabel()" variant="outlined">
-        <ng-template pTemplate="icon">
-            <fa-icon [icon]="menuIcon()" />
-        </ng-template>
-    </p-button>
-</div>
+<p-menu #menu [model]="filteredItems()" [popup]="true" appendTo="body" (onHide)="searchTerm.set('')">
+    <ng-template #start>
+        <div class="p-2">
+            <p-iconfield iconPosition="left" class="w-full">
+                <p-inputicon>
+                    <fa-icon [icon]="faMagnifyingGlass" />
+                </p-inputicon>
+                <input
+                    pInputText
+                    type="text"
+                    [value]="searchTerm()"
+                    (input)="searchTerm.set($any($event.target).value)"
+                    [placeholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
+                    class="w-full"
+                />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #submenuheader let-item>
+        <span [jhiTranslate]="item.label"></span>
+    </ng-template>
+    <ng-template #item let-item>
+        <a pRipple class="flex items-center gap-2 p-menu-item-link">
+            <fa-icon [icon]="item.faIcon" />
+            <span>{{ item.label }}</span>
+            @if (item.label === menuLabel()) {
+                <fa-icon [icon]="faCheck" class="ms-auto text-primary" />
+            }
+        </a>
+    </ng-template>
+</p-menu>
+<p-button (click)="menu.toggle($event)" [label]="menuLabel()" variant="outlined">
+    <ng-template pTemplate="icon">
+        <fa-icon [icon]="menuIcon()" />
+    </ng-template>
+</p-button>
