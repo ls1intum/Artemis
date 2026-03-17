@@ -94,8 +94,8 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
         var freePeriodFromRequest = request.get(getTutorialGroupFreePeriodsPath(freePeriod.getId()), HttpStatus.OK, TutorialGroupResponseDTO.TutorialGroupFreePeriodDTO.class);
         // then
         assertThat(freePeriodFromRequest.id()).isEqualTo(freePeriod.getId());
-        assertThat(freePeriodFromRequest.start()).isEqualTo(freePeriod.getStart());
-        assertThat(freePeriodFromRequest.end()).isEqualTo(freePeriod.getEnd());
+        assertThat(freePeriodFromRequest.start().toInstant()).isEqualTo(freePeriod.getStart().toInstant());
+        assertThat(freePeriodFromRequest.end().toInstant()).isEqualTo(freePeriod.getEnd().toInstant());
         assertThat(freePeriodFromRequest.reason()).isEqualTo(freePeriod.getReason());
 
         // cleanup

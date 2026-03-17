@@ -5,6 +5,10 @@ import static jakarta.persistence.Persistence.getPersistenceUtil;
 import java.time.ZonedDateTime;
 import java.util.List;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -21,12 +25,12 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupResponseDTO(Long id, String title, @Nullable CourseDTO course, @Nullable Integer capacity, @Nullable String campus, @Nullable String language,
-        @Nullable String additionalInformation, @Nullable Boolean isOnline, @Nullable UserDTO teachingAssistant, @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule,
-        @Nullable List<TutorialGroupSessionDTO> tutorialGroupSessions, @Nullable List<TutorialGroupRegistrationDTO> registrations, @Nullable ChannelDTO channel,
-        @Nullable Boolean isUserRegistered, @Nullable Boolean isUserTutor, @Nullable Integer numberOfRegisteredUsers, @Nullable String teachingAssistantName,
-        @Nullable Long teachingAssistantId, @Nullable String teachingAssistantImageUrl, @Nullable String courseTitle, @Nullable TutorialGroupSessionDTO nextSession,
-        @Nullable Integer averageAttendance) {
+public record TutorialGroupResponseDTO(@NotNull Long id, @NotBlank @Size(min = 1, max = 19) String title, @Nullable CourseDTO course, @Nullable Integer capacity,
+        @Nullable String campus, @Nullable String language, @Nullable String additionalInformation, @Nullable Boolean isOnline, @Nullable UserDTO teachingAssistant,
+        @Nullable TutorialGroupScheduleDTO tutorialGroupSchedule, @Nullable List<TutorialGroupSessionDTO> tutorialGroupSessions,
+        @Nullable List<TutorialGroupRegistrationDTO> registrations, @Nullable ChannelDTO channel, @Nullable Boolean isUserRegistered, @Nullable Boolean isUserTutor,
+        @Nullable Integer numberOfRegisteredUsers, @Nullable String teachingAssistantName, @Nullable Long teachingAssistantId, @Nullable String teachingAssistantImageUrl,
+        @Nullable String courseTitle, @Nullable TutorialGroupSessionDTO nextSession, @Nullable Integer averageAttendance) {
 
     /**
      * Creates a response DTO from a tutorial group entity.

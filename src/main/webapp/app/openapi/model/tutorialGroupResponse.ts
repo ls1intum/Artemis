@@ -16,8 +16,8 @@ import { Course } from './course';
 
 
 export interface TutorialGroupResponse { 
-    id?: number;
-    title?: string;
+    id: number;
+    title: string;
     course?: Course;
     capacity?: number;
     campus?: string;

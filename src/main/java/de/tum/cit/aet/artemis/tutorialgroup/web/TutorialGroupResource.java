@@ -531,7 +531,8 @@ public class TutorialGroupResource {
         tutorialGroup.setCampus(tutorialGroupDTO.campus());
 
         if (tutorialGroupDTO.teachingAssistant() != null && StringUtils.hasText(tutorialGroupDTO.teachingAssistant().login())) {
-            tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(tutorialGroupDTO.teachingAssistant().login()).orElse(null));
+            tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(tutorialGroupDTO.teachingAssistant().login())
+                    .orElseThrow(() -> new BadRequestAlertException("The teaching assistant does not exist", ENTITY_NAME, "teachingAssistantNotFound")));
         }
         else {
             tutorialGroup.setTeachingAssistant(null);

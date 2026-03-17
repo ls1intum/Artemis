@@ -54,8 +54,8 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
                 TutorialGroupResponseDTO.TutorialGroupSessionDTO.class);
         // then
         assertThat(sessionFromRequest.id()).isEqualTo(session.getId());
-        assertThat(sessionFromRequest.start()).isEqualTo(session.getStart());
-        assertThat(sessionFromRequest.end()).isEqualTo(session.getEnd());
+        assertThat(sessionFromRequest.start().toInstant()).isEqualTo(session.getStart().toInstant());
+        assertThat(sessionFromRequest.end().toInstant()).isEqualTo(session.getEnd().toInstant());
         assertThat(sessionFromRequest.location()).isEqualTo(session.getLocation());
         assertThat(sessionFromRequest.status()).isEqualTo(session.getStatus());
 

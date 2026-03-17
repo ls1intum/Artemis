@@ -1433,7 +1433,7 @@ components:
       type: object
       properties:
         id: {type: integer, format: int64}
-        title: {type: string}
+        title: {type: string, maxLength: 19, minLength: 1}
         course: {$ref: '#/components/schemas/Course'}
         capacity: {type: integer, format: int32}
         campus: {type: string}
@@ -1458,6 +1458,7 @@ components:
         courseTitle: {type: string}
         nextSession: {$ref: '#/components/schemas/TutorialGroupSession'}
         averageAttendance: {type: integer, format: int32}
+      required: [id, title]
     ConversationUser:
       type: object
       properties:

@@ -51,6 +51,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistrationType;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailGroupDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupDetailSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupResponseDTO;
@@ -474,6 +475,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void create_withUnknownTeachingAssistant_shouldReturnBadRequest() throws Exception {
+        var tutorialGroupDTO = new TutorialGroupDTO(null, generateRandomTitle(), new TutorialGroupDTO.TeachingAssistantDTO("does-not-exist"), null, 15, false,
+                Language.ENGLISH.name(), "Garching");
+
+        request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), tutorialGroupDTO, TutorialGroupResponseDTO.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
         var existingTitle = tutorialGroupTestRepository.findById(exampleOneTutorialGroupId).orElseThrow().getTitle();
         // given
@@ -599,6 +609,27 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
 
         request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void update_asInstructor_withUnknownTeachingAssistant_shouldReturnBadRequest() throws Exception {
+        var existingTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
+
+        Map<String, Object> tutorialGroupUpdateData = new java.util.HashMap<>();
+        tutorialGroupUpdateData.put("id", exampleOneTutorialGroupId);
+        tutorialGroupUpdateData.put("title", existingTutorialGroup.getTitle());
+        tutorialGroupUpdateData.put("isOnline", existingTutorialGroup.getIsOnline());
+        tutorialGroupUpdateData.put("teachingAssistant", Map.of("login", "does-not-exist"));
+
+        Map<String, Object> tutorialGroupUpdate = new java.util.HashMap<>();
+        tutorialGroupUpdate.put("tutorialGroup", tutorialGroupUpdateData);
+        tutorialGroupUpdate.put("updateTutorialGroupChannelName", false);
+
+        request.put(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), tutorialGroupUpdate, HttpStatus.BAD_REQUEST);
+
+        var persistedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
+        assertThat(persistedTutorialGroup.getTeachingAssistant()).isEqualTo(existingTutorialGroup.getTeachingAssistant());
     }
 
     @Test
