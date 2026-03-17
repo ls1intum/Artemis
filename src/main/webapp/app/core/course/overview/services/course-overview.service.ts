@@ -331,8 +331,7 @@ export class CourseOverviewService {
 
     // Sorts direct or group messages with the following priority:
     // 1. Favorites first
-    // 2. Then by unread messages
-    // 3. Then by last message date (most recent first)
+    // 2. Then by last message date (most recent first)
     private sortDirectOrGroupMessages(items: SidebarCardElement[]): void {
         items.sort((a, b) => this.isFavorite(b) - this.isFavorite(a) || (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0));
     }
