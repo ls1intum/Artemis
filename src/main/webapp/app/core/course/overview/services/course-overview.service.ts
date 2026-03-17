@@ -334,26 +334,19 @@ export class CourseOverviewService {
     // 2. Then by unread messages
     // 3. Then by last message date (most recent first)
     private sortDirectOrGroupMessages(items: SidebarCardElement[]): void {
-        items.sort(
-            (a, b) =>
-                this.isFavorite(b) - this.isFavorite(a) ||
-                this.hasUnread(b) - this.hasUnread(a) ||
-                (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0),
-        );
+        items.sort((a, b) => this.isFavorite(b) - this.isFavorite(a) || (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0));
     }
 
     // Sorts unread messages with the following priority:
     // 1. Favorites first
-    // 2. Then by type (DM > GroupChat > Channel)
-    // 3. Then by last message date for DMs & GroupChats (most recent first) or alphabetically for Channels
+    // 2. Then by type (DM > GroupChat)
+    // 3. Then by last message date (most recent first)
     private sortUnreadMessages(items: SidebarCardElement[]): void {
         items.sort(
             (a, b) =>
                 this.isFavorite(b) - this.isFavorite(a) ||
                 this.typeRank(b) - this.typeRank(a) ||
-                (a.type === ConversationType.CHANNEL
-                    ? a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
-                    : (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0)),
+                (b.conversation?.lastMessageDate?.valueOf() ?? 0) - (a.conversation?.lastMessageDate?.valueOf() ?? 0),
         );
     }
 
