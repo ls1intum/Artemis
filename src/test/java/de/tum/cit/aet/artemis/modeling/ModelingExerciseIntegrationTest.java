@@ -238,8 +238,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationLocalCILo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_asInstructor() throws Exception {
-        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        courseUtilService.enableMessagingForCourse(modelingExercise.getCourseViaExerciseGroupOrCourseMember());
+        Course course = classExercise.getCourseViaExerciseGroupOrCourseMember();
+        courseUtilService.enableMessagingForCourse(course);
+        ModelingExercise modelingExercise = ModelingExerciseFactory.createModelingExercise(course.getId());
         modelingExercise.setChannelName("testchannel-" + UUID.randomUUID().toString().substring(0, 8));
         modelingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, modelingExercise, 1)));
         modelingExercise.getCompetencyLinks().forEach(link -> link.getCompetency().setCourse(null));
