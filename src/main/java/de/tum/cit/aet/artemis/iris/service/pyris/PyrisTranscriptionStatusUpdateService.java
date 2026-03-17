@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ import de.tum.cit.aet.artemis.iris.service.pyris.job.TranscriptionWebhookJob;
 import de.tum.cit.aet.artemis.lecture.api.LectureTranscriptionsRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.api.ProcessingStateCallbackApi;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
+import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 
 /**
@@ -97,14 +99,20 @@ public class PyrisTranscriptionStatusUpdateService {
             else if (resultJson != null) {
                 try {
                     PyrisTranscriptionResultDTO result = objectMapper.readValue(resultJson, PyrisTranscriptionResultDTO.class);
+                    List<LectureTranscriptionSegment> segments = result.segments().stream()
+                            .map(seg -> new LectureTranscriptionSegment(seg.startTime(), seg.endTime(), seg.text(), seg.slideNumber())).toList();
                     transcription.setLanguage(result.language());
-                    transcription.setSegments(result.segments());
+                    transcription.setSegments(segments);
                     transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
                 }
                 catch (JsonProcessingException e) {
                     log.error("Failed to parse transcription result for jobId: {}", jobId, e);
                     transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
                 }
+            }
+            else {
+                log.warn("Transcription job completed without a result for jobId: {}", jobId);
+                transcription.setTranscriptionStatus(TranscriptionStatus.FAILED);
             }
 
             LectureTranscription saved = api.save(transcription);

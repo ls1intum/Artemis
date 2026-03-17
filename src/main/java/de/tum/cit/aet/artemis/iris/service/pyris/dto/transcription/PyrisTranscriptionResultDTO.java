@@ -4,8 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
-
 /**
  * DTO for parsing the transcription result JSON from Pyris.
  * This represents the final output when transcription is complete.
@@ -15,5 +13,5 @@ import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
  * @param segments      List of transcription segments with timing and slide info
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisTranscriptionResultDTO(Long lectureUnitId, String language, List<LectureTranscriptionSegment> segments) {
+public record PyrisTranscriptionResultDTO(Long lectureUnitId, String language, List<PyrisTranscriptionSegmentDTO> segments) {
 }

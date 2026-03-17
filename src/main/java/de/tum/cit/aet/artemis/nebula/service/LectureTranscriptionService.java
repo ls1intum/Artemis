@@ -265,6 +265,9 @@ public class LectureTranscriptionService {
             log.info("Transcription started for Lecture ID {}, Unit ID {}, Job ID: {}", lectureId, lectureUnitId, jobToken);
             return jobToken;
         }
+        catch (ResponseStatusException e) {
+            throw e;
+        }
         catch (Exception e) {
             log.error("Error initiating transcription for Lecture ID: {}, Unit ID: {} → {}", lectureId, lectureUnitId, e.getMessage(), e);
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to start transcription: " + e.getMessage(), e);
