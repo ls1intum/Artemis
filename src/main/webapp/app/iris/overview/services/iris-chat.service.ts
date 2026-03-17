@@ -206,7 +206,6 @@ export class IrisChatService implements OnDestroy {
             tap((response: HttpResponse<IrisUserMessage>) => {
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(response.body!);
-                this.updateCurrentSessionLastActivityDate();
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
@@ -232,19 +231,6 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    /**
-     * Updates the lastActivityDate of the current session to now in the chatSessions BehaviorSubject.
-     * This provides an optimistic client-side update so the session immediately re-sorts in the sidebar.
-     */
-    private updateCurrentSessionLastActivityDate(): void {
-        if (!this.sessionId) {
-            return;
-        }
-        const now = new Date();
-        const updatedSessions = this.chatSessions.getValue().map((session) => (session.id === this.sessionId ? { ...session, lastActivityDate: now } : session));
-        this.chatSessions.next(updatedSessions);
-    }
-
     private replaceOrAddMessage(message: IrisMessage) {
         const messageWasReplaced = this.replaceMessage(message);
         if (!messageWasReplaced) {
@@ -266,10 +252,7 @@ export class IrisChatService implements OnDestroy {
 
         return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
             map((r: HttpResponse<IrisUserMessage>) => r.body!),
-            tap((m) => {
-                this.replaceMessage(m);
-                this.updateCurrentSessionLastActivityDate();
-            }),
+            tap((m) => this.replaceMessage(m)),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
                 this.handleSendHttpError(error);
@@ -388,11 +371,12 @@ export class IrisChatService implements OnDestroy {
 
         /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
         const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
+        const entityId = newIrisSession.entityId ?? this.extractEntityIdFromIdentifier();
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
             chatMode: chatMode,
-            entityId: newIrisSession.entityId,
+            entityId: entityId,
             entityName: '',
             title: newIrisSession.title,
         };
@@ -406,10 +390,33 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    /**
+     * Updates the currently active chat context used by UI components.
+     * Falls back to legacy `mode` field for compatibility.
+     */
+    private updateCurrentSessionContext(session: IrisSession | IrisSessionDTO): void {
+        const chatMode = session.chatMode ?? (session as { mode?: ChatServiceMode }).mode;
+        if (chatMode !== undefined) {
+            this.currentChatModeSubject.next(chatMode);
+        }
+        const entityId = session.entityId ?? this.extractEntityIdFromIdentifier();
+        if (entityId !== undefined) {
+            this.currentRelatedEntityIdSubject.next(entityId);
+        }
+    }
+
+    private extractEntityIdFromIdentifier(): number | undefined {
+        if (!this.sessionCreationIdentifier) return undefined;
+        const parts = this.sessionCreationIdentifier.split('/');
+        const id = parts.length >= 2 ? Number(parts[parts.length - 1]) : undefined;
+        return id && !isNaN(id) ? id : undefined;
+    }
+
     private handleNewSession() {
         return {
             next: (newIrisSession: IrisSession) => {
                 this.addLatestEmptySessionToChatSessions(newIrisSession);
+                this.updateCurrentSessionContext(newIrisSession);
 
                 this.sessionId = newIrisSession.id;
                 this.citationInfo.next(newIrisSession.citationInfo || []);
