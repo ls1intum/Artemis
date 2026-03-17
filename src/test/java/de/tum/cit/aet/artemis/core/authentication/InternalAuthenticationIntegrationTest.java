@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.core.authentication;
 
+import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -221,6 +222,20 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         var authentication = new UsernamePasswordAuthenticationToken(inactiveUsername, USER_PASSWORD);
 
         assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("was not activated");
+    }
+
+    @Test
+    void testAuthenticateWithBotUser() {
+        String botUsername = IRIS_BOT_LOGIN;
+        User botUser = userUtilService.createAndSaveUser(botUsername);
+        botUser.setPassword(passwordService.hashPassword(USER_PASSWORD));
+        botUser.setInternal(true);
+        botUser.setActivated(true);
+        userTestRepository.save(botUser);
+
+        var authentication = new UsernamePasswordAuthenticationToken(botUsername, USER_PASSWORD);
+
+        assertThatThrownBy(() -> artemisInternalAuthenticationProvider.authenticate(authentication)).hasMessageContaining("Bot users cannot authenticate interactively");
     }
 
     @Test
