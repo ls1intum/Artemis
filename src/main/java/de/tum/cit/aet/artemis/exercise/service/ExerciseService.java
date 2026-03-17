@@ -918,6 +918,19 @@ public class ExerciseService {
         else {
             final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
 
+            long courseId = entity.getCourseViaExerciseGroupOrCourseMember().getId();
+            Set<Long> newCompetencyIds = dto.competencyLinks().stream().map(link -> link.competency().id()).filter(id -> !existingLinksByCompetencyId.containsKey(id))
+                    .collect(Collectors.toSet());
+
+            Map<Long, CourseCompetency> competenciesById = new HashMap<>();
+            if (!newCompetencyIds.isEmpty()) {
+                var found = competencyRepositoryApi.get().findAllCompetenciesByIdsAndCourseId(newCompetencyIds, courseId);
+                if (found.size() != newCompetencyIds.size()) {
+                    throw new EntityNotFoundException("CourseCompetency");
+                }
+                found.forEach(c -> competenciesById.put(c.getId(), c));
+            }
+
             Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
 
             for (var dtoLink : dto.competencyLinks()) {
@@ -930,7 +943,7 @@ public class ExerciseService {
                     updatedLinks.add(existingLink);
                 }
                 else {
-                    var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    var competency = competenciesById.get(competencyId);
                     var newLink = new CompetencyExerciseLink(competency, entity, weight);
                     updatedLinks.add(newLink);
                 }
