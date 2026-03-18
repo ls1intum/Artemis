@@ -625,6 +625,17 @@ public class LocalVCServletService {
             RepositoryActionType repositoryActionType, LocalVCRepositoryUri localVCRepositoryUri, boolean usingSSH) throws LocalVCForbiddenException {
 
         if (checkAccessToStaffRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
+            // For tests and auxiliary repos, no participation is needed (they don't have dedicated participations).
+            // For template and solution repos, load the participation so callers can use it for access logging.
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+                try {
+                    return Optional.of(tryToLoadParticipation(usingSSH, repositoryTypeOrUserName, localVCRepositoryUri, exercise));
+                }
+                catch (LocalVCInternalException e) {
+                    // Participation record missing (e.g. data inconsistency) — staff access is still allowed, just without logging
+                    return Optional.empty();
+                }
+            }
             return Optional.empty();
         }
 
