@@ -64,6 +64,8 @@ public class JacksonDeserializerInitializationConfig {
 
         // Also perform actual deserialization to fully populate nested property deserializers
         initializeOrganization();
+        initializeCourse();
+        initializeExam();
         initializeTutorialGroup();
         initializePost();
 
@@ -115,6 +117,59 @@ public class JacksonDeserializerInitializationConfig {
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize Organization deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializeCourse() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "title": "Test Course",
+                        "shortName": "TC",
+                        "exercises": [{
+                            "id": 1,
+                            "title": "Test Exercise",
+                            "type": "text"
+                        }],
+                        "lectures": [{
+                            "id": 1,
+                            "title": "Test Lecture"
+                        }],
+                        "organizations": [{
+                            "id": 1,
+                            "name": "Test Org"
+                        }]
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, Course.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializeExam() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "title": "Test Exam",
+                        "exerciseGroups": [{
+                            "id": 1,
+                            "title": "Test Group",
+                            "exercises": []
+                        }],
+                        "studentExams": [{
+                            "id": 1,
+                            "submitted": false
+                        }]
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, Exam.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
         }
     }
 
