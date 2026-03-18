@@ -738,6 +738,9 @@ public class FileUploadExerciseResource {
             }
 
             var competencyDto = linkDto.courseCompetencyDTO();
+            if (competencyDto == null) {
+                throw new BadRequestAlertException("Each competency link must include a courseCompetencyDTO.", "CourseCompetency", "competencyMissing");
+            }
             Long competencyId = competencyDto.id();
 
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
