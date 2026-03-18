@@ -865,35 +865,25 @@ public class ExerciseService {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
-            if (dto.releaseDate() != null) {
-                String releaseDateTitlePrefix = switch (language) {
-                    case ENGLISH -> "Release: ";
-                    case GERMAN -> "Veröffentlichung: ";
-                };
-                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), dto.type(), releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null,
-                        null));
-            }
-            if (dto.startDate() != null) {
-                String startDateTitlePrefix = "Start: ";
-                events.add(new CalendarEventDTO("exerciseStartEvent-" + dto.originEntityId(), dto.type(), startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
-            }
-            if (dto.dueDate() != null) {
-                String dueDateTitlePrefix = switch (language) {
-                    case ENGLISH -> "Due: ";
-                    case GERMAN -> "Abgabefrist: ";
-                };
-                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), dto.type(), dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
-            }
-            if (dto.assessmentDueDate() != null) {
-                String assessmentDueDateTitlePrefix = switch (language) {
-                    case ENGLISH -> "Assessment due: ";
-                    case GERMAN -> "Korrekturfrist: ";
-                };
-                events.add(new CalendarEventDTO("exerciseAssessmentDueEvent-" + dto.originEntityId(), dto.type(), assessmentDueDateTitlePrefix + dto.title(),
-                        dto.assessmentDueDate(), null, null, null));
-            }
+            addDateEvent(events, dto, dto.releaseDate(), "exerciseReleaseEvent-", getLocalizedPrefix("Release: ", "Veröffentlichung: ", language));
+            addDateEvent(events, dto, dto.startDate(), "exerciseStartEvent-", "Start: ");
+            addDateEvent(events, dto, dto.dueDate(), "exerciseDueEvent-", getLocalizedPrefix("Due: ", "Abgabefrist: ", language));
+            addDateEvent(events, dto, dto.assessmentDueDate(), "exerciseAssessmentDueEvent-", getLocalizedPrefix("Assessment due: ", "Korrekturfrist: ", language));
         }
         return events;
+    }
+
+    private static void addDateEvent(Set<CalendarEventDTO> events, NonQuizExerciseCalendarEventDTO dto, ZonedDateTime date, String eventIdPrefix, String titlePrefix) {
+        if (date != null) {
+            events.add(new CalendarEventDTO(eventIdPrefix + dto.originEntityId(), dto.type(), titlePrefix + dto.title(), date, null, null, null));
+        }
+    }
+
+    private static String getLocalizedPrefix(String english, String german, Language language) {
+        return switch (language) {
+            case ENGLISH -> english;
+            case GERMAN -> german;
+        };
     }
 
     /**

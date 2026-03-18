@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -337,34 +338,18 @@ public class ProgrammingExerciseUpdateResource {
     }
 
     private static void applyOptionalBaseExerciseFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        applyIfNotNull(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        applyIfNotNull(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        applyIfNotNull(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        applyIfNotNull(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
     }
 
     private static void applyOptionalProgrammingFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
-        if (dto.allowOnlineEditor() != null) {
-            exercise.setAllowOnlineEditor(dto.allowOnlineEditor());
-        }
-        if (dto.allowOfflineIde() != null) {
-            exercise.setAllowOfflineIde(dto.allowOfflineIde());
-        }
+        applyIfNotNull(dto.allowOnlineEditor(), exercise::setAllowOnlineEditor);
+        applyIfNotNull(dto.allowOfflineIde(), exercise::setAllowOfflineIde);
         exercise.setAllowOnlineIde(dto.allowOnlineIde());
-        if (dto.maxStaticCodeAnalysisPenalty() != null) {
-            exercise.setMaxStaticCodeAnalysisPenalty(dto.maxStaticCodeAnalysisPenalty());
-        }
-        if (dto.testCasesChanged() != null) {
-            exercise.setTestCasesChanged(dto.testCasesChanged());
-        }
+        applyIfNotNull(dto.maxStaticCodeAnalysisPenalty(), exercise::setMaxStaticCodeAnalysisPenalty);
+        applyIfNotNull(dto.testCasesChanged(), exercise::setTestCasesChanged);
     }
 
     /**
@@ -383,15 +368,9 @@ public class ProgrammingExerciseUpdateResource {
     }
 
     private static void applyOptionalBuildConfigFields(UpdateProgrammingExerciseBuildConfigDTO dto, ProgrammingExerciseBuildConfig buildConfig) {
-        if (dto.sequentialTestRuns() != null) {
-            buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
-        }
-        if (dto.buildPlanConfiguration() != null) {
-            buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-        }
-        if (dto.buildScript() != null) {
-            buildConfig.setBuildScript(dto.buildScript());
-        }
+        applyIfNotNull(dto.sequentialTestRuns(), buildConfig::setSequentialTestRuns);
+        applyIfNotNull(dto.buildPlanConfiguration(), buildConfig::setBuildPlanConfiguration);
+        applyIfNotNull(dto.buildScript(), buildConfig::setBuildScript);
     }
 
     private static void applyDirectBuildConfigFields(UpdateProgrammingExerciseBuildConfigDTO dto, ProgrammingExerciseBuildConfig buildConfig) {
@@ -420,6 +399,12 @@ public class ProgrammingExerciseUpdateResource {
                 criterion.setExercise(exercise);
                 exercise.getGradingCriteria().add(criterion);
             }
+        }
+    }
+
+    private static <T> void applyIfNotNull(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
         }
     }
 

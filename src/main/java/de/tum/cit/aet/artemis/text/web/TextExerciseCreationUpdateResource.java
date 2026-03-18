@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -492,17 +493,15 @@ public class TextExerciseCreationUpdateResource {
      * Applies optional boolean fields from the DTO to the exercise.
      */
     private static void applyOptionalBooleanFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
+        applyIfNotNull(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        applyIfNotNull(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        applyIfNotNull(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        applyIfNotNull(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
+    }
+
+    private static <T> void applyIfNotNull(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
         }
     }
 
