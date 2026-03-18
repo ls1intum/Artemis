@@ -98,11 +98,7 @@ export abstract class CourseCompetencyFormComponent {
             return;
         }
         this.form = this.fb.nonNullable.group({
-            title: [
-                undefined as string | undefined,
-                [Validators.required, Validators.maxLength(255)],
-                [],
-            ],
+            title: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)], []],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],
             taxonomy: [undefined as CompetencyTaxonomy | undefined],
