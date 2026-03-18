@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
-import de.tum.cit.aet.artemis.atlas.domain.competency.StandardizedCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.KnowledgeAreaResultDTO;
 import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.SourceDTO;
+import de.tum.cit.aet.artemis.atlas.dto.standardizedCompetency.StandardizedCompetencyResultDTO;
 import de.tum.cit.aet.artemis.atlas.repository.SourceRepository;
 import de.tum.cit.aet.artemis.atlas.repository.StandardizedCompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.service.competency.StandardizedCompetencyService;
@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 
 /**
- * REST controller for managing {@link StandardizedCompetency} entities.
+ * REST controller for managing standardized competencies.
  */
 @Conditional(AtlasEnabled.class)
 @FeatureToggle(Feature.StandardizedCompetencies)
@@ -56,12 +56,12 @@ public class StandardizedCompetencyResource {
      */
     @GetMapping("{competencyId}")
     @EnforceAtLeastEditor
-    public ResponseEntity<StandardizedCompetency> getStandardizedCompetency(@PathVariable long competencyId) {
+    public ResponseEntity<StandardizedCompetencyResultDTO> getStandardizedCompetency(@PathVariable long competencyId) {
         log.debug("REST request to get standardized competency with id : {}", competencyId);
 
         var competency = standardizedCompetencyRepository.findByIdElseThrow(competencyId);
 
-        return ResponseEntity.ok(competency);
+        return ResponseEntity.ok(StandardizedCompetencyResultDTO.of(competency));
     }
 
     /**
