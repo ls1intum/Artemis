@@ -5,20 +5,12 @@
         margin: 0 auto;
         aspect-ratio: 16 / 9.3;
         max-height: 80vh;
-
         background: var(--body-bg);
         border: 1px solid var(--border-color);
         border-radius: var(--bs-border-radius);
-
         overflow: hidden;
         overscroll-behavior: none;
-
         contain: strict;
-
-        @media (max-width: 600px) {
-            max-height: 70vh;
-            border-radius: var(--bs-border-radius);
-        }
     }
 
     .pdf-extended-viewer {
@@ -28,14 +20,14 @@
     }
 }
 
-:host ::ng-deep .pdf-viewer-box .pdfViewer .page {
+.pdf-viewer-container .pdf-viewer-box .pdfViewer .page {
     background: var(--white);
     border: 1px solid var(--artemis-pre-border);
     box-shadow: none;
     margin: 0 auto 10px;
 }
 
-:host ::ng-deep .pdf-viewer-box .pdfViewer .page canvas {
+.pdf-viewer-container .pdf-viewer-box .pdfViewer .page canvas {
     display: block;
     width: 100%;
     height: 100%;
