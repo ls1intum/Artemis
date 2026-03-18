@@ -8,9 +8,11 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
-import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { toISO8601DateString } from 'app/shared/util/date.utils';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
@@ -27,14 +29,14 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     readonly dialogVisible = signal<boolean>(false);
     readonly sessionCreated = output<void>();
 
-    tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
+    tutorialGroupSessionToCreate: TutorialGroupSessionRequestDTO;
     isLoading = false;
 
     readonly tutorialGroup = input.required<TutorialGroup>();
     readonly course = input.required<Course>();
 
     open(): void {
-        this.tutorialGroupSessionToCreate = new TutorialGroupSessionDTO();
+        this.tutorialGroupSessionToCreate = {} as TutorialGroupSessionRequestDTO;
         this.dialogVisible.set(true);
     }
 
@@ -45,10 +47,10 @@ export class CreateTutorialGroupSessionComponent implements OnDestroy {
     createTutorialGroupSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
-        this.tutorialGroupSessionToCreate.date = date;
-        this.tutorialGroupSessionToCreate.startTime = startTime;
-        this.tutorialGroupSessionToCreate.endTime = endTime;
-        this.tutorialGroupSessionToCreate.location = location;
+        this.tutorialGroupSessionToCreate.date = toISO8601DateString(date)!;
+        this.tutorialGroupSessionToCreate.startTime = startTime!;
+        this.tutorialGroupSessionToCreate.endTime = endTime!;
+        this.tutorialGroupSessionToCreate.location = location!;
 
         this.isLoading = true;
 

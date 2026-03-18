@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionStatus } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -12,6 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { DialogModule } from 'primeng/dialog';
 import { ButtonDirective } from 'primeng/button';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-cancellation-modal',
@@ -34,7 +35,7 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
 
     readonly course = input.required<Course>();
     readonly tutorialGroupId = input.required<number>();
-    readonly tutorialGroupSession = input.required<TutorialGroupSession>();
+    readonly tutorialGroupSession = input.required<TutorialGroupSessionDTO>();
 
     ngOnInit(): void {
         this.initializeForm();
@@ -63,13 +64,15 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
         return !this.form.invalid;
     }
 
-    generateSessionLabel(tutorialGroupSession: TutorialGroupSession): string {
-        if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
+    generateSessionLabel(tutorialGroupSession: TutorialGroupSessionDTO): string {
+        if (!tutorialGroupSession?.startDate || !tutorialGroupSession?.endDate) {
             return '';
-        } else {
-            return tutorialGroupSession.start.tz(this.course().timeZone).format('LLLL') + ' - ' + tutorialGroupSession.end.tz(this.course().timeZone).format('LT');
         }
+        return (
+            dayjs.tz(tutorialGroupSession.startDate, this.course().timeZone).format('LLLL') + ' - ' + dayjs.tz(tutorialGroupSession.endDate, this.course().timeZone).format('LT')
+        );
     }
+
     cancelOrActivate(): void {
         if (this.tutorialGroupSession().status === TutorialGroupSessionStatus.ACTIVE) {
             this.cancelSession();

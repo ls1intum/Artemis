@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, inject, input, output, signal } from '@angular/core';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSessionDTO, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/tutorialgroup/manage/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { finalize, takeUntil } from 'rxjs/operators';
@@ -10,9 +10,11 @@ import { Subject } from 'rxjs';
 import { LoadingIndicatorContainerComponent } from 'app/shared/loading-indicator-container/loading-indicator-container.component';
 import { TutorialGroupSessionFormComponent } from '../tutorial-group-session-form/tutorial-group-session-form.component';
 import { captureException } from '@sentry/angular';
-import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/tutorialgroup/shared/service/tutorial-group-session.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { toISO8601DateString } from 'app/shared/util/date.utils';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
@@ -33,7 +35,7 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
 
     readonly course = input.required<Course>();
 
-    readonly tutorialGroupSession = input.required<TutorialGroupSession>();
+    readonly tutorialGroupSession = input.required<TutorialGroupSessionDTO>();
 
     isLoading = false;
     formData?: TutorialGroupSessionFormData = undefined;
@@ -45,10 +47,14 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
             captureException('Error: Component not fully configured');
             return;
         }
+        const start = tutorialGroupSession.startDate ? dayjs.tz(tutorialGroupSession.startDate, course.timeZone) : undefined;
+
+        const end = tutorialGroupSession.endDate ? dayjs.tz(tutorialGroupSession.endDate, course.timeZone) : undefined;
+
         this.formData = {
-            date: tutorialGroupSession.start?.tz(course.timeZone).toDate(),
-            startTime: tutorialGroupSession.start?.tz(course.timeZone).format('HH:mm:ss'),
-            endTime: tutorialGroupSession.end?.tz(course.timeZone).format('HH:mm:ss'),
+            date: start?.toDate(),
+            startTime: start?.format('HH:mm'),
+            endTime: end?.format('HH:mm'),
             location: tutorialGroupSession.location,
         };
         this.dialogVisible.set(true);
@@ -61,12 +67,12 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     updateSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
-        const tutorialGroupSessionDTO = new TutorialGroupSessionDTO();
-
-        tutorialGroupSessionDTO.date = date;
-        tutorialGroupSessionDTO.startTime = startTime;
-        tutorialGroupSessionDTO.endTime = endTime;
-        tutorialGroupSessionDTO.location = location;
+        const tutorialGroupSessionDTO: TutorialGroupSessionRequestDTO = {
+            date: toISO8601DateString(date)!,
+            startTime: startTime!,
+            endTime: endTime!,
+            location: location!,
+        };
 
         this.isLoading = true;
         const course = this.course();

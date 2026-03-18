@@ -1,5 +1,9 @@
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
-import { TutorialGroupFreePeriodDTO, fromTutorialGroupFreePeriodDTO, toTutorialGroupFreePeriodDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
+import {
+    TutorialGroupFreePeriodDTO,
+    entityToTutorialGroupFreePeriodDTO,
+    fromTutorialGroupFreePeriodDTO,
+} from 'app/tutorialgroup/shared/entities/tutorial-group-free-period-dto.model';
 import { convertDateFromClient, convertDateStringFromServer } from 'app/shared/util/date.utils';
 
 export interface TutorialGroupConfigurationDTO {
@@ -18,7 +22,9 @@ export function tutorialGroupConfigurationDtoFromEntity(entity: TutorialGroupsCo
         tutorialPeriodEndInclusive: convertDateFromClient(entity.tutorialPeriodEndInclusive),
         useTutorialGroupChannels: entity.useTutorialGroupChannels,
         usePublicTutorialGroupChannels: entity.usePublicTutorialGroupChannels,
-        tutorialGroupFreePeriods: (entity.tutorialGroupFreePeriods ?? []).map(toTutorialGroupFreePeriodDTO),
+        tutorialGroupFreePeriods: (entity.tutorialGroupFreePeriods ?? [])
+            .map(entityToTutorialGroupFreePeriodDTO)
+            .filter((dto): dto is TutorialGroupFreePeriodDTO => dto !== undefined),
     };
 }
 
@@ -32,6 +38,6 @@ export function tutorialGroupsConfigurationEntityFromDto(dto: TutorialGroupConfi
     entity.useTutorialGroupChannels = dto.useTutorialGroupChannels;
     entity.usePublicTutorialGroupChannels = dto.usePublicTutorialGroupChannels;
 
-    entity.tutorialGroupFreePeriods = (dto.tutorialGroupFreePeriods ?? []).map(fromTutorialGroupFreePeriodDTO);
+    entity.tutorialGroupFreePeriods = (dto.tutorialGroupFreePeriods ?? []).map((freePeriodDto) => fromTutorialGroupFreePeriodDTO(freePeriodDto, entity));
     return entity;
 }

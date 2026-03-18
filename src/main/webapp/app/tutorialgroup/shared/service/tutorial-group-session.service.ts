@@ -1,20 +1,12 @@
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer, toISO8601DateString } from 'app/shared/util/date.utils';
-import { map } from 'rxjs/operators';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
+import { TutorialGroupSession, TutorialGroupSessionDTO, TutorialGroupSessionRequestDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
+import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/shared/service/tutorial-group-free-period.service';
+import { convertDateFromServer } from 'app/shared/util/date.utils';
 
-type EntityResponseType = HttpResponse<TutorialGroupSession>;
-
-export class TutorialGroupSessionDTO {
-    public date?: Date;
-    public startTime?: string;
-    public endTime?: string;
-    public location?: string;
-}
+type EntityResponseType = HttpResponse<TutorialGroupSessionDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
@@ -25,16 +17,15 @@ export class TutorialGroupSessionService {
     private resourceURL = 'api/tutorialgroup';
 
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
-        return this.httpClient
-            .get<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+        return this.httpClient.get<TutorialGroupSessionDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, {
+            observe: 'response',
+        });
     }
 
-    update(courseId: number, tutorialGroupId: number, sessionId: number, session: TutorialGroupSessionDTO): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupSessionDatesFromClient(session);
-        return this.httpClient
-            .put<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    update(courseId: number, tutorialGroupId: number, sessionId: number, session: TutorialGroupSessionRequestDTO): Observable<EntityResponseType> {
+        return this.httpClient.put<TutorialGroupSessionDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, session, {
+            observe: 'response',
+        });
     }
 
     updateAttendanceCount(courseId: number, tutorialGroupId: number, sessionId: number, attendanceCount: number | undefined): Observable<EntityResponseType> {
@@ -42,35 +33,36 @@ export class TutorialGroupSessionService {
         if (attendanceCount !== undefined && attendanceCount !== null) {
             params = params.append('attendanceCount', attendanceCount.toString());
         }
-        return this.httpClient
-            .patch<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, null, {
+        return this.httpClient.patch<TutorialGroupSessionDTO>(
+            `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`,
+            null,
+            {
                 observe: 'response',
                 params,
-            })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+            },
+        );
     }
 
-    create(courseId: number, tutorialGroupId: number, session: TutorialGroupSessionDTO): Observable<EntityResponseType> {
-        const copy = this.convertTutorialGroupSessionDatesFromClient(session);
-        return this.httpClient
-            .post<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    create(courseId: number, tutorialGroupId: number, session: TutorialGroupSessionRequestDTO): Observable<EntityResponseType> {
+        return this.httpClient.post<TutorialGroupSessionDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, session, {
+            observe: 'response',
+        });
     }
 
-    cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation: string): Observable<EntityResponseType> {
-        return this.httpClient
-            .post<TutorialGroupSession>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/cancel`,
-                { status_explanation: explanation },
-                { observe: 'response' },
-            )
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<EntityResponseType> {
+        return this.httpClient.post<TutorialGroupSessionDTO>(
+            `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/cancel`,
+            { statusExplanation: explanation },
+            { observe: 'response' },
+        );
     }
 
     activate(courseId: number, tutorialGroupId: number, sessionId: number): Observable<EntityResponseType> {
-        return this.httpClient
-            .post<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/activate`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+        return this.httpClient.post<TutorialGroupSessionDTO>(
+            `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/activate`,
+            {},
+            { observe: 'response' },
+        );
     }
 
     delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
@@ -86,22 +78,5 @@ export class TutorialGroupSessionService {
             );
         }
         return tutorialGroupSession;
-    }
-
-    private convertTutorialGroupSessionResponseDatesFromServer(res: HttpResponse<TutorialGroupSession>): HttpResponse<TutorialGroupSession> {
-        if (res.body) {
-            this.convertTutorialGroupSessionDatesFromServer(res.body);
-        }
-        return res;
-    }
-
-    private convertTutorialGroupSessionDatesFromClient(tutorialGroupSessionDTO: TutorialGroupSessionDTO): TutorialGroupSessionDTO {
-        if (tutorialGroupSessionDTO) {
-            return Object.assign({}, tutorialGroupSessionDTO, {
-                date: toISO8601DateString(tutorialGroupSessionDTO.date),
-            });
-        } else {
-            return tutorialGroupSessionDTO;
-        }
     }
 }
