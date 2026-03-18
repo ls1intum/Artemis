@@ -83,9 +83,7 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
         assertThat(scienceSettingsResponse).containsExactlyInAnyOrder(updatedSettings);
         assertThat(scienceSettingRepository.findAllByUserId(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).hasSize(2)
                 .extracting(ScienceSetting::getSettingId, ScienceSetting::isActive)
-                .containsExactlyInAnyOrder(
-                        org.assertj.core.groups.Tuple.tuple(settingA.getSettingId(), false),
-                        org.assertj.core.groups.Tuple.tuple(settingB.getSettingId(), true));
+                .containsExactlyInAnyOrder(org.assertj.core.groups.Tuple.tuple(settingA.getSettingId(), false), org.assertj.core.groups.Tuple.tuple(settingB.getSettingId(), true));
     }
 
     @Test
