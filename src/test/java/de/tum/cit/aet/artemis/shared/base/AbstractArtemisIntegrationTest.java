@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.shared.base;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.lenient;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -313,7 +313,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @BeforeEach
     void mockMailService() throws IOException {
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
+        lenient().doNothing().when(javaMailSender).send(any(MimeMessage.class));
         Files.createDirectories(tempPath);
     }
 
