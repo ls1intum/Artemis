@@ -5,6 +5,7 @@ import java.util.Set;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
@@ -20,5 +21,6 @@ public interface ScienceSettingRepository extends ArtemisJpaRepository<ScienceSe
 
     Set<ScienceSetting> findAllByUserId(long userId);
 
+    @Transactional // ok because of delete
     void deleteAllByUserId(long userId);
 }
