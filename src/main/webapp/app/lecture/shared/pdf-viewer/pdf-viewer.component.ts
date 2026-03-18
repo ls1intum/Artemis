@@ -1,682 +1,289 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, computed, effect, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, input, signal, viewChild } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
-import * as PDFJS from 'pdfjs-dist/legacy/build/pdf.mjs';
-import type { PDFDocumentProxy } from 'pdfjs-dist';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
+import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { faExclamationTriangle, faRotateLeft, faSearchMinus, faSearchPlus } from '@fortawesome/free-solid-svg-icons';
 import { ButtonDirective } from 'primeng/button';
 
-type PdfViewerAnchorState = {
-    pageIndex: number;
-    pdfX: number;
-    pdfY: number;
-    hadHorizontalScroll: boolean;
-};
-
-type PDFLoadingTask = {
-    promise: Promise<PDFDocumentProxy>;
-    destroy?: () => Promise<void> | void;
-};
-
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, ButtonDirective],
+    imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, ButtonDirective, NgxExtendedPdfViewerModule],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
 })
-export class PdfViewerComponent implements AfterViewInit, OnDestroy {
-    private static readonly DOM_RENDER_DELAY_MS = 50;
-    private static readonly PAGE_NAVIGATION_DELAY_MS = 300;
-    private static readonly RESIZE_DEBOUNCE_MS = 300;
-    private static readonly RESIZE_WIDTH_THRESHOLD_PX = 30;
-    private static readonly MAX_ZOOM_LEVEL = 3.0;
-    private static readonly MIN_ZOOM_LEVEL = 0.5;
-    private static readonly ZOOM_INCREMENT = 0.25;
-    private static readonly ZOOM_RETRY_DELAY_MS = 100;
-    private static readonly PAGE_SCROLL_OFFSET_PX = 20;
-    private static clamp(value: number, min: number, max: number): number {
-        return Math.max(min, Math.min(max, value));
-    }
-    private static clearTimeoutId(timeoutId: number | undefined): undefined {
-        if (timeoutId !== undefined) {
-            clearTimeout(timeoutId);
-        }
-        return undefined;
-    }
-
+export class PdfViewerComponent implements OnDestroy {
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
     version = input<number | undefined>(undefined);
     initialPage = input<number | undefined>(undefined);
-    pdfContainer = viewChild<ElementRef<HTMLDivElement>>('pdfContainer');
-    pdfViewerBox = viewChild<ElementRef<HTMLDivElement>>('pdfViewerBox');
-
+    viewerHost = viewChild<ElementRef<HTMLElement>>('viewerHost');
     totalPages = signal<number>(0);
     currentPage = signal<number>(1);
     isLoading = signal<boolean>(true);
-    isRendering = signal<boolean>(false);
     error = signal<string | undefined>(undefined);
     zoomLevel = signal<number>(1.0);
-
-    showToolbar = computed(() => !this.isLoading() && this.totalPages() > 0);
-    readonly canZoomOut = computed(() => this.zoomLevel() > PdfViewerComponent.MIN_ZOOM_LEVEL);
-    readonly canZoomIn = computed(() => this.zoomLevel() < PdfViewerComponent.MAX_ZOOM_LEVEL);
-
+    fitWidthZoomFactor = signal<number>(1.0);
+    private readonly isPinchZoomActive = signal<boolean>(false);
+    readonly viewerZoomBinding = computed(() => {
+        const zoom = this.zoomLevel() * (this.fitWidthZoomFactor() || 1);
+        return this.isPinchZoomActive() ? undefined : Number.isFinite(zoom) ? Number((zoom * 100).toFixed(2)) : 100;
+    });
     protected readonly faSearchMinus = faSearchMinus;
     protected readonly faSearchPlus = faSearchPlus;
     protected readonly faRotateLeft = faRotateLeft;
     protected readonly faExclamationTriangle = faExclamationTriangle;
-
-    private pdfDocument: PDFDocumentProxy | undefined;
-    private viewInitialized = signal<boolean>(false);
-    private resizeTimeout: number | undefined;
-    private pageNavTimeoutId: number | undefined;
-    private zoomRetryTimeoutId: number | undefined;
-    private resizeObserver: ResizeObserver | undefined;
-    private lastObservedWidth = 0;
-    private isZooming = false;
-    private pendingRender = false;
-    private loadToken = 0;
-    private loadingTask?: PDFLoadingTask;
-    private preCapturedAnchor: PdfViewerAnchorState | undefined;
-    private isResizing = false;
+    private pendingZoomAnchor?: { centerXRatio: number; centerYRatio: number };
+    private lastViewerHostWidth = 0;
+    private fitWidthTimeoutId?: number;
+    private lastViewerZoomFactor = 0;
+    private basePageWidth = 0;
+    private isApplyingZoom = false;
+    private zoomApplyTimeoutId?: number;
+    private pinchZoomTimeoutId?: number;
+    private readonly handleBrowserZoomKeys = (event: KeyboardEvent): void => {
+        if ((event.ctrlKey || event.metaKey) && (['+', '=', '-', '0'].includes(event.key) || ['Equal', 'Minus', 'NumpadAdd', 'NumpadSubtract', 'Numpad0'].includes(event.code))) {
+            event.stopImmediatePropagation();
+            event.stopPropagation();
+        }
+    };
+    private readonly handlePinchZoomWheel = (event: WheelEvent): void => {
+        if (event.ctrlKey || event.metaKey) this.markPinchZoomActive();
+    };
+    private readonly handlePinchZoomGesture = (): void => this.markPinchZoomActive();
 
     constructor() {
-        PDFJS.GlobalWorkerOptions.workerSrc = '/content/scripts/pdf.worker.min.mjs';
-
-        effect(() => {
-            const url = this.pdfUrl();
-            const viewReady = this.viewInitialized();
-
-            if (url && viewReady) {
-                this.loadPdf(url);
-            }
-        });
-
-        effect(() => {
-            const targetPage = this.initialPage();
-            const totalPages = this.totalPages();
-
-            if (targetPage && !this.isLoading() && totalPages > 0) {
-                this.schedulePageNavigation(targetPage, totalPages);
-            }
-        });
-    }
-
-    ngAfterViewInit(): void {
-        this.viewInitialized.set(true);
-
-        window.addEventListener('resize', this.handleResize);
-
-        const viewerBox = this.pdfViewerBox()?.nativeElement;
-        if (viewerBox) {
-            viewerBox.addEventListener('scroll', this.updateCurrentPage);
-
-            this.lastObservedWidth = viewerBox.clientWidth;
-            this.resizeObserver = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    const newWidth = entry.contentRect.width;
-                    const widthDiff = Math.abs(newWidth - this.lastObservedWidth);
-
-                    if (!this.isRendering() && !this.isZooming && widthDiff > PdfViewerComponent.RESIZE_WIDTH_THRESHOLD_PX) {
-                        const container = this.pdfContainer()?.nativeElement;
-                        if (viewerBox && container) {
-                            if (!this.isResizing) {
-                                this.isResizing = true;
-                                this.preCapturedAnchor = this.captureAnchorState(viewerBox, container);
-                            }
-                        }
-
-                        this.lastObservedWidth = newWidth;
-                        this.handleResize();
-                    }
-                }
-            });
-            this.resizeObserver.observe(viewerBox);
+        if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', this.handleBrowserZoomKeys, { capture: true });
         }
+        effect(() => this.pdfUrl() && this.resetPdfState());
+        effect(() => this.tryApplyInitialPage());
+        effect((onCleanup) => {
+            const host = this.viewerHost()?.nativeElement;
+            if (!host) {
+                return;
+            }
+
+            this.lastViewerHostWidth = host.clientWidth;
+            const resizeObserver = new ResizeObserver((entries) => this.handleViewerHostResize(entries));
+            resizeObserver.observe(host);
+            const gestureEvents = ['gesturestart', 'gesturechange', 'gestureend'] as const;
+            gestureEvents.forEach((event) => host.addEventListener(event, this.handlePinchZoomGesture, { capture: true }));
+            host.addEventListener('wheel', this.handlePinchZoomWheel, { capture: true, passive: true });
+
+            onCleanup(() => {
+                resizeObserver.disconnect();
+                gestureEvents.forEach((event) => host.removeEventListener(event, this.handlePinchZoomGesture, { capture: true }));
+                host.removeEventListener('wheel', this.handlePinchZoomWheel, { capture: true });
+            });
+        });
     }
 
     ngOnDestroy(): void {
-        window.removeEventListener('resize', this.handleResize);
-
-        const viewerBox = this.pdfViewerBox()?.nativeElement;
-        if (viewerBox) {
-            viewerBox.removeEventListener('scroll', this.updateCurrentPage);
-        }
-
-        if (this.resizeObserver) {
-            this.resizeObserver.disconnect();
-        }
-
-        this.resizeTimeout = PdfViewerComponent.clearTimeoutId(this.resizeTimeout);
-        this.pageNavTimeoutId = PdfViewerComponent.clearTimeoutId(this.pageNavTimeoutId);
-        this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
-
-        this.loadToken++;
-        this.clearPdfResources();
+        if (typeof window !== 'undefined') window.removeEventListener('keydown', this.handleBrowserZoomKeys, { capture: true });
+        clearTimeout(this.fitWidthTimeoutId);
+        clearTimeout(this.zoomApplyTimeoutId);
+        clearTimeout(this.pinchZoomTimeoutId);
     }
 
-    private async loadPdf(url: string): Promise<void> {
-        const token = ++this.loadToken;
-        this.clearPdfResources();
+    onPdfLoadingStarts(): void {
+        this.resetPdfState();
+        this.lastViewerZoomFactor = 0;
+        this.basePageWidth = 0;
+        this.fitWidthZoomFactor.set(1.0);
+    }
+
+    onPdfLoaded(event: { pagesCount?: number; numPages?: number; pages?: number }): void {
+        this.totalPages.set(event?.pagesCount ?? event?.numPages ?? event?.pages ?? 0);
+        this.isLoading.set(false);
+        this.error.set(undefined);
+        this.scheduleFitWidthUpdate();
+        this.tryApplyInitialPage();
+    }
+
+    onPdfLoadingFailed(): void {
+        this.error.set('error');
+        this.isLoading.set(false);
+        this.totalPages.set(0);
+    }
+
+    onPageChange(pageNumber: number): void {
+        if (Number.isFinite(pageNumber) && pageNumber > 0 && pageNumber !== this.currentPage()) this.currentPage.set(pageNumber);
+    }
+
+    onZoomFactorChange(zoomFactor: number): void {
+        if (!Number.isFinite(zoomFactor)) return;
+        this.lastViewerZoomFactor = zoomFactor;
+        if (!this.basePageWidth && this.ensureBasePageWidth(zoomFactor)) {
+            this.updateFitWidthZoomFactor();
+        }
+        const fitWidthFactor = this.fitWidthZoomFactor() || 1;
+        const expectedViewerZoom = this.zoomLevel() * fitWidthFactor;
+        if (this.isApplyingZoom) return this.finishZoomApplyIfSettled(expectedViewerZoom, zoomFactor);
+        if (Math.abs(zoomFactor - expectedViewerZoom) > 0.01) {
+            const relativeZoom = zoomFactor / fitWidthFactor;
+            const clamped = Math.max(0.5, Math.min(3.0, relativeZoom));
+            if (Math.abs(clamped - this.zoomLevel()) > 0.001) {
+                this.zoomLevel.set(clamped);
+            }
+        }
+        this.applyZoomAnchor();
+    }
+
+    private tryApplyInitialPage(): void {
+        const initialPage = this.initialPage();
+        if (initialPage === undefined || this.isLoading() || this.totalPages() <= 0) return;
+        const targetPage = Math.max(1, Math.min(this.totalPages(), initialPage));
+        if (targetPage !== this.currentPage()) this.currentPage.set(targetPage);
+    }
+
+    zoomIn(): void {
+        this.applyUserZoom(this.zoomLevel() + 0.25);
+    }
+
+    zoomOut(): void {
+        this.applyUserZoom(this.zoomLevel() - 0.25);
+    }
+
+    resetZoom(): void {
+        this.applyUserZoom(1.0, true);
+    }
+
+    private captureZoomAnchor(): void {
+        const container = this.getViewerContainer();
+        if (!container) return;
+
+        const { scrollLeft, scrollTop, scrollWidth, scrollHeight, clientWidth, clientHeight } = container;
+        if (scrollWidth <= 0 || scrollHeight <= 0) return;
+
+        const centerXRatio = (scrollLeft + clientWidth / 2) / scrollWidth;
+        const centerYRatio = (scrollTop + clientHeight / 2) / scrollHeight;
+        this.pendingZoomAnchor = {
+            centerXRatio: Number.isFinite(centerXRatio) ? centerXRatio : 0.5,
+            centerYRatio: Number.isFinite(centerYRatio) ? centerYRatio : 0.5,
+        };
+    }
+
+    private applyZoomAnchor(): void {
+        const anchor = this.pendingZoomAnchor;
+        const container = this.getViewerContainer();
+        if (!anchor || !container) return;
+        this.pendingZoomAnchor = undefined;
+        requestAnimationFrame(() => {
+            const { scrollWidth, scrollHeight, clientWidth, clientHeight } = container;
+            if (!(scrollWidth > 0 && scrollHeight > 0)) return;
+
+            const newScrollLeft = Math.max(0, Math.min(scrollWidth - clientWidth, anchor.centerXRatio * scrollWidth - clientWidth / 2));
+            const newScrollTop = Math.max(0, Math.min(scrollHeight - clientHeight, anchor.centerYRatio * scrollHeight - clientHeight / 2));
+
+            if (!Number.isFinite(newScrollLeft) || !Number.isFinite(newScrollTop)) return;
+
+            container.scrollLeft = newScrollLeft;
+            container.scrollTop = newScrollTop;
+        });
+    }
+
+    private getViewerContainer(): HTMLElement | null {
+        const host = this.viewerHost()?.nativeElement;
+        return host?.querySelector<HTMLElement>('#viewerContainer') ?? host?.querySelector<HTMLElement>('.pdfViewer')?.parentElement ?? null;
+    }
+
+    private applyUserZoom(nextZoom: number, force = false): void {
+        this.captureZoomAnchor();
+        if (this.pendingZoomAnchor) this.beginZoomApply();
+        const clamped = Math.max(0.5, Math.min(3.0, nextZoom));
+        if (force || clamped !== this.zoomLevel()) {
+            this.zoomLevel.set(clamped);
+        }
+    }
+
+    private handleViewerHostResize(entries: ResizeObserverEntry[]): void {
+        const newWidth = entries[0]?.contentRect?.width ?? 0;
+        if (!newWidth || newWidth <= 0) return;
+
+        if (!this.lastViewerHostWidth) {
+            this.lastViewerHostWidth = newWidth;
+            return;
+        }
+
+        if (Math.abs(newWidth - this.lastViewerHostWidth) < 1) return;
+
+        this.lastViewerHostWidth = newWidth;
+        if (!this.pendingZoomAnchor) {
+            this.captureZoomAnchor();
+        }
+        this.scheduleFitWidthUpdate();
+    }
+
+    private scheduleFitWidthUpdate(): void {
+        clearTimeout(this.fitWidthTimeoutId);
+
+        this.fitWidthTimeoutId = window.setTimeout(() => {
+            this.updateFitWidthZoomFactor();
+        }, 120);
+    }
+
+    private updateFitWidthZoomFactor(): void {
+        const container = this.getViewerContainer();
+        if (!container || !this.ensureBasePageWidth()) return;
+        const nextFitWidth = container.clientWidth / this.basePageWidth;
+        if (!Number.isFinite(nextFitWidth) || nextFitWidth <= 0) return;
+        if (Math.abs(nextFitWidth - this.fitWidthZoomFactor()) < 0.01) {
+            return this.applyZoomAnchor();
+        }
+        if (this.pendingZoomAnchor) this.beginZoomApply();
+        this.fitWidthZoomFactor.set(nextFitWidth);
+    }
+
+    private ensureBasePageWidth(zoomFactor?: number): boolean {
+        if (this.basePageWidth > 0) {
+            return true;
+        }
+        const effectiveZoom = zoomFactor && zoomFactor > 0 ? zoomFactor : this.lastViewerZoomFactor;
+        if (!Number.isFinite(effectiveZoom) || effectiveZoom <= 0) return false;
+        const pageWidth = this.viewerHost()?.nativeElement.querySelector<HTMLElement>('.page')?.getBoundingClientRect().width ?? 0;
+        if (!pageWidth || pageWidth <= 0) return false;
+        const basePageWidth = pageWidth / effectiveZoom;
+        if (!Number.isFinite(basePageWidth) || basePageWidth <= 0) return false;
+
+        this.basePageWidth = basePageWidth;
+        return this.basePageWidth > 0;
+    }
+
+    private beginZoomApply(): void {
+        this.isApplyingZoom = true;
+        clearTimeout(this.zoomApplyTimeoutId);
+
+        this.zoomApplyTimeoutId = window.setTimeout(() => this.finishZoomApply(), 300);
+    }
+
+    private finishZoomApplyIfSettled(expectedZoom: number, actualZoom: number): void {
+        if (Math.abs(actualZoom - expectedZoom) > 0.01) return;
+        clearTimeout(this.zoomApplyTimeoutId);
+        this.finishZoomApply();
+    }
+
+    private markPinchZoomActive(): void {
+        this.isPinchZoomActive.set(true);
+        clearTimeout(this.pinchZoomTimeoutId);
+        this.pinchZoomTimeoutId = window.setTimeout(() => {
+            this.isPinchZoomActive.set(false);
+        }, 150);
+    }
+
+    private finishZoomApply(): void {
+        this.isApplyingZoom = false;
+        this.applyZoomAnchor();
+    }
+
+    private resetPdfState(): void {
         this.isLoading.set(true);
         this.error.set(undefined);
         this.totalPages.set(0);
         this.currentPage.set(1);
-
-        try {
-            const loadingTask = PDFJS.getDocument({ url }) as PDFLoadingTask;
-            this.loadingTask = loadingTask;
-            const pdfDocument = await loadingTask.promise;
-            if (token !== this.loadToken) {
-                await pdfDocument.destroy();
-                return;
-            }
-            this.pdfDocument = pdfDocument;
-
-            const numPages = this.pdfDocument.numPages;
-            this.totalPages.set(numPages);
-
-            if (numPages === 0) {
-                this.error.set('error');
-                this.isLoading.set(false);
-                return;
-            }
-
-            await this.renderAllPages();
-            if (token !== this.loadToken) {
-                return;
-            }
-            this.isLoading.set(false);
-        } catch (err) {
-            if (token !== this.loadToken) {
-                return;
-            }
-            this.error.set('error');
-            this.isLoading.set(false);
-        }
-    }
-
-    /**
-     * Re-renders all pages at the current container width and restores the scroll anchor
-     * so the same PDF content stays under the viewport after resize or reload.
-     */
-    private async renderAllPages(): Promise<void> {
-        if (this.isRendering()) {
-            this.pendingRender = true;
-            return;
-        }
-
-        if (!this.pdfDocument) {
-            return;
-        }
-
-        const containerRef = this.pdfContainer();
-        if (!containerRef) {
-            return;
-        }
-
-        const viewerBox = this.pdfViewerBox()?.nativeElement;
-        const container = containerRef.nativeElement;
-
-        let anchor: PdfViewerAnchorState | undefined;
-        if (this.preCapturedAnchor) {
-            anchor = this.preCapturedAnchor;
-            this.preCapturedAnchor = undefined;
-            this.isResizing = false;
-        } else {
-            anchor = viewerBox ? this.captureAnchorState(viewerBox, container) : undefined;
-            this.isResizing = false;
-        }
-
-        this.isRendering.set(true);
-
-        try {
-            container.innerHTML = '';
-
-            const targetWidth = this.calculateTargetWidth();
-            const numPages = this.pdfDocument.numPages;
-
-            let pagesSucceeded = 0;
-
-            for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-                const success = await this.renderPage(pageNum, container, targetWidth);
-                if (success) {
-                    pagesSucceeded++;
-                }
-            }
-
-            if (pagesSucceeded === 0) {
-                this.error.set('error');
-                this.isRendering.set(false);
-                return;
-            }
-
-            setTimeout(() => {
-                if (this.zoomLevel() !== 1.0) {
-                    this.applyZoomToPages();
-                }
-
-                requestAnimationFrame(() => {
-                    if (viewerBox && anchor) {
-                        this.restoreAnchorState(anchor, viewerBox, container);
-                    }
-
-                    this.updateCurrentPage();
-                });
-            }, PdfViewerComponent.DOM_RENDER_DELAY_MS);
-        } finally {
-            this.isRendering.set(false);
-            if (this.pendingRender) {
-                this.pendingRender = false;
-                void this.renderAllPages();
-            }
-        }
-    }
-
-    private calculateTargetWidth(): number {
-        const viewerBoxRef = this.pdfViewerBox();
-        return viewerBoxRef?.nativeElement.clientWidth || 800;
-    }
-
-    zoomIn(): void {
-        this.setZoom(this.zoomLevel() + PdfViewerComponent.ZOOM_INCREMENT);
-    }
-
-    zoomOut(): void {
-        this.setZoom(this.zoomLevel() - PdfViewerComponent.ZOOM_INCREMENT);
-    }
-
-    resetZoom(): void {
-        this.setZoom(1.0, true);
-    }
-
-    /**
-     * Applies zoom via CSS scaling and preserves the user's scroll position by mapping
-     * old scroll ratios to the new scrollable area.
-     */
-    private performZoom(): void {
-        if (this.isRendering()) {
-            this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
-            this.zoomRetryTimeoutId = window.setTimeout(() => this.performZoom(), PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
-            return;
-        }
-        this.zoomRetryTimeoutId = PdfViewerComponent.clearTimeoutId(this.zoomRetryTimeoutId);
-
-        this.isZooming = true;
-
-        const viewerBox = this.pdfViewerBox()?.nativeElement;
-        const oldScrollLeft = viewerBox?.scrollLeft ?? 0;
-        const oldScrollTop = viewerBox?.scrollTop ?? 0;
-        const oldScrollWidth = viewerBox?.scrollWidth ?? 0;
-        const oldScrollHeight = viewerBox?.scrollHeight ?? 0;
-        const clientWidth = viewerBox?.clientWidth ?? 0;
-        const clientHeight = viewerBox?.clientHeight ?? 0;
-
-        const centerXRatio = oldScrollWidth > 0 ? (oldScrollLeft + clientWidth / 2) / oldScrollWidth : 0.5;
-        const topYRatio = oldScrollHeight > 0 ? oldScrollTop / oldScrollHeight : 0;
-
-        this.applyZoomToPages();
-
-        requestAnimationFrame(() => {
-            if (!viewerBox) {
-                return;
-            }
-
-            const newScrollWidth = viewerBox.scrollWidth;
-            const newScrollHeight = viewerBox.scrollHeight;
-
-            let newScrollLeft = centerXRatio * newScrollWidth - clientWidth / 2;
-            let newScrollTop = topYRatio * newScrollHeight;
-
-            const maxScrollLeft = Math.max(0, newScrollWidth - clientWidth);
-            const maxScrollTop = Math.max(0, newScrollHeight - clientHeight);
-
-            newScrollLeft = Math.max(0, Math.min(maxScrollLeft, newScrollLeft));
-            newScrollTop = Math.max(0, Math.min(maxScrollTop, newScrollTop));
-
-            viewerBox.scrollLeft = newScrollLeft;
-            viewerBox.scrollTop = newScrollTop;
-        });
-
-        setTimeout(() => {
-            if (viewerBox) {
-                this.lastObservedWidth = viewerBox.clientWidth;
-            }
-
-            this.isZooming = false;
-        }, PdfViewerComponent.ZOOM_RETRY_DELAY_MS);
-    }
-
-    goToPage(pageNumber: number): void {
-        if (!this.pdfDocument || pageNumber < 1 || pageNumber > this.totalPages()) {
-            return;
-        }
-
-        const container = this.pdfContainer()?.nativeElement;
-        if (!container) {
-            return;
-        }
-
-        const pageElements = container.querySelectorAll('.pdf-page');
-        const targetPage = pageElements[pageNumber - 1];
-
-        if (targetPage) {
-            const viewerBox = this.pdfViewerBox()?.nativeElement;
-            if (viewerBox) {
-                const pageRect = (targetPage as HTMLElement).getBoundingClientRect();
-                const containerRect = viewerBox.getBoundingClientRect();
-                const offset = pageRect.top - containerRect.top + viewerBox.scrollTop;
-
-                viewerBox.scrollTo({
-                    top: offset - PdfViewerComponent.PAGE_SCROLL_OFFSET_PX,
-                    behavior: 'smooth',
-                });
-            }
-        }
-
-        this.currentPage.set(pageNumber);
-    }
-
-    /**
-     * Resizes rendered pages without re-rendering canvas pixel data.
-     */
-    private applyZoomToPages(): void {
-        const container = this.pdfContainer()?.nativeElement;
-        if (!container) {
-            return;
-        }
-
-        const zoom = this.zoomLevel();
-        const pages = container.querySelectorAll('.pdf-page');
-
-        pages.forEach((pageElement) => {
-            const page = pageElement as HTMLElement;
-            const canvas = page.querySelector('canvas');
-
-            if (canvas instanceof HTMLCanvasElement && canvas.dataset.originalWidth && canvas.dataset.originalHeight) {
-                const width = parseFloat(canvas.dataset.originalWidth) * zoom;
-                const height = parseFloat(canvas.dataset.originalHeight) * zoom;
-                canvas.style.width = `${width}px`;
-                canvas.style.height = `${height}px`;
-                page.style.width = canvas.style.width;
-                page.style.height = canvas.style.height;
-            }
-        });
-    }
-
-    /**
-     * Computes DOM metrics and PDF scale factors for a rendered page.
-     * Used to translate between scroll offsets and PDF coordinates.
-     */
-    private getPageMetrics(
-        page: HTMLElement,
-        container: HTMLDivElement,
-        viewerBox?: HTMLDivElement,
-    ): {
-        left: number;
-        top: number;
-        width: number;
-        height: number;
-        scaleX: number;
-        scaleY: number;
-        pdfWidth: number;
-        pdfHeight: number;
-    } {
-        const rect = page.getBoundingClientRect();
-        const width = rect.width;
-        const height = rect.height;
-
-        let left: number;
-        let top: number;
-
-        if (viewerBox) {
-            const viewerRect = viewerBox.getBoundingClientRect();
-            left = rect.left - viewerRect.left + viewerBox.scrollLeft;
-            top = rect.top - viewerRect.top + viewerBox.scrollTop;
-        } else {
-            const containerRect = container.getBoundingClientRect();
-            left = rect.left - containerRect.left;
-            top = rect.top - containerRect.top;
-        }
-
-        const pdfWidth = Number(page.dataset.pdfWidth) || 0;
-        const pdfHeight = Number(page.dataset.pdfHeight) || 0;
-        const scaleX = pdfWidth > 0 ? width / pdfWidth : 0;
-        const scaleY = pdfHeight > 0 ? height / pdfHeight : 0;
-        return {
-            left,
-            top,
-            width,
-            height,
-            scaleX,
-            scaleY,
-            pdfWidth,
-            pdfHeight,
-        };
-    }
-
-    /**
-     * Captures the current scroll position in PDF coordinates so it can be restored
-     * after a resize or re-render.
-     */
-    private captureAnchorState(viewerBox: HTMLDivElement, container: HTMLDivElement): PdfViewerAnchorState {
-        const pages = container.querySelectorAll('.pdf-page');
-        if (pages.length === 0) {
-            return { pageIndex: 0, pdfX: 0, pdfY: 0, hadHorizontalScroll: false };
-        }
-
-        const anchorX = viewerBox.scrollLeft;
-        const anchorY = viewerBox.scrollTop;
-        const hadHorizontalScroll = viewerBox.scrollWidth > viewerBox.clientWidth;
-
-        let pageIndex = pages.length - 1;
-        for (let i = 0; i < pages.length; i++) {
-            const page = pages[i] as HTMLElement;
-            const metrics = this.getPageMetrics(page, container, viewerBox);
-            if (anchorY <= metrics.top + metrics.height) {
-                pageIndex = i;
-                break;
-            }
-        }
-
-        const page = pages[pageIndex] as HTMLElement;
-        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container, viewerBox);
-
-        const rawPdfX = hadHorizontalScroll && scaleX ? (anchorX - left) / scaleX : 0;
-        const pdfX = Math.max(0, rawPdfX);
-        const pdfY = scaleY ? (anchorY - top) / scaleY : 0;
-
-        return {
-            pageIndex,
-            pdfX,
-            pdfY,
-            hadHorizontalScroll,
-        };
-    }
-
-    /**
-     * Restores the scroll position based on a previously captured anchor state,
-     * respecting whether horizontal scrolling was present.
-     */
-    private restoreAnchorState(anchor: PdfViewerAnchorState, viewerBox: HTMLDivElement, container: HTMLDivElement): void {
-        const pages = container.querySelectorAll('.pdf-page');
-        if (pages.length === 0) {
-            return;
-        }
-
-        const pageIndex = Math.min(anchor.pageIndex, pages.length - 1);
-        const page = pages[pageIndex] as HTMLElement;
-        const { left, top, scaleX, scaleY } = this.getPageMetrics(page, container, viewerBox);
-
-        let desiredScrollLeft: number;
-        if (!anchor.hadHorizontalScroll) {
-            desiredScrollLeft = 0;
-        } else {
-            desiredScrollLeft = left + (scaleX ? anchor.pdfX * scaleX : 0);
-        }
-
-        const desiredScrollTop = top + (scaleY ? anchor.pdfY * scaleY : 0);
-        const maxScrollLeft = Math.max(0, viewerBox.scrollWidth - viewerBox.clientWidth);
-        const maxScrollTop = Math.max(0, viewerBox.scrollHeight - viewerBox.clientHeight);
-
-        const clampedScrollLeft = PdfViewerComponent.clamp(desiredScrollLeft, 0, maxScrollLeft);
-        const clampedScrollTop = PdfViewerComponent.clamp(desiredScrollTop, 0, maxScrollTop);
-
-        viewerBox.scrollLeft = clampedScrollLeft;
-        viewerBox.scrollTop = clampedScrollTop;
-    }
-
-    /**
-     * Debounced resize handler that captures an anchor once per resize sequence
-     * and triggers a re-render at the new width.
-     */
-    private handleResize = (): void => {
-        const viewerBox = this.pdfViewerBox()?.nativeElement;
-        const container = this.pdfContainer()?.nativeElement;
-        if (viewerBox && container && this.pdfDocument && !this.isResizing) {
-            this.isResizing = true;
-            this.preCapturedAnchor = this.captureAnchorState(viewerBox, container);
-        }
-
-        this.resizeTimeout = PdfViewerComponent.clearTimeoutId(this.resizeTimeout);
-        this.resizeTimeout = window.setTimeout(() => {
-            if (this.pdfDocument && !this.isLoading() && !this.error()) {
-                this.renderAllPages();
-            }
-        }, PdfViewerComponent.RESIZE_DEBOUNCE_MS);
-    };
-
-    /**
-     * Delays page navigation until rendering has settled to avoid scroll jitter.
-     */
-    private schedulePageNavigation(targetPage: number, totalPages: number): void {
-        this.pageNavTimeoutId = PdfViewerComponent.clearTimeoutId(this.pageNavTimeoutId);
-        if (targetPage < 1 || targetPage > totalPages) {
-            return;
-        }
-        this.pageNavTimeoutId = window.setTimeout(() => this.goToPage(targetPage), PdfViewerComponent.PAGE_NAVIGATION_DELAY_MS);
-    }
-
-    private setZoom(nextZoom: number, force = false): void {
-        const clamped = PdfViewerComponent.clamp(nextZoom, PdfViewerComponent.MIN_ZOOM_LEVEL, PdfViewerComponent.MAX_ZOOM_LEVEL);
-        if (!force && clamped === this.zoomLevel()) {
-            return;
-        }
-        this.zoomLevel.set(clamped);
-        this.performZoom();
-    }
-
-    /**
-     * Updates the current page based on which page has the largest visible area.
-     */
-    private updateCurrentPage = (): void => {
-        if (this.isRendering()) {
-            return;
-        }
-
-        const viewerBox = this.pdfViewerBox()?.nativeElement;
-        const container = this.pdfContainer()?.nativeElement;
-
-        if (!viewerBox || !container) {
-            return;
-        }
-
-        const pages = container.querySelectorAll('.pdf-page');
-        if (pages.length === 0) {
-            return;
-        }
-
-        const viewerRect = viewerBox.getBoundingClientRect();
-        let maxVisibleArea = 0;
-        let visiblePageNum = 1;
-
-        pages.forEach((page, index) => {
-            const pageRect = page.getBoundingClientRect();
-
-            const intersectionTop = Math.max(pageRect.top, viewerRect.top);
-            const intersectionBottom = Math.min(pageRect.bottom, viewerRect.bottom);
-            const visibleHeight = Math.max(0, intersectionBottom - intersectionTop);
-
-            if (visibleHeight > maxVisibleArea) {
-                maxVisibleArea = visibleHeight;
-                visiblePageNum = index + 1;
-            }
-        });
-
-        this.currentPage.set(visiblePageNum);
-    };
-
-    /**
-     * Renders a single page to a canvas at device pixel ratio for crisp output.
-     * Returns false if rendering fails.
-     */
-    private async renderPage(pageNum: number, container: HTMLDivElement, targetWidth: number): Promise<boolean> {
-        if (!this.pdfDocument) {
-            return false;
-        }
-
-        try {
-            const page = await this.pdfDocument.getPage(pageNum);
-
-            const viewport = page.getViewport({ scale: 1 });
-            const scale = targetWidth / viewport.width;
-
-            const pixelRatio = window.devicePixelRatio || 1;
-            const scaledViewport = page.getViewport({ scale: scale * pixelRatio });
-
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-
-            if (!context) {
-                return false;
-            }
-
-            canvas.height = scaledViewport.height;
-            canvas.width = scaledViewport.width;
-
-            const cssWidth = scaledViewport.width / pixelRatio;
-            const cssHeight = scaledViewport.height / pixelRatio;
-            canvas.style.width = `${cssWidth}px`;
-            canvas.style.height = `${cssHeight}px`;
-
-            canvas.dataset.originalWidth = `${cssWidth}`;
-            canvas.dataset.originalHeight = `${cssHeight}`;
-
-            const renderContext = {
-                canvasContext: context,
-                viewport: scaledViewport,
-                canvas: canvas,
-            };
-
-            await page.render(renderContext).promise;
-
-            const pageDiv = document.createElement('div');
-            pageDiv.className = 'pdf-page';
-            pageDiv.style.width = canvas.style.width;
-            pageDiv.style.height = canvas.style.height;
-            pageDiv.dataset.pdfWidth = `${viewport.width}`;
-            pageDiv.dataset.pdfHeight = `${viewport.height}`;
-            pageDiv.appendChild(canvas);
-            container.appendChild(pageDiv);
-
-            return true;
-        } catch (error) {
-            return false;
-        }
-    }
-
-    private clearPdfResources(): void {
-        this.loadingTask?.destroy?.();
-        this.loadingTask = undefined;
-        if (this.pdfDocument) {
-            this.pdfDocument.destroy();
-            this.pdfDocument = undefined;
-        }
     }
 }
