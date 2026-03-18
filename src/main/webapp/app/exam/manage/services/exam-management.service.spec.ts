@@ -8,6 +8,7 @@ import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.mo
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
+import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -58,7 +59,7 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = ExamManagementService.convertExamDatesFromClient({ id: 1 } as Exam);
+        const expectedBody = toExamUpdateDTO({ id: 1 } as Exam);
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -75,7 +76,7 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = ExamManagementService.convertExamDatesFromClient({ id: 1 } as Exam);
+        const expectedBody = toExamUpdateDTO({ id: 1 } as Exam);
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -92,7 +93,7 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = ExamManagementService.convertExamDatesFromClient({ id: 1 } as Exam);
+        const expectedBody = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -127,10 +128,9 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
         const expected: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
 
         // WHEN
-        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
+        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
@@ -148,10 +148,9 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
 
         // WHEN
-        service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
+        service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
 
         // THEN
         const req = httpMock.expectOne({
