@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasAgent.ExerciseCompetencyMappingDTO;
 import de.tum.cit.aet.artemis.atlas.service.CompetencyExpertToolsService.CompetencyOperation;
 
 /**
@@ -36,6 +37,12 @@ public class AtlasAgentSessionCacheService {
      * Must be configured in CacheConfiguration with appropriate TTL (2 hours recommended).
      */
     public static final String ATLAS_SESSION_PENDING_RELATIONS_CACHE = "atlas-session-pending-relations";
+
+    /**
+     * Cache name for exercise mapping preview DTOs.
+     * Used as distributed fallback when the ThreadLocal preview is not available across nodes.
+     */
+    public static final String ATLAS_SESSION_EXERCISE_PREVIEW_CACHE = "atlas-session-exercise-preview";
 
     private final CacheManager cacheManager;
 
@@ -124,6 +131,46 @@ public class AtlasAgentSessionCacheService {
      */
     public void clearCachedRelationOperations(String sessionId) {
         Cache cache = cacheManager.getCache(ATLAS_SESSION_PENDING_RELATIONS_CACHE);
+        if (cache != null) {
+            cache.evict(sessionId);
+        }
+    }
+
+    /**
+     * Cache the exercise mapping preview for a session.
+     * Written alongside the ThreadLocal so cross-node requests can retrieve it.
+     *
+     * @param sessionId the session ID
+     * @param preview   the exercise mapping preview DTO
+     */
+    public void cacheExerciseMappingPreview(String sessionId, ExerciseCompetencyMappingDTO preview) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_EXERCISE_PREVIEW_CACHE);
+        if (cache != null) {
+            cache.put(sessionId, preview);
+        }
+    }
+
+    /**
+     * Retrieve the cached exercise mapping preview for a session.
+     *
+     * @param sessionId the session ID
+     * @return the cached preview, or null if absent
+     */
+    public ExerciseCompetencyMappingDTO getCachedExerciseMappingPreview(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_EXERCISE_PREVIEW_CACHE);
+        if (cache == null) {
+            return null;
+        }
+        return cache.get(sessionId, ExerciseCompetencyMappingDTO.class);
+    }
+
+    /**
+     * Evict the cached exercise mapping preview for a session.
+     *
+     * @param sessionId the session ID
+     */
+    public void clearCachedExerciseMappingPreview(String sessionId) {
+        Cache cache = cacheManager.getCache(ATLAS_SESSION_EXERCISE_PREVIEW_CACHE);
         if (cache != null) {
             cache.evict(sessionId);
         }
