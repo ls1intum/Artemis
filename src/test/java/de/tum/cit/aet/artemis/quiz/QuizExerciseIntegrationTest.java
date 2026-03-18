@@ -1544,7 +1544,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         assertThat(link.getWeight()).isEqualTo(0.25);
 
         Competency fakeCompetency = new Competency();
-        fakeCompetency.setId(999L);
+        fakeCompetency.setId(999999999L);
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(fakeCompetency, quizExercise, 0.25)));
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.NOT_FOUND);
     }
