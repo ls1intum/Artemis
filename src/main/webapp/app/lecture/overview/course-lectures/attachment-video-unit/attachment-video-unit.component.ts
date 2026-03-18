@@ -1,4 +1,4 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
@@ -47,6 +47,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+
+    targetTimestamp = input<number | undefined>(undefined);
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
