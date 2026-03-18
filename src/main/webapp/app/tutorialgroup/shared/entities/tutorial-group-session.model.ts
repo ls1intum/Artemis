@@ -45,3 +45,25 @@ export interface RawTutorialGroupDetailSessionDTO {
     dateChanged: boolean;
     attendanceCount?: number;
 }
+
+export class TutorialGroupSessionDTO {
+    constructor(
+        public id: number,
+        public start: Dayjs,
+        public end: Dayjs,
+        public location: string,
+        public isCancelled: boolean,
+        public locationChanged: boolean,
+        public timeChanged: boolean,
+        public dateChanged: boolean,
+        public attendance?: number,
+    ) {}
+}
+
+export interface CreateOrUpdateTutorialGroupSessionDTO {
+    date: string;
+    startTime: string;
+    endTime: string;
+    location: string;
+    attendance?: number;
+}
