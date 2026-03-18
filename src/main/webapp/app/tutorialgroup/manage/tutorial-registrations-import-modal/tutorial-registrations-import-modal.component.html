@@ -4,21 +4,32 @@
         @if (step === ImportFlowStep.RESULTS && allStudentsExist()) {
             <div class="success-content">
                 <span class="pi pi-check-circle" style="font-size: 5rem"></span>
-                <span jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.allStudentsRegistered"></span>
+                <span
+                    data-testid="results-description-all-registered"
+                    jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.allStudentsRegistered"
+                ></span>
             </div>
         } @else {
             @switch (step) {
                 @case (ImportFlowStep.EXPLANATION) {
-                    <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.explanationText"></span>
+                    <span class="description" data-testid="explanation-description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.explanationText"></span>
                 }
                 @case (ImportFlowStep.CONFIRMATION) {
-                    <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.confirmationText"></span>
+                    <span class="description" data-testid="confirmation-description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.confirmationText"></span>
                 }
                 @case (ImportFlowStep.RESULTS) {
                     @if (noStudentsExist()) {
-                        <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.noStudentsRegistered"></span>
+                        <span
+                            class="description"
+                            data-testid="results-description-none-registered"
+                            jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.noStudentsRegistered"
+                        ></span>
                     } @else {
-                        <span class="description" jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.someStudentsRegistered"></span>
+                        <span
+                            class="description"
+                            data-testid="results-description-some-registered"
+                            jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.resultsDescription.someStudentsRegistered"
+                        ></span>
                     }
                 }
             }
