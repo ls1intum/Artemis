@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.shared;
 
+import java.util.List;
+
 import jakarta.annotation.PostConstruct;
 
 import org.slf4j.Logger;
@@ -8,9 +10,16 @@ import org.springframework.boot.test.context.TestConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
+import de.tum.cit.aet.artemis.communication.domain.Reaction;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -21,15 +30,11 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * Jackson may encounter "No _valueDeserializer assigned" errors due to incomplete
  * deserializer initialization.
  * <p>
- * By performing dummy deserializations at startup, we ensure the deserializer cache is
+ * By eagerly resolving deserializers at startup, we ensure the deserializer cache is
  * properly populated before any tests run, eliminating the race condition.
  * <p>
- * We focus on key "root" entities that:
- * <ul>
- * <li>Have complex bidirectional relationships with {@code @JsonIgnoreProperties}</li>
- * <li>Are commonly returned in REST responses with nested data</li>
- * <li>Contain many nested entity types (initializing them also initializes their children)</li>
- * </ul>
+ * We cover all entity types that have been observed to cause race condition failures
+ * in CI, including their nested relationships.
  */
 @TestConfiguration
 public class JacksonDeserializerInitializationConfig {
@@ -44,18 +49,43 @@ public class JacksonDeserializerInitializationConfig {
 
     @PostConstruct
     public void initializeDeserializers() {
-        log.debug("Eagerly initializing Jackson deserializers for entity types");
+        log.info("Eagerly initializing Jackson deserializers for entity types");
 
-        // Initialize Organization with nested User and Course
+        // Force Jackson to build and cache BeanDeserializers for all entity types
+        // that are commonly deserialized in integration tests. This prevents race
+        // conditions when tests run in parallel and trigger first-time deserialization
+        // of these types concurrently.
+        List<Class<?>> typesToInitialize = List.of(User.class, Organization.class, Course.class, Exam.class, TutorialGroup.class, TutorialGroupRegistration.class, Post.class,
+                Reaction.class, Exercise.class, QuizExercise.class);
+
+        for (Class<?> type : typesToInitialize) {
+            forceDeserializerCreation(type);
+        }
+
+        // Also perform actual deserialization to fully populate nested property deserializers
         initializeOrganization();
+        initializeTutorialGroup();
+        initializePost();
 
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
-        initializeCourse();
+        log.info("Successfully initialized Jackson deserializers for {} types", typesToInitialize.size());
+    }
 
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
-        initializeExam();
-
-        log.debug("Successfully initialized Jackson deserializers");
+    /**
+     * Forces Jackson to create and cache the BeanDeserializer for the given type.
+     * This ensures that when tests later deserialize this type concurrently,
+     * the deserializer is already fully initialized.
+     */
+    private void forceDeserializerCreation(Class<?> type) {
+        try {
+            // Force the type to be fully resolved by reading an empty object.
+            // This creates and caches the BeanDeserializer and all its property deserializers.
+            objectMapper.readValue("{}", type);
+        }
+        catch (Exception e) {
+            // Expected for types that require specific fields; the important thing
+            // is that the deserializer was created and cached during the attempt
+            log.debug("Pre-initialization attempt for {} (expected): {}", type.getSimpleName(), e.getMessage());
+        }
     }
 
     private void initializeOrganization() {
@@ -88,56 +118,62 @@ public class JacksonDeserializerInitializationConfig {
         }
     }
 
-    private void initializeCourse() {
+    private void initializeTutorialGroup() {
         try {
             String sampleJson = """
                     {
                         "id": 1,
-                        "title": "Test Course",
-                        "shortName": "TC",
-                        "exercises": [{
+                        "title": "Test Group",
+                        "capacity": 10,
+                        "isOnline": false,
+                        "language": "ENGLISH",
+                        "campus": "Test Campus",
+                        "teachingAssistant": {
                             "id": 1,
-                            "title": "Test Exercise",
-                            "type": "text"
-                        }],
-                        "lectures": [{
+                            "login": "tutor1",
+                            "firstName": "Test",
+                            "lastName": "Tutor"
+                        },
+                        "registrations": [{
                             "id": 1,
-                            "title": "Test Lecture"
-                        }],
-                        "organizations": [{
-                            "id": 1,
-                            "name": "Test Org"
+                            "student": {
+                                "id": 2,
+                                "login": "student1",
+                                "firstName": "Test",
+                                "lastName": "Student"
+                            }
                         }]
                     }
                     """;
-            objectMapper.readValue(sampleJson, Course.class);
+            objectMapper.readValue(sampleJson, TutorialGroup.class);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
+            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
         }
     }
 
-    private void initializeExam() {
+    private void initializePost() {
         try {
             String sampleJson = """
                     {
                         "id": 1,
-                        "title": "Test Exam",
-                        "exerciseGroups": [{
+                        "content": "Test post",
+                        "reactions": [{
                             "id": 1,
-                            "title": "Test Group",
-                            "exercises": []
-                        }],
-                        "studentExams": [{
-                            "id": 1,
-                            "submitted": false
+                            "emojiId": "smile",
+                            "user": {
+                                "id": 1,
+                                "login": "testuser",
+                                "firstName": "Test",
+                                "lastName": "User"
+                            }
                         }]
                     }
                     """;
-            objectMapper.readValue(sampleJson, Exam.class);
+            objectMapper.readValue(sampleJson, Post.class);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
+            log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
         }
     }
 }
