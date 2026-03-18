@@ -223,13 +223,22 @@ public class ProgrammingExerciseUpdateResource {
     }
 
     private void validateCourseAndGroupUnchanged(UpdateProgrammingExerciseDTO updateDTO, ProgrammingExercise existingExercise) {
-        Long existingCourseId = existingExercise.isCourseExercise() && existingExercise.getCourseViaExerciseGroupOrCourseMember() != null
-                ? existingExercise.getCourseViaExerciseGroupOrCourseMember().getId()
-                : null;
-        Long existingExerciseGroupId = existingExercise.getExerciseGroup() != null ? existingExercise.getExerciseGroup().getId() : null;
-        if (!Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId())) {
+        boolean courseIdChanged = !Objects.equals(getExistingCourseId(existingExercise), updateDTO.courseId());
+        boolean exerciseGroupIdChanged = !Objects.equals(getExistingExerciseGroupId(existingExercise), updateDTO.exerciseGroupId());
+        if (courseIdChanged || exerciseGroupIdChanged) {
             throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
         }
+    }
+
+    private static Long getExistingCourseId(ProgrammingExercise exercise) {
+        if (exercise.isCourseExercise() && exercise.getCourseViaExerciseGroupOrCourseMember() != null) {
+            return exercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        }
+        return null;
+    }
+
+    private static Long getExistingExerciseGroupId(ProgrammingExercise exercise) {
+        return exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
     }
 
     private void validateImmutableFields(UpdateProgrammingExerciseDTO updateDTO, ProgrammingExercise originalExercise) {
@@ -244,16 +253,13 @@ public class ProgrammingExerciseUpdateResource {
     private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
         boolean onlineEditorAllowed = Boolean.TRUE.equals(updateDTO.allowOnlineEditor());
         boolean offlineIdeAllowed = Boolean.TRUE.equals(updateDTO.allowOfflineIde());
-        if (moduleFeatureService.isTheiaEnabled()) {
-            if (!onlineEditorAllowed && !offlineIdeAllowed && !updateDTO.allowOnlineIde()) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
+        boolean onlineIdeAllowed = moduleFeatureService.isTheiaEnabled() && Boolean.TRUE.equals(updateDTO.allowOnlineIde());
+        if (onlineEditorAllowed || offlineIdeAllowed || onlineIdeAllowed) {
+            return;
         }
-        else if (!onlineEditorAllowed && !offlineIdeAllowed) {
-            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                    "noParticipationModeAllowed");
-        }
+        String detail = moduleFeatureService.isTheiaEnabled() ? "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE"
+                : "You need to allow at least one participation mode, the online editor or the offline IDE";
+        throw new BadRequestAlertException(detail, ENTITY_NAME, "noParticipationModeAllowed");
     }
 
     /**
