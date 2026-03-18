@@ -304,7 +304,7 @@ class ArchitectureTest extends AbstractArchitectureTest {
     }
 
     private <T extends HasAnnotations<T>> ArchCondition<T> useJsonIncludeNonEmpty() {
-        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY)") {
+        return new ArchCondition<>("Use @JsonInclude(JsonInclude.Include.NON_EMPTY) or NON_NULL for build agent DTOs") {
 
             @Override
             public void check(T item, ConditionEvents events) {
@@ -315,9 +315,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
                     return;
                 }
                 JavaEnumConstant value = (JavaEnumConstant) valueProperty.get();
-                if (!value.name().equals("NON_EMPTY")) {
-                    events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY)"));
+                if (value.name().equals("NON_EMPTY") || value.name().equals("NON_NULL")) {
+                    return;
                 }
+                events.add(violated(item, item + " should be annotated with @JsonInclude(JsonInclude.Include.NON_EMPTY) or NON_NULL"));
             }
         };
     }
@@ -442,8 +443,10 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // JacksonConfiguration must NOT be lazy because Jackson modules must be available when the ObjectMapper is created
                 .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.config.JacksonConfiguration")
                 // RequestUtilService must NOT be lazy because it needs the ObjectMapper to be fully configured with Jackson modules
-                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.RequestUtilService").should().beAnnotatedWith(Lazy.class)
-                .because("All Spring components should be lazy-loaded to improve startup time");
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.RequestUtilService")
+                // RedissonCodecConfiguration must NOT be lazy because the RedissonAutoConfigurationCustomizer bean must be available during Redisson startup
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedissonCodecConfiguration").should()
+                .beAnnotatedWith(Lazy.class).because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);
     }
