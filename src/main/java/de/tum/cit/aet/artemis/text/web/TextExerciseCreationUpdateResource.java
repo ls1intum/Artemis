@@ -418,6 +418,9 @@ public class TextExerciseCreationUpdateResource {
             }
 
             var competencyDto = linkDto.courseCompetencyDTO();
+            if (competencyDto == null) {
+                throw new BadRequestAlertException("Each competency link must reference a valid competency with an id.", "CourseCompetency", "competencyMissing");
+            }
             Long competencyId = competencyDto.id();
 
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
