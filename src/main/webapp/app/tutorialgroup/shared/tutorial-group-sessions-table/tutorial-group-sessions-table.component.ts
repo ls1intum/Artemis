@@ -50,7 +50,7 @@ export class TutorialGroupSessionsTableComponent {
         effect(() => {
             const sessionsList = this.sessions();
             if (sessionsList) {
-                this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty([...sessionsList], 'startDate', false));
+                this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty([...sessionsList], 'start', false));
             }
         });
 
