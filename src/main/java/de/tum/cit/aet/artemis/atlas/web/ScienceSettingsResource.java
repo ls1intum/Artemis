@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.science.ScienceSetting;
 import de.tum.cit.aet.artemis.atlas.dto.ScienceSettingDTO;
 import de.tum.cit.aet.artemis.atlas.repository.ScienceSettingRepository;
+import de.tum.cit.aet.artemis.atlas.service.ScienceSettingService;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -47,9 +47,12 @@ public class ScienceSettingsResource {
 
     private final ScienceSettingRepository scienceSettingRepository;
 
-    public ScienceSettingsResource(UserRepository userRepository, ScienceSettingRepository scienceSettingRepository) {
+    private final ScienceSettingService scienceSettingService;
+
+    public ScienceSettingsResource(UserRepository userRepository, ScienceSettingRepository scienceSettingRepository, ScienceSettingService scienceSettingService) {
         this.userRepository = userRepository;
         this.scienceSettingRepository = scienceSettingRepository;
+        this.scienceSettingService = scienceSettingService;
     }
 
     /**
@@ -95,9 +98,7 @@ public class ScienceSettingsResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
-        scienceSettingRepository.deleteAllByUserId(user.getId());
-        List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).map(dto -> new ScienceSetting(user, dto.settingId().trim(), dto.active())).toList();
-        List<ScienceSetting> persistedSettingList = scienceSettingRepository.saveAll(scienceSettingList);
+        List<ScienceSetting> persistedSettingList = scienceSettingService.replaceScienceSettingsForUser(user, scienceSettings);
         if (persistedSettingList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Science Settings", "ScienceSettings", "scienceSettingsEmptyAfterSave");
         }
