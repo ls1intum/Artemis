@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param spotTempId     the temporary ID of the associated spot (can be null for persisted entities, will use real ID)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ShortAnswerMappingFromEditorDTO(Long id, Long solutionTempId, Long spotTempId) {
 
     /**

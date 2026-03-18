@@ -35,7 +35,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param matchLetterCase whether to match letter case
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, @NotEmpty List<@Valid ShortAnswerSpotFromEditorDTO> spots,
         @NotEmpty List<@Valid ShortAnswerSolutionFromEditorDTO> solutions, @NotEmpty List<@Valid ShortAnswerMappingFromEditorDTO> correctMappings, @NotNull Integer similarityValue,

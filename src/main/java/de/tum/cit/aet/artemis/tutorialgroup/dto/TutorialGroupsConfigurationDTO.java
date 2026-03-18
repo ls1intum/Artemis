@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * @param usePublicTutorialGroupChannels whether the tutorial group channels should be public
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record TutorialGroupsConfigurationDTO(@Nullable Long id, @NotNull String tutorialPeriodStartInclusive, @NotNull String tutorialPeriodEndInclusive,
         @NotNull Boolean useTutorialGroupChannels, @NotNull Boolean usePublicTutorialGroupChannels) {
 

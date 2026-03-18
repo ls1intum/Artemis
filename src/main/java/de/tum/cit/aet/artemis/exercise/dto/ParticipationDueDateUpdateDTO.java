@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
  * @param individualDueDate the new individual due date (can be null to remove)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ParticipationDueDateUpdateDTO(@NotNull Long id, @NotNull Long exerciseId, ZonedDateTime individualDueDate) {
 
     /**

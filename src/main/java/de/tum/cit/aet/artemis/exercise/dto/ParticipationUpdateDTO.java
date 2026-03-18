@@ -13,6 +13,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param presentationScore the new presentation score (can be null to remove score)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ParticipationUpdateDTO(@NotNull Long id, @NotNull Long exerciseId, Double presentationScore) {
 }

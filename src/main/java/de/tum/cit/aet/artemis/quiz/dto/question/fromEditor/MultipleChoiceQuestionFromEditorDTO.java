@@ -30,7 +30,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param singleChoice   whether only one answer can be selected
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, @NotEmpty List<@Valid AnswerOptionFromEditorDTO> answerOptions, @NotNull Boolean singleChoice)
         implements QuizQuestionFromEditorDTO {

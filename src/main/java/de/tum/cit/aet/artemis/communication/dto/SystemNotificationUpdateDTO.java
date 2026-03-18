@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.communication.domain.notification.SystemNotificati
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record SystemNotificationUpdateDTO(@Nullable Long id, @Nullable String title, @Nullable String text, @Nullable ZonedDateTime notificationDate,
         @Nullable ZonedDateTime expireDate, @Nullable SystemNotificationType type) {
 

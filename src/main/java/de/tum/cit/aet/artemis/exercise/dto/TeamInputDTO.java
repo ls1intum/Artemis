@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
  * @param ownerId   the owner user ID
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record TeamInputDTO(@Nullable Long id, @NotNull @Size(max = 250) String name, @NotNull @Size(max = 10) String shortName, @Nullable @Size(max = 500) String image,
         @Nullable Set<Long> students, @Nullable Long ownerId) {
 

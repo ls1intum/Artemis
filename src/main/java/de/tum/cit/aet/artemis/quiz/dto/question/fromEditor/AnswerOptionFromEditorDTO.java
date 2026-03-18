@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
  * @param isCorrect   whether this option is correct
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record AnswerOptionFromEditorDTO(Long id, @NotEmpty String text, String hint, String explanation, @NotNull Boolean isCorrect) {
 
     /**

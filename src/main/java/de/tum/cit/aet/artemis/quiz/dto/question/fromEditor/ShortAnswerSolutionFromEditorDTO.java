@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
  * @param text   the solution text
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ShortAnswerSolutionFromEditorDTO(Long id, Long tempID, @NotEmpty String text) {
 
     /**

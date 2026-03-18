@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ExerciseGroupUpdateDTO(@NotNull Long id, @Nullable String title, @NotNull Boolean isMandatory) {
 
     /**

@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
  * @param spotNr the spot number in the text
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, @NotNull Integer spotNr) {
 
     /**
