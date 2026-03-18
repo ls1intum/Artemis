@@ -60,6 +60,24 @@ export interface CourseCreateDTO {
 }
 
 /**
+ * Applies default values for fields shared between create and update DTOs.
+ */
+function applyCourseDefaults(course: Course) {
+    return {
+        testCourse: course.testCourse ?? false,
+        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
+        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
+        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
+        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
+        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
+        faqEnabled: course.faqEnabled ?? false,
+        learningPathsEnabled: course.learningPathsEnabled ?? false,
+        studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
+        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+    };
+}
+
+/**
  * Converts a Course entity to a CourseCreateDTO for sending to the server.
  *
  * @param course the course entity to convert
@@ -87,7 +105,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
 
         // Configuration flags
-        testCourse: course.testCourse ?? false,
         onlineCourse: course.onlineCourse,
         language: course.language,
         defaultProgrammingLanguage: course.defaultProgrammingLanguage,
@@ -95,27 +112,21 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         // Complaint settings
         maxComplaints: course.maxComplaints,
         maxTeamComplaints: course.maxTeamComplaints,
-        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
-        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
-        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
-        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
 
         // UI settings
         color: course.color,
         enrollmentEnabled: course.enrollmentEnabled,
         enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
-        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
 
         // Course features
-        faqEnabled: course.faqEnabled ?? false,
-        learningPathsEnabled: course.learningPathsEnabled ?? false,
-        studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+
+        // Shared defaults
+        ...applyCourseDefaults(course),
     };
 }
 
@@ -211,7 +222,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
 
         // Configuration flags
-        testCourse: course.testCourse ?? false,
         onlineCourse: course.onlineCourse,
         language: course.language,
         defaultProgrammingLanguage: course.defaultProgrammingLanguage,
@@ -219,28 +229,22 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         // Complaint settings
         maxComplaints: course.maxComplaints,
         maxTeamComplaints: course.maxTeamComplaints,
-        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
-        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
-        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
-        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
 
         // UI settings
         color: course.color,
         courseIcon: course.courseIcon,
         enrollmentEnabled: course.enrollmentEnabled,
         enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
-        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        faqEnabled: course.faqEnabled ?? false,
-        learningPathsEnabled: course.learningPathsEnabled ?? false,
-        studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+
+        // Shared defaults
+        ...applyCourseDefaults(course),
     };
 }

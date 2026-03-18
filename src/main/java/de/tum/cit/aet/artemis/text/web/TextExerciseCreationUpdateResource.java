@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -338,19 +339,11 @@ public class TextExerciseCreationUpdateResource {
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
 
-        // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        // Only set values if they are explicitly provided (not null)
+        setIfNotNull(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        setIfNotNull(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        setIfNotNull(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        setIfNotNull(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
@@ -469,18 +462,10 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        setIfNotNull(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        setIfNotNull(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        setIfNotNull(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        setIfNotNull(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {
@@ -492,6 +477,15 @@ public class TextExerciseCreationUpdateResource {
             var exerciseGroup = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
+        }
+    }
+
+    /**
+     * Sets the value using the provided setter only if the value is not null.
+     */
+    private static <T> void setIfNotNull(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
         }
     }
 
