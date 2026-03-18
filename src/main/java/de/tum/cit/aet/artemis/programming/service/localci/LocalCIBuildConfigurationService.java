@@ -148,7 +148,10 @@ public class LocalCIBuildConfigurationService {
         if (phase.script() != null && !phase.script().isBlank()) {
             List<String> scriptLines = phase.script().lines().toList();
             for (String line : scriptLines) {
-                scriptBuilder.append("  ").append(line).append("\n");
+                if (!line.isEmpty()) {
+                    scriptBuilder.append("  ");
+                }
+                scriptBuilder.append(line).append("\n");
             }
         }
         scriptBuilder.append("}\n\n");
@@ -173,10 +176,7 @@ public class LocalCIBuildConfigurationService {
         scriptBuilder.append("  local _script_name\n");
         scriptBuilder.append("  _script_name=${BASH_SOURCE[0]:-$0}\n");
         if (hasRunAlwaysActions) {
-            scriptBuilder.append("  trap final_aeolus_post_action EXIT\n");
-        }
-        if (!nonForceRunPhase.isEmpty()) {
-            scriptBuilder.append("\n");
+            scriptBuilder.append("  trap final_aeolus_post_action EXIT\n\n");
         }
 
         for (BuildPhaseDTO phase : nonForceRunPhase) {

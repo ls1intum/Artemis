@@ -46,7 +46,7 @@ public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage)
             return script;
         }
 
-        return "  cd \"" + workdir + "\"\n" + script;
+        return "cd \"" + workdir + "\"\n" + script;
     }
 
     public static BuildPlanPhasesDTO deserialize(String json) throws JsonProcessingException {
