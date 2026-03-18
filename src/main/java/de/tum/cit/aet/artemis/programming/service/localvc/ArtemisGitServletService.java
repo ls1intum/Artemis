@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 
 import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.transport.ReceivePack;
 import org.eclipse.jgit.transport.UploadPack;
 import org.slf4j.Logger;
@@ -71,6 +72,11 @@ public class ArtemisGitServletService extends GitServlet {
     @Override
     public void init() throws ServletException {
         super.init();
+        // Disable dumb HTTP protocol (serving raw files like /HEAD, /objects/).
+        // Only the smart HTTP protocol (info/refs + git-upload-pack/git-receive-pack) is allowed,
+        // which goes through our authentication and authorization filters.
+        this.setAsIsFileService(AsIsFileService.DISABLED);
+
         this.setRepositoryResolver((request, name) -> {
             // request – the current request, may be used to inspect session state including cookies or user authentication.
             // name – name of the repository, as parsed out of the URL (everything after /git/).

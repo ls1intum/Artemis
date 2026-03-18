@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.programming.icl;
 
 import static de.tum.cit.aet.artemis.core.user.util.UserFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -11,6 +12,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
+import java.util.Base64;
 import java.util.Optional;
 
 import javax.naming.InvalidNameException;
@@ -27,8 +29,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -37,6 +43,7 @@ import de.tum.cit.aet.artemis.programming.service.GitService;
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.util.LocalRepository;
 import de.tum.cit.aet.artemis.programming.util.RepositoryExportTestUtil;
+import de.tum.cit.aet.artemis.programming.web.repository.RepositoryActionType;
 
 /**
  * This class contains integration tests for edge cases pertaining to the local VC system.
@@ -220,8 +227,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
         templateProgrammingExerciseParticipationRepository.delete(templateParticipation);
 
-        localVCLocalCITestService.testFetchReturnsError(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushReturnsError(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug, INTERNAL_SERVER_ERROR);
+        // Instructors should still be able to access the template repository even if the participation record is missing.
+        // Authorization is based on the user's course role, not on the existence of a participation.
+        localVCLocalCITestService.testFetchSuccessful(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(templateRepository.workingCopyGitRepo, instructor1Login, projectKey1, templateRepositorySlug);
     }
 
     @Test
@@ -231,8 +240,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         programmingExerciseRepository.save(programmingExercise);
         solutionProgrammingExerciseParticipationRepository.delete(solutionParticipation);
 
-        localVCLocalCITestService.testFetchReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
-        localVCLocalCITestService.testPushReturnsError(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug, INTERNAL_SERVER_ERROR);
+        // Instructors should still be able to access the solution repository even if the participation record is missing.
+        // Authorization is based on the user's course role, not on the existence of a participation.
+        localVCLocalCITestService.testFetchSuccessful(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug);
+        localVCLocalCITestService.testPushSuccessful(solutionRepository.workingCopyGitRepo, instructor1Login, projectKey1, solutionRepositorySlug);
     }
 
     @Test
@@ -397,6 +408,273 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // assert that the folder names are correct
         assertThat(studentAssignmentRepositoryUri1.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login1);
         assertThat(studentAssignmentRepositoryUri2.folderNameForRepositoryUri()).isEqualTo(projectKey1 + "/" + projectKey1.toLowerCase() + "-" + login2);
+    }
+
+    // --- Security tests: authentication and authorization for git operations ---
+    // These tests directly exercise LocalVCServletService.authenticateAndAuthorizeGitRequest
+    // with MockHttpServletRequest to verify every branch in the authentication and authorization flow.
+
+    // == Authentication tests: verifying credential validation ==
+
+    @Test
+    void testFetch_nonExistentUser_isRejected() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    @Test
+    void testPush_nonExistentUser_isRejected() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+    }
+
+    @Test
+    void testFetch_noAuthorizationHeader_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    /**
+     * Verifies that the dumb HTTP protocol is disabled at the JGit servlet level by sending
+     * real HTTP requests to dumb-protocol endpoints (/HEAD, /objects/info/packs).
+     * These paths bypass our authentication filters entirely (they are served by JGit's
+     * AsIsFileService), so we disable them via {@code setAsIsFileService(AsIsFileService.DISABLED)}
+     * in ArtemisGitServletService. Without this, anyone could clone repositories anonymously.
+     */
+    @Test
+    void testDumbHttpProtocol_isDisabledInServlet() throws Exception {
+        // Send real HTTP requests to dumb-protocol endpoints on the running server.
+        // These must return non-200 (JGit returns 403 when AsIsFileService is DISABLED).
+        var headUrl = new java.net.URI("http://localhost:" + port + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD").toURL();
+        var headConnection = (java.net.HttpURLConnection) headUrl.openConnection();
+        headConnection.setRequestMethod("GET");
+        assertThat(headConnection.getResponseCode()).as("Dumb HTTP /HEAD endpoint should be blocked").isGreaterThanOrEqualTo(400);
+        headConnection.disconnect();
+
+        var packsUrl = new java.net.URI("http://localhost:" + port + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/objects/info/packs").toURL();
+        var packsConnection = (java.net.HttpURLConnection) packsUrl.openConnection();
+        packsConnection.setRequestMethod("GET");
+        assertThat(packsConnection.getResponseCode()).as("Dumb HTTP /objects/info/packs endpoint should be blocked").isGreaterThanOrEqualTo(400);
+        packsConnection.disconnect();
+    }
+
+    /**
+     * Build agent credentials should allow READ (fetch/clone) operations
+     * without going through normal user authentication.
+     */
+    @Test
+    void testFetch_buildAgentCredentials_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "buildjob_user", "buildjob_password");
+
+        // Build agent bypass only applies to READ — should succeed without normal user auth
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    /**
+     * Build agent credentials must NOT bypass authentication for WRITE (push) operations.
+     * The build agent check only applies to RepositoryActionType.READ.
+     */
+    @Test
+    void testPush_buildAgentCredentials_isRejected() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", "buildjob_user", "buildjob_password");
+
+        // Build agent bypass does NOT apply to WRITE — "buildjob_user" is not a real user, so auth fails
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+    }
+
+    // == Authorization tests: student access to staff repositories ==
+    // Covers checkAccessToStaffRepository: student (not TA) + staff repo type → throws
+
+    @Test
+    void testFetch_studentAccessesSolutionRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("solution");
+    }
+
+    @Test
+    void testFetch_studentAccessesTemplateRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("exercise");
+    }
+
+    @Test
+    void testFetch_studentAccessesTestsRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-upload-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("tests");
+    }
+
+    @Test
+    void testPush_studentAccessesSolutionRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-receive-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("solution");
+    }
+
+    @Test
+    void testPush_studentAccessesTemplateRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("exercise");
+    }
+
+    @Test
+    void testPush_studentAccessesTestsRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-receive-pack", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("tests");
+    }
+
+    // Verify /info/refs endpoint applies the same rules (consistent across all URL paths)
+
+    @Test
+    void testFetch_studentAccessesSolutionRepoViaInfoRefs_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/info/refs", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("solution");
+    }
+
+    @Test
+    void testFetch_studentAccessesTemplateRepoViaInfoRefs_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", student1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("exercise");
+    }
+
+    // == Authorization tests: TA access to staff repositories ==
+    // Covers checkAccessToStaffRepository: TA + READ → succeeds, TA + WRITE → throws
+
+    @Test
+    void testFetch_tutorAccessesSolutionRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack", tutor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testFetch_tutorAccessesTemplateRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", tutor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testFetch_tutorAccessesTestsRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-upload-pack", tutor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_tutorAccessesSolutionRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-receive-pack", tutor1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("push");
+    }
+
+    @Test
+    void testPush_tutorAccessesTemplateRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", tutor1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("push");
+    }
+
+    @Test
+    void testPush_tutorAccessesTestsRepo_isForbidden() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-receive-pack", tutor1Login, USER_PASSWORD);
+
+        assertThatExceptionOfType(LocalVCForbiddenException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE))
+                .withMessageContaining("push");
+    }
+
+    // == Authorization tests: instructor/editor access to staff repositories ==
+    // Covers checkAccessToStaffRepository: editor+ → succeeds for both READ and WRITE
+
+    @Test
+    void testFetch_instructorAccessesSolutionRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-upload-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_instructorAccessesSolutionRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/git-receive-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+    }
+
+    @Test
+    void testFetch_instructorAccessesTemplateRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_instructorAccessesTemplateRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-receive-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+    }
+
+    @Test
+    void testFetch_instructorAccessesTestsRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/info/refs", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ);
+    }
+
+    @Test
+    void testPush_instructorAccessesTestsRepo_succeeds() throws Exception {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + testsRepositorySlug + ".git/git-receive-pack", instructor1Login, USER_PASSWORD);
+
+        localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE);
+    }
+
+    // == Consistency: all URL patterns are authenticated the same way ==
+
+    @Test
+    void testFetch_nonExistentUser_isRejectedOnInfoRefs() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+    }
+
+    @Test
+    void testPush_nonExistentUser_isRejectedOnInfoRefs() {
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/info/refs", "hacker", "randompassword");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.WRITE));
+    }
+
+    /**
+     * Creates a MockHttpServletRequest with Basic authentication for git endpoints.
+     */
+    private MockHttpServletRequest createGitRequest(String requestUri, String username, String password) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI(requestUri);
+        request.setRemoteAddr("127.0.0.1");
+        String credentials = Base64.getEncoder().encodeToString((username + ":" + password).getBytes());
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + credentials);
+        return request;
     }
 
     @Test
