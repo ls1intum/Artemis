@@ -19,7 +19,7 @@
     "dependencies": {
         "@docusaurus/core": "3.9.2",
         "@docusaurus/preset-classic": "3.9.2",
-        "@easyops-cn/docusaurus-search-local": "0.55.0",
+        "@easyops-cn/docusaurus-search-local": "0.55.1",
         "@fortawesome/free-solid-svg-icons": "7.2.0",
         "@fortawesome/react-fontawesome": "3.2.0",
         "@mdx-js/react": "3.1.1",
@@ -33,16 +33,18 @@
         "@docusaurus/tsconfig": "3.9.2",
         "@docusaurus/types": "3.9.2",
         "@types/prop-types": "15.7.15",
-        "baseline-browser-mapping": "2.10.0",
+        "baseline-browser-mapping": "2.10.8",
         "patch-package": "8.0.1",
         "prettier": "3.8.1",
         "typescript": "5.9.3"
     },
     "overrides": {
         "js-yaml": "4.1.1",
-        "minimatch": "10.2.2",
+        "minimatch": "10.2.4",
         "qs": "6.15.0",
-        "webpack": "5.105.2"
+        "serialize-javascript": "7.0.4",
+        "undici": "7.24.3",
+        "webpack": "5.105.4"
     },
     "browserslist": {
         "production": [

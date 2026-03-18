@@ -1,9 +1,20 @@
 import 'zone.js';
 import 'zone.js/testing';
+
+// Mock y-monaco so MonacoBinding does not require a real Monaco editor instance.
+// The mock exposes a controllable `destroy` spy that lets tests verify the
+// double-destroy guard in the real createFileBinding implementation.
+jest.mock('y-monaco', () => {
+    const mockDestroy = jest.fn();
+    const MockMonacoBinding = jest.fn().mockImplementation(() => ({ destroy: mockDestroy }));
+    (MockMonacoBinding as any).__mockDestroy = mockDestroy;
+    return { MonacoBinding: MockMonacoBinding };
+});
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Provider } from '@angular/core';
 import { BrowserTestingModule, platformBrowserTesting } from '@angular/platform-browser/testing';
 import { Subject, of, throwError } from 'rxjs';
+import { FileSyncState } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 import { CodeEditorInstructorAndEditorContainerComponent } from 'app/programming/manage/code-editor/instructor-and-editor-container/code-editor-instructor-and-editor-container.component';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
@@ -362,7 +373,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve(); // resolve modal
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
 
             // Emit DONE success event
             job$.next({ type: 'DONE', success: true });
@@ -388,7 +399,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
 
             job$.next({ type: 'DONE', success: false });
 
@@ -411,7 +422,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
             expect(comp.isGeneratingCode()).toBeFalse();
             expect(addAlertSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -472,7 +483,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             await Promise.resolve();
             await Promise.resolve();
 
-            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE });
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
             expect(comp.isGeneratingCode()).toBeFalse();
             // One modal from generateCode() confirmation and one from the "already running" error handler.
             expect(openSpy).toHaveBeenCalledTimes(2);
@@ -646,7 +657,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('runs full consistency check and shows success when no issues', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
 
             comp.checkConsistencies(comp.exercise!);
@@ -661,7 +674,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('shows success when no new consistency threads are persisted after consistency check', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [mockIssues[0]] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [mockIssues[0]] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
             const warningSpy = jest.spyOn(alertService, 'warning');
 
@@ -676,7 +691,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('shows warning and toolbar when new consistency threads are persisted after consistency check', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
             const warningSpy = jest.spyOn(alertService, 'warning');
             (reviewCommentService.reloadThreads as jest.Mock).mockImplementationOnce((onLoaded?: () => void) => {
@@ -696,7 +713,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         it('shows success when no new issues are reported, even if persisted consistency threads already exist', () => {
             reviewCommentService.threads.set(createConsistencyThreads([mockIssues[0]]) as any);
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const successSpy = jest.spyOn(alertService, 'success');
             const warningSpy = jest.spyOn(alertService, 'warning');
 
@@ -711,7 +730,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('error when first consistency check fails', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const failSpy = jest.spyOn(alertService, 'error');
 
             comp.checkConsistencies(comp.exercise!);
@@ -725,7 +746,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('error when exercise id undefined', () => {
             const check1Spy = jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([error1]));
-            const check2Spy = jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            const check2Spy = jest
+                .spyOn(artemisIntelligenceService, 'consistencyCheck')
+                .mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             const failSpy = jest.spyOn(alertService, 'error');
 
             comp.checkConsistencies({ id: undefined } as any);
@@ -1016,7 +1039,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.selectedIssue = comp.sortedIssues()[0];
 
             jest.spyOn(consistencyCheckService, 'checkConsistencyForProgrammingExercise').mockReturnValue(of([]));
-            jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ issues: [] } as ConsistencyCheckResponse));
+            jest.spyOn(artemisIntelligenceService, 'consistencyCheck').mockReturnValue(of({ timestamp: new Date().toISOString(), issues: [] } as ConsistencyCheckResponse));
             jest.spyOn(alertService, 'success');
 
             comp.checkConsistencies(comp.exercise!);
@@ -1143,5 +1166,228 @@ describe('CodeEditorInstructorAndEditorContainerComponent - Problem Statement Re
         comp.submitRefinement();
         expect(problemStatementService.refineGlobally).not.toHaveBeenCalled();
         expect(problemStatementService.generateProblemStatement).not.toHaveBeenCalled();
+    });
+});
+
+describe('CodeEditorInstructorBaseContainerComponent - file sync binding', () => {
+    let fixture: ComponentFixture<CodeEditorInstructorAndEditorContainerComponent>;
+    let comp: CodeEditorInstructorAndEditorContainerComponent;
+
+    /** Minimal monaco model/editor doubles sufficient for binding tests. */
+    function makeMonacoDoubles() {
+        const model = { setValue: jest.fn(), setEOL: jest.fn(), onDidChangeContent: jest.fn(() => ({ dispose: jest.fn() })) } as any;
+        const editorInstance = { getModel: jest.fn(() => model), getEditor: jest.fn(), getText: jest.fn(() => 'content') } as any;
+        return { model, editorInstance };
+    }
+
+    beforeEach(async () => {
+        await configureTestBed();
+        fixture = TestBed.createComponent(CodeEditorInstructorAndEditorContainerComponent);
+        comp = fixture.componentInstance;
+        comp.exercise = createMockExercise();
+    });
+
+    afterEach(() => {
+        fixture?.destroy();
+        jest.clearAllMocks();
+    });
+
+    /** Builds the fileSyncService stub used by all three tests. */
+    function makeFileSyncStub(stateReplaced$: Subject<{ filePath: string } & FileSyncState>, openFileResult: any = {}) {
+        return {
+            isInitialized: jest.fn(() => true),
+            openFile: jest.fn(() => openFileResult),
+            closeFile: jest.fn(),
+            reset: jest.fn(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        };
+    }
+
+    /** Builds the codeEditorContainer stub used by all three tests. */
+    function makeContainerStub(model: any, fileText = '') {
+        return {
+            monacoEditor: {
+                binaryFileSelected: jest.fn(() => false),
+                editor: jest.fn(() => ({
+                    getModel: jest.fn(() => model),
+                    getEditor: jest.fn(() => ({})),
+                    getText: jest.fn(() => fileText),
+                })),
+            },
+        };
+    }
+
+    it('normalizes CRLF fallback content and enforces LF EOL before binding', () => {
+        const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
+        const { model } = makeMonacoDoubles();
+        const openFile = jest.fn(() => ({ doc: {}, text: { toString: () => '' }, awareness: {} }));
+
+        (comp as any).fileSyncService = {
+            isInitialized: jest.fn(() => true),
+            openFile,
+            closeFile: jest.fn(),
+            reset: jest.fn(),
+            stateReplaced$: stateReplaced$.asObservable(),
+        };
+        const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding').mockImplementation(() => undefined);
+
+        (comp as any).codeEditorContainer = makeContainerStub(model, 'line1\r\nline2\r\n');
+
+        (comp as any).onFileSyncLoad('src/Main.java');
+
+        expect(openFile).toHaveBeenCalledWith('src/Main.java', 'line1\nline2\n');
+        expect(model.setEOL).toHaveBeenCalledOnce();
+        expect(model.setValue).toHaveBeenCalledWith('');
+        expect(createFileBindingSpy).toHaveBeenCalledOnce();
+    });
+
+    it('stateReplaced$ for the active file tears down the old binding, sets model value, and rebinds', () => {
+        const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
+        const { model } = makeMonacoDoubles();
+
+        const oldBinding = { destroy: jest.fn() };
+        const newBinding = { destroy: jest.fn() };
+        let bindingCallCount = 0;
+
+        (comp as any).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '' }, awareness: {} });
+
+        const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding').mockImplementation(() => {
+            (comp as any).currentFileBinding = [oldBinding, newBinding][bindingCallCount++];
+        });
+
+        (comp as any).codeEditorContainer = makeContainerStub(model);
+
+        // Load the file — creates the first binding and subscribes to stateReplaced$
+        (comp as any).onFileSyncLoad('src/Main.java');
+        expect(createFileBindingSpy).toHaveBeenCalledOnce();
+
+        // Emit a state replacement for the same file
+        const newText = { toString: () => 'replacement text' } as any;
+        stateReplaced$.next({ filePath: 'src/Main.java', doc: {} as any, text: newText, awareness: {} as any });
+
+        // Old binding must be destroyed before model mutation
+        expect(oldBinding.destroy).toHaveBeenCalled();
+        // Model must be seeded with new content
+        expect(model.setValue).toHaveBeenCalledWith('replacement text');
+        // A new binding must be created
+        expect(createFileBindingSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('stateReplaced$ for a different file does not affect the active binding', () => {
+        const stateReplaced$ = new Subject<{ filePath: string } & FileSyncState>();
+        const { model } = makeMonacoDoubles();
+        const binding = { destroy: jest.fn() };
+
+        (comp as any).fileSyncService = makeFileSyncStub(stateReplaced$, { doc: {}, text: { toString: () => '' }, awareness: {} });
+
+        const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding').mockImplementation(() => {
+            (comp as any).currentFileBinding = binding;
+        });
+
+        (comp as any).codeEditorContainer = makeContainerStub(model);
+
+        (comp as any).onFileSyncLoad('src/Main.java');
+
+        // Emit for a DIFFERENT file — must be ignored
+        stateReplaced$.next({ filePath: 'src/Other.java', doc: {} as any, text: { toString: () => 'other' } as any, awareness: {} as any });
+
+        expect(binding.destroy).not.toHaveBeenCalled();
+        expect(model.setValue).not.toHaveBeenCalledWith('other');
+        // createFileBinding still only called once (initial load)
+        expect(createFileBindingSpy).toHaveBeenCalledOnce();
+    });
+
+    it('double-destroy guard in the real createFileBinding prevents the underlying destroy from being invoked twice', async () => {
+        // Retrieve the mock destroy spy injected by the module-level jest.mock('y-monaco').
+        const yMonaco = await import('y-monaco');
+        const innerDestroy: jest.Mock = (yMonaco.MonacoBinding as any).__mockDestroy;
+        innerDestroy.mockClear();
+
+        const fakeSyncState = { doc: {} as any, text: {} as any, awareness: {} as any };
+        const fakeModel = {} as any;
+        const fakeEditor = {} as any;
+
+        // Call the REAL createFileBinding — not a mock — so we exercise the actual guard.
+        (comp as any).createFileBinding(fakeSyncState, fakeModel, fakeEditor);
+        const firstBinding = (comp as any).currentFileBinding;
+
+        // Call destroy twice; the second call must be a no-op (guard in production code).
+        firstBinding.destroy();
+        firstBinding.destroy();
+
+        expect(innerDestroy).toHaveBeenCalledOnce();
+
+        // teardownFileBinding must also be idempotent when called more than once.
+        (comp as any).teardownFileBinding();
+        (comp as any).teardownFileBinding();
+        // No error thrown — guard works
+    });
+
+    describe('onFileSyncLoad early-return guards', () => {
+        it('does nothing when fileSyncService is not initialized', () => {
+            const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding');
+            (comp as any).fileSyncService = { isInitialized: jest.fn(() => false), reset: jest.fn(), stateReplaced$: new Subject().asObservable() };
+
+            (comp as any).onFileSyncLoad('src/Main.java');
+
+            expect(createFileBindingSpy).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when monacoEditor is not available', () => {
+            const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding');
+            (comp as any).fileSyncService = { isInitialized: jest.fn(() => true), reset: jest.fn(), stateReplaced$: new Subject().asObservable() };
+            (comp as any).codeEditorContainer = { monacoEditor: undefined };
+
+            (comp as any).onFileSyncLoad('src/Main.java');
+
+            expect(createFileBindingSpy).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when a binary file is selected', () => {
+            const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding');
+            (comp as any).fileSyncService = { isInitialized: jest.fn(() => true), reset: jest.fn(), stateReplaced$: new Subject().asObservable() };
+            (comp as any).codeEditorContainer = { monacoEditor: { binaryFileSelected: jest.fn(() => true) } };
+
+            (comp as any).onFileSyncLoad('src/Image.png');
+
+            expect(createFileBindingSpy).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when the model is not available', () => {
+            const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding');
+            (comp as any).fileSyncService = { isInitialized: jest.fn(() => true), openFile: jest.fn(), reset: jest.fn(), stateReplaced$: new Subject().asObservable() };
+            (comp as any).codeEditorContainer = {
+                monacoEditor: {
+                    binaryFileSelected: jest.fn(() => false),
+                    editor: jest.fn(() => ({ getModel: jest.fn(() => undefined), getEditor: jest.fn(() => ({})), getText: jest.fn(() => '') })),
+                },
+            };
+
+            (comp as any).onFileSyncLoad('src/Main.java');
+
+            expect(createFileBindingSpy).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when openFile returns undefined', () => {
+            const createFileBindingSpy = jest.spyOn(comp as any, 'createFileBinding');
+            const model = { setValue: jest.fn(), setEOL: jest.fn() };
+            (comp as any).fileSyncService = {
+                isInitialized: jest.fn(() => true),
+                openFile: jest.fn(() => undefined),
+                closeFile: jest.fn(),
+                reset: jest.fn(),
+                stateReplaced$: new Subject().asObservable(),
+            };
+            (comp as any).codeEditorContainer = {
+                monacoEditor: {
+                    binaryFileSelected: jest.fn(() => false),
+                    editor: jest.fn(() => ({ getModel: jest.fn(() => model), getEditor: jest.fn(() => ({})), getText: jest.fn(() => '') })),
+                },
+            };
+
+            (comp as any).onFileSyncLoad('src/Main.java');
+
+            expect(createFileBindingSpy).not.toHaveBeenCalled();
+        });
     });
 });
