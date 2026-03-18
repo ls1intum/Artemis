@@ -6,6 +6,7 @@ import {
     CourseCompetency,
     CourseCompetencyImportOptionsDTO,
     CourseCompetencyProgress,
+    CourseCompetencyType,
     UpdateCourseCompetencyRelationDTO,
 } from 'app/atlas/shared/entities/competency.model';
 import { CompetencyWithTailRelationResponseDTO, CourseCompetencyResponseDTO, toCompetency, toPrerequisite } from 'app/atlas/shared/dto/course-competency-response.dto';
