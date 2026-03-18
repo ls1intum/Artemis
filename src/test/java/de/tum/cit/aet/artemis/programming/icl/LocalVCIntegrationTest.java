@@ -35,6 +35,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
+import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -439,12 +440,18 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
     }
 
+    /**
+     * Dumb HTTP protocol paths (e.g. /HEAD, /objects/info/packs) are not recognized by
+     * parseRepositoryUri, which only strips /info/refs, /git-upload-pack, and /git-receive-pack.
+     * The malformed path causes LocalVCRepositoryUri validation to fail with LocalVCInternalException,
+     * which the filter converts to HTTP 500 — effectively blocking the request.
+     * We use valid credentials intentionally to isolate the failure to the URL path, not authentication.
+     */
     @Test
     void testFetch_dumbHttpEndpoint_isRejected() {
-        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD", "hacker", "randompassword");
+        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD", instructor1Login, USER_PASSWORD);
 
-        // Dumb HTTP paths like /HEAD are not parseable as valid repository URIs — request is blocked
-        assertThatExceptionOfType(Exception.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
     }
 
     /**

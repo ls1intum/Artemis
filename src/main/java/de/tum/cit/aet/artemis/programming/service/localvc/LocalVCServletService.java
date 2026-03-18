@@ -276,7 +276,12 @@ public class LocalVCServletService {
 
         try {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
-            savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+            // Only create the preliminary access log on /info/refs requests.
+            // The data transfer requests (git-upload-pack, git-receive-pack) will update this log entry
+            // via PreUploadHook / processNewPush rather than creating a duplicate.
+            if (request.getRequestURI().endsWith("/info/refs")) {
+                savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+            }
         }
         catch (LocalVCForbiddenException e) {
             log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
