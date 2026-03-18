@@ -7,6 +7,7 @@
     [viewIsolatedButtonLabel]="'artemisApp.attachmentVideoUnit.download'"
     [viewIsolatedButtonIcon]="faDownload"
     [isPresentationMode]="isPresentationMode()"
+    [initiallyExpanded]="initiallyExpanded()"
     (onCompletion)="toggleCompletion($event)"
     (onCollapse)="toggleCollapse($event)"
     (onShowIsolated)="handleDownload()"
@@ -50,7 +51,7 @@
                 </div>
             </div>
         } @else if (playlistUrl() && hasTranscript()) {
-            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">
