@@ -43,12 +43,12 @@ public class RedissonCodecConfiguration {
         });
     }
 
-    static void configureObjectMapper(ObjectMapper objectMapper) {
+    public static void configureObjectMapper(ObjectMapper objectMapper) {
         objectMapper.registerModule(new JavaTimeModule());
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
     }
 
-    static void configureTypeInclusion(ObjectMapper objectMapper) {
+    public static void configureTypeInclusion(ObjectMapper objectMapper) {
         // Use EVERYTHING instead of the default NON_FINAL to include Java records (which are final)
         // in type information. Without this, records like BuildAgentInformation are serialized
         // without @class and cannot be deserialized back from Object.class.

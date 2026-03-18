@@ -445,8 +445,8 @@ class ArchitectureTest extends AbstractArchitectureTest {
                 // RequestUtilService must NOT be lazy because it needs the ObjectMapper to be fully configured with Jackson modules
                 .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.util.RequestUtilService")
                 // RedissonCodecConfiguration must NOT be lazy because the RedissonAutoConfigurationCustomizer bean must be available during Redisson startup
-                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedissonCodecConfiguration").should()
-                .beAnnotatedWith(Lazy.class).because("All Spring components should be lazy-loaded to improve startup time");
+                .and().doNotHaveFullyQualifiedName("de.tum.cit.aet.artemis.core.service.distributed.redisson.RedissonCodecConfiguration").should().beAnnotatedWith(Lazy.class)
+                .because("All Spring components should be lazy-loaded to improve startup time");
 
         rule.check(allClasses);
     }
