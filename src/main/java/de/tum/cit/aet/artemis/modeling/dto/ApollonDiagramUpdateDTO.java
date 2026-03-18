@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.modeling.domain.DiagramType;
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ApollonDiagramUpdateDTO(@Nullable Long id, @Nullable String title, @Nullable String jsonRepresentation, @Nullable DiagramType diagramType, @NotNull Long courseId) {
 
     /**

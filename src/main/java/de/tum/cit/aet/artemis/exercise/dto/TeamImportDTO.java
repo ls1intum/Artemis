@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
  * @param students  the set of student identifiers (login or registration number)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TeamImportDTO(@NotNull @Size(max = 250) String name, @NotNull @Size(max = 10) String shortName, @Nullable @Size(max = 500) String image,
         @Nullable Set<StudentIdentifierDTO> students) {
 
@@ -41,7 +41,7 @@ public record TeamImportDTO(@NotNull @Size(max = 250) String name, @NotNull @Siz
      * @param login                     the login of the student
      * @param visibleRegistrationNumber the visible registration number of the student
      */
-    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentIdentifierDTO(@Nullable String login, @Nullable String visibleRegistrationNumber) {
 
         /**

@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * DTO for importing exercises. Contains the source exercise ID and optional overrides.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exerciseType, @Nullable String title, @Nullable String shortName, @Nullable Double maxPoints,
         @Nullable Double bonusPoints) {
 

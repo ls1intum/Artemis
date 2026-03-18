@@ -21,7 +21,7 @@ import de.tum.cit.aet.artemis.text.domain.TextBlockType;
  * for unknown properties). The server always generates new IDs for created events.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record TextAssessmentEventInputDTO(@NotNull Long userId, @NotNull TextAssessmentEventType eventType, @Nullable FeedbackType feedbackType,
         @Nullable TextBlockType segmentType, @NotNull Long courseId, @NotNull Long textExerciseId, @NotNull Long participationId, @NotNull Long submissionId) {
 

@@ -17,7 +17,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
  * @param dropLocationTempId the temporary ID of the associated drop location (can be null for persisted entities, will use real ID)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropMappingFromEditorDTO(Long id, Long dragItemTempId, Long dropLocationTempId) {
 
     /**

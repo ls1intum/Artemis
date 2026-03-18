@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DragItem;
  * @param pictureFilePath the picture file path (for image-based items)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pictureFilePath) {
 
     /**

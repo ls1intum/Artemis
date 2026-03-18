@@ -16,7 +16,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizBatch;
  * @param password  the password for the batch (for batched mode)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record QuizBatchFromEditorDTO(Long id, ZonedDateTime startTime, String password) {
 
     /**

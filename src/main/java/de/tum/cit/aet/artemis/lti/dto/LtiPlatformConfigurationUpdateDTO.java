@@ -14,7 +14,7 @@ import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record LtiPlatformConfigurationUpdateDTO(@Nullable Long id, @Nullable String registrationId, @NotNull String clientId, @Nullable String originalUrl,
         @Nullable String customName, @NotNull String authorizationUri, @NotNull String jwkSetUri, @NotNull String tokenUri) {
 

@@ -9,7 +9,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
  * DTO for AuxiliaryRepository.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record AuxiliaryRepositoryDTO(Long id, String name, String repositoryUri, String checkoutDirectory, String description) {
 
     /**

@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
  * @param buildAndTestStudentSubmissionsAfterDueDate the date when student submissions are built and tested after due date
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProgrammingExerciseTimelineUpdateDTO(@NotNull Long id, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, AssessmentType assessmentType,
         ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, ZonedDateTime buildAndTestStudentSubmissionsAfterDueDate) {
 

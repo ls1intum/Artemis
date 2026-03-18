@@ -34,7 +34,7 @@ import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
  * @param correctMappings    the list of correct mappings
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, String text, String hint, String explanation, @NotNull @Positive Double points,
         @NotNull ScoringType scoringType, Boolean randomizeOrder, String backgroundFilePath, @NotEmpty List<@Valid DropLocationFromEditorDTO> dropLocations,
         @NotEmpty List<@Valid DragItemFromEditorDTO> dragItems, @NotEmpty List<@Valid DragAndDropMappingFromEditorDTO> correctMappings) implements QuizQuestionFromEditorDTO {

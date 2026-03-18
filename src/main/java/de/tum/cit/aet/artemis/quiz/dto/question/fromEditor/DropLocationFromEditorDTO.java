@@ -19,7 +19,7 @@ import de.tum.cit.aet.artemis.quiz.domain.DropLocation;
  * @param height the height
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double posX, @NotNull Double posY, @NotNull Double width, @NotNull Double height) {
 
     /**
