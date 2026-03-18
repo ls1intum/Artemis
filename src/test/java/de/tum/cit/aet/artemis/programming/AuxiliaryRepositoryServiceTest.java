@@ -166,7 +166,7 @@ class AuxiliaryRepositoryServiceTest extends AbstractProgrammingIntegrationIndep
         updatedProgrammingExercise.setAuxiliaryRepositories(List.of(auxiliaryRepository2));
 
         assertThatThrownBy(() -> auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise))
-                .isInstanceOf(IllegalStateException.class).hasMessage("Edited an existing repository that is not in the database!");
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
