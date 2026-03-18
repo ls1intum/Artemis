@@ -276,7 +276,10 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
         var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
         var tokenAuthLogs = logs.stream().filter(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).toList();
-        assertThat(tokenAuthLogs).isNotEmpty();
+        assertThat(tokenAuthLogs).hasSize(1);
+        var logEntry = tokenAuthLogs.getFirst();
+        assertThat(logEntry.getUser().getLogin()).isEqualTo(student1Login);
+        assertThat(logEntry.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
     }
 
     @Test
@@ -301,11 +304,17 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         });
 
         var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
-        assertThat(logs).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(logs).hasSize(2);
+
+        // Both fetches should have correct user and password-based auth
+        logs.forEach(accessLog -> {
+            assertThat(accessLog.getUser().getLogin()).isEqualTo(student1Login);
+            assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
+        });
 
         // The second fetch should be a PULL (client offered existing objects)
         var pullLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PULL).toList();
-        assertThat(pullLogs).isNotEmpty();
+        assertThat(pullLogs).as("Second fetch should be logged as PULL").isNotEmpty();
     }
 
     @Test
@@ -330,7 +339,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         });
 
         var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
-        assertThat(logs).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(logs).hasSize(2);
 
         // Verify all logs have correct user and authentication mechanism
         for (var accessLog : logs) {
@@ -339,8 +348,11 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         }
 
         // Verify we have both read (PULL/CLONE) and write (PUSH) operations logged
+        var readLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PULL || log.getRepositoryActionType() == RepositoryActionType.CLONE)
+                .toList();
+        assertThat(readLogs).as("Clone/fetch should be logged").hasSize(1);
         var pushLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PUSH).toList();
-        assertThat(pushLogs).isNotEmpty();
+        assertThat(pushLogs).as("Push should be logged").hasSize(1);
     }
 
     @Disabled("Submission policy test requires build results to be processed for submission counting")

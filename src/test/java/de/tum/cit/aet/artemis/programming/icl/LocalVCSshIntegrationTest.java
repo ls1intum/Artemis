@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
@@ -177,60 +178,63 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSshGitCommand_createsVcsAccessLog() throws IOException, GeneralSecurityException {
+    void testSshGitCommand_executesReceivePackSuccessfully() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
             var user = userTestRepository.getUser();
             var serverSession = getCurrentServerSession(user);
 
-            // Clear existing logs
-            vcsAccessLogRepository.deleteAll();
-            vcsAccessLogRepository.flush();
-
-            // Execute git-receive-pack command (push) — this should create a VCS access log entry
+            // Execute git-receive-pack command (push)
             final var receiveCommandString = "git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
             SshGitCommand receiveCommand = setupCommand(receiveCommandString, (ServerSession) serverSession);
             receiveCommand.run();
 
-            // Verify the command executed successfully
+            // Verify the command executed successfully and the session is still active
             assertThat(serverSession.isOpen()).isTrue();
+            ByteArrayOutputStream outputStream = (ByteArrayOutputStream) receiveCommand.getOutputStream();
+            assertThat(outputStream).isNotNull();
+            assertThat(outputStream.size()).as("git-receive-pack should produce output").isGreaterThan(0);
 
-            // Check that a VCS access log was created via the SSH path
-            // The cacheAttributesInSshSession method should have been called during SSH command setup
-            var logs = vcsAccessLogRepository.findAll();
-            var sshLogs = logs.stream().filter(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.SSH).toList();
-            // SSH logs may or may not be present depending on whether cacheAttributesInSshSession was called
-            // The important thing is that the command executed without error
-            log.info("Found {} SSH access logs after git-receive-pack command", sshLogs.size());
+            // Verify cacheAttributesInSshSession stored data in the session during command setup
+            // The VCS_ACCESS_LOG_KEY is set by cacheAttributesInSshSession when participation is present
+            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+            assertThat(cachedAccessLog).as("cacheAttributesInSshSession should cache access log for template repo").isNotNull();
+            assertThat(cachedAccessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
+            assertThat(cachedAccessLog.getUser().getLogin()).isEqualTo(user.getLogin());
         }
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSshGitCommand_testsRepo_noParticipation() throws IOException, GeneralSecurityException {
+    void testSshGitCommand_testsRepo_handlesEmptyParticipationGracefully() throws IOException, GeneralSecurityException {
         try (var client = clientConnectToArtemisSshServer()) {
             assertThat(client).isNotNull();
             var user = userTestRepository.getUser();
             var serverSession = getCurrentServerSession(user);
 
             // Execute git-upload-pack for tests repository — tests repo has no student participation
-            // This tests that cacheAttributesInSshSession handles the empty Optional gracefully
+            // This verifies cacheAttributesInSshSession handles the empty Optional gracefully
             final var uploadCommandString = "git-upload-pack '/git/" + projectKey1 + "/" + testsRepositorySlug + "'";
 
-            // The git-upload-pack command may throw NullPointerException due to the test environment setup,
-            // but the important thing is that cacheAttributesInSshSession does NOT throw when participation is empty
+            // The git-upload-pack command may throw NullPointerException from upload-pack IO setup,
+            // but cacheAttributesInSshSession must NOT throw when participation is empty
             try {
                 SshGitCommand command = setupCommand(uploadCommandString, (ServerSession) serverSession);
                 command.run();
             }
             catch (NullPointerException e) {
-                // Expected in test environment — the upload-pack command requires more setup
-                // The cacheAttributesInSshSession has already been called by this point
-                log.debug("Expected NullPointerException during git-upload-pack: {}", e.getMessage());
+                // NPE expected from upload-pack IO setup (e.g. getErrorStream() returning null), not from cacheAttributesInSshSession
+                assertThat(e.getStackTrace()[0].getClassName()).as("NPE should not originate from LocalVCServletService").doesNotContain("LocalVCServletService");
             }
 
-            // Verify the session is still open (no crash from cacheAttributesInSshSession)
+            // Verify the session survived without crashing
             assertThat(serverSession.isOpen()).isTrue();
+
+            // When participation is absent, cacheAttributesInSshSession should NOT cache anything
+            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+            assertThat(cachedAccessLog).as("No VCS access log should be cached when participation is absent").isNull();
+            var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
+            assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
         }
     }
 

@@ -33,6 +33,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -695,8 +696,6 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
     }
 
-    // == Phase 1: Auth edge cases for branch coverage ==
-
     @Test
     void testFetch_expiredUserVcsAccessToken_isRejected() throws InvalidNameException {
         localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -705,13 +704,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String expiredToken = "vcpat-expired-token-that-is-exactly-50chars-long12";
         userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, expiredToken, ZonedDateTime.now().minusDays(1));
 
-        // Ensure LDAP rejects the token when it's used as a password fallback
-        var student1Ldap = new LdapUserDto().login(student1Login);
-        student1Ldap.setUid(new LdapName("cn=student1,ou=test,o=lab"));
-        doReturn(Optional.of(student1Ldap)).when(ldapUserService).findByLogin(student1Login);
-        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+        // Expired token fails user VCS token check, then falls through to participation token check
+        // (no match), then to LDAP auth which is mocked to reject
+        setupLdapToRejectAuth(student1Login);
 
-        // Fetching with the expired token should fail (token is expired, falls through to LDAP which won't match)
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, expiredToken, projectKey1, assignmentRepositorySlug,
                 NOT_AUTHORIZED);
     }
@@ -724,13 +720,10 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String token = "vcpat-null-expiry-token-exactly-50chars-long-here1";
         userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, null);
 
-        // Ensure LDAP rejects the token when it's used as a password fallback
-        var student1Ldap = new LdapUserDto().login(student1Login);
-        student1Ldap.setUid(new LdapName("cn=student1,ou=test,o=lab"));
-        doReturn(Optional.of(student1Ldap)).when(ldapUserService).findByLogin(student1Login);
-        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+        // Null expiry date fails user VCS token check, then falls through to participation token check
+        // (no match), then to LDAP auth which is mocked to reject
+        setupLdapToRejectAuth(student1Login);
 
-        // Fetching should fail because null expiry date fails the check
         localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
     }
 
@@ -742,7 +735,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // "Basic" without Base64 payload
         request.addHeader(HttpHeaders.AUTHORIZATION, "Basic");
 
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid authorization header format");
     }
 
     @Test
@@ -753,7 +747,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Bearer scheme instead of Basic
         request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer sometoken");
 
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid authorization header format");
     }
 
     @Test
@@ -765,7 +760,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         String encoded = Base64.getEncoder().encodeToString("usernameonly".getBytes());
         request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encoded);
 
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Missing colon");
     }
 
     @Test
@@ -776,12 +772,13 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         // Invalid Base64 string
         request.addHeader(HttpHeaders.AUTHORIZATION, "Basic !!!not-base64!!!");
 
-        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid Base64");
     }
 
     @Test
     void testGetHttpStatusForException_rateLimitExceeded() {
-        int status = localVCServletService.getHttpStatusForException(new de.tum.cit.aet.artemis.core.exception.RateLimitExceededException(60), "/some-repo");
+        int status = localVCServletService.getHttpStatusForException(new RateLimitExceededException(60), "/some-repo");
         assertThat(status).isEqualTo(429);
     }
 
@@ -789,5 +786,12 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     void testGetHttpStatusForException_unknownException() {
         int status = localVCServletService.getHttpStatusForException(new RuntimeException("unexpected"), "/some-repo");
         assertThat(status).isEqualTo(500);
+    }
+
+    private void setupLdapToRejectAuth(String login) throws InvalidNameException {
+        var ldapUser = new LdapUserDto().login(login);
+        ldapUser.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+        doReturn(Optional.of(ldapUser)).when(ldapUserService).findByLogin(login);
+        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
     }
 }

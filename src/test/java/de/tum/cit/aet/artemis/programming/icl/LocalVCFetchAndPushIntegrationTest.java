@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -1472,6 +1473,16 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             clonedRepoPaths.add(clonePath);
             try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
+
+                // Verify fetch with the same token also works
+                git.fetch().setRemote(tokenRepoUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
+
+                // Verify push with the token works
+                commitFile(git, "team-token-test-file.txt");
+                var pushResults = git.push().setRemote(tokenRepoUri).call();
+                var pushResult = pushResults.iterator().next();
+                var remoteUpdate = pushResult.getRemoteUpdates().iterator().next();
+                assertThat(remoteUpdate.getStatus()).as("Push with valid participation token should succeed").isEqualTo(RemoteRefUpdate.Status.OK);
             }
         }
 
@@ -1500,11 +1511,18 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             clonedRepoPaths.add(clonePath);
             try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
                 assertThat(git).isNotNull();
+                assertThat(git.getRepository().getBranch()).isNotNull();
 
-                // Commit and push with the token
+                // Verify fetch also works with the token
+                git.fetch().setRemote(tokenRepoUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
+
+                // Commit and push with the token, then verify push succeeded
                 commitFile(git, "token-test-file.txt");
                 String pushUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, studentRepoSlug);
-                git.push().setRemote(pushUri).call();
+                var pushResults = git.push().setRemote(pushUri).call();
+                var pushResult = pushResults.iterator().next();
+                var remoteUpdate = pushResult.getRemoteUpdates().iterator().next();
+                assertThat(remoteUpdate.getStatus()).as("Push with valid participation token should succeed").isEqualTo(RemoteRefUpdate.Status.OK);
             }
         }
     }
