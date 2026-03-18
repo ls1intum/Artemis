@@ -5,8 +5,10 @@ import {
     CompetencyWithTailRelationDTO,
     CourseCompetency,
     CourseCompetencyImportOptionsDTO,
+    CourseCompetencyType,
     UpdateCourseCompetencyRelationDTO,
 } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyWithTailRelationResponseDTO, CourseCompetencyResponseDTO, toCompetency, toPrerequisite } from 'app/atlas/shared/dto/course-competency-response.dto';
 
 interface SuggestCompetencyRelationsResponseDTO {
     relations: { tail_id: string; head_id: string; relation_type: string }[];
@@ -21,7 +23,15 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
     }
 
     async importAllByCourseId(courseId: number, courseCompetencyImportOptions: CourseCompetencyImportOptionsDTO): Promise<CompetencyWithTailRelationDTO[]> {
-        return await this.post<CompetencyWithTailRelationDTO[]>(`${this.getPath(courseId)}/import-all`, courseCompetencyImportOptions);
+        const response = await this.post<CompetencyWithTailRelationResponseDTO[]>(`${this.getPath(courseId)}/import-all`, courseCompetencyImportOptions);
+        return response.map((entry) => ({
+            competency: entry.competency
+                ? entry.competency.type === CourseCompetencyType.PREREQUISITE
+                    ? toPrerequisite(entry.competency)
+                    : toCompetency(entry.competency)
+                : undefined,
+            tailRelations: entry.tailRelations,
+        }));
     }
 
     async createCourseCompetencyRelation(courseId: number, relation: CompetencyRelationDTO): Promise<CompetencyRelationDTO> {
@@ -45,7 +55,8 @@ export class CourseCompetencyApiService extends BaseApiHttpService {
     }
 
     async getCourseCompetenciesByCourseId(courseId: number): Promise<CourseCompetency[]> {
-        return await this.get<CompetencyRelationDTO[]>(`${this.getPath(courseId)}`);
+        const response = await this.get<CourseCompetencyResponseDTO[]>(`${this.getPath(courseId)}`);
+        return response.map((dto) => (dto.type === CourseCompetencyType.PREREQUISITE ? toPrerequisite(dto) : toCompetency(dto)));
     }
 
     async getSuggestedCompetencyRelations(courseId: number): Promise<SuggestCompetencyRelationsResponseDTO> {
