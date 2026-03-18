@@ -16,13 +16,4 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisTranscriptionStatusUpdateDTO(List<PyrisStageDTO> stages, String result, Long lectureUnitId) {
-
-    /**
-     * Checks if any stage has an error state.
-     *
-     * @return true if any stage is in ERROR state
-     */
-    public boolean hasError() {
-        return stages != null && stages.stream().anyMatch(stage -> stage.state() == de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState.ERROR);
-    }
 }
