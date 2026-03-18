@@ -35,7 +35,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
-import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
 import de.tum.cit.aet.artemis.core.service.ldap.LdapUserDto;
 import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCILocalVCTestBase;
@@ -441,21 +440,27 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * Verifies that the dumb HTTP protocol is disabled at the JGit servlet level.
-     * Dumb HTTP paths (e.g. /HEAD, /objects/) are served by JGit's AsIsFileService,
-     * which bypasses our authentication filters entirely. We disable it via
-     * {@code setAsIsFileService(AsIsFileService.DISABLED)} in ArtemisGitServletService.
+     * Verifies that the dumb HTTP protocol is disabled at the JGit servlet level by sending
+     * real HTTP requests to dumb-protocol endpoints (/HEAD, /objects/info/packs).
+     * These paths bypass our authentication filters entirely (they are served by JGit's
+     * AsIsFileService), so we disable them via {@code setAsIsFileService(AsIsFileService.DISABLED)}
+     * in ArtemisGitServletService. Without this, anyone could clone repositories anonymously.
      */
     @Test
-    void testDumbHttpProtocol_isDisabledInServlet() {
-        // ArtemisGitServletService disables dumb HTTP by setting AsIsFileService.DISABLED.
-        // Verify this by checking that a dumb-protocol clone fails.
-        // GIT_SMART_HTTP=0 would force the git client to use dumb HTTP, which should fail.
-        // Here we verify at the unit level that parseRepositoryUri rejects dumb HTTP paths,
-        // so even if AsIsFileService were accidentally re-enabled, the auth path would still reject them.
-        MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD", instructor1Login, USER_PASSWORD);
+    void testDumbHttpProtocol_isDisabledInServlet() throws Exception {
+        // Send real HTTP requests to dumb-protocol endpoints on the running server.
+        // These must return non-200 (JGit returns 403 when AsIsFileService is DISABLED).
+        var headUrl = new java.net.URI("http://localhost:" + port + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD").toURL();
+        var headConnection = (java.net.HttpURLConnection) headUrl.openConnection();
+        headConnection.setRequestMethod("GET");
+        assertThat(headConnection.getResponseCode()).as("Dumb HTTP /HEAD endpoint should be blocked").isGreaterThanOrEqualTo(400);
+        headConnection.disconnect();
 
-        assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));
+        var packsUrl = new java.net.URI("http://localhost:" + port + "/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/objects/info/packs").toURL();
+        var packsConnection = (java.net.HttpURLConnection) packsUrl.openConnection();
+        packsConnection.setRequestMethod("GET");
+        assertThat(packsConnection.getResponseCode()).as("Dumb HTTP /objects/info/packs endpoint should be blocked").isGreaterThanOrEqualTo(400);
+        packsConnection.disconnect();
     }
 
     /**
