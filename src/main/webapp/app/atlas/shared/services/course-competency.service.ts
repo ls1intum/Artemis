@@ -156,8 +156,13 @@ export class CourseCompetencyService {
         });
     }
 
-    getCourseCompetencyTitles(courseId: number) {
+    getCourseCompetencyTitles(courseId: number, excludeId?: number) {
+        let params = new HttpParams();
+        if (excludeId !== undefined) {
+            params = params.set('excludeId', excludeId.toString());
+        }
         return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/course-competencies/titles`, {
+            params,
             observe: 'response',
         });
     }

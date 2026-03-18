@@ -132,13 +132,14 @@ public class CourseCompetencyResource {
     /**
      * GET courses/{courseId}/course-competencies/titles : Returns the titles of all course competencies. Used for a validator in the client
      *
-     * @param courseId the id of the current course
+     * @param courseId  the id of the current course
+     * @param excludeId optional id of the competency to exclude from the returned titles
      * @return the titles of all course competencies
      */
     @GetMapping("courses/{courseId}/course-competencies/titles")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<List<String>> getCourseCompetencyTitles(@PathVariable Long courseId) {
-        final var titles = courseCompetencyRepository.findAllTitlesByCourseId(courseId);
+    public ResponseEntity<List<String>> getCourseCompetencyTitles(@PathVariable Long courseId, @RequestParam(required = false) Long excludeId) {
+        final var titles = courseCompetencyRepository.findAllTitlesByCourseIdExcludingCompetencyId(courseId, excludeId);
         return ResponseEntity.ok(titles);
     }
 
