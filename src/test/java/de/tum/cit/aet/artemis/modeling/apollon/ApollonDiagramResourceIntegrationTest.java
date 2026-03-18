@@ -93,9 +93,9 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testUpdateApollonDiagram_CREATED() throws Exception {
+    void testUpdateApollonDiagram_BAD_REQUEST_WithoutId() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
-        request.post("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.CREATED);
+        request.put("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.BAD_REQUEST);
     }
 
     @Test
