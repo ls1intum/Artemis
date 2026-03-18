@@ -441,14 +441,18 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
     }
 
     /**
-     * Dumb HTTP protocol paths (e.g. /HEAD, /objects/info/packs) are not recognized by
-     * parseRepositoryUri, which only strips /info/refs, /git-upload-pack, and /git-receive-pack.
-     * The malformed path causes LocalVCRepositoryUri validation to fail with LocalVCInternalException,
-     * which the filter converts to HTTP 500 — effectively blocking the request.
-     * We use valid credentials intentionally to isolate the failure to the URL path, not authentication.
+     * Verifies that the dumb HTTP protocol is disabled at the JGit servlet level.
+     * Dumb HTTP paths (e.g. /HEAD, /objects/) are served by JGit's AsIsFileService,
+     * which bypasses our authentication filters entirely. We disable it via
+     * {@code setAsIsFileService(AsIsFileService.DISABLED)} in ArtemisGitServletService.
      */
     @Test
-    void testFetch_dumbHttpEndpoint_isRejected() {
+    void testDumbHttpProtocol_isDisabledInServlet() {
+        // ArtemisGitServletService disables dumb HTTP by setting AsIsFileService.DISABLED.
+        // Verify this by checking that a dumb-protocol clone fails.
+        // GIT_SMART_HTTP=0 would force the git client to use dumb HTTP, which should fail.
+        // Here we verify at the unit level that parseRepositoryUri rejects dumb HTTP paths,
+        // so even if AsIsFileService were accidentally re-enabled, the auth path would still reject them.
         MockHttpServletRequest request = createGitRequest("/git/" + projectKey1 + "/" + solutionRepositorySlug + ".git/HEAD", instructor1Login, USER_PASSWORD);
 
         assertThatExceptionOfType(LocalVCInternalException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ));

@@ -253,9 +253,14 @@ public class LocalVCServletService {
             }
         }
 
-        String ipString = getIpStringFromRequest(request);
-        final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
+        // Only count rate limit on /info/refs (the initial handshake request per git operation).
+        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the same credentials
+        // and should not consume additional rate limit budget.
+        if (request.getRequestURI().endsWith("/info/refs")) {
+            String ipString = getIpStringFromRequest(request);
+            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
+        }
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
@@ -648,7 +653,8 @@ public class LocalVCServletService {
                     return Optional.of(tryToLoadParticipation(usingSSH, repositoryTypeOrUserName, localVCRepositoryUri, exercise));
                 }
                 catch (LocalVCInternalException e) {
-                    // Participation record missing (e.g. data inconsistency) — staff access is still allowed, just without logging
+                    log.warn("Missing participation for staff repository {} in exercise {}. Continuing without participation-based logging.", localVCRepositoryUri,
+                            exercise.getId(), e);
                     return Optional.empty();
                 }
             }
@@ -743,28 +749,33 @@ public class LocalVCServletService {
         boolean isTemplateOrSolutionOrTestsRepo = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
                 || repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
 
-        boolean isAtLeastTA = authorizationCheckService.isAtLeastTeachingAssistantInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
 
-        // Students cannot access template, solution, or tests repositories
-        if (isTemplateOrSolutionOrTestsRepo && !isAtLeastTA) {
-            throw new LocalVCForbiddenException("You are not allowed to access the " + repositoryTypeOrUserName + " repository of this programming exercise.");
+        if (isTemplateOrSolutionOrTestsRepo) {
+            // For WRITE operations, check editor permission first (avoids a second role check later)
+            if (repositoryActionType == RepositoryActionType.WRITE) {
+                if (!authorizationCheckService.isAtLeastEditorInCourse(course, user)) {
+                    throw new LocalVCForbiddenException("You are not allowed to push to the " + repositoryTypeOrUserName + " repository of this programming exercise.");
+                }
+            }
+            else if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new LocalVCForbiddenException("You are not allowed to access the " + repositoryTypeOrUserName + " repository of this programming exercise.");
+            }
+            return true;
         }
 
         // For auxiliary repositories, only check if the user is at least TA (avoids unnecessary DB query for students)
+        boolean isAtLeastTA = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
         boolean isAuxiliaryRepo = isAtLeastTA && auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
 
-        if (!isTemplateOrSolutionOrTestsRepo && !isAuxiliaryRepo) {
+        if (!isAuxiliaryRepo) {
             // Not a staff-only repository — proceed with student participation checks
             return false;
         }
 
-        // The repository is a staff-only repository (template, solution, tests, or auxiliary).
-        // TAs can read; writing requires at least editor permissions.
-        if (repositoryActionType == RepositoryActionType.WRITE) {
-            boolean isAtLeastEditor = authorizationCheckService.isAtLeastEditorInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user);
-            if (!isAtLeastEditor) {
-                throw new LocalVCForbiddenException("You are not allowed to push to the " + repositoryTypeOrUserName + " repository of this programming exercise.");
-            }
+        // Auxiliary repository: TAs can read; writing requires at least editor permissions.
+        if (repositoryActionType == RepositoryActionType.WRITE && !authorizationCheckService.isAtLeastEditorInCourse(course, user)) {
+            throw new LocalVCForbiddenException("You are not allowed to push to the " + repositoryTypeOrUserName + " repository of this programming exercise.");
         }
 
         return true;
