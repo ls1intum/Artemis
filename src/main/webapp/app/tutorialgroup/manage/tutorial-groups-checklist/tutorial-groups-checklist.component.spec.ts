@@ -12,7 +12,7 @@ import { mockedActivatedRoute } from 'test/helpers/mocks/activated-route/mock-ac
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/shared/service/tutorial-groups-configuration.service';
-import { generateExampleTutorialGroupsConfiguration } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfigurationDTO } from 'test/helpers/sample/tutorialgroup/tutorialGroupsConfigurationExampleModels';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -57,7 +57,7 @@ describe('TutorialGroupsChecklistComponent', () => {
                 getOneOfCourseSpy = vi.spyOn(tutorialGroupsConfigurationService, 'getOneOfCourse').mockReturnValue(
                     of(
                         new HttpResponse({
-                            body: generateExampleTutorialGroupsConfiguration({}),
+                            body: generateExampleTutorialGroupsConfigurationDTO({}),
                             status: 200,
                         }),
                     ),

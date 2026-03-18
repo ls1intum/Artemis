@@ -7,16 +7,22 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
+import { AccountService } from 'app/core/auth/account.service';
+import { signal } from '@angular/core';
+import { User } from 'app/core/user/user.model';
 
 describe('LLMSelectionModalComponent', () => {
     let component: LLMSelectionModalComponent;
     let fixture: ComponentFixture<LLMSelectionModalComponent>;
     let modalService: LLMSelectionModalService;
     let router: Router;
+    let accountService: AccountService;
     let openModalSubject: Subject<LLMSelectionDecision | undefined>;
+    let userIdentitySignal: ReturnType<typeof signal<User | undefined>>;
 
     beforeEach(async () => {
         openModalSubject = new Subject<LLMSelectionDecision | undefined>();
+        userIdentitySignal = signal<User | undefined>(undefined);
 
         const modalServiceMock = {
             openModal$: openModalSubject.asObservable(),
@@ -35,6 +41,11 @@ describe('LLMSelectionModalComponent', () => {
             isLLMDeploymentEnabled: jest.fn().mockReturnValue(false),
         };
 
+        const accountServiceMock = {
+            userIdentity: userIdentitySignal,
+            setUserEnabledMemiris: jest.fn(),
+        };
+
         await TestBed.configureTestingModule({
             imports: [LLMSelectionModalComponent, TranslateDirective],
             providers: [
@@ -42,6 +53,7 @@ describe('LLMSelectionModalComponent', () => {
                 { provide: ThemeService, useValue: themeServiceMock },
                 { provide: Router, useValue: routerMock },
                 { provide: ProfileService, useValue: profileServiceMock },
+                { provide: AccountService, useValue: accountServiceMock },
             ],
         }).compileComponents();
 
@@ -49,6 +61,7 @@ describe('LLMSelectionModalComponent', () => {
         component = fixture.componentInstance;
         modalService = TestBed.inject(LLMSelectionModalService);
         router = TestBed.inject(Router);
+        accountService = TestBed.inject(AccountService);
     });
 
     afterEach(() => {
@@ -317,6 +330,67 @@ describe('LLMSelectionModalComponent', () => {
             openModalSubject.next(undefined);
 
             expect(component.currentSelection).toBeUndefined();
+        });
+    });
+
+    describe('memirisEnabled', () => {
+        it('should default to true when userIdentity is undefined', () => {
+            userIdentitySignal.set(undefined);
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.memirisEnabled).toBeTrue();
+        });
+
+        it('should read memirisEnabled=true from userIdentity when modal opens', () => {
+            userIdentitySignal.set({ memirisEnabled: true } as User);
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.memirisEnabled).toBeTrue();
+        });
+
+        it('should read memirisEnabled=false from userIdentity when modal opens', () => {
+            userIdentitySignal.set({ memirisEnabled: false } as User);
+            fixture.detectChanges();
+            openModalSubject.next(undefined);
+
+            expect(component.memirisEnabled).toBeFalse();
+        });
+
+        it('should update memirisEnabled each time the modal is opened', () => {
+            fixture.detectChanges();
+
+            userIdentitySignal.set({ memirisEnabled: false } as User);
+            openModalSubject.next(undefined);
+            expect(component.memirisEnabled).toBeFalse();
+
+            userIdentitySignal.set({ memirisEnabled: true } as User);
+            openModalSubject.next(undefined);
+            expect(component.memirisEnabled).toBeTrue();
+        });
+    });
+
+    describe('onMemirisToggle', () => {
+        it('should call setUserEnabledMemiris with true when memirisEnabled is true', () => {
+            component.memirisEnabled = true;
+            component.onMemirisToggle();
+
+            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(true);
+        });
+
+        it('should call setUserEnabledMemiris with false when memirisEnabled is false', () => {
+            component.memirisEnabled = false;
+            component.onMemirisToggle();
+
+            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledWith(false);
+        });
+
+        it('should call setUserEnabledMemiris exactly once per toggle', () => {
+            component.memirisEnabled = true;
+            component.onMemirisToggle();
+
+            expect(accountService.setUserEnabledMemiris).toHaveBeenCalledOnce();
         });
     });
 });
