@@ -110,6 +110,8 @@ export enum CourseManagementSection {
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 overflow: hidden;
+                transform: translateY(0);
+                will-change: transform;
 
                 &::before {
                     content: '';
@@ -126,7 +128,7 @@ export enum CourseManagementSection {
                 &:hover {
                     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
                     transform: translateY(-1px);
-                    border-color: transparent;
+                    border-color: rgba(0, 0, 0, 0);
 
                     &::before {
                         opacity: 1;

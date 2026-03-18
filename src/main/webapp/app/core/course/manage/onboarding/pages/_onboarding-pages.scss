@@ -133,6 +133,14 @@
     }
 }
 
+// ── Color preview button reset ──────────────────────
+.color-preview {
+    border: none;
+    padding: 0;
+    background: none;
+    appearance: none;
+}
+
 // ── Learn more link ──────────────────────────────────
 .iris-learn-more {
     font-size: 0.8rem;

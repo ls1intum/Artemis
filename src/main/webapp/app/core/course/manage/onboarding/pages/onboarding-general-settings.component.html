@@ -22,12 +22,12 @@
         <div class="row mb-3">
             <div class="col-auto" style="position: relative">
                 <label class="form-label" jhiTranslate="artemisApp.course.color"></label>
-                <div
+                <button
+                    type="button"
                     class="color-preview"
-                    role="button"
                     [ngStyle]="{ backgroundColor: course().color || ARTEMIS_DEFAULT_COLOR, width: '36px', height: '36px', borderRadius: '4px', cursor: 'pointer' }"
                     (click)="openColorSelector($event)"
-                ></div>
+                ></button>
                 <jhi-color-selector (selectedColor)="onSelectedColor($event)" />
             </div>
         </div>
@@ -53,6 +53,7 @@
             <div class="col-md-6">
                 <label class="form-label" jhiTranslate="artemisApp.course.semester"></label>
                 <select class="form-select" [ngModel]="course().semester" (ngModelChange)="updateField('semester', $event)">
+                    <option [ngValue]="undefined"></option>
                     @for (semester of semesters; track semester) {
                         <option [value]="semester">{{ semester }}</option>
                     }
@@ -95,11 +96,17 @@
                     <p class="text-muted small mb-2" jhiTranslate="artemisApp.course.onboarding.generalSettings.irisDisabledHint"></p>
                 }
                 <div class="feature-toggle">
-                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" (click)="setIrisEnabled(true)">
+                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': isIrisEnabled() }" [attr.aria-pressed]="isIrisEnabled()" (click)="setIrisEnabled(true)">
                         <fa-icon [icon]="faCheck" />
                         <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                     </button>
-                    <button type="button" class="toggle-btn" [ngClass]="{ 'active-disabled': !isIrisEnabled() }" (click)="setIrisEnabled(false)">
+                    <button
+                        type="button"
+                        class="toggle-btn"
+                        [ngClass]="{ 'active-disabled': !isIrisEnabled() }"
+                        [attr.aria-pressed]="!isIrisEnabled()"
+                        (click)="setIrisEnabled(false)"
+                    >
                         <fa-icon [icon]="faTimes" />
                         <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                     </button>

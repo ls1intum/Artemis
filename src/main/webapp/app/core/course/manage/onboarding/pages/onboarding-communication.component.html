@@ -20,12 +20,19 @@
                     id="onboarding_communicationEnabled"
                     class="toggle-btn"
                     [ngClass]="{ 'active-enabled': communicationEnabled }"
+                    [attr.aria-pressed]="communicationEnabled"
                     (click)="!communicationEnabled && toggleCommunication()"
                 >
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                 </button>
-                <button type="button" class="toggle-btn" [ngClass]="{ 'active-disabled': !communicationEnabled }" (click)="communicationEnabled && toggleCommunication()">
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-disabled': !communicationEnabled }"
+                    [attr.aria-pressed]="!communicationEnabled"
+                    (click)="communicationEnabled && toggleCommunication()"
+                >
                     <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                 </button>
@@ -42,11 +49,23 @@
                 <div class="d-flex align-items-center gap-3 mb-1">
                     <strong jhiTranslate="artemisApp.course.courseCommunicationSetting.messagingEnabled.label"></strong>
                     <div class="feature-toggle">
-                        <button type="button" class="toggle-btn" [ngClass]="{ 'active-enabled': messagingEnabled }" (click)="!messagingEnabled && toggleMessaging()">
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [ngClass]="{ 'active-enabled': messagingEnabled }"
+                            [attr.aria-pressed]="messagingEnabled"
+                            (click)="!messagingEnabled && toggleMessaging()"
+                        >
                             <fa-icon [icon]="faCheck" />
                             <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                         </button>
-                        <button type="button" class="toggle-btn" [ngClass]="{ 'active-disabled': !messagingEnabled }" (click)="messagingEnabled && toggleMessaging()">
+                        <button
+                            type="button"
+                            class="toggle-btn"
+                            [ngClass]="{ 'active-disabled': !messagingEnabled }"
+                            [attr.aria-pressed]="!messagingEnabled"
+                            (click)="messagingEnabled && toggleMessaging()"
+                        >
                             <fa-icon [icon]="faTimes" />
                             <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                         </button>

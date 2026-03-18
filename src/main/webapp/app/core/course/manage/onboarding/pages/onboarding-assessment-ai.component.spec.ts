@@ -56,48 +56,49 @@ describe('OnboardingAssessmentAiComponent', () => {
         expect(comp.course()).toEqual(course);
     });
 
-    describe('complaintsEnabled', () => {
-        it('should return false when maxComplaintTimeDays is 0', () => {
-            course.maxComplaintTimeDays = 0;
-            expect(comp.complaintsEnabled).toBe(false);
+    describe('complaintsToggled', () => {
+        it('should initialize to false when maxComplaintTimeDays is 0', () => {
+            expect(comp.complaintsToggled()).toBe(false);
         });
 
-        it('should return true when maxComplaintTimeDays is greater than 0', () => {
-            course.maxComplaintTimeDays = 7;
-            expect(comp.complaintsEnabled).toBe(true);
-        });
+        it('should not reset when course input changes after initialization', () => {
+            comp.toggleComplaints();
+            expect(comp.complaintsToggled()).toBe(true);
 
-        it('should return false when maxComplaintTimeDays is undefined', () => {
-            course.maxComplaintTimeDays = undefined;
-            expect(comp.complaintsEnabled).toBe(false);
+            // Simulate parent updating course after field value change (the A1 bug scenario)
+            const updatedCourse = { ...course, maxComplaintTimeDays: 0 } as Course;
+            fixture.componentRef.setInput('course', updatedCourse);
+            fixture.detectChanges();
+
+            // Toggle should remain true despite field value being 0
+            expect(comp.complaintsToggled()).toBe(true);
         });
     });
 
-    describe('requestMoreFeedbackEnabled', () => {
-        it('should return false when maxRequestMoreFeedbackTimeDays is 0', () => {
-            course.maxRequestMoreFeedbackTimeDays = 0;
-            expect(comp.requestMoreFeedbackEnabled).toBe(false);
+    describe('requestMoreFeedbackToggled', () => {
+        it('should initialize to false when maxRequestMoreFeedbackTimeDays is 0', () => {
+            expect(comp.requestMoreFeedbackToggled()).toBe(false);
         });
 
-        it('should return true when maxRequestMoreFeedbackTimeDays is greater than 0', () => {
-            course.maxRequestMoreFeedbackTimeDays = 7;
-            expect(comp.requestMoreFeedbackEnabled).toBe(true);
-        });
+        it('should not reset when course input changes after initialization', () => {
+            comp.toggleRequestMoreFeedback();
+            expect(comp.requestMoreFeedbackToggled()).toBe(true);
 
-        it('should return false when maxRequestMoreFeedbackTimeDays is undefined', () => {
-            course.maxRequestMoreFeedbackTimeDays = undefined;
-            expect(comp.requestMoreFeedbackEnabled).toBe(false);
+            const updatedCourse = { ...course, maxRequestMoreFeedbackTimeDays: 0 } as Course;
+            fixture.componentRef.setInput('course', updatedCourse);
+            fixture.detectChanges();
+
+            expect(comp.requestMoreFeedbackToggled()).toBe(true);
         });
     });
 
     describe('toggleComplaints', () => {
         it('should enable complaints with default values', () => {
-            course.maxComplaintTimeDays = 0;
-            fixture.componentRef.setInput('course', { ...course });
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleComplaints();
 
+            expect(comp.complaintsToggled()).toBe(true);
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.maxComplaints).toBe(3);
@@ -108,14 +109,15 @@ describe('OnboardingAssessmentAiComponent', () => {
         });
 
         it('should disable complaints by resetting values to 0', () => {
-            course.maxComplaints = 3;
-            course.maxTeamComplaints = 3;
-            course.maxComplaintTimeDays = 7;
-            fixture.componentRef.setInput('course', { ...course });
-            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            // First enable
+            comp.toggleComplaints();
+            expect(comp.complaintsToggled()).toBe(true);
 
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            // Then disable
             comp.toggleComplaints();
 
+            expect(comp.complaintsToggled()).toBe(false);
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.maxComplaints).toBe(0);
@@ -126,24 +128,26 @@ describe('OnboardingAssessmentAiComponent', () => {
 
     describe('toggleRequestMoreFeedback', () => {
         it('should enable request more feedback with default value', () => {
-            course.maxRequestMoreFeedbackTimeDays = 0;
-            fixture.componentRef.setInput('course', { ...course });
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleRequestMoreFeedback();
 
+            expect(comp.requestMoreFeedbackToggled()).toBe(true);
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.maxRequestMoreFeedbackTimeDays).toBe(7);
         });
 
         it('should disable request more feedback by resetting to 0', () => {
-            course.maxRequestMoreFeedbackTimeDays = 7;
-            fixture.componentRef.setInput('course', { ...course });
-            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            // First enable
+            comp.toggleRequestMoreFeedback();
+            expect(comp.requestMoreFeedbackToggled()).toBe(true);
 
+            const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
+            // Then disable
             comp.toggleRequestMoreFeedback();
 
+            expect(comp.requestMoreFeedbackToggled()).toBe(false);
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.maxRequestMoreFeedbackTimeDays).toBe(0);

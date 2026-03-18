@@ -1,4 +1,4 @@
-import { Component, input, output } from '@angular/core';
+import { Component, effect, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -21,13 +21,19 @@ export class OnboardingAssessmentAiComponent {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
 
-    get complaintsEnabled(): boolean {
-        const c = this.course();
-        return (c.maxComplaintTimeDays ?? 0) > 0;
-    }
+    readonly complaintsToggled = signal(false);
+    readonly requestMoreFeedbackToggled = signal(false);
+    private initialized = false;
 
-    get requestMoreFeedbackEnabled(): boolean {
-        return (this.course().maxRequestMoreFeedbackTimeDays ?? 0) > 0;
+    constructor() {
+        effect(() => {
+            const c = this.course();
+            if (!this.initialized) {
+                this.complaintsToggled.set((c.maxComplaintTimeDays ?? 0) > 0);
+                this.requestMoreFeedbackToggled.set((c.maxRequestMoreFeedbackTimeDays ?? 0) > 0);
+                this.initialized = true;
+            }
+        });
     }
 
     updateField(field: keyof Course, value: any) {
@@ -38,11 +44,13 @@ export class OnboardingAssessmentAiComponent {
 
     toggleComplaints() {
         const current = this.course();
-        if (this.complaintsEnabled) {
+        if (this.complaintsToggled()) {
+            this.complaintsToggled.set(false);
             current.maxComplaints = 0;
             current.maxTeamComplaints = 0;
             current.maxComplaintTimeDays = 0;
         } else {
+            this.complaintsToggled.set(true);
             current.maxComplaints = 3;
             current.maxTeamComplaints = 3;
             current.maxComplaintTimeDays = 7;
@@ -54,9 +62,11 @@ export class OnboardingAssessmentAiComponent {
 
     toggleRequestMoreFeedback() {
         const current = this.course();
-        if (this.requestMoreFeedbackEnabled) {
+        if (this.requestMoreFeedbackToggled()) {
+            this.requestMoreFeedbackToggled.set(false);
             current.maxRequestMoreFeedbackTimeDays = 0;
         } else {
+            this.requestMoreFeedbackToggled.set(true);
             current.maxRequestMoreFeedbackTimeDays = 7;
         }
         this.courseUpdated.emit(Course.from(current));

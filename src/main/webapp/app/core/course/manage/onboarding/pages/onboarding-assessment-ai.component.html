@@ -30,25 +30,32 @@
                     type="button"
                     id="onboarding_complaintsEnabled"
                     class="toggle-btn"
-                    [ngClass]="{ 'active-enabled': complaintsEnabled }"
-                    (click)="!complaintsEnabled && toggleComplaints()"
+                    [ngClass]="{ 'active-enabled': complaintsToggled() }"
+                    [attr.aria-pressed]="complaintsToggled()"
+                    (click)="!complaintsToggled() && toggleComplaints()"
                 >
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
                 </button>
-                <button type="button" class="toggle-btn" [ngClass]="{ 'active-disabled': !complaintsEnabled }" (click)="complaintsEnabled && toggleComplaints()">
+                <button
+                    type="button"
+                    class="toggle-btn"
+                    [ngClass]="{ 'active-disabled': !complaintsToggled() }"
+                    [attr.aria-pressed]="!complaintsToggled()"
+                    (click)="complaintsToggled() && toggleComplaints()"
+                >
                     <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                 </button>
             </div>
         </div>
-        @if (complaintsEnabled) {
+        @if (complaintsToggled()) {
             <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsEnabled"></p>
         } @else {
             <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.complaintsDisabled"></p>
         }
 
-        @if (complaintsEnabled) {
+        @if (complaintsToggled()) {
             <div class="ms-4 mb-3">
                 <div class="row g-3 mb-2 align-items-end">
                     <div class="col-md-4">
@@ -73,8 +80,9 @@
                 <button
                     type="button"
                     class="toggle-btn"
-                    [ngClass]="{ 'active-enabled': requestMoreFeedbackEnabled }"
-                    (click)="!requestMoreFeedbackEnabled && toggleRequestMoreFeedback()"
+                    [ngClass]="{ 'active-enabled': requestMoreFeedbackToggled() }"
+                    [attr.aria-pressed]="requestMoreFeedbackToggled()"
+                    (click)="!requestMoreFeedbackToggled() && toggleRequestMoreFeedback()"
                 >
                     <fa-icon [icon]="faCheck" />
                     <span jhiTranslate="artemisApp.iris.settings.enabled"></span>
@@ -82,21 +90,22 @@
                 <button
                     type="button"
                     class="toggle-btn"
-                    [ngClass]="{ 'active-disabled': !requestMoreFeedbackEnabled }"
-                    (click)="requestMoreFeedbackEnabled && toggleRequestMoreFeedback()"
+                    [ngClass]="{ 'active-disabled': !requestMoreFeedbackToggled() }"
+                    [attr.aria-pressed]="!requestMoreFeedbackToggled()"
+                    (click)="requestMoreFeedbackToggled() && toggleRequestMoreFeedback()"
                 >
                     <fa-icon [icon]="faTimes" />
                     <span jhiTranslate="artemisApp.iris.settings.disabled"></span>
                 </button>
             </div>
         </div>
-        @if (requestMoreFeedbackEnabled) {
+        @if (requestMoreFeedbackToggled()) {
             <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackEnabled"></p>
         } @else {
             <p class="text-muted small mb-3" jhiTranslate="artemisApp.course.onboarding.assessment.moreFeedbackDisabled"></p>
         }
 
-        @if (requestMoreFeedbackEnabled) {
+        @if (requestMoreFeedbackToggled()) {
             <div class="ms-4 mb-3">
                 <label class="form-label" jhiTranslate="artemisApp.course.maxRequestMoreFeedbackTimeDays.title"></label>
                 <input

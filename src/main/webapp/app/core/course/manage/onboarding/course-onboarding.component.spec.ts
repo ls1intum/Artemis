@@ -43,6 +43,7 @@ describe('CourseOnboardingComponent', () => {
 
         const route = {
             data: of({ course }),
+            queryParams: of({}),
         } as any as ActivatedRoute;
 
         await TestBed.configureTestingModule({
@@ -228,12 +229,53 @@ describe('CourseOnboardingComponent', () => {
     });
 
     describe('goToCourse', () => {
-        it('should navigate to course management', () => {
+        it('should set onboardingDone and navigate to course management when not yet done', () => {
+            const updatedCourse = { ...course, onboardingDone: true } as Course;
+            const updateSpy = vi.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: updatedCourse })));
+
             comp.ngOnInit();
             fixture.detectChanges();
             comp.goToCourse();
 
+            expect(updateSpy).toHaveBeenCalledWith(course.id, expect.objectContaining({ onboardingDone: true }));
             expect(router.navigate).toHaveBeenCalledWith(['course-management', course.id], { queryParams: { fromOnboarding: true } });
+        });
+
+        it('should navigate directly when onboardingDone is already true', () => {
+            course.onboardingDone = true;
+            const updateSpy = vi.spyOn(courseManagementService, 'update');
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.goToCourse();
+
+            expect(updateSpy).not.toHaveBeenCalled();
+            expect(router.navigate).toHaveBeenCalledWith(['course-management', course.id], { queryParams: { fromOnboarding: true } });
+        });
+
+        it('should not navigate when course has no id', () => {
+            const courseWithoutId = new Course();
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.course.set(courseWithoutId);
+
+            comp.goToCourse();
+            expect(router.navigate).not.toHaveBeenCalled();
+        });
+
+        it('should revert onboardingDone and show error when update fails', () => {
+            const errorResponse = new HttpErrorResponse({ status: 400, statusText: 'Bad Request' });
+            vi.spyOn(courseManagementService, 'update').mockReturnValue(throwError(() => errorResponse));
+            const alertService = TestBed.inject(AlertService);
+            const errorSpy = vi.spyOn(alertService, 'error');
+
+            comp.ngOnInit();
+            fixture.detectChanges();
+            comp.goToCourse();
+
+            expect(router.navigate).not.toHaveBeenCalled();
+            expect(comp.course().onboardingDone).toBe(false);
+            expect(errorSpy).toHaveBeenCalled();
         });
     });
 

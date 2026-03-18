@@ -55,6 +55,12 @@ export class CourseOnboardingComponent implements OnInit {
     readonly canFinish = computed(() => this.activeStep() === this.totalSteps - 2);
 
     ngOnInit() {
+        this.route.queryParams.subscribe((params) => {
+            const step = parseInt(params['step'], 10);
+            if (!isNaN(step) && step >= 0 && step < this.totalSteps) {
+                this.activeStep.set(step);
+            }
+        });
         this.route.data.subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
@@ -102,7 +108,9 @@ export class CourseOnboardingComponent implements OnInit {
                 if (response.body) {
                     this.course.set(response.body);
                 }
-                this.activeStep.set(this.totalSteps - 1);
+                const lastStep = this.totalSteps - 1;
+                this.activeStep.set(lastStep);
+                this.updateStepUrl(lastStep);
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);
@@ -113,7 +121,21 @@ export class CourseOnboardingComponent implements OnInit {
 
     goToCourse() {
         const current = this.course();
-        this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
+        if (!current.id) {
+            return;
+        }
+        if (!current.onboardingDone) {
+            current.onboardingDone = true;
+            this.courseManagementService.update(current.id, current).subscribe({
+                next: () => this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } }),
+                error: (error: HttpErrorResponse) => {
+                    current.onboardingDone = false;
+                    onError(this.alertService, error);
+                },
+            });
+        } else {
+            this.router.navigate(['course-management', current.id], { queryParams: { fromOnboarding: true } });
+        }
     }
 
     onCourseUpdated(updatedCourse: Course) {
@@ -186,7 +208,9 @@ export class CourseOnboardingComponent implements OnInit {
     private saveAndAdvance() {
         const current = this.course();
         if (!current.id) {
-            this.activeStep.update((s) => s + 1);
+            const newStep = this.activeStep() + 1;
+            this.activeStep.set(newStep);
+            this.updateStepUrl(newStep);
             return;
         }
         this.isSaving.set(true);
@@ -196,7 +220,9 @@ export class CourseOnboardingComponent implements OnInit {
                 if (response.body) {
                     this.course.set(response.body);
                 }
-                this.activeStep.update((s) => s + 1);
+                const newStep = this.activeStep() + 1;
+                this.activeStep.set(newStep);
+                this.updateStepUrl(newStep);
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);
@@ -209,6 +235,7 @@ export class CourseOnboardingComponent implements OnInit {
         const current = this.course();
         if (!current.id) {
             this.activeStep.set(targetStep);
+            this.updateStepUrl(targetStep);
             return;
         }
         this.isSaving.set(true);
@@ -219,11 +246,16 @@ export class CourseOnboardingComponent implements OnInit {
                     this.course.set(response.body);
                 }
                 this.activeStep.set(targetStep);
+                this.updateStepUrl(targetStep);
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);
                 onError(this.alertService, error);
             },
         });
+    }
+
+    private updateStepUrl(step: number) {
+        this.router.navigate([], { queryParams: { step }, queryParamsHandling: 'merge', replaceUrl: true });
     }
 }

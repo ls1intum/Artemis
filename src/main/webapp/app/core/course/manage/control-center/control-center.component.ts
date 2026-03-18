@@ -15,6 +15,14 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
             :host {
                 display: block;
                 flex: 0 0 auto;
+                width: 100%;
+            }
+
+            @media (min-width: 768px) {
+                :host {
+                    max-width: 320px;
+                    flex-shrink: 0;
+                }
             }
 
             .iris-panel {
