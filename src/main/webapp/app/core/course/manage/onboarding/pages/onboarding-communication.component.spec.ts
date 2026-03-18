@@ -87,7 +87,7 @@ describe('OnboardingCommunicationComponent', () => {
     describe('toggleCommunication', () => {
         it('should disable communication when currently enabled', () => {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleCommunication();
@@ -99,7 +99,7 @@ describe('OnboardingCommunicationComponent', () => {
 
         it('should enable communication with messaging when currently disabled', () => {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleCommunication();
@@ -113,7 +113,7 @@ describe('OnboardingCommunicationComponent', () => {
     describe('toggleMessaging', () => {
         it('should disable messaging but keep communication when messaging is enabled', () => {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleMessaging();
@@ -125,7 +125,7 @@ describe('OnboardingCommunicationComponent', () => {
 
         it('should enable messaging when communication only is active', () => {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleMessaging();

@@ -112,8 +112,6 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             ? [new UserMentionAction(this.courseManagementService, this.metisService), new ChannelReferenceAction(this.metisService, this.channelService)]
             : [];
 
-        const faqAction = [new FaqReferenceAction(this.metisService)];
-
         this.defaultActions = [
             new BoldAction(),
             new ItalicAction(),
@@ -129,7 +127,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
             new AttachmentAction(),
             ...messagingOnlyActions,
             new ExerciseReferenceAction(this.metisService),
-            ...faqAction,
+            new FaqReferenceAction(this.metisService),
         ];
 
         this.lectureAttachmentReferenceAction = new LectureAttachmentReferenceAction(this.metisService, this.lectureService, this.fileService);

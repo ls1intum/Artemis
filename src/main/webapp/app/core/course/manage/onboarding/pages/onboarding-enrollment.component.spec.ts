@@ -84,7 +84,7 @@ describe('OnboardingEnrollmentComponent', () => {
 
         it('should disable online course when enabling enrollment', () => {
             course.onlineCourse = true;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleEnrollment();
@@ -98,7 +98,7 @@ describe('OnboardingEnrollmentComponent', () => {
             course.enrollmentEnabled = true;
             course.enrollmentConfirmationMessage = 'Some message';
             course.unenrollmentEnabled = true;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleEnrollment();
@@ -125,7 +125,7 @@ describe('OnboardingEnrollmentComponent', () => {
     describe('toggleOnlineCourse', () => {
         it('should enable online course and disable enrollment', () => {
             course.enrollmentEnabled = true;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleOnlineCourse();
@@ -138,7 +138,7 @@ describe('OnboardingEnrollmentComponent', () => {
 
         it('should disable online course', () => {
             course.onlineCourse = true;
-            fixture.componentRef.setInput('course', { ...course });
+            fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
             comp.toggleOnlineCourse();
