@@ -8,9 +8,12 @@ import org.springframework.boot.test.context.TestConfiguration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.cit.aet.artemis.communication.domain.Post;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Organization;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 
 /**
  * Test configuration to eagerly initialize Jackson deserializers.
@@ -46,6 +49,9 @@ public class JacksonDeserializerInitializationConfig {
     public void initializeDeserializers() {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
+        // Initialize User directly (most commonly nested entity, must be warmed first)
+        initializeUser();
+
         // Initialize Organization with nested User and Course
         initializeOrganization();
 
@@ -55,7 +61,32 @@ public class JacksonDeserializerInitializationConfig {
         // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
         initializeExam();
 
+        // Initialize TutorialGroup with nested registrations containing User references
+        initializeTutorialGroup();
+
+        // Initialize Post with nested reactions containing User references
+        initializePost();
+
         log.debug("Successfully initialized Jackson deserializers");
+    }
+
+    private void initializeUser() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "login": "testuser",
+                        "firstName": "Test",
+                        "lastName": "User",
+                        "email": "test@test.com",
+                        "activated": true
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, User.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize User deserializer: {}", e.getMessage());
+        }
     }
 
     private void initializeOrganization() {
@@ -138,6 +169,55 @@ public class JacksonDeserializerInitializationConfig {
         }
         catch (Exception e) {
             log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializeTutorialGroup() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "title": "Test Group",
+                        "teachingAssistant": {
+                            "id": 1,
+                            "login": "tutor1"
+                        },
+                        "registrations": [{
+                            "id": 1,
+                            "student": {
+                                "id": 2,
+                                "login": "student1"
+                            }
+                        }]
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, TutorialGroup.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
+        }
+    }
+
+    private void initializePost() {
+        try {
+            String sampleJson = """
+                    {
+                        "id": 1,
+                        "content": "Test post",
+                        "reactions": [{
+                            "id": 1,
+                            "emojiId": "rocket",
+                            "user": {
+                                "id": 1,
+                                "login": "testuser"
+                            }
+                        }]
+                    }
+                    """;
+            objectMapper.readValue(sampleJson, Post.class);
+        }
+        catch (Exception e) {
+            log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
         }
     }
 }
