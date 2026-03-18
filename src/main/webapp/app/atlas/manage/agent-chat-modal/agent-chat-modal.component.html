@@ -145,7 +145,8 @@
                                             @if (!message.exerciseMappingPreview.viewOnly) {
                                                 <p-checkbox
                                                     [inputId]="'competency-' + message.id + '-' + competency.competencyId"
-                                                    [(ngModel)]="competency.selected"
+                                                    [ngModel]="competency.selected()"
+                                                    (ngModelChange)="competency.selected.set($event)"
                                                     [binary]="true"
                                                 />
                                             }
