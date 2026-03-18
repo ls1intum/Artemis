@@ -19,4 +19,6 @@ import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 public interface ScienceSettingRepository extends ArtemisJpaRepository<ScienceSetting, Long> {
 
     Set<ScienceSetting> findAllByUserId(long userId);
+
+    void deleteAllByUserId(long userId);
 }

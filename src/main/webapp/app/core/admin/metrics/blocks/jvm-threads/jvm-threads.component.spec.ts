@@ -1,33 +1,28 @@
 /**
  * Vitest tests for JvmThreadsComponent.
  */
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 import { Thread, ThreadState } from 'app/core/admin/metrics/metrics.model';
 import { JvmThreadsComponent } from 'app/core/admin/metrics/blocks/jvm-threads/jvm-threads.component';
-import { MetricsModalThreadsComponent } from 'app/core/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 
 describe('JvmThreadsComponent', () => {
     setupTestBed({ zoneless: true });
 
     let comp: JvmThreadsComponent;
     let fixture: ComponentFixture<JvmThreadsComponent>;
-    let modalService: NgbModal;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [JvmThreadsComponent],
-            providers: [NgbModal],
         })
             .overrideTemplate(JvmThreadsComponent, '<button class="hand btn btn-primary btn-sm" (click)="open()">Expand</button>')
             .compileComponents();
 
         fixture = TestBed.createComponent(JvmThreadsComponent);
         comp = fixture.componentInstance;
-        modalService = TestBed.inject(NgbModal);
     });
 
     it('should store threads and create statistic counts', async () => {
@@ -55,18 +50,13 @@ describe('JvmThreadsComponent', () => {
         });
     });
 
-    it('should open modal when open is called', () => {
-        const mockModalRef = { componentInstance: { threads: undefined } };
-        const spy = vi.spyOn(modalService, 'open').mockReturnValue(mockModalRef as NgbModalRef);
-
+    it('should set showThreadsModal to true when open is called', () => {
         const threads = [{ threadState: ThreadState.Blocked }] as Thread[];
         fixture.componentRef.setInput('threads', threads);
         fixture.detectChanges();
 
         comp.open();
 
-        expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(MetricsModalThreadsComponent, { size: 'xl' });
-        expect(mockModalRef.componentInstance.threads).toEqual(threads);
+        expect(comp.showThreadsModal()).toBe(true);
     });
 });

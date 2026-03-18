@@ -25,6 +25,9 @@ export class GitExerciseParticipation {
 
         if (cloneMethod === GitCloneMethod.https) {
             repoUrl = repoUrl.replace(student.username!, `${student.username!}:${student.password!}`);
+        } else if (cloneMethod === GitCloneMethod.ssh) {
+            // Docker SSH URL uses internal hostname (e.g. nginx:7921), replace with localhost for host access
+            repoUrl = repoUrl.replace(/ssh:\/\/git@[^:]+:(\d+)/, 'ssh://git@localhost:$1');
         }
         console.log(`Cloning repository from ${repoUrl}`);
         const urlParts = repoUrl.split('/');

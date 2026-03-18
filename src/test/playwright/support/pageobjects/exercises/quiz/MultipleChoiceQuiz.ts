@@ -8,9 +8,12 @@ export class MultipleChoiceQuiz {
         this.page = page;
     }
 
-    async tickAnswerOption(exerciseID: number, optionNumber: number, quizQuestionId = 0) {
-        await getExercise(this.page, exerciseID)
-            .locator('#question' + quizQuestionId)
+    async tickAnswerOption(exerciseID: number, optionNumber: number, quizQuestionId?: number) {
+        let scope = getExercise(this.page, exerciseID);
+        if (quizQuestionId != null) {
+            scope = scope.locator('#question' + quizQuestionId);
+        }
+        await scope
             .locator('#answer-option-' + optionNumber)
             .locator('#mc-answer-selection-' + optionNumber)
             .click();
