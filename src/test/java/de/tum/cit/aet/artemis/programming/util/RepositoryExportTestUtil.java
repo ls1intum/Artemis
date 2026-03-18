@@ -391,8 +391,9 @@ public final class RepositoryExportTestUtil {
         var commit = GitService.commit(repo.workingCopyGitRepo).setMessage(message).call();
         repo.workingCopyGitRepo.push().setRemote("origin").call();
 
-        // Wait for the bare repository to be fully ready for cloning operations
-        waitForBareRepositoryReady(repo);
+        // Wait until the exact pushed commit is readable from the bare repository.
+        // This avoids CI flakes where HEAD exists, but the commit object requested by a test is not yet observable.
+        waitForBareRepositoryReady(repo, commit.getId().getName());
 
         return commit;
     }
@@ -406,19 +407,37 @@ public final class RepositoryExportTestUtil {
      * @param repo the local repository whose bare repo should be verified
      */
     public static void waitForBareRepositoryReady(LocalRepository repo) {
+        waitForBareRepositoryReady(repo, null);
+    }
+
+    /**
+     * Waits for a bare repository to be fully ready and, if provided, for a specific commit to be readable from it.
+     *
+     * @param repo       the local repository whose bare repo should be verified
+     * @param commitHash the expected commit hash that should be resolvable and parseable, or null to only verify HEAD
+     */
+    public static void waitForBareRepositoryReady(LocalRepository repo, String commitHash) {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).pollInterval(100, TimeUnit.MILLISECONDS).until(() -> {
             try {
                 // Try to open the bare repository and resolve HEAD
-                // This verifies the repo is accessible and has a valid HEAD reference
+                // This verifies the repo is accessible and has a valid HEAD reference.
+                // If a commit hash is provided, verify that exact object can also be parsed.
                 try (Git git = Git.open(repo.remoteBareGitRepoFile)) {
                     var headRef = git.getRepository().resolve("HEAD");
                     if (headRef == null) {
                         log.debug("Bare repository HEAD is null, waiting...");
                         return false;
                     }
-                    // Verify we can read the commit object
                     try (RevWalk revWalk = new RevWalk(git.getRepository())) {
                         revWalk.parseCommit(headRef);
+                        if (commitHash != null) {
+                            var commitId = git.getRepository().resolve(commitHash);
+                            if (commitId == null) {
+                                log.debug("Bare repository commit {} is not resolvable yet, waiting...", commitHash);
+                                return false;
+                            }
+                            revWalk.parseCommit(commitId);
+                        }
                     }
                     return true;
                 }
