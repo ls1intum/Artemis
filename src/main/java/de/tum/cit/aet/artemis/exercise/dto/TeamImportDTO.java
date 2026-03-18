@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.dto;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -69,13 +70,7 @@ public record TeamImportDTO(@NotNull @Size(max = 250) String name, @NotNull @Siz
         team.setName(name);
         team.setShortName(shortName);
         team.setImage(image);
-
-        Set<User> studentUsers = new HashSet<>();
-        for (StudentIdentifierDTO studentId : studentsOrEmpty()) {
-            studentUsers.add(studentId.toUser());
-        }
-        team.setStudents(studentUsers);
-
+        team.setStudents(studentsOrEmpty().stream().map(StudentIdentifierDTO::toUser).collect(Collectors.toSet()));
         return team;
     }
 }

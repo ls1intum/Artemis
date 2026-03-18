@@ -46,32 +46,8 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
      */
     public Exam toEntity() {
         Exam exam = new Exam();
-        exam.setTitle(title);
         exam.setTestExam(testExam);
-        exam.setExamWithAttendanceCheck(examWithAttendanceCheck);
-        exam.setVisibleDate(visibleDate);
-        exam.setStartDate(startDate);
-        exam.setEndDate(endDate);
-        exam.setPublishResultsDate(publishResultsDate);
-        exam.setExamStudentReviewStart(examStudentReviewStart);
-        exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
-        exam.setWorkingTime(workingTime);
-        exam.setStartText(startText);
-        exam.setEndText(endText);
-        exam.setConfirmationStartText(confirmationStartText);
-        exam.setConfirmationEndText(confirmationEndText);
-        exam.setExamMaxPoints(examMaxPoints);
-        exam.setRandomizeExerciseOrder(randomizeExerciseOrder);
-        exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
-        exam.setNumberOfCorrectionRoundsInExam(numberOfCorrectionRoundsInExam);
-        exam.setExaminer(examiner);
-        exam.setModuleNumber(moduleNumber);
-        exam.setCourseName(courseName);
-        exam.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
-        exam.setChannelName(channelName);
+        applyTo(exam);
         return exam;
     }
 
