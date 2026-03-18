@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRouteSnapshot, Router, RouterStateSnapshot } from '@angular/router';
 import { PasskeyAuthenticationGuard } from './passkey-authentication.guard';
@@ -11,6 +13,8 @@ import { MODULE_FEATURE_PASSKEY, MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN } from 'ap
 import { User } from 'app/core/user/user.model';
 
 describe('PasskeyAuthenticationGuard', () => {
+    setupTestBed({ zoneless: true });
+
     let guard: PasskeyAuthenticationGuard;
     let accountService: AccountService;
     let router: Router;
@@ -32,46 +36,50 @@ describe('PasskeyAuthenticationGuard', () => {
         profileService = TestBed.inject(ProfileService);
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should allow activation when passkey enforcement is disabled', async () => {
-        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(false);
 
         const result = await guard.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot);
 
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should allow activation when user is logged in with approved passkey', async () => {
-        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-        jest.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
 
         const result = await guard.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot);
 
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should redirect to passkey-required page when user is not logged in with approved passkey', async () => {
-        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
-        jest.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         const mockState = { url: '/admin/user-management' } as RouterStateSnapshot;
         const result = await guard.canActivate({} as ActivatedRouteSnapshot, mockState);
 
-        expect(result).toBeFalse();
+        expect(result).toBe(false);
         expect(navigateSpy).toHaveBeenCalledWith(['/passkey-required'], {
             queryParams: { returnUrl: '/admin/user-management' },
         });
     });
 
     it('should pass the correct return URL in query parameters', async () => {
-        jest.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
-        jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
-        jest.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        vi.spyOn(profileService, 'isModuleFeatureActive').mockReturnValue(true);
+        vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(false);
+        vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
+        const navigateSpy = vi.spyOn(router, 'navigate');
 
         const mockState = { url: '/admin/metrics' } as RouterStateSnapshot;
         await guard.canActivate({} as ActivatedRouteSnapshot, mockState);
@@ -82,7 +90,7 @@ describe('PasskeyAuthenticationGuard', () => {
     });
 
     it('should allow activation when passkey module is disabled', async () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
             if (feature === MODULE_FEATURE_PASSKEY) {
                 return false;
             }
@@ -91,13 +99,13 @@ describe('PasskeyAuthenticationGuard', () => {
 
         const result = await guard.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot);
 
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_PASSKEY);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should allow activation when passkey is enabled but require admin feature is disabled', async () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
             if (feature === MODULE_FEATURE_PASSKEY) {
                 return true;
             }
@@ -109,22 +117,22 @@ describe('PasskeyAuthenticationGuard', () => {
 
         const result = await guard.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot);
 
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_PASSKEY);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
         expect(router.navigate).not.toHaveBeenCalled();
     });
 
     it('should enforce passkey check when both passkey and require admin features are enabled', async () => {
-        const isModuleFeatureActiveSpy = jest.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
+        const isModuleFeatureActiveSpy = vi.spyOn(profileService, 'isModuleFeatureActive').mockImplementation((feature: string) => {
             return feature === MODULE_FEATURE_PASSKEY || feature === MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN;
         });
-        jest.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
-        jest.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
+        vi.spyOn(accountService, 'isUserLoggedInWithApprovedPasskey').mockReturnValue(true);
+        vi.spyOn(accountService, 'identity').mockResolvedValue({ id: 99, login: 'admin' } as User);
 
         const result = await guard.canActivate({} as ActivatedRouteSnapshot, {} as RouterStateSnapshot);
 
-        expect(result).toBeTrue();
+        expect(result).toBe(true);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_PASSKEY);
         expect(isModuleFeatureActiveSpy).toHaveBeenCalledWith(MODULE_FEATURE_PASSKEY_REQUIRE_ADMIN);
         expect(accountService.isUserLoggedInWithApprovedPasskey).toHaveBeenCalled();

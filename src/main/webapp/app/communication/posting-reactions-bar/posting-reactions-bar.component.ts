@@ -4,7 +4,8 @@ import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/communication/shared/entities/reaction.model';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { faArrowRight, faBookmark, faCheck, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBookmark, faCheck, faEnvelopeOpenText, faInfoCircle, faPencilAlt, faShare, faSmile, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { faBookmark as farBookmark } from '@fortawesome/free-regular-svg-icons';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
@@ -92,6 +93,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly onBookmarkClicked = output<void>();
     readonly DisplayPriority = DisplayPriority;
     readonly faBookmark = faBookmark;
+    readonly farBookmark = farBookmark;
     readonly faSmile = faSmile;
     readonly faCheck = faCheck;
     readonly faPencilAlt = faPencilAlt;
@@ -99,6 +101,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     readonly faInfoCircle = faInfoCircle;
     readonly faTrash = faTrashAlt;
     readonly faShare = faShare;
+    readonly faEnvelopeOpenText = faEnvelopeOpenText;
 
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
@@ -111,6 +114,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     isAtLeastInstructorInCourse: boolean;
     mayEdit: boolean;
     mayDelete: boolean;
+    canMarkAsUnread: boolean;
     pinTooltip: string;
     displayPriority: DisplayPriority;
     canPin = false;
@@ -127,6 +131,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     mayDeleteOutput = output<boolean>();
     mayEditOutput = output<boolean>();
     canPinOutput = output<boolean>();
+    canMarkAsUnreadOutput = output<boolean>();
     showAnswers = input<boolean>();
     showSearchResultInAnswersHint = input<boolean>(false);
     sortedAnswerPosts = input<AnswerPost[]>();
@@ -170,6 +175,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         }
         this.setMayDelete();
         this.setMayEdit();
+        this.setCanMarkAsUnread();
     }
 
     /**
@@ -466,6 +472,11 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         this.mayEditOutput.emit(this.mayEdit);
     }
 
+    setCanMarkAsUnread(): void {
+        this.canMarkAsUnread = !this.isAuthorOfPosting && this.getPostingType() === 'post';
+        this.canMarkAsUnreadOutput.emit(this.canMarkAsUnread);
+    }
+
     /**
      * Handles opening of the create/edit modal based on post type.
      */
@@ -492,6 +503,10 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         } else {
             this.openForwardMessageView(this.posting()!, isAnswer);
         }
+    }
+
+    markMessageAsUnread() {
+        this.metisService.markMessageAsUnread(this.posting()!);
     }
 
     /**
