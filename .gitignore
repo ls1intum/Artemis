@@ -248,3 +248,4 @@ deferredEagerBeanInstantiationViolations.dot
 ######################
 /src/test/playwright/monocart-report
 /venv/
+/src/test/playwright/test-exercise-repos
