@@ -129,6 +129,8 @@
     overflow-wrap: anywhere;
     word-break: break-word;
     hyphens: auto;
+    position: relative;
+    z-index: 100;
 
     strong {
         margin-right: 0.25rem;

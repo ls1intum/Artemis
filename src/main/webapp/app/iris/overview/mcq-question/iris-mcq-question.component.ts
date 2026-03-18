@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, effect, input, output, signal } from '@angular/core';
 import { McqData, McqQuestionData } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
+import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 /**
@@ -9,7 +11,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 @Component({
     selector: 'jhi-iris-mcq-question',
     standalone: true,
-    imports: [TranslateDirective],
+    imports: [TranslateDirective, IrisCitationTextComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
     templateUrl: './iris-mcq-question.component.html',
     styleUrl: './iris-mcq-question.component.scss',
@@ -17,6 +19,9 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 export class IrisMcqQuestionComponent {
     /** The MCQ payload to render, containing the question, options, and explanation. */
     mcqData = input.required<McqData | McqQuestionData>();
+
+    /** Citation metadata for rendering citation bubbles in the explanation. */
+    citationInfo = input<IrisCitationMetaDTO[]>([]);
 
     // Optional inputs for pre-populated state from carousel parent
     initialSelectedIndex = input<number | undefined>(undefined);

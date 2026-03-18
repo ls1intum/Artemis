@@ -31,7 +31,7 @@
         </div>
         <div class="mcq-explanation">
             <strong jhiTranslate="artemisApp.iris.mcq.explanation"></strong>
-            {{ mcqData().explanation }}
+            <jhi-iris-citation-text [text]="mcqData().explanation" [citationInfo]="citationInfo()" />
         </div>
     }
 </div>

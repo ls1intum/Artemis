@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, input, output, si
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { McqResponseData, McqSetData } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IrisMcqQuestionComponent } from './iris-mcq-question.component';
@@ -24,6 +25,7 @@ export class IrisMcqCarouselComponent {
 
     mcqSetData = input.required<McqSetData>();
     messageId = input<number>();
+    citationInfo = input<IrisCitationMetaDTO[]>([]);
 
     responseSaved = output<McqResponseData>();
 

@@ -6,6 +6,7 @@
 
         <jhi-iris-mcq-question
             [mcqData]="mcqSetData().questions[currentIndex()]"
+            [citationInfo]="citationInfo()"
             [initialSelectedIndex]="currentAnswer()?.selectedIndex"
             [initialSubmitted]="currentAnswer()?.submitted ?? false"
             (answerChanged)="onAnswerChanged($event)"
