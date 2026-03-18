@@ -71,12 +71,14 @@ export class TutorialRegistrationsImportModalComponent {
         const file = input.files?.[0];
 
         if (!file) {
+            this.isLoading.set(false);
             return;
         }
 
         const result = await readStudentDTOsFromCSVFile(file);
         if (!result.ok) {
             this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.invalidFileEntriesAlert');
+            this.isLoading.set(false);
             return;
         }
 
@@ -85,6 +87,7 @@ export class TutorialRegistrationsImportModalComponent {
         });
         if (parsedStudents.length === 0) {
             this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.noFileEntriesAlert');
+            this.isLoading.set(false);
             return;
         }
 
