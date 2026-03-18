@@ -9,6 +9,7 @@ import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
 import de.tum.cit.aet.artemis.buildagent.service.SharedQueueProcessingService;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.core.connector.AeolusRequestMockProvider;
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.test_repository.StudentExamTestRepository;
@@ -28,7 +29,6 @@ import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseImportBasic
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseTestCaseService;
 import de.tum.cit.aet.artemis.programming.service.StaticCodeAnalysisService;
 import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.service.localci.SharedQueueManagementService;
 import de.tum.cit.aet.artemis.programming.test_repository.ProgrammingExerciseTestCaseTestRepository;
 import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseParticipationUtilService;

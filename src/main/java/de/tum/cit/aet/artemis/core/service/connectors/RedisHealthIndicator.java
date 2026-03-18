@@ -12,7 +12,7 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.config.RedisCondition;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.redisson.RedisClientListResolver;
+import de.tum.cit.aet.artemis.core.service.distributed.redisson.RedisClientListResolver;
 
 /**
  * Health indicator for the Redis middleware used by LocalCI.

@@ -4,8 +4,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.plagiarism.config.PlagiarismEnabled;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Conditional(PlagiarismEnabled.class)
 @Lazy

@@ -22,11 +22,11 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 
 import com.nimbusds.jose.jwk.JWK;
 
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSInitialisationService;
 import de.tum.cit.aet.artemis.lti.service.OAuth2JWKSService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
 
 class OAuth2JWKSServiceTest {
 

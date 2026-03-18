@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Lazy
 @Service

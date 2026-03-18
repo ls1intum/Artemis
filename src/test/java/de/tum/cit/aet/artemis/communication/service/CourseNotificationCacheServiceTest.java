@@ -28,8 +28,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.cache.CacheManager;
 
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 @ExtendWith(MockitoExtension.class)
 class CourseNotificationCacheServiceTest {

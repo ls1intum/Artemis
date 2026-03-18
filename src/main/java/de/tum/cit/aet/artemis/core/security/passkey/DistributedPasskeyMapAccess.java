@@ -10,8 +10,8 @@ import org.springframework.security.web.webauthn.api.PublicKeyCredentialRequestO
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.core.dto.passkey.PublicKeyCredentialCreationOptionsDTO;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
 
 /**
  * Access wrapper for passkey-related distributed maps.

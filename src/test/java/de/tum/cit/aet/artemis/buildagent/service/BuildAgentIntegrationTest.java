@@ -42,11 +42,11 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildResultQueueException;
 import de.tum.cit.aet.artemis.buildagent.dto.ResultQueueItem;
+import de.tum.cit.aet.artemis.core.service.distributed.api.map.DistributedMap;
+import de.tum.cit.aet.artemis.core.service.distributed.api.queue.DistributedQueue;
+import de.tum.cit.aet.artemis.core.service.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
 import de.tum.cit.aet.artemis.programming.icl.DockerClientTestService;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.map.DistributedMap;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
-import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.topic.DistributedTopic;
 import de.tum.cit.aet.artemis.shared.base.AbstractArtemisBuildAgentTest;
 
 // TestInstance.Lifecycle.PER_CLASS allows all test methods in this class to share the same instance of the test class.

@@ -23,8 +23,8 @@ import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentDetailsDTO;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentInformation;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildAgentStatus;
 import de.tum.cit.aet.artemis.buildagent.dto.BuildJobQueueItem;
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildStatus;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 @Profile(PROFILE_BUILDAGENT)
 @Lazy(false)

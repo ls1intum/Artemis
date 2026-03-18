@@ -21,8 +21,8 @@ import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
 
 /**
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.

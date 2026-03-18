@@ -13,7 +13,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import de.tum.cit.aet.artemis.programming.service.localci.DistributedDataAccessService;
+import de.tum.cit.aet.artemis.core.service.DistributedDataAccessService;
 
 /**
  * This service is only active on a node that does not run with the 'scheduling' profile.
