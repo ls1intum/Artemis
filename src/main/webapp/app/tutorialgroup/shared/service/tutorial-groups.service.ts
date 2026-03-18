@@ -84,7 +84,7 @@ export class TutorialGroupsService {
     }
 
     importRegistrations(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<TutorialGroupRegisterStudentDTO>>> {
-        return this.httpClient.post<Array<Student>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
+        return this.httpClient.post<Array<Student>>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/import-registrations`, studentDtos, {
             observe: 'response',
         });
     }
