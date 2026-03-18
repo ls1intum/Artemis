@@ -118,7 +118,11 @@ public class CourseUpdateResource {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseUpdateDTO.id());
+        if (!Objects.equals(courseId, courseUpdateDTO.id())) {
+            throw new BadRequestAlertException("Invalid course id", Course.ENTITY_NAME, "idMismatch", true);
+        }
+
+        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -163,7 +167,6 @@ public class CourseUpdateResource {
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
-        existingCourse.setId(courseId); // Ensure the ID is correct
 
         existingCourse.validateEnrollmentConfirmationMessage();
         existingCourse.validateComplaintsAndRequestMoreFeedbackConfig();

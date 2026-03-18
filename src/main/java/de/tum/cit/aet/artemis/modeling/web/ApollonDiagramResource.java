@@ -116,6 +116,10 @@ public class ApollonDiagramResource {
         // Fetch the existing diagram from the database (this is the managed entity)
         ApollonDiagram existingDiagram = apollonDiagramRepository.findByIdElseThrow(diagramUpdateDTO.id());
 
+        if (!Objects.equals(existingDiagram.getCourseId(), courseId)) {
+            throw new ConflictException("The apollonDiagram does not belong to the specified course", "ApollonDiagram", "courseMismatch");
+        }
+
         // Apply DTO values to the managed entity
         diagramUpdateDTO.applyTo(existingDiagram);
 
