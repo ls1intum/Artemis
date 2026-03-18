@@ -73,6 +73,23 @@ class ScienceSettingsIntegrationTest extends AbstractAtlasIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testSaveScienceSettingsForCurrentUser_ReplacesExistingSettings() throws Exception {
+        ScienceSettingDTO[] initialSettings = { ScienceSettingDTO.of(settingA), ScienceSettingDTO.of(settingB) };
+        ScienceSettingDTO[] updatedSettings = { new ScienceSettingDTO(settingA.getSettingId(), false), new ScienceSettingDTO(settingB.getSettingId(), true) };
+
+        request.putWithResponseBody("/api/atlas/science-settings", initialSettings, ScienceSettingDTO[].class, HttpStatus.OK);
+        ScienceSettingDTO[] scienceSettingsResponse = request.putWithResponseBody("/api/atlas/science-settings", updatedSettings, ScienceSettingDTO[].class, HttpStatus.OK);
+
+        assertThat(scienceSettingsResponse).containsExactlyInAnyOrder(updatedSettings);
+        assertThat(scienceSettingRepository.findAllByUserId(userUtilService.getUserByLogin(TEST_PREFIX + "student1").getId())).hasSize(2)
+                .extracting(ScienceSetting::getSettingId, ScienceSetting::isActive)
+                .containsExactlyInAnyOrder(
+                        org.assertj.core.groups.Tuple.tuple(settingA.getSettingId(), false),
+                        org.assertj.core.groups.Tuple.tuple(settingB.getSettingId(), true));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveScienceSettingsForCurrentUser_BAD_REQUEST() throws Exception {
         request.putWithResponseBody("/api/atlas/science-settings", null, ScienceSettingDTO[].class, HttpStatus.BAD_REQUEST);
     }

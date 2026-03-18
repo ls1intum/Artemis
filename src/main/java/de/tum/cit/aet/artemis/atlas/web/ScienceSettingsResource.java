@@ -95,6 +95,7 @@ public class ScienceSettingsResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
+        scienceSettingRepository.deleteAllByUserId(user.getId());
         List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).map(dto -> new ScienceSetting(user, dto.settingId().trim(), dto.active())).toList();
         List<ScienceSetting> persistedSettingList = scienceSettingRepository.saveAll(scienceSettingList);
         if (persistedSettingList.isEmpty()) {
