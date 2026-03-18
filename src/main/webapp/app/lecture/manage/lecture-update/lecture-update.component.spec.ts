@@ -99,16 +99,19 @@ describe('LectureUpdateComponent', () => {
                 MockProvider(CalendarService),
                 {
                     provide: WebsocketService,
-                    useValue: {
-                        subscribe: vi.fn().mockReturnValue(EMPTY),
-                        get connectionState() {
-                            return new BehaviorSubject<ConnectionState>(new ConnectionState(false, false)).asObservable();
-                        },
-                        connect: vi.fn(),
-                        disconnect: vi.fn(),
-                        isConnected: vi.fn().mockReturnValue(false),
-                        send: vi.fn(),
-                    },
+                    useValue: (() => {
+                        const connectionStateSubject = new BehaviorSubject<ConnectionState>(new ConnectionState(false, false));
+                        return {
+                            subscribe: vi.fn().mockReturnValue(EMPTY),
+                            get connectionState() {
+                                return connectionStateSubject.asObservable();
+                            },
+                            connect: vi.fn(),
+                            disconnect: vi.fn(),
+                            isConnected: vi.fn().mockReturnValue(false),
+                            send: vi.fn(),
+                        };
+                    })(),
                 },
                 { provide: ProfileService, useClass: MockProfileService },
             ],

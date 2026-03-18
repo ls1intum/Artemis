@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.iris.web.internal;
 import java.util.Objects;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -266,7 +267,7 @@ public class PyrisInternalStatusUpdateResource {
      */
     @PostMapping("webhooks/transcription/runs/{runId}/status")
     @Internal
-    public ResponseEntity<Void> setStatusOfTranscriptionJob(@PathVariable String runId, @RequestBody PyrisTranscriptionStatusUpdateDTO statusUpdateDTO,
+    public ResponseEntity<Void> setStatusOfTranscriptionJob(@PathVariable String runId, @Valid @RequestBody PyrisTranscriptionStatusUpdateDTO statusUpdateDTO,
             HttpServletRequest request) {
         PyrisJob job = pyrisJobService.getAndAuthenticateJobFromHeaderElseThrow(request, PyrisJob.class);
         if (!job.jobId().equals(runId)) {

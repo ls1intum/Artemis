@@ -776,6 +776,8 @@ describe('LectureUnitManagementComponent', () => {
     describe('WebSocket', () => {
         it('should call loadAllStatuses when WebSocket ingestion-status message received', () => {
             const loadAllStatusesSpy = vi.spyOn(lectureUnitManagementComponent as any, 'loadAllStatuses');
+            const websocketService = TestBed.inject(WebsocketService);
+            expect(websocketService.subscribe).toHaveBeenCalledWith(`/topic/lectures/${lectureId}/ingestion-status`);
             ingestionSubject.next({});
             expect(loadAllStatusesSpy).toHaveBeenCalledOnce();
         });
