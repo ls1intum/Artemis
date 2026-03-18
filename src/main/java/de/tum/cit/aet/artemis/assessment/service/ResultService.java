@@ -202,6 +202,10 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
+        // Always clear participant score FK references immediately before deleting the result
+        // to prevent foreign key constraint violations from the async ParticipantScoreScheduleService
+        // recreating participant_score rows between a prior bulk delete and this result deletion
+        participantScoreRepository.clearAllByResultId(result.getId());
         resultRepository.delete(result);
     }
 
