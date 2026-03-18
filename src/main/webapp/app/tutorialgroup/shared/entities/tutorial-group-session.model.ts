@@ -58,8 +58,8 @@ export interface RawTutorialGroupDetailSessionDTO {
  */
 export interface TutorialGroupSessionDTO {
     id: number;
-    startDate: string;
-    endDate: string;
+    start: string;
+    end: string;
     status?: TutorialGroupSessionStatus;
     statusExplanation?: string;
     location: string;
@@ -91,8 +91,8 @@ export interface TutorialGroupSessionRequestDTO {
 export const entityToTutorialGroupSessionDTO = (entity: TutorialGroupSession): TutorialGroupSessionDTO => {
     return {
         id: entity.id!,
-        startDate: convertDateFromClient(entity.start)!,
-        endDate: convertDateFromClient(entity.end)!,
+        start: convertDateFromClient(entity.start)!,
+        end: convertDateFromClient(entity.end)!,
         status: entity.status,
         statusExplanation: entity.statusExplanation,
         location: entity.location!,

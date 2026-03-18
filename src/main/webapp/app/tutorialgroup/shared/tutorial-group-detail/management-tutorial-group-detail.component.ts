@@ -76,9 +76,7 @@ export class ManagementTutorialGroupDetailComponent {
                 if (group.additionalInformation) {
                     this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(group.additionalInformation);
                 }
-                if (group.tutorialGroupSessions) {
-                    this.sessions = group.tutorialGroupSessions.map(entityToTutorialGroupSessionDTO);
-                }
+                this.sessions = group.tutorialGroupSessions?.map(entityToTutorialGroupSessionDTO) ?? [];
                 this.getTutorialDetail();
             }
         });

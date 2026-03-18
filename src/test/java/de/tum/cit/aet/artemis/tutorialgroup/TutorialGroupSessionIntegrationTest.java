@@ -473,8 +473,8 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     private void assertSessionCreatedCorrectlyFromDTO(TutorialGroupSession session, TutorialGroupSessionDTO.TutorialGroupSessionRequestDTO dto) {
-        assertThat(session.getStart()).isEqualTo(ZonedDateTime.of(dto.date(), dto.startTime(), ZoneId.of(this.exampleTimeZone)));
-        assertThat(session.getEnd()).isEqualTo(ZonedDateTime.of(dto.date(), dto.endTime(), ZoneId.of(this.exampleTimeZone)));
+        assertThat(session.getStart().toInstant()).isEqualTo(ZonedDateTime.of(dto.date(), dto.startTime(), ZoneId.of(this.exampleTimeZone)).toInstant());
+        assertThat(session.getEnd().toInstant()).isEqualTo(ZonedDateTime.of(dto.date(), dto.endTime(), ZoneId.of(this.exampleTimeZone)).toInstant());
         assertThat(session.getLocation()).isEqualTo(dto.location());
         assertThat(session.getTutorialGroupSchedule()).isNull(); // individual session so isn't connected to a schedule
     }

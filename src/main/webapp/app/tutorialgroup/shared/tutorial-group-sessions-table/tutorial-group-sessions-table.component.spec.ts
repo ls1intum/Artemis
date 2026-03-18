@@ -29,7 +29,7 @@ class MockExtraColumnComponent {
     template: `
         <jhi-tutorial-group-sessions-table [sessions]="sessions()" [timeZone]="timeZone()" [showIdColumn]="true" [tutorialGroup]="tutorialGroup()">
             <ng-template let-session>
-                <jhi-mock-extra-column [tutorialGroupSession]="session()" />
+                <jhi-mock-extra-column [tutorialGroupSession]="session" />
             </ng-template>
         </jhi-tutorial-group-sessions-table>
     `,
@@ -133,14 +133,14 @@ describe('TutorialGroupSessionTableComponent', () => {
 
                 pastSession = generateExampleTutorialGroupSessionDTO({
                     id: 1,
-                    startDate: '2021-01-01T12:00:00.000Z',
-                    endDate: '2021-01-01T13:00:00.000Z',
+                    start: '2021-01-01T12:00:00.000Z',
+                    end: '2021-01-01T13:00:00.000Z',
                     location: 'Room 1',
                 });
                 upcomingSession = generateExampleTutorialGroupSessionDTO({
                     id: 2,
-                    startDate: '2021-01-03T12:00:00.000Z',
-                    endDate: '2021-01-03T13:00:00.000Z',
+                    start: '2021-01-03T12:00:00.000Z',
+                    end: '2021-01-03T13:00:00.000Z',
                     location: 'Room 1',
                 });
                 tutorialGroup = generateExampleTutorialGroup({});
@@ -187,8 +187,8 @@ describe('TutorialGroupSessionTableComponent', () => {
             ...tutorialGroup,
             nextSession: {
                 id: pastSession.id,
-                start: dayjs(pastSession.startDate),
-                end: dayjs(pastSession.endDate),
+                start: dayjs(pastSession.start),
+                end: dayjs(pastSession.end),
                 location: pastSession.location,
                 status: pastSession.status,
                 attendanceCount: pastSession.attendanceCount,

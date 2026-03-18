@@ -170,7 +170,6 @@ public class TutorialGroupSessionResource {
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
         return ResponseEntity.ok(TutorialGroupSessionDTO.of(result, zoneId));
-
     }
 
     private Pair<User, Boolean> getUserAndCheckWhetherTheyAreAdminOrInstructor(long courseId) {
@@ -337,7 +336,6 @@ public class TutorialGroupSessionResource {
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
         var courseZone = ZoneId.of(sessionToActivate.getTutorialGroup().getCourse().getTimeZone());
         return ResponseEntity.ok(TutorialGroupSessionDTO.of(sessionToActivate, courseZone));
-
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {

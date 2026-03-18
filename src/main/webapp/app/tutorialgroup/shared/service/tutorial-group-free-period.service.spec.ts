@@ -79,7 +79,17 @@ describe('TutorialGroupFreePeriodService', () => {
     });
 
     it('should UPDATE free period', () => {
-        const updated = { ...elemDefaultRequest, reason: 'Updated Reason' };
+        const updated: TutorialGroupFreePeriodRequestDTO = {
+            reason: 'Updated Reason',
+            startDate: elemDefaultRequest.startDate,
+            endDate: elemDefaultRequest.endDate,
+        };
+        const returnedFromService: TutorialGroupFreePeriodDTO = {
+            ...elemDefault,
+            reason: 'Updated Reason',
+            start: updated.startDate,
+            end: updated.endDate,
+        };
 
         let result: HttpResponse<TutorialGroupFreePeriodDTO> | undefined;
 
@@ -92,8 +102,8 @@ describe('TutorialGroupFreePeriodService', () => {
             method: 'PUT',
             url: 'api/tutorialgroup/courses/1/tutorial-groups-configuration/1/tutorial-free-periods/1',
         });
-        req.flush(updated);
-        expect(result?.body?.reason).toBe('Updated Reason');
+        req.flush(returnedFromService);
+        expect(result?.body).toEqual(returnedFromService);
     });
 
     it('should DELETE free period', () => {
@@ -105,7 +115,7 @@ describe('TutorialGroupFreePeriodService', () => {
             .subscribe((res) => (result = res));
 
         const req = httpMock.expectOne({ method: 'DELETE' });
-        req.flush({});
-        expect(result!.body).toEqual({});
+        req.flush(null);
+        expect(result?.body).toBeNull();
     });
 });

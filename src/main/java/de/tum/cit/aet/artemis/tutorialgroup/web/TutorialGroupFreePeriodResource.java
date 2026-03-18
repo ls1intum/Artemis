@@ -82,7 +82,11 @@ public class TutorialGroupFreePeriodResource {
         var freePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
         checkEntityIdMatchesPathIds(freePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, freePeriod.getTutorialGroupsConfiguration().getCourse(), null);
-        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.of(freePeriod, ZoneId.of(freePeriod.getTutorialGroupsConfiguration().getCourse().getTimeZone())));
+        var courseTimeZone = freePeriod.getTutorialGroupsConfiguration().getCourse().getTimeZone();
+        if (courseTimeZone == null) {
+            throw new BadRequestException("The course has no time zone");
+        }
+        return ResponseEntity.ok(TutorialGroupFreePeriodDTO.of(freePeriod, ZoneId.of(courseTimeZone)));
     }
 
     /**

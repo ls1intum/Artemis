@@ -4,9 +4,9 @@
     }
     <td>
         <span>
-            {{ localSession().startDate | artemisDate: 'short-date' : false : timeZone() : true }}
-            {{ localSession().startDate | artemisDate: 'time' : false : timeZone() }} -
-            {{ localSession().endDate | artemisDate: 'time' : false : timeZone() }}
+            {{ localSession().start | artemisDate: 'short-date' : false : timeZone() : true }}
+            {{ localSession().start | artemisDate: 'time' : false : timeZone() }} -
+            {{ localSession().end | artemisDate: 'time' : false : timeZone() }}
         </span>
         @if (isCancelled) {
             <button

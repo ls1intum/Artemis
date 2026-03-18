@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
  * DTO representing a tutorial group session, contains all relevant information about a tutorial group session, including its schedule and free period if applicable.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime startDate, @NotNull LocalDateTime endDate, TutorialGroupSessionStatus status,
+public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime start, @NotNull LocalDateTime end, TutorialGroupSessionStatus status,
         @Size(min = 1, max = 256) String statusExplanation, @NotNull @Size(max = 2000) String location, @Max(3000) Integer attendanceCount, TutorialGroupScheduleDTO schedule,
         TutorialGroupFreePeriodDTO freePeriod) {
 
@@ -88,6 +88,8 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull LocalDateTime s
     public static TutorialGroupSessionDTO of(TutorialGroupSession session, ZoneId courseZone) {
         Objects.requireNonNull(session, "Tutorial group session must be set");
         Objects.requireNonNull(courseZone, "Course time zone must be set");
+        Objects.requireNonNull(session.getStart(), "Tutorial group session start time must be set");
+        Objects.requireNonNull(session.getEnd(), "Tutorial group session end time must be set");
         if (session.getStart().isAfter(session.getEnd())) {
             throw new IllegalStateException("The session start date must be before the end date.");
         }

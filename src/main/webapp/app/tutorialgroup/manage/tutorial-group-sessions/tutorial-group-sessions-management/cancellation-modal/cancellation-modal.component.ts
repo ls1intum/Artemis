@@ -65,12 +65,10 @@ export class CancellationModalComponent implements OnInit, OnDestroy {
     }
 
     generateSessionLabel(tutorialGroupSession: TutorialGroupSessionDTO): string {
-        if (!tutorialGroupSession?.startDate || !tutorialGroupSession?.endDate) {
+        if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
             return '';
         }
-        return (
-            dayjs.tz(tutorialGroupSession.startDate, this.course().timeZone).format('LLLL') + ' - ' + dayjs.tz(tutorialGroupSession.endDate, this.course().timeZone).format('LT')
-        );
+        return dayjs.tz(tutorialGroupSession.start, this.course().timeZone).format('LLLL') + ' - ' + dayjs.tz(tutorialGroupSession.end, this.course().timeZone).format('LT');
     }
 
     cancelOrActivate(): void {

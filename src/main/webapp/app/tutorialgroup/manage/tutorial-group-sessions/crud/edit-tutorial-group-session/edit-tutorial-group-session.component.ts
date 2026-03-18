@@ -47,9 +47,9 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
             captureException('Error: Component not fully configured');
             return;
         }
-        const start = tutorialGroupSession.startDate ? dayjs.tz(tutorialGroupSession.startDate, course.timeZone) : undefined;
+        const start = tutorialGroupSession.start ? dayjs.tz(tutorialGroupSession.start, course.timeZone) : undefined;
 
-        const end = tutorialGroupSession.endDate ? dayjs.tz(tutorialGroupSession.endDate, course.timeZone) : undefined;
+        const end = tutorialGroupSession.end ? dayjs.tz(tutorialGroupSession.end, course.timeZone) : undefined;
 
         this.formData = {
             date: start?.toDate(),
@@ -67,11 +67,17 @@ export class EditTutorialGroupSessionComponent implements OnDestroy {
     updateSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
+        const isoDate = date ? toISO8601DateString(date) : undefined;
+        if (!isoDate || !startTime || !endTime || !location) {
+            captureException('Error: Session form is incomplete');
+            return;
+        }
+
         const tutorialGroupSessionDTO: TutorialGroupSessionRequestDTO = {
-            date: toISO8601DateString(date)!,
-            startTime: startTime!,
-            endTime: endTime!,
-            location: location!,
+            date: isoDate,
+            startTime,
+            endTime,
+            location,
         };
 
         this.isLoading = true;

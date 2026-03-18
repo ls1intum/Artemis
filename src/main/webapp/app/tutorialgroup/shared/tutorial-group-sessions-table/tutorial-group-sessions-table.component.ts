@@ -65,12 +65,12 @@ export class TutorialGroupSessionsTableComponent {
         // Effect to handle tutorialGroup changes
         effect(() => {
             const group = this.tutorialGroup();
-            if (group?.nextSession) {
+            if (group?.nextSession && group.nextSession.start && group.nextSession.end) {
                 this.nextSession = {
                     id: group.nextSession.id!,
-                    startDate: group.nextSession.start!.toISOString(),
-                    endDate: group.nextSession.end!.toISOString(),
-                    location: group.nextSession.location!,
+                    start: group.nextSession.start.toISOString(),
+                    end: group.nextSession.end.toISOString(),
+                    location: group.nextSession.location ?? '',
                     statusExplanation: group.nextSession.statusExplanation,
                     status: group.nextSession.status,
                     attendanceCount: group.nextSession.attendanceCount,
@@ -108,9 +108,9 @@ export class TutorialGroupSessionsTableComponent {
         const now = this.getCurrentDate();
 
         for (const session of sessions) {
-            const end = session.endDate ? dayjs.tz(session.endDate, this.timeZone()!) : undefined;
-
-            if (end && end.isBefore(now)) {
+            const tz = this.timeZone() ?? this.timeZoneUsedForDisplay;
+            const end = session.end ? dayjs.tz(session.end, tz) : undefined;
+            if (end?.isBefore(now)) {
                 past.push(session);
             } else {
                 upcoming.push(session);

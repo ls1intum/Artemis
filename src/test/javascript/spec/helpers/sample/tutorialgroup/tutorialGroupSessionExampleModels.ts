@@ -53,8 +53,8 @@ export const generateExampleTutorialGroupSession = ({
  */
 export const generateExampleTutorialGroupSessionDTO = ({
     id = 3,
-    startDate = '2021-01-01T10:00:00Z',
-    endDate = '2021-01-01T11:00:00Z',
+    start = '2021-01-01T10:00:00Z',
+    end = '2021-01-01T11:00:00Z',
     location = 'Room 1',
     status = TutorialGroupSessionStatus.ACTIVE,
     statusExplanation,
@@ -64,8 +64,8 @@ export const generateExampleTutorialGroupSessionDTO = ({
 }: Partial<TutorialGroupSessionDTO> = {}): TutorialGroupSessionDTO => {
     return {
         id,
-        startDate,
-        endDate,
+        start,
+        end,
         location,
         status,
         statusExplanation,
@@ -84,8 +84,8 @@ export const generateExampleTutorialGroupSessionDTO = ({
  * @returns form data suitable for the session form component
  */
 export const tutorialGroupSessionDtoToFormData = (dto: TutorialGroupSessionDTO, tz: string): TutorialGroupSessionFormData => {
-    const start = dto.startDate ? dayjs.tz(dto.startDate, tz) : undefined;
-    const end = dto.endDate ? dayjs.tz(dto.endDate, tz) : undefined;
+    const start = dto.start ? dayjs.tz(dto.start, tz) : undefined;
+    const end = dto.end ? dayjs.tz(dto.end, tz) : undefined;
 
     return {
         date: start?.toDate(),
@@ -104,14 +104,13 @@ export const tutorialGroupSessionDtoToFormData = (dto: TutorialGroupSessionDTO, 
  * @returns request DTO for backend submission
  */
 export const formDataToTutorialGroupSessionDTO = (formData: TutorialGroupSessionFormData): TutorialGroupSessionRequestDTO => {
-    if (!formData.date || !formData.startTime || !formData.endTime) {
-        throw new Error('Date, startTime and endTime are required');
+    if (!formData.date || !formData.startTime || !formData.endTime || !formData.location) {
+        throw new Error('Date, startTime, endTime and location are required');
     }
-
     return {
         date: formData.date.toISOString().split('T')[0],
         startTime: formData.startTime,
         endTime: formData.endTime,
-        location: formData.location!,
+        location: formData.location,
     };
 };

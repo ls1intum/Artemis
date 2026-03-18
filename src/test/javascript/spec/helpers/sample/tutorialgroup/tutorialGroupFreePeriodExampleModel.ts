@@ -101,13 +101,14 @@ export const tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData = (entity:
  * {@link TutorialGroupFreePeriod} entity.
  *
  * @param dto the free period DTO
+ * @param tz the time zone to apply
  * @returns the corresponding entity representation
  */
-export const tutorialGroupFreePeriodDTOToEntity = (dto: TutorialGroupFreePeriodDTO): TutorialGroupFreePeriod => {
+export const tutorialGroupFreePeriodDTOToEntity = (dto: TutorialGroupFreePeriodDTO, tz: string): TutorialGroupFreePeriod => {
     return {
         id: dto.id,
-        start: dayjs(dto.start),
-        end: dayjs(dto.end),
+        start: dayjs.tz(dto.start, tz),
+        end: dayjs.tz(dto.end, tz),
         reason: dto.reason,
     } as TutorialGroupFreePeriod;
 };

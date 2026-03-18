@@ -72,7 +72,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
 
         const sessionForm: TutorialGroupFreePeriodFormComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormComponent)).componentInstance;
 
-        const formData = tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(tutorialGroupFreePeriodDTOToEntity(createResponse.body!), 'Europe/Berlin');
+        const formData = tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(tutorialGroupFreePeriodDTOToEntity(createResponse.body!, 'Europe/Berlin'), 'Europe/Berlin');
 
         sessionForm.formSubmitted.emit(formData);
 
