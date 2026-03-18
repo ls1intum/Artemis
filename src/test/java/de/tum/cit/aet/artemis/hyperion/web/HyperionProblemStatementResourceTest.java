@@ -1,6 +1,8 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
@@ -27,6 +29,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseRepository;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationLocalCILocalVCTest;
@@ -38,6 +43,9 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private CommentThreadRepository commentThreadRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -94,12 +102,63 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Improved problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
+    private void mockConsistencyWithIssue() {
+        String json = """
+                {
+                  "issues": [
+                    {
+                      "severity": "HIGH",
+                      "category": "METHOD_PARAMETER_MISMATCH",
+                      "description": "Mismatch between statement and tests",
+                      "suggestedFix": "Align names",
+                      "relatedLocations": [
+                        {
+                          "type": "PROBLEM_STATEMENT",
+                          "filePath": "",
+                          "startLine": 3,
+                          "endLine": 3
+                        }
+                      ]
+                    }
+                  ]
+                }
+                """;
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(json))))).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
     private void mockChatSuccess(String responseMessage) {
         doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseMessage))))).when(azureOpenAiChatModel).call(any(Prompt.class));
     }
 
     private void mockChatFailure() {
         doThrow(new RuntimeException("AI service unavailable")).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    private void mockChecklistAction() {
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Updated problem statement."))))).when(azureOpenAiChatModel).call(any(Prompt.class));
+    }
+
+    private void mockChecklistAnalysis() {
+        // Use content-aware stubbing to avoid order-dependent sequential doReturn.
+        // The three LLM calls run concurrently, so prompt inspection ensures correct routing.
+        var competenciesResponse = new ChatResponse(List.of(new Generation(new AssistantMessage(
+                "{\"competencies\": [{ \"competencyTitle\": \"Loops\", \"taxonomyLevel\": \"APPLY\", \"confidence\": 0.9, \"whyThisMatches\": \"Loop found\" }]}"))));
+        var difficultyResponse = new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))));
+        var qualityResponse = new ChatResponse(List.of(new Generation(new AssistantMessage(
+                "{\"issues\": [{ \"category\": \"CLARITY\", \"severity\": \"LOW\", \"description\": \"Vague\", \"suggestedFix\": \"Fix\", \"location\": null }]}"))));
+
+        doReturn(competenciesResponse).when(azureOpenAiChatModel).call(argThat((Prompt prompt) -> {
+            String text = prompt.getContents();
+            return text.contains("curriculum design");
+        }));
+        doReturn(difficultyResponse).when(azureOpenAiChatModel).call(argThat((Prompt prompt) -> {
+            String text = prompt.getContents();
+            return text.contains("suggest the appropriate difficulty level");
+        }));
+        doReturn(qualityResponse).when(azureOpenAiChatModel).call(argThat((Prompt prompt) -> {
+            String text = prompt.getContents();
+            return text.contains("reviewer");
+        }));
     }
 
     @Test
@@ -120,6 +179,26 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         userUtilService.changeUser(TEST_PREFIX + "editor1");
         programmingExerciseRepository.findById(exerciseId).orElseThrow();
         request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldPersistConsistencyIssuesAsReviewComments() throws Exception {
+        long exerciseId = persistedExerciseId;
+        mockConsistencyWithIssue();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId)).andExpect(status().isOk());
+
+        var threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+        assertThat(threads).isNotEmpty();
+        assertThat(threads).anySatisfy(thread -> {
+            assertThat(thread.getComments()).isNotEmpty();
+            assertThat(thread.getComments()).anySatisfy(comment -> {
+                assertThat(comment.getType()).isEqualTo(CommentType.CONSISTENCY_CHECK);
+                assertThat(comment.getContent()).isInstanceOf(ConsistencyIssueCommentContentDTO.class);
+            });
+        });
     }
 
     @Test
@@ -383,6 +462,23 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
                 .andExpect(status().isBadRequest());
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldAnalyzeChecklistForInstructor() throws Exception {
+        long courseId = persistedCourseId;
+
+        mockChecklistAnalysis();
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + persistedExerciseId + "}";
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.inferredCompetencies[0].competencyTitle").value("Loops"))
+                .andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"))
+                .andExpect(jsonPath("$.difficultyAssessment.suggested").value("EASY"));
+    }
+
     // Targeted refinement endpoint tests
 
     private String buildTargetedRefinementBody(String problemStatement, int startLine, int endLine, Integer startColumn, Integer endColumn, String instruction)
@@ -415,6 +511,23 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldAnalyzeChecklistForEditor() throws Exception {
+        long courseId = persistedCourseId;
+
+        mockChecklistAnalysis();
+
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + persistedExerciseId + "}";
+
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.inferredCompetencies").isArray()).andExpect(jsonPath("$.inferredCompetencies[0].competencyTitle").value("Loops"))
+                .andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"))
+                .andExpect(jsonPath("$.difficultyAssessment").exists()).andExpect(jsonPath("$.difficultyAssessment.suggested").value("EASY"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
     void shouldRefineTargetedForEditor() throws Exception {
         long courseId = persistedCourseId;
         mockChatSuccess("Refined targeted problem statement.");
@@ -427,12 +540,34 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForChecklistAnalysisTutor() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
     void shouldReturnForbiddenForTargetedRefineTutor() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "tutor1");
         courseRepository.findById(courseId).orElseThrow();
         String body = buildTargetedRefinementBody("Some problem statement", 1, 1, null, null, "Fix this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForChecklistAnalysisStudent() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\"}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isForbidden());
     }
 
@@ -449,6 +584,28 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnBadRequestForChecklistAnalysisCourseMismatch() throws Exception {
+        // Create a second course with its own exercise
+        Course otherCourse = new Course();
+        otherCourse.setTitle("Other Course");
+        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other");
+        otherCourse = courseRepository.save(otherCourse);
+
+        ProgrammingExercise otherExercise = new ProgrammingExercise();
+        otherExercise.setTitle("Other Exercise");
+        otherExercise.setCourse(otherCourse);
+        otherExercise = programmingExerciseRepository.save(otherExercise);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        // Pass the other exercise's ID to the first course's endpoint
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + otherExercise.getId() + "}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-analysis", persistedCourseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForTargetedRefineStartLineGreaterThanEndLine() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -457,6 +614,63 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = buildTargetedRefinementBody("Some problem statement text", 5, 2, null, null, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Bad Request")).andExpect(jsonPath("$.message").value("error.http.400"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldAnalyzeChecklistSectionQualityForInstructor() throws Exception {
+        long courseId = persistedCourseId;
+
+        mockChecklistAnalysis();
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + persistedExerciseId + "}";
+
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.qualityIssues").isArray()).andExpect(jsonPath("$.qualityIssues[0].category").value("CLARITY"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldAnalyzeChecklistSectionDifficultyForEditor() throws Exception {
+        long courseId = persistedCourseId;
+
+        doReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"suggested\": \"EASY\", \"reasoning\": \"Simple\"}"))))).when(azureOpenAiChatModel)
+                .call(any(Prompt.class));
+
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"declaredDifficulty\":\"EASY\"}";
+
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "DIFFICULTY").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.difficultyAssessment").exists()).andExpect(jsonPath("$.difficultyAssessment.suggested").value("EASY"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForChecklistSectionAnalysisTutor() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\"}";
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForChecklistSectionAnalysisStudent() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\"}";
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", courseId, "COMPETENCIES").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -472,6 +686,27 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldReturnBadRequestForChecklistSectionAnalysisCourseMismatch() throws Exception {
+        Course otherCourse = new Course();
+        otherCourse.setTitle("Other Course Section");
+        otherCourse.setInstructorGroupName(TEST_PREFIX + "instructor-other-section");
+        otherCourse = courseRepository.save(otherCourse);
+
+        ProgrammingExercise otherExercise = new ProgrammingExercise();
+        otherExercise.setTitle("Other Exercise Section");
+        otherExercise.setCourse(otherCourse);
+        otherExercise = programmingExerciseRepository.save(otherExercise);
+
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        String body = "{\"problemStatementMarkdown\":\"Problem\", \"exerciseId\":" + otherExercise.getId() + "}";
+        request.performMvcRequest(
+                post("/api/hyperion/courses/{courseId}/checklist-analysis/sections/{section}", persistedCourseId, "QUALITY").contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
     void shouldReturnBadRequestForTargetedRefineEmptyProblemStatement() throws Exception {
         long courseId = persistedCourseId;
         userUtilService.changeUser(TEST_PREFIX + "instructor1");
@@ -479,6 +714,54 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
         String body = buildTargetedRefinementBody("", 1, 1, null, null, "Improve this");
         request.performMvcRequest(post("/api/hyperion/courses/{courseId}/problem-statements/refine/targeted", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isBadRequest()).andExpect(jsonPath("$.title").value("Method argument not valid")).andExpect(jsonPath("$.message").value("error.validation"));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldApplyChecklistActionForInstructor() throws Exception {
+        long courseId = persistedCourseId;
+        mockChecklistAction();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        String body = "{\"actionType\":\"FIX_QUALITY_ISSUE\",\"problemStatementMarkdown\":\"Problem\","
+                + "\"context\":{\"issueDescription\":\"Vague instructions\",\"category\":\"CLARITY\"}}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-actions", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.updatedProblemStatement").isString()).andExpect(jsonPath("$.applied").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = { "USER", "EDITOR" })
+    void shouldApplyChecklistActionForEditor() throws Exception {
+        long courseId = persistedCourseId;
+        mockChecklistAction();
+        userUtilService.changeUser(TEST_PREFIX + "editor1");
+
+        String body = "{\"actionType\":\"ADAPT_DIFFICULTY\",\"problemStatementMarkdown\":\"Problem\","
+                + "\"context\":{\"targetDifficulty\":\"MEDIUM\",\"currentDifficulty\":\"EASY\"}}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-actions", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.updatedProblemStatement").isString()).andExpect(jsonPath("$.applied").value(true));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
+    void shouldReturnForbiddenForChecklistActionTutor() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "tutor1");
+
+        String body = "{\"actionType\":\"FIX_QUALITY_ISSUE\",\"problemStatementMarkdown\":\"Problem\"," + "\"context\":{\"issueDescription\":\"Vague\",\"category\":\"CLARITY\"}}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-actions", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = { "USER", "STUDENT" })
+    void shouldReturnForbiddenForChecklistActionStudent() throws Exception {
+        long courseId = persistedCourseId;
+        userUtilService.changeUser(TEST_PREFIX + "student1");
+
+        String body = "{\"actionType\":\"FIX_QUALITY_ISSUE\",\"problemStatementMarkdown\":\"Problem\"," + "\"context\":{\"issueDescription\":\"Vague\",\"category\":\"CLARITY\"}}";
+        request.performMvcRequest(post("/api/hyperion/courses/{courseId}/checklist-actions", courseId).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isForbidden());
     }
 
     @Test

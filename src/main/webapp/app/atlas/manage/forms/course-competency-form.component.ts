@@ -1,5 +1,5 @@
 import { Component, InputSignal, inject, input, output } from '@angular/core';
-import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { AsyncValidatorFn, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { of } from 'rxjs';
 import { catchError, delay, map, switchMap } from 'rxjs/operators';
 import { CompetencyTaxonomy, DEFAULT_MASTERY_THRESHOLD } from 'app/atlas/shared/entities/competency.model';
@@ -8,17 +8,14 @@ import dayjs from 'dayjs/esm';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 
 /**
- * Async Validator to make sure that a competency title is unique within a course
+ * Async validator to make sure that a competency title is unique within a course.
  */
-export const titleUniqueValidator = (courseCompetencyService: CourseCompetencyService, courseId: number, initialTitle?: string) => {
+export const titleUniqueValidator = (courseCompetencyService: CourseCompetencyService, courseId: number, excludeCompetencyId?: number): AsyncValidatorFn => {
     return (competencyTitleControl: FormControl<string | undefined>) => {
         return of(competencyTitleControl.value).pipe(
             delay(250),
             switchMap((title) => {
-                if (initialTitle && title === initialTitle) {
-                    return of(null);
-                }
-                return courseCompetencyService.getCourseCompetencyTitles(courseId).pipe(
+                return courseCompetencyService.getCourseCompetencyTitles(courseId, excludeCompetencyId).pipe(
                     map((res) => {
                         const competencyTitles = res.body!;
                         if (title && competencyTitles.includes(title)) {
@@ -100,22 +97,25 @@ export abstract class CourseCompetencyFormComponent {
         if (this.form) {
             return;
         }
-        let initialTitle: string | undefined = undefined;
-        if (this.isEditMode() && this.formData() && this.formData().title) {
-            initialTitle = this.formData().title;
-        }
         this.form = this.fb.nonNullable.group({
-            title: [
-                undefined as string | undefined,
-                [Validators.required, Validators.maxLength(255)],
-                [titleUniqueValidator(this.courseCompetencyService, this.courseId(), initialTitle)],
-            ],
+            title: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)], []],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             softDueDate: [undefined],
             taxonomy: [undefined as CompetencyTaxonomy | undefined],
             masteryThreshold: [DEFAULT_MASTERY_THRESHOLD, [Validators.min(0), Validators.max(100)]],
             optional: [false],
         });
+
+        this.updateTitleUniqueValidator();
+    }
+
+    protected updateTitleUniqueValidator() {
+        if (!this.form) {
+            return;
+        }
+        const excludeCompetencyId = this.isEditMode() ? this.formData()?.id : undefined;
+        this.titleControl?.setAsyncValidators(titleUniqueValidator(this.courseCompetencyService, this.courseId(), excludeCompetencyId));
+        this.titleControl?.updateValueAndValidity({ emitEvent: false });
     }
 
     cancelForm() {

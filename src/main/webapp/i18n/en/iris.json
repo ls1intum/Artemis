@@ -180,13 +180,10 @@
                 "openChatHistory": "Open chat history",
                 "aboutIris": "About Iris",
                 "today": "Today",
-                "yesterday": "Yesterday",
-                "last7Days": "Last 7 Days",
-                "last30Days": "Last 30 Days",
                 "older": "Older",
                 "relatedEntityTooltip": {
-                    "programmingExercise": "This chat is related to a programming exercise.",
-                    "lecture": "This chat is related to a lecture."
+                    "programmingExercise": "Related Programming Exercise:\n{{ name }}",
+                    "lecture": "Related Lecture:\n{{ name }}"
                 },
                 "deleteSession": "Delete",
                 "deleteSessionHeader": "Delete Chat Session",
@@ -226,6 +223,16 @@
                 "empty": "No memories found.",
                 "delete": "Delete",
                 "deleting": "Deleting...",
+                "indicator": {
+                    "usedSingular": "1 memory used",
+                    "usedPlural": "{{count}} memories used",
+                    "createdSingular": "1 created",
+                    "createdPlural": "{{count}} created",
+                    "compactUsed": "{{count}} used",
+                    "compactCreated": "{{count}} created",
+                    "usedSectionTitle": "Used memories",
+                    "createdSectionTitle": "Created memories"
+                },
                 "conflict": {
                     "warning": "There are conflicts between memories that need to be resolved.",
                     "resolve": "Resolve",

@@ -47,7 +47,8 @@
                 "color": "Color",
                 "style": "Style",
                 "emoji": "Emoji",
-                "strikethrough": "Strikethrough"
+                "strikethrough": "Strikethrough",
+                "textFormat": "Formatting"
             },
             "visualEditor": {
                 "hintTooltip": "Add a hint here (visible during the quiz via ?-Button)",
