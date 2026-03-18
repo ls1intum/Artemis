@@ -50,174 +50,123 @@ public class JacksonDeserializerInitializationConfig {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
         // Initialize User directly (most commonly nested entity, must be warmed first)
-        initializeUser();
+        warmUpDeserializer(User.class, """
+                {
+                    "id": 1,
+                    "login": "testuser",
+                    "firstName": "Test",
+                    "lastName": "User",
+                    "email": "test@test.com",
+                    "activated": true
+                }
+                """);
 
         // Initialize Organization with nested User and Course
-        initializeOrganization();
-
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
-        initializeCourse();
-
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
-        initializeExam();
-
-        // Initialize TutorialGroup with nested registrations containing User references
-        initializeTutorialGroup();
-
-        // Initialize Post with nested reactions containing User references
-        initializePost();
-
-        log.debug("Successfully initialized Jackson deserializers");
-    }
-
-    private void initializeUser() {
-        try {
-            String sampleJson = """
-                    {
+        warmUpDeserializer(Organization.class, """
+                {
+                    "id": 1,
+                    "name": "Test Organization",
+                    "shortName": "TO",
+                    "emailPattern": ".*@test.com",
+                    "users": [{
                         "id": 1,
                         "login": "testuser",
                         "firstName": "Test",
                         "lastName": "User",
                         "email": "test@test.com",
                         "activated": true
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, User.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize User deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeOrganization() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "name": "Test Organization",
-                        "shortName": "TO",
-                        "emailPattern": ".*@test.com",
-                        "users": [{
-                            "id": 1,
-                            "login": "testuser",
-                            "firstName": "Test",
-                            "lastName": "User",
-                            "email": "test@test.com",
-                            "activated": true
-                        }],
-                        "courses": [{
-                            "id": 1,
-                            "title": "Test Course",
-                            "shortName": "TC"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Organization.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Organization deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeCourse() {
-        try {
-            String sampleJson = """
-                    {
+                    }],
+                    "courses": [{
                         "id": 1,
                         "title": "Test Course",
-                        "shortName": "TC",
-                        "exercises": [{
-                            "id": 1,
-                            "title": "Test Exercise",
-                            "type": "text"
-                        }],
-                        "lectures": [{
-                            "id": 1,
-                            "title": "Test Lecture"
-                        }],
-                        "organizations": [{
-                            "id": 1,
-                            "name": "Test Org"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Course.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
-        }
-    }
+                        "shortName": "TC"
+                    }]
+                }
+                """);
 
-    private void initializeExam() {
-        try {
-            String sampleJson = """
-                    {
+        // Initialize Course with nested relationships (exercises, lectures, etc.)
+        warmUpDeserializer(Course.class, """
+                {
+                    "id": 1,
+                    "title": "Test Course",
+                    "shortName": "TC",
+                    "exercises": [{
                         "id": 1,
-                        "title": "Test Exam",
-                        "exerciseGroups": [{
-                            "id": 1,
-                            "title": "Test Group",
-                            "exercises": []
-                        }],
-                        "studentExams": [{
-                            "id": 1,
-                            "submitted": false
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Exam.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
-        }
-    }
+                        "title": "Test Exercise",
+                        "type": "text"
+                    }],
+                    "lectures": [{
+                        "id": 1,
+                        "title": "Test Lecture"
+                    }],
+                    "organizations": [{
+                        "id": 1,
+                        "name": "Test Org"
+                    }]
+                }
+                """);
 
-    private void initializeTutorialGroup() {
-        try {
-            String sampleJson = """
-                    {
+        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
+        warmUpDeserializer(Exam.class, """
+                {
+                    "id": 1,
+                    "title": "Test Exam",
+                    "exerciseGroups": [{
                         "id": 1,
                         "title": "Test Group",
-                        "teachingAssistant": {
+                        "exercises": []
+                    }],
+                    "studentExams": [{
+                        "id": 1,
+                        "submitted": false
+                    }]
+                }
+                """);
+
+        // Initialize TutorialGroup with nested registrations containing User references
+        warmUpDeserializer(TutorialGroup.class, """
+                {
+                    "id": 1,
+                    "title": "Test Group",
+                    "teachingAssistant": {
+                        "id": 1,
+                        "login": "tutor1"
+                    },
+                    "registrations": [{
+                        "id": 1,
+                        "student": {
+                            "id": 2,
+                            "login": "student1"
+                        }
+                    }]
+                }
+                """);
+
+        // Initialize Post with nested reactions containing User references
+        warmUpDeserializer(Post.class, """
+                {
+                    "id": 1,
+                    "content": "Test post",
+                    "reactions": [{
+                        "id": 1,
+                        "emojiId": "rocket",
+                        "user": {
                             "id": 1,
-                            "login": "tutor1"
-                        },
-                        "registrations": [{
-                            "id": 1,
-                            "student": {
-                                "id": 2,
-                                "login": "student1"
-                            }
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, TutorialGroup.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
-        }
+                            "login": "testuser"
+                        }
+                    }]
+                }
+                """);
+
+        log.debug("Successfully initialized Jackson deserializers");
     }
 
-    private void initializePost() {
+    private <T> void warmUpDeserializer(Class<T> type, String sampleJson) {
         try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "content": "Test post",
-                        "reactions": [{
-                            "id": 1,
-                            "emojiId": "rocket",
-                            "user": {
-                                "id": 1,
-                                "login": "testuser"
-                            }
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Post.class);
+            objectMapper.readValue(sampleJson, type);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize Post deserializer: {}", e.getMessage());
+            log.warn("Failed to pre-initialize {} deserializer: {}", type.getSimpleName(), e.getMessage());
         }
     }
 }
