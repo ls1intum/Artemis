@@ -246,8 +246,9 @@ public class DistributedDataAccessService {
                 // Guard against null entries from distributed map
                 .filter(agent -> agent != null && agent.buildAgent() != null)
                 // Filter to only connected agents if we can determine connectivity
-                // Connected client names match the memberAddress (e.g. "artemis-1003"), not the agent name (e.g. "artemis-build-agent-3")
-                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().memberAddress()))
+                // Hazelcast returns agent names (e.g. "staging1-build-agent-1"), Redis returns memberAddress (e.g. "artemis-1003")
+                .filter(agent -> connectedClients.isEmpty() || connectedClients.contains(agent.buildAgent().memberAddress())
+                        || connectedClients.contains(agent.buildAgent().name()))
                 // Enrich with current processing jobs for accurate runningBuildJobs data
                 .map(agent -> enrichWithCurrentProcessingJobs(agent, currentProcessingJobs)).toList();
     }

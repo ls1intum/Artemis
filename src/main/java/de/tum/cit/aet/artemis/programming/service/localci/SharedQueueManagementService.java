@@ -122,7 +122,7 @@ public class SharedQueueManagementService {
         boolean found = false;
         for (var entry : mapCopy.entrySet()) {
             var agent = entry.getValue();
-            if (agent != null && agent.buildAgent() != null && clientName.equals(agent.buildAgent().memberAddress())) {
+            if (agent != null && agent.buildAgent() != null && (clientName.equals(agent.buildAgent().memberAddress()) || clientName.equals(agent.buildAgent().name()))) {
                 var removedAgent = agentMap.remove(entry.getKey());
                 if (removedAgent != null) {
                     log.info("Removed build agent {} (key='{}', memberAddress='{}') from distributed map. MapEntryRemovedEvent will trigger orphan job handling.",
