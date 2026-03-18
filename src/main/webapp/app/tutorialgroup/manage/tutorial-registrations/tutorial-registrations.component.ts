@@ -52,11 +52,11 @@ export class TutorialRegistrationsComponent {
     courseId = input.required<number>();
     tutorialGroupId = input.required<number>();
     registeredStudents = input.required<TutorialGroupRegisteredStudentDTO[]>();
-    filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
-    searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
-    searchString = signal('');
     loggedInUserIsAtLeastTutorOfGroup = input.required<boolean>();
     loggedInUserIsAtLeastInstructorInCourse = input.required<boolean>();
+    searchFieldPlaceholder = computed<string>(() => this.computeSearchFieldPlaceholder());
+    searchString = signal('');
+    filteredRegisteredStudents = computed<TutorialGroupRegisteredStudentDTO[]>(() => this.computeFilteredRegisteredStudents());
 
     exportRegisteredStudents() {
         const registeredStudents = this.registeredStudents();
