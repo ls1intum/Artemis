@@ -1,6 +1,5 @@
 package de.tum.cit.aet.artemis.atlas.web;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -95,9 +94,7 @@ public class ScienceSettingsResource {
         }
         User user = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to save ScienceSettings : {} for current user {}", scienceSettings, user);
-        scienceSettingRepository.deleteAllByUserId(user.getId());
-        List<ScienceSetting> scienceSettingList = Arrays.stream(scienceSettings).map(dto -> new ScienceSetting(user, dto.settingId().trim(), dto.active())).toList();
-        List<ScienceSetting> persistedSettingList = scienceSettingRepository.saveAll(scienceSettingList);
+        List<ScienceSetting> persistedSettingList = scienceSettingRepository.replaceScienceSettingsForUser(user, scienceSettings);
         if (persistedSettingList.isEmpty()) {
             throw new BadRequestAlertException("Error occurred during saving of Science Settings", "ScienceSettings", "scienceSettingsEmptyAfterSave");
         }
