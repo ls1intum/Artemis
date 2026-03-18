@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
+import de.tum.cit.aet.artemis.atlas.dto.CourseCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -43,8 +44,9 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     class PreAuthorize {
 
         private void testAllPreAuthorizeEditor() throws Exception {
-            request.put("/api/atlas/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
-            request.post("/api/atlas/courses/" + course.getId() + "/competencies", new Competency(), HttpStatus.FORBIDDEN);
+            request.put("/api/atlas/courses/" + course.getId() + "/competencies", toRequestDto(courseCompetency), HttpStatus.FORBIDDEN);
+            request.post("/api/atlas/courses/" + course.getId() + "/competencies", new CourseCompetencyRequestDTO(null, "Title", "Description", null, 1, null, false),
+                    HttpStatus.FORBIDDEN);
             request.delete("/api/atlas/courses/" + course.getId() + "/competencies/" + courseCompetency.getId(), HttpStatus.FORBIDDEN);
             request.post("/api/atlas/courses/" + course.getId() + "/competencies/bulk", Collections.emptyList(), HttpStatus.FORBIDDEN);
             // import
@@ -72,6 +74,11 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
 
     Competency getCall(long courseId, long competencyId, HttpStatus expectedStatus) throws Exception {
         return request.get("/api/atlas/courses/" + courseId + "/competencies/" + competencyId, expectedStatus, Competency.class);
+    }
+
+    private static CourseCompetencyRequestDTO toRequestDto(CourseCompetency competency) {
+        return new CourseCompetencyRequestDTO(competency.getId(), competency.getTitle(), competency.getDescription(), competency.getSoftDueDate(), competency.getMasteryThreshold(),
+                competency.getTaxonomy(), competency.isOptional());
     }
 
     @Test
@@ -161,7 +168,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     CourseCompetency updateCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception {
-        return request.putWithResponseBody("/api/atlas/courses/" + courseId + "/competencies", competency, Competency.class, expectedStatus);
+        return request.putWithResponseBody("/api/atlas/courses/" + courseId + "/competencies", toRequestDto(competency), Competency.class, expectedStatus);
     }
 
     @Test
@@ -184,7 +191,7 @@ class CompetencyIntegrationTest extends AbstractCompetencyPrerequisiteIntegratio
     }
 
     CourseCompetency createCall(long courseId, CourseCompetency competency, HttpStatus expectedStatus) throws Exception {
-        return request.postWithResponseBody("/api/atlas/courses/" + courseId + "/competencies", competency, Competency.class, expectedStatus);
+        return request.postWithResponseBody("/api/atlas/courses/" + courseId + "/competencies", toRequestDto(competency), Competency.class, expectedStatus);
     }
 
     @Test
