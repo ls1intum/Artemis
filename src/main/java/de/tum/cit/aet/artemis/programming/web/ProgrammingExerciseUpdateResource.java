@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import jakarta.persistence.EntityManager;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -90,11 +92,13 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final EntityManager entityManager;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, EntityManager entityManager) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -108,6 +112,7 @@ public class ProgrammingExerciseUpdateResource {
         this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
         this.exerciseVersionService = exerciseVersionService;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -138,25 +143,31 @@ public class ProgrammingExerciseUpdateResource {
                     "bothCourseAndExerciseGroupSet");
         }
 
-        // Load the existing exercise from the database with all necessary associations
-        var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        // Load the existing exercise from the database with all necessary associations.
+        // This will serve as the "before update" snapshot after we detach it.
+        var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
 
         // Validate that courseId or exerciseGroupId hasn't changed
         // For course exercises: courseId must match
         // For exam exercises: exerciseGroupId must match
-        Long existingCourseId = programmingExerciseBeforeUpdate.isCourseExercise() && programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember() != null
-                ? programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId()
+        Long existingCourseId = originalExercise.isCourseExercise() && originalExercise.getCourseViaExerciseGroupOrCourseMember() != null
+                ? originalExercise.getCourseViaExerciseGroupOrCourseMember().getId()
                 : null;
-        Long existingExerciseGroupId = programmingExerciseBeforeUpdate.getExerciseGroup() != null ? programmingExerciseBeforeUpdate.getExerciseGroup().getId() : null;
+        Long existingExerciseGroupId = originalExercise.getExerciseGroup() != null ? originalExercise.getExerciseGroup().getId() : null;
         if (!Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId())) {
             throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
         }
 
-        // Create a copy for "before update" state to track changes
-        var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        // Detach the original exercise (and its build config) from the persistence context
+        // so it remains an unmodified "before" snapshot while we update a fresh managed instance
+        entityManager.detach(originalExercise);
+        if (originalExercise.getBuildConfig() != null) {
+            entityManager.detach(originalExercise.getBuildConfig());
+        }
 
-        // Update the existing exercise with DTO values
-        ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
+        // Re-fetch as a fresh managed instance and apply DTO updates
+        var managedExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        ProgrammingExercise updatedProgrammingExercise = update(updateDTO, managedExercise);
 
         // Validate the updated exercise
         updatedProgrammingExercise.validateGeneralSettings();
