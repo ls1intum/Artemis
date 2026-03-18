@@ -29,6 +29,13 @@ public final class BuildResultQueueException extends RuntimeException implements
         this.originalClassName = originalClassName;
     }
 
+    /**
+     * Converts an arbitrary throwable into a {@link BuildResultQueueException} chain
+     * that is safe for JSON serialization in distributed queues.
+     *
+     * @param throwable the throwable to convert, may be null
+     * @return the converted exception, or null if the input was null
+     */
     public static BuildResultQueueException from(Throwable throwable) {
         if (throwable == null) {
             return null;

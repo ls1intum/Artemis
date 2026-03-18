@@ -19,6 +19,12 @@ import de.tum.cit.aet.artemis.core.config.RedisCondition;
 @Conditional(RedisCondition.class)
 public class RedissonCodecConfiguration {
 
+    /**
+     * Customizes the Redisson configuration with a Jackson-based JSON codec
+     * that supports Java records and ZonedDateTime serialization.
+     *
+     * @return the Redisson auto-configuration customizer
+     */
     @Bean
     public RedissonAutoConfigurationCustomizer redissonAutoConfigurationCustomizer() {
         ObjectMapper redissonObjectMapper = new ObjectMapper();
