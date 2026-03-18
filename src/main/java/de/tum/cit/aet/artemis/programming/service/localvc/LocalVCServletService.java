@@ -327,12 +327,17 @@ public class LocalVCServletService {
      */
     public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, Exercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
             User user, RepositoryActionType repositoryAction) {
-        var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
-        var commitHash = getCommitHash(localVCRepositoryUri);
-        var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
-        var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
-        var ipAddress = context.getIpAddress();
-        vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+        try {
+            var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
+            var commitHash = getCommitHash(localVCRepositoryUri);
+            var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
+            var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+            var ipAddress = context.getIpAddress();
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+        }
+        catch (Exception e) {
+            log.warn("Failed to save VCS access log for failed access attempt by user {} to repository {}: {}", user.getLogin(), localVCRepositoryUri, e.getMessage());
+        }
     }
 
     /**
@@ -596,12 +601,18 @@ public class LocalVCServletService {
         }
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 
-        if (!("Basic".equals(basicAuthCredentialsEncoded[0]))) {
-            throw new LocalVCAuthException("Non basic authorization header provided");
+        if (basicAuthCredentialsEncoded.length < 2 || !("Basic".equals(basicAuthCredentialsEncoded[0]))) {
+            throw new LocalVCAuthException("Invalid authorization header format");
         }
 
-        // Return decoded basic auth credentials which contain the username and the password.
-        String basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+        // Decode the Base64-encoded credentials (username:password).
+        String basicAuthCredentials;
+        try {
+            basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+        }
+        catch (IllegalArgumentException e) {
+            throw new LocalVCAuthException("Invalid Base64 encoding in authorization header");
+        }
 
         int separatorIndex = basicAuthCredentials.indexOf(":");
 
@@ -983,13 +994,13 @@ public class LocalVCServletService {
     }
 
     private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
-        if (repositoryTypeOrUserName.equals("exercise")) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return RepositoryType.TEMPLATE;
         }
-        else if (repositoryTypeOrUserName.equals("solution")) {
+        else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
             return RepositoryType.SOLUTION;
         }
-        else if (repositoryTypeOrUserName.equals("tests")) {
+        else if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             return RepositoryType.TESTS;
         }
         else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
@@ -1001,12 +1012,16 @@ public class LocalVCServletService {
     }
 
     private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
-        return switch (repositoryTypeOrUserName) {
-            case "exercise" -> RepositoryType.TEMPLATE;
-            case "solution" -> RepositoryType.SOLUTION;
-            case "tests" -> RepositoryType.TESTS;
-            default -> RepositoryType.USER;
-        };
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return RepositoryType.TEMPLATE;
+        }
+        else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+            return RepositoryType.SOLUTION;
+        }
+        else if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return RepositoryType.TESTS;
+        }
+        return RepositoryType.USER;
     }
 
     /**
@@ -1092,7 +1107,8 @@ public class LocalVCServletService {
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+            log.debug("Could not update VCS access log for HTTPS clone/pull: {}", e.getMessage());
         }
     }
 
@@ -1117,7 +1133,8 @@ public class LocalVCServletService {
             accessLog.setRepositoryActionType(repositoryActionType);
             vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+            log.debug("Could not update VCS access log for SSH clone/pull: {}", e.getMessage());
         }
     }
 
