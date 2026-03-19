@@ -1,15 +1,17 @@
 @if (exercise) {
-    <jhi-exercise-header
-        class="d-flex p-2 rounded-3 module-bg mb-2"
-        [exercise]="exercise"
-        [courseId]="courseId"
-        [studentParticipation]="gradedStudentParticipation()"
-        [submissionPolicy]="submissionPolicy()"
-    />
+    <div class="d-flex flex-column scrollable-content">
+        <jhi-exercise-header
+            class="d-flex p-2 rounded-3 module-bg mb-2"
+            [exercise]="exercise"
+            [courseId]="courseId"
+            [studentParticipation]="gradedStudentParticipation()"
+            [submissionPolicy]="submissionPolicy()"
+        />
 
-    <jhi-exercise-split-panel class="d-flex" [exercise]="exercise" [studentParticipation]="practiceStudentParticipation() ?? gradedStudentParticipation()" />
+        <jhi-exercise-split-panel class="d-flex flex-fill" [exercise]="exercise" [studentParticipation]="practiceStudentParticipation() ?? gradedStudentParticipation()" />
+    </div>
 
-    <div id="course-exercise-details" class="px-3 pt-2 pb-3 scrollable-content module-bg d-none">
+    <div id="course-exercise-details" class="px-3 pt-2 pb-3 scrollable-content module-bg">
         <div class="d-flex align-items-center justify-content-between">
             <div class="d-flex">
                 @if (exerciseIcon()) {
