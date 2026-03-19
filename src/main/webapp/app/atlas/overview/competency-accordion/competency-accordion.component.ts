@@ -1,7 +1,7 @@
 import { Component, OnChanges, SimpleChanges, inject, input, output } from '@angular/core';
 import { faFile, faFilePdf, faList } from '@fortawesome/free-solid-svg-icons';
 import { MIN_SCORE_GREEN } from 'app/app.constants';
-import { Competency, CompetencyJol, CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
+import { CompetencyProgress, getConfidence, getIcon, getMastery, getProgress } from 'app/atlas/shared/entities/competency.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { Router, RouterLink } from '@angular/router';
 import { CompetencyInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
@@ -13,7 +13,6 @@ import { isStartPracticeAvailable } from 'app/exercise/util/exercise.utils';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbProgressbar, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CompetencyRingsComponent } from 'app/atlas/shared/competency-rings/competency-rings.component';
-import { JudgementOfLearningRatingComponent } from 'app/atlas/overview/judgement-of-learning-rating/judgement-of-learning-rating.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseExerciseRowComponent } from 'app/core/course/overview/course-exercises/course-exercise-row/course-exercise-row.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -27,17 +26,7 @@ export interface CompetencyAccordionToggleEvent {
     selector: 'jhi-competency-accordion',
     templateUrl: './competency-accordion.component.html',
     styleUrl: './competency-accordion.component.scss',
-    imports: [
-        FaIconComponent,
-        NgbTooltip,
-        NgbProgressbar,
-        CompetencyRingsComponent,
-        JudgementOfLearningRatingComponent,
-        TranslateDirective,
-        CourseExerciseRowComponent,
-        RouterLink,
-        ArtemisTranslatePipe,
-    ],
+    imports: [FaIconComponent, NgbTooltip, NgbProgressbar, CompetencyRingsComponent, TranslateDirective, CourseExerciseRowComponent, RouterLink, ArtemisTranslatePipe],
 })
 export class CompetencyAccordionComponent implements OnChanges {
     private router = inject(Router);
@@ -58,8 +47,6 @@ export class CompetencyAccordionComponent implements OnChanges {
     confidence: number = 1;
     mastery: number = 0;
     progress: number = 0;
-    jolRating?: number;
-    promptForRating = false;
 
     protected readonly faList = faList;
     protected readonly faFile = faFile;
@@ -81,26 +68,6 @@ export class CompetencyAccordionComponent implements OnChanges {
             this.setNextExercises();
             this.setNextLessonUnits();
             this.calculateProgressValues();
-
-            const courseCompetencies = Object.values(this.metrics().competencyMetrics?.competencyInformation ?? {}).map((competency) => {
-                return {
-                    ...competency,
-                    userProgress: [
-                        {
-                            progress: this.metrics().competencyMetrics?.progress?.[competency.id] ?? 0,
-                            confidence: this.metrics().competencyMetrics?.confidence?.[competency.id] ?? 1,
-                        },
-                    ],
-                } satisfies Competency;
-            });
-            this.promptForRating = CompetencyJol.shouldPromptForJol(
-                this.competency() satisfies Competency,
-                {
-                    progress: this.metrics().competencyMetrics?.progress?.[this.competency().id],
-                    confidence: this.metrics().competencyMetrics?.confidence?.[this.competency().id],
-                },
-                courseCompetencies,
-            );
         }
     }
 
@@ -159,20 +126,12 @@ export class CompetencyAccordionComponent implements OnChanges {
     }
 
     calculateProgressValues() {
-        const jol = this.metrics().competencyMetrics?.currentJolValues?.[this.competency().id];
-        this.jolRating = jol?.jolValue;
         this.exercisesProgress = this.calculateExercisesProgress();
         this.lectureUnitsProgress = this.calculateLectureUnitsProgress();
         const userProgress = this.getUserProgress();
-        if (this.jolRating !== undefined) {
-            this.progress = this.getProgress(userProgress);
-            this.confidence = this.getConfidence(userProgress);
-            this.mastery = this.getMastery(userProgress);
-        } else {
-            this.progress = 0;
-            this.confidence = 1;
-            this.mastery = 0;
-        }
+        this.progress = this.getProgress(userProgress);
+        this.confidence = this.getConfidence(userProgress);
+        this.mastery = this.getMastery(userProgress);
     }
 
     calculateExercisesProgress(): number | undefined {
@@ -228,23 +187,6 @@ export class CompetencyAccordionComponent implements OnChanges {
     toggle() {
         this.open = !this.open;
         this.accordionToggle.emit({ opened: this.open, index: this.index() });
-    }
-
-    onRatingChange(newRating: number) {
-        const competencyMetrics = this.metrics().competencyMetrics;
-        if (competencyMetrics) {
-            competencyMetrics.currentJolValues = {
-                ...(competencyMetrics.currentJolValues ?? {}),
-                [this.competency().id]: {
-                    competencyId: this.competency().id,
-                    jolValue: newRating,
-                    judgementTime: dayjs().toString(),
-                    competencyProgress: this.progress,
-                    competencyConfidence: this.confidence,
-                },
-            };
-            this.calculateProgressValues();
-        }
     }
 
     navigateToCompetencyDetailPage(event: Event) {
