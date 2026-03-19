@@ -45,7 +45,8 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
             await modelingExerciseAssessment.submitExample();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            await expect(modelingExerciseEditor.getModelingCanvas()).toBeAttached();
+            await modelingExerciseEditor.waitForExampleSolutionEditor();
+            await expect(modelingExerciseEditor.getModelingCanvas()).toBeVisible();
         });
 
         test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {

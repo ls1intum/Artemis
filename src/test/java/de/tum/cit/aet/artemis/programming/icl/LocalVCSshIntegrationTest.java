@@ -14,6 +14,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -33,9 +34,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.UserSshPublicKey;
 import de.tum.cit.aet.artemis.programming.service.localvc.SshGitCommandFactoryService;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.HashUtils;
+import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshConstants;
 import de.tum.cit.aet.artemis.programming.service.localvc.ssh.SshGitCommand;
 
 class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
@@ -171,6 +174,47 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             ByteArrayOutputStream outputStream = (ByteArrayOutputStream) receiveCommand.getOutputStream();
             assertThat(outputStream).isNotNull();
             assertThat(outputStream.size()).isGreaterThan(0); // Assuming the command produces some output
+
+            // 3. Verify cacheAttributesInSshSession stored data in the session during receive-pack execution
+            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+            assertThat(cachedAccessLog).as("cacheAttributesInSshSession should cache access log for template repo").isNotNull();
+            assertThat(cachedAccessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
+            assertThat(cachedAccessLog.getUser().getLogin()).isEqualTo(user.getLogin());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSshGitCommand_testsRepo_handlesEmptyParticipationGracefully() throws IOException, GeneralSecurityException {
+        try (var client = clientConnectToArtemisSshServer()) {
+            assertThat(client).isNotNull();
+            var user = userTestRepository.getUser();
+            var serverSession = getCurrentServerSession(user);
+
+            // Execute git-upload-pack for tests repository — tests repo has no student participation
+            // This verifies cacheAttributesInSshSession handles the empty Optional gracefully
+            final var uploadCommandString = "git-upload-pack '/git/" + projectKey1 + "/" + testsRepositorySlug + "'";
+
+            // The git-upload-pack command may throw NullPointerException from upload-pack IO setup,
+            // but cacheAttributesInSshSession must NOT throw when participation is empty
+            try {
+                SshGitCommand command = setupCommand(uploadCommandString, (ServerSession) serverSession);
+                command.run();
+            }
+            catch (NullPointerException e) {
+                // NPE expected from upload-pack IO setup (e.g. getErrorStream() returning null), not from cacheAttributesInSshSession
+                var stackTrace = Arrays.stream(e.getStackTrace()).map(StackTraceElement::getClassName).toList();
+                assertThat(stackTrace).as("NPE should not originate from LocalVCServletService").noneMatch(cls -> cls.contains("LocalVCServletService"));
+            }
+
+            // Verify the session survived without crashing
+            assertThat(serverSession.isOpen()).isTrue();
+
+            // When participation is absent, cacheAttributesInSshSession should NOT cache anything
+            var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
+            assertThat(cachedAccessLog).as("No VCS access log should be cached when participation is absent").isNull();
+            var cachedParticipation = ((ServerSession) serverSession).getAttribute(SshConstants.PARTICIPATION_KEY);
+            assertThat(cachedParticipation).as("No participation should be cached for tests repo").isNull();
         }
     }
 
