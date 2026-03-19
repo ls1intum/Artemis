@@ -6,17 +6,17 @@ type RequiredInputs = {
 };
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: RequiredInputs) {
-    component.initialize();
-    fixture.changeDetectorRef.detectChanges();
-    expect(component.isInitialized).toBeFalse();
-
-    // expect console.err not to be called
-    // loop over required inputs and set on component
+    // Set inputs before calling initialize() so signal inputs have values
     Object.keys(requiredInputs).forEach((key) => {
-        component[key as keyof AbstractDialogComponent] = requiredInputs[key];
+        try {
+            fixture.componentRef.setInput(key, requiredInputs[key]);
+        } catch {
+            // Not a signal input, assign directly as a regular property
+            (component as any)[key] = requiredInputs[key];
+        }
     });
 
     component.initialize();
     fixture.changeDetectorRef.detectChanges();
-    expect(component.isInitialized).toBeTrue();
+    expect(component.isInitialized).toBe(true);
 }

@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -11,36 +13,37 @@ import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.com
 import { ViewContainerRef } from '@angular/core';
 import { MockViewContainerRef } from 'test/helpers/mocks/service/mock-view-container-ref.service';
 import { metisAnswerPostToCreateUser1, metisAnswerPostUser2, metisResolvingAnswerPostUser1 } from 'test/helpers/sample/metis-sample-data';
+import { DialogService } from 'primeng/dynamicdialog';
 
 describe('AnswerPostCreateEditModalComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AnswerPostCreateEditModalComponent;
     let fixture: ComponentFixture<AnswerPostCreateEditModalComponent>;
     let metisService: MetisService;
-    let updatePostingMock: jest.SpyInstance;
+    let updatePostingMock: ReturnType<typeof vi.spyOn>;
 
     beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
-            declarations: [
+        TestBed.configureTestingModule({
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
                 AnswerPostCreateEditModalComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
-                component = fixture.componentInstance;
-                metisService = TestBed.inject(MetisService);
-                updatePostingMock = jest.spyOn(component, 'updatePosting');
-            });
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }, { provide: DialogService, useValue: { open: vi.fn() } }],
+        });
+        fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
+        component = fixture.componentInstance;
+        metisService = TestBed.inject(MetisService);
+        updatePostingMock = vi.spyOn(component, 'updatePosting');
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should init modal with correct content and title for answer post with id', () => {
@@ -59,8 +62,8 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke create embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        const mockClear = jest.fn();
-        const mockCreateEmbeddedView = jest.fn();
+        const mockClear = vi.fn();
+        const mockCreateEmbeddedView = vi.fn();
 
         fixture.componentRef.setInput('createEditAnswerPostContainerRef', {
             clear: mockClear,
@@ -73,8 +76,8 @@ describe('AnswerPostCreateEditModalComponent', () => {
 
     it('should invoke clear embedded view', () => {
         component.posting = metisResolvingAnswerPostUser1;
-        const mockClear = jest.fn();
-        const mockCreateEmbeddedView = jest.fn();
+        const mockClear = vi.fn();
+        const mockCreateEmbeddedView = vi.fn();
 
         fixture.componentRef.setInput('createEditAnswerPostContainerRef', {
             clear: mockClear,
@@ -99,9 +102,9 @@ describe('AnswerPostCreateEditModalComponent', () => {
         expect(updatePostingMock).toHaveBeenCalledOnce();
     });
 
-    it('should invoke metis service with created answer post', fakeAsync(() => {
-        const metisServiceCreateSpy = jest.spyOn(metisService, 'createAnswerPost');
-        const onCreateSpy = jest.spyOn(component.onCreate, 'emit');
+    it('should invoke metis service with created answer post', () => {
+        const metisServiceCreateSpy = vi.spyOn(metisService, 'createAnswerPost');
+        const onCreateSpy = vi.spyOn(component.onCreate, 'emit');
         component.posting = metisAnswerPostToCreateUser1;
         component.ngOnChanges();
         const newContent = 'New Content';
@@ -110,13 +113,12 @@ describe('AnswerPostCreateEditModalComponent', () => {
         });
         component.confirm();
         expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: newContent });
-        tick();
         expect(component.isLoading).toBeFalsy();
         expect(onCreateSpy).toHaveBeenCalledOnce();
-    }));
+    });
 
-    it('should invoke metis service with updated answer post', fakeAsync(() => {
-        const metisServiceCreateSpy = jest.spyOn(metisService, 'updateAnswerPost');
+    it('should invoke metis service with updated answer post', () => {
+        const metisServiceCreateSpy = vi.spyOn(metisService, 'updateAnswerPost');
         component.posting = metisAnswerPostUser2;
         component.ngOnChanges();
         const updatedContent = 'Updated Content';
@@ -125,9 +127,8 @@ describe('AnswerPostCreateEditModalComponent', () => {
         });
         component.confirm();
         expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: updatedContent });
-        tick();
         expect(component.isLoading).toBeFalsy();
-    }));
+    });
 
     it('should update content when posting content changed', () => {
         component.posting = metisAnswerPostUser2;

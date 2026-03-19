@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
 import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -10,8 +12,14 @@ import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-pict
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MetisService } from 'app/communication/service/metis.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('PostingSummaryComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingSummaryComponent;
     let fixture: ComponentFixture<PostingSummaryComponent>;
 
@@ -34,8 +42,8 @@ describe('PostingSummaryComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [FaIconComponent],
-            declarations: [
+            imports: [
+                FaIconComponent,
                 PostingSummaryComponent,
                 MockPipe(ArtemisDatePipe),
                 MockComponent(ProfilePictureComponent),
@@ -43,10 +51,22 @@ describe('PostingSummaryComponent', () => {
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-        }).compileComponents();
+            providers: [
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
 
         fixture = TestBed.createComponent(PostingSummaryComponent);
         component = fixture.componentInstance;
+    });
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
     });
 
     it('should create', () => {
@@ -54,6 +74,8 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Input handling', () => {
+        setupTestBed({ zoneless: true });
+
         it('should handle post input', () => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
@@ -72,6 +94,8 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('PostingType detection', () => {
+        setupTestBed({ zoneless: true });
+
         it('should detect answer post', () => {
             const answerPost = { ...mockPost, postingType: PostingType.ANSWER.valueOf() };
 
@@ -90,6 +114,8 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Date handling', () => {
+        setupTestBed({ zoneless: true });
+
         it('should detect post from today', () => {
             const todayPost = { ...mockPost, creationDate: dayjs() };
 
@@ -110,9 +136,11 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Event emissions', () => {
+        setupTestBed({ zoneless: true });
+
         it('should emit status change', () => {
-            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
-            const emitSpy = jest.spyOn(component.onChangeSavedPostStatus, 'emit');
+            const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
+            const emitSpy = vi.spyOn(component.onChangeSavedPostStatus, 'emit');
             const newStatus = SavedPostStatus.ARCHIVED;
 
             component['onStatusChangeClick'](mockEvent, newStatus);
@@ -122,8 +150,8 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should emit remove bookmark event', () => {
-            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
-            const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
+            const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
+            const emitSpy = vi.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', mockPost);
 
             component['onRemoveBookmarkClick'](mockEvent);
@@ -133,8 +161,8 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should not emit remove bookmark event when post is undefined', () => {
-            const mockEvent = { stopPropagation: jest.fn() } as unknown as MouseEvent;
-            const emitSpy = jest.spyOn(component.onRemoveBookmark, 'emit');
+            const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
+            const emitSpy = vi.spyOn(component.onRemoveBookmark, 'emit');
             fixture.componentRef.setInput('post', undefined);
 
             component['onRemoveBookmarkClick'](mockEvent);
@@ -144,7 +172,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should emit navigation event with post', () => {
-            const emitSpy = jest.spyOn(component.onNavigateToPost, 'emit');
+            const emitSpy = vi.spyOn(component.onNavigateToPost, 'emit');
             fixture.componentRef.setInput('post', mockPost);
 
             component['onTriggerNavigateToPost']();
@@ -153,7 +181,7 @@ describe('PostingSummaryComponent', () => {
         });
 
         it('should not emit navigation event when post is undefined', () => {
-            const emitSpy = jest.spyOn(component.onNavigateToPost, 'emit');
+            const emitSpy = vi.spyOn(component.onNavigateToPost, 'emit');
             fixture.componentRef.setInput('post', undefined);
 
             component['onTriggerNavigateToPost']();
@@ -163,12 +191,14 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Template rendering', () => {
-        beforeEach(fakeAsync(() => {
+        setupTestBed({ zoneless: true });
+
+        beforeEach(() => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
-            tick();
+            vi.advanceTimersByTime(0);
             fixture.detectChanges();
-        }));
+        });
 
         it('should render author name', () => {
             const authorElement = fixture.nativeElement.querySelector('.posting-summary-author-content');

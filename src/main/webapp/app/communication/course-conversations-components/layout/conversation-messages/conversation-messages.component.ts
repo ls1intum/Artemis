@@ -4,19 +4,17 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
-    Input,
     OnChanges,
     OnDestroy,
     OnInit,
-    QueryList,
     SimpleChanges,
-    ViewChildren,
     ViewEncapsulation,
     effect,
     inject,
     input,
     output,
     viewChild,
+    viewChildren,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -92,15 +90,10 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     readonly openThread = output<Post>();
 
-    // TODO: Skipped for migration because:
-    //  There are references to this query that cannot be migrated automatically.
-    @ViewChildren('postingThread') messages: QueryList<PostingThreadComponent>;
+    readonly messages = viewChildren<PostingThreadComponent>('postingThread');
     readonly content = viewChild.required<ElementRef>('container');
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() course?: Course;
+    readonly course = input<Course>();
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
     pinnedPosts: Post[] = [];
@@ -152,6 +145,23 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         effect(() => {
             this.focusOnPostId = this.focusPostId();
             this.isOpenThreadOnFocus = this.openThreadOnFocus();
+        });
+
+        // viewChildren returns a signal; use effect() to react to changes.
+        // These effects are created in the constructor (injection context) but
+        // the viewChildren signals won't resolve until after view init, which
+        // is fine because effects re-run reactively.
+        effect(() => {
+            // Read the signal to track changes
+            void this.messages();
+            this.handleScrollOnNewMessage();
+        });
+        effect(() => {
+            // Read the signal to track changes
+            void this.messages();
+            if (!this.createdNewMessage && this.posts.length > 0) {
+                this.scrollToStoredId();
+            }
         });
     }
 
@@ -230,12 +240,6 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     ngAfterViewInit() {
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (!this.createdNewMessage && this.posts.length > 0) {
-                this.scrollToStoredId();
-            }
-        });
         this.content().nativeElement.addEventListener('scroll', () => {
             this.findElementsAtScrollPosition();
         });
@@ -279,7 +283,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.isHiddenInputWithCallToAction = false;
         }
 
-        if (this.course && this._activeConversation) {
+        if (this.course() && this._activeConversation) {
             this.canStartSaving = false;
             this.onSearch();
             this.createEmptyPost();
@@ -306,7 +310,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
-            courseId: this.course?.id,
+            courseId: this.course()?.id,
             conversationIds: this._activeConversation?.id ? [this._activeConversation.id] : undefined,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
@@ -655,7 +659,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.canStartSaving = true;
             return;
         }
-        const messageArray = this.messages.toArray();
+        const messageArray = this.messages();
         const element = messageArray.find((message) => message.post().id === lastScrollPosition); // Suchen nach dem Post
 
         if (!element) {
@@ -673,7 +677,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     findElementsAtScrollPosition() {
-        const messageArray = this.messages.toArray();
+        const messageArray = this.messages();
         const containerRect = this.content().nativeElement.getBoundingClientRect();
         const visibleMessages = [];
         for (const message of messageArray) {
@@ -730,7 +734,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        const component = this.messages.find((m) => m.post().id === this.firstUnreadPostId);
+        const component = this.messages().find((m) => m.post().id === this.firstUnreadPostId);
         if (!component?.elementRef?.nativeElement) {
             return;
         }
@@ -761,7 +765,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return undefined;
         }
 
-        const component = this.messages.find((m) => m.post().id === postId);
+        const component = this.messages().find((m) => m.post().id === postId);
         if (!component?.elementRef?.nativeElement) {
             return undefined;
         }

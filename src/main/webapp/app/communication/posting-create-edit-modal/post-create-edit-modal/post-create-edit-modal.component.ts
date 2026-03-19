@@ -73,20 +73,21 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         super.ngOnChanges();
     }
 
+    isDialogVisible = false;
+
     /**
      * opens the modal to edit or create a post
      */
     open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor(), {
-            size: 'lg',
-            backdrop: 'static',
-            beforeDismiss: () => {
-                // when cancelling the create or update action, we do not want to store the current values
-                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
-                this.resetFormGroup();
-                return true;
-            },
-        });
+        this.isDialogVisible = true;
+    }
+
+    /**
+     * closes the modal and resets the form
+     */
+    close(): void {
+        this.resetFormGroup();
+        this.isDialogVisible = false;
     }
 
     /**
@@ -118,7 +119,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         create$.subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
-                this.modalRef?.close();
+                this.isDialogVisible = false;
                 this.onCreate.emit(post);
             },
             error: () => {
@@ -136,7 +137,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
-                this.modalRef?.close();
+                this.isDialogVisible = false;
             },
             error: () => {
                 this.isLoading = false;

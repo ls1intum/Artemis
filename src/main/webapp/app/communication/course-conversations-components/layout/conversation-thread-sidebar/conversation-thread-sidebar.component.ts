@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, inject, input, viewChild, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, effect, inject, input, viewChild, output } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -28,25 +28,30 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     threadContainer = viewChild<ElementRef>('threadContainer');
 
     readonly readOnlyMode = input(false);
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set activeConversation(conversation: ConversationDTO | Conversation) {
-        this.conversation = conversation as ConversationDTO;
-        this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
-    }
-    // TODO: Skipped for migration because:
-    //  Accessor inputs cannot be migrated as they are too complex.
-    @Input()
-    set activePost(activePost: Post) {
-        this.post = activePost;
-        this.createdAnswerPost = this.createEmptyAnswerPost();
-    }
+    readonly activeConversation = input<ConversationDTO | Conversation>();
+    readonly activePost = input<Post>();
 
     course = input<Course>();
 
     readonly closePostThread = output<void>();
     private readonly conversationSelectionState = inject(ConversationSelectionState);
+
+    constructor() {
+        effect(() => {
+            const conversation = this.activeConversation();
+            if (conversation) {
+                this.conversation = conversation as ConversationDTO;
+                this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+            }
+        });
+        effect(() => {
+            const activePost = this.activePost();
+            if (activePost) {
+                this.post = activePost;
+                this.createdAnswerPost = this.createEmptyAnswerPost();
+            }
+        });
+    }
 
     post?: Post;
     createdAnswerPost: AnswerPost;
@@ -92,7 +97,6 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
      * Emits the close post thread and resets the open post variable
      */
     closeThread() {
-        // TODO: The 'emit' function requires a mandatory void argument
         this.closePostThread.emit();
         this.conversationSelectionState.setOpenPostId(undefined);
     }
@@ -126,8 +130,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     }
 
     scrollEditorIntoView(): void {
-        scrollBody?.nativeElement?.scrollTo({
-            top: scrollBody.nativeElement.scrollHeight,
+        this.scrollBody()?.nativeElement?.scrollTo({
+            top: this.scrollBody()!.nativeElement.scrollHeight,
             behavior: 'instant',
         });
     }

@@ -1,15 +1,15 @@
 import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { Course } from 'app/core/course/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { EMPTY, Subject, from, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
-import { catchError } from 'rxjs/operators';
+import { filter } from 'rxjs/operators';
 import { MetisService } from 'app/communication/service/metis.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
@@ -37,7 +37,7 @@ import { ConversationAddUsersDialogComponent } from 'app/communication/course-co
     imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink, EmojiComponent, ArtemisTranslatePipe],
 })
 export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy {
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     metisConversationService = inject(MetisConversationService);
     conversationService = inject(ConversationService);
     private metisService = inject(MetisService);
@@ -130,13 +130,16 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
+            ...defaultFirstLayerDialogOptions,
+            data: {
+                course: this.course,
+                activeConversation: this.activeConversation,
+            },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => result !== undefined),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {
@@ -153,36 +156,19 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
      */
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
-        modalRef.componentInstance.selectedTab = tab;
-        if (this.getAsOneToOneChat(this.activeConversation)) {
-            modalRef.componentInstance.selectedTab = ConversationDetailTabs.INFO;
-        }
-        modalRef.componentInstance.initialize();
+        const selectedTab = this.getAsOneToOneChat(this.activeConversation) ? ConversationDetailTabs.INFO : tab;
+        const ref = this.dialogService.open(ConversationDetailDialogComponent, {
+            ...defaultFirstLayerDialogOptions,
+            data: {
+                course: this.course,
+                activeConversation: this.activeConversation,
+                selectedTab,
+            },
+        });
 
-        // If user clicks another username inside modal → open one-to-one chat
-        const userNameClicked = modalRef.componentInstance.userNameClicked;
-        if (userNameClicked) {
-            const subscription = userNameClicked.subscribe((username: number) => {
-                modalRef.dismiss();
-                this.metisConversationService
-                    .createOneToOneChatWithId(username)
-                    .pipe(
-                        catchError((error) => {
-                            return EMPTY;
-                        }),
-                    )
-                    .subscribe();
-            });
-
-            modalRef.closed.subscribe(() => subscription.unsubscribe());
-        }
-
-        from(modalRef.result)
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => result !== undefined),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {

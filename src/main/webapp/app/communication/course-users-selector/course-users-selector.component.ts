@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -49,22 +49,14 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     private ngUnsubscribe = new Subject<void>();
 
     readonly typeAheadInstance = viewChild.required<NgbTypeahead>('instance');
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() disabled = false;
+    disabled = false;
     readonly searchInput = viewChild.required<ElementRef>('searchInput');
     readonly courseId = input<number>(undefined!);
-    // TODO: Skipped for migration because:
-    //  This input is used in combination with `@HostBinding` and migrating would
-    //  break.
-    @Input()
+
     @HostBinding('attr.id')
     id = 'users-selector' + selectorId++;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input()
-    label?: string;
+
+    readonly label = input<string>();
     readonly rolesToAllowSearchingIn = input<SearchRoleGroup[]>(['tutors', 'students', 'instructors']);
     readonly multiSelect = input(true);
 

@@ -1,7 +1,7 @@
 <div (focusout)="onTouched()">
     <div class="form-group">
-        @if (label) {
-            <label [for]="id + '-search-input'">{{ label }}</label>
+        @if (label()) {
+            <label [for]="id + '-search-input'">{{ label() }}</label>
         }
         <input
             #searchInput

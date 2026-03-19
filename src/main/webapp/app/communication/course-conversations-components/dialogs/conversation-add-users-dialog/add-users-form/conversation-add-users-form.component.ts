@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -27,18 +27,9 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
 
     readonly formSubmitted = output<AddUsersFormData>();
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() courseId: number;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() maxSelectable?: number = undefined;
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() activeConversation: ConversationDTO;
+    readonly courseId = input.required<number>();
+    readonly maxSelectable = input<number | undefined>(undefined);
+    readonly activeConversation = input.required<ConversationDTO>();
 
     isLoading = input<boolean>(false);
 
@@ -75,7 +66,8 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
         if (this.form) {
             return;
         }
-        const validators = this.maxSelectable ? [Validators.required, Validators.maxLength(this.maxSelectable)] : [Validators.required];
+        const maxSel = this.maxSelectable();
+        const validators = maxSel ? [Validators.required, Validators.maxLength(maxSel)] : [Validators.required];
 
         this.form = this.fb.group({
             selectedUsers: [[], validators],

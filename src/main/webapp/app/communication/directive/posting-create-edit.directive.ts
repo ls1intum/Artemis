@@ -1,6 +1,6 @@
-import { Directive, Input, OnChanges, OnInit, inject, output } from '@angular/core';
+import { Directive, OnChanges, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PostingEditType } from 'app/communication/metis.util';
@@ -13,16 +13,14 @@ const MAX_CONTENT_LENGTH = 5000;
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit, OnChanges {
     protected metisService = inject(MetisService);
-    protected modalService = inject(NgbModal);
+    protected modalService = inject(DialogService);
     protected formBuilder = inject(FormBuilder);
 
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() posting: T;
+    posting: T;
     readonly onCreate = output<T>();
     readonly isModalOpen = output<void>();
 
-    modalRef?: NgbModalRef;
+    modalRef?: DynamicDialogRef;
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
     editorHeight = MarkdownEditorHeight.INLINE;
@@ -32,20 +30,23 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     readonly EditType = PostingEditType;
 
     get editType(): PostingEditType {
-        return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
+        return this.posting?.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
     }
 
     /**
      * on initialization: sets the content, and the modal title (edit or create)
      */
     ngOnInit(): void {
-        this.content = this.posting.content ?? '';
+        this.content = this.posting?.content ?? '';
     }
 
     /**
      * on changes: sets the content, and the modal title (edit or create), resets the form
      */
     ngOnChanges() {
+        if (!this.posting) {
+            return;
+        }
         this.content = this.posting?.content ?? '';
         this.resetFormGroup();
     }

@@ -1,5 +1,5 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Directive, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -11,9 +11,7 @@ import { Router } from '@angular/router';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() posting: T;
+    posting: T;
     readonly isCommunicationPage = input<boolean>(undefined!);
     readonly showChannelReference = input<boolean>();
 
@@ -45,7 +43,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     faBookmark = faBookmark;
 
     ngOnInit(): void {
-        this.content = this.posting.content;
+        this.content = this.posting?.content;
     }
 
     ngOnDestroy(): void {

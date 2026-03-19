@@ -1,21 +1,20 @@
 import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
+import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { get } from 'lodash-es';
 import {
     GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { EMPTY, Subject, debounceTime, distinctUntilChanged, filter, from, map, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { channelRegex } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { GroupChatDTO, getAsGroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { catchError } from 'rxjs/operators';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -63,7 +62,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private alertService = inject(AlertService);
     private conversationService = inject(ConversationService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
@@ -158,20 +157,28 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         regexPattern: RegExp | undefined,
         translationKeys: GenericUpdateTextPropertyTranslationKeys,
     ) {
-        const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.propertyName = propertyName;
-        modalRef.componentInstance.maxPropertyLength = maxLength;
-        modalRef.componentInstance.translationKeys = translationKeys;
-        modalRef.componentInstance.isRequired = isRequired;
-        modalRef.componentInstance.regexPattern = regexPattern;
         const property = get(channelOrGroupChat, propertyName);
-        if (property && typeof property === 'string' && property.length > 0) {
-            modalRef.componentInstance.initialValue = property;
-        }
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const initialValue = property && typeof property === 'string' && property.length > 0 ? property : undefined;
+
+        const ref = this.dialogService.open(GenericUpdateTextPropertyDialogComponent, {
+            width: '50rem',
+            modal: true,
+            closable: true,
+            closeOnEscape: true,
+            styleClass: 'second-layer-modal-bg',
+            data: {
+                propertyName,
+                maxPropertyLength: maxLength,
+                translationKeys,
+                isRequired,
+                regexPattern,
+                initialValue,
+            },
+        });
+
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((newValue) => newValue !== undefined),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((newValue: string) => {

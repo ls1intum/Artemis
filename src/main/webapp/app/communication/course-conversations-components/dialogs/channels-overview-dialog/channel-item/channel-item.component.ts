@@ -1,4 +1,4 @@
-import { Component, Input, output } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -17,17 +17,13 @@ export class ChannelItemComponent {
     canLeaveConversation = canLeaveConversation;
 
     readonly channelAction = output<ChannelAction>();
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input()
-    channel: ChannelDTO;
+    readonly channel = input<ChannelDTO>();
 
     emitChannelAction($event: MouseEvent, action: ChannelActionType) {
         $event.stopPropagation();
         this.channelAction.emit({
             action,
-            channel: this.channel,
+            channel: this.channel()!,
         } as ChannelAction);
     }
 }

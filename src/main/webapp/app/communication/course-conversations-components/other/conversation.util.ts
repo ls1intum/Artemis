@@ -1,4 +1,3 @@
-import { NgbModalOptions } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
@@ -31,12 +30,19 @@ export function getChannelSubTypeReferenceTranslationKey(subType: ChannelSubType
     }
 }
 
-export const defaultFirstLayerDialogOptions: NgbModalOptions = { size: 'lg', scrollable: false, backdrop: 'static' };
+export const defaultFirstLayerDialogOptions = {
+    width: '50rem',
+    modal: true,
+    closable: true,
+    closeOnEscape: true,
+    dismissableMask: false,
+};
 
-export const defaultSecondLayerDialogOptions: NgbModalOptions = {
-    size: 'lg',
-    scrollable: false,
-    backdrop: 'static',
-    backdropClass: 'second-layer-modal-bg',
-    centered: true,
+export const defaultSecondLayerDialogOptions = {
+    width: '50rem',
+    modal: true,
+    closable: true,
+    closeOnEscape: true,
+    dismissableMask: false,
+    styleClass: 'second-layer-modal-bg',
 };

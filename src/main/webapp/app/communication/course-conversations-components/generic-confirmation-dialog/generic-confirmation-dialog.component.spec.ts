@@ -1,21 +1,32 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { GenericConfirmationDialogComponent } from 'app/communication/course-conversations-components/generic-confirmation-dialog/generic-confirmation-dialog.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { Subject } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('GenericConfirmationDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: GenericConfirmationDialogComponent;
     let fixture: ComponentFixture<GenericConfirmationDialogComponent>;
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [GenericConfirmationDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbActiveModal)],
-        }).compileComponents();
-    }));
+            imports: [GenericConfirmationDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            providers: [
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
+    });
 
     beforeEach(() => {
         fixture = TestBed.createComponent(GenericConfirmationDialogComponent);
@@ -26,15 +37,15 @@ describe('GenericConfirmationDialogComponent', () => {
             descriptionKey: 'description',
             confirmButtonKey: 'confirm',
         };
-        component.canBeUndone = true;
-        component.isDangerousAction = false;
-        component.translationParameters = {};
+        fixture.componentRef.setInput('canBeUndone', true);
+        fixture.componentRef.setInput('isDangerousAction', false);
+        fixture.componentRef.setInput('translationParameters', {});
         fixture.changeDetectorRef.detectChanges();
         initializeDialog(component, fixture, { translationKeys });
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -42,18 +53,18 @@ describe('GenericConfirmationDialogComponent', () => {
     });
 
     it('should close modal if confirm is selected', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         const confirmButton = fixture.debugElement.nativeElement.querySelector('.confirm');
         confirmButton.click();
         expect(closeSpy).toHaveBeenCalled();
     });
 
     it('should dismiss modal if cancel is selected', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const closeSpy = vi.spyOn(dialogRef, 'close');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('.cancel');
         cancelButton.click();
-        expect(dismissSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
     });
 });

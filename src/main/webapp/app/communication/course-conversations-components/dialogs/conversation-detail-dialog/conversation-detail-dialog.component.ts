@@ -1,4 +1,4 @@
-import { Component, Input, inject, output, input } from '@angular/core';
+import { Component, inject, output, input } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -43,9 +43,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     public readonly activeConversation = input<ConversationDTO>(undefined!);
     readonly course = input<Course>(undefined!);
-    // TODO: Skipped for migration because:
-    //  Your application code writes to the input. This prevents migration.
-    @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
+    selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
     isOneToOneChat = false;

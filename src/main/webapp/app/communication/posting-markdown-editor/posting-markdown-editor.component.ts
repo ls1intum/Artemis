@@ -4,7 +4,6 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    Input,
     OnInit,
     ViewContainerRef,
     ViewEncapsulation,
@@ -74,10 +73,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() maxContentLength: number;
+    readonly maxContentLength = input<number>();
     readonly editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
     readonly isInputLengthDisplayed = input(true);
     readonly suppressNewlineOnEnter = input(true);

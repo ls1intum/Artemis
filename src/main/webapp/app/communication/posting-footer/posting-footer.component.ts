@@ -1,7 +1,7 @@
 import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewContainerRef, inject, input, output, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import dayjs from 'dayjs/esm';
@@ -25,7 +25,7 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     lastReadDate = input<dayjs.Dayjs | undefined>();
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
-    modalRef = input<NgbModalRef | undefined>();
+    modalRef = input<DynamicDialogRef | undefined>();
     hasChannelModerationRights = input<boolean>(false);
     showAnswers = input<boolean>(false);
     isCommunicationPage = input<boolean>(false);
@@ -65,7 +65,10 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     }
 
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal()?.createEditAnswerPostContainerRef()?.clear();
+        const modal = this.answerPostCreateEditModal();
+        if (modal && typeof modal.createEditAnswerPostContainerRef === 'function') {
+            modal.createEditAnswerPostContainerRef()?.clear();
+        }
     }
 
     /**

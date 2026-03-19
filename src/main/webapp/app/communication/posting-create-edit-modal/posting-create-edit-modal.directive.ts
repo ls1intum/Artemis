@@ -4,7 +4,7 @@ import { PostingCreateEditDirective } from 'app/communication/directive/posting-
 
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> extends PostingCreateEditDirective<T> implements OnInit, OnChanges {
-    readonly postingEditor = viewChild.required<TemplateRef<any>>('postingEditor');
+    readonly postingEditor = viewChild<TemplateRef<any>>('postingEditor');
     modalTitle: string;
 
     /**
@@ -20,7 +20,9 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> extends
      */
     ngOnChanges() {
         super.ngOnChanges();
-        this.updateModalTitle();
+        if (this.posting) {
+            this.updateModalTitle();
+        }
     }
 
     abstract open(): void;

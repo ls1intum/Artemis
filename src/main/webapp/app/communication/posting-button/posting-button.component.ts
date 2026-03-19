@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, input } from '@angular/core';
+import { Component, HostBinding, input } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -9,23 +9,24 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
     imports: [FaIconComponent],
 })
 export class PostingButtonComponent {
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() buttonIcon: IconProp;
+    readonly buttonIcon = input<IconProp>();
     readonly buttonLabel = input<string>(undefined!);
     readonly buttonLoading = input(false);
     readonly hideLabelMobile = input(true);
 
-    // TODO: Skipped for migration because:
-    //  This input is used in combination with `@HostBinding` and migrating would
-    //  break.
-    @HostBinding('class.btn-outline-primary') @Input() outlined = false;
-    // TODO: Skipped for migration because:
-    //  This input is used in combination with `@HostBinding` and migrating would
-    //  break.
-    @HostBinding('class.btn-sm') @Input() smallButton = false;
+    readonly outlined = input(false);
+    readonly smallButton = input(false);
     @HostBinding('class.btn') isButton = true;
+
+    @HostBinding('class.btn-outline-primary')
+    get outlinedClass() {
+        return this.outlined();
+    }
+
+    @HostBinding('class.btn-sm')
+    get smallButtonClass() {
+        return this.smallButton();
+    }
 
     // Icons
     faCircleNotch = faCircleNotch;

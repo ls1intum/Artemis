@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject, input } from '@angular/core';
+import { Component, OnInit, inject, input } from '@angular/core';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -17,10 +17,7 @@ import { urlRegex } from 'app/communication/link-preview/services/linkify.servic
 export class LinkPreviewComponent implements OnInit {
     private metisService = inject(MetisService);
 
-    // TODO: Skipped for migration because:
-    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
-    //  and migrating would break narrowing currently.
-    @Input() linkPreview: LinkPreview;
+    readonly linkPreview = input<LinkPreview>();
     readonly posting = input<Posting>();
     readonly showLoadingsProgress = input<boolean>(undefined!);
     readonly loaded = input<boolean>(undefined!);

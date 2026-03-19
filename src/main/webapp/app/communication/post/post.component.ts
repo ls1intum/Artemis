@@ -18,7 +18,8 @@ import {
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { MetisService } from 'app/communication/service/metis.service';
-import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -80,7 +81,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     previewMode = input<boolean>(false);
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
-    modalRef = input<NgbModalRef | undefined>(undefined);
+    modalRef = input<DynamicDialogRef | undefined>(undefined);
     searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
@@ -329,7 +330,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
-            this.modalRef()?.dismiss();
+            this.modalRef()?.close();
             this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
         }
     }

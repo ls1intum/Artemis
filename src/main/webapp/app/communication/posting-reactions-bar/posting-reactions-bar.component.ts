@@ -10,7 +10,8 @@ import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/communication/emoji/emoji-picker.component';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AsyncPipe, KeyValuePipe, NgClass } from '@angular/common';
@@ -151,7 +152,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);
     private conversationService = inject(ConversationService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private metisConversationService = inject(MetisConversationService);
     private courseSidebarService = inject(CourseSidebarService);
 
@@ -540,19 +541,21 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
                         }
                     });
 
-                    // Open the forward message dialog
-                    const modalRef = this.modalService.open(ForwardMessageDialogComponent, {
-                        size: 'lg',
-                        backdrop: 'static',
+                    // Open the forward message dialog using PrimeNG DialogService
+                    const ref = this.dialogService.open(ForwardMessageDialogComponent, {
+                        header: '',
+                        width: '50vw',
+                        modal: true,
+                        closable: false,
+                        data: {
+                            users: [],
+                            channels: this.channels,
+                            postToForward: post,
+                            courseId: this.course()?.id,
+                        },
                     });
 
-                    // Pass initial data to the dialog
-                    modalRef.componentInstance.users.set([]);
-                    modalRef.componentInstance.channels.set(this.channels);
-                    modalRef.componentInstance.postToForward.set(post);
-                    modalRef.componentInstance.courseId.set(this.course()?.id);
-
-                    modalRef.result.then(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string }) => {
+                    ref?.onClose.subscribe(async (selection: { channels: Conversation[]; users: UserPublicInfoDTO[]; messageContent: string } | undefined) => {
                         if (selection) {
                             const allSelections: Conversation[] = [...selection.channels];
                             const userLogins = selection.users.map((user) => user.login!);

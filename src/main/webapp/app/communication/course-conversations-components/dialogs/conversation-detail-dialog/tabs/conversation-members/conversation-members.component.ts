@@ -2,15 +2,17 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input, output,
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { catchError, debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { EMPTY, Subject, from, map } from 'rxjs';
+import { EMPTY, Subject, map } from 'rxjs';
 import { faMagnifyingGlass, faUserPlus } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
+import { filter } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -69,7 +71,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     public conversationService = inject(ConversationService);
     private alertService = inject(AlertService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private cdr = inject(ChangeDetectorRef);
 
     trackIdentity(index: number, item: ConversationUserDTO) {
@@ -78,13 +80,16 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.activeConversation = this.activeConversation();
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(ConversationAddUsersDialogComponent, {
+            ...defaultSecondLayerDialogOptions,
+            data: {
+                course: this.course(),
+                activeConversation: this.activeConversation(),
+            },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => result !== undefined),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {

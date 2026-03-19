@@ -1,6 +1,6 @@
 <div [hidden]="buttonLoading()">
-    @if (buttonIcon) {
-        <fa-icon [icon]="buttonIcon" />
+    @if (buttonIcon()) {
+        <fa-icon [icon]="buttonIcon()!" />
     }
     <span>{{ buttonLabel() }}</span>
 </div>
