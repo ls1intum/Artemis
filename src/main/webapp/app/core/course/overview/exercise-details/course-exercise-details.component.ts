@@ -41,7 +41,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseDetailsStudentActionsComponent } from './student-actions/exercise-details-student-actions.component';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
-import { ResultComponent } from 'app/exercise/result/result.component';
 import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
 import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
@@ -79,7 +78,6 @@ interface InstructorActionItem {
         ExerciseDetailsStudentActionsComponent,
         ExerciseHeadersInformationComponent,
         ExerciseHeaderComponent,
-        ResultComponent,
         ProblemStatementComponent,
         ResetRepoButtonComponent,
         ModelingEditorComponent,
