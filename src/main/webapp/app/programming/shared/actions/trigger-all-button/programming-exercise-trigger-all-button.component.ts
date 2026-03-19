@@ -22,7 +22,6 @@ import { hasDueDatePassed } from 'app/programming/shared/utils/programming-exerc
     template: `
         <jhi-button
             id="trigger-all-button"
-            class="ms-3"
             [disabled]="disabled"
             [btnType]="ButtonType.ERROR"
             [isLoading]="isTriggeringBuildAll"

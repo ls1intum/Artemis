@@ -1,7 +1,7 @@
 @if (buildingSummary) {
-    <div class="d-flex">
+    <div class="d-flex gap-2">
         @if (hasBuildingSubmissions) {
-            <div id="result-eta" class="badge bg-secondary d-flex flex-column justify-content-between me-3">
+            <div id="result-eta" class="badge bg-secondary d-flex flex-column justify-content-between">
                 <fa-icon [icon]="faClock" />
                 <span
                     [ngbTooltip]="'artemisApp.programmingExercise.resultETATooltip' | artemisTranslate"
@@ -34,7 +34,6 @@
         <jhi-programming-exercise-trigger-all-button [exercise]="exercise" />
         <jhi-button
             id="trigger-failed-button"
-            class="ms-3"
             [disabled]="!hasFailedSubmissions"
             [isLoading]="isBuildingFailedSubmissions"
             [icon]="faRedo"
