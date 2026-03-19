@@ -21,6 +21,7 @@ import { FeedbackComponent } from 'app/exercise/feedback/feedback.component';
 import { prepareFeedbackComponentParameters } from 'app/exercise/feedback/feedback.utils';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { ProgrammingSubmission } from 'app/programming/shared/entities/programming-submission.model';
 
 @Component({
     selector: 'jhi-result-history-dropdown',
@@ -84,6 +85,33 @@ export class ResultHistoryDropdownComponent {
             return '';
         }
         return this.resultService.getResultString(result, this.exercise(), participation, false);
+    }
+
+    getResultFeedbackMessage(result: Result): string {
+        const submission = result.submission;
+        if (submission && (submission as ProgrammingSubmission).buildFailed) {
+            return 'Your build failed!';
+        }
+
+        const score = result.score ?? 0;
+        if (score === 100) {
+            return 'Goal reached! Excellent work.';
+        }
+
+        const sortedResults = this.sortedHistoryResults();
+        const index = sortedResults.indexOf(result);
+        if (index <= 0) {
+            return "Nice progress! You're getting closer.";
+        }
+
+        const previousScore = sortedResults[index - 1].score ?? 0;
+        if (score > previousScore) {
+            return "Nice progress! You're getting closer.";
+        } else if (score < previousScore) {
+            return 'Oops, your score dropped. Try a different path!';
+        } else {
+            return 'Stuck? Try a new approach.';
+        }
     }
 
     getBadge(result: Result): Badge {

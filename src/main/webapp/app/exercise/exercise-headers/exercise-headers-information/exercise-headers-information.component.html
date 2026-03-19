@@ -2,7 +2,12 @@
     <div id="exercise-headers-information" class="d-flex flex-row flex-wrap gap-2 overflow-auto">
         @for (informationBoxItem of informationBoxItems; track informationBoxItem) {
             @if (informationBoxItem.content.type === 'submissionStatus') {
-                <div role="button" class="pe-auto" (click)="resultHistoryDropdown.toggleResultsPopover($event)">
+                <div
+                    [attr.role]="sortedHistoryResults.length ? 'button' : undefined"
+                    [class.pe-auto]="sortedHistoryResults.length"
+                    [ngbTooltip]="sortedHistoryResults.length ? 'Click to see all your results' : ''"
+                    (click)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
+                >
                     <jhi-information-box [informationBoxData]="informationBoxItem">
                         <span contentComponent class="d-flex align-items-center gap-1">
                             <jhi-submission-result-status

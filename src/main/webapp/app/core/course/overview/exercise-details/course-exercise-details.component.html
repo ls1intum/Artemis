@@ -54,7 +54,6 @@
                         [sortedHistoryResults]="sortedHistoryResults"
                     />
                 </div>
-                <!-- Results are now displayed in the submission status dropdown in exercise-headers-information -->
                 <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!" />
                 @if (exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length) {
                     <jhi-reset-repo-button [exercise]="exercise" [participations]="exercise.studentParticipations" [smallButtons]="false" />

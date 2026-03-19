@@ -1,6 +1,6 @@
 @if (sortedHistoryResults().length > 0) {
     <span #dropdownArrow>
-        <fa-icon [icon]="faAngleDown" class="ms-1" style="font-size: 0.75rem" />
+        <fa-icon [icon]="faAngleDown" class="ms-1 fw-bold" style="font-size: 0.875rem" />
     </span>
 }
 <p-popover #resultsPopover [pt]="{ root: { style: 'margin-left: -8px' }, content: { style: 'padding: 0' } }">
@@ -25,7 +25,8 @@
                 <div class="flex-grow-1 d-flex flex-column overflow-hidden" style="gap: 3px">
                     <div class="d-flex align-items-center gap-1">
                         <span class="fw-bold" [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">{{ result.score }}%</span>
-                        <span class="text-truncate text-body" style="font-size: 12px">{{ getResultText(result) }}</span>
+                        <span [class]="getResultColorClass(result)" style="font-size: 13px; white-space: nowrap">-</span>
+                        <span class="fw-bold text-truncate" style="font-size: 12px" [class]="getResultColorClass(result)">{{ getResultFeedbackMessage(result) }}</span>
                     </div>
                     <div class="d-flex align-items-center gap-1">
                         <p-tag [value]="getBadge(result).text | artemisTranslate" [severity]="getBadgeSeverity(result)" />
