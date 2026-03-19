@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, inject, input } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject, input, output } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -25,10 +25,19 @@ export interface AddUsersFormData {
 export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     private fb = inject(FormBuilder);
 
-    @Output() formSubmitted: EventEmitter<AddUsersFormData> = new EventEmitter<AddUsersFormData>();
+    readonly formSubmitted = output<AddUsersFormData>();
 
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() courseId: number;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() maxSelectable?: number = undefined;
+    // TODO: Skipped for migration because:
+    //  This input is used in a control flow expression (e.g. `@if` or `*ngIf`)
+    //  and migrating would break narrowing currently.
     @Input() activeConversation: ConversationDTO;
 
     isLoading = input<boolean>(false);

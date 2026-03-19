@@ -1,4 +1,4 @@
-import { Component, EventEmitter, OnChanges, OnDestroy, OnInit, Output, inject, output } from '@angular/core';
+import { Component, OnChanges, OnDestroy, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
@@ -34,9 +34,9 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         isAnnouncementChannel: undefined,
         isCourseWideChannel: undefined,
     };
-    @Output() formSubmitted: EventEmitter<ChannelFormData> = new EventEmitter<ChannelFormData>();
-    @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
-    @Output() isAnnouncementChannelChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
+    readonly formSubmitted = output<ChannelFormData>();
+    readonly channelTypeChanged = output<ChannelType>();
+    readonly isAnnouncementChannelChanged = output<boolean>();
     isCourseWideChannelChanged = output<boolean>();
 
     form: FormGroup;

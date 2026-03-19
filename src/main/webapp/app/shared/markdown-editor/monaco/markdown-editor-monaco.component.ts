@@ -768,14 +768,17 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.inVisualMode = event.nextId === this.TAB_VISUAL;
         this.inEditMode = event.nextId === this.TAB_EDIT;
         if (this.inEditMode) {
+            // TODO: The 'emit' function requires a mandatory void argument
             this.onEditSelect.emit();
         } else if (this.inPreviewMode) {
+            // TODO: The 'emit' function requires a mandatory void argument
             this.onPreviewSelect.emit();
         }
         this.updateReviewCommentButton();
 
         // Some components need to know when the user leaves the visual tab, as it might make changes to the underlying data.
         if (event.activeId === this.TAB_VISUAL) {
+            // TODO: The 'emit' function requires a mandatory void argument
             this.onLeaveVisualTab.emit();
         }
 

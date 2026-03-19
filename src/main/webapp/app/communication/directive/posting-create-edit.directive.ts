@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Directive, Input, OnChanges, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -16,9 +16,11 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     protected modalService = inject(NgbModal);
     protected formBuilder = inject(FormBuilder);
 
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() posting: T;
-    @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
-    @Output() isModalOpen = new EventEmitter<void>();
+    readonly onCreate = output<T>();
+    readonly isModalOpen = output<void>();
 
     modalRef?: NgbModalRef;
     isLoading = false;

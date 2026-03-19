@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, Output, ViewChild, inject, input, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, inject, input, viewChild, output } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -23,17 +23,20 @@ import { ConversationSelectionState } from 'app/communication/shared/course-conv
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
 export class ConversationThreadSidebarComponent implements AfterViewInit {
-    @ViewChild('scrollBody', { static: false }) scrollBody?: ElementRef<HTMLDivElement>;
+    readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
 
-    @Input()
-    readOnlyMode = false;
+    readonly readOnlyMode = input(false);
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set activeConversation(conversation: ConversationDTO | Conversation) {
         this.conversation = conversation as ConversationDTO;
         this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
     }
+    // TODO: Skipped for migration because:
+    //  Accessor inputs cannot be migrated as they are too complex.
     @Input()
     set activePost(activePost: Post) {
         this.post = activePost;
@@ -42,8 +45,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
 
     course = input<Course>();
 
-    @Output()
-    closePostThread = new EventEmitter<void>();
+    readonly closePostThread = output<void>();
     private readonly conversationSelectionState = inject(ConversationSelectionState);
 
     post?: Post;
@@ -90,6 +92,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
      * Emits the close post thread and resets the open post variable
      */
     closeThread() {
+        // TODO: The 'emit' function requires a mandatory void argument
         this.closePostThread.emit();
         this.conversationSelectionState.setOpenPostId(undefined);
     }
@@ -123,8 +126,8 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     }
 
     scrollEditorIntoView(): void {
-        this.scrollBody?.nativeElement?.scrollTo({
-            top: this.scrollBody.nativeElement.scrollHeight,
+        scrollBody?.nativeElement?.scrollTo({
+            top: scrollBody.nativeElement.scrollHeight,
             behavior: 'instant',
         });
     }

@@ -77,7 +77,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * opens the modal to edit or create a post
      */
     open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor, {
+        this.modalRef = this.modalService.open(this.postingEditor(), {
             size: 'lg',
             backdrop: 'static',
             beforeDismiss: () => {

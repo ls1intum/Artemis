@@ -1,10 +1,10 @@
-import { Directive, OnChanges, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { Directive, OnChanges, OnInit, TemplateRef, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingCreateEditDirective } from 'app/communication/directive/posting-create-edit.directive';
 
 @Directive()
 export abstract class PostingCreateEditModalDirective<T extends Posting> extends PostingCreateEditDirective<T> implements OnInit, OnChanges {
-    @ViewChild('postingEditor') postingEditor: TemplateRef<any>;
+    readonly postingEditor = viewChild.required<TemplateRef<any>>('postingEditor');
     modalTitle: string;
 
     /**

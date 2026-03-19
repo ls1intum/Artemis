@@ -1,5 +1,5 @@
-@if (!this.linkPreview && !this.loaded && this.showLoadingsProgress) {
-    @if (!hasError) {
+@if (!this.linkPreview && !this.loaded() && this.showLoadingsProgress()) {
+    @if (!hasError()) {
         <div class="loading-container">
             <!-- Loading template -->
             <div class="loading-spinner">
@@ -28,7 +28,7 @@
                         <h2 class="preview-title">{{ linkPreview.title }}</h2>
                         <p class="preview-description">{{ linkPreview.description }}</p>
                     </div>
-                    @if (linkPreview.image && !multiple) {
+                    @if (linkPreview.image && !multiple()) {
                         <div class="preview-image">
                             <img [src]="linkPreview.image" alt="Preview Image" />
                         </div>

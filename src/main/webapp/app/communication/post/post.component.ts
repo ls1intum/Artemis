@@ -309,7 +309,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
-        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
+        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference()) ?? false;
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
@@ -372,7 +372,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     onChannelReferenceClicked(channelId: number) {
         const course = this.metisService.getCourse();
         if (isCommunicationEnabled(course)) {
-            if (this.isCommunicationPage) {
+            if (this.isCommunicationPage()) {
                 this.metisConversationService.setActiveConversation(channelId);
             } else {
                 this.router.navigate(['courses', course.id, 'communication'], {

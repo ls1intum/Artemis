@@ -1,4 +1,4 @@
-import { Component, Input, inject, output } from '@angular/core';
+import { Component, Input, inject, output, input } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -41,8 +41,10 @@ export enum ConversationDetailTabs {
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);
 
-    @Input() public activeConversation: ConversationDTO;
-    @Input() course: Course;
+    public readonly activeConversation = input<ConversationDTO>(undefined!);
+    readonly course = input<Course>(undefined!);
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
@@ -53,8 +55,9 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
-        if (this.activeConversation) {
-            const conversation = getAsOneToOneChatDTO(this.activeConversation);
+        const activeConversation = this.activeConversation();
+        if (activeConversation) {
+            const conversation = getAsOneToOneChatDTO(activeConversation);
             if (conversation) {
                 this.isOneToOneChat = true;
                 this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);

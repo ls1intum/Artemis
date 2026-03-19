@@ -1,5 +1,5 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -11,12 +11,14 @@ import { Router } from '@angular/router';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
+    // TODO: Skipped for migration because:
+    //  Your application code writes to the input. This prevents migration.
     @Input() posting: T;
-    @Input() isCommunicationPage: boolean;
-    @Input() showChannelReference?: boolean;
+    readonly isCommunicationPage = input<boolean>(undefined!);
+    readonly showChannelReference = input<boolean>();
 
-    @Input() hasChannelModerationRights = false;
-    @Input() isThreadSidebar: boolean;
+    readonly hasChannelModerationRights = input(false);
+    readonly isThreadSidebar = input<boolean>(undefined!);
     abstract get reactionsBar(): any;
     showDropdown = false;
     dropdownPosition = { x: 0, y: 0 };
@@ -184,7 +186,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     onUserReferenceClicked(referencedUserLogin: string) {
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
+            if (this.isCommunicationPage()) {
                 this.metisConversationService.createOneToOneChat(referencedUserLogin).subscribe();
             } else {
                 this.oneToOneChatService.create(course.id!, referencedUserLogin).subscribe((res) => {
@@ -210,7 +212,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {
-            if (this.isCommunicationPage) {
+            if (this.isCommunicationPage()) {
                 this.metisConversationService.createOneToOneChatWithId(referencedUserId).subscribe();
             } else {
                 this.oneToOneChatService.createWithId(course.id!, referencedUserId).subscribe((res) => {

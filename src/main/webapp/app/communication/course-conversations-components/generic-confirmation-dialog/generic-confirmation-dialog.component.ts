@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -15,10 +15,10 @@ export interface GenericConfirmationTranslationKeys {
     imports: [TranslateDirective, ArtemisTranslatePipe],
 })
 export class GenericConfirmationDialogComponent extends AbstractDialogComponent {
-    @Input() translationParameters = {};
-    @Input() translationKeys: GenericConfirmationTranslationKeys;
-    @Input() canBeUndone = true;
-    @Input() isDangerousAction = false;
+    readonly translationParameters = input({});
+    readonly translationKeys = input<GenericConfirmationTranslationKeys>(undefined!);
+    readonly canBeUndone = input(true);
+    readonly isDangerousAction = input(false);
 
     initialize() {
         super.initialize(['translationKeys']);

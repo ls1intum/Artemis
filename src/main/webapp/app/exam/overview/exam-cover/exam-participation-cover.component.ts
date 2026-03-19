@@ -215,6 +215,7 @@ export class ExamParticipationCoverComponent implements OnChanges, OnDestroy, On
      */
     continueAfterHandInEarly() {
         this.examParticipationService.setEndView(false);
+        // TODO: The 'emit' function requires a mandatory void argument
         this.onExamContinueAfterHandInEarly.emit();
     }
 
