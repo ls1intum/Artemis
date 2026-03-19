@@ -1,12 +1,11 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { CompetencyMetrics, ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
+import { ExerciseInformation, LectureUnitInformation, StudentMetrics } from 'app/atlas/shared/entities/student-metrics.model';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
-import { CompetencyJol } from 'app/atlas/shared/entities/competency.model';
 
 @Injectable({ providedIn: 'root' })
 export class CourseDashboardService {
@@ -32,7 +31,6 @@ export class CourseDashboardService {
                     }
                     if (response.body.competencyMetrics && response.body.competencyMetrics.competencyInformation) {
                         response.body.competencyMetrics.competencyInformation = this.convertToCompetencyInformation(response.body.competencyMetrics.competencyInformation);
-                        response.body.competencyMetrics.currentJolValues = this.filterJolWhereMasteryChanged(response.body.competencyMetrics);
                     }
                 }
                 return response;
@@ -75,16 +73,6 @@ export class CourseDashboardService {
                 return acc;
             },
             {} as { [key: string]: LectureUnitInformation },
-        );
-    }
-
-    private filterJolWhereMasteryChanged(competencyMetrics: CompetencyMetrics): { [key: string]: CompetencyJol } {
-        return Object.fromEntries(
-            Object.entries(competencyMetrics.currentJolValues ?? {}).filter(([key, value]) => {
-                const progress = competencyMetrics?.progress?.[Number(key)] ?? 0;
-                const confidence = competencyMetrics?.confidence?.[Number(key)] ?? 1;
-                return value.competencyProgress === progress && value.competencyConfidence === confidence;
-            }),
         );
     }
 
