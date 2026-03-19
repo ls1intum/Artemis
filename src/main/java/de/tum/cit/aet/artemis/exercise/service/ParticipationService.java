@@ -39,8 +39,10 @@ import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participant;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationManagementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ParticipationScoreSearchDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationSearchDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -761,6 +763,92 @@ public class ParticipationService {
         }
 
         return participations;
+    }
+
+    /**
+     * Returns a paginated list of {@link ParticipationManagementDTO} for the participation management view.
+     * Uses a 3-step approach: paginated ID query → full entity load → DTO mapping.
+     *
+     * @param exercise the exercise to query
+     * @param search   search parameters including pagination, sorting, search term, and filter
+     * @return a page of ParticipationManagementDTO
+     */
+    public Page<ParticipationManagementDTO> findParticipationsForExercise(Exercise exercise, ParticipationSearchDTO search) {
+
+        SortingOrder sortOrder = search.getSortingOrder() != null ? search.getSortingOrder() : SortingOrder.ASCENDING;
+        Pageable pageable = PageRequest.of(search.getPage(), search.getPageSize());
+        boolean teamMode = exercise.isTeamMode();
+
+        ZonedDateTime stuckBuildCutoff = null;
+        if ("Failed".equals(search.getFilterProp()) && exercise instanceof ProgrammingExercise) {
+            int timeoutSeconds = programmingExerciseRepository.findBuildTimeoutSecondsByExerciseId(exercise.getId()).filter(t -> t > 0).orElse(120);
+            stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
+        }
+
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsByExerciseIdForManagement(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
+                stuckBuildCutoff, pageable, sortOrder, search.getSortedColumn());
+
+        List<Long> ids = idPage.getContent();
+        if (ids.isEmpty()) {
+            return new PageImpl<>(Collections.emptyList(), pageable, idPage.getTotalElements());
+        }
+
+        List<StudentParticipation> participations = teamMode ? studentParticipationRepository.findByIdsWithLatestSubmissionWithTeamInformation(ids)
+                : studentParticipationRepository.findByIdsWithLatestSubmission(ids);
+
+        Map<Long, Integer> submissionCountMap = studentParticipationRepository.countSubmissionsPerParticipationByIdsAsMap(ids);
+
+        Map<Long, StudentParticipation> participationById = participations.stream().collect(Collectors.toMap(p -> p.getId(), Function.identity()));
+        List<ParticipationManagementDTO> dtos = ids.stream().map(participationById::get).filter(Objects::nonNull).map(p -> mapToManagementDTO(p, submissionCountMap)).toList();
+
+        return new PageImpl<>(dtos, pageable, idPage.getTotalElements());
+    }
+
+    private ParticipationManagementDTO mapToManagementDTO(StudentParticipation participation, Map<Long, Integer> submissionCountMap) {
+
+        String participantName;
+        String participantIdentifier;
+        Long studentId = null;
+        String studentLogin = null;
+        Long teamId = null;
+
+        if (participation.getStudent().isPresent()) {
+            User student = participation.getStudent().get();
+            participantName = student.getName();
+            participantIdentifier = student.getLogin();
+            studentId = student.getId();
+            studentLogin = student.getLogin();
+        }
+        else if (participation.getTeam().isPresent()) {
+            Team team = participation.getTeam().get();
+            participantName = team.getName();
+            participantIdentifier = team.getShortName();
+            teamId = team.getId();
+        }
+        else {
+            participantName = null;
+            participantIdentifier = null;
+        }
+
+        Submission latestSubmission = participation.getSubmissions().isEmpty() ? null : participation.getSubmissions().iterator().next();
+        Boolean buildFailed = null;
+        if (latestSubmission instanceof ProgrammingSubmission progSubmission) {
+            buildFailed = progSubmission.isBuildFailed();
+        }
+
+        String buildPlanId = null;
+        String repositoryUri = null;
+        if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
+            buildPlanId = progParticipation.getBuildPlanId();
+            repositoryUri = progParticipation.getRepositoryUri();
+        }
+
+        int submissionCount = submissionCountMap.getOrDefault(participation.getId(), 0);
+        boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
+
+        return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
+                participantName, participantIdentifier, studentId, studentLogin, teamId, testRun, participation.getPresentationScore(), participation.getIndividualDueDate(),
+                buildPlanId, repositoryUri, buildFailed);
     }
 
     /**

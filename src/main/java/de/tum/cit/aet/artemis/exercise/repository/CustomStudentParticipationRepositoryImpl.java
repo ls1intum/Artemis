@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.repository;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -258,6 +259,42 @@ public class CustomStudentParticipationRepositoryImpl implements CustomStudentPa
         return cb.exists(existsSub);
     }
 
+    /**
+     * EXISTS subquery for the FAILED (stuck build) filter.
+     * Matches participations whose latest submission has no result yet and was submitted before {@code cutoff},
+     * meaning the build has been waiting longer than the exercise's configured timeout.
+     */
+    private Predicate stuckBuildExists(CriteriaBuilder cb, CriteriaQuery<?> parentQuery, Root<StudentParticipation> participationRoot, ZonedDateTime cutoff) {
+
+        Subquery<Long> existsSub = parentQuery.subquery(Long.class);
+        Root<Submission> subRoot = existsSub.from(Submission.class);
+        existsSub.select(cb.literal(1L));
+
+        // s.participation = p
+        Predicate participationMatch = cb.equal(subRoot.get(Submission_.PARTICIPATION), participationRoot);
+
+        // s.id = MAX submission id
+        Subquery<Long> maxSubId = existsSub.subquery(Long.class);
+        Root<Submission> msRoot = maxSubId.from(Submission.class);
+        maxSubId.select(cb.max(msRoot.get(DomainObject_.ID)));
+        maxSubId.where(cb.equal(msRoot.get(Submission_.PARTICIPATION), participationRoot));
+        Predicate latestSubmission = cb.equal(subRoot.get(DomainObject_.ID), maxSubId);
+
+        // no result exists for this submission
+        Subquery<Long> resultSub = existsSub.subquery(Long.class);
+        Root<Result> resultRoot = resultSub.from(Result.class);
+        resultSub.select(cb.literal(1L));
+        resultSub.where(cb.equal(resultRoot.get(Result_.SUBMISSION), subRoot));
+        Predicate noResult = cb.not(cb.exists(resultSub));
+
+        // submission was submitted before the cutoff (older than the build timeout)
+        Predicate beforeCutoff = cb.lessThan(subRoot.get("submissionDate"), cutoff);
+
+        existsSub.where(participationMatch, latestSubmission, noResult, beforeCutoff);
+
+        return cb.exists(existsSub);
+    }
+
     // --------------------------------------------------
     // Sorting
     // --------------------------------------------------
@@ -322,6 +359,154 @@ public class CustomStudentParticipationRepositoryImpl implements CustomStudentPa
 
         sub.where(participationMatch, latestSubmission, latestResult);
         return sub;
+    }
+
+    // --------------------------------------------------
+    // Management view (participation list)
+    // --------------------------------------------------
+
+    @Override
+    public Page<Long> findParticipationIdsByExerciseIdForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
+            Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<Long> idQuery = cb.createQuery(Long.class);
+        Root<StudentParticipation> root = idQuery.from(StudentParticipation.class);
+        idQuery.select(root.get(DomainObject_.ID));
+
+        Join<StudentParticipation, User> studentJoin = null;
+        Join<StudentParticipation, Team> teamJoin = null;
+        if (teamMode) {
+            teamJoin = root.join(StudentParticipation_.TEAM, JoinType.LEFT);
+        }
+        else {
+            studentJoin = root.join(StudentParticipation_.STUDENT, JoinType.LEFT);
+        }
+
+        List<Predicate> predicates = buildManagementPredicates(cb, idQuery, root, studentJoin, teamJoin, exerciseId, teamMode, searchTerm, filterProp, stuckBuildCutoff);
+        idQuery.where(cb.and(predicates.toArray(new Predicate[0])));
+
+        Expression<?> sortExpr = buildManagementSortExpression(cb, root, studentJoin, teamJoin, teamMode, sortedColumn);
+        Order primaryOrder = (sortOrder == SortingOrder.DESCENDING) ? cb.desc(sortExpr) : cb.asc(sortExpr);
+        Order tieBreaker = cb.asc(root.get(DomainObject_.ID));
+        idQuery.orderBy(primaryOrder, tieBreaker);
+
+        TypedQuery<Long> typedQuery = entityManager.createQuery(idQuery);
+        typedQuery.setFirstResult((int) pageable.getOffset());
+        typedQuery.setMaxResults(pageable.getPageSize());
+        List<Long> ids = typedQuery.getResultList();
+
+        long total = executeManagementCountQuery(cb, exerciseId, teamMode, searchTerm, filterProp, stuckBuildCutoff);
+
+        return new PageImpl<>(ids, pageable, total);
+    }
+
+    private List<Predicate> buildManagementPredicates(CriteriaBuilder cb, CriteriaQuery<?> query, Root<StudentParticipation> root, Join<StudentParticipation, User> studentJoin,
+            Join<StudentParticipation, Team> teamJoin, long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff) {
+
+        List<Predicate> predicates = new ArrayList<>();
+
+        predicates.add(cb.equal(root.get(Participation_.EXERCISE).get(DomainObject_.ID), exerciseId));
+
+        if (teamMode) {
+            predicates.add(cb.isNotNull(root.get(StudentParticipation_.TEAM)));
+        }
+        else {
+            predicates.add(cb.isNotNull(root.get(StudentParticipation_.STUDENT)));
+        }
+
+        if (searchTerm != null && !searchTerm.isBlank()) {
+            String pattern = "%" + searchTerm.toLowerCase() + "%";
+            if (teamMode) {
+                predicates.add(cb.or(cb.like(cb.lower(teamJoin.get(Team_.NAME)), pattern), cb.like(cb.lower(teamJoin.get(Team_.SHORT_NAME)), pattern)));
+            }
+            else {
+                predicates.add(cb.or(cb.like(cb.lower(studentJoin.get(User_.LOGIN)), pattern), cb.like(cb.lower(studentJoin.get(User_.FIRST_NAME)), pattern),
+                        cb.like(cb.lower(studentJoin.get(User_.LAST_NAME)), pattern)));
+            }
+        }
+
+        addManagementFilterPredicate(cb, query, root, predicates, filterProp, stuckBuildCutoff);
+
+        return predicates;
+    }
+
+    private void addManagementFilterPredicate(CriteriaBuilder cb, CriteriaQuery<?> query, Root<StudentParticipation> root, List<Predicate> predicates, String filterProp,
+            ZonedDateTime stuckBuildCutoff) {
+        if (filterProp == null || "All".equals(filterProp)) {
+            return;
+        }
+        switch (filterProp) {
+            case "Failed" -> {
+                if (stuckBuildCutoff != null) {
+                    predicates.add(stuckBuildExists(cb, query, root, stuckBuildCutoff));
+                }
+            }
+            case "NoSubmissions" -> {
+                Subquery<Long> sub = query.subquery(Long.class);
+                Root<Submission> subRoot = sub.from(Submission.class);
+                sub.select(cb.literal(1L));
+                sub.where(cb.equal(subRoot.get(Submission_.PARTICIPATION), root));
+                predicates.add(cb.not(cb.exists(sub)));
+            }
+            case "NoPracticeMode" -> predicates.add(cb.or(cb.isNull(root.get("testRun")), cb.equal(root.get("testRun"), false)));
+            default -> {
+                // Unknown filter — ignore
+            }
+        }
+    }
+
+    private Expression<?> buildManagementSortExpression(CriteriaBuilder cb, Root<StudentParticipation> root, Join<StudentParticipation, User> studentJoin,
+            Join<StudentParticipation, Team> teamJoin, boolean teamMode, String sortedColumn) {
+
+        final String column = sortedColumn != null ? sortedColumn : "";
+
+        return switch (column) {
+            case "participantName" -> {
+                if (teamMode) {
+                    yield teamJoin.get(Team_.NAME);
+                }
+                else {
+                    yield cb.coalesce(studentJoin.get(User_.LAST_NAME), cb.literal(""));
+                }
+            }
+            case "participantIdentifier" -> {
+                if (teamMode) {
+                    yield teamJoin.get(Team_.SHORT_NAME);
+                }
+                else {
+                    yield studentJoin.get(User_.LOGIN);
+                }
+            }
+            case "initializationState" -> root.get("initializationState");
+            case "initializationDate" -> root.get("initializationDate");
+            case "testRun" -> root.get("testRun");
+            case "presentationScore" -> root.get("presentationScore");
+            case "individualDueDate" -> root.get("individualDueDate");
+            default -> root.get(DomainObject_.ID);
+        };
+    }
+
+    private long executeManagementCountQuery(CriteriaBuilder cb, long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff) {
+
+        CriteriaQuery<Long> countQuery = cb.createQuery(Long.class);
+        Root<StudentParticipation> root = countQuery.from(StudentParticipation.class);
+        countQuery.select(cb.count(root));
+
+        Join<StudentParticipation, User> studentJoin = null;
+        Join<StudentParticipation, Team> teamJoin = null;
+        if (teamMode) {
+            teamJoin = root.join(StudentParticipation_.TEAM, JoinType.LEFT);
+        }
+        else {
+            studentJoin = root.join(StudentParticipation_.STUDENT, JoinType.LEFT);
+        }
+
+        List<Predicate> predicates = buildManagementPredicates(cb, countQuery, root, studentJoin, teamJoin, exerciseId, teamMode, searchTerm, filterProp, stuckBuildCutoff);
+        countQuery.where(cb.and(predicates.toArray(new Predicate[0])));
+
+        return entityManager.createQuery(countQuery).getSingleResult();
     }
 
     // --------------------------------------------------
