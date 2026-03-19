@@ -97,6 +97,7 @@ describe('ExerciseChatbotButtonComponent', () => {
                     useValue: {
                         get: vi.fn().mockReturnValue(of('')),
                         instant: vi.fn((key: string) => key),
+                        getCurrentLang: vi.fn().mockReturnValue('en'),
                         onTranslationChange: new Subject(),
                         onLangChange: new Subject(),
                         onDefaultLangChange: new Subject(),
@@ -234,13 +235,16 @@ describe('ExerciseChatbotButtonComponent', () => {
     });
 
     describe('handleButtonClick', () => {
-        it('should close dialog and set chatOpen to false when chat is open', () => {
+        it('should close dialog and set chatOpen to false when chat is open', async () => {
             component.openChat();
             expect(component.chatOpen()).toBe(true);
 
             component.handleButtonClick();
 
-            expect(mockDialog.closeAll).toHaveBeenCalled();
+            expect(mockDialogClose).toHaveBeenCalled();
+            // chatOpen is reset via afterClosed subscription
+            mockDialogAfterClosed.next();
+            await fixture.whenStable();
             expect(component.chatOpen()).toBe(false);
         });
 

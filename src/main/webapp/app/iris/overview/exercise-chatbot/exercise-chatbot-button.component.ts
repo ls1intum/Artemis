@@ -14,6 +14,7 @@ import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-s
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateService } from '@ngx-translate/core';
+import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-exercise-chatbot-button',
@@ -31,6 +32,7 @@ export class IrisExerciseChatbotButtonComponent {
     private readonly route = inject(ActivatedRoute);
     private readonly destroyRef = inject(DestroyRef);
     private readonly translateService = inject(TranslateService);
+    private readonly currentLocale = getCurrentLocaleSignal(this.translateService);
 
     private readonly CHAT_BUBBLE_TIMEOUT = 10000;
 
@@ -56,6 +58,7 @@ export class IrisExerciseChatbotButtonComponent {
     // Active stage and display name for minimized indicator
     readonly activeStage = computed(() => this.currentStages().find((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
     readonly stageDisplayName = computed(() => {
+        this.currentLocale();
         const name = this.activeStage()?.name;
         return name ? this.translateLabel(name) : '';
     });
@@ -180,8 +183,7 @@ export class IrisExerciseChatbotButtonComponent {
      */
     public handleButtonClick() {
         if (this.chatOpen() && this.dialogRef) {
-            this.dialog.closeAll();
-            this.chatOpen.set(false);
+            this.dialogRef.close();
         } else {
             this.openChat();
             this.chatOpen.set(true);

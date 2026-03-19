@@ -13,7 +13,7 @@
 
 %iris-popup {
     position: absolute;
-    right: 80px;
+    right: min(80px, calc(100vw - 100%));
     display: flex;
     align-items: center;
     gap: 0.5rem;
@@ -29,7 +29,7 @@
     @extend %iris-popup;
 
     bottom: 100px;
-    width: 350px;
+    width: min(350px, calc(100vw - 120px));
     max-height: 240px;
     cursor: pointer;
     border: none;
@@ -91,6 +91,9 @@
     line-height: 1.6;
     white-space: nowrap;
     display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: min(200px, 40vw);
 
     &.anim-a,
     &.anim-b {

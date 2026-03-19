@@ -28,18 +28,22 @@
     }
 
     &.spinning {
-        animation: iris-spin 1.5s linear infinite;
+        margin-left: 4px;
+        animation: iris-pulse 1.5s ease-in-out infinite;
         filter: none;
     }
 }
 
-@keyframes iris-spin {
-    from {
-        transform: rotate(0deg);
+@keyframes iris-pulse {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
     }
 
-    to {
-        transform: rotate(360deg);
+    50% {
+        transform: scale(1.15);
+        opacity: 0.85;
     }
 }
 

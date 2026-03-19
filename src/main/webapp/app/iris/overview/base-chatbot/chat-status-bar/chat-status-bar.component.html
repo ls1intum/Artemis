@@ -1,6 +1,6 @@
 <div class="chat-status-bar" [class.open]="open()">
     @if (isError()) {
-        <div class="display error">
+        <div class="display error" role="alert">
             <fa-icon [icon]="faCircleXmark" />
             <div>{{ stageMessage() }}</div>
         </div>

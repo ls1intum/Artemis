@@ -24,6 +24,7 @@ describe('ChatStatusBarComponent', () => {
                     provide: TranslateService,
                     useValue: {
                         instant: vi.fn((key: string) => key),
+                        getCurrentLang: vi.fn().mockReturnValue('en'),
                         onTranslationChange: new Subject(),
                         onLangChange: new Subject(),
                         onDefaultLangChange: new Subject(),
