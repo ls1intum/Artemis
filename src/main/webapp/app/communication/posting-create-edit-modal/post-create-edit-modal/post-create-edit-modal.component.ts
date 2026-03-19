@@ -80,6 +80,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     open(): void {
         this.isDialogVisible = true;
+        this.isModalOpen.emit();
     }
 
     /**
