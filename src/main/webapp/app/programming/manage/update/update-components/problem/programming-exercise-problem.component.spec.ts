@@ -4,6 +4,7 @@ import { of, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { ProgrammingExerciseProblemComponent } from 'app/programming/manage/update/update-components/problem/programming-exercise-problem.component';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 import { programmingExerciseCreationConfigMock } from 'test/helpers/mocks/programming-exercise-creation-config-mock';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -30,6 +31,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
     const mockHyperionApiService = {
         generateProblemStatement: jest.fn(),
         refineProblemStatementGlobally: jest.fn(),
+        refineProblemStatementTargeted: jest.fn(),
     };
 
     const mockAlertService = {
@@ -99,7 +101,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         // Trigger the generation
         comp.userPrompt.set(userPrompt);
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         // Verify the API was called correctly
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(courseId, request);
@@ -117,7 +119,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
@@ -128,7 +130,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('Test prompt');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.generateProblemStatement).not.toHaveBeenCalled();
     });
@@ -141,7 +143,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(throwError(() => new Error('API error')));
 
         comp.userPrompt.set('Test prompt');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
@@ -155,7 +157,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of({ draftProblemStatement: '' }));
 
         comp.userPrompt.set('Test prompt');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.generationError');
     });
@@ -173,7 +175,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).toHaveBeenCalledWith(
             42,
@@ -226,9 +228,11 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         const emitSpy = jest.spyOn(comp.programmingExerciseChange, 'emit');
 
-        comp.onCompetencyLinksChange([{ id: 1 }] as any);
+        const mockLink = new CompetencyExerciseLink({ id: 1, title: 'Test' } as any, programmingExercise, 1);
+        comp.onCompetencyLinksChange([mockLink]);
 
-        expect(programmingExercise.competencyLinks).toEqual([{ id: 1 }]);
+        expect(programmingExercise.competencyLinks).toHaveLength(1);
+        expect(programmingExercise.competencyLinks![0]).toBeInstanceOf(CompetencyExerciseLink);
         expect(emitSpy).toHaveBeenCalled();
     });
 
@@ -238,7 +242,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         programmingExercise.problemStatement = ''; // Empty, should trigger generate
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
-        const generateSpy = jest.spyOn(comp, 'generateProblemStatement');
+        const generateSpy = jest.spyOn(comp.aiOps, 'generateProblemStatement');
 
         comp.userPrompt.set('Test');
         comp.handleProblemStatementAction();
@@ -254,10 +258,10 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges(); // Trigger ngOnInit to set currentProblemStatement signal
 
         // Set templateLoaded so shouldShowGenerateButton returns false for non-template content
-        comp['templateLoaded'].set(true);
-        comp['templateProblemStatement'].set('Different template');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.templateProblemStatement.set('Different template');
 
-        const refineSpy = jest.spyOn(comp, 'refineProblemStatement');
+        const refineSpy = jest.spyOn(comp.aiOps, 'refineProblemStatement');
 
         comp.userPrompt.set('Improve this');
         comp.handleProblemStatementAction();
@@ -300,11 +304,132 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges();
 
         // Set templateLoaded so shouldShowGenerateButton compares against template
-        comp['templateLoaded'].set(true);
-        comp['templateProblemStatement'].set('Different template');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.templateProblemStatement.set('Different template');
 
         // shouldShowGenerateButton should be false for existing content that differs from template
         expect(comp.shouldShowGenerateButton()).toBeFalse();
+    });
+
+    it('should handle inline refinement successfully', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original problem statement with content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const mockResponse: ProblemStatementRefinementResponse = {
+            refinedProblemStatement: 'Refined problem statement',
+        };
+
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(of(mockResponse));
+
+        const event = {
+            instruction: 'Improve this section',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockHyperionApiService.refineProblemStatementTargeted).toHaveBeenCalledWith(
+            42,
+            expect.objectContaining({
+                problemStatementText: 'Original problem statement with content',
+                instruction: 'Improve this section',
+                startLine: 1,
+                endLine: 2,
+                startColumn: 1,
+                endColumn: 10,
+            }),
+        );
+
+        expect(comp.showDiff()).toBeTrue();
+        expect(mockAlertService.success).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.success');
+    });
+
+    it('should handle inline refinement error when no courseId', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.problemStatement = 'Some content';
+        // No course set
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        // Service returns silently with success: false when courseId is missing
+        expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
+    });
+
+    it('should handle inline refinement error when problem statement is empty', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = '   '; // Only whitespace
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        // Component validates empty content before calling service
+        expect(mockHyperionApiService.refineProblemStatementTargeted).not.toHaveBeenCalled();
+    });
+
+    it('should handle inline refinement API error', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(throwError(() => new Error('API error')));
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
+        expect(comp.isGeneratingOrRefining()).toBeFalse();
+    });
+
+    it('should handle inline refinement with empty response', () => {
+        const programmingExercise = new ProgrammingExercise(undefined, undefined);
+        programmingExercise.course = { id: 42 } as any;
+        programmingExercise.problemStatement = 'Original content';
+        fixture.componentRef.setInput('programmingExercise', programmingExercise);
+
+        mockHyperionApiService.refineProblemStatementTargeted.mockReturnValue(of({ refinedProblemStatement: '' }));
+
+        const event = {
+            instruction: 'Improve this',
+            startLine: 1,
+            endLine: 2,
+            startColumn: 1,
+            endColumn: 10,
+        };
+
+        comp.onInlineRefinement(event);
+
+        expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.inlineRefinement.error');
     });
 
     it('should handle refinement with completely empty response', () => {
@@ -318,7 +443,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(of(mockResponse));
 
         comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
     });
@@ -332,7 +457,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.refineProblemStatementGlobally.mockReturnValue(throwError(() => new Error('API error')));
 
         comp.userPrompt.set('Improve clarity');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockAlertService.error).toHaveBeenCalledWith('artemisApp.programmingExercise.problemStatement.refinementError');
         expect(comp.isGeneratingOrRefining()).toBeFalse();
@@ -345,7 +470,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
@@ -356,7 +481,7 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
 
         comp.userPrompt.set('Improve');
-        comp.refineProblemStatement();
+        comp.aiOps.refineProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.refineProblemStatementGlobally).not.toHaveBeenCalled();
     });
@@ -373,24 +498,24 @@ describe('ProgrammingExerciseProblemComponent', () => {
         mockHyperionApiService.generateProblemStatement.mockReturnValue(of(mockResponse));
 
         comp.userPrompt.set('Create exercise');
-        comp.generateProblemStatement();
+        comp.aiOps.generateProblemStatement(comp.programmingExercise(), comp.editableInstructions());
 
         expect(mockHyperionApiService.generateProblemStatement).toHaveBeenCalledWith(99, expect.any(Object));
     });
 
     it('should cancel active subscription on cancelAiOperation', () => {
         const mockSubscription = { unsubscribe: jest.fn() };
-        comp['currentAiOperationSubscription'] = mockSubscription as any;
+        (comp.aiOps as any)['currentAiOperationSubscription'] = mockSubscription as any;
 
         comp.cancelAiOperation();
 
         expect(mockSubscription.unsubscribe).toHaveBeenCalled();
-        expect(comp['currentAiOperationSubscription']).toBeUndefined();
+        expect((comp.aiOps as any)['currentAiOperationSubscription']).toBeUndefined();
     });
 
     it('should unsubscribe on destroy', () => {
         const mockSubscription = { unsubscribe: jest.fn() };
-        comp['currentAiOperationSubscription'] = mockSubscription as any;
+        (comp.aiOps as any)['currentAiOperationSubscription'] = mockSubscription as any;
 
         comp.ngOnDestroy();
 
@@ -404,9 +529,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.detectChanges();
 
         // Set the template to match the problem statement
-        comp['templateProblemStatement'].set('Template content');
-        comp['templateLoaded'].set(true);
-        comp['currentProblemStatement'].set('Template content');
+        comp.aiOps.templateProblemStatement.set('Template content');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.currentProblemStatement.set('Template content');
 
         expect(comp.shouldShowGenerateButton()).toBeTrue();
     });
@@ -417,9 +542,9 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
-        comp['templateProblemStatement'].set('Template content');
-        comp['templateLoaded'].set(true);
-        comp['currentProblemStatement'].set('Custom content');
+        comp.aiOps.templateProblemStatement.set('Template content');
+        comp.aiOps.templateLoaded.set(true);
+        comp.aiOps.currentProblemStatement.set('Custom content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
@@ -430,8 +555,8 @@ describe('ProgrammingExerciseProblemComponent', () => {
         fixture.componentRef.setInput('programmingExercise', programmingExercise);
         fixture.detectChanges();
 
-        comp['templateLoaded'].set(false);
-        comp['currentProblemStatement'].set('Existing content');
+        comp.aiOps.templateLoaded.set(false);
+        comp.aiOps.currentProblemStatement.set('Existing content');
 
         expect(comp.shouldShowGenerateButton()).toBeFalse();
     });
@@ -445,8 +570,20 @@ describe('ProgrammingExerciseProblemComponent', () => {
 
         comp.onInstructionChange('Updated statement');
 
+        expect(programmingExerciseSpy).toHaveBeenCalledOnce();
+        expect(programmingExerciseSpy).toHaveBeenCalledWith(expect.objectContaining({ problemStatement: 'Updated statement' }));
         expect(exercise.problemStatement).toBe('Updated statement');
         expect(problemStatementSpy).toHaveBeenCalledWith('Updated statement');
-        expect(programmingExerciseSpy).toHaveBeenCalledWith(exercise);
+    });
+
+    it('should delegate onChecklistActionDiffRequest to aiOps.applyChecklistActionDiff', () => {
+        fixture.detectChanges();
+
+        const applyChecklistSpy = jest.spyOn(comp.aiOps, 'applyChecklistActionDiff').mockImplementation(() => {});
+
+        comp.onChecklistActionDiffRequest('Proposed content');
+
+        expect(applyChecklistSpy).toHaveBeenCalledOnce();
+        expect(applyChecklistSpy).toHaveBeenCalledWith('Proposed content', comp.editableInstructions());
     });
 });

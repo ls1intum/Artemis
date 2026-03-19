@@ -11,7 +11,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.Principal;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -109,6 +108,7 @@ import de.tum.cit.aet.artemis.exam.service.ExamService;
 import de.tum.cit.aet.artemis.exam.service.ExamSessionService;
 import de.tum.cit.aet.artemis.exam.service.ExamUserService;
 import de.tum.cit.aet.artemis.exam.service.StudentExamService;
+import de.tum.cit.aet.artemis.exam.util.ExamDateUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseForPlagiarismCasesOverviewDTO;
@@ -289,10 +289,11 @@ public class ExamResource {
         // NOTE: We have to get exercises and groups as we need them for re-scheduling
         Exam examWithExercises = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(savedExam.getId(), false);
 
-        // We can't test dates for equality as the dates retrieved from the database lose precision. Also use instant to take timezones into account
-        Comparator<ZonedDateTime> comparator = Comparator.comparing(date -> date.truncatedTo(ChronoUnit.SECONDS).toInstant());
-        if (comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
-                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0) {
+        Comparator<ZonedDateTime> comparator = ExamDateUtil.truncatedComparator();
+        boolean visibleOrStartDateChanged = comparator.compare(originalExam.getVisibleDate(), updatedExam.getVisibleDate()) != 0
+                || comparator.compare(originalExam.getStartDate(), updatedExam.getStartDate()) != 0;
+        boolean endDateChanged = comparator.compare(originalExam.getEndDate(), updatedExam.getEndDate()) != 0;
+        if (visibleOrStartDateChanged) {
             // for all programming exercises in the exam, send their ids for scheduling
             examWithExercises.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(ProgrammingExercise.class::isInstance).map(Exercise::getId)
                     .forEach(instanceMessageSendService::sendProgrammingExerciseSchedule);
@@ -304,6 +305,8 @@ public class ExamResource {
             Exam examWithStudentExams = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(savedExam.getId());
             examService.updateStudentExamsAndRescheduleExercises(examWithStudentExams, originalExamDuration, workingTimeChange);
         }
+
+        examService.syncExamExercisesMetadata(examWithExercises, visibleOrStartDateChanged, endDateChanged);
 
         if (updatedChannel != null) {
             savedExam.setChannelName(updatedExam.getChannelName());
@@ -343,6 +346,9 @@ public class ExamResource {
 
         // 2. Re-calculate the working times of all student exams
         examService.updateStudentExamsAndRescheduleExercises(exam, originalExamDuration, workingTimeChange);
+
+        // 3. Update Weaviate exercise metadata since the exam end date changed
+        examService.syncExamExercisesMetadata(exam);
 
         return ResponseEntity.ok(exam);
     }

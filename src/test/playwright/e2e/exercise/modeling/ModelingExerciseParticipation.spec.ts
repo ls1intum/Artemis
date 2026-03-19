@@ -1,17 +1,16 @@
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseParticipation.id } as any;
 
 test.describe('Modeling Exercise Participation', { tag: '@fast' }, () => {
-    let course: Course;
     let modelingExercise: ModelingExercise;
 
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests, exerciseAPIRequests }) => {
+    test.beforeEach('Create modeling exercise', async ({ login, exerciseAPIRequests }) => {
         await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
         modelingExercise = await exerciseAPIRequests.createModelingExercise({ course });
     });
 
@@ -25,7 +24,5 @@ test.describe('Modeling Exercise Participation', { tag: '@fast' }, () => {
         await modelingExerciseEditor.submit();
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });
