@@ -125,6 +125,7 @@ public class LocalCIBuildConfigurationService {
         StringBuilder scriptBuilder = new StringBuilder();
         scriptBuilder.append("#!/usr/bin/env bash\n");
         scriptBuilder.append("set -e\n");
+        scriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
         scriptBuilder.append("export AEOLUS_INITIAL_DIRECTORY=${PWD}\n");
 
         for (BuildPhaseDTO phase : activePhases) {
