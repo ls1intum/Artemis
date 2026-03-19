@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record PyrisLectureTranscriptionDTO(Long id, @Nullable String language, List<LectureTranscriptionSegment> segments, @Nullable String jobId,
-        @Nullable TranscriptionStatus transcriptionStatus) {
+        TranscriptionStatus transcriptionStatus) {
 
     /**
      * Creates a DTO from a {@link LectureTranscription} entity.
