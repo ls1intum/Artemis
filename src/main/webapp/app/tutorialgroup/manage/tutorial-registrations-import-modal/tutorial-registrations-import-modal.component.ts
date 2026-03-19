@@ -83,7 +83,7 @@ export class TutorialRegistrationsImportModalComponent {
         }
 
         const parsedStudents: TutorialGroupRegisterStudentDTO[] = result.students.map((student) => {
-            return { login: student.login, registrationNumber: student.registrationNumber };
+            return { login: student.login || undefined, registrationNumber: student.registrationNumber || undefined };
         });
         if (parsedStudents.length === 0) {
             this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.noFileEntriesAlert');

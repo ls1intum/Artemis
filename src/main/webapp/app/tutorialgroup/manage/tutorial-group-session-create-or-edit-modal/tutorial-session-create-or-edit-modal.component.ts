@@ -210,10 +210,10 @@ export class TutorialSessionCreateOrEditModalComponent {
     }
 
     private computeIfInputsInvalid() {
-        const dateInvalid = this.computeDateValidation().status === ValidationStatus.INVALID;
-        const startTimeInvalid = this.computeStartTimeValidation().status === ValidationStatus.INVALID;
-        const endTimeInvalid = this.computeEndTimeValidation().status === ValidationStatus.INVALID;
-        const locationInvalid = this.computeLocationValidation().status === ValidationStatus.INVALID;
+        const dateInvalid = this.dateValidationResult().status === ValidationStatus.INVALID;
+        const startTimeInvalid = this.startTimeValidationResult().status === ValidationStatus.INVALID;
+        const endTimeInvalid = this.endTimeValidationResult().status === ValidationStatus.INVALID;
+        const locationInvalid = this.locationValidationResult().status === ValidationStatus.INVALID;
         return dateInvalid || startTimeInvalid || endTimeInvalid || locationInvalid;
     }
 
