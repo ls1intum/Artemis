@@ -228,6 +228,8 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         return updatedJob.get();
     }
 
+    private static final String MALFORMED_MCQ_ERROR_MESSAGE = "Sorry, I tried to generate a quiz question but the response was malformed. Please try again.";
+
     private static final Set<String> MCQ_CONTENT_TYPES = Set.of("mcq", "mcq-set");
 
     /**
@@ -252,8 +254,11 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
         if (trimmed.startsWith("{")) {
             try {
                 JsonNode jsonNode = objectMapper.readTree(trimmed);
-                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
-                    return List.of(new IrisJsonMessageContent(jsonNode));
+                if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                    if (isValidMcqNode(jsonNode)) {
+                        return List.of(new IrisJsonMessageContent(jsonNode));
+                    }
+                    return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
                 }
             }
             catch (JsonProcessingException e) {
@@ -280,7 +285,10 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
             if (jsonCandidate != null) {
                 try {
                     JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
-                    if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText()) && isValidMcqNode(jsonNode)) {
+                    if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                        if (!isValidMcqNode(jsonNode)) {
+                            return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
+                        }
                         contents.add(new IrisJsonMessageContent(jsonNode));
 
                         // Text after the JSON block
