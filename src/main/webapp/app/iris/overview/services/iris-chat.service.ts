@@ -2,6 +2,7 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model';
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { IrisExerciseChatSession } from 'app/iris/shared/entities/iris-exercise-chat-session.model';
@@ -203,9 +204,9 @@ export class IrisChatService implements OnDestroy {
         const requestDTO = new IrisMessageRequestDTO([IrisMessageContentDTO.text(message)], randomInt(), uncommittedFiles);
 
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
-            tap((response: HttpResponse<IrisUserMessage>) => {
+            tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 this.suggestions.next([]);
-                this.replaceOrAddMessage(response.body!);
+                this.replaceOrAddMessage(response.body! as IrisMessage);
                 this.updateCurrentSessionLastActivityDate();
             }),
             map(() => undefined),
@@ -265,7 +266,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
-            map((r: HttpResponse<IrisUserMessage>) => r.body!),
+            map((r: HttpResponse<IrisMessageResponseDTO>) => r.body! as IrisMessage),
             tap((m) => {
                 this.replaceMessage(m);
                 this.updateCurrentSessionLastActivityDate();
@@ -296,7 +297,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         return this.irisChatHttpService.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
-            map((r: HttpResponse<IrisAssistantMessage>) => r.body!),
+            map((r: HttpResponse<IrisMessageResponseDTO>) => r.body! as IrisMessage),
             tap((m) => this.replaceMessage(m)),
             map(() => undefined),
             catchError(() => {
@@ -468,7 +469,10 @@ export class IrisChatService implements OnDestroy {
                     this.numNewMessages.next(this.numNewMessages.getValue() + 1);
                 }
                 if (payload.message?.id) {
-                    this.replaceOrAddMessage(payload.message);
+                    const message = Object.assign({}, payload.message, {
+                        sentAt: payload.message.sentAt ? dayjs(payload.message.sentAt) : undefined,
+                    }) as IrisMessage;
+                    this.replaceOrAddMessage(message);
                 }
                 if (payload.stages) {
                     this.stages.next(this.filterStages(payload.stages));
