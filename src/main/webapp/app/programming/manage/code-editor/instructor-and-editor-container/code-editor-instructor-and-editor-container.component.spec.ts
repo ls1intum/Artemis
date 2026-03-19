@@ -719,8 +719,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             tick();
 
             expect(align).toHaveBeenCalledOnce();
-            expect(style.insetInlineStart).toBe('0px');
-            expect(setProperty).toHaveBeenCalledWith('--p-popover-arrow-left', '124px');
+            expect(style.insetInlineStart).toBe('20px');
+            expect(setProperty).toHaveBeenCalledWith('--p-popover-arrow-left', '102px');
         }));
 
         it('should clear subscription when restore check-only has no active job', () => {
