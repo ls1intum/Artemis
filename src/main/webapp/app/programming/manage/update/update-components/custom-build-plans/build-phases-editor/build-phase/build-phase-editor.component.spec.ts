@@ -40,11 +40,7 @@ describe('BuildPhaseEditorComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [...initialPhase.resultPaths] });
         fixture.componentRef.setInput('index', 1);
-        fixture.componentRef.setInput('phases', [
-            { ...initialPhase, name: 'phase-1' },
-            { ...initialPhase, name: initialPhase.name, resultPaths: [...initialPhase.resultPaths] },
-            { ...initialPhase, name: 'phase-3' },
-        ]);
+        fixture.componentRef.setInput('phaseNames', ['phase-1', initialPhase.name, 'phase-3']);
         fixture.componentRef.setInput('isLast', false);
         fixture.detectChanges();
     });
@@ -94,10 +90,7 @@ describe('BuildPhaseEditorComponent', () => {
         });
 
         it('should report duplicate names case-insensitively as invalid', () => {
-            fixture.componentRef.setInput('phases', [
-                { ...initialPhase, name: 'build' },
-                { ...initialPhase, name: 'BUILD', resultPaths: [...initialPhase.resultPaths] },
-            ]);
+            fixture.componentRef.setInput('phaseNames', ['build', 'BUILD']);
             fixture.detectChanges();
 
             expect(component.isNameUnique()).toBe(false);
@@ -178,6 +171,32 @@ describe('BuildPhaseEditorComponent', () => {
         });
     });
 
+    describe('updateTestsExpected', () => {
+        it('should clear resultPaths when tests are not expected', () => {
+            component.updateTestsExpected(false);
+
+            expect(component.phase().resultPaths).toEqual([]);
+        });
+
+        it('should add one empty result path when tests are expected without cached values', () => {
+            fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [] });
+            fixture.detectChanges();
+
+            component.updateTestsExpected(true);
+
+            expect(component.phase().resultPaths).toEqual(['']);
+        });
+
+        it('should restore cached resultPaths when tests are enabled again', () => {
+            component.updateTestsExpected(false);
+            fixture.detectChanges();
+
+            component.updateTestsExpected(true);
+
+            expect(component.phase().resultPaths).toEqual(['**/results.xml', '**/coverage.xml']);
+        });
+    });
+
     describe('updateResultPath', () => {
         it('should update result path at specified index', () => {
             const resultPathInput = getResultPathInput(0)!;
@@ -203,7 +222,7 @@ describe('BuildPhaseEditorComponent', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [] });
             fixture.detectChanges();
 
-            getAddResultPathButton().click();
+            component.updateTestsExpected(true);
             fixture.detectChanges();
 
             const resultPathInput = getResultPathInput(0)!;
@@ -229,8 +248,7 @@ describe('BuildPhaseEditorComponent', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [] });
             fixture.detectChanges();
 
-            getAddResultPathButton().click();
-            fixture.detectChanges();
+            component.addResultPath();
 
             expect(component.phase().resultPaths.length).toBe(1);
             expect(component.phase().resultPaths[0]).toBe('');
@@ -240,8 +258,7 @@ describe('BuildPhaseEditorComponent', () => {
             fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: undefined as any });
             fixture.detectChanges();
 
-            getAddResultPathButton().click();
-            fixture.detectChanges();
+            component.addResultPath();
 
             expect(component.phase().resultPaths.length).toBe(1);
         });

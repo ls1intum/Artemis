@@ -56,6 +56,8 @@ export class BuildPhaseEditorComponent {
     protected readonly faArrowDown = faArrowDown;
     protected readonly faArrowUp = faArrowUp;
 
+    private cachedResultPaths: string[] = [];
+
     readonly phase = model.required<BuildPhase>();
 
     readonly index = input.required<number>();
@@ -65,10 +67,6 @@ export class BuildPhaseEditorComponent {
     readonly displayedNumber = computed(() => this.index() + 1);
     readonly isFirst = computed(() => this.index() === 0);
     readonly isOnly = computed(() => this.isFirst() && this.isLast());
-
-    readonly testsExpectedHintKey = computed(() =>
-        this.phase().resultPaths?.length ? 'artemisApp.programmingExercise.buildPhasesEditor.testsExpected' : 'artemisApp.programmingExercise.buildPhasesEditor.noTestsExpected',
-    );
 
     readonly isNamePatternValid = computed(() => BUILD_PHASE_NAME_PATTERN.test(this.phase().name));
 
@@ -140,6 +138,25 @@ export class BuildPhaseEditorComponent {
      */
     updateForceRun(forceRun: boolean): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, forceRun }));
+    }
+
+    /**
+     * Updates whether this phase is expected to produce test results.
+     *
+     * @param testsExpected true if this phase should collect result paths
+     */
+    updateTestsExpected(testsExpected: boolean): void {
+        this.phase.update((oldPhase) => {
+            const currentResultPaths = oldPhase.resultPaths ?? [];
+            if (!testsExpected) {
+                this.cachedResultPaths = [...currentResultPaths];
+                return { ...oldPhase, resultPaths: [] };
+            }
+
+            const restoredResultPaths = this.cachedResultPaths.length ? this.cachedResultPaths : [''];
+            this.cachedResultPaths = [];
+            return { ...oldPhase, resultPaths: [...restoredResultPaths] };
+        });
     }
 
     /**

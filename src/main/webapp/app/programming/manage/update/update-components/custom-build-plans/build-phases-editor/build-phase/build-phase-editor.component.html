@@ -102,43 +102,51 @@
         <jhi-monaco-editor-fit-text data-testid="script-editor" [text]="phase().script" (textChange)="updateScript($event)" />
     </div>
 
-    <!-- Result paths -->
-    <div class="d-flex flex-column gap-1">
-        <div class="d-flex align-items-center">
-            <label class="me-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.resultPaths"></label>
+    <div class="d-flex gap-2 mb-2">
+        <p-checkbox [inputId]="'phase-tests-expected-input-' + index()" [binary]="true" [ngModel]="!!phase().resultPaths?.length" (ngModelChange)="updateTestsExpected($event)" />
+        <div class="d-flex gap-1">
+            <label [for]="'phase-tests-expected-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.testsExpected"></label>
             <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.resultPathsHelp" />
-            <span class="ms-2 small text-secondary">{{ testsExpectedHintKey() | artemisTranslate }}</span>
-        </div>
-
-        @for (path of phase().resultPaths; track $index) {
-            <div class="d-flex align-items-center gap-2">
-                <input
-                    [attr.data-testid]="'result-path-input-' + $index"
-                    pInputText
-                    pSize="small"
-                    [ngModel]="path"
-                    (ngModelChange)="updateResultPath($index, $event)"
-                    [placeholder]="'artemisApp.programmingExercise.buildPhasesEditor.resultPathPlaceholder' | artemisTranslate"
-                />
-                <button
-                    [attr.data-testid]="'delete-result-path-button-' + $index"
-                    pButton
-                    [text]="true"
-                    [rounded]="true"
-                    size="small"
-                    severity="danger"
-                    (click)="deleteResultPath($index)"
-                >
-                    <fa-icon [icon]="faXmark" pButtonIcon />
-                </button>
-            </div>
-        }
-
-        <div>
-            <button [id]="'add-result-path-button-' + index()" pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
-                <fa-icon [icon]="faPlus" pButtonIcon />
-                <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addResultPath"></span>
-            </button>
         </div>
     </div>
+
+    @if (phase().resultPaths?.length) {
+        <!-- Result paths -->
+        <div class="d-flex flex-column gap-1">
+            <div class="d-flex align-items-center">
+                <label class="me-1" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.resultPaths"></label>
+            </div>
+
+            @for (path of phase().resultPaths; track $index) {
+                <div class="d-flex align-items-center gap-2">
+                    <input
+                        [attr.data-testid]="'result-path-input-' + $index"
+                        pInputText
+                        pSize="small"
+                        [ngModel]="path"
+                        (ngModelChange)="updateResultPath($index, $event)"
+                        [placeholder]="'artemisApp.programmingExercise.buildPhasesEditor.resultPathPlaceholder' | artemisTranslate"
+                    />
+                    <button
+                        [attr.data-testid]="'delete-result-path-button-' + $index"
+                        pButton
+                        [text]="true"
+                        [rounded]="true"
+                        size="small"
+                        severity="danger"
+                        (click)="deleteResultPath($index)"
+                    >
+                        <fa-icon [icon]="faXmark" pButtonIcon />
+                    </button>
+                </div>
+            }
+
+            <div>
+                <button [id]="'add-result-path-button-' + index()" pButton [text]="true" size="small" severity="secondary" (click)="addResultPath()">
+                    <fa-icon [icon]="faPlus" pButtonIcon />
+                    <span pButtonLabel jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.addResultPath"></span>
+                </button>
+            </div>
+        </div>
+    }
 </p-card>
