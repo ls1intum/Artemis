@@ -1,5 +1,4 @@
-import { Component, OnDestroy, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
-import { KeyValuePipe } from '@angular/common';
+import { Component, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
 import { WebsocketService } from 'app/shared/service/websocket.service';
@@ -8,7 +7,6 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-// import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -35,7 +33,7 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
-import { CellRendererParams, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
 import { ParticipationSearch } from 'app/shared/table/pageable-table';
 import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
@@ -67,7 +65,6 @@ export enum FilterProp {
         NgbDropdown,
         NgbDropdownToggle,
         NgbDropdownMenu,
-        KeyValuePipe,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
@@ -95,7 +92,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly ActionType = ActionType;
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly RepositoryType = RepositoryType;
-    readonly FilterProp = FilterProp;
 
     readonly exercise = signal<Exercise | undefined>(undefined);
     readonly participations = signal<ParticipationManagementDTO[]>([]);
@@ -119,6 +115,36 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeStepsDTO()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
     });
 
+    readonly scoresRoute = computed<any[]>(() => {
+        const ex = this.exercise();
+        if (!ex) return [];
+        const exam = ex.exerciseGroup?.exam;
+        const base: any[] = ['/course-management'];
+        if (exam) {
+            base.push(exam.course!.id, 'exams', exam.id, 'exercise-groups', ex.exerciseGroup!.id);
+        } else {
+            base.push(ex.course!.id);
+        }
+        base.push(ex.type + '-exercises', ex.id, 'scores');
+        return base;
+    });
+
+    readonly relevantFilters = computed<FilterProp[]>(() => {
+        const ex = this.exercise();
+        if (!ex) return [];
+        return Object.values(FilterProp).filter((f) => {
+            switch (f) {
+                case FilterProp.FAILED:
+                case FilterProp.NO_PRACTICE:
+                    return ex.type === ExerciseType.PROGRAMMING;
+                default:
+                    return true;
+            }
+        });
+    });
+
+    readonly isExamExercise = computed(() => !!this.exercise()?.exerciseGroup);
+
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     // private exerciseSubmissionState: ExerciseSubmissionState = {};
     private paramSub: Subscription;
@@ -135,18 +161,18 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
 
     // Template refs
-    readonly idCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('idCellTemplate');
-    readonly repositoryCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('repositoryCellTemplate');
-    readonly buildPlanCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('buildPlanCellTemplate');
-    readonly initStateCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('initStateCellTemplate');
-    readonly initDateCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('initDateCellTemplate');
-    readonly submissionCountCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('submissionCountCellTemplate');
-    readonly participantNameCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('participantNameCellTemplate');
-    readonly teamStudentsCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('teamStudentsCellTemplate');
-    readonly practiceCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('practiceCellTemplate');
-    readonly basicPresentationCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('basicPresentationCellTemplate');
-    readonly gradedPresentationCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('gradedPresentationCellTemplate');
-    readonly individualDueDateCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('individualDueDateCellTemplate');
+    readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('idCellTemplate');
+    readonly repositoryCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('repositoryCellTemplate');
+    readonly buildPlanCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('buildPlanCellTemplate');
+    readonly initStateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initStateCellTemplate');
+    readonly initDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('initDateCellTemplate');
+    readonly submissionCountCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('submissionCountCellTemplate');
+    readonly participantNameCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('participantNameCellTemplate');
+    readonly teamStudentsCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('teamStudentsCellTemplate');
+    readonly practiceCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('practiceCellTemplate');
+    readonly basicPresentationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('basicPresentationCellTemplate');
+    readonly gradedPresentationCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('gradedPresentationCellTemplate');
+    readonly individualDueDateCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('individualDueDateCellTemplate');
 
     readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => {
         const ex = this.exercise();
@@ -361,36 +387,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.loadPage();
     }
 
-    isFilterRelevantForConfiguration(filterProp: FilterProp): boolean {
-        const ex = this.exercise();
-        if (!ex) return false;
-        switch (filterProp) {
-            case FilterProp.FAILED:
-            case FilterProp.NO_PRACTICE:
-                return ex.type === ExerciseType.PROGRAMMING;
-            default:
-                return true;
-        }
-    }
-
     getParticipationLink(participationId: number): string[] {
-        const ex = this.exercise()!;
-        if (ex.exerciseGroup) {
-            return [participationId.toString()];
-        }
-        return [participationId.toString(), 'submissions'];
-    }
-
-    getScoresRoute(exercise: Exercise): any[] {
-        let route: any[] = ['/course-management'];
-        const exam = exercise.exerciseGroup?.exam;
-        if (exam) {
-            route = [...route, exam.course!.id, 'exams', exam.id, 'exercise-groups', exercise.exerciseGroup!.id];
-        } else {
-            route = [...route, exercise.course!.id];
-        }
-        route = [...route, exercise.type + '-exercises', exercise.id, 'scores'];
-        return route;
+        return this.isExamExercise() ? [participationId.toString()] : [participationId.toString(), 'submissions'];
     }
 
     toProgrammingParticipation(dto: ParticipationManagementDTO): ProgrammingExerciseStudentParticipation {

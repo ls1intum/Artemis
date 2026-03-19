@@ -37,7 +37,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { CellRendererParams, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/shared/table/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -139,15 +139,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     paramSub: Subscription;
 
     // Template refs for cell rendering
-    readonly nameCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('nameCellTemplate');
-    readonly idCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('idCellTemplate');
-    readonly completionDateTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('completionDateTemplate');
-    readonly lastResultTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('lastResultTemplate');
-    readonly assessmentTypeTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('assessmentTypeTemplate');
-    readonly assessmentNoteTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('assessmentNoteTemplate');
-    readonly practiceTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('practiceTemplate');
-    readonly submissionCountTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('submissionCountTemplate');
-    readonly durationTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationScoreDTO> }>>('durationTemplate');
+    readonly nameCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('nameCellTemplate');
+    readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('idCellTemplate');
+    readonly completionDateTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('completionDateTemplate');
+    readonly lastResultTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('lastResultTemplate');
+    readonly assessmentTypeTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('assessmentTypeTemplate');
+    readonly assessmentNoteTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('assessmentNoteTemplate');
+    readonly practiceTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('practiceTemplate');
+    readonly submissionCountTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('submissionCountTemplate');
+    readonly durationTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('durationTemplate');
     readonly filterActionsTemplate = viewChild<TemplateRef<unknown>>('filterDropdownTemplate');
     readonly exportPopover = viewChild<NgbPopover>('exportPopover');
 

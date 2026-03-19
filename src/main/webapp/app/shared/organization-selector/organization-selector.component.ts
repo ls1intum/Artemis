@@ -1,10 +1,10 @@
-import { Component, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, computed, inject, signal, viewChild } from '@angular/core';
 import { OrganizationManagementService } from 'app/core/admin/organization-management/organization-management.service';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Organization } from 'app/core/shared/entities/organization.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TableLazyLoadEvent } from 'primeng/table';
-import { CellRendererParams, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -38,7 +38,7 @@ export class OrganizationSelectorComponent {
 
     private loadRequestId = 0;
 
-    private readonly logoTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<Organization> }>>('logoCell');
+    private readonly logoTemplate = viewChild<CellTemplateRef<Organization>>('logoCell');
 
     protected readonly assignedOrgIds = new Set<number>(
         (this.config.data?.organizations ?? []).map((o: Organization) => o.id).filter((id: number | undefined): id is number => id !== undefined),
