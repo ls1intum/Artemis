@@ -1074,6 +1074,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setCategories(updateQuizExerciseDTO.categories());
         }
 
+        exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
+
         if (updateQuizExerciseDTO.difficulty() != null) {
             quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
         }
