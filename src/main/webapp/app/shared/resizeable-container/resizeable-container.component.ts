@@ -26,6 +26,7 @@ export class ResizeableContainerComponent implements AfterViewInit {
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
     @Input() examTimeline = false;
+    @Input() showRightPanel = true;
 
     /**
      * Expected to be set to true while the component is printed as PDF.

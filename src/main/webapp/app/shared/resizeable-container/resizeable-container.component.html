@@ -14,7 +14,7 @@
     </div>
     <!--endregion LEFT SIDE-->
     <!--region RIGHT SIDE-->
-    @if (!examTimeline) {
+    @if (!examTimeline && showRightPanel) {
         @if (collapsed && !expandProblemStatement) {
             <div class="collapsed right text-white bg-primary" (click)="collapsed = !collapsed">
                 <fa-icon [icon]="faChevronLeft" />

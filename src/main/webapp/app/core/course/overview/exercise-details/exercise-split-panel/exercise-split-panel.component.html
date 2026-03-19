@@ -1,5 +1,16 @@
 <jhi-resizable-panels>
-    <ng-template jhiPanel label="Problem statement" [icon]="faGear">
+    @if (studentParticipation()) {
+        <ng-template jhiPanel label="Editor" [icon]="getIcon(exercise().type)">
+            @if (exercise().type === ExerciseType.TEXT) {
+                <jhi-text-editor [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
+            }
+            @if (exercise().type === ExerciseType.PROGRAMMING) {
+                <p>Hello Programming</p>
+            }
+        </ng-template>
+    }
+
+    <ng-template jhiPanel label="Problem statement" [icon]="faAlignLeft">
         <div class="d-flex flex-fill p-3">
             <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()!" />
         </div>

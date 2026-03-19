@@ -102,6 +102,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participationId = input<number>();
     displayHeader = input<boolean>(true);
     expandProblemStatement = input<boolean>(true);
+    showProblemStatement = input<boolean>(true);
     inputExercise = input<TextExercise>();
     inputSubmission = input<TextSubmission>();
     inputParticipation = input<StudentParticipation>();
