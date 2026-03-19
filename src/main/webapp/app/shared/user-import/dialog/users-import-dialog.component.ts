@@ -19,7 +19,7 @@ import { HelpIconComponent } from '../../components/help-icon/help-icon.componen
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PrimeTemplate } from 'primeng/api';
-import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared/user-import/helpers/read-users-from-csv';
+import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared/user-import/util/read-users-from-csv';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
