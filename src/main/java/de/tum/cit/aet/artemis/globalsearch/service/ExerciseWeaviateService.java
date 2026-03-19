@@ -79,7 +79,7 @@ public class ExerciseWeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to upsert exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
-            throw new WeaviateException("Failed to upsert exercise: " + exerciseWeaviateDTO.exerciseId(), e);
+            throw new WeaviateException("Failed to upsert exercise " + exerciseWeaviateDTO.exerciseId() + " in Weaviate: " + e.getMessage(), e);
         }
     }
 
@@ -378,7 +378,7 @@ public class ExerciseWeaviateService {
         }
         catch (Exception e) {
             log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
-            throw new WeaviateException("Failed to search exercises", e);
+            throw new WeaviateException("Failed to search exercises in Weaviate: " + e.getMessage(), e);
         }
     }
 
@@ -406,7 +406,7 @@ public class ExerciseWeaviateService {
         }
         catch (Exception e) {
             log.error("Failed to fetch exercises: {}", e.getMessage(), e);
-            throw new WeaviateException("Failed to fetch exercises", e);
+            throw new WeaviateException("Failed to fetch exercises from Weaviate: " + e.getMessage(), e);
         }
     }
 }

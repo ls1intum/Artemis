@@ -136,7 +136,7 @@ public class WeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-            throw new WeaviateException("Failed to create collection: " + collectionName, e);
+            throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
         }
         catch (WeaviateApiException e) {
             // In test environments, multiple Spring contexts may share one Weaviate instance,
@@ -146,7 +146,7 @@ public class WeaviateService {
             }
             else {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-                throw new WeaviateException("Failed to create collection: " + collectionName, e);
+                throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
             }
         }
     }
