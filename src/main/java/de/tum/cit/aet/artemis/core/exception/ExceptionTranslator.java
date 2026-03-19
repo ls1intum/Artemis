@@ -201,8 +201,9 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
 
     @ExceptionHandler
     public ResponseEntity<Problem> handleWeaviateException(de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException ex, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).withTitle("Weaviate Error").withDetail(ex.getMessage())
-                .with(MESSAGE_KEY, "error.weaviateOperationFailed").build();
+        log.error("Weaviate operation failed: {}", ex.getMessage(), ex);
+        Problem problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).withTitle("Weaviate Error")
+                .withDetail("An internal error occurred while processing the request").with(MESSAGE_KEY, "error.weaviateOperationFailed").build();
         return create(ex, problem, request);
     }
 

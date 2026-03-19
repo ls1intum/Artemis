@@ -377,7 +377,7 @@ public class ExerciseWeaviateService {
             }
         }
         catch (Exception e) {
-            log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
+            log.error("Failed to search exercises (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
             throw new WeaviateException("Failed to search exercises in Weaviate: " + e.getMessage(), e);
         }
     }
