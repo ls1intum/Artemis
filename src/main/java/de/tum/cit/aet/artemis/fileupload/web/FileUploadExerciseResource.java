@@ -732,8 +732,8 @@ public class FileUploadExerciseResource {
 
         Set<CompetencyExerciseLink> updated = new HashSet<>();
         for (var linkDto : dto.competencyLinks()) {
-            if (linkDto == null || linkDto.competency() == null || linkDto.competency().id() == null) {
-                throw new BadRequestAlertException("Each competency link must include competency.id.", ENTITY_NAME, "competencyIdMissing");
+            if (linkDto == null || linkDto.competency() == null) {
+                throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
             }
             Long competencyId = linkDto.competency().id();
 
