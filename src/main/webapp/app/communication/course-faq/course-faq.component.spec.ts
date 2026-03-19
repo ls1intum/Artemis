@@ -109,6 +109,7 @@ describe('CourseFaqs', () => {
                             }),
                         );
                     },
+                    convertFaqCategoriesAsStringFromServer: () => [],
                     applyFilters: () => {
                         return [faq2, faq3];
                     },

@@ -110,6 +110,7 @@ describe('FaqComponent', () => {
                             }),
                         );
                     },
+                    convertFaqCategoriesAsStringFromServer: () => [],
                     applyFilters: () => {
                         return [faq2, faq3];
                     },

@@ -395,9 +395,12 @@ describe('MetisConversationService', () => {
     it('should check and accept code of conduct', () => {
         const checkStub = vi.spyOn(conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
         metisConversationService.checkIsCodeOfConductAccepted(course);
-        metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
-            expect(isCodeOfConductAccepted).toBe(false);
+        let lastValue: boolean | undefined;
+        const sub = metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+            lastValue = isCodeOfConductAccepted;
         });
+        expect(lastValue).toBe(false);
+        sub.unsubscribe();
         expect(checkStub).toHaveBeenCalledOnce();
 
         const acceptStub = vi.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
@@ -616,9 +619,8 @@ describe('MetisConversationService', () => {
             { unreadMessagesCount: 0, isMuted: false },
         ];
         (metisConversationService as any).hasUnreadMessagesCheck();
-        metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
-            expect(hasUnread).toBe(false);
-        });
+        // hasUnreadMessages starts as false and check finds no unread non-muted, so value stays false (no emission)
+        expect((metisConversationService as any).hasUnreadMessages).toBe(false);
 
         // Unread in non-muted conversation
         (metisConversationService as any).conversationsOfUser = [
