@@ -8,15 +8,19 @@ set -e
 #   ./run-e2e-tests-local.sh [options]
 #
 # Options:
+#   --stop              Stop all Docker containers and volumes; exit
 #   --skip-build        Skip building the WAR file (use existing one)
 #   --skip-cleanup      Skip Docker cleanup before running
 #   --filter <pattern>  Run only tests matching the pattern (e.g., "Quiz")
+#   --debug             Show all Docker container output (default: only test results)
 #   --db <postgres>       Select database for E2E tests (default: postgres)
 #   --help              Show this help message
 # =============================================================================
 
+STOP=false
 SKIP_BUILD=false
 SKIP_CLEANUP=false
+DEBUG=false
 TEST_FILTER=""
 DB_TYPE="postgres"
 
@@ -29,8 +33,10 @@ NC='\033[0m'
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --stop) STOP=true; shift ;;
         --skip-build) SKIP_BUILD=true; shift ;;
         --skip-cleanup) SKIP_CLEANUP=true; shift ;;
+        --debug) DEBUG=true; shift ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -61,10 +67,29 @@ while [[ $# -gt 0 ]]; do
             fi
             shift
             ;;
-        --help) head -15 "$0" | tail -10; exit 0 ;;
+        --help) head -17 "$0" | tail -12; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
+
+cd "$(dirname "$0")"
+
+# =============================================================================
+# --stop: Tear down all Docker containers and volumes
+# =============================================================================
+if [ "$STOP" = true ]; then
+    echo -e "${BLUE}Stopping all E2E Docker services...${NC}"
+    cd docker
+    for compose_file in playwright-E2E-tests-postgres-localci.yml playwright-E2E-tests-postgres.yml playwright-E2E-tests-multi-node.yml; do
+        if [ -f "$compose_file" ]; then
+            docker compose --env-file ../.env -f "$compose_file" down -v 2>/dev/null || true
+        fi
+    done
+    cd ..
+    docker volume rm artemis-postgres-data artemis-data 2>/dev/null || true
+    echo -e "${GREEN}All services stopped.${NC}"
+    exit 0
+fi
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  Artemis E2E Test Runner${NC}"
@@ -86,8 +111,6 @@ export FAST_TEST_TIMEOUT_SECONDS="${FAST_TEST_TIMEOUT_SECONDS:-45}"    # CI: 60
 export BUILD_RESULT_TIMEOUT_MS="${BUILD_RESULT_TIMEOUT_MS:-90000}"     # CI: 90000
 export BUILD_FINISH_TIMEOUT_MS="${BUILD_FINISH_TIMEOUT_MS:-60000}"     # CI: 60000
 export EXAM_DASHBOARD_TIMEOUT_MS="${EXAM_DASHBOARD_TIMEOUT_MS:-60000}" # CI: 60000
-
-cd "$(dirname "$0")"
 
 # Step 1: Build WAR
 if [ "$SKIP_BUILD" = false ]; then
@@ -123,6 +146,9 @@ echo -e "${BLUE}Step 3: Running E2E tests...${NC}"
 echo ""
 
 CONFIGURATION="postgres-localci"
+
+export E2E_DEBUG="$DEBUG"
+export E2E_LOG_DIR=".e2e-local"
 
 .ci/E2E-tests/execute-locally.sh "$CONFIGURATION" "$TEST_FILTER"
 
