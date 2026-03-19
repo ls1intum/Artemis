@@ -109,7 +109,7 @@ class AeolusTest {
     }
 
     @Test
-    void testWindfileToBuildPlanPhasesWrapsWorkdir() {
+    void testWindfileToBuildPlanPhasesPrependsWorkdir() {
         ScriptAction scriptActionWithWorkdir = new ScriptAction("scriptAction", Map.of(), Map.of(), List.of(), "tests", false, null, "./gradlew test");
         Windfile workdirWindfile = new Windfile("v0.0.1", windfile.metadata(), List.of(scriptActionWithWorkdir), null);
 
@@ -117,10 +117,8 @@ class AeolusTest {
 
         assertThat(phases.phases()).hasSize(1);
         assertThat(phases.phases().getFirst().script()).isEqualTo("""
-                ORIGINAL_DIR="$(pwd)"
                 cd "tests"
-                ./gradlew test
-                cd "$ORIGINAL_DIR\"""");
+                ./gradlew test""");
         assertThat(phases.dockerImage()).isEqualTo("image:tag");
     }
 }
