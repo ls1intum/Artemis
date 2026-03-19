@@ -111,21 +111,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithPlantUmlSelfContained() throws Exception {
-        String ps = "Some text\n@startuml\n!pragma layout smetana\nclass Student\n@enduml\nMore text";
-        TextExercise exercise = createCourseExerciseWithProblemStatement(ps);
-
-        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
-
-        assertThat(result.diagrams()).hasSize(1);
-        assertThat(result.diagrams().getFirst().renderMode()).isEqualTo("inline");
-        assertThat(result.diagrams().getFirst().inlineSvg()).contains("<svg");
-        assertThat(result.html()).contains("<svg");
-        assertThat(result.assets().diagramMode()).isEqualTo("inline");
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenderWithKaTeX() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("The formula is $$E = mc^2$$");
 
@@ -155,6 +140,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
         assertThat(result.html()).contains("<table>");
+        assertThat(result.html()).contains("<th>Col A</th>");
+        assertThat(result.html()).contains("<td>1</td>");
     }
 
     @Test
@@ -164,11 +151,16 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
-        // With @JsonInclude(NON_EMPTY), empty strings and empty lists are omitted from JSON,
-        // so Jackson deserializes them as null
+        // Null PS should return empty content (NON_EMPTY serialization omits empty fields → null on deserialization)
         assertThat(result.html()).isNullOrEmpty();
         assertThat(result.tasks()).isNullOrEmpty();
         assertThat(result.diagrams()).isNullOrEmpty();
+        // Assets and version should still be present
+        assertThat(result.assets()).isNotNull();
+        assertThat(result.assets().katex()).isEqualTo("absent");
+        assertThat(result.assets().highlighting()).isEqualTo("absent");
+        assertThat(result.rendererVersion()).isNotBlank();
+        assertThat(result.contentHash()).isNotBlank();
     }
 
     @Test
@@ -196,13 +188,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     // --- Authorization tests ---
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAuthStudentCanAccessCourseExercise() throws Exception {
-        TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
-        request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
-    }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -265,25 +250,29 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
-        assertThat(result.html()).contains("http");
-        assertThat(result.html()).contains("/api/files/attachments/123");
-        assertThat(result.html()).contains("/api/files/attachments/456");
-        // Should not contain bare relative paths as href or src
+        // Links and images should have absolute URLs (server URL prepended)
         assertThat(result.html()).doesNotContain("href=\"/api/files");
         assertThat(result.html()).doesNotContain("src=\"/api/files");
+        // The absolute URL should contain the server URL prefix + the original path
+        assertThat(result.html()).containsPattern("href=\"https?://[^\"]+/api/files/attachments/123\"");
+        assertThat(result.html()).containsPattern("src=\"https?://[^\"]+/api/files/attachments/456\"");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testSelfContainedSvgNotStrippedBySanitizer() throws Exception {
-        String ps = "@startuml\n!pragma layout smetana\nclass Student\n@enduml";
+    void testRenderWithPlantUmlSelfContained() throws Exception {
+        String ps = "Some text\n@startuml\n!pragma layout smetana\nclass Student\n@enduml\nMore text";
         TextExercise exercise = createCourseExerciseWithProblemStatement(ps);
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
-        // The inline SVG should be present in the HTML
+        // Diagram metadata
+        assertThat(result.diagrams()).hasSize(1);
+        assertThat(result.diagrams().getFirst().renderMode()).isEqualTo("inline");
+        assertThat(result.diagrams().getFirst().inlineSvg()).contains("<svg");
+        assertThat(result.assets().diagramMode()).isEqualTo("inline");
+        // SVG is inlined in the HTML and survives sanitization
         assertThat(result.html()).contains("<svg");
-        // The SVG should contain the class name from the diagram
         assertThat(result.html()).contains("Student");
         // SVG placeholder spans must not remain in the output
         assertThat(result.html()).doesNotContain("artemis-svg-placeholder");
@@ -391,21 +380,16 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAuthTutorExamExerciseExactBoundary() throws Exception {
+    void testAuthTutorExamExerciseJustEnded() throws Exception {
         TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         exercise.setProblemStatement("Hello");
         exerciseRepository.save(exercise);
 
-        // Set exam end date to exactly now — exam has not fully ended yet
+        // Set exam end date to 1 second ago — clearly ended, no race condition
         Exam exam = exercise.getExerciseGroup().getExam();
-        exam.setEndDate(ZonedDateTime.now());
+        exam.setEndDate(ZonedDateTime.now().minusSeconds(1));
         examRepository.save(exam);
 
-        // When endDate equals now, isAfter(now()) may be false (race), but the intent is
-        // that the exam must be strictly in the past. This should be forbidden or at the boundary.
-        // The controller checks: latestIndividualExamEndDate.isAfter(ZonedDateTime.now())
-        // If endDate == now, isAfter returns false, so access is granted.
-        // This is consistent with ExerciseResource behavior.
         request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
     }
 
