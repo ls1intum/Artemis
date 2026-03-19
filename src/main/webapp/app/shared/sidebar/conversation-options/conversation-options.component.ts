@@ -3,7 +3,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { faBoxArchive, faBoxOpen, faEllipsisVertical, faGear, faHeart as faHearthSolid, faVolumeUp, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { faHeart as faHeartRegular } from '@fortawesome/free-regular-svg-icons';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged, filter, takeUntil } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -126,9 +126,14 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
                 selectedTab: ConversationDetailTabs.SETTINGS,
             },
         });
-        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            this.onUpdateSidebar.emit();
-        });
+        ref?.onClose
+            .pipe(
+                filter((result) => result !== undefined),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.onUpdateSidebar.emit();
+            });
     }
 
     private updateConversationIsFavorite() {

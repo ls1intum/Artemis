@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, input } from '@angular/core';
+import { Component, OnChanges, OnInit, input, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -73,13 +73,13 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         super.ngOnChanges();
     }
 
-    isDialogVisible = false;
+    isDialogVisible = signal(false);
 
     /**
      * opens the modal to edit or create a post
      */
     open(): void {
-        this.isDialogVisible = true;
+        this.isDialogVisible.set(true);
         this.isModalOpen.emit();
     }
 
@@ -88,7 +88,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     close(): void {
         this.resetFormGroup();
-        this.isDialogVisible = false;
+        this.isDialogVisible.set(false);
     }
 
     /**
@@ -121,7 +121,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             next: (post: Post) => {
                 this.isLoading = false;
                 this.resetFormGroup();
-                this.isDialogVisible = false;
+                this.isDialogVisible.set(false);
                 this.onCreate.emit(post);
             },
             error: () => {
@@ -140,7 +140,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             next: () => {
                 this.isLoading = false;
                 this.resetFormGroup();
-                this.isDialogVisible = false;
+                this.isDialogVisible.set(false);
             },
             error: () => {
                 this.isLoading = false;

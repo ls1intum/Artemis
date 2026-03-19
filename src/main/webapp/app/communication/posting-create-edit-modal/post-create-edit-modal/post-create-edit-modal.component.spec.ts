@@ -171,8 +171,8 @@ describe('PostCreateEditModalComponent', () => {
     });
 
     it('should set isDialogVisible to true when open is called', () => {
-        expect(component.isDialogVisible).toBe(false);
+        expect(component.isDialogVisible()).toBe(false);
         component.open();
-        expect(component.isDialogVisible).toBe(true);
+        expect(component.isDialogVisible()).toBe(true);
     });
 });
