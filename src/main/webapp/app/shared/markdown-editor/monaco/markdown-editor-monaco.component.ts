@@ -21,7 +21,10 @@ import {
     signal,
     untracked,
 } from '@angular/core';
-import { MonacoEditorComponent, MonacoEditorMode } from 'app/shared/monaco-editor/monaco-editor.component';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
+import { MonacoEditorMode } from 'app/shared/monaco-editor/model/monaco-editor.types';
+import { EditorRange } from 'app/shared/monaco-editor/model/actions/monaco-editor.util';
 import { LineChange } from 'app/programming/shared/utils/diff.utils';
 import {
     NgbDropdown,
@@ -36,7 +39,7 @@ import {
     NgbNavOutlet,
     NgbTooltip,
 } from '@ng-bootstrap/ng-bootstrap';
-import { TextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
+import { TextEditorAction, TextStyleTextEditorAction } from 'app/shared/monaco-editor/model/actions/text-editor-action.model';
 import { BoldAction } from 'app/shared/monaco-editor/model/actions/bold.action';
 import { ItalicAction } from 'app/shared/monaco-editor/model/actions/italic.action';
 import { UnderlineAction } from 'app/shared/monaco-editor/model/actions/underline.action';
@@ -75,6 +78,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MatMenu, MatMenuItem, MatMenuTrigger } from '@angular/material/menu';
 import { MatButton } from '@angular/material/button';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { Tag } from 'primeng/tag';
+import { TranslateService } from '@ngx-translate/core';
 import { ArtemisIntelligenceService } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/artemis-intelligence.service';
 import { faPaperPlane } from '@fortawesome/free-regular-svg-icons';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -82,12 +87,13 @@ import { RedirectToIrisButtonComponent } from 'app/communication/shared/redirect
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FileUploadResponse, FileUploaderService } from 'app/shared/service/file-uploader.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
-import { ConsistencyIssue } from 'app/openapi/model/consistencyIssue';
-import { addCommentBoxes } from 'app/shared/monaco-editor/model/actions/artemis-intelligence/consistency-check';
-import { TranslateService } from '@ngx-translate/core';
-import { CommentThread, CommentThreadLocationType } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
+import { EditorSelectionWithPosition, InstructionSelectionPosition } from 'app/programming/manage/shared/problem-statement.utils';
+
+/** Cached selection with Monaco-compatible data used by scroll re-positioning. */
+type CachedSelectionWithText = InstructionSelectionPosition & { selectedText: string };
 
 export enum MarkdownEditorHeight {
     INLINE = 125,
@@ -98,6 +104,7 @@ export enum MarkdownEditorHeight {
 }
 
 interface MarkdownActionsByGroup {
+    style: TextStyleTextEditorAction[];
     standard: TextEditorAction[];
     header: HeadingAction[];
     color?: ColorAction;
@@ -123,6 +130,9 @@ const BORDER_WIDTH_OFFSET = 3;
 const BORDER_HEIGHT_OFFSET = 2;
 const PROBLEM_STATEMENT_FILE_PATH = 'problem_statement.md';
 const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
+
+/** Vertical offset (in px) applied below the selection end position for the floating action button. */
+const FLOATING_BUTTON_VERTICAL_OFFSET = 5;
 
 @Component({
     selector: 'jhi-markdown-editor-monaco',
@@ -154,15 +164,16 @@ const REVIEW_COMMENT_HOVER_BUTTON_CLASS = 'monaco-add-review-comment-button';
         MatButton,
         ArtemisTranslatePipe,
         RedirectToIrisButtonComponent,
+        Tag,
     ],
 })
 export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterViewInit, OnDestroy {
     private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
     // We inject the MetisService here to avoid a NullInjectorError in the FileUploaderService.
     private readonly metisService = inject(MetisService, { optional: true });
     private readonly fileUploaderService = inject(FileUploaderService);
     private readonly artemisMarkdown = inject(ArtemisMarkdownService);
-    private readonly translateService = inject(TranslateService);
     protected readonly artemisIntelligenceService = inject(ArtemisIntelligenceService); // used in template
     private readonly viewContainerRef = inject(ViewContainerRef);
     private readonly exerciseReviewCommentService = inject(ExerciseReviewCommentService);
@@ -269,7 +280,6 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     @Input()
     metaActions: TextEditorAction[] = [new FullscreenAction()];
 
-    readonly consistencyIssues = input<ConsistencyIssue[]>([]);
     readonly enableExerciseReviewComments = input<boolean>(false);
     readonly showLocationWarning = input<boolean>(false);
 
@@ -319,17 +329,39 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onLeaveVisualTab = new EventEmitter<void>();
 
     readonly onAddReviewComment = output<{ lineNumber: number; fileName: string }>();
+    readonly onNavigateToReviewCommentLocation = output<ReviewThreadLocation>();
+
+    /** Emits when user selects lines in the editor (includes selectedText, position, and column info for inline refinement) */
+    readonly onSelectionChange = output<EditorSelectionWithPosition | undefined>();
+
     defaultPreviewHtml: SafeHtml | undefined;
     inPreviewMode = false;
     inVisualMode = false;
     inEditMode = true;
     uniqueMarkdownEditorId: string;
     resizeObserver?: ResizeObserver;
+    /** Disposable for the selection change listener */
+    private selectionChangeDisposable?: { dispose: () => void };
+    /** Disposable for the scroll change listener used to hide the inline refinement button on editor scroll */
+    private scrollChangeDisposable?: { dispose: () => void };
+    /** Cached model selection used to re-compute screen position after scroll */
+    private cachedSelection?: CachedSelectionWithText;
+    /** Window scroll handler reference, stored so it can be removed in ngOnDestroy. */
+    private windowScrollHandler?: () => void;
+    /** Reactive translated label for the "Your Original" diff-pane header (updates on language change). */
+    protected readonly diffOriginalLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.originalLabel'), { initialValue: '' });
+    /** Reactive translated label for the "AI Suggestion" diff-pane header (updates on language change). */
+    protected readonly diffSuggestionLabel = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.suggestionLabel'), {
+        initialValue: '',
+    });
+    /** Reactive translated hint text for the unified diff view (updates on language change). */
+    protected readonly diffUnifiedHint = toSignal(this.translateService.stream('artemisApp.programmingExercise.problemStatement.diffView.unifiedHint'), { initialValue: '' });
     targetWrapperHeight?: number;
     minWrapperHeight?: number;
     constrainDragPositionFn?: (pointerPosition: Point) => Point;
     isResizing = false;
     displayedActions: MarkdownActionsByGroup = {
+        style: [],
         standard: [],
         header: [],
         color: undefined,
@@ -338,6 +370,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         artemisIntelligence: [],
         meta: [],
     };
+    readonly showTextStyleActions = signal<boolean>(true);
+    readonly showNonTextStyleActions = signal<boolean>(true);
 
     /**
      * Color mapping from hex codes to CSS class names.
@@ -421,19 +455,14 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     }
 
     /**
-     * Renders consistency issues inside the editor.
+     * Renders review comment widgets inside the editor.
      */
     protected renderEditorWidgets() {
-        const issues = this.consistencyIssues();
-
         // Bail out until the editor is ready
         if (!this.monacoEditor) {
             return;
         }
 
-        // Keep review comment widgets stable while refreshing consistency issue widgets.
-        this.monacoEditor.disposeWidgetsByPrefix('comment-');
-        addCommentBoxes(this.monacoEditor, issues, PROBLEM_STATEMENT_FILE_PATH, CommentThreadLocationType.PROBLEM_STATEMENT, this.translateService);
         if (this.enableExerciseReviewComments()) {
             // Avoid tracking UI-only signals (e.g. showLocationWarning) as rerender dependencies.
             untracked(() => this.getReviewCommentManager()?.renderWidgets());
@@ -449,7 +478,8 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         this.minWrapperHeight = this.resizableMinHeight.valueOf();
         this.constrainDragPositionFn = this.constrainDragPosition.bind(this);
         this.displayedActions = {
-            standard: this.filterDisplayedActions(this.defaultActions),
+            style: this.filterDisplayedActions(this.defaultActions).filter((action) => action instanceof TextStyleTextEditorAction) as TextStyleTextEditorAction[],
+            standard: this.filterDisplayedActions(this.defaultActions).filter((action) => !(action instanceof TextStyleTextEditorAction)),
             header: this.filterDisplayedActions(this.headerActions?.actions ?? []),
             color: this.filterDisplayedAction(this.colorAction),
             domain: {
@@ -529,8 +559,86 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
         if (this.useDefaultMarkdownEditorOptions) {
             this.monacoEditor.applyOptionPreset(DEFAULT_MARKDOWN_EDITOR_OPTIONS);
         }
-        this.renderEditorWidgets();
-        this.updateReviewCommentButton();
+
+        if (this.isInCommunication()) {
+            this.showTextStyleActions.set(false);
+        }
+
+        // Set up selection change listener for inline comments/refinement and hiding/showing actions in communication mode
+        this.selectionChangeDisposable = this.monacoEditor.onSelectionChange((selection) => {
+            if (this.isInCommunication()) {
+                this.updateEditorActionsVisibility(selection);
+            }
+            if (selection) {
+                // Get selected text for inline refinement
+                const model = this.monacoEditor.getModel();
+                const selectedText = model ? model.getValueInRange(selection) : '';
+
+                // Only emit if there's actual text selected (not just cursor movement)
+                if (selectedText.trim().length === 0) {
+                    this.cachedSelection = undefined;
+                    this.onSelectionChange.emit(undefined);
+                    return;
+                }
+
+                // Cache the selection so scroll events can re-compute position
+                this.cachedSelection = {
+                    startLine: selection.startLineNumber,
+                    endLine: selection.endLineNumber,
+                    startColumn: selection.startColumn,
+                    endColumn: selection.endColumn,
+                    selectedText,
+                };
+
+                this.emitSelectionWithScreenPosition();
+            } else {
+                this.cachedSelection = undefined;
+                this.onSelectionChange.emit(undefined);
+            }
+        });
+
+        // Hide the inline refinement button whenever any scroll occurs (editor-internal or page).
+        const hideOnScroll = () => {
+            this.cachedSelection = undefined;
+            this.onSelectionChange.emit(undefined);
+        };
+        this.scrollChangeDisposable = this.monacoEditor.onScrollChange(hideOnScroll);
+        this.windowScrollHandler = hideOnScroll;
+        window.addEventListener('scroll', hideOnScroll, { passive: true, capture: true });
+    }
+
+    /**
+     * Computes the screen position from the cached selection and emits the selection event.
+     * If the selection end is scrolled off-screen (coords are null), emits undefined to hide the button.
+     */
+    private emitSelectionWithScreenPosition(): void {
+        if (!this.cachedSelection) {
+            return;
+        }
+
+        const endPosition = { lineNumber: this.cachedSelection.endLine, column: this.cachedSelection.endColumn };
+        const coords = this.monacoEditor.getScrolledVisiblePosition(endPosition);
+        const editorDom = this.monacoEditor.getDomNode();
+
+        if (!coords || !editorDom) {
+            this.onSelectionChange.emit(undefined);
+            return;
+        }
+
+        const editorRect = editorDom.getBoundingClientRect();
+        const screenPosition = {
+            top: editorRect.top + coords.top + coords.height + FLOATING_BUTTON_VERTICAL_OFFSET,
+            left: editorRect.left + coords.left,
+        };
+
+        this.onSelectionChange.emit({
+            startLine: this.cachedSelection.startLine,
+            endLine: this.cachedSelection.endLine,
+            startColumn: this.cachedSelection.startColumn,
+            endColumn: this.cachedSelection.endColumn,
+            selectedText: this.cachedSelection.selectedText,
+            screenPosition,
+        });
     }
 
     /**
@@ -550,6 +658,13 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     ngOnDestroy(): void {
         this.resizeObserver?.disconnect();
+        this.selectionChangeDisposable?.dispose();
+        this.scrollChangeDisposable?.dispose();
+        if (this.windowScrollHandler) {
+            window.removeEventListener('scroll', this.windowScrollHandler, { capture: true });
+            this.windowScrollHandler = undefined;
+        }
+        this.cachedSelection = undefined;
         this.reviewCommentManager?.disposeAll();
         this.monacoEditor?.clearLineDecorationsHoverButton();
     }
@@ -557,6 +672,19 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
     onTextChanged(event: { text: string; fileName: string }): void {
         this.markdown = event.text;
         this.markdownChange.emit(event.text);
+    }
+
+    /**
+     * Hides actions that are not applicable in the given context, and shows actions that can be used.
+     * @param selection Currently selected text
+     */
+    updateEditorActionsVisibility(selection: EditorRange | undefined): void {
+        const isEmpty = !selection || (selection.startLineNumber == selection.endLineNumber && selection.startColumn == selection.endColumn);
+        if (!isEmpty === this.showTextStyleActions() && isEmpty === this.showNonTextStyleActions()) {
+            return;
+        }
+        this.showTextStyleActions.set(!isEmpty);
+        this.showNonTextStyleActions.set(isEmpty);
     }
 
     /**
@@ -827,6 +955,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 filterThread: (thread) => this.isProblemStatementThread(thread),
                 getThreadLine: (thread) => this.getProblemStatementThreadLine(thread),
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
+                onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
             });
         }
@@ -839,6 +968,26 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
 
     private getProblemStatementThreadLine(thread: CommentThread): number {
         return (thread.lineNumber ?? thread.initialLineNumber ?? 1) - 1;
+    }
+
+    /**
+     * Gets the current selection in the editor.
+     * @returns The current selection or undefined.
+     */
+    getSelection(): { startLine: number; endLine: number; startColumn: number; endColumn: number } | undefined {
+        if (!this.monacoEditor) {
+            return undefined;
+        }
+        const sel = this.monacoEditor.getSelection();
+        if (!sel) {
+            return undefined;
+        }
+        return {
+            startLine: sel.startLineNumber,
+            endLine: sel.endLineNumber,
+            startColumn: sel.startColumn,
+            endColumn: sel.endColumn,
+        };
     }
 
     /**

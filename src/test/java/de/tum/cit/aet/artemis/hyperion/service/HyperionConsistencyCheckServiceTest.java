@@ -2,14 +2,21 @@ package de.tum.cit.aet.artemis.hyperion.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.ai.chat.client.ChatClient;
@@ -21,12 +28,23 @@ import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.chat.prompt.Prompt;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tum.cit.aet.artemis.core.config.LLMModelCostConfiguration;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.service.LLMTokenUsageService;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.UserTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
+import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.hyperion.domain.ConsistencyIssueCategory;
+import de.tum.cit.aet.artemis.hyperion.domain.Severity;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -57,6 +75,9 @@ class HyperionConsistencyCheckServiceTest {
     @Mock
     private UserTestRepository userRepository;
 
+    @Mock
+    private CommentThreadRepository commentThreadRepository;
+
     private HyperionConsistencyCheckService hyperionConsistencyCheckService;
 
     @BeforeEach
@@ -72,8 +93,9 @@ class HyperionConsistencyCheckServiceTest {
         var costConfiguration = createTestConfiguration();
         var llmTokenUsageService = new LLMTokenUsageService(llmTokenUsageTraceRepository, llmTokenUsageRequestRepository, costConfiguration);
         var observationRegistry = ObservationRegistry.create();
+        var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, new ObjectMapper());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                observationRegistry, llmTokenUsageService, userRepository);
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository);
     }
 
     @Test
@@ -91,7 +113,7 @@ class HyperionConsistencyCheckServiceTest {
             return new ChatResponse(List.of(new Generation(msg)));
         });
 
-        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
         assertThat(resp.issues()).isNotEmpty();
@@ -115,7 +137,7 @@ class HyperionConsistencyCheckServiceTest {
             return new ChatResponse(List.of(new Generation(msg)), metadata);
         });
 
-        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise);
+        ConsistencyCheckResponseDTO resp = hyperionConsistencyCheckService.checkConsistency(exercise.getId());
 
         assertThat(resp).isNotNull();
         assertThat(resp.timestamp()).isNotNull();
@@ -131,6 +153,90 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(resp.costs()).isNotNull();
         // Costs should be calculated based on configured rates (EUR)
         assertThat(resp.costs().totalEur()).isGreaterThan(0);
+    }
+
+    @Test
+    void checkConsistency_includesExistingConsistencyCheckThreadsInPrompt() throws Exception {
+        final var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        CommentThread existingThread = new CommentThread();
+        existingThread.setId(7L);
+        existingThread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        existingThread.setInitialLineNumber(4);
+        existingThread.setLineNumber(4);
+        existingThread.setOutdated(false);
+        existingThread.setResolved(false);
+
+        User author = new User();
+        author.setFirstName("Ada");
+        author.setLastName("Lovelace");
+
+        Comment existingComment = new Comment();
+        existingComment.setId(100L);
+        existingComment.setType(CommentType.CONSISTENCY_CHECK);
+        existingComment.setCreatedDate(Instant.parse("2026-01-01T10:00:00Z"));
+        existingComment.setAuthor(author);
+        existingComment
+                .setContent(new ConsistencyIssueCommentContentDTO(Severity.HIGH, ConsistencyIssueCategory.METHOD_PARAMETER_MISMATCH, "Already discussed naming mismatch", null));
+        existingThread.getComments().add(existingComment);
+
+        Comment replyComment = new Comment();
+        replyComment.setId(101L);
+        replyComment.setType(CommentType.USER);
+        replyComment.setCreatedDate(Instant.parse("2026-01-01T10:05:00Z"));
+        replyComment.setAuthor(author);
+        replyComment.setContent(new UserCommentContentDTO("This user reply should not be part of prompt context"));
+        existingThread.getComments().add(replyComment);
+        when(commentThreadRepository.findWithCommentsAndGroupByExerciseId(42L)).thenReturn(Set.of(existingThread));
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
+
+        hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, atLeastOnce()).call(promptCaptor.capture());
+
+        String promptText = promptCaptor.getAllValues().stream().flatMap(prompt -> prompt.getInstructions().stream())
+                .map(content -> Objects.toString(content.getText(), content.toString())).collect(Collectors.joining("\n"));
+        assertThat(promptText).contains("Already discussed naming mismatch");
+        assertThat(promptText).doesNotContain("This user reply should not be part of prompt context");
+        assertThat(promptText).contains("threads");
+    }
+
+    @Test
+    void checkConsistency_handlesMissingConsistencyMetadataInRenderedThreadContext() throws Exception {
+        final var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        CommentThread existingThread = new CommentThread();
+        existingThread.setId(11L);
+        existingThread.setTargetType(CommentThreadLocationType.PROBLEM_STATEMENT);
+        existingThread.setInitialLineNumber(5);
+        existingThread.setLineNumber(5);
+        existingThread.setOutdated(false);
+        existingThread.setResolved(false);
+
+        Comment existingComment = new Comment();
+        existingComment.setType(CommentType.CONSISTENCY_CHECK);
+        existingComment.setContent(new ConsistencyIssueCommentContentDTO(null, null, "Missing metadata but keep text", null));
+        existingThread.getComments().add(existingComment);
+        when(commentThreadRepository.findWithCommentsAndGroupByExerciseId(42L)).thenReturn(Set.of(existingThread));
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\":[]}")))));
+
+        hyperionConsistencyCheckService.checkConsistency(exercise.getId());
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, atLeastOnce()).call(promptCaptor.capture());
+
+        String promptText = promptCaptor.getAllValues().stream().flatMap(prompt -> prompt.getInstructions().stream())
+                .map(content -> Objects.toString(content.getText(), content.toString())).collect(Collectors.joining("\n"));
+        assertThat(promptText).contains("[UNKNOWN/UNKNOWN] Missing metadata but keep text");
     }
 
     private static LLMModelCostConfiguration createTestConfiguration() {

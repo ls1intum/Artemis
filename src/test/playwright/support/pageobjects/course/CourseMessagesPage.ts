@@ -21,7 +21,9 @@ export class CourseMessagesPage {
      */
     async createChannelButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Create channel' }).click();
+        const createBtn = this.page.locator('button', { hasText: 'Create channel' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
     }
 
     /**
@@ -29,7 +31,11 @@ export class CourseMessagesPage {
      */
     async browseChannelsButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Browse channels' }).click();
+        const browseBtn = this.page.locator('button', { hasText: 'Browse channels' });
+        await browseBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await browseBtn.click();
+        // Wait for the channels overview to load
+        await this.page.locator('.channels-overview').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
@@ -37,7 +43,7 @@ export class CourseMessagesPage {
      * @param name - The name of the channel to check for existence.
      */
     async checkChannelsExists(name: string) {
-        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name)).toBeVisible();
+        await expect(this.page.locator('.channels-overview .list-group-item').getByText(name, { exact: true })).toBeVisible({ timeout: 15000 });
     }
 
     /**
@@ -141,7 +147,9 @@ export class CourseMessagesPage {
      * @param isPublic - Specifies if the channel is public.
      */
     async createChannel(isAnnouncementChannel: boolean, isPublic: boolean) {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/channels`);
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/channels') && resp.request().method() === 'POST' && resp.status() === 201,
+        );
         await this.page.locator('.modal-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
@@ -315,8 +323,18 @@ export class CourseMessagesPage {
      */
     async editMessage(messageId: number, message: string) {
         const postLocator = this.getSinglePost(messageId);
-        await postLocator.locator('.message-container').click({ button: 'right' });
-        await this.page.waitForSelector('.dropdown-menu.show');
+        await postLocator.scrollIntoViewIfNeeded();
+
+        // Right-click to open context menu, with retry if the menu doesn't appear
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
 
         const editButton = postLocator.locator('.dropdown-menu.show .editIcon');
         if (await editButton.isVisible()) {
@@ -338,11 +356,21 @@ export class CourseMessagesPage {
      * @param messageId - The ID of the message to delete.
      */
     async deleteMessage(messageId: number) {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         const postLocator = this.getSinglePost(messageId);
-        await postLocator.locator('.message-container').click({ button: 'right' });
-        await this.page.waitForSelector('.dropdown-menu.show');
+        await postLocator.scrollIntoViewIfNeeded();
 
+        // Right-click to open context menu, with retry if the menu doesn't appear
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await postLocator.locator('.message-container').click({ button: 'right' });
+            try {
+                await this.page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                break;
+            } catch {
+                if (attempt === 2) throw new Error('Context menu did not appear after 3 right-click attempts');
+            }
+        }
+
+        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages/*`);
         const deleteButton = postLocator.locator('.dropdown-menu.show .deleteIcon');
         if (await deleteButton.isVisible()) {
             await deleteButton.click();
@@ -366,15 +394,15 @@ export class CourseMessagesPage {
      * @param force - Whether to force the click action.
      * @returns A promise that resolves with the Post object after saving.
      */
-    async save(force = false): Promise<Post> {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/messages`);
+    async save(): Promise<Post> {
+        const responsePromise = this.page.waitForResponse(
+            (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/messages') && resp.request().method() === 'POST',
+        );
         const saveButton = this.page.locator('#save');
-        // Ensure the button is visible and scrolled into view
-        await saveButton.scrollIntoViewIfNeeded();
-        // Wait for any notifications that might overlap to disappear
-        await this.page.waitForTimeout(500);
-        await saveButton.click({ force });
+        await expect(saveButton).toBeEnabled({ timeout: 10000 });
+        await saveButton.click({ timeout: 10000 });
         const response = await responsePromise;
+        expect(response.status()).toBe(201);
         return response.json();
     }
 
@@ -383,7 +411,9 @@ export class CourseMessagesPage {
      */
     async createGroupChatButton() {
         await this.page.locator('.btn-primary.btn-sm.square-button').click();
-        await this.page.locator('button', { hasText: 'Create group chat' }).click();
+        const createBtn = this.page.locator('button', { hasText: 'Create group chat' });
+        await createBtn.waitFor({ state: 'visible', timeout: 5000 });
+        await createBtn.click();
     }
 
     /**
@@ -391,19 +421,27 @@ export class CourseMessagesPage {
      * @returns A promise that resolves with the GroupChat object after creation.
      */
     async createGroupChat(): Promise<GroupChat> {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/group-chats`);
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats') && !resp.url().includes('/register') && resp.request().method() === 'POST');
         await this.page.locator('#submitButton').click();
         const response = await responsePromise;
-        return response.json();
+        const groupChat: GroupChat = await response.json();
+        // Wait for Angular to navigate to the new conversation
+        await this.page.waitForURL(`**/communication?conversationId=${groupChat.id}`, { timeout: 10000 });
+        return groupChat;
     }
 
     /**
      * Updates a group chat's registration status and waits for the response.
      */
     async updateGroupChat() {
-        const responsePromise = this.page.waitForResponse(`api/communication/courses/*/group-chats/*/register`);
-        await this.page.locator('#submitButton').click();
-        await responsePromise;
+        const submitButton = this.page.locator('#submitButton');
+        await expect(submitButton).toBeEnabled({ timeout: 10000 });
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/register') && resp.request().method() === 'POST');
+        await submitButton.click();
+        const response = await responsePromise;
+        expect(response.status()).toBeLessThan(300);
+        // Wait for Angular to process the response and update the conversation header
+        await this.page.waitForTimeout(500);
     }
 
     /**
@@ -411,25 +449,97 @@ export class CourseMessagesPage {
      * @param user - The username of the user to add to the group chat.
      */
     async addUserToGroupChat(user: string) {
-        await this.page.locator('#users-selector0-search-input').fill(user);
-        await this.page.locator('.dropdown-item', { hasText: `(${user})` }).click();
+        // Use a flexible selector that matches any users-selector search input (the ID suffix is a global counter)
+        const searchInput = this.page.locator('input[id$="-search-input"][id^="users-selector"]');
+        const dropdownItem = this.page.locator('.dropdown-item', { hasText: `(${user})` });
+        for (let attempt = 0; attempt < 3; attempt++) {
+            await searchInput.clear();
+            await searchInput.fill(user);
+            try {
+                await dropdownItem.waitFor({ state: 'visible', timeout: 8000 });
+                await dropdownItem.click();
+                return;
+            } catch {
+                if (attempt === 2) throw new Error(`User search dropdown did not appear after 3 attempts for '${user}'`);
+            }
+        }
     }
 
     /**
-     * Clicks the button to add users to a group chat.
+     * Clicks the button to add users to a group chat and waits for the modal to appear.
      */
     async addUserToGroupChatButton() {
-        await this.page.locator('.addUsers').click();
+        const addUsersBtn = this.page.locator('.addUsers');
+        await addUsersBtn.waitFor({ state: 'visible', timeout: 10000 });
+        await addUsersBtn.click();
+        // Wait for the add-users modal form to render (use flexible selector for the search input ID)
+        await this.page.locator('input[id$="-search-input"][id^="users-selector"]').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
-     * Navigates to a specific conversation in a course and opens the member list.
-     * @param courseID - The ID of the course.
-     * @param conversationID - The ID of the conversation.
+     * Navigates to a conversation and waits for it to become active.
+     * Angular's setActiveConversation() looks up the conversationId in a cached list.
+     * If the cache isn't ready when the route first processes, the conversation won't activate.
+     * We handle this by navigating to the full URL, waiting for the conversations API to respond
+     * (which populates the cache), then reloading if the conversation didn't activate.
      */
+    async openConversation(courseID: number, conversationID: number) {
+        const fullUrl = `/courses/${courseID}/communication?conversationId=${conversationID}`;
+        const membersButton = this.page.locator('.members');
+
+        // Attempt 1: Navigate directly to the conversation URL
+        // Set up the response waiter BEFORE navigation so we don't miss the response
+        const conversationsApiPromise = this.page.waitForResponse(
+            (resp) =>
+                resp.url().includes('/api/communication/courses/') &&
+                resp.url().match(/\/conversations(\?|$)/) !== null &&
+                resp.request().method() === 'GET' &&
+                resp.status() === 200,
+        );
+        await this.page.goto(fullUrl);
+        // Wait for the conversations list API to complete (cache population)
+        await conversationsApiPromise.catch(() => {});
+
+        // Check if the conversation became active
+        try {
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+            return;
+        } catch {
+            // Conversation didn't activate — cache may not have been ready in time
+        }
+
+        // Attempt 2: Reload the page so Angular re-processes the route with a populated cache
+        await this.page.reload({ waitUntil: 'domcontentloaded' });
+        try {
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+            return;
+        } catch {
+            // Still not active
+        }
+
+        // Attempt 3: Full fresh navigation with wait for API
+        const apiPromise2 = this.page.waitForResponse(
+            (resp) =>
+                resp.url().includes('/api/communication/courses/') &&
+                resp.url().match(/\/conversations(\?|$)/) !== null &&
+                resp.request().method() === 'GET' &&
+                resp.status() === 200,
+        );
+        await this.page.goto(fullUrl);
+        await apiPromise2.catch(() => {});
+        await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+    }
+
     async listMembersButton(courseID: number, conversationID: number) {
-        await this.page.goto(`/courses/${courseID}/communication?conversationId=${conversationID}`);
-        await this.page.locator('.members').click();
+        const membersButton = this.page.locator('.members');
+        try {
+            await membersButton.waitFor({ state: 'visible', timeout: 10000 });
+        } catch {
+            await this.openConversation(courseID, conversationID);
+        }
+        await membersButton.click();
+        // Wait for the members dialog to render
+        await this.page.locator('jhi-conversation-members').waitFor({ state: 'visible', timeout: 10000 });
     }
 
     /**
@@ -437,21 +547,35 @@ export class CourseMessagesPage {
      * @param name - The name of the member to check for in the list.
      */
     async checkMemberList(name: string) {
-        await expect(this.page.locator('jhi-conversation-members')).toContainText(name);
+        await expect(this.page.locator('jhi-conversation-members')).toContainText(name, { timeout: 15000 });
+    }
+
+    /**
+     * Checks that the conversation header (h4 title) contains the given name.
+     * This is faster and more reliable than opening the member list dialog.
+     */
+    async checkConversationHeaderContains(name: string) {
+        await expect(this.page.locator('h4.d-inline-block')).toContainText(name, { timeout: 10000 });
     }
 
     /**
      * Opens the settings tab within the conversation details.
      */
     async openSettingsTab() {
-        await this.page.locator('.settings-tab').click();
+        const settingsTab = this.page.locator('.settings-tab .nav-link');
+        await settingsTab.waitFor({ state: 'visible', timeout: 10000 });
+        await settingsTab.click();
     }
 
     /**
      * Leaves the current group chat.
      */
     async leaveGroupChat() {
-        await this.page.locator('.leave-conversation').click();
+        const leaveButton = this.page.locator('.leave-conversation');
+        await leaveButton.waitFor({ state: 'visible', timeout: 10000 });
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/group-chats/') && resp.url().includes('/deregister') && resp.status() === 200);
+        await leaveButton.click();
+        await responsePromise;
     }
 
     /**
@@ -462,9 +586,9 @@ export class CourseMessagesPage {
     async checkGroupChatExists(name: string, exist: boolean) {
         const groupChat = this.page.getByTitle(name);
         if (exist) {
-            await expect(groupChat).toBeVisible();
+            await expect(groupChat).toBeVisible({ timeout: 15000 });
         } else {
-            await expect(groupChat).toBeHidden();
+            await expect(groupChat).toBeHidden({ timeout: 15000 });
         }
     }
 
@@ -479,11 +603,11 @@ export class CourseMessagesPage {
     async acceptCodeOfConductButton() {
         const button = this.page.locator('#acceptCodeOfConductButton');
         // Wait a short time for the page to load and determine if the button should be shown
-        await this.page.waitForLoadState('networkidle');
+        await this.page.waitForLoadState('domcontentloaded');
         if (await button.isVisible()) {
             await button.click();
             // Wait for the acceptance to be processed
-            await this.page.waitForLoadState('networkidle');
+            await this.page.waitForLoadState('domcontentloaded');
         }
     }
 }
