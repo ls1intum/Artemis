@@ -96,8 +96,20 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             await expect(completionCheckbox).toBeVisible();
             await completionCheckbox.click();
 
-            // Wait for the completion to be processed
-            await page.waitForLoadState(WAIT_STATE);
+            // Wait until the completion is persisted before reloading.
+            await expect
+                .poll(
+                    async () => {
+                        const progressResponse = await page.request.get(`api/atlas/courses/${course.id}/course-competencies/${competency.id}/student-progress?refresh=true`);
+                        if (!progressResponse.ok()) {
+                            return 0;
+                        }
+                        const progressBody = (await progressResponse.json()) as { progress?: number };
+                        return progressBody.progress ?? 0;
+                    },
+                    { timeout: 60000 },
+                )
+                .toBeGreaterThan(0);
 
             // Refresh the page to see updated progress
             await page.reload();
