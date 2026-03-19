@@ -44,7 +44,7 @@ examples.forEach((activeConversation) => {
         const canAddUsersToConversation = vi.fn();
 
         beforeEach(async () => {
-        vi.useFakeTimers();
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
                 imports: [
                     ConversationMembersComponent,
@@ -92,7 +92,7 @@ examples.forEach((activeConversation) => {
         });
 
         afterEach(() => {
-        vi.useRealTimers();
+            vi.useRealTimers();
             vi.restoreAllMocks();
         });
 

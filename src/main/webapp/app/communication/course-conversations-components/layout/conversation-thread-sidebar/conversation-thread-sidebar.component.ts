@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, effect, inject, input, viewChild, output } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';

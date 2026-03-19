@@ -31,7 +31,14 @@ examples.forEach((activeConversation) => {
 
         beforeEach(async () => {
             TestBed.configureTestingModule({
-                imports: [ReactiveFormsModule, FormsModule, ConversationAddUsersFormComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                imports: [
+                    ReactiveFormsModule,
+                    FormsModule,
+                    ConversationAddUsersFormComponent,
+                    MockComponent(CourseUsersSelectorComponent),
+                    MockPipe(ArtemisTranslatePipe),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [{ provide: TranslateService, useClass: MockTranslateService }],
             });
         });

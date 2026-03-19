@@ -254,7 +254,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
     }
 
     private loadImageError(error: Error): void {
-        // TODO: The 'emit' function requires a mandatory void argument
         this.loadImageFailed.emit();
         captureException(error);
     }
@@ -269,7 +268,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
 
     private checkImageMaxSizeRecursively(): void {
         if (this.setImageMaxSizeRetries > 40) {
-            // TODO: The 'emit' function requires a mandatory void argument
             this.loadImageFailed.emit();
         } else if (this.sourceImageLoaded()) {
             this.setMaxSize();
@@ -470,7 +468,6 @@ export class ImageCropperComponent implements OnChanges, OnInit {
 
     crop(): ImageCroppedEvent | undefined {
         if (this.loadedImage?.transformed?.image != undefined) {
-            // TODO: The 'emit' function requires a mandatory void argument
             this.startCropImage.emit();
             const output = this.cropService.crop(this.sourceImage, this.loadedImage, this.cropper, this.settings);
             if (output != undefined) {

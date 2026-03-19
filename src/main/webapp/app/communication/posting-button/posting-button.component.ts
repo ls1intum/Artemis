@@ -10,7 +10,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 })
 export class PostingButtonComponent {
     readonly buttonIcon = input<IconProp>();
-    readonly buttonLabel = input<string>(undefined!);
+    readonly buttonLabel = input.required<string>();
     readonly buttonLoading = input(false);
     readonly hideLabelMobile = input(true);
 

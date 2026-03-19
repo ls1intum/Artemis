@@ -6,14 +6,11 @@ type RequiredInputs = {
 };
 
 export function initializeDialog(component: AbstractDialogComponent, fixture: ComponentFixture<AbstractDialogComponent>, requiredInputs: RequiredInputs) {
-    // Set inputs before calling initialize() so signal inputs have values
+    // Populate the DynamicDialogConfig.data with the provided inputs,
+    // so that AbstractDialogComponent.initialize() can apply them correctly
+    // (including setting writable signals via .set()).
     Object.keys(requiredInputs).forEach((key) => {
-        try {
-            fixture.componentRef.setInput(key, requiredInputs[key]);
-        } catch {
-            // Not a signal input, assign directly as a regular property
-            (component as any)[key] = requiredInputs[key];
-        }
+        component.dialogConfig.data[key] = requiredInputs[key];
     });
 
     component.initialize();

@@ -91,11 +91,10 @@ describe('TutorSuggestionComponent', () => {
                 provideHttpClient(),
                 provideHttpClientTesting(),
             ],
-        })
-            .overrideComponent(TutorSuggestionComponent, {
-                remove: { imports: [IrisBaseChatbotComponent, ArtemisTimeAgoPipe] },
-                add: { imports: [MockIrisBaseChatbotComponent, MockPipe(ArtemisTimeAgoPipe)] },
-            });
+        }).overrideComponent(TutorSuggestionComponent, {
+            remove: { imports: [IrisBaseChatbotComponent, ArtemisTimeAgoPipe] },
+            add: { imports: [MockIrisBaseChatbotComponent, MockPipe(ArtemisTimeAgoPipe)] },
+        });
 
         fixture = TestBed.createComponent(TutorSuggestionComponent);
         chatService = TestBed.inject(IrisChatService);

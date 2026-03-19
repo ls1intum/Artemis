@@ -32,7 +32,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 describe('PostingThreadComponent', () => {
     setupTestBed({ zoneless: true });
 
-    let component: PostingThreadComponent;
     let fixture: ComponentFixture<PostingThreadComponent>;
 
     beforeEach(() => {
@@ -66,7 +65,6 @@ describe('PostingThreadComponent', () => {
             add: { imports: [MockComponent(PostComponent)] },
         });
         fixture = TestBed.createComponent(PostingThreadComponent);
-        component = fixture.componentInstance;
     });
 
     afterEach(() => {
@@ -75,6 +73,7 @@ describe('PostingThreadComponent', () => {
 
     it('should contain a post', () => {
         fixture.componentRef.setInput('post', post);
+        fixture.componentRef.setInput('showAnswers', true);
 
         fixture.changeDetectorRef.detectChanges();
 

@@ -4,7 +4,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { initializeDialog } from 'test/helpers/dialog-test-helpers';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, ChannelSubType } from 'app/communication/shared/entities/conversation/channel.model';
-import { EMPTY, of, Subject } from 'rxjs';
+import { EMPTY, Subject, of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { LoadingIndicatorContainerStubComponent } from 'test/helpers/stubs/shared/loading-indicator-container-stub.component';
@@ -98,10 +98,8 @@ examples.forEach((exampleChannel) => {
             fixture.detectChanges();
             canCreateChannel.mockReturnValue(true);
             component.canCreateChannel = canCreateChannel;
-            fixture.componentRef.setInput('course', course);
             fixture.componentRef.setInput('createChannelFn', createChannelFn);
-            fixture.componentRef.setInput('channelSubType', exampleChannel.subType);
-            initializeDialog(component, fixture, {});
+            initializeDialog(component, fixture, { course, channelSubType: exampleChannel.subType });
 
             channelItems = fixture.debugElement.queryAll(By.css('jhi-channel-item')).map((debugElement) => debugElement.componentInstance);
         });

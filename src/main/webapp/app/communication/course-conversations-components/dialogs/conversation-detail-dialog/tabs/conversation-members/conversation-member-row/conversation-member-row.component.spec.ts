@@ -65,7 +65,7 @@ examples.forEach((activeConversation) => {
         let translateService: TranslateService;
 
         beforeEach(async () => {
-        vi.useFakeTimers();
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
                 imports: [
                     ConversationMemberRowComponent,
@@ -83,11 +83,10 @@ examples.forEach((activeConversation) => {
                     MockProvider(GroupChatService),
                     MockProvider(AlertService),
                 ],
-            })
-                .overrideComponent(ConversationMemberRowComponent, {
-                    remove: { imports: [TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent] },
-                    add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent)] },
-                });
+            }).overrideComponent(ConversationMemberRowComponent, {
+                remove: { imports: [TranslateDirective, ArtemisTranslatePipe, ProfilePictureComponent] },
+                add: { imports: [MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), MockComponent(ProfilePictureComponent)] },
+            });
         });
 
         beforeEach(() => {
@@ -115,7 +114,7 @@ examples.forEach((activeConversation) => {
         });
 
         afterEach(() => {
-        vi.useRealTimers();
+            vi.useRealTimers();
             vi.restoreAllMocks();
         });
 

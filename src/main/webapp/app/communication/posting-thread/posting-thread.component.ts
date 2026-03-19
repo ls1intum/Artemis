@@ -16,9 +16,9 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
 export class PostingThreadComponent {
     readonly lastReadDate = input<dayjs.Dayjs>();
     readonly readOnlyMode = input(false);
-    readonly post = input<Post>(undefined!);
-    readonly showAnswers = input<boolean>(undefined!);
-    readonly isCommunicationPage = input<boolean>(undefined!);
+    readonly post = input.required<Post>();
+    readonly showAnswers = input.required<boolean>();
+    readonly isCommunicationPage = input<boolean | undefined>();
     readonly showChannelReference = input<boolean>();
     readonly hasChannelModerationRights = input(false);
     readonly openThread = output<Post>();

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, inject, input } from '@angular/core';
+import { Component, OnDestroy, inject, signal } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -32,8 +32,8 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     private ngUnsubscribe = new Subject<void>();
 
-    readonly course = input<Course>(undefined!);
-    readonly activeConversation = input<ConversationDTO>(undefined!);
+    course = signal<Course | undefined>(undefined);
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
 
     isInitialized = false;
     maxSelectable: number | undefined;
@@ -42,7 +42,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
-            const activeConversation = this.activeConversation();
+            const activeConversation = this.activeConversation()!;
             if (isGroupChatDTO(activeConversation)) {
                 this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation?.numberOfMembers ?? 0);
             }
@@ -66,10 +66,10 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
         this.isLoading = true;
 
-        const activeConversation = this.activeConversation();
+        const activeConversation = this.activeConversation()!;
         if (isChannelDTO(activeConversation)) {
             this.channelService
-                .registerUsersToChannel(this.course().id!, activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
+                .registerUsersToChannel(this.course()!.id!, activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
                     finalize(() => this.close()),
                     takeUntil(this.ngUnsubscribe),
@@ -85,7 +85,7 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                 });
         } else if (isGroupChatDTO(activeConversation)) {
             this.groupChatService
-                .addUsersToGroupChat(this.course().id!, activeConversation.id!, userLogins)
+                .addUsersToGroupChat(this.course()!.id!, activeConversation.id!, userLogins)
                 .pipe(
                     finalize(() => this.close()),
                     takeUntil(this.ngUnsubscribe),

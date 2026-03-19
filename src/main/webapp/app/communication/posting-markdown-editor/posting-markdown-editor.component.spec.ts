@@ -74,7 +74,7 @@ describe('PostingsMarkdownEditor', () => {
         scrollStrategies: { reposition: vi.fn().mockReturnValue({}) },
     };
 
-    const mockEditor: { [K in keyof TextEditor]: ReturnType<typeof vi.fn> } = {
+    const mockEditor: Record<keyof TextEditor, any> = {
         getPosition: vi.fn(),
         setPosition: vi.fn(),
         focus: vi.fn(),
@@ -373,7 +373,7 @@ describe('PostingsMarkdownEditor', () => {
         const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
         const stopPropagationSpy = vi.spyOn(event, 'stopPropagation');
 
-        const addEventListenerMock = (mockEditor.getDomNode()?.addEventListener as ReturnType<typeof vi.fn>).mock;
+        const addEventListenerMock = mockEditor.getDomNode()?.addEventListener.mock;
         const keydownListener = addEventListenerMock.calls.find((call: any) => call[0] === 'keydown')[1];
         keydownListener(event);
 

@@ -28,7 +28,6 @@ import { ForwardedMessage } from 'app/communication/shared/entities/forwarded-me
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { PostingType } from '../../../shared/entities/posting.model';
 import { InfiniteScrollDirective } from 'ngx-infinite-scroll';
-import { NgClass } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -74,7 +73,19 @@ examples.forEach((activeConversation) => {
         beforeEach(async () => {
             vi.useFakeTimers();
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule, FaIconComponent, ConversationMessagesComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent), MockComponent(PostingThreadComponent), MockComponent(MessageInlineInputComponent), MockComponent(PostCreateEditModalComponent), MockDirective(TranslateDirective), InfiniteScrollStubDirective],
+                imports: [
+                    FormsModule,
+                    ReactiveFormsModule,
+                    FaIconComponent,
+                    ConversationMessagesComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(ButtonComponent),
+                    MockComponent(PostingThreadComponent),
+                    MockComponent(MessageInlineInputComponent),
+                    MockComponent(PostCreateEditModalComponent),
+                    MockDirective(TranslateDirective),
+                    InfiniteScrollStubDirective,
+                ],
                 providers: [
                     MockProvider(MetisConversationService),
                     MockProvider(MetisService),
@@ -85,8 +96,20 @@ examples.forEach((activeConversation) => {
             });
 
             TestBed.overrideComponent(ConversationMessagesComponent, {
-                remove: { imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective] },
-                add: { imports: [MockComponent(PostingThreadComponent), MockComponent(MessageInlineInputComponent), MockComponent(PostCreateEditModalComponent), InfiniteScrollStubDirective, MockComponent(ButtonComponent), MockDirective(TranslateDirective)], schemas: [NO_ERRORS_SCHEMA] },
+                remove: {
+                    imports: [PostingThreadComponent, MessageInlineInputComponent, PostCreateEditModalComponent, InfiniteScrollDirective, ButtonComponent, TranslateDirective],
+                },
+                add: {
+                    imports: [
+                        MockComponent(PostingThreadComponent),
+                        MockComponent(MessageInlineInputComponent),
+                        MockComponent(PostCreateEditModalComponent),
+                        InfiniteScrollStubDirective,
+                        MockComponent(ButtonComponent),
+                        MockDirective(TranslateDirective),
+                    ],
+                    schemas: [NO_ERRORS_SCHEMA],
+                },
             });
         });
 

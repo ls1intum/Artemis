@@ -10,7 +10,6 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
 describe('PostingButtonComponent', () => {
     setupTestBed({ zoneless: true });
 
-    let component: PostingButtonComponent;
     let fixture: ComponentFixture<PostingButtonComponent>;
     let debugElement: DebugElement;
 
@@ -23,7 +22,7 @@ describe('PostingButtonComponent', () => {
             imports: [PostingButtonComponent, FaIconComponent],
         });
         fixture = TestBed.createComponent(PostingButtonComponent);
-        component = fixture.componentInstance;
+        fixture.componentRef.setInput('buttonLabel', 'test');
         debugElement = fixture.debugElement;
     });
 

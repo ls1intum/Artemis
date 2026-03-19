@@ -34,7 +34,12 @@ describe('AnswerPostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: ViewContainerRef, useClass: MockViewContainerRef }, { provide: DialogService, useValue: { open: vi.fn() } }],
+            providers: [
+                FormBuilder,
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: ViewContainerRef, useClass: MockViewContainerRef },
+                { provide: DialogService, useValue: { open: vi.fn() } },
+            ],
         });
         fixture = TestBed.createComponent(AnswerPostCreateEditModalComponent);
         component = fixture.componentInstance;

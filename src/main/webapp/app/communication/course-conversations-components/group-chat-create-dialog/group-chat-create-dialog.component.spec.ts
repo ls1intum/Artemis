@@ -22,7 +22,14 @@ describe('GroupChatCreateDialogComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule, GroupChatCreateDialogComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                GroupChatCreateDialogComponent,
+                MockComponent(CourseUsersSelectorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },

@@ -55,7 +55,10 @@ describe('CourseNotificationComponent', () => {
 
         await TestBed.configureTestingModule({
             imports: [CommonModule, FaIconComponent, CourseNotificationComponent, MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
-            providers: [{ provide: CourseNotificationService, useValue: courseNotificationService }, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: CourseNotificationService, useValue: courseNotificationService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
 
         fixture = TestBed.createComponent(CourseNotificationComponent);

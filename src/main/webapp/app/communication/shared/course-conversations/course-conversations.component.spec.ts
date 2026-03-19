@@ -51,7 +51,6 @@ import { ConversationGlobalSearchComponent } from 'app/communication/shared/conv
 import { AlertService } from 'app/shared/service/alert.service';
 import { FaqService } from 'app/communication/faq/faq.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgClass } from '@angular/common';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 
@@ -117,10 +116,13 @@ examples.forEach((activeConversation) => {
                     MockComponent(SidebarAccordionComponent),
                     MockPipe(ArtemisTranslatePipe),
                     MockPipe(HtmlForMarkdownPipe),
+                    FormsModule,
+                    ReactiveFormsModule,
+                    FontAwesomeModule,
+                    NgbModule,
+                    TranslateModule.forRoot(),
                 ],
-                declarations: [
-                    LoadingIndicatorContainerStubComponent,
-                ],
+                declarations: [LoadingIndicatorContainerStubComponent],
                 providers: [
                     {
                         provide: BreakpointObserver,
@@ -158,7 +160,6 @@ examples.forEach((activeConversation) => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],
-                imports: [FormsModule, ReactiveFormsModule, FontAwesomeModule, NgbModule, TranslateModule.forRoot()],
             });
 
             const metisService = new MockMetisService();
@@ -465,7 +466,7 @@ examples.forEach((activeConversation) => {
         });
 
         it('onConversationSelected should change active conversation', () => {
-            const setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation').mockImplementation();
+            const setActiveConversationSpy = vi.spyOn(metisConversationService, 'setActiveConversation').mockImplementation(() => {});
             component.onConversationSelected(activeConversation?.id ?? 1);
             expect(setActiveConversationSpy).toHaveBeenCalled();
         });
@@ -490,7 +491,7 @@ examples.forEach((activeConversation) => {
                 component.ngOnInit();
 
                 component.createChannelFn = vi.fn().mockReturnValue(EMPTY);
-                vi.spyOn(component, 'prepareSidebarData').mockImplementation();
+                vi.spyOn(component, 'prepareSidebarData').mockImplementation(() => {});
             });
 
             it('should call createChannelFn with the provided channel', () => {

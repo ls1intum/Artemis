@@ -17,7 +17,7 @@ import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';

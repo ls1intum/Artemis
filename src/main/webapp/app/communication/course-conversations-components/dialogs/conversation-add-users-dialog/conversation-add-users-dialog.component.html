@@ -19,9 +19,9 @@
             <jhi-conversation-add-users-form
                 [isLoading]="isLoading"
                 [maxSelectable]="maxSelectable"
-                [courseId]="course().id!"
+                [courseId]="course()!.id!"
                 (formSubmitted)="onFormSubmitted($event)"
-                [activeConversation]="activeConversation()"
+                [activeConversation]="activeConversation()!"
             />
         </div>
     </div>

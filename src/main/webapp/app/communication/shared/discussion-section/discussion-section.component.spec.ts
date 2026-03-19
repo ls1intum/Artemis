@@ -48,7 +48,6 @@ import { Directive, EventEmitter, Input, Output } from '@angular/core';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { MockMetisConversationService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-conversation.service';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { PostingThreadComponent } from 'app/communication/posting-thread/posting-thread.component';
 import { MessageInlineInputComponent } from 'app/communication/message/message-inline-input/message-inline-input.component';
 import { LinkifyService } from 'app/communication/link-preview/services/linkify.service';
@@ -58,7 +57,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 
 @Directive({
     selector: '[infinite-scroll]',
-    standalone: false,
 })
 class InfiniteScrollStubDirective {
     @Input() scrollWindow = true;
@@ -80,7 +78,14 @@ describe('DiscussionSectionComponent', () => {
     beforeEach(async () => {
         vi.useFakeTimers();
         await TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule), DiscussionSectionComponent, FaIconComponent],
+            imports: [
+                MockModule(FormsModule),
+                MockModule(ReactiveFormsModule),
+                MockModule(NgbTooltipModule),
+                DiscussionSectionComponent,
+                FaIconComponent,
+                InfiniteScrollStubDirective,
+            ],
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
@@ -106,7 +111,6 @@ describe('DiscussionSectionComponent', () => {
                     useValue: new MockActivatedRoute({ postId: metisPostTechSupport.id, courseId: metisCourse.id }),
                 },
             ],
-            declarations: [InfiniteScrollStubDirective],
         })
             .overrideComponent(DiscussionSectionComponent, {
                 set: {

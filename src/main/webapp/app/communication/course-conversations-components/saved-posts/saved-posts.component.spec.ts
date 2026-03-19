@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type Mocked, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SavedPostsComponent } from 'app/communication/course-conversations-components/saved-posts/saved-posts.component';
@@ -19,8 +19,8 @@ describe('SavedPostsComponent', () => {
 
     let component: SavedPostsComponent;
     let fixture: ComponentFixture<SavedPostsComponent>;
-    let savedPostService: vi.Mocked<SavedPostService>;
-    let alertService: vi.Mocked<AlertService>;
+    let savedPostService: Mocked<SavedPostService>;
+    let alertService: Mocked<AlertService>;
 
     const mockPosting: Posting = {
         id: 1,
@@ -50,8 +50,8 @@ describe('SavedPostsComponent', () => {
             ],
         });
 
-        savedPostService = TestBed.inject(SavedPostService) as vi.Mocked<SavedPostService>;
-        alertService = TestBed.inject(AlertService) as vi.Mocked<AlertService>;
+        savedPostService = TestBed.inject(SavedPostService) as Mocked<SavedPostService>;
+        alertService = TestBed.inject(AlertService) as Mocked<AlertService>;
         fixture = TestBed.createComponent(SavedPostsComponent);
         component = fixture.componentInstance;
     });

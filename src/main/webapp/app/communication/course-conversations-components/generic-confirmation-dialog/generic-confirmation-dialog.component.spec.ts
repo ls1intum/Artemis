@@ -37,11 +37,8 @@ describe('GenericConfirmationDialogComponent', () => {
             descriptionKey: 'description',
             confirmButtonKey: 'confirm',
         };
-        fixture.componentRef.setInput('canBeUndone', true);
-        fixture.componentRef.setInput('isDangerousAction', false);
-        fixture.componentRef.setInput('translationParameters', {});
         fixture.changeDetectorRef.detectChanges();
-        initializeDialog(component, fixture, { translationKeys });
+        initializeDialog(component, fixture, { translationKeys, canBeUndone: true, isDangerousAction: false, translationParameters: {} });
     });
 
     afterEach(() => {

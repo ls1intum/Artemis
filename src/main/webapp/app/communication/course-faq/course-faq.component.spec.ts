@@ -55,7 +55,15 @@ describe('CourseFaqs', () => {
         faq3 = createFaq(3, 'category3', '#0ab84f');
 
         TestBed.configureTestingModule({
-            imports: [MockComponent(CustomExerciseCategoryBadgeComponent), MockComponent(CourseFaqAccordionComponent), FaIconComponent, CourseFaqComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(SearchFilterComponent)],
+            imports: [
+                MockComponent(CustomExerciseCategoryBadgeComponent),
+                MockComponent(CourseFaqAccordionComponent),
+                FaIconComponent,
+                CourseFaqComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+                MockComponent(SearchFilterComponent),
+            ],
             providers: [
                 MockProvider(FaqService),
                 { provide: Router, useClass: MockRouter },

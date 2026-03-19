@@ -53,7 +53,7 @@ examples.forEach((activeConversation) => {
         } as ChannelDTO);
 
         beforeEach(async () => {
-        vi.useFakeTimers();
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
                 imports: [ConversationInfoComponent, TranslateModule.forRoot(), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective)],
                 providers: [
@@ -106,7 +106,7 @@ examples.forEach((activeConversation) => {
         });
 
         afterEach(() => {
-        vi.useRealTimers();
+            vi.useRealTimers();
             vi.restoreAllMocks();
         });
 

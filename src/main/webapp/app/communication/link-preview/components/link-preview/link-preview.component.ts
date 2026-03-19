@@ -19,9 +19,9 @@ export class LinkPreviewComponent implements OnInit {
 
     readonly linkPreview = input<LinkPreview>();
     readonly posting = input<Posting>();
-    readonly showLoadingsProgress = input<boolean>(undefined!);
-    readonly loaded = input<boolean>(undefined!);
-    readonly hasError = input<boolean>(undefined!);
+    readonly showLoadingsProgress = input.required<boolean>();
+    readonly loaded = input.required<boolean>();
+    readonly hasError = input.required<boolean>();
     readonly isReply = input<boolean>();
     readonly multiple = input<boolean>();
 

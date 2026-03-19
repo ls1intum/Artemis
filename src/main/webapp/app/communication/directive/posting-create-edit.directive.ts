@@ -1,4 +1,4 @@
-import { Directive, OnChanges, OnInit, inject, output } from '@angular/core';
+import { Directive, Input, OnChanges, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Posting } from 'app/communication/shared/entities/posting.model';
@@ -16,7 +16,7 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     protected modalService = inject(DialogService);
     protected formBuilder = inject(FormBuilder);
 
-    posting: T;
+    @Input() posting: T;
     readonly onCreate = output<T>();
     readonly isModalOpen = output<void>();
 

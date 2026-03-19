@@ -1,4 +1,4 @@
-import { Component, inject, output, input } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -41,8 +41,8 @@ export enum ConversationDetailTabs {
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);
 
-    public readonly activeConversation = input<ConversationDTO>(undefined!);
-    readonly course = input<Course>(undefined!);
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
+    course = signal<Course | undefined>(undefined);
     selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;

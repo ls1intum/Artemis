@@ -1,5 +1,5 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -11,12 +11,12 @@ import { Router } from '@angular/router';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
-    posting: T;
-    readonly isCommunicationPage = input<boolean>(undefined!);
+    @Input() posting: T;
+    readonly isCommunicationPage = input<boolean | undefined>();
     readonly showChannelReference = input<boolean>();
 
     readonly hasChannelModerationRights = input(false);
-    readonly isThreadSidebar = input<boolean>(undefined!);
+    readonly isThreadSidebar = input<boolean | undefined>();
     abstract get reactionsBar(): any;
     showDropdown = false;
     dropdownPosition = { x: 0, y: 0 };

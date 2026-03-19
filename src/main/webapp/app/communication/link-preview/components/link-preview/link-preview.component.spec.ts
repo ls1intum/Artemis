@@ -40,6 +40,9 @@ describe('LinkPreviewComponent', () => {
         metisService = TestBed.inject(MetisService);
         component = fixture.componentInstance;
         fixture.componentRef.setInput('posting', new Post());
+        fixture.componentRef.setInput('showLoadingsProgress', false);
+        fixture.componentRef.setInput('loaded', false);
+        fixture.componentRef.setInput('hasError', false);
         fixture.detectChanges();
     });
 

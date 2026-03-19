@@ -43,7 +43,13 @@ examples.forEach((activeConversation) => {
 
         beforeEach(async () => {
             TestBed.configureTestingModule({
-                imports: [FontAwesomeModule, ConversationDetailDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
+                imports: [
+                    FontAwesomeModule,
+                    ConversationDetailDialogComponent,
+                    MockPipe(ArtemisTranslatePipe),
+                    MockComponent(ChannelIconComponent),
+                    MockDirective(TranslateDirective),
+                ],
                 providers: [
                     { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
                     { provide: DynamicDialogConfig, useValue: { data: {} } },

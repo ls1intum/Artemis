@@ -90,6 +90,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/**/*.routes.ts',        // ignore routes files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/app/assessment/**',     // assessment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/communication/**',   // communication module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/**',           // core module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
@@ -117,6 +118,7 @@ module.exports = {
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
+        '<rootDir>/src/main/webapp/app/communication/',      // communication module uses Vitest
         '<rootDir>/src/main/webapp/app/core/',              // core module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
@@ -173,6 +175,7 @@ module.exports = {
     testPathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
+        '<rootDir>/src/main/webapp/app/communication/', // communication module
         '<rootDir>/src/main/webapp/app/core/',          // core module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module

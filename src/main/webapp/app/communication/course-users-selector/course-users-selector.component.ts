@@ -51,7 +51,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     readonly typeAheadInstance = viewChild.required<NgbTypeahead>('instance');
     disabled = false;
     readonly searchInput = viewChild.required<ElementRef>('searchInput');
-    readonly courseId = input<number>(undefined!);
+    readonly courseId = input.required<number>();
 
     @HostBinding('attr.id')
     id = 'users-selector' + selectorId++;

@@ -53,7 +53,6 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
                 takeUntil(this.destroy$),
             )
             .subscribe(() => {
-                // TODO: The 'emit' function requires a mandatory void argument
                 this.timerAboutToEnd.emit();
                 // if timer is displayed and duration is already over
                 // -> display at least one display time, that's why we use setTimeout

@@ -126,13 +126,9 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
                 selectedTab: ConversationDetailTabs.SETTINGS,
             },
         });
-        ref?.onClose
-            .pipe(
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.onUpdateSidebar.emit();
-            });
+        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            this.onUpdateSidebar.emit();
+        });
     }
 
     private updateConversationIsFavorite() {

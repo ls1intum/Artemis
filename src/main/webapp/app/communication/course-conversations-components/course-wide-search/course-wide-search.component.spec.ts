@@ -26,7 +26,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 
 @Directive({
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
-    standalone: false,
 })
 class InfiniteScrollStubDirective {
     @Output() scrolled = new EventEmitter<void>();
@@ -70,11 +69,25 @@ describe('CourseWideSearchComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule, FaIconComponent, CourseWideSearchComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ButtonComponent), MockComponent(PostingThreadComponent), MockComponent(MessageInlineInputComponent), MockComponent(PostCreateEditModalComponent), MockDirective(TranslateDirective)],
-            declarations: [
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                FaIconComponent,
+                CourseWideSearchComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(ButtonComponent),
+                MockComponent(PostingThreadComponent),
+                MockComponent(MessageInlineInputComponent),
+                MockComponent(PostCreateEditModalComponent),
+                MockDirective(TranslateDirective),
                 InfiniteScrollStubDirective,
             ],
-            providers: [MockProvider(MetisConversationService), MockProvider(MetisService), MockProvider(DialogService), { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                MockProvider(MetisConversationService),
+                MockProvider(MetisService),
+                MockProvider(DialogService),
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
         });
 
         TestBed.overrideComponent(CourseWideSearchComponent, {

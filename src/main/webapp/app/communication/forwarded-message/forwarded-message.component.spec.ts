@@ -55,12 +55,14 @@ describe('ForwardedMessageComponent', () => {
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, { provide: MetisService, useClass: MockMetisService }],
-        })
-            .overrideComponent(ForwardedMessageComponent, {
-                remove: { imports: [ProfilePictureComponent, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe] },
-                add: { imports: [MockComponent(ProfilePictureComponent), MockComponent(PostingContentComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)] },
-            });
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: MetisService, useClass: MockMetisService },
+            ],
+        }).overrideComponent(ForwardedMessageComponent, {
+            remove: { imports: [ProfilePictureComponent, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe] },
+            add: { imports: [MockComponent(ProfilePictureComponent), MockComponent(PostingContentComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)] },
+        });
 
         fixture = TestBed.createComponent(ForwardedMessageComponent);
         component = fixture.componentInstance;

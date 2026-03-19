@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -41,7 +41,14 @@ describe('ConversationThreadSidebarComponent', () => {
     beforeEach(() => {
         TestBed.overrideComponent(ConversationThreadSidebarComponent, {
             remove: { imports: [PostComponent, MessageReplyInlineInputComponent, TutorSuggestionComponent, TranslateDirective] },
-            add: { imports: [MockComponent(PostComponent), MockComponent(MessageReplyInlineInputComponent), MockComponent(TutorSuggestionComponent), MockDirective(TranslateDirective)] },
+            add: {
+                imports: [
+                    MockComponent(PostComponent),
+                    MockComponent(MessageReplyInlineInputComponent),
+                    MockComponent(TutorSuggestionComponent),
+                    MockDirective(TranslateDirective),
+                ],
+            },
         });
         fixture = TestBed.createComponent(ConversationThreadSidebarComponent);
         component = fixture.componentInstance;

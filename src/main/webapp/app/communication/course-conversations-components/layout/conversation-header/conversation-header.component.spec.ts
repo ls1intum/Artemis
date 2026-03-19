@@ -53,7 +53,7 @@ examples.forEach((activeConversation) => {
         const canAddUsers = vi.fn();
 
         beforeEach(async () => {
-        vi.useFakeTimers();
+            vi.useFakeTimers();
             TestBed.configureTestingModule({
                 imports: [MockComponent(ChannelIconComponent), MockComponent(ProfilePictureComponent), MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe)],
                 providers: [
@@ -226,19 +226,16 @@ examples.forEach((activeConversation) => {
         });
 
         if (activeConversation instanceof ChannelDTO && activeConversation.subType !== ChannelSubType.GENERAL) {
-            it(
-                'should navigate to ' + activeConversation.subType,
-                () => {
-                    const button = fixture.debugElement.query(By.css('#subTypeReferenceRouterLink')).nativeElement;
-                    button.click();
-                    vi.advanceTimersByTime(0);
-                    vi.clearAllTimers();
-                    fixture.whenStable().then(() => {
-                        // Assert that the router has navigated to the correct link
-                        expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
-                    });
-                },
-            );
+            it('should navigate to ' + activeConversation.subType, async () => {
+                const button = fixture.debugElement.query(By.css('#subTypeReferenceRouterLink')).nativeElement;
+                button.click();
+                vi.advanceTimersByTime(0);
+                vi.clearAllTimers();
+                vi.useRealTimers();
+                await fixture.whenStable();
+                // Assert that the router has navigated to the correct link
+                expect(location.path()).toBe('/courses/1/' + activeConversation.subType + 's/1');
+            });
         }
 
         it('should open conversation detail dialog', () => {

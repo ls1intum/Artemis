@@ -91,14 +91,13 @@ describe('GenericUpdateTextPropertyDialog', () => {
             regexErrorKey: 'regexError',
         };
 
-        fixture.componentRef.setInput('isRequired', isRequired);
-        fixture.componentRef.setInput('initialValue', initialValue);
-        fixture.componentRef.setInput('regexPattern', regexPattern);
-
         initializeDialog(component, fixture, {
             propertyName,
             maxPropertyLength,
             translationKeys,
+            isRequired,
+            initialValue,
+            regexPattern,
         });
         fixture.changeDetectorRef.detectChanges();
     }

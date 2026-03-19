@@ -23,7 +23,14 @@ describe('OneToOneChatCreateDialogComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [FormsModule, ReactiveFormsModule, OneToOneChatCreateDialogComponent, MockComponent(CourseUsersSelectorComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            imports: [
+                FormsModule,
+                ReactiveFormsModule,
+                OneToOneChatCreateDialogComponent,
+                MockComponent(CourseUsersSelectorComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },

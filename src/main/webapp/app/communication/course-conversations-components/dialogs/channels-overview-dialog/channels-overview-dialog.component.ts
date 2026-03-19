@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -33,8 +33,8 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     canCreateChannel = canCreateChannel;
 
     readonly createChannelFn = input<(channel: ChannelDTO) => Observable<never>>();
-    readonly course = input<Course>(undefined!);
-    readonly channelSubType = input<ChannelSubType>(undefined!);
+    course = signal<Course | undefined>(undefined);
+    channelSubType = signal<ChannelSubType | undefined>(undefined);
 
     channelActions$ = new Subject<ChannelAction>();
 
@@ -81,7 +81,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         switch (channelAction.action) {
             case 'register':
                 this.channelService
-                    .registerUsersToChannel(this.course().id!, channelAction.channel.id!)
+                    .registerUsersToChannel(this.course()!.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -90,7 +90,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 break;
             case 'deregister':
                 this.channelService
-                    .deregisterUsersFromChannel(this.course().id!, channelAction.channel.id!)
+                    .deregisterUsersFromChannel(this.course()!.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -106,7 +106,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     loadChannelsOfCourse() {
         this.isLoading = true;
         this.channelService
-            .getChannelsOfCourse(this.course().id!)
+            .getChannelsOfCourse(this.course()!.id!)
             .pipe(
                 map((res: HttpResponse<ChannelDTO[]>) => res.body),
                 finalize(() => {

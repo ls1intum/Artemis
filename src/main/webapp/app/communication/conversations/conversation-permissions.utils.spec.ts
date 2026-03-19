@@ -39,9 +39,9 @@ describe('ConversationPermissionUtils', () => {
             });
 
             it('can create new message in a an announcement channel where user is moderator', () => {
-                expect(
-                    canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: true } as ChannelDTO)),
-                ).toBe(true);
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: true } as ChannelDTO))).toBe(
+                    true,
+                );
             });
 
             it('can create a new message in an announcement channel where user is not moderator but has moderation rights', () => {

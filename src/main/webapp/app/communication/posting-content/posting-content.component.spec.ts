@@ -37,7 +37,12 @@ describe('PostingContentComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: MetisService, useClass: MockMetisService }, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                provideHttpClient(),
+                provideHttpClientTesting(),
+                { provide: MetisService, useClass: MockMetisService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
             imports: [
                 PostingContentComponent,
                 MockComponent(PostingContentPartComponent),

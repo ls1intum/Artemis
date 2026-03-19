@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -25,7 +25,14 @@ describe('ChannelFormComponent', () => {
 
     beforeEach(async () => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, ChannelFormComponent, MockComponent(ChannelIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+            imports: [
+                ReactiveFormsModule,
+                FormsModule,
+                ChannelFormComponent,
+                MockComponent(ChannelIconComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },

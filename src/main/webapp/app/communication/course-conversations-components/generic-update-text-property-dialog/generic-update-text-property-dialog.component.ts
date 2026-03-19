@@ -1,4 +1,4 @@
-import { Component, inject, input } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormBuilder } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
@@ -26,12 +26,12 @@ export interface GenericUpdateTextPropertyTranslationKeys {
 export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComponent {
     private fb = inject(FormBuilder);
 
-    readonly propertyName = input<string>(undefined!);
-    readonly isRequired = input(false);
-    readonly regexPattern = input<RegExp>();
-    readonly maxPropertyLength = input<number>(undefined!);
-    readonly initialValue = input<string>();
-    readonly translationKeys = input<GenericUpdateTextPropertyTranslationKeys>(undefined!);
+    propertyName = signal<string | undefined>(undefined);
+    isRequired = signal(false);
+    regexPattern = signal<RegExp | undefined>(undefined);
+    maxPropertyLength = signal<number | undefined>(undefined);
+    initialValue = signal<string | undefined>(undefined);
+    translationKeys = signal<GenericUpdateTextPropertyTranslationKeys | undefined>(undefined);
 
     form: FormGroup;
 
@@ -47,7 +47,7 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
     }
 
     get control() {
-        return this.form.get(this.propertyName());
+        return this.form.get(this.propertyName()!);
     }
 
     private initializeForm() {
@@ -69,7 +69,7 @@ export class GenericUpdateTextPropertyDialogComponent extends AbstractDialogComp
         }
 
         this.form = this.fb.group({
-            [this.propertyName()]: [this.initialValue(), validators],
+            [this.propertyName()!]: [this.initialValue(), validators],
         });
     }
 

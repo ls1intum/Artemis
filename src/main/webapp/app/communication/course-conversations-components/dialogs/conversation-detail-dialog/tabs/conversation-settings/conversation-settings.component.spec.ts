@@ -42,7 +42,13 @@ examples.forEach((activeConversation) => {
         beforeEach(async () => {
             TestBed.configureTestingModule({
                 imports: [FaIconComponent, ConversationSettingsComponent, MockDirective(DeleteButtonDirective), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-                providers: [MockProvider(DialogService), MockProvider(ChannelService), MockProvider(GroupChatService), MockProvider(AlertService), { provide: TranslateService, useClass: MockTranslateService }],
+                providers: [
+                    MockProvider(DialogService),
+                    MockProvider(ChannelService),
+                    MockProvider(GroupChatService),
+                    MockProvider(AlertService),
+                    { provide: TranslateService, useClass: MockTranslateService },
+                ],
             });
         });
 
@@ -127,21 +133,20 @@ examples.forEach((activeConversation) => {
             }
         });
 
-        it('should open archive dialog when button is pressed', () => {
+        it('should open archive dialog when button is pressed', async () => {
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const archiveSpy = vi.spyOn(channelService, 'archive').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 const archiveButton = fixture.debugElement.nativeElement.querySelector('.archive-toggle');
 
                 genericConfirmationDialogTest(archiveButton);
-                fixture.whenStable().then(() => {
-                    expect(archiveSpy).toHaveBeenCalledOnce();
-                    expect(archiveSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
-                });
+                await fixture.whenStable();
+                expect(archiveSpy).toHaveBeenCalledOnce();
+                expect(archiveSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
             }
         });
 
-        it('should open unarchive dialog when button is pressed', () => {
+        it('should open unarchive dialog when button is pressed', async () => {
             if (isChannelDTO(activeConversation)) {
                 const activeConversationCopy = component.activeConversation();
                 (activeConversationCopy as ChannelDTO).isArchived = true;
@@ -152,22 +157,20 @@ examples.forEach((activeConversation) => {
                 const archiveButton = fixture.debugElement.nativeElement.querySelector('.archive-toggle');
 
                 genericConfirmationDialogTest(archiveButton);
-                fixture.whenStable().then(() => {
-                    expect(unarchivespy).toHaveBeenCalledOnce();
-                    expect(unarchivespy).toHaveBeenCalledWith(course.id, activeConversation.id);
-                });
+                await fixture.whenStable();
+                expect(unarchivespy).toHaveBeenCalledOnce();
+                expect(unarchivespy).toHaveBeenCalledWith(course.id, activeConversation.id);
             }
         });
 
-        it('should call delete channel when callback is called', () => {
+        it('should call delete channel when callback is called', async () => {
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const deleteSpy = vi.spyOn(channelService, 'delete').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
                 component.deleteChannel();
-                fixture.whenStable().then(() => {
-                    expect(deleteSpy).toHaveBeenCalledOnce();
-                    expect(deleteSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
-                });
+                await fixture.whenStable();
+                expect(deleteSpy).toHaveBeenCalledOnce();
+                expect(deleteSpy).toHaveBeenCalledWith(course.id, activeConversation.id);
             }
         });
 
@@ -241,8 +244,9 @@ examples.forEach((activeConversation) => {
 
         function genericConfirmationDialogTest(button: HTMLElement) {
             const dialogService = TestBed.inject(DialogService);
+            const dialogCloseSubject = new Subject<any>();
             const mockDialogRef = {
-                onClose: new Subject().asObservable(),
+                onClose: dialogCloseSubject.asObservable(),
                 close: vi.fn(),
             };
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as DynamicDialogRef);
@@ -251,10 +255,12 @@ examples.forEach((activeConversation) => {
             button.click();
             vi.advanceTimersByTime(0);
 
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.anything());
-            });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.anything());
+
+            // Emit a truthy value to trigger the component's onClose callback
+            dialogCloseSubject.next(true);
+            vi.advanceTimersByTime(0);
         }
     });
 });

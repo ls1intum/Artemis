@@ -116,11 +116,10 @@ describe('CourseNotificationPopupOverlayComponent', () => {
                 { provide: ActivatedRoute, useValue: mockRoute },
                 { provide: ConversationSelectionState, useValue: conversationSelectionState },
             ],
-        })
-            .overrideComponent(CourseNotificationPopupOverlayComponent, {
-                remove: { imports: [CourseNotificationComponent] },
-                add: { imports: [MockComponent(CourseNotificationComponent)] },
-            });
+        }).overrideComponent(CourseNotificationPopupOverlayComponent, {
+            remove: { imports: [CourseNotificationComponent] },
+            add: { imports: [MockComponent(CourseNotificationComponent)] },
+        });
 
         fixture = TestBed.createComponent(CourseNotificationPopupOverlayComponent);
         component = fixture.componentInstance;
