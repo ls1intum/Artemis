@@ -3,8 +3,9 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { createRequestOption } from 'app/shared/util/request.util';
-import { PageableResult, ParticipationScoreSearch } from 'app/shared/table/pageable-table';
+import { PageableResult, ParticipationScoreSearch, ParticipationSearch } from 'app/shared/table/pageable-table';
 import { ParticipationScoreDTO } from 'app/exercise/exercise-scores/participation-score-dto.model';
+import { ParticipationManagementDTO } from 'app/exercise/participation/participation-management-dto.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
@@ -70,6 +71,38 @@ export class ParticipationService {
                 observe: 'response',
             })
             .pipe(map((res: EntityArrayResponseType) => this.processParticipationEntityArrayResponseType(res)));
+    }
+
+    searchParticipations(exerciseId: number, search: ParticipationSearch): Observable<PageableResult<ParticipationManagementDTO>> {
+        const params: Record<string, string | number> = {
+            page: search.page,
+            pageSize: search.pageSize,
+            sortingOrder: search.sortingOrder,
+            sortedColumn: search.sortedColumn,
+            searchTerm: search.searchTerm,
+        };
+        if (search.filterProp) {
+            params['filterProp'] = search.filterProp;
+        }
+        return this.http
+            .get<ParticipationManagementDTO[]>(`api/exercise/exercises/${exerciseId}/participations/page`, {
+                params,
+                observe: 'response',
+            })
+            .pipe(
+                map((res: HttpResponse<ParticipationManagementDTO[]>) => {
+                    const content = res.body ?? [];
+                    content.forEach((dto) => {
+                        if (dto.initializationDate) {
+                            dto.initializationDate = dayjs(dto.initializationDate as unknown as string);
+                        }
+                        if (dto.individualDueDate) {
+                            dto.individualDueDate = dayjs(dto.individualDueDate as unknown as string);
+                        }
+                    });
+                    return { content, totalElements: Number(res.headers.get('X-Total-Count') ?? 0) };
+                }),
+            );
     }
 
     searchParticipationScores(exerciseId: number, search: ParticipationScoreSearch): Observable<PageableResult<ParticipationScoreDTO>> {

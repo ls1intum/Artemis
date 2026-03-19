@@ -1,33 +1,30 @@
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, TemplateRef, computed, inject, signal, viewChild } from '@angular/core';
+import { KeyValuePipe } from '@angular/common';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { Subject, Subscription } from 'rxjs';
+import { WebsocketService } from 'app/shared/service/websocket.service';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { StudentParticipation, isPracticeMode } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { ExerciseSubmissionState, ProgrammingSubmissionService, ProgrammingSubmissionState } from 'app/programming/shared/services/programming-submission.service';
+import { ProgrammingSubmissionService } from 'app/programming/shared/services/programming-submission.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { HttpErrorResponse } from '@angular/common/http';
-import { tap } from 'rxjs/operators';
+// import { tap } from 'rxjs/operators';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { formatTeamAsSearchResult } from 'app/exercise/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { EventManager } from 'app/shared/service/event-manager.service';
-import { faCircleNotch, faEraser, faFilePowerpoint, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleNotch, faEraser, faFilePowerpoint, faFilter, faPencil, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
 import { ProgrammingExerciseInstructorSubmissionStateComponent } from 'app/programming/shared/actions/instructor-submission-state/programming-exercise-instructor-submission-state.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@siemens/ngx-datatable';
 import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/code-button.component';
-import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ProgrammingExerciseInstructorTriggerBuildButtonComponent } from 'app/programming/shared/actions/trigger-build-button/instructor/programming-exercise-instructor-trigger-build-button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -36,12 +33,18 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { TableLazyLoadEvent } from 'primeng/table';
+import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
+import { CellRendererParams, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { ParticipationManagementDTO } from './participation-management-dto.model';
+import { ParticipationSearch } from 'app/shared/table/pageable-table';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
 
-enum FilterProp {
-    ALL = 'all',
-    FAILED = 'failed',
-    NO_SUBMISSIONS = 'no-submissions',
-    NO_PRACTICE = 'no-practice',
+export enum FilterProp {
+    ALL = 'All',
+    FAILED = 'Failed',
+    NO_SUBMISSIONS = 'NoSubmissions',
+    NO_PRACTICE = 'NoPracticeMode',
 }
 
 @Component({
@@ -53,28 +56,30 @@ enum FilterProp {
         ProgrammingExerciseInstructorSubmissionStateComponent,
         RouterLink,
         FaIconComponent,
-        DataTableComponent,
-        NgxDatatableModule,
+        TableViewComponent,
         CodeButtonComponent,
-        TeamStudentsListComponent,
         FormDateTimePickerComponent,
         ProgrammingExerciseInstructorTriggerBuildButtonComponent,
         DeleteButtonDirective,
         FeatureToggleDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
+        NgbDropdown,
+        NgbDropdownToggle,
+        NgbDropdownMenu,
+        KeyValuePipe,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly participationService = inject(ParticipationService);
     private readonly alertService = inject(AlertService);
-    private readonly eventManager = inject(EventManager);
     private readonly exerciseService = inject(ExerciseService);
     private readonly programmingSubmissionService = inject(ProgrammingSubmissionService);
     private readonly accountService = inject(AccountService);
     private readonly profileService = inject(ProfileService);
     private readonly gradingService = inject(GradingService);
+    private readonly websocketService = inject(WebsocketService);
 
     protected readonly faTable = faTable;
     protected readonly faTimes = faTimes;
@@ -82,6 +87,9 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faEraser = faEraser;
     protected readonly faFilePowerpoint = faFilePowerpoint;
+    protected readonly faFilter = faFilter;
+    protected readonly faPencil = faPencil;
+    protected readonly faCheck = faCheck;
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly ActionType = ActionType;
@@ -89,78 +97,211 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly RepositoryType = RepositoryType;
     readonly FilterProp = FilterProp;
 
-    participations: StudentParticipation[] = [];
-    participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
-    participationsChangedPresentation: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
-    filteredParticipationsSize = 0;
-    eventSubscriber: Subscription;
-    paramSub: Subscription;
-    exercise: Exercise;
-    hasLoadedPendingSubmissions = false;
-    basicPresentationEnabled = false;
-    gradedPresentationEnabled = false;
+    readonly exercise = signal<Exercise | undefined>(undefined);
+    readonly participations = signal<ParticipationManagementDTO[]>([]);
+    readonly totalRows = signal(0);
+    readonly isLoading = signal(false);
+    readonly isSaving = signal(false);
+    readonly afterDueDate = signal(false);
+    readonly activeFilter = signal<FilterProp>(FilterProp.ALL);
+    readonly hasLoadedPendingSubmissions = signal(false);
+    readonly isAdmin = signal(false);
+    readonly isLocalCIEnabled = signal(true);
+    readonly gradeStepsDTO = signal<GradeStepsDTO | undefined>(undefined);
 
-    gradeStepsDTO?: GradeStepsDTO;
-    gradeStepsDTOSub: Subscription;
+    readonly basicPresentationEnabled = computed(() => {
+        const ex = this.exercise();
+        return !!(ex?.isAtLeastTutor === true && (ex?.course?.presentationScore ?? 0) > 0 && ex?.presentationScoreEnabled === true);
+    });
 
+    readonly gradedPresentationEnabled = computed(() => {
+        const ex = this.exercise();
+        return !!(ex?.course && ex?.isAtLeastTutor && (this.gradeStepsDTO()?.presentationsNumber ?? 0) > 0 && ex?.presentationScoreEnabled === true);
+    });
+
+    private lastLazyEvent: TableLazyLoadEvent | undefined;
+    // private exerciseSubmissionState: ExerciseSubmissionState = {};
+    private paramSub: Subscription;
+    private gradeStepsDTOSub: Subscription;
+    private websocketSubscriptions: Subscription[] = [];
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
 
-    participationCriteria: {
-        filterProp: FilterProp;
-    };
+    // Track graded presentation edits (not signals — not rendered directly)
+    participationsChangedPresentation = new Map<number, ParticipationManagementDTO>();
 
-    exerciseSubmissionState: ExerciseSubmissionState;
+    // Track individual due date inline editing
+    readonly editingDueDateIds = signal<ReadonlySet<number>>(new Set());
+    private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
 
-    isLocalCIEnabled = true;
-    isAdmin = false;
-    isLoading: boolean;
-    isSaving: boolean;
-    afterDueDate = false;
+    // Template refs
+    readonly idCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('idCellTemplate');
+    readonly repositoryCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('repositoryCellTemplate');
+    readonly buildPlanCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('buildPlanCellTemplate');
+    readonly initStateCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('initStateCellTemplate');
+    readonly initDateCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('initDateCellTemplate');
+    readonly submissionCountCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('submissionCountCellTemplate');
+    readonly participantNameCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('participantNameCellTemplate');
+    readonly teamStudentsCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('teamStudentsCellTemplate');
+    readonly practiceCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('practiceCellTemplate');
+    readonly basicPresentationCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('basicPresentationCellTemplate');
+    readonly gradedPresentationCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('gradedPresentationCellTemplate');
+    readonly individualDueDateCellTemplate = viewChild<TemplateRef<{ $implicit: CellRendererParams<ParticipationManagementDTO> }>>('individualDueDateCellTemplate');
 
-    constructor() {
-        this.participationCriteria = {
-            filterProp: FilterProp.ALL,
-        };
-    }
+    readonly columns = computed<ColumnDef<ParticipationManagementDTO>[]>(() => {
+        const ex = this.exercise();
+        if (!ex) return [];
 
-    /**
-     * Initialize component by calling loadAll and registerChangeInParticipation
-     */
+        const cols: ColumnDef<ParticipationManagementDTO>[] = [
+            {
+                headerKey: 'global.field.id',
+                field: 'participationId',
+                width: '80px',
+                sort: true,
+                templateRef: this.idCellTemplate(),
+            },
+        ];
+
+        if (ex.type === ExerciseType.PROGRAMMING) {
+            cols.push(
+                {
+                    headerKey: 'artemisApp.participation.repository',
+                    width: '80px',
+                    sort: false,
+                    templateRef: this.repositoryCellTemplate(),
+                },
+                {
+                    headerKey: 'artemisApp.participation.buildPlanId',
+                    field: 'buildPlanId',
+                    width: '120px',
+                    sort: true,
+                    templateRef: this.buildPlanCellTemplate(),
+                },
+            );
+        }
+
+        cols.push(
+            {
+                headerKey: 'artemisApp.participation.initializationState',
+                field: 'initializationState',
+                width: '120px',
+                sort: true,
+                templateRef: this.initStateCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.participation.initializationDate',
+                field: 'initializationDate',
+                width: '160px',
+                sort: true,
+                templateRef: this.initDateCellTemplate(),
+            },
+            {
+                headerKey: 'artemisApp.exercise.submissionCount',
+                field: 'submissionCount',
+                width: '100px',
+                sort: false,
+                templateRef: this.submissionCountCellTemplate(),
+            },
+        );
+
+        if (!ex.teamMode) {
+            cols.push({
+                headerKey: 'artemisApp.participation.student',
+                field: 'participantName',
+                width: '140px',
+                sort: true,
+                templateRef: this.participantNameCellTemplate(),
+            });
+        } else {
+            cols.push(
+                {
+                    headerKey: 'artemisApp.participation.team',
+                    field: 'participantName',
+                    width: '120px',
+                    sort: true,
+                    templateRef: this.participantNameCellTemplate(),
+                },
+                {
+                    headerKey: 'artemisApp.participation.students',
+                    width: '280px',
+                    sort: false,
+                    templateRef: this.teamStudentsCellTemplate(),
+                },
+            );
+        }
+
+        if (ex.type === ExerciseType.PROGRAMMING && this.afterDueDate()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.practice',
+                field: 'testRun',
+                width: '90px',
+                sort: true,
+                templateRef: this.practiceCellTemplate(),
+            });
+        }
+
+        if (this.basicPresentationEnabled()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.presentationScore',
+                field: 'presentationScore',
+                width: '130px',
+                sort: true,
+                templateRef: this.basicPresentationCellTemplate(),
+            });
+        }
+
+        if (this.gradedPresentationEnabled()) {
+            cols.push({
+                headerKey: 'artemisApp.participation.presentationGrade',
+                field: 'presentationScore',
+                width: '130px',
+                sort: true,
+                templateRef: this.gradedPresentationCellTemplate(),
+            });
+        }
+
+        if (ex.type !== ExerciseType.QUIZ && ex.dueDate) {
+            cols.push({
+                headerKey: 'artemisApp.participation.individualDueDate',
+                field: 'individualDueDate',
+                width: '260px',
+                sort: true,
+                templateRef: this.individualDueDateCellTemplate(),
+            });
+        }
+
+        return cols;
+    });
+
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(+params['exerciseId']));
-        this.registerChangeInParticipations();
-        this.isAdmin = this.accountService.isAdmin();
-        this.isLocalCIEnabled = this.profileService.isProfileActive(PROFILE_LOCALCI);
+        this.isAdmin.set(this.accountService.isAdmin());
+        this.isLocalCIEnabled.set(this.profileService.isProfileActive(PROFILE_LOCALCI));
     }
 
-    /**
-     * Unsubscribe from all subscriptions and destroy eventSubscriber
-     */
     ngOnDestroy() {
-        this.programmingSubmissionService.unsubscribeAllWebsocketTopics(this.exercise);
-        this.eventManager.destroy(this.eventSubscriber);
+        const ex = this.exercise();
+        if (ex) {
+            this.programmingSubmissionService.unsubscribeAllWebsocketTopics(ex);
+        }
         this.dialogErrorSource.unsubscribe();
-        if (this.paramSub) {
-            this.paramSub.unsubscribe();
-        }
-        if (this.gradeStepsDTOSub) {
-            this.gradeStepsDTOSub.unsubscribe();
-        }
+        this.paramSub?.unsubscribe();
+        this.gradeStepsDTOSub?.unsubscribe();
+        this.websocketSubscriptions.forEach((sub) => sub.unsubscribe());
     }
 
     private loadExercise(exerciseId: number) {
-        this.isLoading = true;
-        this.hasLoadedPendingSubmissions = false;
+        this.isLoading.set(true);
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
-            this.exercise = exerciseResponse.body!;
-            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
-            this.loadGradingScale(this.exercise.course?.id);
-            this.loadParticipations(exerciseId);
-            if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                this.loadSubmissions(exerciseId);
+            const ex = exerciseResponse.body!;
+            this.exercise.set(ex);
+            this.afterDueDate.set(!!ex.dueDate && dayjs().isAfter(ex.dueDate));
+            this.loadGradingScale(ex.course?.id);
+            if (ex.type === ExerciseType.PROGRAMMING) {
+                this.loadSubmissionState(exerciseId);
+                this.setupFailedFilterWebsocket(exerciseId);
             }
-            this.basicPresentationEnabled = this.checkBasicPresentationConfig();
+            this.isLoading.set(false);
         });
     }
 
@@ -168,272 +309,78 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         if (courseId) {
             this.gradeStepsDTOSub = this.gradingService.findGradeStepsForCourse(courseId).subscribe((gradeStepsDTO) => {
                 if (gradeStepsDTO.body) {
-                    this.gradeStepsDTO = gradeStepsDTO.body;
+                    this.gradeStepsDTO.set(gradeStepsDTO.body);
                 }
-                this.gradedPresentationEnabled = this.checkGradedPresentationConfig();
             });
         }
     }
 
-    private loadParticipations(exerciseId: number) {
-        this.participationService.findAllParticipationsByExercise(exerciseId, false).subscribe((participationsResponse) => {
-            this.participations = participationsResponse.body!;
-            this.isLoading = false;
-        });
-    }
-
-    private loadSubmissions(exerciseId: number) {
+    private loadSubmissionState(exerciseId: number) {
         this.programmingSubmissionService
             .getSubmissionStateOfExercise(exerciseId)
-            .pipe(
-                tap((exerciseSubmissionState: ExerciseSubmissionState) => {
-                    this.exerciseSubmissionState = exerciseSubmissionState;
-                }),
-            )
-            .subscribe(() => (this.hasLoadedPendingSubmissions = true));
+            .pipe()
+            .subscribe(() => this.hasLoadedPendingSubmissions.set(true));
+    }
+
+    private setupFailedFilterWebsocket(exerciseId: number) {
+        const reloadIfFailedFilterActive = () => {
+            if (this.activeFilter() === FilterProp.FAILED) {
+                this.loadPage();
+            }
+        };
+        const submissionSub = this.websocketService.subscribe(`/topic/exercise/${exerciseId}/newSubmissions`).subscribe(() => reloadIfFailedFilterActive());
+        const resultSub = this.websocketService.subscribe(`/topic/exercise/${exerciseId}/newResults`).subscribe(() => reloadIfFailedFilterActive());
+        this.websocketSubscriptions.push(submissionSub, resultSub);
+    }
+
+    onLazyLoad(event: TableLazyLoadEvent) {
+        this.lastLazyEvent = event;
+        this.loadPage();
+    }
+
+    private loadPage() {
+        const ex = this.exercise();
+        if (!ex?.id || !this.lastLazyEvent) return;
+
+        this.isLoading.set(true);
+        const base = buildDbQueryFromLazyEvent(this.lastLazyEvent);
+        const search: ParticipationSearch = {
+            ...base,
+            filterProp: this.activeFilter() !== FilterProp.ALL ? this.activeFilter() : undefined,
+        };
+
+        this.participationService.searchParticipations(ex.id, search).subscribe((result) => {
+            this.participations.set(result.content);
+            this.totalRows.set(result.totalElements);
+            this.isLoading.set(false);
+        });
     }
 
     updateParticipationFilter(newValue: FilterProp) {
-        this.isLoading = true;
-        setTimeout(() => {
-            this.participationCriteria.filterProp = newValue;
-            this.isLoading = false;
-        });
+        this.activeFilter.set(newValue);
+        this.loadPage();
     }
 
-    filterParticipationByProp = (participation: StudentParticipation) => {
-        switch (this.participationCriteria.filterProp) {
+    isFilterRelevantForConfiguration(filterProp: FilterProp): boolean {
+        const ex = this.exercise();
+        if (!ex) return false;
+        switch (filterProp) {
             case FilterProp.FAILED:
-                return this.hasFailedSubmission(participation);
-            case FilterProp.NO_SUBMISSIONS:
-                return participation.submissionCount === 0;
             case FilterProp.NO_PRACTICE:
-                return !isPracticeMode(participation);
-            case FilterProp.ALL:
+                return ex.type === ExerciseType.PROGRAMMING;
             default:
                 return true;
         }
-    };
+    }
 
-    private hasFailedSubmission(participation: StudentParticipation) {
-        const submissionStateObj = this.exerciseSubmissionState[participation.id!];
-        if (submissionStateObj) {
-            const { submissionState } = submissionStateObj;
-            return submissionState === ProgrammingSubmissionState.HAS_FAILED_SUBMISSION;
+    getParticipationLink(participationId: number): string[] {
+        const ex = this.exercise()!;
+        if (ex.exerciseGroup) {
+            return [participationId.toString()];
         }
-        return false;
+        return [participationId.toString(), 'submissions'];
     }
 
-    trackId(index: number, item: StudentParticipation) {
-        return item.id;
-    }
-
-    registerChangeInParticipations() {
-        this.eventSubscriber = this.eventManager.subscribe('participationListModification', () => this.loadExercise(this.exercise.id!));
-    }
-
-    checkBasicPresentationConfig(): boolean {
-        if (!this.exercise.course) {
-            return false;
-        }
-        return this.exercise.isAtLeastTutor === true && (this.exercise.course.presentationScore ?? 0) > 0 && this.exercise.presentationScoreEnabled === true;
-    }
-
-    checkGradedPresentationConfig(): boolean {
-        return !!(this.exercise.course && this.exercise.isAtLeastTutor && (this.gradeStepsDTO?.presentationsNumber ?? 0) > 0 && this.exercise.presentationScoreEnabled === true);
-    }
-
-    addBasicPresentation(participation: StudentParticipation) {
-        if (!this.basicPresentationEnabled) {
-            return;
-        }
-        participation.presentationScore = 1;
-        this.participationService.update(this.exercise, participation).subscribe({
-            error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
-        });
-    }
-
-    addGradedPresentation(participation: StudentParticipation) {
-        if (!this.gradedPresentationEnabled || (participation.presentationScore ?? 0) > 100 || (participation.presentationScore ?? 0) < 0) {
-            return;
-        }
-        this.participationService.update(this.exercise, participation).subscribe({
-            error: (res: HttpErrorResponse) => {
-                const error = res.error;
-                if (error && error.errorKey && error.errorKey === 'invalid.presentations.maxNumberOfPresentationsExceeded') {
-                    participation.presentationScore = undefined;
-                } else {
-                    this.alertService.error('artemisApp.participation.savePresentation.error');
-                }
-            },
-
-            complete: () => {
-                this.participationsChangedPresentation.delete(participation.id!);
-            },
-        });
-    }
-
-    hasGradedPresentationChanged(participation: StudentParticipation) {
-        return this.participationsChangedPresentation.has(participation.id!);
-    }
-
-    changeGradedPresentation(participation: StudentParticipation) {
-        this.participationsChangedPresentation.set(participation.id!, participation);
-    }
-
-    removePresentation(participation: StudentParticipation) {
-        if (!this.basicPresentationEnabled && !this.gradedPresentationEnabled) {
-            return;
-        }
-        participation.presentationScore = undefined;
-        this.participationService.update(this.exercise, participation).subscribe({
-            error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
-        });
-    }
-
-    /**
-     * Save that the due date of the given participation has changed.
-     *
-     * Does not issue an immediate update of the due date to the server.
-     * The actual update is performed with {@link saveChangedDueDates}.
-     * @param participation of which the individual due date has changed.
-     */
-    changedIndividualDueDate(participation: StudentParticipation) {
-        this.participationsChangedDueDate.set(participation.id!, participation);
-    }
-
-    /**
-     * Removes the individual due date from the given participation.
-     *
-     * Does not issue an immediate update of the due date to the server.
-     * The actual update is performed with {@link saveChangedDueDates}.
-     * @param participation of which the individual due date should be removed.
-     */
-    removeIndividualDueDate(participation: StudentParticipation) {
-        participation.individualDueDate = undefined;
-        this.participationsChangedDueDate.set(participation.id!, participation);
-    }
-
-    /**
-     * Saves the updated individual due dates for all participants.
-     *
-     * Changes are not updated directly when changing just a single due date, as
-     * an update here might require a full update of the scheduling of the
-     * exercise. Therefore, an explicit save action which can also update the
-     * due date for multiple participants at the same time is preferred.
-     */
-    saveChangedDueDates() {
-        this.isSaving = true;
-
-        const changedParticipations = Array.from(this.participationsChangedDueDate.values());
-        this.participationService.updateIndividualDueDates(this.exercise, changedParticipations).subscribe({
-            next: (response) => {
-                response.body!.forEach((updatedParticipation) => {
-                    const changedIndex = this.participations.findIndex((participation) => participation.id! === updatedParticipation.id!);
-                    this.participations[changedIndex] = updatedParticipation;
-                });
-
-                this.participationsChangedDueDate.clear();
-                this.isSaving = false;
-                this.alertService.success('artemisApp.participation.updateDueDates.success', { count: response.body!.length });
-            },
-            error: () => {
-                this.alertService.error('artemisApp.participation.updateDueDates.error');
-                this.isSaving = false;
-            },
-        });
-    }
-
-    /**
-     * Deletes participation
-     * @param participationId the id of the participation that we want to delete
-     */
-    deleteParticipation(participationId: number) {
-        const deleteBuildPlan = true;
-        const deleteRepository = true;
-        this.participationService.delete(participationId, { deleteBuildPlan, deleteRepository }).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'participationListModification',
-                    content: 'Deleted an participation',
-                });
-                this.dialogErrorSource.next('');
-                this.participationsChangedDueDate.delete(participationId);
-                this.participationsChangedPresentation.delete(participationId);
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Cleans programming exercise participation
-     * @param programmingExerciseParticipation the id of the participation that we want to delete
-     */
-    cleanupProgrammingExerciseParticipation(programmingExerciseParticipation: StudentParticipation) {
-        this.participationService.cleanupBuildPlan(programmingExerciseParticipation).subscribe({
-            next: () => {
-                this.eventManager.broadcast({
-                    name: 'participationListModification',
-                    content: 'Cleanup the build plan of an participation',
-                });
-                this.dialogErrorSource.next('');
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
-    }
-
-    /**
-     * Update the number of filtered participations
-     *
-     * @param filteredParticipationsSize Total number of participations after filters have been applied
-     */
-    handleParticipationsSizeChange = (filteredParticipationsSize: number) => {
-        this.filteredParticipationsSize = filteredParticipationsSize;
-    };
-
-    /**
-     * Formats the results in the autocomplete overlay.
-     *
-     * @param participation
-     */
-    searchResultFormatter = (participation: StudentParticipation) => {
-        if (participation.student) {
-            const { login, name } = participation.student;
-            return `${login} (${name})`;
-        } else if (participation.team) {
-            return formatTeamAsSearchResult(participation.team);
-        }
-        return `${participation.id!}`;
-    };
-
-    /**
-     * Converts a participation object to a string that can be searched for. This is
-     * used by the autocomplete select inside the data table.
-     *
-     * @param participation Student participation
-     */
-    searchTextFromParticipation = (participation: StudentParticipation): string => {
-        return participation.student?.login || participation.team?.shortName || '';
-    };
-
-    /**
-     * Removes the login from the repositoryUri
-     *
-     * @param participation Student participation
-     * @param repoUri original repository uri
-     */
-    getRepositoryLink = (participation: StudentParticipation, repoUri: string) => {
-        if ((participation as ProgrammingExerciseStudentParticipation).repositoryUri === repoUri) {
-            return (participation as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUri;
-        }
-        return repoUri;
-    };
-
-    /**
-     * Get the route for the exercise's scores page.
-     *
-     * @param exercise the exercise for which the scores route should be extracted
-     */
     getScoresRoute(exercise: Exercise): any[] {
         let route: any[] = ['/course-management'];
         const exam = exercise.exerciseGroup?.exam;
@@ -444,5 +391,149 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
         route = [...route, exercise.type + '-exercises', exercise.id, 'scores'];
         return route;
+    }
+
+    toProgrammingParticipation(dto: ParticipationManagementDTO): ProgrammingExerciseStudentParticipation {
+        const p = new ProgrammingExerciseStudentParticipation();
+        p.id = dto.participationId;
+        return p;
+    }
+
+    private toStudentParticipation(dto: ParticipationManagementDTO): StudentParticipation {
+        const p = new StudentParticipation();
+        p.id = dto.participationId;
+        p.presentationScore = dto.presentationScore;
+        p.individualDueDate = dto.individualDueDate;
+        p.testRun = dto.testRun;
+        return p;
+    }
+
+    addBasicPresentation(dto: ParticipationManagementDTO) {
+        if (!this.basicPresentationEnabled()) return;
+        const p = this.toStudentParticipation(dto);
+        p.presentationScore = 1;
+        this.participationService.update(this.exercise()!, p).subscribe({
+            next: () => this.loadPage(),
+            error: () => this.alertService.error('artemisApp.participation.addPresentation.error'),
+        });
+    }
+
+    addGradedPresentation(dto: ParticipationManagementDTO) {
+        if (!this.gradedPresentationEnabled() || (dto.presentationScore ?? 0) > 100 || (dto.presentationScore ?? 0) < 0) return;
+        this.participationService.update(this.exercise()!, this.toStudentParticipation(dto)).subscribe({
+            error: (res: HttpErrorResponse) => {
+                const error = res.error;
+                if (error?.errorKey === 'invalid.presentations.maxNumberOfPresentationsExceeded') {
+                    dto.presentationScore = undefined;
+                } else {
+                    this.alertService.error('artemisApp.participation.savePresentation.error');
+                }
+            },
+            complete: () => {
+                this.participationsChangedPresentation.delete(dto.participationId);
+                this.loadPage();
+            },
+        });
+    }
+
+    hasGradedPresentationChanged(dto: ParticipationManagementDTO): boolean {
+        return this.participationsChangedPresentation.has(dto.participationId);
+    }
+
+    changeGradedPresentation(dto: ParticipationManagementDTO) {
+        this.participationsChangedPresentation.set(dto.participationId, dto);
+    }
+
+    removePresentation(dto: ParticipationManagementDTO) {
+        if (!this.basicPresentationEnabled() && !this.gradedPresentationEnabled()) return;
+        const p = this.toStudentParticipation(dto);
+        p.presentationScore = undefined;
+        this.participationService.update(this.exercise()!, p).subscribe({
+            next: () => this.loadPage(),
+            error: () => this.alertService.error('artemisApp.participation.removePresentation.error'),
+        });
+    }
+
+    isEditingDueDate(id: number): boolean {
+        return this.editingDueDateIds().has(id);
+    }
+
+    getPendingDueDate(id: number): dayjs.Dayjs | undefined {
+        return this.pendingDueDates.get(id);
+    }
+
+    setPendingDueDate(id: number, value: dayjs.Dayjs | undefined) {
+        this.pendingDueDates.set(id, value);
+    }
+
+    startEditDueDate(dto: ParticipationManagementDTO) {
+        this.pendingDueDates.set(dto.participationId, dto.individualDueDate);
+        this.editingDueDateIds.update((s) => new Set([...s, dto.participationId]));
+    }
+
+    cancelEditDueDate(dto: ParticipationManagementDTO) {
+        this.pendingDueDates.delete(dto.participationId);
+        this.editingDueDateIds.update((s) => {
+            const next = new Set(s);
+            next.delete(dto.participationId);
+            return next;
+        });
+    }
+
+    saveIndividualDueDate(dto: ParticipationManagementDTO) {
+        dto.individualDueDate = this.pendingDueDates.get(dto.participationId);
+        this.pendingDueDates.delete(dto.participationId);
+        this.editingDueDateIds.update((s) => {
+            const next = new Set(s);
+            next.delete(dto.participationId);
+            return next;
+        });
+        this.isSaving.set(true);
+        this.participationService.updateIndividualDueDates(this.exercise()!, [this.toStudentParticipation(dto)]).subscribe({
+            next: (response) => {
+                this.isSaving.set(false);
+                this.alertService.success('artemisApp.participation.updateDueDates.success', { name: dto.participantName ?? dto.participantIdentifier });
+                this.loadPage();
+            },
+            error: () => {
+                this.alertService.error('artemisApp.participation.updateDueDates.error');
+                this.isSaving.set(false);
+            },
+        });
+    }
+
+    /**
+     * Deletes participation
+     * @param participationId the id of the participation that we want to delete
+     */
+    deleteParticipation(participationId: number) {
+        this.participationService.delete(participationId, { deleteBuildPlan: true, deleteRepository: true }).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.pendingDueDates.delete(participationId);
+                this.editingDueDateIds.update((s) => {
+                    const next = new Set(s);
+                    next.delete(participationId);
+                    return next;
+                });
+                this.participationsChangedPresentation.delete(participationId);
+                this.loadPage();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    /**
+     * Cleans programming exercise participation
+     * @param programmingExerciseParticipation the id of the participation that we want to delete
+     */
+    cleanupProgrammingExerciseParticipation(dto: ParticipationManagementDTO) {
+        this.participationService.cleanupBuildPlan(this.toStudentParticipation(dto)).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.loadPage();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     }
 }
