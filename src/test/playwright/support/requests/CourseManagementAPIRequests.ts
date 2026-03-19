@@ -133,6 +133,26 @@ export class CourseManagementAPIRequests {
     }
 
     /**
+     * Updates the maxComplaints setting for a course via API.
+     * Useful for tests that file complaints on shared seed courses.
+     */
+    async updateCourseMaxComplaints(courseId: number, maxComplaints: number) {
+        const courseResponse = await this.page.request.get(`api/core/courses/${courseId}`);
+        const courseData = await courseResponse.json();
+        courseData.maxComplaints = maxComplaints;
+        const response = await this.page.request.put(`api/core/courses/${courseId}`, {
+            multipart: {
+                course: {
+                    name: 'course',
+                    mimeType: 'application/json',
+                    buffer: Buffer.from(JSON.stringify(courseData)),
+                },
+            },
+        });
+        return response;
+    }
+
+    /**
      * Adds the specified student to the course.
      *
      * @param course - The course to which the student will be added.
