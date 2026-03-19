@@ -79,7 +79,15 @@ fi
 
 # Merge reports
 echo "--- Merging test reports ---"
-npm run merge-junit-reports || true
+if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-sequential.xml ]; then
+    npm run merge-junit-reports || true
+elif [ -f ./test-reports/results-parallel.xml ]; then
+    cp ./test-reports/results-parallel.xml ./test-reports/results.xml
+elif [ -f ./test-reports/results-sequential.xml ]; then
+    cp ./test-reports/results-sequential.xml ./test-reports/results.xml
+else
+    echo 'Warning: No JUnit report files found to merge'
+fi
 npm run merge-coverage-reports || true
 
 # Write marker file if reporter failed but tests passed (picked up by execute.sh for CI reporting).
