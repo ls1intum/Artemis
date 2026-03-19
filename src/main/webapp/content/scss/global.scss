@@ -1240,6 +1240,13 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
+// Tooltip for chat-history related-entity icons (portaled to <body>).
+.chat-history-entity-tooltip .p-tooltip-text {
+    font-size: 12px;
+    min-width: 200px;
+    white-space: pre-line;
+}
+
 // Landing page documentation dropdown (PrimeNG Menu appended to body)
 .landing-docs-menu.p-menu {
     background: #0f172a;
