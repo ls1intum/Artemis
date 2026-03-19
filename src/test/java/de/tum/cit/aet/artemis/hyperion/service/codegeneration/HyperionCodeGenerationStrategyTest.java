@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -263,6 +264,43 @@ class HyperionCodeGenerationServiceTest {
     }
 
     @Test
+    void callChatClient_withMarkdownWrappedJson_returnsResponse() throws Exception {
+        String expectedPlan = "Generated solution plan";
+        String wrappedJsonResponse = """
+                ```json
+                {"solutionPlan":"%s","files":[]}
+                ```
+                """.formatted(expectedPlan);
+        Map<String, Object> templateVariables = Map.of("key", "value");
+
+        when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(wrappedJsonResponse));
+
+        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
+    }
+
+    @Test
+    void callChatClient_withSurroundingTextAndEmbeddedJson_returnsResponse() throws Exception {
+        String expectedPlan = "Generated solution plan";
+        String wrappedJsonResponse = """
+                Here is the generated output:
+                {"solutionPlan":"%s","files":[]}
+                """.formatted(expectedPlan);
+        Map<String, Object> templateVariables = Map.of("key", "value");
+
+        when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
+        when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(wrappedJsonResponse));
+
+        CodeGenerationResponseDTO result = strategy.testCallChatClient(user, exercise, "test-template", templateVariables);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getSolutionPlan()).isEqualTo(expectedPlan);
+    }
+
+    @Test
     void callChatClient_withTransientAiException_throwsNetworkingException() {
         Map<String, Object> templateVariables = Map.of("key", "value");
         when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
@@ -289,7 +327,17 @@ class HyperionCodeGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("JSON parse failed"));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
-                .hasMessageContaining("AI request failed due to an internal processing error. Please contact support.");
+                .hasMessageContaining("JSON parse failed");
+    }
+
+    @Test
+    void callChatClient_withChannelTimeout_throwsUserFriendlyNetworkingException() {
+        Map<String, Object> templateVariables = Map.of("key", "value");
+        when(templates.renderObject("test-template", templateVariables)).thenReturn("rendered prompt");
+        when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException(new TimeoutException("Channel response timed out after 60000 milliseconds.")));
+
+        assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class).hasMessageContaining(
+                "The AI took too long to respond and this generation request timed out after 60 seconds. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
     }
 
     private void setupMockTemplateAndChatResponses(String finalResponse) {

@@ -18,6 +18,7 @@ import {
     faCircleExclamation,
     faCircleInfo,
     faCircleNotch,
+    faGear,
     faPaperPlane,
     faPlus,
     faSave,
@@ -39,7 +40,7 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
+import { HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
@@ -64,6 +65,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TextareaModule } from 'primeng/textarea';
 import { BadgeModule } from 'primeng/badge';
 import { ButtonModule } from 'primeng/button';
+import { CheckboxModule } from 'primeng/checkbox';
 import { MessageModule } from 'primeng/message';
 import { Popover, PopoverModule } from 'primeng/popover';
 
@@ -72,6 +74,31 @@ const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
     [ConsistencyIssue.SeverityEnum.Medium]: 1,
     [ConsistencyIssue.SeverityEnum.Low]: 2,
 };
+
+const SUPPORTED_CODE_GENERATION_REPOSITORIES = [RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS] as const;
+const CODE_GENERATION_SLOT_RELEASE_POLL_INTERVAL_MS = 300;
+const CODE_GENERATION_SLOT_RELEASE_MAX_POLLS = 20;
+const CODE_GENERATION_STATUS_POPOVER_CENTER_OFFSET_PX = -10;
+
+type SupportedCodeGenerationRepositoryType = (typeof SUPPORTED_CODE_GENERATION_REPOSITORIES)[number];
+type CodeGenerationExecutionState = 'idle' | 'queued' | 'running' | 'success' | 'error' | 'skipped';
+type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE';
+
+interface CodeGenerationFileActivity {
+    repositoryType: SupportedCodeGenerationRepositoryType;
+    eventType: CodeGenerationFileEventType;
+    path: string;
+    timestamp: number;
+}
+
+interface CodeGenerationRepositoryStatus {
+    repositoryType: SupportedCodeGenerationRepositoryType;
+    enabled: boolean;
+    state: CodeGenerationExecutionState;
+    attempts?: number;
+    message?: string;
+    fileActivities: CodeGenerationFileActivity[];
+}
 
 interface ConsistencyIssueNavigationIssue {
     threadId: number;
@@ -112,6 +139,7 @@ interface ConsistencyIssueNavigationIssue {
         TextareaModule,
         BadgeModule,
         ButtonModule,
+        CheckboxModule,
         MessageModule,
         PopoverModule,
     ],
@@ -161,6 +189,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     readonly ButtonSize = ButtonSize;
 
     readonly refinementPopover = viewChild<Popover>('refinementPopover');
+    readonly codeGenerationSettingsPopover = viewChild<Popover>('codeGenerationSettingsPopover');
+    readonly codeGenerationStatusPopover = viewChild<Popover>('codeGenerationStatusPopover');
     /** Prompt bound to the refinement popover textarea — aliased to aiOps.userPrompt. */
     readonly refinementPrompt = this.aiOps.userPrompt;
     protected readonly faPaperPlane = faPaperPlane;
@@ -185,6 +215,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     protected readonly faCircleExclamation = faCircleExclamation;
     protected readonly faTriangleExclamation = faTriangleExclamation;
     protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faGear = faGear;
 
     protected readonly faSpinner = faSpinner;
     protected readonly facArtemisIntelligence = facArtemisIntelligence;
@@ -203,6 +234,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private activeJobId?: string;
     private statusSubscription?: Subscription;
     private restoreRequestId = 0;
+    private slotReleasePollTimeoutHandle?: number;
+    private queuedCodeGenerationRepositories: SupportedCodeGenerationRepositoryType[] = [];
+    private activeCodeGenerationRepository?: SupportedCodeGenerationRepositoryType;
+    private hasCustomCodeGenerationSelection = false;
+    readonly supportedCodeGenerationRepositories = SUPPORTED_CODE_GENERATION_REPOSITORIES;
+    readonly codeGenerationStatuses = signal<CodeGenerationRepositoryStatus[]>(
+        SUPPORTED_CODE_GENERATION_REPOSITORIES.map((repositoryType) => this.createCodeGenerationStatus(repositoryType)),
+    );
+    readonly codeGenerationActivityLog = computed(() =>
+        this.codeGenerationStatuses()
+            .flatMap((status) => status.fileActivities)
+            .sort((left, right) => right.timestamp - left.timestamp),
+    );
 
     constructor() {
         super();
@@ -271,52 +315,71 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             return;
         }
 
-        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
-            this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' });
+        const repositories = this.getSelectedCodeGenerationRepositories();
+        if (!repositories.length) {
+            this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.noRepositorySelected' });
             return;
         }
         const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'md' });
         modalRef.componentInstance.title = 'artemisApp.programmingExercise.codeGeneration.confirmTitle';
         modalRef.componentInstance.text = 'artemisApp.programmingExercise.codeGeneration.confirmText';
         modalRef.componentInstance.translateText = true;
-        modalRef.result.then(() => this.startCodeGeneration()).catch(() => {});
+        modalRef.result.then(() => this.startCodeGeneration(repositories)).catch(() => {});
     }
 
     /**
      * Triggers the async generation endpoint and subscribes to job updates.
      */
-    private startCodeGeneration() {
+    private startCodeGeneration(repositories: SupportedCodeGenerationRepositoryType[]) {
         this.isGeneratingCode.set(true);
-        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
-        if (!repositoryType) {
-            this.isGeneratingCode.set(false);
-            this.codeGenAlertService.addAlert({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.unsupportedRepository' });
+        this.restoreRequestId += 1;
+        this.clearCodeGenerationStatusSubscription();
+        this.clearSlotReleasePoll();
+        this.codeGenerationSettingsPopover()?.hide();
+        this.initializeCodeGenerationRunStatuses(repositories);
+        this.queuedCodeGenerationRepositories = [...repositories];
+        this.activeCodeGenerationRepository = undefined;
+        this.runNextCodeGeneration();
+    }
+
+    private runNextCodeGeneration() {
+        const repositoryType = this.queuedCodeGenerationRepositories.shift();
+        if (!repositoryType || !this.exercise?.id) {
+            this.activeCodeGenerationRepository = undefined;
+            this.clearJobSubscription(true);
             return;
         }
+
+        this.activeCodeGenerationRepository = repositoryType;
+        this.updateCodeGenerationStatus(repositoryType, (status) => ({
+            ...status,
+            state: 'running',
+            attempts: undefined,
+            message: undefined,
+        }));
+
         const request = this.createCodeGenerationRequest(repositoryType);
-        const exerciseId = this.exercise!.id!;
+        const exerciseId = this.exercise.id;
         this.hyperionCodeGenerationApi.generateCode(exerciseId, request).subscribe({
             next: (res) => {
                 if (!res?.jobId) {
-                    this.isGeneratingCode.set(false);
-                    this.codeGenAlertService.addAlert({
-                        type: AlertType.DANGER,
-                        translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                    });
+                    this.stopCodeGenerationQueue(repositoryType, undefined, 'artemisApp.programmingExercise.codeGeneration.error');
                     return;
                 }
-                this.subscribeToJob(res.jobId);
+                this.subscribeToJob(res.jobId, repositoryType);
             },
             error: (error: HttpErrorResponse) => {
-                this.isGeneratingCode.set(false);
                 if (this.isCodeGenerationAlreadyRunning(error)) {
+                    this.stopCodeGenerationQueue(
+                        repositoryType,
+                        this.translateService.instant('artemisApp.programmingExercise.codeGeneration.runningText'),
+                        'artemisApp.programmingExercise.codeGeneration.error',
+                        false,
+                    );
                     this.openCodeGenerationRunningModal();
                     return;
                 }
-                this.codeGenAlertService.addAlert({
-                    type: AlertType.DANGER,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                });
+                this.stopCodeGenerationQueue(repositoryType, undefined, 'artemisApp.programmingExercise.codeGeneration.error');
             },
             complete: () => {},
         });
@@ -338,20 +401,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     protected override applyDomainChange(domainType: any, domainValue: any) {
         super.applyDomainChange(domainType, domainValue);
+        if (!this.hasCustomCodeGenerationSelection && !this.isGeneratingCode()) {
+            this.syncCodeGenerationSelectionWithSelectedRepository();
+        }
         this.restoreCodeGenerationState();
     }
 
     override ngOnDestroy() {
         this.clearJobSubscription(true);
-        this.statusSubscription?.unsubscribe();
+        this.clearCodeGenerationStatusSubscription();
+        this.clearSlotReleasePoll();
         this.aiOps.destroy();
         super.ngOnDestroy();
     }
 
     private restoreCodeGenerationState() {
         this.restoreRequestId += 1;
-        this.statusSubscription?.unsubscribe();
-        this.statusSubscription = undefined;
+        this.clearCodeGenerationStatusSubscription();
 
         if (!this.hyperionEnabled || !this.exercise?.id) {
             return;
@@ -374,7 +440,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     return;
                 }
                 if (res?.jobId) {
-                    this.subscribeToJob(res.jobId);
+                    this.initializeCodeGenerationRunStatuses([repositoryType]);
+                    this.activeCodeGenerationRepository = repositoryType;
+                    this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, state: 'running' }));
+                    this.subscribeToJob(res.jobId, repositoryType);
                 } else {
                     this.clearJobSubscription(true);
                 }
@@ -388,7 +457,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
-    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): RepositoryType | undefined {
+    private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
                 return RepositoryType.TEMPLATE;
@@ -406,76 +475,25 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
     }
 
+    private createCheckOnlyCodeGenerationRequest(): CodeGenerationRequest {
+        return { checkOnly: true } as unknown as CodeGenerationRequest;
+    }
+
     /**
      * Subscribes to job updates, refreshes files on updates, and stops spinner on terminal events.
      * @param jobId job identifier
      */
-    private subscribeToJob(jobId: string) {
+    private subscribeToJob(jobId: string, repositoryType: SupportedCodeGenerationRepositoryType) {
         if (this.activeJobId === jobId && this.jobSubscription) {
             return;
         }
         this.clearJobSubscription(false);
         this.activeJobId = jobId;
-        const cleanup = () => {
-            this.clearJobSubscription(true);
-        };
 
         this.isGeneratingCode.set(true);
         this.jobSubscription = this.hyperionWs.subscribeToJob(jobId).subscribe({
-            next: (event) => {
-                switch (event.type) {
-                    case 'STARTED':
-                        // spinner already on; just log
-                        break;
-
-                    case 'PROGRESS':
-                        break;
-
-                    case 'FILE_UPDATED':
-                    case 'NEW_FILE':
-                        this.repoService
-                            .pull()
-                            .pipe(
-                                take(1),
-                                catchError(() => {
-                                    return of(void 0);
-                                }),
-                            )
-                            .subscribe(() => {});
-                        break;
-
-                    case 'DONE':
-                        this.codeEditorContainer?.actions?.executeRefresh();
-                        cleanup();
-                        this.codeGenAlertService.addAlert({
-                            type: event.success ? AlertType.SUCCESS : AlertType.WARNING,
-                            translationKey: event.success
-                                ? 'artemisApp.programmingExercise.codeGeneration.success'
-                                : 'artemisApp.programmingExercise.codeGeneration.partialSuccess',
-                            translationParams: { repositoryType: this.selectedRepository },
-                        });
-                        break;
-
-                    case 'ERROR':
-                        cleanup();
-                        this.codeGenAlertService.addAlert({
-                            type: AlertType.DANGER,
-                            translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                            translationParams: { repositoryType: this.selectedRepository },
-                        });
-                        break;
-
-                    default:
-                }
-            },
-            error: () => {
-                cleanup();
-                this.codeGenAlertService.addAlert({
-                    type: AlertType.DANGER,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
-                    translationParams: { repositoryType: this.selectedRepository },
-                });
-            },
+            next: (event) => this.handleCodeGenerationJobEvent(repositoryType, event),
+            error: () => this.stopCodeGenerationQueue(repositoryType, undefined, 'artemisApp.programmingExercise.codeGeneration.error'),
             complete: () => {
                 // don't auto-stop spinner here; DONE/ERROR/timeout handle it
             },
@@ -483,14 +501,111 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         // Safety timeout (20 minutes)
         this.jobTimeoutHandle = window.setTimeout(() => {
-            if (this.isGeneratingCode()) {
-                cleanup();
-                this.codeGenAlertService.addAlert({
-                    type: AlertType.WARNING,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout',
-                });
+            if (this.isGeneratingCode() && this.activeCodeGenerationRepository === repositoryType) {
+                this.stopCodeGenerationQueue(
+                    repositoryType,
+                    this.translateService.instant('artemisApp.programmingExercise.codeGeneration.timeoutDetails'),
+                    'artemisApp.programmingExercise.codeGeneration.timeout',
+                );
             }
         }, 1_200_000);
+    }
+
+    toggleCodeGenerationSettings(event: Event): void {
+        this.codeGenerationStatusPopover()?.hide();
+        const popover = this.codeGenerationSettingsPopover();
+        if (!popover) {
+            return;
+        }
+
+        if (popover.overlayVisible) {
+            popover.hide();
+            return;
+        }
+
+        popover.show(event, event.currentTarget as HTMLElement | undefined);
+    }
+
+    toggleCodeGenerationStatus(event: Event, target?: HTMLElement): void {
+        this.codeGenerationSettingsPopover()?.hide();
+        const popover = this.codeGenerationStatusPopover();
+        if (!popover) {
+            return;
+        }
+
+        if (popover.overlayVisible) {
+            popover.hide();
+            return;
+        }
+
+        popover.show(event, target || (event.currentTarget as HTMLElement | undefined));
+        this.scheduleCodeGenerationStatusPopoverRealign();
+    }
+
+    isCodeGenerationRepositoryEnabled(repositoryType: SupportedCodeGenerationRepositoryType): boolean {
+        return this.codeGenerationStatuses().find((status) => status.repositoryType === repositoryType)?.enabled ?? false;
+    }
+
+    toggleCodeGenerationRepository(repositoryType: SupportedCodeGenerationRepositoryType): void {
+        this.setCodeGenerationRepositoryEnabled(repositoryType, !this.isCodeGenerationRepositoryEnabled(repositoryType));
+    }
+
+    setCodeGenerationRepositoryEnabled(repositoryType: SupportedCodeGenerationRepositoryType, enabled: boolean): void {
+        if (this.isGeneratingCode()) {
+            return;
+        }
+
+        this.hasCustomCodeGenerationSelection = true;
+        this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, enabled }));
+    }
+
+    getCodeGenerationRepositoryTranslationKey(repositoryType: SupportedCodeGenerationRepositoryType): string {
+        switch (repositoryType) {
+            case RepositoryType.TEMPLATE:
+                return 'artemisApp.editor.repoSelect.templateRepo';
+            case RepositoryType.SOLUTION:
+                return 'artemisApp.editor.repoSelect.solutionRepo';
+            case RepositoryType.TESTS:
+                return 'artemisApp.editor.repoSelect.testRepo';
+        }
+    }
+
+    getCodeGenerationStateTranslationKey(state: CodeGenerationExecutionState): string {
+        switch (state) {
+            case 'queued':
+                return 'artemisApp.programmingExercise.codeGeneration.status.queued';
+            case 'running':
+                return 'artemisApp.programmingExercise.codeGeneration.status.running';
+            case 'success':
+                return 'artemisApp.programmingExercise.codeGeneration.status.success';
+            case 'error':
+                return 'artemisApp.programmingExercise.codeGeneration.status.error';
+            case 'skipped':
+                return 'artemisApp.programmingExercise.codeGeneration.status.skipped';
+            default:
+                return 'artemisApp.programmingExercise.codeGeneration.status.idle';
+        }
+    }
+
+    getCodeGenerationStateClass(state: CodeGenerationExecutionState): string {
+        switch (state) {
+            case 'success':
+                return 'text-success';
+            case 'queued':
+                return 'text-warning';
+            case 'error':
+                return 'text-danger';
+            case 'running':
+                return 'text-primary';
+            case 'skipped':
+                return 'text-muted';
+            default:
+                return 'text-body-secondary';
+        }
+    }
+
+    getCodeGenerationFileActionTranslationKey(eventType: CodeGenerationFileEventType): string {
+        return eventType === 'NEW_FILE' ? 'artemisApp.programmingExercise.codeGeneration.status.fileCreated' : 'artemisApp.programmingExercise.codeGeneration.status.fileUpdated';
     }
 
     private clearJobSubscription(stopSpinner: boolean) {
@@ -506,6 +621,267 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.jobTimeoutHandle) {
             clearTimeout(this.jobTimeoutHandle);
             this.jobTimeoutHandle = undefined;
+        }
+    }
+
+    private handleCodeGenerationJobEvent(repositoryType: SupportedCodeGenerationRepositoryType, event: HyperionEvent) {
+        switch (event.type) {
+            case 'STARTED':
+            case 'PROGRESS':
+                break;
+
+            case 'FILE_UPDATED':
+            case 'NEW_FILE':
+                this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path);
+                if (this.selectedRepository === repositoryType) {
+                    this.repoService
+                        .pull()
+                        .pipe(
+                            take(1),
+                            catchError(() => {
+                                return of(void 0);
+                            }),
+                        )
+                        .subscribe(() => {});
+                }
+                break;
+
+            case 'DONE':
+                this.codeEditorContainer?.actions?.executeRefresh();
+                this.updateCodeGenerationStatus(repositoryType, (status) => ({
+                    ...status,
+                    state: 'success',
+                    attempts: event.attempts,
+                    message: event.success ? event.message : undefined,
+                }));
+                this.codeGenAlertService.addAlert({
+                    type: AlertType.SUCCESS,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
+                    translationParams: { repositoryType },
+                });
+                this.finishCurrentCodeGeneration(event.success || this.queuedCodeGenerationRepositories.length > 0);
+                break;
+
+            case 'ERROR':
+                this.stopCodeGenerationQueue(repositoryType, event.message, 'artemisApp.programmingExercise.codeGeneration.error');
+                break;
+
+            default:
+        }
+    }
+
+    private finishCurrentCodeGeneration(continueQueue: boolean) {
+        const hasMoreRepositories = continueQueue && this.queuedCodeGenerationRepositories.length > 0;
+        this.clearJobSubscription(!hasMoreRepositories);
+        this.activeCodeGenerationRepository = undefined;
+
+        if (hasMoreRepositories) {
+            this.waitForCodeGenerationSlotRelease();
+        }
+    }
+
+    private stopCodeGenerationQueue(
+        repositoryType: SupportedCodeGenerationRepositoryType,
+        message: string | undefined,
+        alertTranslationKey: 'artemisApp.programmingExercise.codeGeneration.error' | 'artemisApp.programmingExercise.codeGeneration.timeout',
+        showAlert = true,
+    ) {
+        this.updateCodeGenerationStatus(repositoryType, (status) => ({
+            ...status,
+            state: 'error',
+            message,
+        }));
+        this.markQueuedCodeGenerationRepositoriesSkipped();
+        this.queuedCodeGenerationRepositories = [];
+        this.activeCodeGenerationRepository = undefined;
+        this.clearCodeGenerationStatusSubscription();
+        this.clearSlotReleasePoll();
+        this.clearJobSubscription(true);
+        if (showAlert) {
+            this.codeGenAlertService.addAlert({
+                type: alertTranslationKey === 'artemisApp.programmingExercise.codeGeneration.timeout' ? AlertType.WARNING : AlertType.DANGER,
+                translationKey: alertTranslationKey,
+                translationParams: { repositoryType },
+            });
+        }
+    }
+
+    private markQueuedCodeGenerationRepositoriesSkipped() {
+        if (!this.queuedCodeGenerationRepositories.length) {
+            return;
+        }
+
+        const skippedMessage = this.translateService.instant('artemisApp.programmingExercise.codeGeneration.status.skippedMessage');
+        const queuedRepositories = new Set(this.queuedCodeGenerationRepositories);
+        this.codeGenerationStatuses.update((statuses) =>
+            statuses.map((status) =>
+                queuedRepositories.has(status.repositoryType)
+                    ? {
+                          ...status,
+                          state: 'skipped',
+                          message: skippedMessage,
+                      }
+                    : status,
+            ),
+        );
+    }
+
+    private registerCodeGenerationFileActivity(repositoryType: SupportedCodeGenerationRepositoryType, eventType: CodeGenerationFileEventType, path: string) {
+        const activity: CodeGenerationFileActivity = {
+            repositoryType,
+            eventType,
+            path,
+            timestamp: Date.now(),
+        };
+        this.updateCodeGenerationStatus(repositoryType, (status) => ({
+            ...status,
+            fileActivities: [activity, ...status.fileActivities],
+        }));
+    }
+
+    private getSelectedCodeGenerationRepositories(): SupportedCodeGenerationRepositoryType[] {
+        const enabledRepositories = new Set(
+            this.codeGenerationStatuses()
+                .filter((status) => status.enabled)
+                .map((status) => status.repositoryType),
+        );
+
+        return SUPPORTED_CODE_GENERATION_REPOSITORIES.filter((repositoryType) => enabledRepositories.has(repositoryType));
+    }
+
+    private initializeCodeGenerationRunStatuses(repositories: SupportedCodeGenerationRepositoryType[]) {
+        const enabledRepositories = new Set(repositories);
+        this.codeGenerationStatuses.set(
+            SUPPORTED_CODE_GENERATION_REPOSITORIES.map((repositoryType) => ({
+                repositoryType,
+                enabled: enabledRepositories.has(repositoryType),
+                state: enabledRepositories.has(repositoryType) ? 'queued' : 'idle',
+                attempts: undefined,
+                message: undefined,
+                fileActivities: [],
+            })),
+        );
+        this.scheduleCodeGenerationStatusPopoverRealign();
+    }
+
+    private syncCodeGenerationSelectionWithSelectedRepository() {
+        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
+        this.codeGenerationStatuses.update((statuses) =>
+            statuses.map((status) => ({
+                ...status,
+                enabled: repositoryType === status.repositoryType,
+            })),
+        );
+    }
+
+    private createCodeGenerationStatus(repositoryType: SupportedCodeGenerationRepositoryType): CodeGenerationRepositoryStatus {
+        return {
+            repositoryType,
+            enabled: false,
+            state: 'idle',
+            fileActivities: [],
+        };
+    }
+
+    private updateCodeGenerationStatus(repositoryType: SupportedCodeGenerationRepositoryType, updater: (status: CodeGenerationRepositoryStatus) => CodeGenerationRepositoryStatus) {
+        this.codeGenerationStatuses.update((statuses) => statuses.map((status) => (status.repositoryType === repositoryType ? updater(status) : status)));
+        this.scheduleCodeGenerationStatusPopoverRealign();
+    }
+
+    private scheduleCodeGenerationStatusPopoverRealign() {
+        const popover = this.codeGenerationStatusPopover();
+        if (!popover?.overlayVisible) {
+            return;
+        }
+
+        window.setTimeout(() => {
+            this.realignCodeGenerationStatusPopover();
+        });
+    }
+
+    private realignCodeGenerationStatusPopover() {
+        const popover = this.codeGenerationStatusPopover();
+        const target = popover?.target as HTMLElement | undefined;
+        const container = popover?.container;
+        if (!popover?.overlayVisible || !target || !container) {
+            return;
+        }
+
+        popover.align();
+
+        const containerRect = container.getBoundingClientRect();
+        const targetRect = target.getBoundingClientRect();
+        const arrowTargetRect = this.getCodeGenerationStatusArrowTargetRect(target);
+        const scrollLeft = window.scrollX;
+        const viewportWidth = window.innerWidth;
+        const borderRadius = parseFloat(window.getComputedStyle(container).getPropertyValue('border-radius')) || 0;
+        const centeredLeft = targetRect.left + scrollLeft + targetRect.width / 2 - containerRect.width / 2 + CODE_GENERATION_STATUS_POPOVER_CENTER_OFFSET_PX;
+        const clampedLeft = Math.max(scrollLeft, Math.min(centeredLeft, scrollLeft + viewportWidth - containerRect.width));
+        container.style.insetInlineStart = `${clampedLeft}px`;
+
+        const arrowLeft = Math.max(0, arrowTargetRect.left + scrollLeft + arrowTargetRect.width / 2 - clampedLeft - borderRadius * 3 - 2);
+        container.style.setProperty('--p-popover-arrow-left', `${arrowLeft}px`);
+    }
+
+    private getCodeGenerationStatusArrowTargetRect(target: HTMLElement): DOMRect {
+        const iconElement = target.querySelector('svg');
+        return iconElement?.getBoundingClientRect() ?? target.getBoundingClientRect();
+    }
+
+    private waitForCodeGenerationSlotRelease(attempt = 0) {
+        if (!this.exercise?.id) {
+            this.clearJobSubscription(true);
+            return;
+        }
+
+        this.clearCodeGenerationStatusSubscription();
+        this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, this.createCheckOnlyCodeGenerationRequest()).subscribe({
+            next: (res) => {
+                if (!res?.jobId) {
+                    this.clearCodeGenerationStatusSubscription();
+                    this.clearSlotReleasePoll();
+                    this.runNextCodeGeneration();
+                    return;
+                }
+
+                this.scheduleNextSlotReleasePoll(attempt);
+            },
+            error: () => {
+                this.scheduleNextSlotReleasePoll(attempt);
+            },
+        });
+    }
+
+    private scheduleNextSlotReleasePoll(attempt: number) {
+        if (attempt + 1 >= CODE_GENERATION_SLOT_RELEASE_MAX_POLLS) {
+            const nextRepository = this.queuedCodeGenerationRepositories[0];
+            if (nextRepository) {
+                this.stopCodeGenerationQueue(
+                    nextRepository,
+                    this.translateService.instant('artemisApp.programmingExercise.codeGeneration.queueReleaseTimeoutDetails'),
+                    'artemisApp.programmingExercise.codeGeneration.error',
+                );
+            } else {
+                this.clearJobSubscription(true);
+            }
+            return;
+        }
+
+        this.clearSlotReleasePoll();
+        this.slotReleasePollTimeoutHandle = window.setTimeout(() => {
+            this.waitForCodeGenerationSlotRelease(attempt + 1);
+        }, CODE_GENERATION_SLOT_RELEASE_POLL_INTERVAL_MS);
+    }
+
+    private clearCodeGenerationStatusSubscription() {
+        this.statusSubscription?.unsubscribe();
+        this.statusSubscription = undefined;
+    }
+
+    private clearSlotReleasePoll() {
+        if (this.slotReleasePollTimeoutHandle) {
+            clearTimeout(this.slotReleasePollTimeoutHandle);
+            this.slotReleasePollTimeoutHandle = undefined;
         }
     }
 

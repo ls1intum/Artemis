@@ -4,11 +4,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.ResponseEntity;
 import org.springframework.ai.chat.metadata.Usage;
 import org.springframework.ai.chat.model.ChatResponse;
 import org.springframework.ai.retry.NonTransientAiException;
@@ -19,6 +21,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.core.domain.LLMRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
@@ -45,6 +48,14 @@ import de.tum.cit.aet.artemis.programming.repository.ProgrammingExerciseReposito
 public abstract class HyperionCodeGenerationService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationService.class);
+
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
+
+    private static final String CHANNEL_TIMEOUT_MESSAGE = "Channel response timed out after 60000 milliseconds";
+
+    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 60 seconds. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 
     /**
      * Maximum number of characters kept when passing consistency issues into AI prompts.
@@ -153,13 +164,9 @@ public abstract class HyperionCodeGenerationService {
             throws NetworkingException {
         String rendered = templates.renderObject(prompt, templateVariables);
         try {
-            ResponseEntity<ChatResponse, CodeGenerationResponseDTO> responseResult = chatClient.prompt().user(rendered).call().responseEntity(CodeGenerationResponseDTO.class);
-            ChatResponse chatResponse = responseResult.getResponse();
+            ChatResponse chatResponse = chatClient.prompt().user(rendered).call().chatResponse();
+            CodeGenerationResponseDTO response = parseCodeGenerationResponse(LLMTokenUsageService.extractResponseText(chatResponse));
             storeTokenUsage(user, exercise, courseId, prompt, chatResponse);
-            CodeGenerationResponseDTO response = responseResult.entity();
-            if (response == null) {
-                throw new IllegalArgumentException("AI response content is missing");
-            }
             return response;
         }
         catch (TransientAiException e) {
@@ -175,14 +182,70 @@ public abstract class HyperionCodeGenerationService {
             if (isResponseProcessingException(e)) {
                 throw new NetworkingException("AI response processing failed. Please retry.", e);
             }
-            throw new NetworkingException("AI request failed due to an internal processing error. Please contact support.", e);
+            if (isChannelResponseTimeout(e)) {
+                throw new NetworkingException(USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE, e);
+            }
+            throw new NetworkingException("AI request failed due to an internal processing error.", e);
         }
+    }
+
+    private CodeGenerationResponseDTO parseCodeGenerationResponse(String responseText) {
+        if (responseText == null || responseText.isBlank()) {
+            throw new IllegalArgumentException("AI response content is missing");
+        }
+
+        String trimmed = responseText.trim();
+        for (String candidate : extractJsonCandidates(trimmed)) {
+            try {
+                CodeGenerationResponseDTO response = OBJECT_MAPPER.readValue(candidate, CodeGenerationResponseDTO.class);
+                if (response != null) {
+                    return response;
+                }
+            }
+            catch (JsonProcessingException ignored) {
+                // Try the next candidate.
+            }
+        }
+        throw new IllegalArgumentException("AI response content could not be parsed");
+    }
+
+    private List<String> extractJsonCandidates(String responseText) {
+        Matcher codeBlockMatcher = JSON_CODE_BLOCK_PATTERN.matcher(responseText);
+        if (codeBlockMatcher.find()) {
+            return List.of(codeBlockMatcher.group(1).trim(), responseText);
+        }
+
+        int firstBrace = responseText.indexOf('{');
+        int lastBrace = responseText.lastIndexOf('}');
+        if (firstBrace >= 0 && lastBrace > firstBrace) {
+            String embeddedJson = responseText.substring(firstBrace, lastBrace + 1).trim();
+            if (!embeddedJson.equals(responseText)) {
+                return List.of(responseText, embeddedJson);
+            }
+        }
+
+        return List.of(responseText);
     }
 
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
-            if (current instanceof JsonProcessingException) {
+            if (current instanceof JsonProcessingException || current instanceof IllegalArgumentException) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isChannelResponseTimeout(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            if (current instanceof TimeoutException) {
+                return true;
+            }
+            String message = current.getMessage();
+            if (message != null && message.contains(CHANNEL_TIMEOUT_MESSAGE)) {
                 return true;
             }
             current = current.getCause();

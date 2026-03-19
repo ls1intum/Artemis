@@ -62,12 +62,10 @@ public class HyperionCodeGenerationJobService {
      * @return the created job id
      */
     public String startJob(User user, ProgrammingExercise exercise, Long courseId, RepositoryType repositoryType) {
-        JobClaim claim = claimJob(user.getLogin(), exercise.getId(), repositoryType);
-        if (claim.started()) {
-            String jobId = claim.job().jobId();
-            taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, () -> clearJob(exercise.getId(), jobId));
-        }
-        return claim.job().jobId();
+        JobInfo job = claimJob(user.getLogin(), exercise.getId(), repositoryType);
+        String jobId = job.jobId();
+        taskService.runJobAsync(jobId, user, exercise, courseId, repositoryType, () -> clearJob(exercise.getId(), jobId));
+        return jobId;
     }
 
     /**
@@ -82,24 +80,21 @@ public class HyperionCodeGenerationJobService {
     }
 
     /**
-     * Claims an exercise-level job slot and reuses the existing job for the same user.
+     * Claims an exercise-level job slot for a new generation request.
      *
      * @param userLogin      user login requesting the job
      * @param exerciseId     exercise id
      * @param repositoryType repository type for code generation
-     * @return job claim result
+     * @return the claimed job
      */
-    private JobClaim claimJob(String userLogin, long exerciseId, RepositoryType repositoryType) {
+    private JobInfo claimJob(String userLogin, long exerciseId, RepositoryType repositoryType) {
         String jobId = UUID.randomUUID().toString();
         JobInfo newJob = new JobInfo(jobId, userLogin, exerciseId, repositoryType, Instant.now());
         JobInfo existing = getJobMap().putIfAbsent(jobKey(exerciseId), newJob);
         if (existing != null) {
-            if (existing.userLogin().equals(userLogin)) {
-                return new JobClaim(existing, false);
-            }
             throw new ConflictException("Code generation already running for this exercise", ENTITY_NAME, "codeGenerationRunning");
         }
-        return new JobClaim(newJob, true);
+        return newJob;
     }
 
     private Optional<JobInfo> getJobForUser(long exerciseId, String userLogin) {
@@ -125,9 +120,6 @@ public class HyperionCodeGenerationJobService {
 
     private static String jobKey(long exerciseId) {
         return String.valueOf(exerciseId);
-    }
-
-    private record JobClaim(JobInfo job, boolean started) {
     }
 
     public record JobInfo(String jobId, String userLogin, long exerciseId, RepositoryType repositoryType, Instant startedAt) implements Serializable {
