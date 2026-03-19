@@ -206,7 +206,7 @@ export class IrisChatService implements OnDestroy {
         return this.irisChatHttpService.createMessage(this.sessionId, requestDTO).pipe(
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 this.suggestions.next([]);
-                this.replaceOrAddMessage(response.body! as IrisMessage);
+                this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
                 this.updateCurrentSessionLastActivityDate();
             }),
             map(() => undefined),
@@ -266,7 +266,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         return this.irisChatHttpService.resendMessage(this.sessionId, message).pipe(
-            map((r: HttpResponse<IrisMessageResponseDTO>) => r.body! as IrisMessage),
+            map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 this.replaceMessage(m);
                 this.updateCurrentSessionLastActivityDate();
@@ -297,7 +297,7 @@ export class IrisChatService implements OnDestroy {
         }
 
         return this.irisChatHttpService.rateMessage(this.sessionId, message.id!, !!helpful).pipe(
-            map((r: HttpResponse<IrisMessageResponseDTO>) => r.body! as IrisMessage),
+            map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => this.replaceMessage(m)),
             map(() => undefined),
             catchError(() => {
@@ -469,10 +469,7 @@ export class IrisChatService implements OnDestroy {
                     this.numNewMessages.next(this.numNewMessages.getValue() + 1);
                 }
                 if (payload.message?.id) {
-                    const message = Object.assign({}, payload.message, {
-                        sentAt: payload.message.sentAt ? dayjs(payload.message.sentAt) : undefined,
-                    }) as IrisMessage;
-                    this.replaceOrAddMessage(message);
+                    this.replaceOrAddMessage(this.mapMessageDTO(payload.message));
                 }
                 if (payload.stages) {
                     this.stages.next(this.filterStages(payload.stages));
@@ -485,6 +482,12 @@ export class IrisChatService implements OnDestroy {
                 }
                 break;
         }
+    }
+
+    private mapMessageDTO(dto: IrisMessageResponseDTO): IrisMessage {
+        return Object.assign({}, dto, {
+            sentAt: dto.sentAt ? dayjs(dto.sentAt) : undefined,
+        }) as IrisMessage;
     }
 
     private filterStages(stages: IrisStageDTO[]): IrisStageDTO[] {
