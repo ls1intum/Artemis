@@ -27,6 +27,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.RemoteRefUpdate;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
@@ -216,6 +217,15 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
      */
     private String buildRepositoryUri(String username, String projectKey, String repositorySlug) {
         String userInfo = username + ":" + UserFactory.USER_PASSWORD;
+        return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
+                .toString();
+    }
+
+    /**
+     * Builds a repository URI with a specific token as password for the local VC server.
+     */
+    private String buildRepositoryUriWithToken(String username, String token, String projectKey, String repositorySlug) {
+        String userInfo = username + ":" + token;
         return UriComponentsBuilder.fromUri(localVCBaseUri).port(port).userInfo(userInfo).pathSegment("git", projectKey.toUpperCase(), repositorySlug + ".git").build().toUri()
                 .toString();
     }
@@ -1415,6 +1425,109 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
                 testFetchSuccessful(git, instructor1.getLogin(), examProjectKey, instructorRepoSlug);
                 commitFile(git, "test-run-answer.txt");
                 testPushSuccessful(git, instructor1.getLogin(), examProjectKey, instructorRepoSlug);
+            }
+        }
+    }
+
+    @Nested
+    class ParticipationTokenTests {
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_teamExercise_withParticipationVcsAccessToken() throws Exception {
+            // Create team exercise via REST API
+            mockDockerClientForExerciseCreation();
+            ProgrammingExercise newExercise = ProgrammingExerciseFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
+            newExercise.setProjectType(ProjectType.PLAIN_GRADLE);
+            newExercise.setAllowOfflineIde(true);
+            newExercise.setChannelName("test-team-token");
+            newExercise.setMode(ExerciseMode.TEAM);
+            ProgrammingExercise exercise = request.postWithResponseBody("/api/programming/programming-exercises/setup", newExercise, ProgrammingExercise.class, HttpStatus.CREATED);
+
+            String projectKey = exercise.getProjectKey();
+
+            // Create team with student1 as member
+            Team team = new Team();
+            team.setName("TokenTeam");
+            team.setShortName("tokenteam");
+            team.setExercise(exercise);
+            team.setStudents(Set.of(student1));
+            teamRepository.save(team);
+
+            String teamRepoSlug = projectKey.toLowerCase() + "-tokenteam";
+
+            // Team member (student1) starts the exercise via REST API
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
+                    HttpStatus.CREATED);
+
+            // Create a participation VCS access token for student1
+            localVCLocalCITestService.createParticipationVcsAccessToken(student1, participation.getId());
+            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
+            String token = participationToken.getVcsAccessToken();
+
+            // Disable LDAP fallback so success can only come from participation token auth
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // Clone using the participation VCS token — exercises the team mode token auth path
+            String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, teamRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
+                assertThat(git).isNotNull();
+
+                // Verify fetch with the same token also works
+                git.fetch().setRemote(tokenRepoUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
+
+                // Verify push with the token works
+                commitFile(git, "team-token-test-file.txt");
+                var pushResults = git.push().setRemote(tokenRepoUri).call();
+                var pushResult = pushResults.iterator().next();
+                var remoteUpdate = pushResult.getRemoteUpdates().iterator().next();
+                assertThat(remoteUpdate.getStatus()).as("Push with valid participation token should succeed").isEqualTo(RemoteRefUpdate.Status.OK);
+            }
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        void testFetchPush_individualExercise_withParticipationVcsAccessToken() throws Exception {
+            // Create individual exercise
+            ProgrammingExercise exercise = createProgrammingExerciseViaApi("test-individual-token");
+
+            String projectKey = exercise.getProjectKey();
+            String studentRepoSlug = projectKey.toLowerCase() + "-" + TEST_PREFIX + "student1";
+
+            // Student1 starts participation
+            userUtilService.changeUser(TEST_PREFIX + "student1");
+            mockDockerClientForStudentBuild();
+            var participation = request.postWithResponseBody("/api/exercise/exercises/" + exercise.getId() + "/participations", null, StudentParticipation.class,
+                    HttpStatus.CREATED);
+
+            // Get the auto-created participation VCS access token for student1
+            var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
+            String token = participationToken.getVcsAccessToken();
+
+            // Disable LDAP fallback so success can only come from participation token auth
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
+            // Clone using the token
+            String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, studentRepoSlug);
+            Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-individual-token-clone-");
+            clonedRepoPaths.add(clonePath);
+            try (Git git = Git.cloneRepository().setURI(tokenRepoUri).setDirectory(clonePath.toFile()).call()) {
+                assertThat(git).isNotNull();
+                assertThat(git.getRepository().getBranch()).isNotNull();
+
+                // Verify fetch also works with the token
+                git.fetch().setRemote(tokenRepoUri).setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*")).call();
+
+                // Commit and push with the token, then verify push succeeded
+                commitFile(git, "token-test-file.txt");
+                var pushResults = git.push().setRemote(tokenRepoUri).call();
+                var pushResult = pushResults.iterator().next();
+                var remoteUpdate = pushResult.getRemoteUpdates().iterator().next();
+                assertThat(remoteUpdate.getStatus()).as("Push with valid participation token should succeed").isEqualTo(RemoteRefUpdate.Status.OK);
             }
         }
     }
