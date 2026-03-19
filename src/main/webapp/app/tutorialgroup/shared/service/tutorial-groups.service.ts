@@ -2,32 +2,25 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import {
     CreateOrUpdateTutorialGroupDTO,
-    RawTutorialGroupDTO,
     TutorialGroup,
-    TutorialGroupDetailDTO,
     TutorialGroupRegisterStudentDTO,
     TutorialGroupRegisteredStudentDTO,
     TutorialGroupScheduleDTO,
 } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { Student } from 'app/openapi/model/student';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
 import { HttpParams } from '@angular/common/http';
 import { TutorialGroupImport } from 'app/openapi/model/tutorialGroupImport';
+import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupsService {
     private httpClient = inject(HttpClient);
-    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
-    private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
 
     private resourceURL = 'api/tutorialgroup';
@@ -35,13 +28,7 @@ export class TutorialGroupsService {
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupResponseArrayDatesFromServer(res)));
-    }
-
-    getTutorialGroupDTO(courseId: number, tutorialGroupId: number): Observable<TutorialGroupDetailDTO> {
-        return this.httpClient
-            .get<RawTutorialGroupDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`)
-            .pipe(map((rawDto) => new TutorialGroupDetailDTO(rawDto)));
+            .pipe(map((res: EntityArrayResponseType) => convertTutorialGroupResponseArrayDatesFromServer(res)));
     }
 
     create(courseId: number, createTutorialGroupDTO: CreateOrUpdateTutorialGroupDTO): Observable<void> {
@@ -107,47 +94,5 @@ export class TutorialGroupsService {
                 return JSON.stringify(data);
             }),
         );
-    }
-
-    convertTutorialGroupArrayDatesFromServer(tutorialGroups: TutorialGroup[]): TutorialGroup[] {
-        if (tutorialGroups) {
-            tutorialGroups.forEach((tutorialGroup: TutorialGroup) => {
-                this.convertTutorialGroupDatesFromServer(tutorialGroup);
-            });
-        }
-        return tutorialGroups;
-    }
-
-    convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup): TutorialGroup {
-        if (tutorialGroup.tutorialGroupSchedule) {
-            tutorialGroup.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validFromInclusive);
-            tutorialGroup.tutorialGroupSchedule.validToInclusive = convertDateFromServer(tutorialGroup.tutorialGroupSchedule.validToInclusive);
-        }
-        if (tutorialGroup.tutorialGroupSessions) {
-            tutorialGroup.tutorialGroupSessions.map((tutorialGroupSession: TutorialGroupSession) =>
-                this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroupSession),
-            );
-        }
-
-        if (tutorialGroup.nextSession) {
-            tutorialGroup.nextSession = this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroup.nextSession);
-        }
-
-        if (tutorialGroup.course?.tutorialGroupsConfiguration) {
-            tutorialGroup.course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
-                tutorialGroup.course?.tutorialGroupsConfiguration,
-            );
-        }
-
-        return tutorialGroup;
-    }
-
-    convertTutorialGroupResponseArrayDatesFromServer(res: HttpResponse<TutorialGroup[]>): HttpResponse<TutorialGroup[]> {
-        if (res.body) {
-            res.body.forEach((tutorialGroup: TutorialGroup) => {
-                this.convertTutorialGroupDatesFromServer(tutorialGroup);
-            });
-        }
-        return res;
     }
 }

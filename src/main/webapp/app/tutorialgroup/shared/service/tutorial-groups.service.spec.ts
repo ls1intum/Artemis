@@ -13,8 +13,6 @@ import {
     TutorialGroupRegisteredStudentDTO,
     TutorialGroupScheduleDTO,
 } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
-import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { Student } from 'app/openapi/model/student';
@@ -23,14 +21,6 @@ import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
 import { TutorialGroupsConfiguration } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
-
-interface TutorialGroupSessionServiceMock {
-    convertTutorialGroupSessionDatesFromServer: ReturnType<typeof vi.fn>;
-}
-
-interface TutorialGroupsConfigurationServiceMock {
-    convertTutorialGroupsConfigurationDatesFromServer: ReturnType<typeof vi.fn>;
-}
 
 interface TutorialGroupApiServiceMock {
     getUniqueLanguageValues: ReturnType<typeof vi.fn>;
@@ -103,17 +93,9 @@ describe('TutorialGroupsService', () => {
     let service: TutorialGroupsService;
     let httpMock: HttpTestingController;
 
-    let tutorialGroupSessionServiceMock: TutorialGroupSessionServiceMock;
-    let tutorialGroupsConfigurationServiceMock: TutorialGroupsConfigurationServiceMock;
     let tutorialGroupApiServiceMock: TutorialGroupApiServiceMock;
 
     beforeEach(() => {
-        tutorialGroupSessionServiceMock = {
-            convertTutorialGroupSessionDatesFromServer: vi.fn((session) => session),
-        };
-        tutorialGroupsConfigurationServiceMock = {
-            convertTutorialGroupsConfigurationDatesFromServer: vi.fn((configuration) => configuration),
-        };
         tutorialGroupApiServiceMock = {
             getUniqueLanguageValues: vi.fn(),
             delete: vi.fn(),
@@ -124,13 +106,7 @@ describe('TutorialGroupsService', () => {
         };
 
         TestBed.configureTestingModule({
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                { provide: TutorialGroupSessionService, useValue: tutorialGroupSessionServiceMock },
-                { provide: TutorialGroupsConfigurationService, useValue: tutorialGroupsConfigurationServiceMock },
-                { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), { provide: TutorialGroupApiService, useValue: tutorialGroupApiServiceMock }],
         });
 
         service = TestBed.inject(TutorialGroupsService);
@@ -161,13 +137,6 @@ describe('TutorialGroupsService', () => {
 
     it('should get all tutorial groups for a course and convert nested dates', async () => {
         const tutorialGroup = createTutorialGroup();
-        const convertedSession = { id: 100 } as TutorialGroupSession;
-        const convertedNextSession = { id: 101 } as TutorialGroupSession;
-        const convertedConfiguration = new TutorialGroupsConfiguration();
-        convertedConfiguration.tutorialPeriodStartInclusive = dayjs('2025-01-01');
-
-        tutorialGroupSessionServiceMock.convertTutorialGroupSessionDatesFromServer.mockReturnValueOnce(convertedSession).mockReturnValueOnce(convertedNextSession);
-        tutorialGroupsConfigurationServiceMock.convertTutorialGroupsConfigurationDatesFromServer.mockReturnValue(convertedConfiguration);
 
         const resultPromise = firstValueFrom(service.getAllForCourse(42));
 
@@ -181,11 +150,12 @@ describe('TutorialGroupsService', () => {
 
         expect(resultBody?.[0].tutorialGroupSchedule?.validFromInclusive?.toISOString()).toBe(dayjs('2025-01-10').toISOString());
         expect(resultBody?.[0].tutorialGroupSchedule?.validToInclusive?.toISOString()).toBe(dayjs('2025-01-20').toISOString());
-        expect(resultBody?.[0].tutorialGroupSessions).toEqual(tutorialGroup.tutorialGroupSessions);
-        expect(resultBody?.[0].nextSession).toBe(convertedNextSession);
-        expect(resultBody?.[0].course?.tutorialGroupsConfiguration).toBe(convertedConfiguration);
-        expect(tutorialGroupSessionServiceMock.convertTutorialGroupSessionDatesFromServer).toHaveBeenCalledTimes(2);
-        expect(tutorialGroupsConfigurationServiceMock.convertTutorialGroupsConfigurationDatesFromServer).toHaveBeenCalledOnce();
+        expect(resultBody?.[0].tutorialGroupSessions?.[0].start?.toISOString()).toBe(dayjs('2025-01-10T09:00:00Z').toISOString());
+        expect(resultBody?.[0].tutorialGroupSessions?.[0].end?.toISOString()).toBe(dayjs('2025-01-10T10:00:00Z').toISOString());
+        expect(resultBody?.[0].nextSession?.start?.toISOString()).toBe(dayjs('2025-01-11T09:00:00Z').toISOString());
+        expect(resultBody?.[0].nextSession?.end?.toISOString()).toBe(dayjs('2025-01-11T10:00:00Z').toISOString());
+        expect(resultBody?.[0].course?.tutorialGroupsConfiguration?.tutorialPeriodStartInclusive?.toISOString()).toBe(dayjs('2025-01-01').toISOString());
+        expect(resultBody?.[0].course?.tutorialGroupsConfiguration?.tutorialPeriodEndInclusive?.toISOString()).toBe(dayjs('2025-02-01').toISOString());
     });
 
     it('should get a tutorial group dto and map it to a TutorialGroupDTO', async () => {

@@ -1,18 +1,16 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
 import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupFreePeriodService } from 'app/tutorialgroup/manage/service/tutorial-group-free-period.service';
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
+import { convertTutorialGroupSessionDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
     private httpClient = inject(HttpClient);
-    private tutorialGroupFreePeriodService = inject(TutorialGroupFreePeriodService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
 
     private resourceURL = 'api/tutorialgroup';
@@ -45,20 +43,9 @@ export class TutorialGroupSessionService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {
-        tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
-        tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
-        if (tutorialGroupSession.tutorialGroupFreePeriod) {
-            tutorialGroupSession.tutorialGroupFreePeriod = this.tutorialGroupFreePeriodService.convertTutorialGroupFreePeriodDatesFromServer(
-                tutorialGroupSession.tutorialGroupFreePeriod,
-            );
-        }
-        return tutorialGroupSession;
-    }
-
     private convertTutorialGroupSessionResponseDatesFromServer(res: HttpResponse<TutorialGroupSession>): HttpResponse<TutorialGroupSession> {
         if (res.body) {
-            this.convertTutorialGroupSessionDatesFromServer(res.body);
+            convertTutorialGroupSessionDatesFromServer(res.body);
         }
         return res;
     }
