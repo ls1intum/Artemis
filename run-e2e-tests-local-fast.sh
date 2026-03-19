@@ -63,7 +63,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -21 "$0" | tail -17; exit 0 ;;
+        --help) head -25 "$0" | tail -21; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -261,7 +261,7 @@ if [ "$SKIP_SERVER" = false ]; then
 
     # Start server in background
     if [ "$DEBUG" = true ]; then
-        ./gradlew bootRun -x webapp 2>&1 | tee "$LOCAL_DIR/server.log" &
+        ./gradlew bootRun -x webapp > >(tee "$LOCAL_DIR/server.log") 2>&1 &
     else
         ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
     fi
@@ -294,7 +294,7 @@ if [ "$SKIP_CLIENT" = false ]; then
     check_port_available 9000 "Angular client"
 
     if [ "$DEBUG" = true ]; then
-        npm start 2>&1 | tee "$LOCAL_DIR/client.log" &
+        npm start > >(tee "$LOCAL_DIR/client.log") 2>&1 &
     else
         npm start > "$LOCAL_DIR/client.log" 2>&1 &
     fi
