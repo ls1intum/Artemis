@@ -3,9 +3,10 @@
         <div class="inputs-grid">
             <div class="label-and-input">
                 @let dateValidation = dateValidationResult();
-                <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date"></label>
+                <label for="tutorial-session-date-input" jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date"></label>
                 <p-inputgroup>
                     <p-datepicker
+                        inputId="tutorial-session-date-input"
                         appendTo="body"
                         [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.date' | artemisTranslate) + ' *'"
                         [(ngModel)]="date"
@@ -21,9 +22,10 @@
             </div>
             <div class="label-and-input">
                 @let startTimeValidation = startTimeValidationResult();
-                <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime"></label>
+                <label for="tutorial-session-start-time-input" jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime"></label>
                 <p-inputgroup>
                     <p-datepicker
+                        inputId="tutorial-session-start-time-input"
                         appendTo="body"
                         [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.startTime' | artemisTranslate) + ' *'"
                         [(ngModel)]="startTime"
@@ -40,9 +42,10 @@
             </div>
             <div class="label-and-input">
                 @let endTimeValidation = endTimeValidationResult();
-                <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime"></label>
+                <label for="tutorial-session-end-time-input" jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime"></label>
                 <p-inputgroup>
                     <p-datepicker
+                        inputId="tutorial-session-end-time-input"
                         appendTo="body"
                         [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.endTime' | artemisTranslate) + ' *'"
                         [(ngModel)]="endTime"
@@ -59,9 +62,10 @@
             </div>
             <div class="label-and-input">
                 @let locationValidation = locationValidationResult();
-                <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location"></label>
+                <label for="tutorial-session-location-input" jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location"></label>
                 <p-inputgroup>
                     <input
+                        id="tutorial-session-location-input"
                         pInputText
                         [(ngModel)]="location"
                         [placeholder]="('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.location' | artemisTranslate) + ' *'"
@@ -76,9 +80,10 @@
                 </p-inputgroup>
             </div>
             <div class="label-and-input">
-                <label jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance"></label>
+                <label for="tutorial-session-attendance-input" jhiTranslate="artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.inputLabels.attendance"></label>
                 <p-inputgroup>
                     <p-inputnumber
+                        inputId="tutorial-session-attendance-input"
                         [(ngModel)]="attendance"
                         [min]="0"
                         [showButtons]="true"
