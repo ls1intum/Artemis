@@ -931,12 +931,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             textarea.value = '';
-            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
 
             component.adjustTextareaRows();
 
             expect(textarea.style.height).toBe('');
-            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
         });
 
         it('should reset height and return early when textarea has only whitespace', () => {
@@ -945,12 +943,10 @@ describe('IrisBaseChatbotComponent', () => {
 
             const textarea = fixture.nativeElement.querySelector('textarea');
             textarea.value = '   ';
-            const adjustScrollButtonPositionSpy = vi.spyOn(component, 'adjustScrollButtonPosition');
 
             component.adjustTextareaRows();
 
             expect(textarea.style.height).toBe('');
-            expect(adjustScrollButtonPositionSpy).toHaveBeenCalledWith(1);
         });
     });
 

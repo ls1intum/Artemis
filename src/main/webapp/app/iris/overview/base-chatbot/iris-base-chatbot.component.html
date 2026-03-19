@@ -183,7 +183,8 @@
                             <div class="toolbox">
                                 <span
                                     class="rate-limit"
-                                    [ngbTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    [pTooltip]="'artemisApp.exerciseChatbot.rateLimitTooltip' | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours }"
+                                    tooltipPosition="bottom"
                                 >
                                     {{ rateLimitInfo()?.currentMessageCount }} / {{ rateLimit }}
                                 </span>
@@ -304,13 +305,7 @@
                                 }
                             </div>
                         }
-                        @if (
-                            suggestions()?.length &&
-                            isAIEnabled() &&
-                            active() &&
-                            (!rateLimitInfo()?.rateLimit || rateLimitInfo()?.currentMessageCount !== rateLimitInfo()?.rateLimit) &&
-                            !hasActiveStage()
-                        ) {
+                        @if (canShowSuggestions()) {
                             <div animate.enter="suggestion-entering" animate.leave="suggestion-leaving">
                                 <div class="suggestions-container">
                                     @for (suggestion of suggestions(); track $index) {
@@ -357,7 +352,6 @@
                 class="scroll-to-bottom"
                 [hidden]="isScrolledToBottom()"
                 (click)="scrollToBottom('smooth')"
-                #scrollArrow
                 [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
             >
                 <fa-icon [icon]="faArrowDown" />
@@ -384,12 +378,7 @@
                                 class="form-control"
                                 (input)="onInput()"
                                 (paste)="onPaste()"
-                                [disabled]="
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
+                                [disabled]="isInputDisabled()"
                                 (keydown)="handleKey($event)"
                                 placeholder="{{ 'artemisApp.exerciseChatbot.inputMessage' | artemisTranslate }}"
                                 #messageTextarea
@@ -401,13 +390,7 @@
                                 (onClick)="onSend()"
                                 [btnType]="ButtonType.SUCCESS_OUTLINE"
                                 [icon]="faPaperPlane"
-                                [disabled]="
-                                    !newMessageTextContent().trim() ||
-                                    isLoading() ||
-                                    !active() ||
-                                    (rateLimitInfo()?.rateLimit && rateLimitInfo()?.currentMessageCount === rateLimitInfo()?.rateLimit) ||
-                                    hasActiveStage()
-                                "
+                                [disabled]="isSendDisabled()"
                             />
                         </div>
                     </div>

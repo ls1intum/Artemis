@@ -622,20 +622,22 @@ pre {
 }
 
 .scroll-to-bottom {
-    position: fixed;
-    bottom: 48px;
-    right: 20px;
+    position: absolute;
+    top: calc(-44px);
+    left: 50%;
+    transform: translateX(-50%);
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: var(--secondary);
-    color: white;
+    background-color: var(--iris-primary-background);
+    color: var(--iris-label-color);
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     box-shadow: 0 0 50px rgba(0, 0, 0, 0.4);
     z-index: 1;
+    border: 1px solid var(--bs-border-color);
 }
 
 .rate-message-buttons {

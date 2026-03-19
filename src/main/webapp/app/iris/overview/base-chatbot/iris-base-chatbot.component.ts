@@ -16,7 +16,7 @@ import {
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/shared/service/alert.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { TooltipModule } from 'primeng/tooltip';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import {
@@ -97,7 +97,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         IrisLogoComponent,
         RouterLink,
         FaIconComponent,
-        NgbTooltip,
+        TooltipModule,
         TranslateDirective,
         ChatStatusBarComponent,
         FormsModule,
@@ -232,6 +232,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         const decision = this.userAccepted();
         return decision === LLMSelectionDecision.CLOUD_AI || decision === LLMSelectionDecision.LOCAL_AI;
     });
+    readonly isInputDisabled = computed(
+        () =>
+            this.isLoading() ||
+            !this.active() ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
+            this.hasActiveStage(),
+    );
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    readonly canShowSuggestions = computed(
+        () =>
+            !!this.suggestions()?.length &&
+            this.isAIEnabled() &&
+            this.active() &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
+            !this.hasActiveStage(),
+    );
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
@@ -243,7 +259,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     private copyResetTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    public ButtonType = ButtonType;
+    protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
     readonly newChatTitle = computed(() => this.translateService.instant('artemisApp.iris.chatHistory.newChat'));
@@ -260,7 +276,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
-    readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
@@ -686,33 +701,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         textarea.style.height = 'auto'; // Reset the height to auto
         if (!textarea.value.trim()) {
             textarea.style.height = '';
-            this.adjustScrollButtonPosition(1);
             return;
         }
-        const bufferForSpaceBetweenLines = 4;
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
         const maxHeight = 200;
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
         textarea.style.height = `${newHeight}px`;
-
-        this.adjustScrollButtonPosition(newHeight / lineHeight);
-    }
-
-    /**
-     * Adjusts the position of the scroll button based on the number of rows in the message textarea.
-     * @param newRows - The new number of rows.
-     */
-    adjustScrollButtonPosition(newRows: number) {
-        const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
-        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
-        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
-        const rowHeight = lineHeight * newRows - lineHeight;
-        setTimeout(() => {
-            scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
-        }, 10);
     }
 
     /**
@@ -720,13 +713,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     resetChatBodyHeight() {
         const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
+        if (!textareaRef) return;
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         textarea.rows = 1;
         textarea.style.height = '';
-        scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
