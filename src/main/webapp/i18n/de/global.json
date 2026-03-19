@@ -39,7 +39,20 @@
             "placeholder": "Suchen oder Frage stellen...",
             "noResultsFound": "Keine Ergebnisse gefunden",
             "toNavigate": "zum Navigieren",
-            "toClose": "zum Schließen"
+            "toClose": "zum Schließen",
+            "searchLectureContent": "Vorlesungsinhalt durchsuchen",
+            "searchLectureContentDescription": "Semantische Suche durch Transkripte und Materialien",
+            "searchLectureContentHint": "Tippen Sie, um den Vorlesungsinhalt zu durchsuchen",
+            "lectureResultsAriaLabel": "Suchergebnisse für Vorlesungen",
+            "arrowUpAriaLabel": "Pfeil nach oben",
+            "arrowDownAriaLabel": "Pfeil nach unten",
+            "pageAbbreviation": "S.",
+            "askIris": "Iris fragen",
+            "askIrisDescription": "Stellen Sie Iris eine Frage zu Ihren Kursen",
+            "irisAnswerTitle": "Iris-Antwort",
+            "irisAnswerSources": "Quellen",
+            "irisAnswerError": "Etwas ist schiefgelaufen. Bitte versuchen Sie es erneut.",
+            "continueInIris": "In Iris fortfahren"
         },
         "menu": {
             "home": "Startseite",
