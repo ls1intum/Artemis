@@ -1,19 +1,17 @@
-<div id="exercise-header-panel">
+<div id="exercise-header" class="d-flex flex-column flex-fill">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        <div class="d-flex">
-            @if (exerciseIcon()) {
-                <h5 class="mb-0" id="exercise-header">
-                    @if (exerciseIcon()) {
-                        <fa-icon class="me-2" [icon]="exerciseIcon()!" />
-                    }
-                    {{ exercise().title }}
-                </h5>
-            }
-        </div>
-        <jhi-exercise-header-actions [courseId]="courseId()" [exercise]="exercise()" />
+        @if (exerciseIcon()) {
+            <h5 class="mb-0">
+                @if (exerciseIcon()) {
+                    <fa-icon [icon]="exerciseIcon()!" />
+                }
+                {{ exercise().title }}
+            </h5>
+        }
+        <jhi-exercise-header-actions class="w-auto" [courseId]="courseId()" [exercise]="exercise()" />
     </div>
 
-    <hr />
+    <hr class="my-2" />
 
     <jhi-exercise-headers-information
         [exercise]="exercise()"
