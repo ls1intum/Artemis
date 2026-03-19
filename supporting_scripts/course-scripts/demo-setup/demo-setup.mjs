@@ -3,11 +3,15 @@
 /**
  * Demo Data Setup Script for Master Thesis Presentation
  *
- * Creates a realistic "Data Structures and Algorithms" course with:
- * - Named characters: Prof. Sofia (admin/instructor), Luca (student), Tom (instructor)
- * - ~50 students for a realistic class size
- * - Programming exercises including "Binary Search Trees" (for global search demo)
- * - Lectures with content about trees, sorting, graphs (for search demo)
+ * Creates three realistic courses matching the presentation story:
+ * - "Algorithms" (main course, richest content)
+ * - "Introduction to Programming" (additional course)
+ * - "Data Structures" (additional course)
+ *
+ * Named characters: Prof. Sofia (admin/instructor), Luca (student), Tom (instructor)
+ * - ~50 students per main course for a realistic class size
+ * - Programming exercises including "Runtime Complexity Analysis" (for global search demo)
+ * - Lectures with content about runtime complexity, sorting, graphs (for search demo)
  * - Modeling, text, and quiz exercises
  * - Communication posts in the course channel
  *
@@ -15,7 +19,7 @@
  * 1. Passkey registration — Prof. Sofia registers a passkey
  * 2. Passkey login — One-touch login
  * 3. Locked indicator — Privileged admin action with lock icon (password session)
- * 4. Global search — Cmd+K, "binary search trees" → results across exercises and lectures
+ * 4. Global search — Cmd+K, "runtime complexity" → results across exercises and lectures
  *
  * Usage:
  *   node demo-setup.mjs [options]
@@ -58,8 +62,8 @@ const STUDENT_PASSWORD = 'Password123!';
 
 // ─── Course Configuration ─────────────────────────────────────────────────────
 
-const COURSE_TITLE = 'Data Structures and Algorithms';
-const COURSE_SHORT_NAME = 'DSA2026';
+const COURSE_TITLE = 'Algorithms';
+const COURSE_SHORT_NAME = 'ALG2026';
 
 // ─── Named Demo Characters ────────────────────────────────────────────────────
 
@@ -80,7 +84,7 @@ const DEMO_USERS = {
         email: 'luca.bauer@tum.test',
         password: STUDENT_PASSWORD,
         role: 'student',
-        description: 'Student — searches for "binary search trees"',
+        description: 'Student — emails about "runtime complexity" exercise',
     },
     tom: {
         login: 'tom',
@@ -189,7 +193,7 @@ async function createCourse(client) {
         onlineCourse: false,
         timeZone: 'Europe/Berlin',
         semester: 'SS2026',
-        description: 'This course covers fundamental data structures and algorithms including arrays, linked lists, trees, graphs, sorting, and searching. Students learn to analyze time and space complexity and apply algorithmic thinking to solve computational problems.',
+        description: 'This course covers fundamental algorithms including sorting, searching, graph traversal, and runtime complexity analysis. Students learn to analyze time and space complexity, apply algorithmic thinking, and compare algorithm efficiency.',
         defaultChannelName: 'general',
     };
 
@@ -207,78 +211,44 @@ async function createCourse(client) {
 
 const PROGRAMMING_EXERCISES = [
     {
-        title: 'Binary Search Trees',
-        shortName: `BST${timestamp}`,
+        title: 'Runtime Complexity Analysis',
+        shortName: `RCA${timestamp}`,
         programmingLanguage: 'JAVA',
         projectType: 'PLAIN_GRADLE',
-        packageName: 'de.tum.cit.dsa.bst',
+        packageName: 'de.tum.cit.alg.complexity',
         staticCodeAnalysisEnabled: true,
-        problemStatement: `# Binary Search Trees
+        problemStatement: `# Runtime Complexity Analysis
 
 ## Task Description
-Implement a Binary Search Tree (BST) that supports insertion, search, and traversal operations.
+Implement and empirically measure the runtime complexity of different algorithms to understand Big-O notation in practice.
 
 ## Requirements
-1. Implement the \`insert(int key)\` method in the \`BinarySearchTree\` class
-2. Implement the \`search(int key)\` method that returns \`true\` if the key exists
-3. Implement \`inorderTraversal()\` that returns a sorted list of all elements
-4. Implement \`delete(int key)\` to remove a node while maintaining BST properties
+1. Implement \`measureLinear(int n)\` — an O(n) algorithm that sums all elements in an array
+2. Implement \`measureQuadratic(int n)\` — an O(n²) algorithm using nested loops (e.g., bubble sort)
+3. Implement \`measureLogarithmic(int n)\` — an O(log n) algorithm (e.g., binary search on a sorted array)
+4. Implement \`measureLinearithmic(int n)\` — an O(n log n) algorithm (e.g., merge sort)
+5. Implement \`benchmarkAll(int[] sizes)\` that runs all algorithms for given input sizes and returns timing results
 
 ## Background
-A binary search tree is a rooted binary tree data structure where each node has a key greater than all keys in its left subtree and less than all keys in its right subtree. This property enables efficient searching, insertion, and deletion in O(log n) average time.
+Runtime complexity (Big-O notation) describes how an algorithm's running time grows as the input size increases. Understanding complexity is essential for choosing the right algorithm for a given problem. Common complexity classes include O(1), O(log n), O(n), O(n log n), O(n²), and O(2^n).
 
 ## Example
 \`\`\`java
-BinarySearchTree bst = new BinarySearchTree();
-bst.insert(5);
-bst.insert(3);
-bst.insert(7);
-bst.insert(1);
-bst.search(3);   // returns true
-bst.search(4);   // returns false
-bst.inorderTraversal(); // returns [1, 3, 5, 7]
+ComplexityAnalyzer analyzer = new ComplexityAnalyzer();
+long time1 = analyzer.measureLinear(1000);      // ~1ms
+long time2 = analyzer.measureQuadratic(1000);    // ~10ms
+long time3 = analyzer.measureLogarithmic(1000);  // ~0.01ms
+
+int[] sizes = {100, 1000, 10000};
+Map<String, long[]> results = analyzer.benchmarkAll(sizes);
+// Results show how runtime scales with input size
 \`\`\`
 
 ## Hints
-- Handle the base case of an empty tree
-- For deletion, consider the three cases: leaf node, one child, two children
-- Use recursion for clean implementations
-- Think about balanced vs. unbalanced trees and their performance implications`,
-    },
-    {
-        title: 'Linked List Implementation',
-        shortName: `LList${timestamp}`,
-        programmingLanguage: 'JAVA',
-        projectType: 'PLAIN_GRADLE',
-        packageName: 'de.tum.cit.dsa.linkedlist',
-        staticCodeAnalysisEnabled: false,
-        problemStatement: `# Linked List Implementation
-
-## Task Description
-Implement a generic singly linked list with common operations.
-
-## Requirements
-1. Implement \`add(T element)\` to append an element
-2. Implement \`get(int index)\` to retrieve an element by index
-3. Implement \`remove(int index)\` to remove and return an element
-4. Implement \`size()\` and \`isEmpty()\`
-5. Implement \`reverse()\` to reverse the list in-place
-
-## Example
-\`\`\`java
-LinkedList<Integer> list = new LinkedList<>();
-list.add(1);
-list.add(2);
-list.add(3);
-list.get(1);    // returns 2
-list.size();    // returns 3
-list.reverse(); // list is now [3, 2, 1]
-\`\`\`
-
-## Hints
-- Use a Node inner class with data and next pointer
-- Track both head and size for O(1) size queries
-- Handle edge cases: empty list, single element, index out of bounds`,
+- Use \`System.nanoTime()\` for precise measurements
+- Run each measurement multiple times and average the results
+- Plot or print results to visualize the growth rates
+- Consider warm-up iterations to account for JVM optimization`,
     },
     {
         title: 'Graph Traversal Algorithms',
@@ -349,21 +319,21 @@ Sorting.mergeSort(array);
 
 const MODELING_EXERCISES = [
     {
-        title: 'UML Class Diagram: Tree Structures',
-        shortName: `UMLTree${timestamp}`,
+        title: 'UML Class Diagram: Sorting Algorithm Hierarchy',
+        shortName: `UMLSort${timestamp}`,
         diagramType: 'ClassDiagram',
         difficulty: 'MEDIUM',
-        problemStatement: `# UML Class Diagram: Tree Structures
+        problemStatement: `# UML Class Diagram: Sorting Algorithm Hierarchy
 
 ## Task Description
-Design a UML class diagram that models the class hierarchy for different tree data structures.
+Design a UML class diagram that models the class hierarchy for different sorting algorithms.
 
 ## Requirements
-1. Model the abstract base class \`Tree<T>\` with common operations
-2. Model \`BinarySearchTree<T>\` extending \`Tree<T>\`
-3. Model \`AVLTree<T>\` extending \`BinarySearchTree<T>\`
-4. Model the \`Node<T>\` class used by tree implementations
-5. Show associations, inheritance, and key methods
+1. Model the abstract base class \`SortingAlgorithm<T>\` with common operations
+2. Model \`MergeSort<T>\`, \`QuickSort<T>\`, and \`InsertionSort<T>\` extending \`SortingAlgorithm<T>\`
+3. Model a \`ComplexityAnalyzer\` utility class for measuring runtime
+4. Show associations, inheritance, and key methods
+5. Include complexity annotations (e.g., best/worst/average case)
 
 ## Evaluation Criteria
 - Correct use of UML notation
@@ -372,21 +342,21 @@ Design a UML class diagram that models the class hierarchy for different tree da
 - Appropriate visibility modifiers`,
     },
     {
-        title: 'Activity Diagram: Search Algorithm Flow',
-        shortName: `ActSearch${timestamp}`,
+        title: 'Activity Diagram: Algorithm Complexity Comparison',
+        shortName: `ActComp${timestamp}`,
         diagramType: 'ActivityDiagram',
         difficulty: 'EASY',
-        problemStatement: `# Activity Diagram: Search Algorithm Flow
+        problemStatement: `# Activity Diagram: Algorithm Complexity Comparison
 
 ## Task Description
-Create an activity diagram showing the flow of a binary search algorithm.
+Create an activity diagram showing the flow of comparing two algorithms' runtime complexity empirically.
 
 ## Requirements
-1. Show the input: sorted array and target value
-2. Model the iterative comparison steps
-3. Include decision points for found/not found
-4. Show the narrowing of search bounds (left/right pointers)
-5. Model the termination condition
+1. Show the input: two algorithms and a set of input sizes
+2. Model the benchmarking loop for each input size
+3. Include decision points for which algorithm is faster
+4. Show the recording and comparison of timing results
+5. Model the output: complexity classification
 
 ## Evaluation Criteria
 - Correct activity diagram notation
@@ -419,22 +389,22 @@ Write a comprehensive comparison of at least three sorting algorithms.
 - Overall structure and writing quality`,
     },
     {
-        title: 'Summary: Applications of Binary Search Trees',
-        shortName: `SumBST${timestamp}`,
+        title: 'Summary: Runtime Complexity in Practice',
+        shortName: `SumRCA${timestamp}`,
         difficulty: 'EASY',
-        problemStatement: `# Summary: Applications of Binary Search Trees
+        problemStatement: `# Summary: Runtime Complexity in Practice
 
 ## Task Description
-Write a summary discussing real-world applications of binary search trees.
+Write a summary discussing how runtime complexity analysis applies to real-world software engineering decisions.
 
 ## Requirements
-1. Describe at least 3 real-world applications of BSTs
-2. Explain why BSTs are suitable for each application
-3. Discuss limitations and alternatives (e.g., hash tables, B-trees)
-4. Include complexity analysis for common operations
+1. Describe at least 3 real-world scenarios where algorithm complexity matters
+2. Explain how Big-O notation helps in choosing between algorithms
+3. Discuss the gap between theoretical complexity and practical performance (cache effects, constant factors)
+4. Include examples of complexity trade-offs (time vs. space)
 
 ## Evaluation Criteria
-- Breadth of applications covered
+- Breadth of scenarios covered
 - Depth of analysis
 - Connection between theory and practice`,
     },
@@ -442,14 +412,14 @@ Write a summary discussing real-world applications of binary search trees.
 
 const QUIZ_EXERCISES = [
     {
-        title: 'Data Structures Fundamentals Quiz',
-        shortName: `DSQuiz${timestamp}`,
+        title: 'Algorithm Fundamentals Quiz',
+        shortName: `AlgQuiz${timestamp}`,
         duration: 30,
         questions: [
             {
                 type: 'multiple-choice',
-                title: 'BST Search Complexity',
-                text: 'What is the average-case time complexity of searching in a balanced binary search tree?',
+                title: 'Runtime Complexity Comparison',
+                text: 'Which of the following runtime complexities grows the slowest as input size increases?',
                 answerOptions: [
                     { text: 'O(log n)', isCorrect: true },
                     { text: 'O(n)', isCorrect: false },
@@ -461,35 +431,35 @@ const QUIZ_EXERCISES = [
             },
             {
                 type: 'multiple-choice',
-                title: 'Linked List Properties',
-                text: 'Which properties are true for a singly linked list? (Select all that apply)',
+                title: 'Big-O Properties',
+                text: 'Which statements about Big-O notation are true? (Select all that apply)',
                 answerOptions: [
-                    { text: 'O(1) insertion at the head', isCorrect: true },
-                    { text: 'O(1) access by index', isCorrect: false },
-                    { text: 'Dynamic size (no fixed capacity)', isCorrect: true },
-                    { text: 'O(n) search for an element', isCorrect: true },
+                    { text: 'It describes the upper bound of an algorithm\'s growth rate', isCorrect: true },
+                    { text: 'O(2n) is the same as O(n)', isCorrect: true },
+                    { text: 'O(n²) is always slower than O(n log n) for any input', isCorrect: false },
+                    { text: 'Constant factors are dropped in Big-O notation', isCorrect: true },
                 ],
                 points: 3,
                 singleChoice: false,
             },
             {
                 type: 'multiple-choice',
-                title: 'Stack vs Queue',
-                text: 'Which data structure uses FIFO (First In, First Out) ordering?',
+                title: 'Divide and Conquer',
+                text: 'Which algorithm design paradigm does MergeSort use?',
                 answerOptions: [
-                    { text: 'Queue', isCorrect: true },
-                    { text: 'Stack', isCorrect: false },
-                    { text: 'Priority Queue', isCorrect: false },
-                    { text: 'Deque', isCorrect: false },
+                    { text: 'Divide and Conquer', isCorrect: true },
+                    { text: 'Dynamic Programming', isCorrect: false },
+                    { text: 'Greedy', isCorrect: false },
+                    { text: 'Backtracking', isCorrect: false },
                 ],
                 points: 1,
                 singleChoice: true,
             },
             {
                 type: 'short-answer',
-                title: 'Tree Terminology',
-                text: 'In a binary tree, a node with no children is called a [-spot 1] node.',
-                solutions: ['leaf'],
+                title: 'Complexity Notation',
+                text: 'The notation that describes the worst-case upper bound of an algorithm\'s runtime is called Big-[-spot 1] notation.',
+                solutions: ['O'],
                 points: 1,
             },
         ],
@@ -546,201 +516,114 @@ const QUIZ_EXERCISES = [
 
 const LECTURES = [
     {
-        title: 'Introduction to Data Structures',
-        description: 'Overview of fundamental data structures: arrays, linked lists, stacks, and queues.',
+        title: 'Runtime Complexity and Big-O Notation',
+        description: 'Comprehensive coverage of algorithm runtime analysis, Big-O notation, and complexity classes.',
         textUnits: [
             {
-                name: 'Arrays and Dynamic Arrays',
-                content: `# Arrays and Dynamic Arrays
+                name: 'Introduction to Runtime Complexity',
+                content: `# Introduction to Runtime Complexity
 
-## Static Arrays
-An array is a contiguous block of memory storing elements of the same type.
+## Why Analyze Algorithms?
+Not all algorithms are created equal. Two algorithms that solve the same problem can have vastly different performance characteristics. Runtime complexity analysis gives us a framework to compare algorithms independently of hardware.
 
-### Properties
-- **Random access**: O(1) time to access any element by index
-- **Fixed size**: Capacity determined at creation
-- **Cache-friendly**: Elements stored contiguously in memory
+### What is Runtime Complexity?
+Runtime complexity describes how an algorithm's execution time grows as the input size (n) increases. It answers the question: "If I double the input, how much longer will the algorithm take?"
 
-### Common Operations
-| Operation     | Time Complexity |
-|---------------|----------------|
-| Access        | O(1)           |
-| Search        | O(n)           |
-| Insert (end)  | O(1) amortized |
-| Insert (mid)  | O(n)           |
-| Delete        | O(n)           |
+## Big-O Notation
+Big-O notation provides an upper bound on the growth rate of an algorithm.
 
-## Dynamic Arrays (ArrayList in Java)
-Dynamic arrays automatically resize when capacity is exceeded.
+### Common Complexity Classes
+| Complexity | Name          | Example                    |
+|-----------|---------------|----------------------------|
+| O(1)      | Constant      | Array access by index      |
+| O(log n)  | Logarithmic   | Binary search              |
+| O(n)      | Linear        | Linear search              |
+| O(n log n)| Linearithmic  | MergeSort, QuickSort (avg) |
+| O(n²)     | Quadratic     | Bubble sort, nested loops  |
+| O(2^n)    | Exponential   | Brute-force subset search  |
+| O(n!)     | Factorial     | Brute-force permutations   |
 
-\`\`\`java
-ArrayList<Integer> list = new ArrayList<>();
-list.add(42);    // O(1) amortized
-list.get(0);     // O(1)
-list.remove(0);  // O(n)
-\`\`\`
-
-### Amortized Analysis
-When the array is full, a new array of double the size is allocated and elements are copied. This "doubling strategy" ensures that the amortized cost of insertion remains O(1).`,
+### Rules of Big-O
+1. **Drop constants**: O(2n) = O(n)
+2. **Drop lower-order terms**: O(n² + n) = O(n²)
+3. **Focus on dominant term**: The fastest-growing term dominates for large n`,
             },
             {
-                name: 'Stacks and Queues',
-                content: `# Stacks and Queues
+                name: 'Analyzing Algorithm Complexity',
+                content: `# Analyzing Algorithm Complexity
 
-## Stack (LIFO — Last In, First Out)
-A stack supports two primary operations:
-- **push(x)**: Add element to the top — O(1)
-- **pop()**: Remove and return the top element — O(1)
+## Step-by-Step Analysis
 
-### Applications
-- Function call stack (recursion)
-- Undo/redo operations
-- Expression evaluation and syntax parsing
-- Depth-first search (DFS)
+### Counting Operations
+To determine complexity, count the number of basic operations as a function of input size n.
 
 \`\`\`java
-Stack<Integer> stack = new Stack<>();
-stack.push(1);
-stack.push(2);
-stack.pop(); // returns 2
-\`\`\`
+// O(n) — linear
+int sum = 0;
+for (int i = 0; i < n; i++) {
+    sum += array[i];  // executed n times
+}
 
-## Queue (FIFO — First In, First Out)
-A queue supports:
-- **enqueue(x)**: Add element to the back — O(1)
-- **dequeue()**: Remove and return the front element — O(1)
+// O(n²) — quadratic
+for (int i = 0; i < n; i++) {
+    for (int j = 0; j < n; j++) {
+        matrix[i][j] = i + j;  // executed n² times
+    }
+}
 
-### Applications
-- Breadth-first search (BFS)
-- Task scheduling
-- Print job queues
-- Message buffering
-
-\`\`\`java
-Queue<Integer> queue = new LinkedList<>();
-queue.offer(1);
-queue.offer(2);
-queue.poll(); // returns 1
-\`\`\``,
-            },
-        ],
-    },
-    {
-        title: 'Trees and Binary Search Trees',
-        description: 'In-depth coverage of tree data structures with focus on binary search trees, traversals, and balanced trees.',
-        textUnits: [
-            {
-                name: 'Introduction to Trees',
-                content: `# Introduction to Trees
-
-## What is a Tree?
-A tree is a hierarchical data structure consisting of nodes connected by edges. It is an acyclic connected graph.
-
-### Terminology
-- **Root**: The topmost node (no parent)
-- **Parent/Child**: A node directly connected above/below another
-- **Leaf**: A node with no children
-- **Depth**: Distance from the root to a node
-- **Height**: Maximum depth of any node in the tree
-- **Subtree**: A node and all its descendants
-
-## Binary Trees
-A binary tree is a tree where each node has at most two children (left and right).
-
-### Types of Binary Trees
-1. **Full Binary Tree**: Every node has 0 or 2 children
-2. **Complete Binary Tree**: All levels filled except possibly the last
-3. **Perfect Binary Tree**: All internal nodes have 2 children, all leaves at same depth
-4. **Balanced Binary Tree**: Height difference between left and right subtrees ≤ 1
-
-## Tree Traversals
-
-### Inorder (Left → Root → Right)
-Visits nodes in sorted order for BSTs.
-
-### Preorder (Root → Left → Right)
-Useful for creating a copy of the tree.
-
-### Postorder (Left → Right → Root)
-Useful for deleting a tree.
-
-### Level-order (BFS)
-Visits nodes level by level.`,
-            },
-            {
-                name: 'Binary Search Trees (BST)',
-                content: `# Binary Search Trees
-
-## Definition
-A binary search tree is a binary tree where for every node:
-- All keys in the **left subtree** are **less than** the node's key
-- All keys in the **right subtree** are **greater than** the node's key
-
-This property enables efficient searching, insertion, and deletion.
-
-## Operations
-
-### Search — O(h) where h = height
-\`\`\`java
-public boolean search(Node node, int key) {
-    if (node == null) return false;
-    if (key == node.key) return true;
-    if (key < node.key) return search(node.left, key);
-    return search(node.right, key);
+// O(log n) — logarithmic
+int i = n;
+while (i > 1) {
+    i = i / 2;  // halves each iteration → log₂(n) iterations
 }
 \`\`\`
 
-### Insertion — O(h)
-Navigate to the correct position and insert as a leaf.
+## Best, Average, and Worst Case
+- **Best case (Ω)**: Minimum operations for any input of size n
+- **Average case (Θ)**: Expected operations over all inputs of size n
+- **Worst case (O)**: Maximum operations for any input of size n
 
-### Deletion — O(h)
-Three cases:
-1. **Leaf node**: Simply remove
-2. **One child**: Replace node with its child
-3. **Two children**: Replace with inorder successor (smallest in right subtree)
+### Example: QuickSort
+- Best case: O(n log n) — balanced partitions
+- Average case: O(n log n) — random pivots
+- Worst case: O(n²) — already sorted input with first-element pivot
 
-## Complexity Analysis
-| Operation | Average | Worst Case |
-|-----------|---------|------------|
-| Search    | O(log n)| O(n)       |
-| Insert    | O(log n)| O(n)       |
-| Delete    | O(log n)| O(n)       |
-
-The worst case occurs when the tree degenerates into a linked list (e.g., inserting sorted data).
-
-## Balanced BSTs
-To guarantee O(log n) operations, we use self-balancing trees:
-- **AVL Trees**: Maintain balance factor ≤ 1 using rotations
-- **Red-Black Trees**: Maintain approximate balance using coloring rules
-- **B-Trees**: Used in databases and file systems for disk-efficient operations`,
+## Space Complexity
+Space complexity measures the additional memory an algorithm uses.
+- In-place algorithms: O(1) extra space (e.g., insertion sort)
+- MergeSort: O(n) extra space for the merge step
+- Recursive algorithms: O(depth) stack space`,
             },
             {
-                name: 'AVL Trees and Rotations',
-                content: `# AVL Trees
+                name: 'Practical Runtime Analysis',
+                content: `# Practical Runtime Analysis
 
-## Motivation
-Unbalanced BSTs can degrade to O(n) performance. AVL trees (named after Adelson-Velsky and Landis) maintain balance automatically.
+## Empirical Measurement
+While Big-O gives theoretical bounds, empirical measurement reveals practical performance:
 
-## Balance Factor
-For each node: balance factor = height(left subtree) - height(right subtree)
-An AVL tree maintains |balance factor| ≤ 1 for every node.
+\`\`\`java
+long start = System.nanoTime();
+algorithm.run(input);
+long elapsed = System.nanoTime() - start;
+\`\`\`
 
-## Rotations
+### Pitfalls
+- **JVM warm-up**: First runs are slower due to JIT compilation
+- **Cache effects**: Memory access patterns affect real performance
+- **Constant factors**: O(n) with a large constant can be slower than O(n log n) for small n
 
-### Left Rotation
-Used when right subtree is too tall (balance factor = -2).
+## Amortized Analysis
+Some operations are expensive occasionally but cheap on average:
+- **ArrayList.add()**: Usually O(1), but O(n) when resizing → amortized O(1)
+- **Hash table insert**: Usually O(1), but O(n) when rehashing
 
-### Right Rotation
-Used when left subtree is too tall (balance factor = 2).
-
-### Left-Right Rotation
-Double rotation for left-right imbalance.
-
-### Right-Left Rotation
-Double rotation for right-left imbalance.
-
-## Complexity
-All operations (search, insert, delete) are guaranteed O(log n) because the tree height is always O(log n).`,
+## Complexity in Practice
+| Task                    | Naive         | Optimized      |
+|------------------------|---------------|----------------|
+| Find element in list   | O(n) linear   | O(log n) binary search (sorted) |
+| Sort a collection      | O(n²) bubble  | O(n log n) merge sort |
+| Find shortest path     | O(V²) matrix  | O((V+E) log V) Dijkstra |
+| String matching        | O(nm) brute   | O(n+m) KMP algorithm |`,
             },
         ],
     },
@@ -899,17 +782,17 @@ Both algorithms produce a tree spanning all vertices with minimum total edge wei
     },
 ];
 
-// ─── Communication Posts (DSA-themed) ─────────────────────────────────────────
+// ─── Communication Posts (Algorithms-themed) ──────────────────────────────────
 
 const DSA_POSTS = [
     {
-        title: 'Welcome to Data Structures and Algorithms!',
-        content: 'Welcome everyone! I am Prof. Sofia Meier and I will be teaching this course. Please feel free to ask questions here. Our first exercise on linked lists is already available — make sure to start early!',
+        title: 'Welcome to Algorithms!',
+        content: 'Welcome everyone! I am Prof. Sofia Meier and I will be teaching this course. Please feel free to ask questions here. Our first exercise on runtime complexity analysis is already available — make sure to start early!',
         author: 'sofia',
     },
     {
-        title: 'Question about binary search trees',
-        content: 'Hi everyone, I am struggling with the deletion operation in the binary search tree exercise. When the node to delete has two children, how do I find the inorder successor? Can someone explain the algorithm step by step?',
+        title: 'Question about runtime complexity exercise',
+        content: 'Hi everyone, I am working on the runtime complexity exercise and I am confused about how to measure the difference between O(n) and O(n log n) empirically. When I run my benchmarks, the results for small inputs look similar. How large does n need to be to see a clear difference?',
         author: 'luca',
     },
     {
@@ -919,7 +802,7 @@ const DSA_POSTS = [
     },
     {
         title: 'Study group for exam preparation',
-        content: 'Is anyone interested in forming a study group to prepare for the exam? We could meet in the library or online. I think reviewing tree traversals and graph algorithms together would be really helpful.',
+        content: 'Is anyone interested in forming a study group to prepare for the exam? We could meet in the library or online. I think reviewing complexity analysis and graph algorithms together would be really helpful.',
         author: 'luca',
     },
     {
@@ -930,11 +813,11 @@ const DSA_POSTS = [
 ];
 
 const DSA_ANSWERS = [
-    'For BST deletion with two children: find the smallest node in the right subtree (go right once, then left as far as possible). Replace the deleted node\'s key with that value, then delete the successor node. It will have at most one child!',
-    'I also recommend drawing the tree on paper before coding. Visualizing the rotations helped me a lot with AVL trees.',
+    'For the runtime complexity exercise: try using input sizes like 1000, 10000, 100000. At small sizes the constant factors dominate, but at larger sizes you can clearly see O(n²) growing much faster than O(n log n).',
+    'I also recommend plotting the results on a graph. When you see the curves, the difference between linear and quadratic growth becomes very intuitive!',
     'Great idea about the study group! I am in. Maybe we could also go through past exam questions together?',
-    'Thanks for the MergeSort tip! The recursive structure clicked for me when I thought of it as a post-order tree traversal.',
-    'Could you also cover the time complexity analysis for balanced vs unbalanced BSTs in office hours? I am confused about when O(log n) vs O(n) applies.',
+    'Thanks for the MergeSort tip! The recursive structure clicked for me when I realized each split halves the problem — that is where the log n comes from.',
+    'Could you also cover amortized analysis in office hours? I understand worst-case Big-O but amortized complexity for dynamic arrays confuses me.',
     'Pro tip: use the debugger to step through your sorting code with a small array (like 5 elements). It makes understanding the partitioning in QuickSort much clearer.',
     'Count me in for the study group! I am especially struggling with Dijkstra\'s algorithm and would appreciate going through it together.',
     'Thank you Prof. Meier! The office hours were very helpful. For others: make sure you understand the difference between BFS (uses queue) and DFS (uses stack/recursion) — it was a key exam topic last year.',
@@ -1001,10 +884,10 @@ function createQuizQuestion(config) {
 
 const ADDITIONAL_COURSES = [
     {
-        title: 'Introduction to Informatics',
-        shortName: 'IntroInf2026',
+        title: 'Introduction to Programming',
+        shortName: 'IntroProg2026',
         semester: 'SS2026',
-        description: 'Introductory course covering the basics of computer science, programming in Python, and computational thinking.',
+        description: 'Introductory course covering the basics of programming in Java and Python, computational thinking, and fundamental programming concepts.',
         studentCount: 15,
         exercises: [
             {
@@ -1018,9 +901,9 @@ const ADDITIONAL_COURSES = [
             },
             {
                 type: 'text',
-                title: 'Essay: What is Computer Science?',
-                shortName: `EssayCS${timestamp}`,
-                problemStatement: `# Essay: What is Computer Science?\n\nWrite a short essay (300-500 words) explaining what computer science is and why it matters in today's world.\n\n## Evaluation Criteria\n- Clarity of explanation\n- Use of examples\n- Writing quality`,
+                title: 'Essay: Why Learn Programming?',
+                shortName: `EssayProg${timestamp}`,
+                problemStatement: `# Essay: Why Learn Programming?\n\nWrite a short essay (300-500 words) explaining why programming skills are valuable in today's world, even for non-computer-scientists.\n\n## Evaluation Criteria\n- Clarity of explanation\n- Use of examples\n- Writing quality`,
             },
             {
                 type: 'modeling',
@@ -1032,17 +915,17 @@ const ADDITIONAL_COURSES = [
         ],
         lectures: [
             {
-                title: 'What is Computer Science?',
-                description: 'An introduction to the field of computer science and its applications.',
+                title: 'Getting Started with Programming',
+                description: 'An introduction to programming concepts: variables, control flow, and functions.',
                 textUnits: [
                     {
-                        name: 'Overview of Computer Science',
-                        content: `# Overview of Computer Science\n\nComputer science is the study of computation, information, and automation. It spans theoretical disciplines such as algorithms and complexity theory to practical areas like software engineering and artificial intelligence.\n\n## Subfields\n- **Theoretical CS**: Algorithms, complexity theory, formal languages\n- **Systems**: Operating systems, networks, databases\n- **AI & ML**: Machine learning, natural language processing\n- **Software Engineering**: Development practices, testing, maintenance`,
+                        name: 'Programming Fundamentals',
+                        content: `# Programming Fundamentals\n\nProgramming is the process of writing instructions that a computer can execute. It requires logical thinking, problem decomposition, and attention to detail.\n\n## Key Concepts\n- **Variables**: Named containers for storing data\n- **Control Flow**: if/else statements, loops\n- **Functions**: Reusable blocks of code\n- **Data Types**: integers, strings, booleans, arrays`,
                     },
                 ],
             },
             {
-                title: 'Introduction to Python Programming',
+                title: 'Introduction to Python',
                 description: 'Learn the basics of Python: variables, control flow, functions, and data structures.',
                 textUnits: [
                     {
@@ -1054,70 +937,72 @@ const ADDITIONAL_COURSES = [
         ],
     },
     {
-        title: 'Software Engineering Fundamentals',
-        shortName: 'SE2026',
+        title: 'Data Structures',
+        shortName: 'DS2026',
         semester: 'WS2025',
-        description: 'Covers software development processes, design patterns, testing strategies, and team collaboration using modern tools.',
+        description: 'Covers fundamental data structures including arrays, linked lists, trees, hash tables, and graphs. Students learn how to choose the right data structure for different problems.',
         studentCount: 20,
         exercises: [
             {
                 type: 'programming',
-                title: 'Java Unit Testing with JUnit',
-                shortName: `JUnit${timestamp}`,
+                title: 'Binary Search Trees',
+                shortName: `BST${timestamp}`,
                 programmingLanguage: 'JAVA',
                 projectType: 'PLAIN_GRADLE',
-                packageName: 'de.tum.cit.se.testing',
-                problemStatement: `# Java Unit Testing with JUnit\n\nWrite unit tests for a given Calculator class using JUnit 5.\n\n## Requirements\n1. Test all arithmetic operations: add, subtract, multiply, divide\n2. Test edge cases: division by zero, integer overflow\n3. Use \`@ParameterizedTest\` for at least one test\n4. Achieve at least 90% code coverage`,
+                packageName: 'de.tum.cit.ds.bst',
+                problemStatement: `# Binary Search Trees\n\nImplement a Binary Search Tree (BST) that supports insertion, search, and traversal operations.\n\n## Requirements\n1. Implement the \`insert(int key)\` method\n2. Implement the \`search(int key)\` method that returns \`true\` if the key exists\n3. Implement \`inorderTraversal()\` that returns a sorted list of all elements\n4. Implement \`delete(int key)\` to remove a node while maintaining BST properties`,
+            },
+            {
+                type: 'programming',
+                title: 'Linked List Implementation',
+                shortName: `LList${timestamp}`,
+                programmingLanguage: 'JAVA',
+                projectType: 'PLAIN_GRADLE',
+                packageName: 'de.tum.cit.ds.linkedlist',
+                problemStatement: `# Linked List Implementation\n\nImplement a generic singly linked list with common operations.\n\n## Requirements\n1. Implement \`add(T element)\` to append an element\n2. Implement \`get(int index)\` to retrieve an element by index\n3. Implement \`remove(int index)\` to remove and return an element\n4. Implement \`size()\` and \`isEmpty()\`\n5. Implement \`reverse()\` to reverse the list in-place`,
             },
             {
                 type: 'text',
-                title: 'Report: Agile vs Waterfall',
-                shortName: `ReportAgile${timestamp}`,
-                problemStatement: `# Report: Agile vs Waterfall\n\nCompare and contrast the Agile and Waterfall software development methodologies.\n\n## Requirements\n1. Describe each methodology\n2. Discuss advantages and disadvantages\n3. Give examples of when each is appropriate\n4. State your recommendation with justification`,
+                title: 'Report: Choosing the Right Data Structure',
+                shortName: `ReportDS${timestamp}`,
+                problemStatement: `# Report: Choosing the Right Data Structure\n\nCompare and contrast arrays, linked lists, and trees for different use cases.\n\n## Requirements\n1. Describe each data structure and its properties\n2. Discuss time complexity trade-offs for common operations\n3. Give examples of when each is appropriate\n4. State recommendations with justification`,
             },
             {
                 type: 'modeling',
-                title: 'UML Class Diagram: Online Shop',
-                shortName: `UMLShop${timestamp}`,
+                title: 'UML Class Diagram: Collection Framework',
+                shortName: `UMLColl${timestamp}`,
                 diagramType: 'ClassDiagram',
-                problemStatement: `# UML Class Diagram: Online Shop\n\nDesign a class diagram for an online shopping system.\n\n## Requirements\n1. Model classes: Customer, Product, Order, ShoppingCart, Payment\n2. Show attributes and methods for each class\n3. Model associations, including multiplicities\n4. Use inheritance where appropriate (e.g., different payment types)`,
-            },
-            {
-                type: 'modeling',
-                title: 'Activity Diagram: CI/CD Pipeline',
-                shortName: `ActCI${timestamp}`,
-                diagramType: 'ActivityDiagram',
-                problemStatement: `# Activity Diagram: CI/CD Pipeline\n\nCreate an activity diagram showing a typical CI/CD pipeline.\n\n## Requirements\n1. Model stages: Build, Test, Static Analysis, Deploy\n2. Include decision points for pass/fail\n3. Show parallel activities where applicable\n4. Include notification steps`,
+                problemStatement: `# UML Class Diagram: Collection Framework\n\nDesign a class diagram for a simplified collection framework.\n\n## Requirements\n1. Model interfaces: Collection, List, Set, Map\n2. Model implementations: ArrayList, LinkedList, HashSet, HashMap\n3. Show inheritance and interface implementation\n4. Include key methods for each interface`,
             },
         ],
         lectures: [
             {
-                title: 'Software Development Processes',
-                description: 'Overview of software development lifecycles and methodologies.',
+                title: 'Introduction to Data Structures',
+                description: 'Overview of fundamental data structures: arrays, linked lists, stacks, and queues.',
                 textUnits: [
                     {
-                        name: 'Agile and Scrum',
-                        content: `# Agile and Scrum\n\n## Agile Manifesto Principles\n- Individuals and interactions over processes and tools\n- Working software over comprehensive documentation\n- Customer collaboration over contract negotiation\n- Responding to change over following a plan\n\n## Scrum Framework\n- **Sprint**: Fixed-length iteration (2-4 weeks)\n- **Daily Standup**: 15-minute sync\n- **Sprint Review**: Demo completed work\n- **Sprint Retrospective**: Continuous improvement`,
+                        name: 'Arrays and Linked Lists',
+                        content: `# Arrays and Linked Lists\n\n## Arrays\n- Contiguous memory, O(1) random access\n- Fixed size (or amortized O(1) with dynamic arrays)\n- Cache-friendly due to locality\n\n## Linked Lists\n- Dynamic size, O(1) insertion at head\n- O(n) access by index\n- Each node stores data + pointer to next\n\n## Comparison\n| Operation | Array | Linked List |\n|-----------|-------|-------------|\n| Access    | O(1)  | O(n)        |\n| Insert (head) | O(n) | O(1)   |\n| Search    | O(n)  | O(n)        |`,
                     },
                 ],
             },
             {
-                title: 'Design Patterns in Practice',
-                description: 'Learn about common design patterns and how to apply them in real-world software.',
+                title: 'Trees and Binary Search Trees',
+                description: 'In-depth coverage of tree data structures with focus on BSTs, traversals, and balanced trees.',
                 textUnits: [
                     {
-                        name: 'Creational Patterns',
-                        content: `# Creational Design Patterns\n\n## Singleton\nEnsures a class has only one instance.\n\n## Factory Method\nDefines an interface for creating objects, letting subclasses decide which class to instantiate.\n\n## Builder\nSeparates construction of a complex object from its representation.\n\n## Abstract Factory\nProvides an interface for creating families of related objects.`,
+                        name: 'Binary Search Trees',
+                        content: `# Binary Search Trees\n\nA BST is a binary tree where for every node:\n- Left subtree keys < node key\n- Right subtree keys > node key\n\n## Operations\n| Operation | Average | Worst |\n|-----------|---------|-------|\n| Search    | O(log n)| O(n)  |\n| Insert    | O(log n)| O(n)  |\n| Delete    | O(log n)| O(n)  |\n\n## Self-Balancing Trees\n- AVL Trees: strict balance (height diff ≤ 1)\n- Red-Black Trees: approximate balance\n- B-Trees: disk-efficient, used in databases`,
                     },
                 ],
             },
             {
-                title: 'Testing Strategies',
-                description: 'Unit testing, integration testing, and test-driven development.',
+                title: 'Hash Tables and Advanced Structures',
+                description: 'Hash tables, heaps, and their applications.',
                 textUnits: [
                     {
-                        name: 'Testing Pyramid',
-                        content: `# The Testing Pyramid\n\n## Unit Tests (Base)\n- Fast, isolated, many\n- Test individual methods/classes\n- Mock external dependencies\n\n## Integration Tests (Middle)\n- Test component interactions\n- Use real databases/services where possible\n- Slower but more realistic\n\n## E2E Tests (Top)\n- Test full user workflows\n- Slowest, most brittle\n- Use sparingly for critical paths`,
+                        name: 'Hash Tables',
+                        content: `# Hash Tables\n\n## Concept\nMap keys to array indices using a hash function.\n- Average O(1) insert, search, delete\n- Worst case O(n) with many collisions\n\n## Collision Resolution\n- **Chaining**: Each bucket stores a linked list\n- **Open Addressing**: Probe for next empty slot\n\n## Load Factor\nRatio of elements to table size. Rehash when load factor exceeds threshold (typically 0.75).`,
                     },
                 ],
             },
@@ -1130,7 +1015,7 @@ const ADDITIONAL_COURSES = [
 async function main() {
     console.log('='.repeat(60));
     console.log('  Demo Data Setup — Master Thesis Presentation');
-    console.log('  "Data Structures and Algorithms" (SS 2026)');
+    console.log('  "Algorithms" (SS 2026) + Intro to Programming + Data Structures');
     console.log('='.repeat(60));
     console.log(`  Server:   ${config.serverUrl}`);
     console.log(`  Admin:    ${config.adminUser}`);
@@ -1218,10 +1103,10 @@ async function main() {
         const firstName = firstNames[(i - 1) % firstNames.length];
         const lastName = lastNames[(i - 1) % lastNames.length];
         const user = await createUser(client, {
-            login: `dsa_student_${i}`,
+            login: `alg_student_${i}`,
             firstName,
             lastName,
-            email: `dsa_student_${i}@tum.test`,
+            email: `alg_student_${i}@tum.test`,
             password: STUDENT_PASSWORD,
         });
         students.push(user);
@@ -1235,10 +1120,10 @@ async function main() {
     const tutors = [];
     for (let i = 1; i <= 2; i++) {
         const user = await createUser(client, {
-            login: `dsa_tutor_${i}`,
+            login: `alg_tutor_${i}`,
             firstName: `Tutor`,
-            lastName: `DSA${i}`,
-            email: `dsa_tutor_${i}@tum.test`,
+            lastName: `ALG${i}`,
+            email: `alg_tutor_${i}@tum.test`,
             password: STUDENT_PASSWORD,
         });
         tutors.push(user);
@@ -1423,27 +1308,27 @@ async function main() {
     }
 
     // Link some exercises to lectures as exercise units
-    if (createdLectures.length >= 2 && programmingExercises.length >= 1) {
+    if (createdLectures.length >= 1 && programmingExercises.length >= 1) {
         try {
-            // Link BST exercise to Trees lecture
-            const treesLecture = createdLectures[1]; // "Trees and Binary Search Trees"
-            const bstExercise = programmingExercises[0]; // "Binary Search Trees"
-            await client.post(`/api/lecture/lectures/${treesLecture.id}/exercise-units`, {
+            // Link Runtime Complexity exercise to Runtime Complexity lecture
+            const complexityLecture = createdLectures[0]; // "Runtime Complexity and Big-O Notation"
+            const complexityExercise = programmingExercises[0]; // "Runtime Complexity Analysis"
+            await client.post(`/api/lecture/lectures/${complexityLecture.id}/exercise-units`, {
                 type: 'exercise',
-                exercise: { id: bstExercise.id, type: bstExercise.type },
-                lecture: { id: treesLecture.id },
+                exercise: { id: complexityExercise.id, type: complexityExercise.type },
+                lecture: { id: complexityLecture.id },
             });
-            console.log(`    Linked exercise "${bstExercise.title}" to lecture "${treesLecture.title}"`);
+            console.log(`    Linked exercise "${complexityExercise.title}" to lecture "${complexityLecture.title}"`);
         } catch (error) {
             console.log(`    Could not link exercise to lecture: ${error.message}`);
         }
     }
 
-    if (createdLectures.length >= 3 && programmingExercises.length >= 4) {
+    if (createdLectures.length >= 2 && programmingExercises.length >= 3) {
         try {
             // Link Sorting exercise to Sorting lecture
-            const sortLecture = createdLectures[2]; // "Sorting Algorithms"
-            const sortExercise = programmingExercises[3]; // "Sorting Algorithms"
+            const sortLecture = createdLectures[1]; // "Sorting Algorithms"
+            const sortExercise = programmingExercises[2]; // "Sorting Algorithms"
             await client.post(`/api/lecture/lectures/${sortLecture.id}/exercise-units`, {
                 type: 'exercise',
                 exercise: { id: sortExercise.id, type: sortExercise.type },
@@ -1744,11 +1629,11 @@ async function main() {
     console.log(`    Luca         → login: luca        / password: ${STUDENT_PASSWORD}  (Student)`);
     console.log(`    Tom          → login: tom         / password: ${STUDENT_PASSWORD}  (Instructor + Admin)`);
     console.log('');
-    console.log(`  Students: ${students.length} generic students (dsa_student_1 .. dsa_student_${config.studentCount})`);
-    console.log(`  Tutors:   ${tutors.length} tutors (dsa_tutor_1, dsa_tutor_2)`);
+    console.log(`  Students: ${students.length} generic students (alg_student_1 .. alg_student_${config.studentCount})`);
+    console.log(`  Tutors:   ${tutors.length} tutors (alg_tutor_1, alg_tutor_2)`);
     console.log('');
     console.log('  Exercises:');
-    console.log(`    Programming:  ${programmingExercises.length} (incl. "Binary Search Trees")`);
+    console.log(`    Programming:  ${programmingExercises.length} (incl. "Runtime Complexity Analysis")`);
     console.log(`    Modeling:     ${modelingExercises.length}`);
     console.log(`    Text:         ${textExercises.length}`);
     console.log(`    Quiz:         ${quizExercises.length}`);
@@ -1766,7 +1651,7 @@ async function main() {
     console.log('  Demo Flow:');
     console.log('    1. Login as prof_sofia → register passkey → logout → login with passkey');
     console.log('    2. Show locked admin action (login with password only)');
-    console.log('    3. Cmd+K → type "binary search trees" → results from exercises + lectures');
+    console.log('    3. Cmd+K → type "runtime complexity" → results from exercises + lectures');
     console.log('');
     console.log('='.repeat(60));
 }

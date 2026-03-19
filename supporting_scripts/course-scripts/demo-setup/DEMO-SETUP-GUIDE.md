@@ -4,72 +4,90 @@
 
 This script sets up realistic demo data for the master thesis presentation on **"Enhancing Navigation in a Learning Management System through Passkey Authentication and Semantic Search"**.
 
-It creates a fully populated **"Data Structures and Algorithms" (SS 2026)** course that matches the storytelling in the presentation, where:
+It creates three courses matching the storytelling in the presentation:
 
-- **Prof. Sofia** (admin/instructor) manages the course and demonstrates passkey authentication
-- **Luca** (student) searches for "binary search trees" using global search
-- **Tom** (instructor/admin) is the colleague who fell for a phishing email
+- **"Algorithms" (SS 2026)** — main course, richest content, search demo target
+- **"Introduction to Programming" (SS 2026)** — additional course
+- **"Data Structures" (WS 2025)** — additional course
+
+The story:
+- **Prof. Sofia** manages all three courses and demonstrates passkey authentication
+- **Tom** is her colleague who fell for a phishing email — Sofia can't safely share her password with him
+- **Luca** (student) emails Sofia about a "runtime complexity" exercise, but Sofia doesn't know which course it's in
+- Sofia uses **global search** to instantly find the exercise across all courses
 
 ## What Gets Created
 
-### Course
+### Demo Characters
+
+| Character   | Login        | Password       | Role               | Story Role                                    |
+|-------------|--------------|----------------|--------------------|--------------------------------------------|
+| Prof. Sofia | `prof_sofia` | `Password123!` | Admin + Instructor | Registers passkey, manages courses, searches  |
+| Luca        | `luca`       | `Password123!` | Student            | Emails about "runtime complexity" exercise    |
+| Tom         | `tom`        | `Password123!` | Admin + Instructor | Compromised colleague (phishing)              |
+
+### Course 1: Algorithms (Main Course)
+
 | Field      | Value                          |
 |------------|--------------------------------|
-| Title      | Data Structures and Algorithms |
-| Short Name | DSA2026                        |
+| Title      | Algorithms                     |
+| Short Name | ALG2026                        |
 | Semester   | SS2026                         |
 | Duration   | 30 days ago → 90 days from now |
 
-### Demo Characters
+#### Exercises
 
-| Character   | Login        | Password       | Role               | Story Role                         |
-|-------------|--------------|----------------|--------------------|------------------------------------|
-| Prof. Sofia | `prof_sofia` | `Password123!` | Admin + Instructor | Registers passkey, manages course  |
-| Luca        | `luca`       | `Password123!` | Student            | Searches for "binary search trees" |
-| Tom         | `tom`        | `Password123!` | Admin + Instructor | Compromised colleague (phishing)   |
+| Type               | Title                                        | Key for Demo?                  |
+|--------------------|----------------------------------------------|-------------------------------|
+| Programming (Java) | **Runtime Complexity Analysis**               | **Yes — search demo target**  |
+| Programming (Java) | Graph Traversal Algorithms                   | Background content            |
+| Programming (Java) | Sorting Algorithms                           | Background content            |
+| Modeling           | UML Class Diagram: Sorting Algorithm Hierarchy | Background content          |
+| Modeling           | Activity Diagram: Algorithm Complexity Comparison | Background content       |
+| Text               | Essay: Comparing Sorting Algorithms          | Background content            |
+| Text               | Summary: Runtime Complexity in Practice      | Background content            |
+| Quiz               | Algorithm Fundamentals Quiz                  | Background content            |
+| Quiz               | Sorting Algorithms Quiz                      | Background content            |
 
-### Students & Tutors
-- **50 students** with realistic German names (`dsa_student_1` through `dsa_student_50`)
-- **2 tutors** (`dsa_tutor_1`, `dsa_tutor_2`)
-- All students use password `Password123!`
+#### Lectures (with text units)
 
-### Exercises
+| Lecture                                | Text Units                                                                       | Key for Demo?                |
+|----------------------------------------|----------------------------------------------------------------------------------|------------------------------|
+| **Runtime Complexity and Big-O Notation** | Introduction to Runtime Complexity, Analyzing Algorithm Complexity, Practical Runtime Analysis | **Yes — search demo target** |
+| Sorting Algorithms                     | Comparison-Based Sorting, Non-Comparison Sorting                                 | Background                   |
+| Graph Algorithms                       | Graph Representations, Shortest Paths                                            | Background                   |
 
-| Type               | Title                                        | Key for Demo?                |
-|--------------------|----------------------------------------------|------------------------------|
-| Programming (Java) | **Binary Search Trees**                      | **Yes — search demo target** |
-| Programming (Java) | Linked List Implementation                   | Background content           |
-| Programming (Java) | Graph Traversal Algorithms                   | Background content           |
-| Programming (Java) | Sorting Algorithms                           | Background content           |
-| Modeling           | UML Class Diagram: Tree Structures           | Background content           |
-| Modeling           | Activity Diagram: Search Algorithm Flow      | Background content           |
-| Text               | Essay: Comparing Sorting Algorithms          | Background content           |
-| Text               | Summary: Applications of Binary Search Trees | Background content           |
-| Quiz               | Data Structures Fundamentals Quiz            | Background content           |
-| Quiz               | Sorting Algorithms Quiz                      | Background content           |
+### Course 2: Introduction to Programming
 
-### Lectures (with text units)
+| Field      | Value                          |
+|------------|--------------------------------|
+| Title      | Introduction to Programming    |
+| Short Name | IntroProg2026                  |
+| Semester   | SS2026                         |
 
-| Lecture                           | Text Units                                                                    | Key for Demo?                |
-|-----------------------------------|-------------------------------------------------------------------------------|------------------------------|
-| Introduction to Data Structures   | Arrays and Dynamic Arrays, Stacks and Queues                                  | Background                   |
-| **Trees and Binary Search Trees** | Introduction to Trees, **Binary Search Trees (BST)**, AVL Trees and Rotations | **Yes — search demo target** |
-| Sorting Algorithms                | Comparison-Based Sorting, Non-Comparison Sorting                              | Background                   |
-| Graph Algorithms                  | Graph Representations, Shortest Paths                                         | Background                   |
+Exercises: 3 (1 programming, 1 text, 1 modeling)
+Lectures: 2
+Students: 15
 
-### Additional Courses (Prof. Sofia as Instructor)
+### Course 3: Data Structures
 
-These give the demo a realistic feel — a professor managing multiple courses, not just one.
+| Field      | Value                          |
+|------------|--------------------------------|
+| Title      | Data Structures                |
+| Short Name | DS2026                         |
+| Semester   | WS2025                         |
 
-| Course                            | Short Name   | Semester | Exercises                             | Lectures | Students |
-|-----------------------------------|--------------|----------|---------------------------------------|----------|----------|
-| Introduction to Informatics       | IntroInf2026 | SS2026   | 3 (1 programming, 1 text, 1 modeling) | 2        | 15       |
-| Software Engineering Fundamentals | SE2026       | WS2025   | 4 (1 programming, 1 text, 2 modeling) | 3        | 20       |
+Exercises: 4 (2 programming incl. BST and Linked List, 1 text, 1 modeling)
+Lectures: 3
+Students: 20
 
-Both courses have Luca enrolled as a student and Tom as an instructor, matching the story.
+### Students & Tutors (Main Course)
+- **50 students** with realistic German names (`alg_student_1` through `alg_student_50`)
+- **2 tutors** (`alg_tutor_1`, `alg_tutor_2`)
+- All use password `Password123!`
 
 ### Communication
-- 5 posts from Prof. Sofia, Luca, and Tom in the course channel (DSA-themed)
+- 5 posts from Prof. Sofia, Luca, and Tom in the course channel (algorithms-themed)
 - 8 reply answers from various students
 - Reactions from students on posts
 
@@ -123,6 +141,13 @@ Environment variables `ARTEMIS_SERVER_URL`, `ARTEMIS_ADMIN_USER`, and `ARTEMIS_A
 
 ## Demo Flow (Presentation Order)
 
+### Story Context
+Sofia recently joined a new research group. She helps out in three courses on Artemis: Algorithms, Introduction to Programming, and Data Structures. She also administrates Artemis for the chair.
+
+As her paper deadline approaches, she wants to delegate admin tasks to Tom — but Tom has clicked on every phishing link the university has ever sent. She trusts Tom with the work, but not with a password that unlocks admin features.
+
+A student (Luca) emails her about an exercise on runtime complexity. Since Sofia is new, she doesn't know which course the exercise belongs to and would have to search each course one by one.
+
 ### 1. Passkey Registration (as Prof. Sofia)
 1. Open Artemis, login as `prof_sofia` / `Password123!`
 2. Go to account settings → register a passkey
@@ -140,16 +165,10 @@ Environment variables `ARTEMIS_SERVER_URL`, `ARTEMIS_ADMIN_USER`, and `ARTEMIS_A
 
 ### 4. Global Search
 1. Press **Cmd+K** (or click the search icon)
-2. Type **"binary search trees"**
+2. Type **"runtime complexity"**
 3. Results should show:
-   - **Exercise**: "Binary Search Trees" (programming exercise)
-   - **Lecture**: "Trees and Binary Search Trees" (with BST text units)
-
-## Which Course to Use for the Demo
-
-Use the course **"Data Structures and Algorithms"** (`DSA2026`).
-
-The course ID will be printed at the end of the script execution. You can also find it in the Artemis admin panel under Course Management.
+   - **Exercise**: "Runtime Complexity Analysis" (programming exercise)
+   - **Lecture**: "Runtime Complexity and Big-O Notation" (with text units)
 
 ## Re-running the Script
 
