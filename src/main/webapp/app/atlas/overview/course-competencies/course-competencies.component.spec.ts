@@ -17,7 +17,6 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CompetencyCardStubComponent } from 'test/helpers/stubs/atlas/competency-card-stub.component';
 import { CompetencyCardComponent } from 'app/atlas/overview/competency-card/competency-card.component';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
-import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 import { Prerequisite } from 'app/atlas/shared/entities/prerequisite.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -68,12 +67,6 @@ describe('CourseCompetencies', () => {
                     provide: ActivatedRoute,
                     useValue: mockActivatedRoute,
                 },
-                {
-                    provide: FeatureToggleService,
-                    useValue: {
-                        getFeatureToggleActive: () => of(true),
-                    },
-                },
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(ScienceService),
             ],
@@ -121,13 +114,11 @@ describe('CourseCompetencies', () => {
             ),
         );
         vi.spyOn(mockCourseStorageService, 'getCourse').mockReturnValue({ studentCourseAnalyticsDashboardEnabled: true } as any);
-        const getJoLAllForCourseSpy = vi.spyOn(courseCompetencyService, 'getJoLAllForCourse').mockReturnValue(of({} as any));
 
         courseCompetenciesComponent.isCollapsed = false;
         courseCompetenciesComponentFixture.detectChanges();
 
         expect(getAllCourseCompetenciesForCourseSpy).toHaveBeenCalledOnce();
-        expect(getJoLAllForCourseSpy).toHaveBeenCalledOnce();
         expect(courseCompetenciesComponent.competencies).toHaveLength(2);
     });
 });
