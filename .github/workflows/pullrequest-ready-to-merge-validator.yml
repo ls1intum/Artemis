@@ -97,8 +97,9 @@ jobs:
                   const firstComment = thread.comments.nodes[0]?.body || '';
                   const url = thread.comments.nodes[0]?.url || '';
                   const commentAuthor = thread.comments.nodes[0]?.author?.login || '';
-                  // Truncate long comments
-                  const preview = firstComment.length > 80 ? firstComment.substring(0, 77) + '...' : firstComment;
+                  // Sanitize for Markdown link syntax: strip newlines and remove [] characters
+                  const sanitized = firstComment.replace(/[\r\n]+/g, ' ').replace(/[\[\]]/g, '');
+                  const preview = sanitized.length > 80 ? sanitized.substring(0, 77) + '...' : sanitized;
                   return { preview, url, commentAuthor };
                 })
               });
