@@ -100,11 +100,13 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.updatePostingWithReactions();
             this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting() as Posting);
             this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+            this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
             if (this.getPostingType() === 'post') {
                 this.resetTooltipsAndPriority();
             }
             this.setMayDelete();
             this.setMayEdit();
+            this.setCanMarkAsUnread();
         });
     }
 
