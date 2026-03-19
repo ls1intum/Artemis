@@ -1247,3 +1247,10 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     background-color: var(--iris-secondary-background);
     padding: 0;
 }
+
+// Tooltip for chat-history related-entity icons (portaled to <body>).
+.chat-history-entity-tooltip .p-tooltip-text {
+    font-size: 12px;
+    min-width: 200px;
+    white-space: pre-line;
+}
