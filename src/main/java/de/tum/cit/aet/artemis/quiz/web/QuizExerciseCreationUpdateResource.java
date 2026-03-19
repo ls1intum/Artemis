@@ -176,7 +176,7 @@ public class QuizExerciseCreationUpdateResource {
      * @param files                 the new files for drag and drop questions to
      *                                  upload (optional). The original file name
      *                                  must equal the file path of the image in
-     *                                  {@code quizExercise}
+     *                                  {@code updateQuizExerciseDTO}
      * @param notificationText      about the quiz exercise update that should
      *                                  be displayed to the student group
      * @return the ResponseEntity with status 200 (OK) and with body the updated

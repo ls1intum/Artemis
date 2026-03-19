@@ -402,7 +402,7 @@ public class TextExerciseCreationUpdateResource {
             clearInitializedCollection(exercise.getCompetencyLinks());
             return;
         }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
+        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", ENTITY_NAME, "atlasDisabled"));
 
         Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
 
@@ -413,9 +413,10 @@ public class TextExerciseCreationUpdateResource {
 
         Set<CompetencyExerciseLink> updated = new HashSet<>();
         for (var linkDto : dto.competencyLinks()) {
-
-            var competencyDto = linkDto.competency();
-            Long competencyId = competencyDto.id();
+            if (linkDto == null || linkDto.competency() == null || linkDto.competency().id() == null) {
+                throw new BadRequestAlertException("Each competency link must include competency.id.", ENTITY_NAME, "competencyIdMissing");
+            }
+            Long competencyId = linkDto.competency().id();
 
             CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
             if (link == null) {
