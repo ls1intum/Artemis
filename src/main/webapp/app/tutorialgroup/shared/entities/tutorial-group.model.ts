@@ -99,3 +99,8 @@ export interface TutorialGroupRegisteredStudentDTO {
     email?: string;
     registrationNumber?: string;
 }
+
+export interface TutorialGroupRegisterStudentDTO {
+    login?: string;
+    registrationNumber?: string;
+}
