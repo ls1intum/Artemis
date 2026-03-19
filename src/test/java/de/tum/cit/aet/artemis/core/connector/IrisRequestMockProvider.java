@@ -196,10 +196,6 @@ public class IrisRequestMockProvider {
         mockPostRequest("/programming-exercise-chat/run?event=progress_stalled", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer, ExpectedCount.max(2));
     }
 
-    public void mockJolEventRunResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
-        mockPostRequest("/course-chat/run?event=jol", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer);
-    }
-
     public void mockCourseChatResponse(Consumer<PyrisCourseChatPipelineExecutionDTO> responseConsumer) {
         mockPostRequest("/course-chat/run", PyrisCourseChatPipelineExecutionDTO.class, responseConsumer);
     }
