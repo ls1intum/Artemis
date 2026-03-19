@@ -56,6 +56,7 @@ import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-deta
 import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -92,6 +93,7 @@ interface InstructorActionItem {
         LtiInitializerComponent,
         ArtemisTranslatePipe,
         CompetencyContributionComponent,
+        ExerciseSplitPanelComponent,
     ],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {

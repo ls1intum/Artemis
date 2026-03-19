@@ -1,0 +1,17 @@
+<jhi-resizable-panels>
+    <ng-template jhiPanel label="Problem statement" [icon]="faGear">
+        <div class="d-flex flex-fill p-3">
+            <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()!" />
+        </div>
+    </ng-template>
+
+    @if (showDiscussion()) {
+        <ng-template jhiPanel label="Chat" [icon]="faComment">
+            <jhi-discussion-section [exercise]="exercise()" />
+        </ng-template>
+    }
+
+    <ng-template jhiPanel label="Iris" [icon]="faGraduationCap">
+        <!-- Iris content coming soon -->
+    </ng-template>
+</jhi-resizable-panels>
