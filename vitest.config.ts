@@ -45,6 +45,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/services/problem-statement.service.spec.ts', // include problem statement service tests
             'src/main/webapp/app/programming/manage/shared/problem-statement.utils.spec.ts', // include problem statement utils tests
             'src/main/webapp/app/shared/monaco-editor/inline-refinement-button/*.spec.ts', // include inline refinement button tests
+            'src/main/webapp/app/exercise/exercise-headers/**/*.spec.ts', // include exercise headers tests
             'src/main/webapp/app/exercise/synchronization/**/*.spec.ts', // include exercise synchronization tests
             'src/main/webapp/app/exercise/version-history/**/*.spec.ts', // include exercise version history tests
             'src/main/webapp/app/exercise/review/**/*.spec.ts', // include review module tests
