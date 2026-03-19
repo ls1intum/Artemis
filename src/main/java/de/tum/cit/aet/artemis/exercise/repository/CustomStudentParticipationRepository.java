@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exercise.repository;
 
+import java.time.ZonedDateTime;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -26,4 +28,21 @@ public interface CustomStudentParticipationRepository {
      */
     Page<Long> findParticipationIdsByExerciseIdWithFilters(long exerciseId, boolean teamMode, String searchTerm, String filterProp, Integer scoreRangeLower,
             Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn);
+
+    /**
+     * Returns a page of participation IDs for the given exercise for the management view, applying search and filter predicates.
+     *
+     * @param exerciseId       the exercise to query
+     * @param teamMode         whether the exercise uses teams
+     * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
+     * @param filterProp       filter property name (All, Failed, NoSubmissions, NoPracticeMode)
+     * @param stuckBuildCutoff for the "Failed" filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck;
+     *                             {@code null} disables the filter
+     * @param pageable         pagination information
+     * @param sortOrder        ascending or descending
+     * @param sortedColumn     the column to sort by
+     * @return a page of participation IDs
+     */
+    Page<Long> findParticipationIdsByExerciseIdForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
+            Pageable pageable, SortingOrder sortOrder, String sortedColumn);
 }
