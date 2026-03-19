@@ -67,6 +67,7 @@ jobs:
                         comments(first: 1) {
                           nodes {
                             body
+                            url
                           }
                         }
                       }
@@ -91,8 +92,10 @@ jobs:
                 count: unresolvedThreads.length,
                 items: unresolvedThreads.slice(0, 5).map(thread => {
                   const firstComment = thread.comments.nodes[0]?.body || '';
+                  const url = thread.comments.nodes[0]?.url || '';
                   // Truncate long comments
-                  return firstComment.length > 80 ? firstComment.substring(0, 77) + '...' : firstComment;
+                  const preview = firstComment.length > 80 ? firstComment.substring(0, 77) + '...' : firstComment;
+                  return { preview, url };
                 })
               });
             }
@@ -133,8 +136,12 @@ jobs:
               const threadIssue = issues.find(i => i.type === 'threads');
               if (threadIssue) {
                 commentBody += `### Unresolved Review Threads (${threadIssue.count})\n\n`;
-                threadIssue.items.forEach((preview, index) => {
-                  commentBody += `${index + 1}. "${preview}"\n`;
+                threadIssue.items.forEach((item, index) => {
+                  if (item.url) {
+                    commentBody += `${index + 1}. [${item.preview}](${item.url})\n`;
+                  } else {
+                    commentBody += `${index + 1}. "${item.preview}"\n`;
+                  }
                 });
                 if (threadIssue.count > 5) {
                   commentBody += `\n... and ${threadIssue.count - 5} more unresolved threads\n`;
