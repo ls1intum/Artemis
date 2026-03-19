@@ -1467,6 +1467,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
             String token = participationToken.getVcsAccessToken();
 
+            // Disable LDAP fallback so success can only come from participation token auth
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
+
             // Clone using the participation VCS token — exercises the team mode token auth path
             String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, teamRepoSlug);
             Path clonePath = tempFileUtilService.createTempDirectory(tempPath, "localvc-team-token-clone-");
@@ -1504,6 +1507,9 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
             // Get the auto-created participation VCS access token for student1
             var participationToken = localVCLocalCITestService.getParticipationVcsAccessToken(student1, participation.getId());
             String token = participationToken.getVcsAccessToken();
+
+            // Disable LDAP fallback so success can only come from participation token auth
+            doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
 
             // Clone using the token
             String tokenRepoUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, studentRepoSlug);
