@@ -34,6 +34,7 @@ export class BuildPhasesEditorComponent {
                 name: '',
                 script: '# enter the script of this phase',
                 condition: 'ALWAYS',
+                forceRun: false,
                 resultPaths: [],
             },
         ]);

@@ -61,7 +61,7 @@ public class BuildPhaseEvaluationService {
 
     private boolean isPhaseActive(BuildPhaseDTO phase, boolean allPhasesActive) {
         return switch (phase.condition()) {
-            case ALWAYS, FORCE_RUN -> true;
+            case ALWAYS -> true;
             case AFTER_DUE_DATE -> allPhasesActive;
         };
     }

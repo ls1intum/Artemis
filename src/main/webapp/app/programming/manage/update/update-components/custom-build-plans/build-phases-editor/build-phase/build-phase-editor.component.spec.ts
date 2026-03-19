@@ -21,6 +21,7 @@ describe('BuildPhaseEditorComponent', () => {
         name: 'build',
         script: 'echo "building..."',
         condition: 'ALWAYS',
+        forceRun: false,
         resultPaths: ['**/results.xml', '**/coverage.xml'],
     };
 
@@ -58,8 +59,9 @@ describe('BuildPhaseEditorComponent', () => {
             const options = component.conditionOptions();
 
             expect(options.length).toBe(Object.keys(BUILD_PHASE_CONDITION).length);
-            expect(options).toContainEqual({ value: 'ALWAYS', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.ALWAYS' });
-            expect(options).toContainEqual({ value: 'AFTER_DUE_DATE', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.AFTER_DUE_DATE' });
+            expect(options).toContainEqual({ value: 'ALWAYS', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.always' });
+            expect(options).toContainEqual({ value: 'AFTER_DUE_DATE', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.afterDueDate' });
+            expect(options).not.toContainEqual({ value: 'FORCE_RUN', label: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.forceRun' });
         });
     });
 
@@ -82,6 +84,7 @@ describe('BuildPhaseEditorComponent', () => {
             const phase = component.phase();
             expect(phase.script).toBe(initialPhase.script);
             expect(phase.condition).toBe(initialPhase.condition);
+            expect(phase.forceRun).toBe(initialPhase.forceRun);
             expect(phase.resultPaths).toEqual(initialPhase.resultPaths);
         });
     });
@@ -102,6 +105,7 @@ describe('BuildPhaseEditorComponent', () => {
             const phase = component.phase();
             expect(phase.name).toBe(initialPhase.name);
             expect(phase.condition).toBe(initialPhase.condition);
+            expect(phase.forceRun).toBe(initialPhase.forceRun);
         });
     });
 
@@ -118,6 +122,24 @@ describe('BuildPhaseEditorComponent', () => {
             const phase = component.phase();
             expect(phase.name).toBe(initialPhase.name);
             expect(phase.script).toBe(initialPhase.script);
+            expect(phase.forceRun).toBe(initialPhase.forceRun);
+        });
+    });
+
+    describe('updateForceRun', () => {
+        it('should update forceRun', () => {
+            component.updateForceRun(true);
+
+            expect(component.phase().forceRun).toBe(true);
+        });
+
+        it('should preserve other phase properties', () => {
+            component.updateForceRun(true);
+
+            const phase = component.phase();
+            expect(phase.name).toBe(initialPhase.name);
+            expect(phase.script).toBe(initialPhase.script);
+            expect(phase.condition).toBe(initialPhase.condition);
         });
     });
 

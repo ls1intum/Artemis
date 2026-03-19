@@ -17,8 +17,8 @@ describe('BuildPhasesEditorComponent', () => {
     let fixture: ComponentFixture<BuildPhasesEditorComponent>;
 
     const initialPhases: BuildPhase[] = [
-        { name: 'build', script: 'echo build', condition: 'ALWAYS', resultPaths: [] },
-        { name: 'test', script: 'echo test', condition: 'ALWAYS', resultPaths: ['**/test-results.xml'] },
+        { name: 'build', script: 'echo build', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+        { name: 'test', script: 'echo test', condition: 'ALWAYS', forceRun: false, resultPaths: ['**/test-results.xml'] },
     ];
 
     beforeEach(async () => {
@@ -67,6 +67,7 @@ describe('BuildPhasesEditorComponent', () => {
             expect(newPhase.name).toBe('');
             expect(newPhase.script).toBe('# enter the script of this phase');
             expect(newPhase.condition).toBe('ALWAYS');
+            expect(newPhase.forceRun).toBe(false);
             expect(newPhase.resultPaths).toEqual([]);
         });
 
@@ -123,6 +124,7 @@ describe('BuildPhasesEditorComponent', () => {
                 name: 'updated-build',
                 script: 'npm run build',
                 condition: 'AFTER_DUE_DATE',
+                forceRun: false,
                 resultPaths: ['dist/**/*'],
             };
 
@@ -141,6 +143,7 @@ describe('BuildPhasesEditorComponent', () => {
                 name: 'modified',
                 script: 'modified script',
                 condition: 'ALWAYS',
+                forceRun: false,
                 resultPaths: [],
             };
 
@@ -176,9 +179,9 @@ describe('BuildPhasesEditorComponent', () => {
             fixture.detectChanges();
 
             fixture.componentRef.setInput('phases', [
-                { name: 'first', script: '', condition: 'ALWAYS', resultPaths: [] },
-                { name: 'second', script: '', condition: 'ALWAYS', resultPaths: [] },
-                { name: 'third', script: '', condition: 'ALWAYS', resultPaths: [] },
+                { name: 'first', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'second', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'third', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
             ]);
             fixture.detectChanges();
 
@@ -215,9 +218,9 @@ describe('BuildPhasesEditorComponent', () => {
 
         it('should correctly move middle element down', () => {
             fixture.componentRef.setInput('phases', [
-                { name: 'first', script: '', condition: 'ALWAYS', resultPaths: [] },
-                { name: 'second', script: '', condition: 'ALWAYS', resultPaths: [] },
-                { name: 'third', script: '', condition: 'ALWAYS', resultPaths: [] },
+                { name: 'first', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'second', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'third', script: '', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
             ]);
             fixture.detectChanges();
 

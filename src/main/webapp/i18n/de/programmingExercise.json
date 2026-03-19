@@ -149,7 +149,9 @@
                 "phase": "Phase",
                 "phaseName": "Phasenname",
                 "phaseNamePlaceholder": "z. B. compile",
-                "condition": "Bedingung",
+                "condition": "Inklusionsbedingung",
+                "forceRun": "Ausführung erzwingen",
+                "forceRunHelp": "Wenn aktiviert, wird diese Phase am Ende des Builds ausgeführt, selbst wenn vorherige Phasen fehlschlagen.",
                 "script": "Skript",
                 "scriptHelp": "Gib die Befehle ein, die in dieser Phase des Builds ausgeführt werden sollen.",
                 "resultPaths": "Ergebnispfade",
@@ -163,8 +165,7 @@
                 "delete": "Löschen",
                 "conditions": {
                     "always": "Immer",
-                    "afterDueDate": "Nach Abgabefrist",
-                    "forceRun": "Ausführung erzwingen"
+                    "afterDueDate": "Nach Abgabefrist"
                 }
             },
             "customizeDockerImage": "Du kannst das Docker-Image anpassen. Stelle sicher, dass du es in amd64 und arm64 bereitstellst und alle Build Abhängigkeiten enthalten sind, um eine kurze Build Dauer zu gewährleisten.",

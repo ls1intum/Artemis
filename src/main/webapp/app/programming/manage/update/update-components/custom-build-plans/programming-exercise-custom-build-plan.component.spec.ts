@@ -235,7 +235,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     describe('ngOnInit', () => {
         it('should parse buildPlanConfiguration JSON into buildPlanPhases', () => {
             const phases: BuildPlanPhases = {
-                phases: [{ name: 'test', script: 'npm test', condition: 'ALWAYS', resultPaths: [] }],
+                phases: [{ name: 'test', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }],
                 dockerImage: 'node:18',
             };
             programmingExercise.buildConfig!.buildPlanConfiguration = JSON.stringify(phases);
@@ -299,8 +299,8 @@ describe('ProgrammingExercise Custom Build Plan', () => {
     describe('onPhasesChange', () => {
         it('should update buildPlanPhases with new phases', () => {
             const newPhases: BuildPhase[] = [
-                { name: 'build', script: 'npm build', condition: 'ALWAYS', resultPaths: [] },
-                { name: 'test', script: 'npm test', condition: 'AFTER_DUE_DATE', resultPaths: ['**/results.xml'] },
+                { name: 'build', script: 'npm build', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'test', script: 'npm test', condition: 'AFTER_DUE_DATE', forceRun: false, resultPaths: ['**/results.xml'] },
             ];
 
             comp.onPhasesChange(newPhases);
@@ -310,7 +310,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
         it('should preserve dockerImage when updating phases', () => {
             comp.buildPlanPhases = { phases: [], dockerImage: 'original-image' };
-            const newPhases: BuildPhase[] = [{ name: 'test', script: 'test', condition: 'ALWAYS', resultPaths: [] }];
+            const newPhases: BuildPhase[] = [{ name: 'test', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
 
             comp.onPhasesChange(newPhases);
 
@@ -333,7 +333,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
         });
 
         it('should preserve phases when updating docker image', () => {
-            const phases: BuildPhase[] = [{ name: 'test', script: 'test', condition: 'ALWAYS', resultPaths: [] }];
+            const phases: BuildPhase[] = [{ name: 'test', script: 'test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
             comp.buildPlanPhases = { phases, dockerImage: 'old' };
 
             comp.setDockerImage('new');
@@ -344,7 +344,7 @@ describe('ProgrammingExercise Custom Build Plan', () => {
 
     describe('getBuildPlanPhasesJSON', () => {
         it('should return JSON string of buildPlanPhases', () => {
-            const phases: BuildPhase[] = [{ name: 'test', script: 'npm test', condition: 'ALWAYS', resultPaths: ['**/results.xml'] }];
+            const phases: BuildPhase[] = [{ name: 'test', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: ['**/results.xml'] }];
             comp.buildPlanPhases = { phases, dockerImage: 'node:18' };
 
             const json = comp.getBuildPlanPhasesJSON();

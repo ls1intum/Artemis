@@ -28,9 +28,8 @@ public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage)
     public static BuildPlanPhasesDTO fromWindfile(Windfile windfile) {
         List<BuildPhaseDTO> phases = windfile.scriptActions().stream().map(action -> {
             final List<String> resultPaths = action.results() != null ? action.results().stream().map(AeolusResult::path).toList() : Collections.emptyList();
-            final BuildPhaseCondition buildPhaseCondition = action.runAlways() ? BuildPhaseCondition.FORCE_RUN : BuildPhaseCondition.ALWAYS;
             final String script = prependWorkdir(action.script(), action.workdir());
-            return new BuildPhaseDTO(action.name(), script, buildPhaseCondition, resultPaths);
+            return new BuildPhaseDTO(action.name(), script, BuildPhaseCondition.ALWAYS, action.runAlways(), resultPaths);
         }).toList();
 
         String dockerImage = null;

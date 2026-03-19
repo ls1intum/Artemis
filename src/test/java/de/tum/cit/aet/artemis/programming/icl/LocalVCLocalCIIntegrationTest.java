@@ -477,8 +477,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPhaseBuildPlanBeforeDueDate_excludesAfterDueDatePhases() throws Exception {
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, List.of()),
-                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("build/test-results/test/*.xml"))), "");
+            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
             buildConfig.setBuildPlanConfiguration(phases.serialize());
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
@@ -502,8 +502,8 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testPhaseBuildPlanAfterDueDate_includesAfterDueDatePhases() throws Exception {
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, List.of()),
-                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("build/test-results/test/*.xml"))), "");
+            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
             buildConfig.setBuildPlanConfiguration(phases.serialize());
             programmingExerciseBuildConfigRepository.save(buildConfig);
 

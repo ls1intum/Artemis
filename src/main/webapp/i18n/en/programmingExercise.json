@@ -162,7 +162,9 @@
                 "phase": "Phase",
                 "phaseName": "Phase Name",
                 "phaseNamePlaceholder": "e.g. compile",
-                "condition": "Condition",
+                "condition": "Inclusion condition",
+                "forceRun": "Force run",
+                "forceRunHelp": "If enabled, this phase runs at the end of the build even when earlier phases fail.",
                 "script": "Script",
                 "scriptHelp": "Enter the commands to execute in this phase of the build.",
                 "resultPaths": "Result Paths",
@@ -176,8 +178,7 @@
                 "delete": "Delete",
                 "conditions": {
                     "always": "Always",
-                    "afterDueDate": "After due date",
-                    "forceRun": "Force run"
+                    "afterDueDate": "After due date"
                 }
             },
             "customizeDockerImage": "You can customize the Docker image. Make sure to provide it in amd64 and arm64 and include all build dependencies to guarantee a short build duration.",

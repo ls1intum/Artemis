@@ -16,6 +16,7 @@ import { Tooltip } from 'primeng/tooltip';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { Checkbox } from 'primeng/checkbox';
 
 @Component({
     selector: 'jhi-build-phase',
@@ -34,6 +35,7 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
         Tooltip,
         TranslateDirective,
         ArtemisTranslatePipe,
+        Checkbox,
     ],
     templateUrl: './build-phase-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -104,6 +106,15 @@ export class BuildPhaseEditorComponent {
      */
     updateCondition(condition: BuildPhaseCondition): void {
         this.phase.update((oldPhase) => ({ ...oldPhase, condition }));
+    }
+
+    /**
+     * Updates whether this phase should always run in the post-action block.
+     *
+     * @param forceRun true if this phase should run regardless of previous failures
+     */
+    updateForceRun(forceRun: boolean): void {
+        this.phase.update((oldPhase) => ({ ...oldPhase, forceRun }));
     }
 
     /**

@@ -5,7 +5,6 @@
 export const BUILD_PHASE_CONDITION = {
     ALWAYS: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.always',
     AFTER_DUE_DATE: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.afterDueDate',
-    FORCE_RUN: 'artemisApp.programmingExercise.buildPhasesEditor.conditions.forceRun',
 };
 
 export type BuildPhaseCondition = keyof typeof BUILD_PHASE_CONDITION;
@@ -18,6 +17,7 @@ export interface BuildPhase {
     name: string;
     script: string;
     condition: BuildPhaseCondition;
+    forceRun: boolean;
     resultPaths: string[];
 }
 

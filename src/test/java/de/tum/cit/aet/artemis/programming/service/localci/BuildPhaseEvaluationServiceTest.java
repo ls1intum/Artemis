@@ -34,8 +34,8 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testAllAlwaysPhases_allActive() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, List.of("target/surefire-reports/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -49,8 +49,8 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testAfterDueDatePhases_beforeDueDate_onlyAlwaysActive() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/surefire-reports/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -64,8 +64,8 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testAfterDueDatePhases_afterDueDate_allActive() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/surefire-reports/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
@@ -91,8 +91,8 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testMultipleAfterDueDatePhases_beforeDueDate_noneActive() {
-        BuildPhaseDTO test1 = new BuildPhaseDTO("test1", "mvn test -pl module1", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module1/target/*.xml"));
-        BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module2/target/*.xml"));
+        BuildPhaseDTO test1 = new BuildPhaseDTO("test1", "mvn test -pl module1", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module1/target/*.xml"));
+        BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module2/target/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(test1, test2), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -105,8 +105,8 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testMultipleAfterDueDatePhases_afterDueDate_allActive() {
-        BuildPhaseDTO test1 = new BuildPhaseDTO("test1", "mvn test -pl module1", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module1/target/*.xml"));
-        BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module2/target/*.xml"));
+        BuildPhaseDTO test1 = new BuildPhaseDTO("test1", "mvn test -pl module1", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module1/target/*.xml"));
+        BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module2/target/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(test1, test2), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
@@ -120,8 +120,8 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testResultPathsAggregatedFromMultiplePhases() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, List.of("compile-results/*.xml"));
-        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, List.of("test-results/*.xml", "integration/*.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, List.of("compile-results/*.xml"));
+        BuildPhaseDTO test = new BuildPhaseDTO("test", "mvn test", BuildPhaseCondition.ALWAYS, false, List.of("test-results/*.xml", "integration/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -134,7 +134,7 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testPhaseWithNullResultPaths_noTestsExpected() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, null);
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -148,7 +148,7 @@ class BuildPhaseEvaluationServiceTest {
 
     @Test
     void testPhaseWithEmptyResultPaths_noTestsExpected() {
-        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, Collections.emptyList());
+        BuildPhaseDTO compile = new BuildPhaseDTO("compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, Collections.emptyList());
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile), "ubuntu:latest");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -162,9 +162,9 @@ class BuildPhaseEvaluationServiceTest {
     @Test
     void testTypicalSetup_compileAlways_testAfterDueDate_beforeDueDate() {
         // Typical configuration: compile phase always runs, test phase only after due date
-        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn clean compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/surefire-reports/*.xml"));
-        BuildPhaseDTO sca = new BuildPhaseDTO("Static Analysis", "mvn checkstyle:checkstyle", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/checkstyle-result.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn clean compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO sca = new BuildPhaseDTO("Static Analysis", "mvn checkstyle:checkstyle", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/checkstyle-result.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test, sca), "maven:3.9-eclipse-temurin-21");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(false);
@@ -180,9 +180,9 @@ class BuildPhaseEvaluationServiceTest {
     @Test
     void testTypicalSetup_compileAlways_testAfterDueDate_afterDueDate() {
         // Same configuration, but after due date
-        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn clean compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/surefire-reports/*.xml"));
-        BuildPhaseDTO sca = new BuildPhaseDTO("Static Analysis", "mvn checkstyle:checkstyle", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/checkstyle-result.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn clean compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO sca = new BuildPhaseDTO("Static Analysis", "mvn checkstyle:checkstyle", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/checkstyle-result.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test, sca), "maven:3.9-eclipse-temurin-21");
 
         when(exerciseDateService.isAfterDueDate(participation)).thenReturn(true);
@@ -199,8 +199,8 @@ class BuildPhaseEvaluationServiceTest {
     void testTemplateParticipation_beforeDueDate_allPhasesActive() {
         // Template participations should always run all phases so instructors get full feedback
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/surefire-reports/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test), "ubuntu:latest");
 
         // ExerciseDateService should not even be consulted for template participations
@@ -215,9 +215,9 @@ class BuildPhaseEvaluationServiceTest {
     void testSolutionParticipation_beforeDueDate_allPhasesActive() {
         // Solution participations should always run all phases so instructors get full feedback
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
-        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn compile", BuildPhaseCondition.ALWAYS, null);
-        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/surefire-reports/*.xml"));
-        BuildPhaseDTO sca = new BuildPhaseDTO("SCA", "mvn checkstyle:checkstyle", BuildPhaseCondition.AFTER_DUE_DATE, List.of("target/checkstyle-result.xml"));
+        BuildPhaseDTO compile = new BuildPhaseDTO("Compile", "mvn compile", BuildPhaseCondition.ALWAYS, false, null);
+        BuildPhaseDTO test = new BuildPhaseDTO("Test", "mvn test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/surefire-reports/*.xml"));
+        BuildPhaseDTO sca = new BuildPhaseDTO("SCA", "mvn checkstyle:checkstyle", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("target/checkstyle-result.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(compile, test, sca), "ubuntu:latest");
 
         // ExerciseDateService should not even be consulted for solution participations
@@ -232,8 +232,8 @@ class BuildPhaseEvaluationServiceTest {
     void testTemplateParticipation_allAfterDueDatePhases_allActive() {
         // Even if all phases are AFTER_DUE_DATE, template participation should still run them all
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
-        BuildPhaseDTO test1 = new BuildPhaseDTO("test1", "mvn test -pl module1", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module1/*.xml"));
-        BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, List.of("module2/*.xml"));
+        BuildPhaseDTO test1 = new BuildPhaseDTO("test1", "mvn test -pl module1", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module1/*.xml"));
+        BuildPhaseDTO test2 = new BuildPhaseDTO("test2", "mvn test -pl module2", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("module2/*.xml"));
         BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(test1, test2), "ubuntu:latest");
 
         List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(phases, templateParticipation);

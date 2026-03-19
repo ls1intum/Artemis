@@ -81,6 +81,14 @@
         </div>
     </div>
 
+    <div class="d-flex gap-2 mb-2">
+        <p-checkbox [inputId]="'phase-force-run-input-' + index()" [binary]="true" [ngModel]="phase().forceRun" (ngModelChange)="updateForceRun($event)" />
+        <div class="d-flex gap-1">
+            <label [for]="'phase-force-run-input-' + index()" jhiTranslate="artemisApp.programmingExercise.buildPhasesEditor.forceRun"></label>
+            <jhi-help-icon text="artemisApp.programmingExercise.buildPhasesEditor.forceRunHelp" />
+        </div>
+    </div>
+
     <!-- Script editor -->
     <div class="d-flex flex-column gap-1 mb-2">
         <div class="d-flex gap-1">

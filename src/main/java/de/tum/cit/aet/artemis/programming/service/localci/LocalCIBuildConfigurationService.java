@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.exception.LocalCIException;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
-import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
@@ -115,7 +114,7 @@ public class LocalCIBuildConfigurationService {
         List<BuildPhaseDTO> forceRunPhases = new ArrayList<>();
 
         for (BuildPhaseDTO phase : activePhases) {
-            if (phase.condition() == BuildPhaseCondition.FORCE_RUN) {
+            if (phase.forceRun()) {
                 forceRunPhases.add(phase);
             }
             else {

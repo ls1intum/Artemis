@@ -38,6 +38,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
                 name: '',
                 script: '# enter the script of this phase',
                 condition: 'ALWAYS',
+                forceRun: false,
                 resultPaths: [],
             },
         ],
@@ -185,6 +186,7 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
                 name: action.name || '',
                 script: this.wrapScriptWithWorkdir(action.script, action.workdir),
                 condition: 'ALWAYS' as const,
+                forceRun: action.runAlways,
                 resultPaths: (action.results ?? []).map((r) => r.path).filter((p): p is string => !!p),
             }));
         const dockerImage = windfile.metadata?.docker?.image;
