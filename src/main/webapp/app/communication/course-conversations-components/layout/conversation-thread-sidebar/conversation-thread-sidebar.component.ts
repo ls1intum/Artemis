@@ -131,7 +131,7 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
 
     scrollEditorIntoView(): void {
         this.scrollBody()?.nativeElement?.scrollTo({
-            top: this.scrollBody()!.nativeElement.scrollHeight,
+            top: this.scrollBody()?.nativeElement.scrollHeight,
             behavior: 'instant',
         });
     }

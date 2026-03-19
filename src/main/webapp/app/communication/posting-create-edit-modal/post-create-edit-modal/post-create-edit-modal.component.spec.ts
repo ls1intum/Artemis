@@ -60,6 +60,7 @@ describe('PostCreateEditModalComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
     });
 
@@ -130,7 +131,7 @@ describe('PostCreateEditModalComponent', () => {
         component.formGroup.setValue({
             title: newTitle,
             content: newContent,
-            context: { conversationId: metisPostToCreateUser1.conversation?.id, exercise: undefined, undefined },
+            context: { conversationId: metisPostToCreateUser1.conversation?.id, exercise: undefined },
         });
         component.confirm();
         expect(metisServiceCreateStub).toHaveBeenCalledWith({

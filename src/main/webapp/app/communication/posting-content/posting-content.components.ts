@@ -68,9 +68,10 @@ export class PostingContentComponent implements OnInit, OnDestroy {
                 if (this.isSubscribeToMetis()) {
                     this.postsSubscription?.unsubscribe();
                     this.computeContentPartsOfPosts();
+                } else {
+                    const patternMatches: PatternMatch[] = this.getPatternMatches();
+                    this.computePostingContentParts(patternMatches);
                 }
-                const patternMatches: PatternMatch[] = this.getPatternMatches();
-                this.computePostingContentParts(patternMatches);
             }
         });
     }
