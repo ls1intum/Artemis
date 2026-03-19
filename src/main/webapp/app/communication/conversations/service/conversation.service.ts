@@ -123,6 +123,10 @@ export class ConversationService {
         return this.http.patch<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/mark-as-read`, null, { observe: 'response' });
     }
 
+    markMessageAsUnread(courseId: number, conversationId: number, messageId: number): Observable<HttpResponse<void>> {
+        return this.http.patch<void>(`${this.resourceUrl}${courseId}/conversations/${conversationId}/messages/${messageId}/mark-as-unread`, null, { observe: 'response' });
+    }
+
     checkForUnreadMessages(courseId: number): Observable<HttpResponse<boolean>> {
         return this.http.get<boolean>(`${this.resourceUrl}${courseId}/unread-messages`, { observe: 'response' });
     }
