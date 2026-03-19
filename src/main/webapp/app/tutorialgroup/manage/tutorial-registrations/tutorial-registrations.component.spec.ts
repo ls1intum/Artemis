@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ConfirmationService } from 'primeng/api';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
-import * as writeUsersToCsv from 'app/shared/user-import/helpers/write-users-to-csv';
+import * as writeUsersToCsv from 'app/shared/user-import/util/write-users-to-csv';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { TutorialRegistrationsImportModalMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-import-modal-mock.component';
 import { TutorialRegistrationsRegisterModalMockComponent } from 'src/test/javascript/spec/helpers/mocks/tutorialgroup/tutorial-registrations-register-modal-mock.component';

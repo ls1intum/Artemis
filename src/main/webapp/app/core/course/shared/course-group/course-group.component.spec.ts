@@ -15,7 +15,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CourseGroupComponent } from 'app/core/course/shared/course-group/course-group.component';
-import { ExportUserInformationRow } from 'app/shared/user-import/helpers/write-users-to-csv';
+import { ExportUserInformationRow } from 'app/shared/user-import/util/write-users-to-csv';
 
 describe('CourseGroupComponent', () => {
     setupTestBed({ zoneless: true });

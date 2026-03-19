@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogModule } from 'primeng/dialog';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
-import * as readUsersFromCsv from 'app/shared/user-import/helpers/read-users-from-csv';
+import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';

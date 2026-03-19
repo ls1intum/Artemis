@@ -12,7 +12,7 @@ import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { FormsModule } from '@angular/forms';
 import { TutorialRegistrationsImportModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-import-modal/tutorial-registrations-import-modal.component';
 import { EMAIL_KEY, NAME_KEY, REGISTRATION_NUMBER_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
-import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/helpers/write-users-to-csv';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/util/write-users-to-csv';
 import { TutorialRegistrationsRegisterModalComponent } from 'app/tutorialgroup/manage/tutorial-registrations-register-modal/tutorial-registrations-register-modal.component';
 import {
     TutorialRegistrationsStudentsTableComponent,

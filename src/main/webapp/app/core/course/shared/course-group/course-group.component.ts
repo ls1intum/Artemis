@@ -18,7 +18,7 @@ import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
-import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/helpers/write-users-to-csv';
+import { ExportUserInformationRow, exportUserInformationAsCsv } from 'app/shared/user-import/util/write-users-to-csv';
 
 const cssClasses = {
     alreadyMember: 'already-member',

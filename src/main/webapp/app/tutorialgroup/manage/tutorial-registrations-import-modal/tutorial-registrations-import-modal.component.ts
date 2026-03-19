@@ -4,7 +4,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { TranslateService } from '@ngx-translate/core';
 import { ButtonDirective } from 'primeng/button';
-import { readStudentDTOsFromCSVFile } from 'app/shared/user-import/helpers/read-users-from-csv';
+import { readStudentDTOsFromCSVFile } from 'app/shared/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
