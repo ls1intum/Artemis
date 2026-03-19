@@ -927,6 +927,10 @@ public class ExerciseService {
                 }
                 else {
                     var competency = competencyRelationApi.get().findCompetencyByIdElseThrow(competencyId);
+                    var course = entity.getCourseViaExerciseGroupOrCourseMember();
+                    if (competency.getCourse() == null || !competency.getCourse().getId().equals(course.getId())) {
+                        throw new EntityNotFoundException("Competency", competencyId);
+                    }
                     var newLink = new CompetencyExerciseLink(competency, entity, weight);
                     updatedLinks.add(newLink);
                 }
