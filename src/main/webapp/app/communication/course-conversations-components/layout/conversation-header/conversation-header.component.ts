@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, inject, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -36,7 +36,18 @@ import { ConversationAddUsersDialogComponent } from 'app/communication/course-co
     styleUrls: ['./conversation-header.component.scss'],
     imports: [FaIconComponent, ChannelIconComponent, ProfilePictureComponent, TranslateDirective, RouterLink, EmojiComponent, ArtemisTranslatePipe],
 })
-export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy {
+export class ConversationHeaderComponent implements OnInit, OnDestroy {
+    constructor() {
+        effect(() => {
+            // Track pinnedMessageCount signal input (replaces ngOnChanges)
+            const currentCount = this.pinnedMessageCount();
+            if (this.showPinnedMessages && currentCount === 0) {
+                this.showPinnedMessages = false;
+                this.cdr.detectChanges();
+            }
+        });
+    }
+
     private dialogService = inject(DialogService);
     metisConversationService = inject(MetisConversationService);
     conversationService = inject(ConversationService);
@@ -78,16 +89,6 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
     ngOnInit(): void {
         this.course = this.metisConversationService.course!;
         this.subscribeToActiveConversation();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['pinnedMessageCount']) {
-            const currentCount = changes['pinnedMessageCount'].currentValue;
-            if (this.showPinnedMessages && currentCount === 0) {
-                this.showPinnedMessages = false;
-                this.cdr.detectChanges();
-            }
-        }
     }
 
     /**

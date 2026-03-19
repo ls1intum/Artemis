@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, inject, input, output } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -22,7 +22,7 @@ export interface AddUsersFormData {
     templateUrl: './conversation-add-users-form.component.html',
     imports: [TranslateDirective, FormsModule, ReactiveFormsModule, CourseUsersSelectorComponent, FaIconComponent, ArtemisTranslatePipe],
 })
-export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
+export class ConversationAddUsersFormComponent implements OnInit {
     private fb = inject(FormBuilder);
 
     readonly formSubmitted = output<AddUsersFormData>();
@@ -55,10 +55,6 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit(): void {
-        this.initializeForm();
-    }
-
-    ngOnChanges() {
         this.initializeForm();
     }
 

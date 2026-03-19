@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewContainerRef, inject, input, output, viewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -21,7 +21,16 @@ interface PostGroup {
     templateUrl: './posting-footer.component.html',
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
-export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked {
+    constructor() {
+        effect(() => {
+            // Track sortedAnswerPosts signal input (replaces ngOnChanges)
+            this.sortedAnswerPosts();
+            this.groupAnswerPosts();
+            this.changeDetector.detectChanges();
+        });
+    }
+
     lastReadDate = input<dayjs.Dayjs | undefined>();
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
@@ -55,13 +64,6 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.createdAnswerPost = this.createEmptyAnswerPost();
         this.groupAnswerPosts();
-    }
-
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['sortedAnswerPosts']) {
-            this.groupAnswerPosts();
-            this.changeDetector.detectChanges();
-        }
     }
 
     ngOnDestroy(): void {

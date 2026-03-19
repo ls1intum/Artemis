@@ -24,7 +24,6 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
-import { SimpleChanges } from '@angular/core';
 import { MockMetisConversationService } from 'test/helpers/mocks/service/mock-metis-conversation.service';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
@@ -174,54 +173,30 @@ examples.forEach((activeConversation) => {
         it('should set showPinnedMessages to false if pinnedMessageCount changes to 0 while it is currently showing pinned messages', () => {
             component.showPinnedMessages = true;
             fixture.componentRef.setInput('pinnedMessageCount', 3);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
-            const changes: SimpleChanges = {
-                pinnedMessageCount: {
-                    currentValue: 0,
-                    previousValue: 3,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
+            fixture.componentRef.setInput('pinnedMessageCount', 0);
+            fixture.detectChanges();
 
-            component.ngOnChanges(changes);
             expect(component.showPinnedMessages).toBe(false);
         });
 
         it('should not change showPinnedMessages if pinnedMessageCount changes but is not 0', () => {
             component.showPinnedMessages = true;
             fixture.componentRef.setInput('pinnedMessageCount', 3);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
-            const changes: SimpleChanges = {
-                pinnedMessageCount: {
-                    currentValue: 5,
-                    previousValue: 3,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
+            fixture.componentRef.setInput('pinnedMessageCount', 5);
+            fixture.detectChanges();
 
-            component.ngOnChanges(changes);
             expect(component.showPinnedMessages).toBe(true);
         });
 
         it('should correctly handle first change of pinnedMessageCount', () => {
             component.showPinnedMessages = false;
             fixture.componentRef.setInput('pinnedMessageCount', 2);
-            fixture.changeDetectorRef.detectChanges();
+            fixture.detectChanges();
 
-            const changes: SimpleChanges = {
-                pinnedMessageCount: {
-                    currentValue: 2,
-                    previousValue: undefined,
-                    firstChange: true,
-                    isFirstChange: () => true,
-                },
-            };
-
-            component.ngOnChanges(changes);
             expect(component.showPinnedMessages).toBe(false);
         });
 

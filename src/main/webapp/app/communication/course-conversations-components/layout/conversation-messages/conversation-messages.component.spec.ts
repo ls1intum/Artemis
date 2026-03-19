@@ -475,52 +475,13 @@ examples.forEach((activeConversation) => {
             expect(component.posts).toEqual([pinnedPost, regularPost]);
         });
 
-        it('should call setPosts when showOnlyPinned input changes and it is not the first change', () => {
-            const changes = {
-                showOnlyPinned: {
-                    currentValue: true,
-                    previousValue: false,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
-
+        it('should call setPosts when showOnlyPinned input changes after initialization', () => {
             const setPostsSpy = vi.spyOn(component, 'setPosts');
-            component.ngOnChanges(changes);
+
+            fixture.componentRef.setInput('showOnlyPinned', true);
+            fixture.detectChanges();
 
             expect(setPostsSpy).toHaveBeenCalled();
-        });
-
-        it('should not call setPosts when showOnlyPinned input changes for the first time', () => {
-            const changes = {
-                showOnlyPinned: {
-                    currentValue: true,
-                    previousValue: undefined,
-                    firstChange: true,
-                    isFirstChange: () => true,
-                },
-            };
-
-            const setPostsSpy = vi.spyOn(component, 'setPosts');
-            component.ngOnChanges(changes);
-
-            expect(setPostsSpy).not.toHaveBeenCalled();
-        });
-
-        it('should not call setPosts when showOnlyPinned input does not change', () => {
-            const changes = {
-                unrelatedInput: {
-                    currentValue: true,
-                    previousValue: false,
-                    firstChange: false,
-                    isFirstChange: () => false,
-                },
-            };
-
-            const setPostsSpy = vi.spyOn(component, 'setPosts');
-            component.ngOnChanges(changes);
-
-            expect(setPostsSpy).not.toHaveBeenCalled();
         });
 
         it('should subscribe to pinned posts on init and emit pinnedCount', () => {

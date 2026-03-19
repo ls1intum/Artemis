@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnChanges, OnInit, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
@@ -12,7 +12,7 @@ import { Link, LinkifyService } from 'app/communication/link-preview/services/li
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [LinkPreviewComponent],
 })
-export class LinkPreviewContainerComponent implements OnInit, OnChanges {
+export class LinkPreviewContainerComponent implements OnInit {
     private readonly linkPreviewService: LinkPreviewService = inject(LinkPreviewService);
     private readonly linkifyService: LinkifyService = inject(LinkifyService);
 
@@ -28,12 +28,25 @@ export class LinkPreviewContainerComponent implements OnInit, OnChanges {
     readonly showLoadingsProgress = signal<boolean>(true);
     readonly multiple = signal<boolean>(false);
 
-    ngOnInit() {
-        this.findPreviews();
+    private initialized = false;
+
+    constructor() {
+        effect(() => {
+            // Track all inputs that may trigger a reload
+            this.data();
+            this.author();
+            this.posting();
+            this.isEdited();
+            this.isReply();
+            if (this.initialized) {
+                this.reloadLinkPreviews();
+            }
+        });
     }
 
-    ngOnChanges() {
-        this.reloadLinkPreviews();
+    ngOnInit() {
+        this.findPreviews();
+        this.initialized = true;
     }
 
     private reloadLinkPreviews() {

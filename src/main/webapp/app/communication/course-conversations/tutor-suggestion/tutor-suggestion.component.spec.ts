@@ -236,10 +236,12 @@ describe('TutorSuggestionComponent', () => {
         });
     });
 
-    it('should call requestSuggestion when sessionId emits in ngOnChanges', () => {
+    it('should call requestSuggestion when post input changes', () => {
         const requestTutorSuggestionSpy = vi.spyOn(chatService, 'requestTutorSuggestion').mockReturnValue(of());
         setUpForRequestSuggestion();
-        component.ngOnChanges();
+        // Trigger the effect by changing the post input
+        componentRef.setInput('post', { id: 2 } as any);
+        fixture.detectChanges();
         vi.advanceTimersByTime(0);
         expect(requestTutorSuggestionSpy).toHaveBeenCalled();
     });

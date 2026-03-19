@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, shareReplay, skip, switchMap, take, tap } from 'rxjs/operators';
@@ -37,7 +37,23 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     styleUrls: ['./tutor-suggestion.component.scss'],
     imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip],
 })
-export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
+export class TutorSuggestionComponent implements OnInit, OnDestroy {
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            const post = this.post();
+            this.course();
+            if (this.irisEnabled) {
+                if (post) {
+                    this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                    this.messagesSubscription?.unsubscribe();
+                    this.subscribeToIrisActivation();
+                }
+                this.fetchMessages();
+            }
+        });
+    }
+
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly IrisTextMessageContent = IrisTextMessageContent;
 
@@ -106,19 +122,6 @@ export class TutorSuggestionComponent implements OnInit, OnChanges, OnDestroy {
                 this.irisEnabled = false;
             }
         });
-    }
-
-    ngOnChanges(): void {
-        if (this.irisEnabled) {
-            const post = this.post();
-            if (post) {
-                this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
-                this.messagesSubscription?.unsubscribe();
-
-                this.subscribeToIrisActivation();
-            }
-            this.fetchMessages();
-        }
     }
 
     ngOnDestroy() {

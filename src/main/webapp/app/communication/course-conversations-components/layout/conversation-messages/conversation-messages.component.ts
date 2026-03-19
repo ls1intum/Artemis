@@ -4,10 +4,8 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
-    OnChanges,
     OnDestroy,
     OnInit,
-    SimpleChanges,
     ViewEncapsulation,
     effect,
     inject,
@@ -66,7 +64,7 @@ interface PostGroup {
         ButtonComponent,
     ],
 })
-export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
     private breakpointObserver = inject(BreakpointObserver);
     metisService = inject(MetisService);
@@ -163,13 +161,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                 this.scrollToStoredId();
             }
         });
+        effect(() => {
+            // Track showOnlyPinned signal input (replaces ngOnChanges)
+            this.showOnlyPinned();
+            if (this.initialized) {
+                this.setPosts();
+            }
+        });
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['showOnlyPinned'] && !changes['showOnlyPinned'].firstChange) {
-            this.setPosts();
-        }
-    }
+    private initialized = false;
 
     /**
      * Applies pinned message filter based on current toggle state.
@@ -207,6 +208,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         // Ensure that all pinned posts are fetched when the component is initialized
         this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
         this.cdr.detectChanges();
+        this.initialized = true;
     }
 
     private subscribeToActiveConversation() {

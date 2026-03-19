@@ -1,7 +1,7 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
+import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -209,7 +209,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
-    channelActions$ = new EventEmitter<ChannelAction>();
+    readonly channelActions$ = output<ChannelAction>();
 
     private courseSidebarService = inject(CourseSidebarService);
     private changeDetector = inject(ChangeDetectorRef);
@@ -302,7 +302,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
                 this.isServiceSetUp = true;
                 this.isLoading = false;
-                this.channelActions$
+                outputToObservable(this.channelActions$)
                     .pipe(
                         debounceTime(500),
                         distinctUntilChanged(

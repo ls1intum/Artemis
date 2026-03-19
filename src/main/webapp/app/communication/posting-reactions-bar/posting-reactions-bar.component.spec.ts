@@ -425,7 +425,10 @@ describe('PostingReactionsBarComponent', () => {
         pinEmoji.click();
         (component.posting() as Post)!.displayPriority = DisplayPriority.PINNED;
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting()!.id!, DisplayPriority.PINNED);
-        component.ngOnChanges();
+        // Trigger the effect by re-setting the posting input
+        const updatedPost = { ...component.posting()! } as Post;
+        fixture.componentRef.setInput('posting', updatedPost);
+        fixture.detectChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
         expect(component.pinTooltip).toBe('artemisApp.metis.removePinPostTooltip');
     });

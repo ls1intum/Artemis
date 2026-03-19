@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -90,7 +90,23 @@ interface ReactionMetaDataMap {
         PostCreateEditModalComponent,
     ],
 })
-export class PostingReactionsBarComponent<T extends Posting> implements OnInit, OnChanges {
+export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            this.posting();
+            this.isReadOnlyMode();
+            this.previewMode();
+            this.updatePostingWithReactions();
+            this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+            if (this.getPostingType() === 'post') {
+                this.resetTooltipsAndPriority();
+            }
+            this.setMayDelete();
+            this.setMayEdit();
+        });
+    }
+
     readonly onBookmarkClicked = output<void>();
     readonly DisplayPriority = DisplayPriority;
     readonly faBookmark = faBookmark;
@@ -177,20 +193,6 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit, 
         this.setMayDelete();
         this.setMayEdit();
         this.setCanMarkAsUnread();
-    }
-
-    /**
-     * on changes: updates the current posting and its reactions,
-     * invokes metis service to check user authority
-     */
-    ngOnChanges() {
-        this.updatePostingWithReactions();
-        this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        if (this.getPostingType() === 'post') {
-            this.resetTooltipsAndPriority();
-        }
-        this.setMayDelete();
-        this.setMayEdit();
     }
 
     /*

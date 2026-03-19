@@ -100,7 +100,10 @@ describe('PostingFooterComponent', () => {
         fixture.detectChanges();
 
         const changeDetectorSpy = vi.spyOn(component['changeDetector'], 'detectChanges');
-        component.ngOnChanges({ sortedAnswerPosts: { currentValue: unsortedAnswerArray, previousValue: [], firstChange: true, isFirstChange: () => true } });
+
+        const answerPostWithDate = { ...unApprovedAnswerPost1, id: 3, creationDate: dayjs().subtract(2, 'day') } as AnswerPost;
+        fixture.componentRef.setInput('sortedAnswerPosts', [unApprovedAnswerPost1, unApprovedAnswerPost2, answerPostWithDate]);
+        fixture.detectChanges();
         expect(component.groupedAnswerPosts.length).toBeGreaterThan(0);
         expect(changeDetectorSpy).toHaveBeenCalled();
     });

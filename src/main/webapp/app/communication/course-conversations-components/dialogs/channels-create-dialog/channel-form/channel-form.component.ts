@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, inject, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { Subject, takeUntil } from 'rxjs';
@@ -22,7 +22,7 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9:\\-]{0,30}$');
     templateUrl: './channel-form.component.html',
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe],
 })
-export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
+export class ChannelFormComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
 
     private ngUnsubscribe = new Subject<void>();
@@ -72,10 +72,6 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
     ngOnDestroy() {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
-    }
-
-    ngOnChanges() {
-        this.initializeForm();
     }
 
     submitForm() {
