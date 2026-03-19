@@ -12,12 +12,14 @@ import { NgClass } from '@angular/common';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseOverviewService } from 'app/core/course/overview/services/course-overview.service';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AccordionGroups, CollapseState, SidebarData, SidebarItemShowAlways, TutorialGroupCategory } from 'app/shared/types/sidebar';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import dayjs from 'dayjs/esm';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { HttpResponse } from '@angular/common/http';
+import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-course-tutorial-groups',
@@ -46,7 +48,7 @@ export class CourseTutorialGroupsComponent {
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private courseStorageService = inject(CourseStorageService);
-    private tutorialGroupService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private lectureService = inject(LectureService);
     private courseOverviewService = inject(CourseOverviewService);
     private sessionStorageService = inject(SessionStorageService);
@@ -105,14 +107,17 @@ export class CourseTutorialGroupsComponent {
     }
 
     private loadAndSetTutorialGroups(courseId: number) {
-        this.tutorialGroupService.getAllForCourse(courseId).subscribe({
-            next: ({ body }) => {
-                const tutorialGroups = body ?? [];
-                this.tutorialGroups.set(tutorialGroups);
-                this.updateCachedTutorialGroups(tutorialGroups, courseId);
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        this.tutorialGroupApiService
+            .getTutorialGroupsForCourse(courseId, 'response')
+            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)))
+            .subscribe({
+                next: ({ body }) => {
+                    const tutorialGroups = body ?? [];
+                    this.tutorialGroups.set(tutorialGroups);
+                    this.updateCachedTutorialGroups(tutorialGroups, courseId);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
     }
 
     private updateCachedTutorialGroups(tutorialGroups: TutorialGroup[], courseId: number) {

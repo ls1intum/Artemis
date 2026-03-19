@@ -21,9 +21,12 @@ import { TutorialGroupsCourseInformationComponent } from './tutorial-groups-cour
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TutorialGroupsTableComponent } from 'app/tutorialgroup/manage/tutorial-groups-table/tutorial-groups-table.component';
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/tutorialgroup/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { TutorialGroupsConfigurationService } from 'app/tutorialgroup/manage/service/tutorial-groups-configuration.service';
 import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shared/entities/tutorial-groups-configuration-dto.model';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { HttpResponse } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+import { convertTutorialGroupResponseArrayDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -49,7 +52,7 @@ import { tutorialGroupsConfigurationEntityFromDto } from 'app/tutorialgroup/shar
     ],
 })
 export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
-    private tutorialGroupService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private activatedRoute = inject(ActivatedRoute);
     private alertService = inject(AlertService);
     private tutorialGroupsConfigurationService = inject(TutorialGroupsConfigurationService);
@@ -93,7 +96,12 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
     loadTutorialGroups() {
         this.isLoading = true;
 
-        combineLatest([this.tutorialGroupService.getAllForCourse(this.courseId), this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!)])
+        const tutorialGroupObservable = this.tutorialGroupApiService
+            .getTutorialGroupsForCourse(this.courseId, 'response')
+            .pipe(map((res: HttpResponse<TutorialGroup[]>) => convertTutorialGroupResponseArrayDatesFromServer(res)));
+        const tutorialGroupsConfigurationObservable = this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
+
+        combineLatest([tutorialGroupObservable, tutorialGroupsConfigurationObservable])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

@@ -1,15 +1,16 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { map } from 'rxjs/operators';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Injectable({
     providedIn: 'root',
 })
 export class TutorialGroupSharedStateService {
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
 
@@ -30,16 +31,19 @@ export class TutorialGroupSharedStateService {
 
     fetchTutorialGroup(courseId: number, tutorialGroupId: number) {
         this.isTutorialGroupLoading.set(true);
-        this.tutorialGroupsService.getTutorialGroupDTO(courseId, tutorialGroupId).subscribe({
-            next: (tutorialGroup) => {
-                this.tutorialGroup.set(tutorialGroup);
-                this.isTutorialGroupLoading.set(false);
-            },
-            error: () => {
-                this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkError.fetchGroup');
-                this.isTutorialGroupLoading.set(false);
-            },
-        });
+        this.tutorialGroupApiService
+            .getTutorialGroup(courseId, tutorialGroupId)
+            .pipe(map((tutorialGroupDetail) => new TutorialGroupDetailDTO(tutorialGroupDetail)))
+            .subscribe({
+                next: (dto) => {
+                    this.tutorialGroup.set(dto);
+                    this.isTutorialGroupLoading.set(false);
+                },
+                error: () => {
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkError.fetchGroup');
+                    this.isTutorialGroupLoading.set(false);
+                },
+            });
     }
 
     fetchCourse(courseId: number) {

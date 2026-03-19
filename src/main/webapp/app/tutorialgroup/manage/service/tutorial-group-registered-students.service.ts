@@ -1,13 +1,13 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { TutorialGroupRegisteredStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Injectable({
     providedIn: 'root',
 })
 export class TutorialGroupRegisteredStudentsService {
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
     private registeredStudentsInternal = signal<TutorialGroupRegisteredStudentDTO[]>([]);
 
@@ -16,7 +16,7 @@ export class TutorialGroupRegisteredStudentsService {
 
     deregisterStudent(courseId: number, tutorialGroupId: number, studentLogin: string) {
         this.isLoading.set(true);
-        this.tutorialGroupsService.deregisterStudent(courseId, tutorialGroupId, studentLogin).subscribe({
+        this.tutorialGroupApiService.deregisterStudent(courseId, tutorialGroupId, studentLogin).subscribe({
             next: () => {
                 this.registeredStudentsInternal.update((registeredStudents) => {
                     return registeredStudents.filter((student) => student.login !== studentLogin);
@@ -32,7 +32,7 @@ export class TutorialGroupRegisteredStudentsService {
 
     fetchRegisteredStudents(courseId: number, tutorialGroupId: number) {
         this.isLoading.set(true);
-        this.tutorialGroupsService.getRegisteredStudentDTOs(courseId, tutorialGroupId).subscribe({
+        this.tutorialGroupApiService.getRegisteredStudents(courseId, tutorialGroupId).subscribe({
             next: (registeredStudents) => {
                 this.registeredStudentsInternal.set(registeredStudents);
                 this.isLoading.set(false);

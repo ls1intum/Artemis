@@ -3,10 +3,10 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CreateTutorialGroupEvent, TutorialCreateOrEditComponent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
     selector: 'jhi-tutorial-create-container',
@@ -17,7 +17,7 @@ import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-o
 export class TutorialCreateContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);
@@ -42,8 +42,8 @@ export class TutorialCreateContainerComponent {
         this.isTutorialGroupLoading.set(true);
         const courseId = createTutorialGroupEvent.courseId;
         const createTutorialGroupDTO = createTutorialGroupEvent.createTutorialGroupDTO;
-        this.tutorialGroupsService
-            .create(courseId, createTutorialGroupDTO)
+        this.tutorialGroupApiService
+            .createTutorialGroup(courseId, createTutorialGroupDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {

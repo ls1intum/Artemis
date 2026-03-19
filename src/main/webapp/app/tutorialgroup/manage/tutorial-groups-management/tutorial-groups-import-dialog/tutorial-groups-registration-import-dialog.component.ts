@@ -13,9 +13,9 @@ import { CsvDownloadService } from 'app/shared/util/CsvDownloadService';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { DialogModule } from 'primeng/dialog';
 import { TutorialGroupImport } from 'app/openapi/model/tutorialGroupImport';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 /**
  * Each row is a object with the structure
@@ -51,7 +51,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
     private fb = inject(FormBuilder);
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private csvDownloadService = inject(CsvDownloadService);
 
     readonly dialogVisible = signal<boolean>(false);
@@ -295,7 +295,7 @@ export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, 
 
     import() {
         this.isImporting = true;
-        this.tutorialGroupService.import(this.courseId(), this.registrationsDisplayedInTable).subscribe({
+        this.tutorialGroupApiService.importTutorialGroupsWithRegistrations(this.courseId(), this.registrationsDisplayedInTable, 'response').subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });

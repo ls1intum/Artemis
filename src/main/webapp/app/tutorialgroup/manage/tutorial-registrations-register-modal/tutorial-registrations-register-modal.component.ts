@@ -11,10 +11,10 @@ import {
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonDirective } from 'primeng/button';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
     selector: 'jhi-tutorial-registrations-register-modal',
@@ -32,7 +32,7 @@ import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage
 export class TutorialRegistrationsRegisterModalComponent {
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
 
@@ -70,8 +70,8 @@ export class TutorialRegistrationsRegisterModalComponent {
 
     registerAll() {
         this.isLoading.set(true);
-        this.tutorialGroupsService
-            .registerMultipleStudentsViaLogin(
+        this.tutorialGroupApiService
+            .batchRegisterStudents(
                 this.courseId(),
                 this.tutorialGroupId(),
                 this.selectedStudents().map((student) => student.login),

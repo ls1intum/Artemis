@@ -16,11 +16,11 @@ import { AdminUserService } from 'app/core/user/shared/admin-user.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HelpIconComponent } from '../../components/help-icon/help-icon.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { Student } from 'app/openapi/model/student';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PrimeTemplate } from 'primeng/api';
-import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared/user-import/util/read-users-from-csv';
+import { readExamUserDTOsFromCSVFile, readStudentDTOsFromCSVFile } from 'app/shared/user-import/helpers/read-users-from-csv';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
     selector: 'jhi-users-import-dialog',
@@ -34,7 +34,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     private examManagementService = inject(ExamManagementService);
     private courseManagementService = inject(CourseManagementService);
     private adminUserService = inject(AdminUserService);
-    private tutorialGroupService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
 
     readonly ActionType = ActionType;
     readonly dialogVisible = signal<boolean>(false);
@@ -137,7 +137,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         const courseId = this.courseId();
 
         if (tutorialGroup) {
-            this.tutorialGroupService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport).subscribe({
+            this.tutorialGroupApiService.importRegistrations(courseId!, tutorialGroup.id!, this.usersToImport, 'response').subscribe({
                 next: (res: HttpResponse<Array<Student>>) => {
                     const convertedStudents = this.convertGeneratedDtoToNonGenerated(res.body || []);
                     this.onSaveSuccess(convertedStudents);

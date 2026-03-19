@@ -6,6 +6,7 @@ import { RawTutorialGroupSessionDTO, TutorialGroupSession, TutorialGroupSessionD
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import dayjs from 'dayjs/esm';
+import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
 
 export class TutorialGroup implements BaseEntity {
     public id?: number;
@@ -50,12 +51,12 @@ export class TutorialGroupDetailDTO {
     groupChannelId?: number;
     tutorChatId?: number;
 
-    constructor(rawDto: RawTutorialGroupDTO) {
-        this.id = rawDto.id;
-        this.title = rawDto.title;
-        this.language = rawDto.language;
-        this.isOnline = rawDto.isOnline;
-        this.sessions = (rawDto.sessions ?? []).map(
+    constructor(tutorialGroupDetail: TutorialGroupDetail) {
+        this.id = tutorialGroupDetail.id;
+        this.title = tutorialGroupDetail.title;
+        this.language = tutorialGroupDetail.language;
+        this.isOnline = tutorialGroupDetail.isOnline;
+        this.sessions = (tutorialGroupDetail.sessions ?? []).map(
             (rawSessionDto: RawTutorialGroupSessionDTO) =>
                 new TutorialGroupSessionDTO(
                     rawSessionDto.id,
@@ -69,33 +70,16 @@ export class TutorialGroupDetailDTO {
                     rawSessionDto.attendanceCount,
                 ),
         );
-        this.tutorName = rawDto.tutorName;
-        this.tutorLogin = rawDto.tutorLogin;
-        this.tutorId = rawDto.tutorId;
-        this.tutorImageUrl = rawDto.tutorImageUrl;
-        this.capacity = rawDto.capacity;
-        this.campus = rawDto.campus;
-        this.additionalInformation = rawDto.additionalInformation;
-        this.groupChannelId = rawDto.groupChannelId;
-        this.tutorChatId = rawDto.tutorChatId;
+        this.tutorName = tutorialGroupDetail.tutorName;
+        this.tutorLogin = tutorialGroupDetail.tutorLogin;
+        this.tutorId = tutorialGroupDetail.tutorId;
+        this.tutorImageUrl = tutorialGroupDetail.tutorImageUrl;
+        this.capacity = tutorialGroupDetail.capacity;
+        this.campus = tutorialGroupDetail.campus;
+        this.additionalInformation = tutorialGroupDetail.additionalInformation;
+        this.groupChannelId = tutorialGroupDetail.groupChannelId;
+        this.tutorChatId = tutorialGroupDetail.tutorChatId;
     }
-}
-
-export class RawTutorialGroupDTO {
-    id: number;
-    title: string;
-    language: string;
-    isOnline: boolean;
-    tutorName: string;
-    tutorLogin: string;
-    tutorId: number;
-    sessions: RawTutorialGroupSessionDTO[] | undefined;
-    tutorImageUrl?: string;
-    capacity?: number;
-    campus?: string;
-    additionalInformation?: string;
-    groupChannelId?: number;
-    tutorChatId?: number;
 }
 
 export interface TutorialGroupRegisteredStudentDTO {

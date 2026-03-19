@@ -5,10 +5,10 @@ import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
 import { TutorialGroupSharedStateService } from 'app/tutorialgroup/shared/service/tutorial-group-shared-state.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
     selector: 'jhi-tutorial-edit-container',
@@ -19,7 +19,7 @@ import { TutorialGroupSharedStateService } from 'app/tutorialgroup/shared/servic
 export class TutorialEditContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
@@ -57,8 +57,8 @@ export class TutorialEditContainerComponent {
         const courseId = updateTutorialGroupEvent.courseId;
         const tutorialGroupId = updateTutorialGroupEvent.tutorialGroupId;
         const updateTutorialGroupDTO = updateTutorialGroupEvent.updateTutorialGroupDTO;
-        this.tutorialGroupsService
-            .update(courseId, tutorialGroupId, updateTutorialGroupDTO)
+        this.tutorialGroupApiService
+            .updateTutorialGroup(courseId, tutorialGroupId, updateTutorialGroupDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
@@ -75,7 +75,7 @@ export class TutorialEditContainerComponent {
 
     private loadSchedule(courseId: number, tutorialGroupId: number) {
         this.isScheduleLoading.set(true);
-        this.tutorialGroupsService.getTutorialGroupScheduleDTO(courseId, tutorialGroupId).subscribe({
+        this.tutorialGroupApiService.getTutorialGroupSchedule(courseId, tutorialGroupId).subscribe({
             next: (schedule) => {
                 this.schedule.set(schedule);
                 this.isScheduleLoading.set(false);

@@ -4,9 +4,11 @@ import { Subject } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import { DialogModule } from 'primeng/dialog';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
+import { TutorialGroupExport } from 'app/openapi/model/tutorialGroupExport';
+import { map } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-groups-export-button',
@@ -15,7 +17,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [NgbDropdownButtonItem, NgbDropdownItem, TranslateDirective, FormsModule, DialogModule, ArtemisTranslatePipe],
 })
 export class TutorialGroupsExportButtonComponent implements OnDestroy {
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private alertService = inject(AlertService);
 
     ngUnsubscribe = new Subject<void>();
@@ -75,7 +77,7 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportCSV() {
-        this.tutorialGroupsService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields).subscribe({
+        this.tutorialGroupApiService.exportTutorialGroupsToCSV(this.courseId(), this.selectedFields).subscribe({
             next: (blob: Blob) => {
                 const a = document.createElement('a');
                 const objectUrl = URL.createObjectURL(blob);
@@ -96,25 +98,28 @@ export class TutorialGroupsExportButtonComponent implements OnDestroy {
     }
 
     exportJSON() {
-        this.tutorialGroupsService.exportToJson(this.courseId(), this.selectedFields).subscribe({
-            next: (response) => {
-                const blob = new Blob([response], { type: 'application/json' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'tutorial_groups.json';
-                a.click();
-                window.URL.revokeObjectURL(url);
-                this.resetSelections();
-                this.closeDialog();
-                this.exportFinished.emit();
-            },
-            error: () => {
-                this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
-                this.resetSelections();
-                this.closeDialog();
-            },
-        });
+        this.tutorialGroupApiService
+            .exportTutorialGroupsToJSON(this.courseId(), this.selectedFields)
+            .pipe(map((data: TutorialGroupExport[]) => JSON.stringify(data)))
+            .subscribe({
+                next: (response) => {
+                    const blob = new Blob([response], { type: 'application/json' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'tutorial_groups.json';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    this.resetSelections();
+                    this.closeDialog();
+                    this.exportFinished.emit();
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.tutorialGroupExportDialog.failedJSON');
+                    this.resetSelections();
+                    this.closeDialog();
+                },
+            });
     }
 
     private resetSelections() {
