@@ -15,7 +15,7 @@ export interface ColumnDef<T> {
     filter?: boolean;
     filterType?: string;
     /** Render the cell using a parent-defined template. Receives {@link CellRendererParams} as `$implicit`. Takes priority over `cellRenderer`. */
-    templateRef?: TemplateRef<{ $implicit: CellRendererParams<T> }>;
+    templateRef?: CellTemplateRef<T>;
     cellRenderer?: Type<unknown>;
 }
 
@@ -25,6 +25,8 @@ export interface CellRendererParams<T> {
     value: T[keyof T] | undefined;
     rowIndex: number;
 }
+
+export type CellTemplateRef<T> = TemplateRef<{ $implicit: CellRendererParams<T> }>;
 
 /**
  * The fully-resolved configuration for the table. All fields are required.

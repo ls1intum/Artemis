@@ -7,7 +7,7 @@
                     <jhi-programming-exercise-instructor-submission-state [exercise]="exercise()!" />
                 }
                 @if (exercise()!.isAtLeastTutor) {
-                    <a class="btn btn-info" [routerLink]="getScoresRoute(exercise()!)">
+                    <a class="btn btn-info" [routerLink]="scoresRoute()">
                         <fa-icon [icon]="faTable" />
                         <span class="d-md-inline" jhiTranslate="entity.action.scores"></span>
                     </a>
@@ -38,15 +38,13 @@
             </span>
         </button>
         <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="participation-filter-dropdown">
-            @for (filter of FilterProp | keyvalue; track filter) {
-                @if (isFilterRelevantForConfiguration(filter.value)) {
-                    <li>
-                        <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                            <input type="radio" [ngModel]="activeFilter()" (click)="updateParticipationFilter(filter.value)" [value]="filter.value" />
-                            <span class="ms-1">{{ 'artemisApp.exercise.show' + filter.value | artemisTranslate }}</span>
-                        </label>
-                    </li>
-                }
+            @for (filter of relevantFilters(); track filter) {
+                <li>
+                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
+                        <input type="radio" [ngModel]="activeFilter()" (click)="updateParticipationFilter(filter)" [value]="filter" />
+                        <span class="ms-1">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
+                    </label>
+                </li>
             }
         </ul>
     </div>
