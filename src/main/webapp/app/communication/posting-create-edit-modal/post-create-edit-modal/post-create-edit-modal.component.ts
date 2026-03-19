@@ -119,6 +119,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         create$.subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
+                this.resetFormGroup();
                 this.isDialogVisible = false;
                 this.onCreate.emit(post);
             },
@@ -137,6 +138,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
+                this.resetFormGroup();
                 this.isDialogVisible = false;
             },
             error: () => {

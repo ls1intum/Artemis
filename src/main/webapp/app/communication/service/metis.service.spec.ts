@@ -828,8 +828,8 @@ describe('Metis Service', () => {
 
     it('should not call getSourcePostsByIds if postId list is undefined', () => {
         const postIds: number[] | undefined = undefined;
-        metisService.getSourcePostsByIds(postIds as any);
         const postServiceSpy = vi.spyOn(postService, 'getSourcePostsByIds');
+        metisService.getSourcePostsByIds(postIds as any);
 
         expect(postServiceSpy).not.toHaveBeenCalled();
         vi.advanceTimersByTime(0);
@@ -837,8 +837,8 @@ describe('Metis Service', () => {
 
     it('should not call getSourceAnswerPostsByIds if answerPostIds is undefined', () => {
         const answerPostIds: number[] | undefined = undefined;
-        metisService.getSourceAnswerPostsByIds(answerPostIds as any);
         const answerPostServiceSpy = vi.spyOn(answerPostService, 'getSourceAnswerPostsByIds');
+        metisService.getSourceAnswerPostsByIds(answerPostIds as any);
         expect(answerPostServiceSpy).not.toHaveBeenCalled();
     });
 

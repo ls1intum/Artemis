@@ -198,6 +198,9 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
      * Fetches the messages from the chat service and updates the suggestion if necessary
      */
     private fetchMessages(): void {
+        this.messagesSubscription?.unsubscribe();
+        this.stagesSubscription?.unsubscribe();
+        this.errorSubscription?.unsubscribe();
         this.messagesSubscription = this.chatService.currentMessages().subscribe((messages) => {
             if (messages.length !== this.messages?.length) {
                 this.suggestions = messages.filter((message) => message.sender === IrisSender.ARTIFACT);

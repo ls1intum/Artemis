@@ -65,7 +65,7 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             this.isDeleted();
             this.deleteTimerInSeconds();
             if (this.initialized) {
-                if (!this.isSubscribeToMetis()) {
+                if (this.isSubscribeToMetis()) {
                     this.computeContentPartsOfPosts();
                 }
                 const patternMatches: PatternMatch[] = this.getPatternMatches();

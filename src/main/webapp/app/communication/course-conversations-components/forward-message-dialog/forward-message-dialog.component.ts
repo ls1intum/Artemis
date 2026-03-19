@@ -160,7 +160,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
         if (this.searchTerm) {
             const lowerCaseSearchTerm = this.searchTerm.toLowerCase();
 
-            if (lowerCaseSearchTerm.length >= 3) {
+            if (lowerCaseSearchTerm.length >= 3 && this.courseId()) {
                 this.courseManagementService
                     .searchUsers(this.courseId()!, lowerCaseSearchTerm, ['students', 'tutors', 'instructors'])
                     .pipe(
