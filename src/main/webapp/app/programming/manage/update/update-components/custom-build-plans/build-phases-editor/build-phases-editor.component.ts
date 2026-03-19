@@ -23,6 +23,7 @@ export class BuildPhasesEditorComponent {
     readonly phases = model.required<BuildPhase[]>();
 
     readonly phaseCount = computed(() => this.phases().length);
+    readonly phaseNames = computed(() => this.phases().map((phase) => phase.name));
 
     /**
      * Appends a new phase with default values.

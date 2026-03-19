@@ -62,7 +62,11 @@
                 [ngModel]="phase().name"
                 (ngModelChange)="updateName($event)"
                 [placeholder]="'artemisApp.programmingExercise.buildPhasesEditor.phaseNamePlaceholder' | artemisTranslate"
+                [invalid]="shouldShowNameValidationError()"
             />
+            @if (shouldShowNameValidationError()) {
+                <p-message severity="error" size="small" variant="simple">{{ nameValidationMessageKey() | artemisTranslate }}</p-message>
+            }
         </div>
 
         <div class="d-flex flex-column gap-1">

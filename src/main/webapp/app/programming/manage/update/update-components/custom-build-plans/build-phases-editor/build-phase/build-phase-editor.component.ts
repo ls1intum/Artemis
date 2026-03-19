@@ -3,6 +3,7 @@ import { TranslateService } from '@ngx-translate/core';
 
 import { faArrowDown, faArrowUp, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { BUILD_PHASE_CONDITION, BuildPhase, BuildPhaseCondition } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BUILD_PHASE_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
@@ -17,6 +18,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { Checkbox } from 'primeng/checkbox';
+import { Message } from 'primeng/message';
 
 @Component({
     selector: 'jhi-build-phase',
@@ -36,6 +38,7 @@ import { Checkbox } from 'primeng/checkbox';
         TranslateDirective,
         ArtemisTranslatePipe,
         Checkbox,
+        Message,
     ],
     templateUrl: './build-phase-editor.component.html',
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -56,6 +59,7 @@ export class BuildPhaseEditorComponent {
     readonly phase = model.required<BuildPhase>();
 
     readonly index = input.required<number>();
+    readonly phaseNames = input.required<string[]>();
     readonly isLast = input.required<boolean>();
 
     readonly displayedNumber = computed(() => this.index() + 1);
@@ -65,6 +69,27 @@ export class BuildPhaseEditorComponent {
     readonly testsExpectedHintKey = computed(() =>
         this.phase().resultPaths?.length ? 'artemisApp.programmingExercise.buildPhasesEditor.testsExpected' : 'artemisApp.programmingExercise.buildPhasesEditor.noTestsExpected',
     );
+
+    readonly isNamePatternValid = computed(() => BUILD_PHASE_NAME_PATTERN.test(this.phase().name));
+
+    readonly isNameUnique = computed(() => {
+        const currentIndex = this.index();
+        const normalizedCurrentName = this.phase().name.toLowerCase();
+        if (!normalizedCurrentName) {
+            return false;
+        }
+        return this.phaseNames().every((phaseName, index) => index === currentIndex || phaseName.toLowerCase() !== normalizedCurrentName);
+    });
+
+    readonly isNameValid = computed(() => this.isNamePatternValid() && this.isNameUnique());
+
+    readonly nameValidationMessageKey = computed(() =>
+        this.phase().name && this.isNamePatternValid()
+            ? 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameDuplicate'
+            : 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters',
+    );
+
+    readonly shouldShowNameValidationError = computed(() => !this.isNameValid());
 
     readonly conditionOptions = computed(() => {
         this.currentLocale();

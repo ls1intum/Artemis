@@ -3,6 +3,8 @@ package de.tum.cit.aet.artemis.programming.dto;
 import java.util.Collections;
 import java.util.List;
 
+import jakarta.validation.Valid;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.json.JsonMapper;
@@ -13,7 +15,7 @@ import de.tum.cit.aet.artemis.programming.dto.aeolus.ScriptAction;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @JsonInclude()
-public record BuildPlanPhasesDTO(List<BuildPhaseDTO> phases, String dockerImage) {
+public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String dockerImage) {
 
     private static final JsonMapper mapper = JsonMapper.builder().findAndAddModules().build();
 

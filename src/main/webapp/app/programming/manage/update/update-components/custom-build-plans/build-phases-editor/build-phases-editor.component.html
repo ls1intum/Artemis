@@ -6,6 +6,7 @@
         <jhi-build-phase
             [phase]="phase"
             [index]="$index"
+            [phaseNames]="phaseNames()"
             [isLast]="$index === phaseCount() - 1"
             (phaseChange)="updatePhase($index, $event)"
             (delete)="deletePhase($index)"

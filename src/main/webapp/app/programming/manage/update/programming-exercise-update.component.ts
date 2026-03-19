@@ -1253,6 +1253,7 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
         this.validateTimeout(validationErrorReasons);
         this.validateCheckoutPaths(validationErrorReasons);
         this.validateExercisePlagiarism(validationErrorReasons);
+        this.validateBuildPhaseNames(validationErrorReasons);
 
         return validationErrorReasons;
     }
@@ -1278,6 +1279,21 @@ export class ProgrammingExerciseUpdateComponent implements AfterViewInit, OnDest
                         });
                     }
                 }
+            });
+        }
+    }
+
+    private validateBuildPhaseNames(validationErrorReasons: ValidationReason[]): void {
+        if (!this.programmingExercise.customizeBuildPlanWithAeolus || this.customBuildPlansSupported !== PROFILE_LOCALCI) {
+            return;
+        }
+
+        const customBuildPlanComponent = this.exerciseLanguageComponent?.programmingExerciseCustomBuildPlanComponent;
+        const phasesValid = customBuildPlanComponent?.arePhaseNamesValid(customBuildPlanComponent.buildPlanPhases.phases);
+        if (!phasesValid) {
+            validationErrorReasons.push({
+                translateKey: 'artemisApp.programmingExercise.buildPhasesEditor.invalidPhaseNames',
+                translateValues: {},
             });
         }
     }

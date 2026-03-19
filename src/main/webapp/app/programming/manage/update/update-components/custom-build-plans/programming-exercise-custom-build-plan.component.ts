@@ -11,6 +11,7 @@ import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update
 import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ScriptAction } from 'app/programming/shared/entities/build.action';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
+import { BUILD_PHASE_NAME_PATTERN } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -155,10 +156,17 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
      * @returns JSON string of BuildPlanPhases with dockerImage, or undefined if no phases available
      */
     getBuildPlanPhasesJSON(): string | undefined {
-        if (!this.buildPlanPhases?.phases?.length) {
+        if (!this.buildPlanPhases?.phases?.length || !this.arePhaseNamesValid(this.buildPlanPhases.phases)) {
             return undefined;
         }
         return JSON.stringify(this.buildPlanPhases);
+    }
+
+    arePhaseNamesValid(phases: BuildPhase[]): boolean {
+        const normalizedNames = phases.map((phase) => phase.name.toLowerCase());
+        const namesAreUnique = new Set(normalizedNames).size === normalizedNames.length;
+        const namesArePatternValid = phases.every((phase) => BUILD_PHASE_NAME_PATTERN.test(phase.name));
+        return namesAreUnique && namesArePatternValid;
     }
 
     setTimeout(timeout: number) {

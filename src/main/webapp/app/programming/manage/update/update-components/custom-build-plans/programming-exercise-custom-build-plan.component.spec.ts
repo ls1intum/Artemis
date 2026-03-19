@@ -363,6 +363,23 @@ describe('ProgrammingExercise Custom Build Plan', () => {
             comp.buildPlanPhases = undefined as any;
             expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
         });
+
+        it('should return undefined when phase names contain invalid characters', () => {
+            const phases: BuildPhase[] = [{ name: 'bad name', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+            comp.buildPlanPhases = { phases, dockerImage: 'node:18' };
+
+            expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+        });
+
+        it('should return undefined when phase names are duplicates case-insensitively', () => {
+            const phases: BuildPhase[] = [
+                { name: 'Build', script: 'npm build', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+                { name: 'build', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: [] },
+            ];
+            comp.buildPlanPhases = { phases, dockerImage: 'node:18' };
+
+            expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+        });
     });
 
     describe('replacePlaceholders', () => {

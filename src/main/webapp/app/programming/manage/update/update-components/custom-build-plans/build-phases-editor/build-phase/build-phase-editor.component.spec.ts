@@ -40,6 +40,11 @@ describe('BuildPhaseEditorComponent', () => {
         component = fixture.componentInstance;
         fixture.componentRef.setInput('phase', { ...initialPhase, resultPaths: [...initialPhase.resultPaths] });
         fixture.componentRef.setInput('index', 1);
+        fixture.componentRef.setInput('phases', [
+            { ...initialPhase, name: 'phase-1' },
+            { ...initialPhase, name: initialPhase.name, resultPaths: [...initialPhase.resultPaths] },
+            { ...initialPhase, name: 'phase-3' },
+        ]);
         fixture.componentRef.setInput('isLast', false);
         fixture.detectChanges();
     });
@@ -86,6 +91,36 @@ describe('BuildPhaseEditorComponent', () => {
             expect(phase.condition).toBe(initialPhase.condition);
             expect(phase.forceRun).toBe(initialPhase.forceRun);
             expect(phase.resultPaths).toEqual(initialPhase.resultPaths);
+        });
+
+        it('should report duplicate names case-insensitively as invalid', () => {
+            fixture.componentRef.setInput('phases', [
+                { ...initialPhase, name: 'build' },
+                { ...initialPhase, name: 'BUILD', resultPaths: [...initialPhase.resultPaths] },
+            ]);
+            fixture.detectChanges();
+
+            expect(component.isNameUnique()).toBe(false);
+            expect(component.isNameValid()).toBe(false);
+            expect(component.shouldShowNameValidationError()).toBe(true);
+            expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameDuplicate');
+        });
+
+        it('should report invalid characters as invalid', () => {
+            component.phase.set({ ...component.phase(), name: 'bad name' });
+            fixture.detectChanges();
+
+            expect(component.isNamePatternValid()).toBe(false);
+            expect(component.isNameValid()).toBe(false);
+            expect(component.shouldShowNameValidationError()).toBe(true);
+            expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters');
+        });
+
+        it('should show validation error for empty phase name', () => {
+            component.phase.set({ ...component.phase(), name: '' });
+            fixture.detectChanges();
+
+            expect(component.shouldShowNameValidationError()).toBe(true);
         });
     });
 
