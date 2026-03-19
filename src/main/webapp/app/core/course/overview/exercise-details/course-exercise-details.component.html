@@ -67,7 +67,7 @@
                         [sortedHistoryResults]="sortedHistoryResults"
                     />
                 </div>
-                <jhi-problem-statement [exercise]="exercise" [participation]="practiceStudentParticipation ?? gradedStudentParticipation!" />
+                <jhi-problem-statement [exerciseInput]="exercise" [participationInput]="practiceStudentParticipation() ?? gradedStudentParticipation()!" />
                 @if (exercise.type === PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length) {
                     <jhi-reset-repo-button [exercise]="exercise" [participations]="exercise.studentParticipations" [smallButtons]="false" />
                 }
