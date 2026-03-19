@@ -3,16 +3,10 @@ name: Ready to Merge Label Validator
 on:
   pull_request_target:
     types: [labeled]
-  workflow_dispatch:
-    inputs:
-      pr_number:
-        description: 'PR number to validate (for testing)'
-        required: true
-        type: number
 
 jobs:
   validate-ready-to-merge:
-    if: github.event.label.name == 'ready to merge' || github.event_name == 'workflow_dispatch'
+    if: github.event.label.name == 'ready to merge'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -25,24 +19,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const prNumber = context.payload.inputs?.pr_number
-              ? parseInt(context.payload.inputs.pr_number)
-              : context.payload.pull_request.number;
+            const prNumber = context.payload.pull_request.number;
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-
-            // For workflow_dispatch, fetch the PR to get the author
-            let author;
-            if (context.payload.pull_request) {
-              author = context.payload.pull_request.user.login;
-            } else {
-              const { data: prData } = await github.rest.pulls.get({
-                owner,
-                repo,
-                pull_number: prNumber
-              });
-              author = prData.user.login;
-            }
+            const author = context.payload.pull_request.user.login;
 
             console.log(`Validating PR #${prNumber} for "ready to merge" label`);
 
@@ -88,6 +68,9 @@ jobs:
                           nodes {
                             body
                             url
+                            author {
+                              login
+                            }
                           }
                         }
                       }
@@ -113,9 +96,10 @@ jobs:
                 items: unresolvedThreads.slice(0, 5).map(thread => {
                   const firstComment = thread.comments.nodes[0]?.body || '';
                   const url = thread.comments.nodes[0]?.url || '';
+                  const commentAuthor = thread.comments.nodes[0]?.author?.login || '';
                   // Truncate long comments
                   const preview = firstComment.length > 80 ? firstComment.substring(0, 77) + '...' : firstComment;
-                  return { preview, url };
+                  return { preview, url, commentAuthor };
                 })
               });
             }
@@ -157,10 +141,11 @@ jobs:
               if (threadIssue) {
                 commentBody += `### Unresolved Review Threads (${threadIssue.count})\n\n`;
                 threadIssue.items.forEach((item, index) => {
+                  const authorTag = item.commentAuthor ? `@${item.commentAuthor}: ` : '';
                   if (item.url) {
-                    commentBody += `${index + 1}. [${item.preview}](${item.url})\n`;
+                    commentBody += `${index + 1}. ${authorTag}[${item.preview}](${item.url})\n`;
                   } else {
-                    commentBody += `${index + 1}. "${item.preview}"\n`;
+                    commentBody += `${index + 1}. ${authorTag}"${item.preview}"\n`;
                   }
                 });
                 if (threadIssue.count > 5) {
