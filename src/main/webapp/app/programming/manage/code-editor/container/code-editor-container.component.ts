@@ -400,6 +400,10 @@ export class CodeEditorContainerComponent implements ComponentCanDeactivate, OnD
         return this.monacoEditor?.getText() ?? '';
     }
 
+    commit(): void {
+        this.actions?.commit();
+    }
+
     getNumberOfLines(): number {
         return this.monacoEditor?.getNumberOfLines() ?? 0;
     }

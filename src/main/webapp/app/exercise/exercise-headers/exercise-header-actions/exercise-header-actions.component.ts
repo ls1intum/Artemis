@@ -71,6 +71,7 @@ export class ExerciseHeaderActionsComponent {
     protected readonly faPlayCircle = faPlayCircle;
     protected readonly faRedo = faRedo;
     protected readonly faWrench = faWrench;
+    protected readonly faFileSignature = faFileSignature;
 
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
@@ -88,6 +89,7 @@ export class ExerciseHeaderActionsComponent {
     readonly smallButtons = input<boolean>(false);
     readonly examMode = input<boolean>(false);
     readonly isGeneratingFeedback = input<boolean>(false);
+    readonly onSubmitExercise = input<() => void>();
 
     readonly generatingFeedback = output<void>();
 

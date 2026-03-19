@@ -6,6 +6,7 @@
             [courseId]="courseId"
             [studentParticipation]="gradedStudentParticipation()"
             [submissionPolicy]="submissionPolicy()"
+            [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
         />
 
         <jhi-exercise-split-panel class="d-flex flex-fill" [exercise]="exercise" [studentParticipation]="practiceStudentParticipation() ?? gradedStudentParticipation()" />

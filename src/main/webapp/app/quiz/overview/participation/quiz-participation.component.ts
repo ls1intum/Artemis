@@ -1,5 +1,5 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
-import { Component, ElementRef, OnDestroy, OnInit, effect, inject, viewChild, viewChildren } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, effect, inject, input, viewChild, viewChildren } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -132,6 +132,10 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
     result: Result;
     questionScores: { [id: number]: number } = {};
+    readonly inputExerciseId = input<number>();
+    readonly inputCourseId = input<number>();
+    readonly inputMode = input<string>();
+
     quizId: number;
     courseId: number;
     interval?: number;
@@ -179,9 +183,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         // set correct mode
         this.routeAndDataSubscription = combineLatest([this.route.data, this.route.params, this.route.parent?.parent?.params ?? of({ courseId: undefined })]).subscribe(
             ([data, params, parentParams]) => {
-                this.mode = data.mode;
-                this.quizId = Number(params['exerciseId']);
-                this.courseId = Number(parentParams['courseId']);
+                this.mode = this.inputMode() ?? data.mode;
+                this.quizId = this.inputExerciseId() ?? Number(params['exerciseId']);
+                this.courseId = this.inputCourseId() ?? Number(parentParams['courseId']);
                 // init according to mode
                 switch (this.mode) {
                     case 'practice':

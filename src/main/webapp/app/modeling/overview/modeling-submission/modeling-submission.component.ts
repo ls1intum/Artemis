@@ -107,6 +107,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
     displayHeader = input(true);
     isPrinting = input(false);
     expandProblemStatement = input(false);
+    showProblemStatement = input(true);
 
     private subscription: Subscription;
     private manualResultUpdateListener?: Subscription;

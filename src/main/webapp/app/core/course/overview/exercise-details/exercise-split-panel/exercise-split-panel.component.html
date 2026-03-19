@@ -4,8 +4,17 @@
             @if (exercise().type === ExerciseType.TEXT) {
                 <jhi-text-editor [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
             }
-            @if (exercise().type === ExerciseType.PROGRAMMING) {
-                <p>Hello Programming</p>
+            @if (showCodeEditor()) {
+                <jhi-code-editor-student [participationId]="studentParticipation()!.id" />
+            }
+            @if (exercise().type === ExerciseType.MODELING) {
+                <jhi-modeling-submission [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
+            }
+            @if (exercise().type === ExerciseType.FILE_UPLOAD) {
+                <jhi-file-upload-submission [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
+            }
+            @if (exercise().type === ExerciseType.QUIZ) {
+                <jhi-quiz [inputExerciseId]="exercise().id" [inputCourseId]="exercise().course?.id" [inputMode]="'live'" />
             }
         </ng-template>
     }

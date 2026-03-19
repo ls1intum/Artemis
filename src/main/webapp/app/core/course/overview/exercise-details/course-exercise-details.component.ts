@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -110,6 +110,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private readonly scienceService = inject(ScienceService);
     private irisSettingsService = inject(IrisSettingsService);
     private destroyRef = inject(DestroyRef);
+
+    protected readonly splitPanel = viewChild(ExerciseSplitPanelComponent);
+
+    protected readonly submitExercise = () => this.splitPanel()?.submitExercise();
 
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;

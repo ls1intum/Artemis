@@ -16,6 +16,7 @@ export class ExerciseHeaderComponent {
     readonly courseId = input.required<number>();
     readonly studentParticipation = input<StudentParticipation>();
     readonly submissionPolicy = input<SubmissionPolicy>();
+    readonly onSubmitExercise = input<() => void>();
 
     readonly exerciseIcon = computed(() => {
         const exercise = this.exercise();

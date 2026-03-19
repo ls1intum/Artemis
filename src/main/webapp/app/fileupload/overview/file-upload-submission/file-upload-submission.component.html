@@ -20,7 +20,7 @@
     </jhi-header-participation-page>
 }
 @if (fileUploadExercise()) {
-    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()">
+    <jhi-resizeable-container [isExerciseParticipation]="true" [expandProblemStatement]="expandProblemStatement()" [showRightPanel]="showProblemStatement()">
         <!--region Left Panel-->
         <div left-body class="px-2 pb-2 w-100">
             <div class="row">

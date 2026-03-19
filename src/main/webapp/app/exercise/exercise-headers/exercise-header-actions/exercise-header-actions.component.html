@@ -19,6 +19,15 @@
             </div>
         </div>
     }
+    @if (onSubmitExercise()) {
+        <button
+            jhi-exercise-action-button
+            [buttonIcon]="faFileSignature"
+            [buttonLabel]="'entity.action.submit' | artemisTranslate"
+            [smallButton]="smallButtons()"
+            (click)="onSubmitExercise()!()"
+        ></button>
+    }
     @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {

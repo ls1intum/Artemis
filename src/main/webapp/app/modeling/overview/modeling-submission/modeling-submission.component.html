@@ -66,7 +66,13 @@
     }
 
     @if (modelingExercise) {
-        <jhi-resizeable-container [isExerciseParticipation]="true" [isBeingPrinted]="isPrinting()" [expandProblemStatement]="expandProblemStatement()" [collapsed]="isFeedbackView">
+        <jhi-resizeable-container
+            [isExerciseParticipation]="true"
+            [isBeingPrinted]="isPrinting()"
+            [expandProblemStatement]="expandProblemStatement()"
+            [collapsed]="isFeedbackView"
+            [showRightPanel]="showProblemStatement()"
+        >
             <!--region Left Panel-->
             <ng-container left-body>
                 @if (!submission || submission.submitted || !isExamSummary()) {
