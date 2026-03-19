@@ -42,3 +42,7 @@ export interface ParticipationScoreSearch extends SearchTermPageableSearch {
     scoreRangeLower?: number;
     scoreRangeUpper?: number;
 }
+
+export interface ParticipationSearch extends SearchTermPageableSearch {
+    filterProp?: string;
+}
