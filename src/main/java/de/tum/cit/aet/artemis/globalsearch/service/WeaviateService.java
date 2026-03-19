@@ -115,6 +115,10 @@ public class WeaviateService {
                     }
                 }
 
+                // Enable null state indexing so that properties with null values can be used in filters
+                // (e.g. release_date IS NULL, or filtering on exam properties that are null for non-exam exercises)
+                collection.invertedIndex(idx -> idx.indexNulls(true));
+
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
                     collection.properties(createProperty(prop));
