@@ -1,7 +1,10 @@
 package de.tum.cit.aet.artemis.exercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.net.URI;
 import java.time.ZonedDateTime;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -9,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -281,5 +285,140 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("<svg");
         // The SVG should contain the class name from the diagram
         assertThat(result.html()).contains("Student");
+        // SVG placeholder spans must not remain in the output
+        assertThat(result.html()).doesNotContain("artemis-svg-placeholder");
+    }
+
+    // --- Additional rendering edge case tests ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRenderBlankProblemStatement() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("   \n  \t  ");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).isNullOrEmpty();
+        assertThat(result.tasks()).isNullOrEmpty();
+        assertThat(result.diagrams()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRenderMultipleTasksAndDiagrams() throws Exception {
+        String ps = """
+                [task][Task A](<testid>1</testid>)
+                [task][Task B](<testid>2</testid>,<testid>3</testid>)
+                @startuml
+                !pragma layout smetana
+                class Foo
+                @enduml
+                @startuml
+                !pragma layout smetana
+                class Bar
+                @enduml
+                """;
+        TextExercise exercise = createCourseExerciseWithProblemStatement(ps);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.tasks()).hasSize(2);
+        assertThat(result.tasks().get(0).taskName()).isEqualTo("Task A");
+        assertThat(result.tasks().get(0).testIds()).containsExactly(1L);
+        assertThat(result.tasks().get(1).taskName()).isEqualTo("Task B");
+        assertThat(result.tasks().get(1).testIds()).containsExactly(2L, 3L);
+
+        assertThat(result.diagrams()).hasSize(2);
+        assertThat(result.diagrams().get(0).diagramId()).isEqualTo("uml-0");
+        assertThat(result.diagrams().get(1).diagramId()).isEqualTo("uml-1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRenderTaskNameWithSpecialCharacters() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("[task][Implement <List> & \"Map\"](<testid>10</testid>)");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.tasks()).hasSize(1);
+        assertThat(result.tasks().getFirst().taskName()).isEqualTo("Implement <List> & \"Map\"");
+        // HTML attributes must be escaped
+        assertThat(result.html()).doesNotContain("data-task-name=\"Implement <List>");
+        assertThat(result.html()).contains("&lt;List&gt;");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testTestIdTagsStrippedFromOutput() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("[task][Sort](<testid>42</testid>)");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).doesNotContain("<testid>");
+        assertThat(result.html()).doesNotContain("</testid>");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testXssEventHandlerStripped() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("<img src=x onerror=alert('xss')>\n\n<a href=\"javascript:alert('xss')\">click</a>");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // The dangerous img tag must not appear as executable HTML (either escaped or sanitized)
+        assertThat(result.html()).doesNotContain("<img src=x onerror");
+        // javascript: protocol must be stripped from href
+        assertThat(result.html()).doesNotContain("javascript:");
+    }
+
+    // --- Additional authorization tests ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "outsider1", roles = "USER")
+    void testAuthStudentOutsideCourseCannotAccess() throws Exception {
+        userUtilService.createAndSaveUser(TEST_PREFIX + "outsider1");
+        TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
+
+        // outsider1 is not in the course groups (tumuser, tutor, editor, instructor)
+        request.get(renderUrl(exercise.getId()), HttpStatus.FORBIDDEN, RenderedProblemStatementDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testNonExistentExerciseReturns404() throws Exception {
+        request.get(renderUrl(999999L), HttpStatus.NOT_FOUND, RenderedProblemStatementDTO.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testAuthTutorExamExerciseExactBoundary() throws Exception {
+        TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
+        exercise.setProblemStatement("Hello");
+        exerciseRepository.save(exercise);
+
+        // Set exam end date to exactly now — exam has not fully ended yet
+        Exam exam = exercise.getExerciseGroup().getExam();
+        exam.setEndDate(ZonedDateTime.now());
+        examRepository.save(exam);
+
+        // When endDate equals now, isAfter(now()) may be false (race), but the intent is
+        // that the exam must be strictly in the past. This should be forbidden or at the boundary.
+        // The controller checks: latestIndividualExamEndDate.isAfter(ZonedDateTime.now())
+        // If endDate == now, isAfter returns false, so access is granted.
+        // This is consistent with ExerciseResource behavior.
+        request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+    }
+
+    // --- HTTP contract tests ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testResponseContainsETagAndCacheControlHeaders() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("Header test");
+
+        MvcResult result = request.performMvcRequest(get(new URI(renderUrl(exercise.getId())))).andExpect(status().isOk()).andReturn();
+
+        assertThat(result.getResponse().getHeader("ETag")).isNotNull().isNotBlank();
+        assertThat(result.getResponse().getHeader("Cache-Control")).contains("max-age=300").contains("private");
     }
 }
