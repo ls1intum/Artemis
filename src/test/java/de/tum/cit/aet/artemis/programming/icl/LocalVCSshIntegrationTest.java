@@ -14,6 +14,7 @@ import java.security.KeyPairGenerator;
 import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
 import java.time.ZonedDateTime;
+import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.sshd.client.SshClient;
@@ -173,30 +174,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             ByteArrayOutputStream outputStream = (ByteArrayOutputStream) receiveCommand.getOutputStream();
             assertThat(outputStream).isNotNull();
             assertThat(outputStream.size()).isGreaterThan(0); // Assuming the command produces some output
-        }
-    }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testSshGitCommand_executesReceivePackSuccessfully() throws IOException, GeneralSecurityException {
-        try (var client = clientConnectToArtemisSshServer()) {
-            assertThat(client).isNotNull();
-            var user = userTestRepository.getUser();
-            var serverSession = getCurrentServerSession(user);
-
-            // Execute git-receive-pack command (push)
-            final var receiveCommandString = "git-receive-pack '/git/" + projectKey1 + "/" + templateRepositorySlug + "'";
-            SshGitCommand receiveCommand = setupCommand(receiveCommandString, (ServerSession) serverSession);
-            receiveCommand.run();
-
-            // Verify the command executed successfully and the session is still active
-            assertThat(serverSession.isOpen()).isTrue();
-            ByteArrayOutputStream outputStream = (ByteArrayOutputStream) receiveCommand.getOutputStream();
-            assertThat(outputStream).isNotNull();
-            assertThat(outputStream.size()).as("git-receive-pack should produce output").isGreaterThan(0);
-
-            // Verify cacheAttributesInSshSession stored data in the session during command setup
-            // The VCS_ACCESS_LOG_KEY is set by cacheAttributesInSshSession when participation is present
+            // 3. Verify cacheAttributesInSshSession stored data in the session during receive-pack execution
             var cachedAccessLog = ((ServerSession) serverSession).getAttribute(SshConstants.VCS_ACCESS_LOG_KEY);
             assertThat(cachedAccessLog).as("cacheAttributesInSshSession should cache access log for template repo").isNotNull();
             assertThat(cachedAccessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.SSH);
@@ -224,7 +203,8 @@ class LocalVCSshIntegrationTest extends LocalVCIntegrationTest {
             }
             catch (NullPointerException e) {
                 // NPE expected from upload-pack IO setup (e.g. getErrorStream() returning null), not from cacheAttributesInSshSession
-                assertThat(e.getStackTrace()[0].getClassName()).as("NPE should not originate from LocalVCServletService").doesNotContain("LocalVCServletService");
+                var stackTrace = Arrays.stream(e.getStackTrace()).map(StackTraceElement::getClassName).toList();
+                assertThat(stackTrace).as("NPE should not originate from LocalVCServletService").noneMatch(cls -> cls.contains("LocalVCServletService"));
             }
 
             // Verify the session survived without crashing

@@ -1518,8 +1518,7 @@ class LocalVCFetchAndPushIntegrationTest extends AbstractProgrammingIntegrationL
 
                 // Commit and push with the token, then verify push succeeded
                 commitFile(git, "token-test-file.txt");
-                String pushUri = buildRepositoryUriWithToken(student1.getLogin(), token, projectKey, studentRepoSlug);
-                var pushResults = git.push().setRemote(pushUri).call();
+                var pushResults = git.push().setRemote(tokenRepoUri).call();
                 var pushResult = pushResults.iterator().next();
                 var remoteUpdate = pushResult.getRemoteUpdates().iterator().next();
                 assertThat(remoteUpdate.getStatus()).as("Push with valid participation token should succeed").isEqualTo(RemoteRefUpdate.Status.OK);

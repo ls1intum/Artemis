@@ -790,7 +790,8 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
 
     private void setupLdapToRejectAuth(String login) throws InvalidNameException {
         var ldapUser = new LdapUserDto().login(login);
-        ldapUser.setUid(new LdapName("cn=student1,ou=test,o=lab"));
+        String cn = login.replace(TEST_PREFIX, "");
+        ldapUser.setUid(new LdapName("cn=" + cn + ",ou=test,o=lab"));
         doReturn(Optional.of(ldapUser)).when(ldapUserService).findByLogin(login);
         doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
     }
