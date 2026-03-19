@@ -1982,6 +1982,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationJenkinsLocalVC
     void testGradedStudentExamSummaryWithGradingScaleAsStudentBeforePublishResults() throws Exception {
         StudentExam studentExam = createStudentExamWithResultsAndAssessments(true, 1);
 
+        // Reload exam2 from DB to avoid stale detached entity issues with Hibernate 6.6
+        exam2 = examRepository.findByIdElseThrow(exam2.getId());
         exam2.setPublishResultsDate(ZonedDateTime.now().plusDays(1));
         exam2 = examRepository.save(exam2);
 
