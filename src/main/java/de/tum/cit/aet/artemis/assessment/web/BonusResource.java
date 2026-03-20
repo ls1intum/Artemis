@@ -273,7 +273,6 @@ public class BonusResource {
         existingBonus.setWeight(updatedBonus.getWeight());
         existingBonus.setBonusStrategy(updatedBonus.getBonusStrategy());
 
-        bonusToGradingScale.addBonusFrom(existingBonus);
         bonusToGradingScale.setBonusStrategy(updatedBonus.getBonusStrategy());
         gradingScaleRepository.save(bonusToGradingScale);
         Bonus savedBonus = bonusService.saveBonus(existingBonus, isSourceGradeScaleUpdated);
