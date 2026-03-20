@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.StudentScore;
@@ -31,6 +31,9 @@ public class StudentScoreUtilService {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private TransactionTemplate transactionTemplate;
 
     /**
      * Creates student score for given exercise and user.
@@ -96,11 +99,12 @@ public class StudentScoreUtilService {
      * @param user the user whose student scores should be normalized
      * @param date the instant to set as lastModifiedDate for all scores
      */
-    @Transactional
     public void normalizeLastModifiedDates(User user, Instant date) {
-        entityManager.createQuery("UPDATE StudentScore s SET s.lastModifiedDate = :date WHERE s.user = :user").setParameter("date", date).setParameter("user", user)
-                .executeUpdate();
-        entityManager.flush();
-        entityManager.clear();
+        transactionTemplate.executeWithoutResult(status -> {
+            entityManager.createQuery("UPDATE StudentScore s SET s.lastModifiedDate = :date WHERE s.user = :user").setParameter("date", date).setParameter("user", user)
+                    .executeUpdate();
+            entityManager.flush();
+            entityManager.clear();
+        });
     }
 }
