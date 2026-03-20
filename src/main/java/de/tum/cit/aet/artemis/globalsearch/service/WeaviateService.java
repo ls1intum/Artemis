@@ -190,6 +190,6 @@ public class WeaviateService {
      * @return {@code true} if a text vectorizer is available, {@code false} otherwise
      */
     public boolean isVectorizerAvailable() {
-        return !WeaviateConfigurationProperties.VECTORIZER_NONE.equals(vectorizerModule);
+        return WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(vectorizerModule);
     }
 }
