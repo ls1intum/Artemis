@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_NONE;
+import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI;
 import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS;
 
 import java.util.ArrayList;
@@ -75,6 +76,10 @@ public class ConfigurationValidator {
 
     private final String weaviateVectorizerModule;
 
+    private final String weaviateApiBaseUrl;
+
+    private final String weaviateApiKey;
+
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
             @Value("${artemis.user-management.internal-admin.username:#{null}}") String internalAdminUsername,
@@ -82,7 +87,8 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-host:#{null}}") String weaviateHost,
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
-            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule) {
+            @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
+            @Value("${artemis.weaviate.api-base-url:#{null}}") String weaviateApiBaseUrl, @Value("${artemis.weaviate.api-key:#{null}}") String weaviateApiKey) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -96,6 +102,8 @@ public class ConfigurationValidator {
         this.weaviateGrpcPort = weaviateGrpcPort;
         this.weaviateScheme = weaviateScheme;
         this.weaviateVectorizerModule = weaviateVectorizerModule;
+        this.weaviateApiBaseUrl = weaviateApiBaseUrl;
+        this.weaviateApiKey = weaviateApiKey;
     }
 
     /**
@@ -224,8 +232,20 @@ public class ConfigurationValidator {
         if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
         }
-        else if (!VECTORIZER_NONE.equals(weaviateVectorizerModule) && !VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)) {
-            invalidProperties.add("artemis.weaviate.vectorizer-module (must be '" + VECTORIZER_NONE + "' or '" + VECTORIZER_TEXT2VEC_TRANSFORMERS + "')");
+        else if (!VECTORIZER_NONE.equals(weaviateVectorizerModule) && !VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)
+                && !VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule)) {
+            invalidProperties.add(
+                    "artemis.weaviate.vectorizer-module (must be '" + VECTORIZER_NONE + "', '" + VECTORIZER_TEXT2VEC_TRANSFORMERS + "', or '" + VECTORIZER_TEXT2VEC_OPENAI + "')");
+        }
+
+        // Validate OpenAI-specific properties when text2vec-openai vectorizer is selected
+        if (VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule)) {
+            if (!StringUtils.hasText(weaviateApiBaseUrl)) {
+                invalidProperties.add("artemis.weaviate.api-base-url (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+            }
+            if (!StringUtils.hasText(weaviateApiKey)) {
+                invalidProperties.add("artemis.weaviate.api-key (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer, use a dummy value for Ollama)");
+            }
         }
 
         if (!invalidProperties.isEmpty()) {

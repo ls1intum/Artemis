@@ -140,6 +140,7 @@ public class WeaviateService {
                 // Configure vectorizer based on deployment setup
                 // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
+                // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
                 if (VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue().equals(vectorizerModule)) {
                     log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue());
                     collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {

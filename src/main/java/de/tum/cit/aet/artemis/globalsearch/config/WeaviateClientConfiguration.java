@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
 import io.weaviate.client6.v1.api.WeaviateClient;
@@ -31,6 +32,9 @@ public class WeaviateClientConfiguration {
     /**
      * Creates and configures a Weaviate client bean.
      * Configuration validation is handled by {@link de.tum.cit.aet.artemis.core.config.ConfigurationValidator#validateWeaviateConfiguration()}.
+     * <p>
+     * When using the text2vec-openai vectorizer, the API key is passed as a request header
+     * so that Weaviate can forward it to the OpenAI-compatible API (e.g. Ollama).
      *
      * @return the configured WeaviateClient instance
      * @throws WeaviateConnectionException if the connection to Weaviate fails
@@ -39,17 +43,32 @@ public class WeaviateClientConfiguration {
     public WeaviateClient weaviateClient() {
         try {
             WeaviateClient client;
+            boolean hasApiKey = StringUtils.hasText(weaviateProperties.apiKey());
             if (weaviateProperties.secure()) {
                 // Custom connection for HTTPS/secure connections.
                 // IMPORTANT: scheme() must be called first because it auto-sets both ports (443 for https, 80 for http).
                 // httpPort() and grpcPort() are called after to override with the configured values.
-                client = WeaviateClient.connectToCustom(config -> config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost())
-                        .httpPort(weaviateProperties.httpPort()).grpcHost(weaviateProperties.httpHost()).grpcPort(weaviateProperties.grpcPort()));
+                client = WeaviateClient.connectToCustom(config -> {
+                    config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost()).httpPort(weaviateProperties.httpPort())
+                            .grpcHost(weaviateProperties.httpHost()).grpcPort(weaviateProperties.grpcPort());
+                    if (hasApiKey) {
+                        config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
+                    }
+                    return config;
+                });
             }
             else {
                 // Local connection for non-secure connections
-                client = WeaviateClient
-                        .connectToLocal(config -> config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort()));
+                client = WeaviateClient.connectToLocal(config -> {
+                    config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort());
+                    if (hasApiKey) {
+                        config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
+                    }
+                    return config;
+                });
+            }
+            if (hasApiKey) {
+                log.debug("Configured Weaviate client with X-OpenAI-Api-Key header for OpenAI-compatible vectorizer");
             }
 
             // The constructor already verified liveness; isReady() is an additional readiness check.
@@ -76,4 +95,5 @@ public class WeaviateClientConfiguration {
                     weaviateProperties.grpcPort(), weaviateProperties.secure());
         }
     }
+
 }

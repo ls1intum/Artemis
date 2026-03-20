@@ -31,14 +31,20 @@ class ConfigurationValidatorTest {
     private static final String VALID_VECTORIZER_MODULE = WeaviateConfigurationProperties.VECTORIZER_NONE;
 
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme) {
-        return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, VALID_VECTORIZER_MODULE);
+        return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, VALID_VECTORIZER_MODULE, null, null);
     }
 
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
             String vectorizerModule) {
+        return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule, null, null);
+    }
+
+    private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
+            String vectorizerModule, String apiBaseUrl, String apiKey) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
-        return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule);
+        return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
+                apiBaseUrl, apiKey);
     }
 
     @Nested
@@ -165,13 +171,11 @@ class ConfigurationValidatorTest {
             }
 
             @ParameterizedTest
-            @ValueSource(strings = { "text2vec-transformer", "text2vec-openai", "invalid", "None", "TEXT2VEC-TRANSFORMERS" })
+            @ValueSource(strings = { "text2vec-transformer", "invalid", "None", "TEXT2VEC-TRANSFORMERS" })
             void testInvalidValueShouldFailValidation(String vectorizerModule) {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME, vectorizerModule);
 
-                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class)
-                        .hasMessageContaining("artemis.weaviate.vectorizer-module (must be '" + WeaviateConfigurationProperties.VECTORIZER_NONE + "' or '"
-                                + WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS + "')");
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.vectorizer-module");
             }
 
             @Test
@@ -188,6 +192,30 @@ class ConfigurationValidatorTest {
                         WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS);
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+            }
+
+            @Test
+            void testText2vecOpenAiWithApiPropertiesShouldPassValidation() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI, "http://localhost:11434", "dummy");
+
+                assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
+            }
+
+            @Test
+            void testText2vecOpenAiWithoutBaseUrlShouldFailValidation() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI, null, "dummy");
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.api-base-url");
+            }
+
+            @Test
+            void testText2vecOpenAiWithoutApiKeyShouldFailValidation() {
+                ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
+                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI, "http://localhost:11434", null);
+
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.api-key");
             }
         }
     }
