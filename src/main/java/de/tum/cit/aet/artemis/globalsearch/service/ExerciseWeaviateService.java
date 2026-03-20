@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
-import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
@@ -44,9 +43,9 @@ public class ExerciseWeaviateService {
 
     private final boolean useHybridSearch;
 
-    public ExerciseWeaviateService(WeaviateService weaviateService, WeaviateConfigurationProperties properties) {
+    public ExerciseWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
-        this.useHybridSearch = !WeaviateConfigurationProperties.VECTORIZER_NONE.equals(properties.vectorizerModule());
+        this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
 
     /**
@@ -343,7 +342,9 @@ public class ExerciseWeaviateService {
     }
 
     /**
-     * Performs a hybrid (semantic + keyword) search on exercises using a pre-built filter.
+     * Performs a search on exercises using a pre-built filter.
+     * Uses hybrid (semantic + keyword) search when a vectorizer is available,
+     * or falls back to BM25 (keyword-only) search otherwise.
      * The filter should include both course access restrictions and role-based access control.
      *
      * @param query  the search query

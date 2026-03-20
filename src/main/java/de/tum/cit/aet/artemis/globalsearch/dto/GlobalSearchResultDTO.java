@@ -46,10 +46,10 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
             metadata.put("releaseDate", releaseDate);
         }
 
-        // Add points
+        // Add points (preserve fractional values like 0.5, 1.5)
         Double maxPoints = getDouble(properties, "max_points");
         if (maxPoints != null) {
-            metadata.put("points", maxPoints.intValue());
+            metadata.put("points", maxPoints);
         }
 
         // Add course information
