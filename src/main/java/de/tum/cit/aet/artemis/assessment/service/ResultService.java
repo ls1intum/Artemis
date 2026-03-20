@@ -202,7 +202,7 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        resultRepository.delete(result);
+        resultRepository.deleteByIdJpql(result.getId());
     }
 
     /**
@@ -222,6 +222,8 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
+        longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
+        feedbackRepository.deleteByResult_Id(resultId);
     }
 
     /**
