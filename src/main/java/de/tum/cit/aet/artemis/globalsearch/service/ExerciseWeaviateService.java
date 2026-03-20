@@ -27,7 +27,6 @@ import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
-import io.weaviate.client6.v1.api.collections.query.SortBy;
 
 /**
  * Service for synchronizing exercise metadata with Weaviate vector database.
@@ -396,20 +395,19 @@ public class ExerciseWeaviateService {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            var result = collection.query.fetchObjects(q -> {
-                q.limit(limit);
-                q.sort(SortBy.creationTime().desc());
+            var result = collection.query.fetchObjects(queryBuilder -> {
+                queryBuilder.limit(limit);
                 if (filter != null) {
-                    q.filters(filter);
+                    queryBuilder.filters(filter);
                 }
-                return q;
+                return queryBuilder;
             });
 
             return result.objects().stream().map(WeaviateObject::properties).toList();
         }
         catch (Exception e) {
             log.error("Failed to fetch exercises: {}", e.getMessage(), e);
-            throw new WeaviateException("Failed to fetch exercises", e);
+            throw new WeaviateException("Failed to fetch exercises from Weaviate: " + e.getMessage(), e);
         }
     }
 }
