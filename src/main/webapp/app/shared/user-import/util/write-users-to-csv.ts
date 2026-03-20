@@ -9,6 +9,7 @@ export type ExportUserInformationRow = {
 };
 
 export function exportUserInformationAsCsv(rows: ExportUserInformationRow[], keys: string[], fileName: string) {
+    const sanitizedRows = rows.map((row) => sanitizeRow(row));
     const options = {
         fieldSeparator: ';',
         quoteStrings: true,
@@ -21,6 +22,19 @@ export function exportUserInformationAsCsv(rows: ExportUserInformationRow[], key
         columnHeaders: keys,
     };
     const csvExportConfig = mkConfig(options);
-    const csvData = generateCsv(csvExportConfig)(rows);
+    const csvData = generateCsv(csvExportConfig)(sanitizedRows);
     download(csvExportConfig)(csvData);
+}
+
+function sanitizeRow(row: ExportUserInformationRow): ExportUserInformationRow {
+    return {
+        [NAME_KEY]: sanitizeValue(row[NAME_KEY]),
+        [USERNAME_KEY]: sanitizeValue(row[USERNAME_KEY]),
+        [EMAIL_KEY]: sanitizeValue(row[EMAIL_KEY]),
+        [REGISTRATION_NUMBER_KEY]: sanitizeValue(row[REGISTRATION_NUMBER_KEY]),
+    };
+}
+
+function sanitizeValue(value: string): string {
+    return /^\s*[=+\-@]/.test(value) ? `'${value}` : value;
 }

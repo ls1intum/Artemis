@@ -3,9 +3,22 @@
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
+    width: min(45rem, 85vw);
 
     .description {
-        width: min(45rem, 85vw);
+        width: 100%;
+    }
+
+    .table-container-scroll-container {
+        width: 100%;
+        overflow-x: auto;
+
+        .table-container {
+            display: flex;
+            justify-content: center;
+            width: max-content;
+            min-width: 100%;
+        }
     }
 
     .success-content {

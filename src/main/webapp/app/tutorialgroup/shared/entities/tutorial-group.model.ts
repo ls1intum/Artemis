@@ -91,10 +91,10 @@ export interface TutorialGroupRegisteredStudentDTO {
     registrationNumber?: string;
 }
 
-export interface TutorialGroupRegisterStudentDTO {
-    login?: string;
-    registrationNumber?: string;
-}
+export type TutorialGroupRegisterStudentDTO =
+    | { login: undefined; registrationNumber: string }
+    | { login: string; registrationNumber: undefined }
+    | { login: string; registrationNumber: string };
 
 export interface TutorialGroupTutorDTO {
     id: number;

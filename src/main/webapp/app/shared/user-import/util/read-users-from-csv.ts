@@ -92,6 +92,7 @@ function parseCsvUserFromFile(csvFile: File): Promise<CsvUser[]> {
         parse<CsvUser>(csvFile, {
             header: true,
             transformHeader: (header: string) => cleanString(header),
+            transform: (value: string) => value.trim(),
             skipEmptyLines: true,
             complete: (results) => resolve(results.data),
             error: (error) => reject(error),
