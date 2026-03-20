@@ -136,7 +136,7 @@ public class WeaviateService {
 
         try {
             if (client.collections.exists(collectionName)) {
-                log.info("Collection '{}' already exists, skipping creation. Delete the collection and restart to apply configuration changes.", collectionName);
+                log.info("Collection '{}' already exists, skipping creation.", collectionName);
                 return;
             }
 
