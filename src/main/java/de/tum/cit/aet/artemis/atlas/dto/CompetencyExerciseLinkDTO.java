@@ -8,7 +8,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO courseCompetencyDTO, Double weight, Long courseId) {
+public record CompetencyExerciseLinkDTO(@NotNull CourseCompetencyDTO competency, Double weight, Long courseId) {
 
     /**
      * Creates a DTO from a CompetencyExerciseLink entity.

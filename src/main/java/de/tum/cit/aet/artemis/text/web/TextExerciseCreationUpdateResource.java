@@ -401,7 +401,7 @@ public class TextExerciseCreationUpdateResource {
             throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
         }
 
-        Long competencyId = linkDto.courseCompetencyDTO().id();
+        Long competencyId = linkDto.competency().id();
         CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
         if (link == null) {
             Competency competencyRef = api.loadCompetency(competencyId);
