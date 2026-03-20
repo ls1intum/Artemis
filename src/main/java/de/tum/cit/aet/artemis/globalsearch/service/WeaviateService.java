@@ -137,6 +137,7 @@ public class WeaviateService {
         try {
             if (client.collections.exists(collectionName)) {
                 log.info("Collection '{}' already exists, skipping creation.", collectionName);
+                checkForConfigurationDrift(collectionName);
                 return;
             }
 
