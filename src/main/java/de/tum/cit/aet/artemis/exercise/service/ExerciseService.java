@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -983,6 +984,37 @@ public class ExerciseService {
             CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
             if (managedCompetency != null) {
                 resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
+            }
+        }
+        exercise.setCompetencyLinks(resolvedLinks);
+    }
+
+    /**
+     * Restores competency links from DTOs to a saved exercise and persists them.
+     * <p>
+     * This method must be called AFTER the exercise has been saved and has an ID.
+     * It resolves competency IDs from the DTOs into managed entities and creates
+     * proper links. The caller must save the exercise again after this call.
+     *
+     * @param exercise        the saved exercise (must have an ID)
+     * @param competencyLinks the competency link DTOs containing competency IDs and weights
+     */
+    public void addCompetencyLinksFromDTOsForCreation(Exercise exercise, Set<CompetencyLinkDTO> competencyLinks) {
+        if (competencyLinks == null || competencyLinks.isEmpty()) {
+            return;
+        }
+        if (competencyRepositoryApi.isEmpty()) {
+            return;
+        }
+        Set<Long> competencyIds = competencyLinks.stream().map(link -> link.competency().id()).collect(Collectors.toSet());
+        Map<Long, CourseCompetency> managedCompetencies = competencyRepositoryApi.get().findAllCompetenciesById(competencyIds).stream()
+                .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
+
+        Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
+        for (CompetencyLinkDTO linkDTO : competencyLinks) {
+            CourseCompetency managedCompetency = managedCompetencies.get(linkDTO.competency().id());
+            if (managedCompetency != null) {
+                resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, linkDTO.weight()));
             }
         }
         exercise.setCompetencyLinks(resolvedLinks);

@@ -39,7 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -63,6 +62,7 @@ import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -1299,7 +1299,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the created and saved quiz exercise
      * @throws IOException if there is an error handling the files
      */
-    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyExerciseLink> competencyLinks) throws IOException {
+    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyLinkDTO> competencyLinks) throws IOException {
         resolveQuizQuestionMappings(quizExercise);
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
@@ -1312,7 +1312,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Restore competency links with proper exercise reference and save again
         if (competencyLinks != null && !competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            exerciseService.addCompetencyLinksFromDTOsForCreation(savedExercise, competencyLinks);
             savedExercise = save(savedExercise);
         }
 
