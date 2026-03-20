@@ -63,7 +63,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderPlainMarkdown() throws Exception {
+    void shouldRenderPlainMarkdown() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("# Hello\n\nThis is **bold** text.");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -79,7 +79,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithTasks() throws Exception {
+    void shouldRenderTasksWithTestIds() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("Implement the following:\n[task][Sort Method](<testid>42</testid>,<testid>43</testid>)");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -94,7 +94,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithPlantUml() throws Exception {
+    void shouldRenderPlantUmlDiagramAsUrl() throws Exception {
         String ps = "Some text\n@startuml\n!pragma layout smetana\nclass A\n@enduml\nMore text";
         TextExercise exercise = createCourseExerciseWithProblemStatement(ps);
 
@@ -111,7 +111,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithKaTeX() throws Exception {
+    void shouldRenderKaTeXServerSideWhenFormulaPresent() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("The formula is $$E = mc^2$$");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -124,7 +124,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithCodeBlocks() throws Exception {
+    void shouldRenderCodeHighlightingServerSide() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("```java\npublic class Foo {}\n```");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -137,7 +137,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithTables() throws Exception {
+    void shouldRenderMarkdownTables() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("| Col A | Col B |\n|-------|-------|\n| 1     | 2     |");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -150,7 +150,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderEmptyProblemStatement() throws Exception {
+    void shouldReturnEmptyContentWhenProblemStatementIsNull() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement(null);
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -169,7 +169,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderXssInjection() throws Exception {
+    void shouldStripScriptTagsWhenXssInjected() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("<script>alert('xss')</script>\n\nSafe text");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -180,7 +180,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testContentHashChangesOnEdit() throws Exception {
+    void shouldChangeContentHashWhenProblemStatementEdited() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("Version 1");
         RenderedProblemStatementDTO result1 = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
@@ -195,7 +195,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRendererVersionIsV2() throws Exception {
+    void shouldReturnRendererVersionV2() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -205,7 +205,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRequiredCssWhenServerRendered() throws Exception {
+    void shouldReturnRequiredCssWhenServerRendered() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -215,7 +215,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testKaTexRenderedServerSide() throws Exception {
+    void shouldRenderBlockKaTeXServerSide() throws Exception {
         // Block formula: $$ on its own line
         TextExercise exercise = createCourseExerciseWithProblemStatement("$$E = mc^2$$");
 
@@ -227,7 +227,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testHighlightingRenderedServerSide() throws Exception {
+    void shouldRenderHighlightingServerSide() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("```java\npublic class Foo {}\n```");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -238,7 +238,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGithubAlertRendered() throws Exception {
+    void shouldRenderGithubAlerts() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("> [!NOTE]\n> This is a note");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -248,7 +248,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFormulaInsideCodeFenceNotRenderedAsKatex() throws Exception {
+    void shouldNotRenderFormulaAsKaTeXWhenInsideCodeFence() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("```\n$$E=mc^2$$\n```");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -259,7 +259,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testFormulaCompatibilityInlineDollarDollar() throws Exception {
+    void shouldConvertInlineDollarDollarToKaTeX() throws Exception {
         // Inline: $$ with surrounding text → converted to $ for KaTeX inline math
         TextExercise exercise = createCourseExerciseWithProblemStatement("The energy is $$E=mc^2$$ according to Einstein.");
 
@@ -272,7 +272,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAdversarialUserKatexHtml() throws Exception {
+    void shouldStripMaliciousContentFromUserCraftedKaTeXHtml() throws Exception {
         // User-injected HTML that mimics KaTeX structure with malicious content
         TextExercise exercise = createCourseExerciseWithProblemStatement("<span class=\"katex\"><script>alert('xss')</script></span>\n<span onclick=\"alert('xss')\">text</span>");
 
@@ -285,7 +285,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testUserStyleAttributeSurvivesSanitization() throws Exception {
+    void shouldPreserveStyleAttributeOnSpanAfterSanitization() throws Exception {
         // Regression test: style on span is allowed (needed for KaTeX layout).
         // User-authored spans with style pass through jsoup — this is an accepted trade-off
         // because problem statements are authored by trusted instructors, not students.
@@ -305,7 +305,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testAuthStudentCannotAccessExamExercise() throws Exception {
+    void shouldForbidStudentAccessToExamExercise() throws Exception {
         TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         exercise.setProblemStatement("Hello");
         exerciseRepository.save(exercise);
@@ -315,7 +315,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAuthTutorCannotAccessExamExerciseBeforeEnd() throws Exception {
+    void shouldForbidTutorAccessToExamExerciseBeforeEnd() throws Exception {
         // Default exam has endDate = now + 60min, so it hasn't ended yet
         TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         exercise.setProblemStatement("Hello");
@@ -326,7 +326,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAuthTutorCanAccessExamExerciseAfterEnd() throws Exception {
+    void shouldAllowTutorAccessToExamExerciseAfterEnd() throws Exception {
         TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         exercise.setProblemStatement("Hello");
         exerciseRepository.save(exercise);
@@ -342,7 +342,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testAuthEditorCanAccessExamExercise() throws Exception {
+    void shouldAllowEditorAccessToExamExercise() throws Exception {
         TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         exercise.setProblemStatement("Hello");
         exerciseRepository.save(exercise);
@@ -352,14 +352,14 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    void testAuthUnauthenticated() throws Exception {
+    void shouldReturn401WhenUnauthenticated() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
         request.get(renderUrl(exercise.getId()), HttpStatus.UNAUTHORIZED, RenderedProblemStatementDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRelativeLinksConvertedToAbsolute() throws Exception {
+    void shouldConvertRelativeLinksToAbsolute() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("[link](/api/files/attachments/123)\n\n![image](/api/files/attachments/456)");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -374,7 +374,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderWithPlantUmlSelfContained() throws Exception {
+    void shouldInlineSvgWhenSelfContainedPlantUml() throws Exception {
         String ps = "Some text\n@startuml\n!pragma layout smetana\nclass Student\n@enduml\nMore text";
         TextExercise exercise = createCourseExerciseWithProblemStatement(ps);
 
@@ -396,7 +396,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderBlankProblemStatement() throws Exception {
+    void shouldReturnEmptyContentWhenProblemStatementIsBlank() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("   \n  \t  ");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -408,7 +408,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderMultipleTasksAndDiagrams() throws Exception {
+    void shouldRenderMultipleTasksAndDiagrams() throws Exception {
         String ps = """
                 [task][Task A](<testid>1</testid>)
                 [task][Task B](<testid>2</testid>,<testid>3</testid>)
@@ -438,7 +438,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testRenderTaskNameWithSpecialCharacters() throws Exception {
+    void shouldEscapeSpecialCharactersInTaskName() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("[task][Implement <List> & \"Map\"](<testid>10</testid>)");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -452,7 +452,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testTestIdTagsStrippedFromOutput() throws Exception {
+    void shouldStripTestIdTagsFromOutput() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("[task][Sort](<testid>42</testid>)");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -463,7 +463,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testXssEventHandlerStripped() throws Exception {
+    void shouldStripEventHandlersAndJavascriptProtocol() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("<img src=x onerror=alert('xss')>\n\n<a href=\"javascript:alert('xss')\">click</a>");
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
@@ -478,7 +478,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "outsider1", roles = "USER")
-    void testAuthStudentOutsideCourseCannotAccess() throws Exception {
+    void shouldForbidStudentOutsideCourseAccess() throws Exception {
         userUtilService.createAndSaveUser(TEST_PREFIX + "outsider1");
         TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
 
@@ -488,13 +488,13 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testNonExistentExerciseReturns404() throws Exception {
+    void shouldReturn404WhenExerciseDoesNotExist() throws Exception {
         request.get(renderUrl(999999L), HttpStatus.NOT_FOUND, RenderedProblemStatementDTO.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testAuthTutorExamExerciseJustEnded() throws Exception {
+    void shouldAllowTutorAccessToExamExerciseJustEnded() throws Exception {
         TextExercise exercise = examUtilService.addCourseExamExerciseGroupWithOneTextExercise();
         exercise.setProblemStatement("Hello");
         exerciseRepository.save(exercise);
@@ -511,7 +511,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testResponseContainsETagAndCacheControlHeaders() throws Exception {
+    void shouldReturnETagAndCacheControlHeaders() throws Exception {
         TextExercise exercise = createCourseExerciseWithProblemStatement("Header test");
 
         MvcResult result = request.performMvcRequest(get(new URI(renderUrl(exercise.getId())))).andExpect(status().isOk()).andReturn();

@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -117,7 +118,9 @@ public class ProblemStatementRenderingResource {
         }
 
         var testResults = fetchTestResults(exercise, user);
-        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, testResults);
+        String langKey = user.getLangKey();
+        Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
+        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, testResults, locale);
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePrivate()).body(result);
     }

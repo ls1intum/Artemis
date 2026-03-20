@@ -8,7 +8,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HexFormat;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,9 +28,13 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -56,16 +62,16 @@ public class ProblemStatementRenderingService {
             <style>
             .artemis-problem-statement svg{max-width:100%;height:auto}
             .artemis-task{cursor:pointer;font-weight:600}
-            .artemis-icon-success{color:#28a745}
-            .artemis-icon-fail{color:#dc3545}
+            .artemis-icon-success{color:var(--artemis-success-color,#28a745)}
+            .artemis-icon-fail{color:var(--artemis-danger-color,#dc3545)}
             .artemis-task-stats{font-weight:400;font-size:.9em;margin-left:4px;text-decoration:underline}
-            .artemis-task-success .artemis-task-stats{color:#28a745}
-            .artemis-task-fail .artemis-task-stats{color:#dc3545}
-            .artemis-task-not-executed .artemis-task-stats{color:#6c757d}
-            .markdown-alert{border-left:4px solid #17a2b8;padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+            .artemis-task-success .artemis-task-stats{color:var(--artemis-success-color,#28a745)}
+            .artemis-task-fail .artemis-task-stats{color:var(--artemis-danger-color,#dc3545)}
+            .artemis-task-not-executed .artemis-task-stats{color:var(--artemis-secondary-color,#6c757d)}
+            .markdown-alert{border-left:4px solid var(--artemis-info-color,#17a2b8);padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
             .markdown-alert-title{font-weight:600}
             table.table{border-collapse:collapse;width:100%}
-            table.table th,table.table td{border:1px solid #dee2e6;padding:8px}
+            table.table th,table.table td{border:1px solid var(--artemis-border-color,#dee2e6);padding:8px}
             </style>
             """;
     // @formatter:on
@@ -107,14 +113,20 @@ public class ProblemStatementRenderingService {
 
     private final MarkdownItRenderingService markdownItRenderingService;
 
+    private final ObjectMapper objectMapper;
+
+    private final MessageSource messageSource;
+
     private final String serverUrl;
 
     private final boolean useMarkdownIt;
 
-    public ProblemStatementRenderingService(PlantUmlService plantUmlService, MarkdownItRenderingService markdownItRenderingService, @Value("${server.url}") String serverUrl,
-            @Value("${artemis.rendering.use-markdown-it:true}") boolean useMarkdownIt) {
+    public ProblemStatementRenderingService(PlantUmlService plantUmlService, MarkdownItRenderingService markdownItRenderingService, ObjectMapper objectMapper,
+            MessageSource messageSource, @Value("${server.url}") String serverUrl, @Value("${artemis.rendering.use-markdown-it:true}") boolean useMarkdownIt) {
         this.plantUmlService = plantUmlService;
         this.markdownItRenderingService = markdownItRenderingService;
+        this.objectMapper = objectMapper;
+        this.messageSource = messageSource;
         this.serverUrl = serverUrl;
         this.useMarkdownIt = useMarkdownIt;
     }
@@ -125,9 +137,10 @@ public class ProblemStatementRenderingService {
      * @param exercise      the exercise whose problem statement should be rendered
      * @param selfContained if true, PlantUML diagrams are inlined as SVG; otherwise URLs are provided
      * @param testResults   map of testCaseId → passed (true/false), or null if no results available
+     * @param locale        the locale for i18n of user-visible text
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
         String problemStatement = exercise.getProblemStatement();
         boolean useGraalJs = useMarkdownIt && markdownItRenderingService.isAvailable();
         String diagramMode = selfContained ? "inline" : "url";
@@ -147,7 +160,7 @@ public class ProblemStatementRenderingService {
 
         // Step 2: Extract and replace task markers
         List<TaskRenderInfoDTO> tasks = new ArrayList<>();
-        processedMarkdown = extractTasks(processedMarkdown, tasks, testResults);
+        processedMarkdown = extractTasks(processedMarkdown, tasks, testResults, locale);
 
         // Step 3: Render markdown to HTML and determine asset requirements
         String html;
@@ -300,9 +313,6 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Resolves a single test ID to a PlantUML color based on test results.
-     */
-    /**
      * Resolves a test ID (guaranteed digits-only by regex) to a PlantUML color.
      */
     private static String resolveTestColor(String testIdStr, @Nullable Map<Long, TestFeedbackDetail> testResults) {
@@ -317,7 +327,7 @@ public class ProblemStatementRenderingService {
         return detail.passed() ? "green" : "red";
     }
 
-    private String extractTasks(String markdown, List<TaskRenderInfoDTO> tasks, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private String extractTasks(String markdown, List<TaskRenderInfoDTO> tasks, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
 
@@ -340,7 +350,7 @@ public class ProblemStatementRenderingService {
             int total = testIds.size();
 
             boolean hasFeedback = testResults != null && !testIds.isEmpty();
-            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, total, hasFeedback ? testResults : null);
+            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, total, hasFeedback ? testResults : null, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
             tasks.add(new TaskRenderInfoDTO(taskName, testIds, testStatus, hasFeedback ? successCount : null, hasFeedback ? failCount : null));
@@ -349,8 +359,8 @@ public class ProblemStatementRenderingService {
         return sb.toString();
     }
 
-    private static String buildTaskHtml(String taskName, List<Long> testIds, @Nullable String testStatus, int successCount, int total,
-            @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private String buildTaskHtml(String taskName, List<Long> testIds, @Nullable String testStatus, int successCount, int total, @Nullable Map<Long, TestFeedbackDetail> testResults,
+            Locale locale) {
         String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
         String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
         String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
@@ -370,31 +380,34 @@ public class ProblemStatementRenderingService {
         }
         html.append(escapeHtml(taskName));
         if (testResults != null && !testIds.isEmpty()) {
-            html.append(" <span class=\"artemis-task-stats\">").append(successCount).append(" von ").append(total).append(" Tests bestanden</span>");
+            String statsText = messageSource.getMessage("exercise.problemStatement.taskStats", new Object[] { successCount, total }, locale);
+            html.append(" <span class=\"artemis-task-stats\">").append(escapeHtml(statsText)).append("</span>");
         }
         html.append("</span><br>");
         return html.toString();
     }
 
-    private static String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackDetail> testResults) {
-        StringBuilder json = new StringBuilder("[");
-        boolean first = true;
+    private String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackDetail> testResults) {
+        List<Map<String, Object>> feedbackList = new ArrayList<>();
         for (Long testId : testIds) {
             TestFeedbackDetail detail = testResults.get(testId);
             if (detail != null) {
-                if (!first) {
-                    json.append(",");
-                }
-                json.append("{&quot;name&quot;:&quot;").append(escapeHtmlAttribute(detail.testName())).append("&quot;,&quot;passed&quot;:").append(detail.passed());
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("name", detail.testName());
+                entry.put("passed", detail.passed());
                 if (detail.message() != null && !detail.message().isBlank()) {
-                    json.append(",&quot;message&quot;:&quot;").append(escapeHtmlAttribute(detail.message())).append("&quot;");
+                    entry.put("message", detail.message());
                 }
-                json.append("}");
-                first = false;
+                feedbackList.add(entry);
             }
         }
-        json.append("]");
-        return json.toString();
+        try {
+            return escapeHtmlAttribute(objectMapper.writeValueAsString(feedbackList));
+        }
+        catch (JsonProcessingException e) {
+            log.error("Failed to serialize feedback JSON", e);
+            return "[]";
+        }
     }
 
     /**
