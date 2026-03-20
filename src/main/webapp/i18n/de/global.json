@@ -38,8 +38,15 @@
             "title": "Suchen",
             "placeholder": "Suchen oder Frage stellen...",
             "noResultsFound": "Keine Ergebnisse gefunden",
+            "searching": "Suche läuft...",
             "toNavigate": "zum Navigieren",
-            "toClose": "zum Schließen"
+            "toSelect": "zum Auswählen",
+            "toClose": "zum Schließen",
+            "toAddFilter": "um Filter hinzuzufügen",
+            "tipTitle": "Schnellsuche",
+            "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
+            "arrowUpAriaLabel": "Pfeil nach oben",
+            "arrowDownAriaLabel": "Pfeil nach unten"
         },
         "menu": {
             "home": "Startseite",

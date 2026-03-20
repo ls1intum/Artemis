@@ -44,7 +44,9 @@
             "toClose": "to close",
             "toAddFilter": "to add filter",
             "tipTitle": "Quick Search",
-            "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results."
+            "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
+            "arrowUpAriaLabel": "Arrow up",
+            "arrowDownAriaLabel": "Arrow down"
         },
         "menu": {
             "home": "Home",
