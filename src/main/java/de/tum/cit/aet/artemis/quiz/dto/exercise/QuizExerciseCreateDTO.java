@@ -24,7 +24,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.QuizBatchCreationDTO;
 import de.tum.cit.aet.artemis.quiz.dto.question.create.QuizQuestionCreateDTO;
 
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releaseDate, ZonedDateTime startDate, ZonedDateTime dueDate, DifficultyLevel difficulty,
         @NotNull ExerciseMode mode, @NotNull IncludedInOverallScore includedInOverallScore, Set<CompetencyLinkDTO> competencyLinks, Set<String> categories, String channelName,
         Boolean randomizeQuestionOrder, @NotNull QuizMode quizMode, Integer duration, Set<QuizBatchCreationDTO> quizBatches,

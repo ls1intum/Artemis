@@ -21,6 +21,27 @@ export interface CompetencyLinkDTO {
 }
 
 /**
+ * DTO for grading criterion
+ */
+export interface GradingCriterionDTO {
+    id?: number;
+    title?: string;
+    structuredGradingInstructions?: GradingInstructionDTO[];
+}
+
+/**
+ * DTO for grading instruction
+ */
+export interface GradingInstructionDTO {
+    id?: number;
+    credits?: number;
+    gradingScale?: string;
+    instructionDescription?: string;
+    feedback?: string;
+    usageCount?: number;
+}
+
+/**
  * DTO for updating text exercises.
  * Matches the server-side UpdateTextExerciseDTO record structure.
  * Uses IDs instead of entity objects to avoid Hibernate detached entity issues.
@@ -53,6 +74,9 @@ export interface UpdateTextExerciseDTO {
     allowFeedbackRequests?: boolean;
     channelName?: string;
 
+    // Grading criteria
+    gradingCriteria?: GradingCriterionDTO[];
+
     // Competency links as DTOs
     competencyLinks?: CompetencyLinkDTO[];
 
@@ -80,6 +104,20 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
     const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = textExercise.competencyLinks?.map((link) => ({
         competency: { id: link.competency!.id! },
         weight: link.weight,
+    }));
+
+    // Convert grading criteria to DTOs
+    const gradingCriteriaDTOs: GradingCriterionDTO[] | undefined = textExercise.gradingCriteria?.map((criterion) => ({
+        id: criterion.id,
+        title: criterion.title,
+        structuredGradingInstructions: criterion.structuredGradingInstructions?.map((instruction) => ({
+            id: instruction.id,
+            credits: instruction.credits,
+            gradingScale: instruction.gradingScale,
+            instructionDescription: instruction.instructionDescription,
+            feedback: instruction.feedback,
+            usageCount: instruction.usageCount,
+        })),
     }));
 
     // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive)
@@ -115,6 +153,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         allowComplaintsForAutomaticAssessments: textExercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: textExercise.allowFeedbackRequests,
         channelName: textExercise.channelName,
+        gradingCriteria: gradingCriteriaDTOs,
         competencyLinks: competencyLinkDTOs,
         courseId,
         exerciseGroupId,

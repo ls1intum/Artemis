@@ -921,6 +921,9 @@ public class ExerciseService {
             Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
 
             for (var dtoLink : dto.competencyLinks()) {
+                if (dtoLink == null || dtoLink.competency() == null) {
+                    throw new BadRequestAlertException("Competency link and its competency must not be null", "exercise", "competencyLinkNull");
+                }
                 long competencyId = dtoLink.competency().id();
                 double weight = dtoLink.weight();
 

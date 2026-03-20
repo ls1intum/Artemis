@@ -752,7 +752,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).toList();
+                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
+                .toList();
         FileUtil.deleteFiles(allFilesToRemoveMerged);
     }
 
