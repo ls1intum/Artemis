@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.mapInitializedSet;
+
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -7,8 +9,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
-
-import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -43,10 +43,7 @@ public record UpdateQuizExerciseDTO(String title, String channelName, Set<String
         Set<QuizBatchFromEditorDTO> batchDTOs = Optional.ofNullable(quizExercise.getQuizBatches()).orElse(Set.of()).stream().map(QuizBatchFromEditorDTO::of)
                 .collect(Collectors.toSet());
         // Only convert competency links if they are initialized (to avoid LazyInitializationException)
-        Set<CompetencyLinkDTO> competencyLinkDTOs = null;
-        if (Hibernate.isInitialized(quizExercise.getCompetencyLinks()) && quizExercise.getCompetencyLinks() != null) {
-            competencyLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
-        }
+        Set<CompetencyLinkDTO> competencyLinkDTOs = mapInitializedSet(quizExercise.getCompetencyLinks(), CompetencyLinkDTO::of);
         return new UpdateQuizExerciseDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(), competencyLinkDTOs, quizExercise.getDifficulty(),
                 quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), batchDTOs, quizExercise.getReleaseDate(),
                 quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(), questionDTOs);

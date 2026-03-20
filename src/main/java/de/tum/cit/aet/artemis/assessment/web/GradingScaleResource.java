@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -314,12 +315,8 @@ public class GradingScaleResource {
             return;
         }
 
-        if (dto.courseMaxPoints() != null) {
-            course.setMaxPoints(dto.courseMaxPoints());
-        }
-        if (dto.coursePresentationScore() != null) {
-            course.setPresentationScore(dto.coursePresentationScore());
-        }
+        setIfPresent(dto.courseMaxPoints(), course::setMaxPoints);
+        setIfPresent(dto.coursePresentationScore(), course::setPresentationScore);
     }
 
     /**

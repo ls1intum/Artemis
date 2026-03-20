@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
 import static java.time.ZonedDateTime.now;
 
 import java.io.IOException;
@@ -1063,29 +1064,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param updateQuizExerciseDTO The DTO containing the properties to be merged into the domain object.
      */
     public void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
-        if (updateQuizExerciseDTO.title() != null) {
-            quizExercise.setTitle(updateQuizExerciseDTO.title());
-        }
-        if (updateQuizExerciseDTO.channelName() != null) {
-            quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
-        }
+        setIfPresent(updateQuizExerciseDTO.title(), quizExercise::setTitle);
+        setIfPresent(updateQuizExerciseDTO.channelName(), quizExercise::setChannelName);
         // TODO: we must support empty competency links, so checking for null here might be a problem
-        if (updateQuizExerciseDTO.categories() != null) {
-            quizExercise.setCategories(updateQuizExerciseDTO.categories());
-        }
-
-        if (updateQuizExerciseDTO.difficulty() != null) {
-            quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
-        }
-        if (updateQuizExerciseDTO.duration() != null) {
-            quizExercise.setDuration(updateQuizExerciseDTO.duration());
-        }
-        if (updateQuizExerciseDTO.randomizeQuestionOrder() != null) {
-            quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
-        }
-        if (updateQuizExerciseDTO.quizMode() != null) {
-            quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
-        }
+        setIfPresent(updateQuizExerciseDTO.categories(), quizExercise::setCategories);
+        setIfPresent(updateQuizExerciseDTO.difficulty(), quizExercise::setDifficulty);
+        setIfPresent(updateQuizExerciseDTO.duration(), quizExercise::setDuration);
+        setIfPresent(updateQuizExerciseDTO.randomizeQuestionOrder(), quizExercise::setRandomizeQuestionOrder);
+        setIfPresent(updateQuizExerciseDTO.quizMode(), quizExercise::setQuizMode);
         // TODO: should it really be possible to update quiz batches in the quiz exercise update endpoint?
         if (updateQuizExerciseDTO.quizBatches() != null) {
             // Convert DTOs to new entities to avoid detached entity issues
@@ -1093,18 +1079,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.getQuizBatches().clear();
             quizExercise.getQuizBatches().addAll(newBatches);
         }
-        if (updateQuizExerciseDTO.releaseDate() != null) {
-            quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
-        }
-        if (updateQuizExerciseDTO.startDate() != null) {
-            quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
-        }
-        if (updateQuizExerciseDTO.dueDate() != null) {
-            quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
-        }
-        if (updateQuizExerciseDTO.includedInOverallScore() != null) {
-            quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
-        }
+        setIfPresent(updateQuizExerciseDTO.releaseDate(), quizExercise::setReleaseDate);
+        setIfPresent(updateQuizExerciseDTO.startDate(), quizExercise::setStartDate);
+        setIfPresent(updateQuizExerciseDTO.dueDate(), quizExercise::setDueDate);
+        setIfPresent(updateQuizExerciseDTO.includedInOverallScore(), quizExercise::setIncludedInOverallScore);
         if (updateQuizExerciseDTO.quizQuestions() != null) {
             // Build a map of existing questions by ID so we can preserve statistics
             Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)

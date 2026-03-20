@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.Objects;
+
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -29,7 +31,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      */
     public static ShortAnswerSpotFromEditorDTO of(ShortAnswerSpot spot) {
         // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = spot.getTempID() != null ? spot.getTempID() : spot.getId();
+        Long effectiveTempID = Objects.requireNonNullElse(spot.getTempID(), spot.getId());
         return new ShortAnswerSpotFromEditorDTO(spot.getId(), effectiveTempID, spot.getWidth(), spot.getSpotNr());
     }
 
@@ -41,7 +43,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
     public ShortAnswerSpot toDomainObject() {
         ShortAnswerSpot spot = new ShortAnswerSpot();
         // Use id as tempID fallback for mapping resolution
-        spot.setTempID(tempID != null ? tempID : id);
+        spot.setTempID(effectiveId());
         spot.setWidth(width);
         spot.setSpotNr(spotNr);
         return spot;
@@ -53,7 +55,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      * @param spot the existing spot to update
      */
     public void applyTo(ShortAnswerSpot spot) {
-        spot.setTempID(tempID != null ? tempID : id);
+        spot.setTempID(effectiveId());
         spot.setWidth(width);
         spot.setSpotNr(spotNr);
     }

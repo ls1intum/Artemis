@@ -6,7 +6,6 @@ import static de.tum.cit.aet.artemis.core.util.StringUtil.stripIllegalCharacters
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -161,11 +160,7 @@ public class TeamResource {
         team.setImage(dto.image());
 
         // Resolve student IDs to User entities
-        Set<User> students = new HashSet<>();
-        for (Long studentId : dto.studentsOrEmpty()) {
-            students.add(userRepository.findByIdElseThrow(studentId));
-        }
-        team.setStudents(students);
+        team.setStudents(dto.studentsOrEmpty().stream().map(userRepository::findByIdElseThrow).collect(Collectors.toSet()));
 
         // Tutors can only create teams for themselves while instructors can select any tutor as the team owner
         if (!authCheckService.isAtLeastInstructorForExercise(exercise, user)) {
@@ -227,7 +222,7 @@ public class TeamResource {
         }
 
         // Resolve the new owner from DTO
-        User newOwner = dto.ownerId() != null ? userRepository.findByIdElseThrow(dto.ownerId()) : null;
+        User newOwner = Optional.ofNullable(dto.ownerId()).map(userRepository::findByIdElseThrow).orElse(null);
 
         // The team owner can only be changed by instructors
         final boolean ownerWasChanged = !Objects.equals(existingTeam.getOwner(), newOwner);
@@ -244,11 +239,7 @@ public class TeamResource {
         existingTeam.setImage(dto.image());
 
         // Resolve student IDs to User entities
-        Set<User> students = new HashSet<>();
-        for (Long studentId : dto.studentsOrEmpty()) {
-            students.add(userRepository.findByIdElseThrow(studentId));
-        }
-        existingTeam.setStudents(students);
+        existingTeam.setStudents(dto.studentsOrEmpty().stream().map(userRepository::findByIdElseThrow).collect(Collectors.toSet()));
         existingTeam.setOwner(newOwner);
 
         // Save the existing managed team (includes check for conflicts that no student is assigned to multiple teams for an exercise)

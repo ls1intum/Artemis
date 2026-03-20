@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -27,7 +29,7 @@ public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pi
      */
     public static DragItemFromEditorDTO of(DragItem dragItem) {
         // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = dragItem.getTempID() != null ? dragItem.getTempID() : dragItem.getId();
+        Long effectiveTempID = Objects.requireNonNullElse(dragItem.getTempID(), dragItem.getId());
         return new DragItemFromEditorDTO(dragItem.getId(), effectiveTempID, dragItem.getText(), dragItem.getPictureFilePath());
     }
 
@@ -39,7 +41,7 @@ public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pi
     public DragItem toDomainObject() {
         DragItem dragItem = new DragItem();
         // Use id as tempID fallback for mapping resolution
-        dragItem.setTempID(tempID != null ? tempID : id);
+        dragItem.setTempID(effectiveId());
         dragItem.setText(text);
         dragItem.setPictureFilePath(pictureFilePath);
         return dragItem;
@@ -51,7 +53,7 @@ public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pi
      * @param dragItem the existing drag item to update
      */
     public void applyTo(DragItem dragItem) {
-        dragItem.setTempID(tempID != null ? tempID : id);
+        dragItem.setTempID(effectiveId());
         dragItem.setText(text);
         dragItem.setPictureFilePath(pictureFilePath);
     }

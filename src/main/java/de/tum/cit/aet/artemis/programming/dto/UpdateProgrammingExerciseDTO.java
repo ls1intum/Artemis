@@ -1,9 +1,11 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.mapInitializedSet;
+
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.Nullable;
@@ -11,9 +13,7 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -71,23 +71,12 @@ public record UpdateProgrammingExerciseDTO(
 
         // For course exercises: set courseId, leave exerciseGroupId null
         // For exam exercises: set exerciseGroupId, leave courseId null
-        Long courseId = exercise.isCourseExercise() && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId()
-                : null;
-        Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
+        Long courseId = exercise.isCourseExercise() ? Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null) : null;
+        Long exerciseGroupId = Optional.ofNullable(exercise.getExerciseGroup()).map(g -> g.getId()).orElse(null);
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
-        Set<CompetencyLinkDTO> competencyLinkDTOs = null;
+        Set<GradingCriterionDTO> gradingCriterionDTOs = mapInitializedSet(exercise.getGradingCriteria(), GradingCriterionDTO::of);
+        Set<CompetencyLinkDTO> competencyLinkDTOs = mapInitializedSet(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
         List<AuxiliaryRepositoryDTO> auxiliaryRepositoryDTOs = null;
-
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
-
-        if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
-        }
-        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
-            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
-        }
         if (exercise.getAuxiliaryRepositories() != null && Hibernate.isInitialized(exercise.getAuxiliaryRepositories())) {
             auxiliaryRepositoryDTOs = exercise.getAuxiliaryRepositories().isEmpty() ? List.of()
                     : exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();

@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -62,7 +63,7 @@ public record MultipleChoiceQuestionFromEditorDTO(Long id, @NotNull String title
         question.setExplanation(explanation);
         question.setPoints(points);
         question.setScoringType(scoringType);
-        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
+        question.setRandomizeOrder(Objects.requireNonNullElse(randomizeOrder, Boolean.FALSE));
         question.setSingleChoice(singleChoice);
 
         List<AnswerOption> options = new java.util.ArrayList<>(answerOptions.stream().map(AnswerOptionFromEditorDTO::toDomainObject).toList());

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
+
 import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotNull;
@@ -55,9 +57,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
         exam.setPublishResultsDate(publishResultsDate);
         exam.setExamStudentReviewStart(examStudentReviewStart);
         exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
+        setIfPresent(gracePeriod, exam::setGracePeriod);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);
@@ -91,9 +91,7 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
         exam.setPublishResultsDate(publishResultsDate);
         exam.setExamStudentReviewStart(examStudentReviewStart);
         exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
+        setIfPresent(gracePeriod, exam::setGracePeriod);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);

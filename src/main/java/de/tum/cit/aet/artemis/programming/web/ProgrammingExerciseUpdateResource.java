@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -144,10 +144,10 @@ public class ProgrammingExerciseUpdateResource {
         // Validate that courseId or exerciseGroupId hasn't changed
         // For course exercises: courseId must match
         // For exam exercises: exerciseGroupId must match
-        Long existingCourseId = programmingExerciseBeforeUpdate.isCourseExercise() && programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember() != null
-                ? programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId()
+        Long existingCourseId = programmingExerciseBeforeUpdate.isCourseExercise()
+                ? Optional.ofNullable(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null)
                 : null;
-        Long existingExerciseGroupId = programmingExerciseBeforeUpdate.getExerciseGroup() != null ? programmingExerciseBeforeUpdate.getExerciseGroup().getId() : null;
+        Long existingExerciseGroupId = Optional.ofNullable(programmingExerciseBeforeUpdate.getExerciseGroup()).map(g -> g.getId()).orElse(null);
         if (!Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId())) {
             throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
         }
@@ -266,8 +266,7 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        exercise.setProblemStatement(Objects.requireNonNullElse(dto.problemStatement(), ""));
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
@@ -284,41 +283,23 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
         // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        setIfPresent(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        setIfPresent(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        setIfPresent(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        setIfPresent(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
 
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields
-        if (dto.allowOnlineEditor() != null) {
-            exercise.setAllowOnlineEditor(dto.allowOnlineEditor());
-        }
-        if (dto.allowOfflineIde() != null) {
-            exercise.setAllowOfflineIde(dto.allowOfflineIde());
-        }
+        setIfPresent(dto.allowOnlineEditor(), exercise::setAllowOnlineEditor);
+        setIfPresent(dto.allowOfflineIde(), exercise::setAllowOfflineIde);
         exercise.setAllowOnlineIde(dto.allowOnlineIde());
-
-        if (dto.maxStaticCodeAnalysisPenalty() != null) {
-            exercise.setMaxStaticCodeAnalysisPenalty(dto.maxStaticCodeAnalysisPenalty());
-        }
+        setIfPresent(dto.maxStaticCodeAnalysisPenalty(), exercise::setMaxStaticCodeAnalysisPenalty);
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
-
-        if (dto.testCasesChanged() != null) {
-            exercise.setTestCasesChanged(dto.testCasesChanged());
-        }
+        setIfPresent(dto.testCasesChanged(), exercise::setTestCasesChanged);
 
         exercise.setSubmissionPolicy(dto.submissionPolicy());
         exercise.setProjectType(dto.projectType());
@@ -353,16 +334,10 @@ public class ProgrammingExerciseUpdateResource {
             return;
         }
 
-        if (dto.sequentialTestRuns() != null) {
-            buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
-        }
+        setIfPresent(dto.sequentialTestRuns(), buildConfig::setSequentialTestRuns);
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null) {
-            buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-        }
-        if (dto.buildScript() != null) {
-            buildConfig.setBuildScript(dto.buildScript());
-        }
+        setIfPresent(dto.buildPlanConfiguration(), buildConfig::setBuildPlanConfiguration);
+        setIfPresent(dto.buildScript(), buildConfig::setBuildScript);
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());
@@ -383,11 +358,11 @@ public class ProgrammingExerciseUpdateResource {
     private void updateGradingCriteria(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
         if (dto.gradingCriteria() != null) {
             exercise.getGradingCriteria().clear();
-            for (GradingCriterionDTO criterionDTO : dto.gradingCriteria()) {
+            dto.gradingCriteria().stream().map(criterionDTO -> {
                 GradingCriterion criterion = criterionDTO.toEntity();
                 criterion.setExercise(exercise);
-                exercise.getGradingCriteria().add(criterion);
-            }
+                return criterion;
+            }).forEach(exercise.getGradingCriteria()::add);
         }
     }
 

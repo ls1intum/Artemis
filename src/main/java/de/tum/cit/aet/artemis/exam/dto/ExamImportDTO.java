@@ -1,8 +1,12 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
+
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -13,7 +17,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
-import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 
 /**
  * DTO for importing exams with exercise groups and exercises.
@@ -37,10 +40,8 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
      * @return the DTO representation
      */
     public static ExamImportDTO of(Exam exam, Long courseId) {
-        List<ExerciseGroupImportDTO> exerciseGroupDTOs = null;
-        if (exam.getExerciseGroups() != null && !exam.getExerciseGroups().isEmpty()) {
-            exerciseGroupDTOs = exam.getExerciseGroups().stream().map(ExerciseGroupImportDTO::of).toList();
-        }
+        List<ExerciseGroupImportDTO> exerciseGroupDTOs = Optional.ofNullable(exam.getExerciseGroups()).filter(groups -> !groups.isEmpty())
+                .map(groups -> groups.stream().map(ExerciseGroupImportDTO::of).toList()).orElse(null);
 
         return new ExamImportDTO(exam.getTitle(), exam.isTestExam(), exam.isExamWithAttendanceCheck(), exam.getVisibleDate(), exam.getStartDate(), exam.getEndDate(),
                 exam.getPublishResultsDate(), exam.getExamStudentReviewStart(), exam.getExamStudentReviewEnd(), exam.getGracePeriod(), exam.getWorkingTime(), exam.getStartText(),
@@ -66,9 +67,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         exam.setPublishResultsDate(publishResultsDate);
         exam.setExamStudentReviewStart(examStudentReviewStart);
         exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        if (gracePeriod != null) {
-            exam.setGracePeriod(gracePeriod);
-        }
+        setIfPresent(gracePeriod, exam::setGracePeriod);
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);
@@ -86,12 +85,7 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
         exam.setCourse(course);
 
         // Add exercise groups with exercises
-        if (exerciseGroups != null) {
-            for (ExerciseGroupImportDTO groupDTO : exerciseGroups) {
-                ExerciseGroup group = groupDTO.toEntity();
-                exam.addExerciseGroup(group);
-            }
-        }
+        exerciseGroupsOrEmpty().stream().map(ExerciseGroupImportDTO::toEntity).forEach(exam::addExerciseGroup);
 
         return exam;
     }
@@ -102,6 +96,6 @@ public record ExamImportDTO(@NotNull String title, boolean testExam, boolean exa
      * @return the exercise groups or empty list
      */
     public List<ExerciseGroupImportDTO> exerciseGroupsOrEmpty() {
-        return exerciseGroups != null ? exerciseGroups : new ArrayList<>();
+        return Objects.requireNonNullElse(exerciseGroups, Collections.emptyList());
     }
 }

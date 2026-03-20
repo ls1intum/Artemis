@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -29,8 +31,8 @@ public record DragAndDropMappingFromEditorDTO(Long id, Long dragItemTempId, Long
      */
     public static DragAndDropMappingFromEditorDTO of(DragAndDropMapping mapping) {
         // Use real ID as fallback for tempID when dealing with persisted entities
-        Long dragItemEffectiveId = mapping.getDragItem().getTempID() != null ? mapping.getDragItem().getTempID() : mapping.getDragItem().getId();
-        Long dropLocationEffectiveId = mapping.getDropLocation().getTempID() != null ? mapping.getDropLocation().getTempID() : mapping.getDropLocation().getId();
+        Long dragItemEffectiveId = Objects.requireNonNullElse(mapping.getDragItem().getTempID(), mapping.getDragItem().getId());
+        Long dropLocationEffectiveId = Objects.requireNonNullElse(mapping.getDropLocation().getTempID(), mapping.getDropLocation().getId());
         return new DragAndDropMappingFromEditorDTO(mapping.getId(), dragItemEffectiveId, dropLocationEffectiveId);
     }
 

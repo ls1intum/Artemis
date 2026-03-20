@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.Objects;
+
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -31,7 +33,7 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
      */
     public static DropLocationFromEditorDTO of(DropLocation dropLocation) {
         // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = dropLocation.getTempID() != null ? dropLocation.getTempID() : dropLocation.getId();
+        Long effectiveTempID = Objects.requireNonNullElse(dropLocation.getTempID(), dropLocation.getId());
         return new DropLocationFromEditorDTO(dropLocation.getId(), effectiveTempID, dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(),
                 dropLocation.getHeight());
     }
@@ -44,7 +46,7 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
     public DropLocation toDomainObject() {
         DropLocation dropLocation = new DropLocation();
         // Use id as tempID fallback for mapping resolution
-        dropLocation.setTempID(tempID != null ? tempID : id);
+        dropLocation.setTempID(effectiveId());
         dropLocation.setPosX(posX);
         dropLocation.setPosY(posY);
         dropLocation.setWidth(width);
@@ -58,7 +60,7 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
      * @param dropLocation the existing drop location to update
      */
     public void applyTo(DropLocation dropLocation) {
-        dropLocation.setTempID(tempID != null ? tempID : id);
+        dropLocation.setTempID(effectiveId());
         dropLocation.setPosX(posX);
         dropLocation.setPosY(posY);
         dropLocation.setWidth(width);

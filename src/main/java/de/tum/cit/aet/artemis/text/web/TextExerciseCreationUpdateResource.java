@@ -1,16 +1,16 @@
 package de.tum.cit.aet.artemis.text.web;
 
+import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
+import de.tum.cit.aet.artemis.core.util.DTOHelper;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -317,9 +318,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setTitle(dto.title());
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
-        // problemStatement: null -> empty string
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        exercise.setProblemStatement(Objects.requireNonNullElse(dto.problemStatement(), ""));
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
@@ -339,18 +338,10 @@ public class TextExerciseCreationUpdateResource {
         exercise.validateGeneralSettings();
 
         // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        setIfPresent(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        setIfPresent(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        setIfPresent(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        setIfPresent(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
@@ -377,17 +368,14 @@ public class TextExerciseCreationUpdateResource {
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
-            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
-            if (criterion == null) {
-                criterion = gcDto.toEntity();
-                criterion.setExercise(exercise);
-            }
-            else {
-                gcDto.applyTo(criterion);
-            }
-            return criterion;
-        }).collect(Collectors.toSet());
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> Optional.ofNullable(gcDto.id()).map(existingById::get).map(existing -> {
+            gcDto.applyTo(existing);
+            return existing;
+        }).orElseGet(() -> {
+            GradingCriterion newCriterion = gcDto.toEntity();
+            newCriterion.setExercise(exercise);
+            return newCriterion;
+        })).collect(Collectors.toSet());
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);
@@ -408,30 +396,22 @@ public class TextExerciseCreationUpdateResource {
         Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
                 .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
 
-        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        Long exerciseCourseId = Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null);
 
-        Set<CompetencyExerciseLink> updated = new HashSet<>();
-        for (var linkDto : dto.competencyLinks()) {
-
+        Set<CompetencyExerciseLink> updated = dto.competencyLinks().stream().map(linkDto -> {
             if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
                 throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
             }
-
-            var competencyDto = linkDto.courseCompetencyDTO();
-            Long competencyId = competencyDto.id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
+            Long competencyId = linkDto.courseCompetencyDTO().id();
+            return Optional.ofNullable(existingByCompetencyId.get(competencyId)).map(existing -> {
+                existing.setWeight(linkDto.weight());
+                return existing;
+            }).orElseGet(() -> {
                 Competency competencyRef = api.loadCompetency(competencyId);
                 competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
-        }
+                return new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+            });
+        }).collect(Collectors.toSet());
 
         managedLinks.clear();
         managedLinks.addAll(updated);
@@ -441,9 +421,7 @@ public class TextExerciseCreationUpdateResource {
      * Clears the given collection if it is initialized.
      */
     private static <T> void clearInitializedCollection(Set<T> set) {
-        if (set != null && Hibernate.isInitialized(set)) {
-            set.clear();
-        }
+        DTOHelper.clearIfInitialized(set);
     }
 
     /**
@@ -469,18 +447,10 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        setIfPresent(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        setIfPresent(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        setIfPresent(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        setIfPresent(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {

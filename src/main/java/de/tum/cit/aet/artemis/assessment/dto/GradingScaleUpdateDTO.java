@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.HashSet;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
@@ -41,7 +42,7 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
      * Returns the grade steps, defaulting to an empty set if null.
      */
     public Set<GradeStepDTO> gradeStepsOrEmpty() {
-        return gradeSteps != null ? gradeSteps : new HashSet<>();
+        return Objects.requireNonNullElse(gradeSteps, Collections.emptySet());
     }
 
     /**

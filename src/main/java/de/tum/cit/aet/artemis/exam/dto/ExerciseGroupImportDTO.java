@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import org.jspecify.annotations.Nullable;
 
@@ -9,7 +11,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 
 /**
  * DTO for importing exercise groups.
@@ -25,10 +26,8 @@ public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory
      * @return the DTO representation
      */
     public static ExerciseGroupImportDTO of(ExerciseGroup group) {
-        List<ExerciseImportDTO> exerciseDTOs = null;
-        if (group.getExercises() != null && !group.getExercises().isEmpty()) {
-            exerciseDTOs = group.getExercises().stream().map(ExerciseImportDTO::of).toList();
-        }
+        List<ExerciseImportDTO> exerciseDTOs = Optional.ofNullable(group.getExercises()).filter(exs -> !exs.isEmpty()).map(exs -> exs.stream().map(ExerciseImportDTO::of).toList())
+                .orElse(null);
         return new ExerciseGroupImportDTO(group.getTitle(), group.getIsMandatory(), exerciseDTOs);
     }
 
@@ -43,14 +42,7 @@ public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory
         group.setIsMandatory(isMandatory);
 
         // Add exercises
-        if (exercises != null) {
-            for (ExerciseImportDTO exerciseDTO : exercises) {
-                Exercise exercise = exerciseDTO.toEntity();
-                if (exercise != null) {
-                    group.addExercise(exercise);
-                }
-            }
-        }
+        exercisesOrEmpty().stream().map(ExerciseImportDTO::toEntity).filter(Objects::nonNull).forEach(group::addExercise);
 
         return group;
     }
@@ -61,6 +53,6 @@ public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory
      * @return the exercises or empty list
      */
     public List<ExerciseImportDTO> exercisesOrEmpty() {
-        return exercises != null ? exercises : new ArrayList<>();
+        return Objects.requireNonNullElse(exercises, Collections.emptyList());
     }
 }

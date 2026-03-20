@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -68,7 +69,7 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setExplanation(explanation);
         question.setPoints(points);
         question.setScoringType(scoringType);
-        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
+        question.setRandomizeOrder(Objects.requireNonNullElse(randomizeOrder, Boolean.FALSE));
         question.setBackgroundFilePath(backgroundFilePath);
 
         List<DropLocation> locations = new java.util.ArrayList<>(dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList());

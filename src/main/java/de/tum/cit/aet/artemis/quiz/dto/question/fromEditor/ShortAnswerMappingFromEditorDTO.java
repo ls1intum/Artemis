@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -29,8 +31,8 @@ public record ShortAnswerMappingFromEditorDTO(Long id, Long solutionTempId, Long
      */
     public static ShortAnswerMappingFromEditorDTO of(ShortAnswerMapping mapping) {
         // Use real ID as fallback for tempID when dealing with persisted entities
-        Long solutionEffectiveId = mapping.getSolution().getTempID() != null ? mapping.getSolution().getTempID() : mapping.getSolution().getId();
-        Long spotEffectiveId = mapping.getSpot().getTempID() != null ? mapping.getSpot().getTempID() : mapping.getSpot().getId();
+        Long solutionEffectiveId = Objects.requireNonNullElse(mapping.getSolution().getTempID(), mapping.getSolution().getId());
+        Long spotEffectiveId = Objects.requireNonNullElse(mapping.getSpot().getTempID(), mapping.getSpot().getId());
         return new ShortAnswerMappingFromEditorDTO(mapping.getId(), solutionEffectiveId, spotEffectiveId);
     }
 
