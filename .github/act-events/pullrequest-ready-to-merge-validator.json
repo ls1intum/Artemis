@@ -1,0 +1,12 @@
+{
+  "action": "labeled",
+  "label": {
+    "name": "ready to merge"
+  },
+  "pull_request": {
+    "number": 0,
+    "user": {
+      "login": "REPLACE_WITH_PR_AUTHOR"
+    }
+  }
+}
