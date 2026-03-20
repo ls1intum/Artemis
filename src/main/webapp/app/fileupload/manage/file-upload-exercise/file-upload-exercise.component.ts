@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, model, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { filter } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -22,11 +22,24 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
+import { EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-file-upload-exercise',
     templateUrl: './file-upload-exercise.component.html',
-    imports: [SortDirective, FormsModule, SortByDirective, TranslateDirective, FaIconComponent, RouterLink, ExerciseCategoriesComponent, DeleteButtonDirective, ArtemisDatePipe],
+    imports: [
+        SortDirective,
+        FormsModule,
+        SortByDirective,
+        TranslateDirective,
+        FaIconComponent,
+        RouterLink,
+        ExerciseCategoriesComponent,
+        DeleteButtonDirective,
+        ArtemisDatePipe,
+        ArtemisTranslatePipe,
+    ],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class FileUploadExerciseComponent extends ExerciseComponent {
@@ -113,6 +126,10 @@ export class FileUploadExerciseComponent extends ExerciseComponent {
         const sorted = this.sortService.sortByProperty([...this.fileUploadExercises()], this.predicate, this.reverse);
         this.fileUploadExercises.set(sorted);
         this.applyFilter();
+    }
+
+    fetchExerciseDeletionSummary(exercise: FileUploadExercise): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(exercise);
     }
 
     /**
