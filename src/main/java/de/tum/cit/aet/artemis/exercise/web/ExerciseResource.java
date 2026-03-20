@@ -49,6 +49,7 @@ import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ExerciseDeletionSummaryDTO;
 import de.tum.cit.aet.artemis.exercise.dto.ExerciseDetailsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
@@ -280,6 +281,19 @@ public class ExerciseResource {
     public ResponseEntity<String> getExerciseTitle(@PathVariable Long exerciseId) {
         final var title = exerciseRepository.getExerciseTitle(exerciseId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
+     * GET /exercises/:exerciseId/deletion-summary : Get a summary for the deletion of an exercise.
+     *
+     * @param exerciseId the id of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200} and with body a summary of the deletion of the exercise
+     */
+    @GetMapping("exercises/{exerciseId}/deletion-summary")
+    @EnforceAtLeastInstructorInExercise
+    public ResponseEntity<ExerciseDeletionSummaryDTO> getDeletionSummary(@PathVariable long exerciseId) {
+        log.debug("REST request to get deletion summary for exercise : {}", exerciseId);
+        return ResponseEntity.ok(exerciseDeletionService.getDeletionSummary(exerciseId));
     }
 
     /**
