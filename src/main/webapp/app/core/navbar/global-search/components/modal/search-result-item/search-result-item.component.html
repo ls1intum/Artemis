@@ -65,7 +65,7 @@
     <!-- Navigation hint for selected item (positioned absolutely) -->
     @if (isSelected()) {
         <div class="result-nav-hint position-absolute text-secondary">
-            <kbd class="key-hint-small" aria-label="Press Enter to activate">
+            <kbd class="key-hint-small" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate">
                 <fa-icon [icon]="faLevelDownAlt" />
             </kbd>
         </div>

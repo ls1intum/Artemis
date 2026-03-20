@@ -42,7 +42,7 @@
             "toNavigate": "to navigate",
             "toSelect": "to select",
             "toClose": "to close",
-            "toAddFilter": "to add filter",
+            "toAddFilter": "to add a filter",
             "tipTitle": "Quick Search",
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
             "arrowUpAriaLabel": "Arrow up",
@@ -70,10 +70,12 @@
                 "calendarDescription": "View your schedule and deadlines"
             },
             "results": {
+                "due": "Due: {{ date }}",
                 "point": "point",
                 "points": "points"
             },
-            "comingSoon": "Coming soon"
+            "comingSoon": "Coming soon",
+            "enterToActivate": "Press Enter to activate"
         },
         "menu": {
             "home": "Home",

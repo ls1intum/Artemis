@@ -70,10 +70,12 @@
                 "calendarDescription": "Termine und Fristen ansehen"
             },
             "results": {
+                "due": "Fällig: {{ date }}",
                 "point": "Punkt",
                 "points": "Punkte"
             },
-            "comingSoon": "Demnächst verfügbar"
+            "comingSoon": "Demnächst verfügbar",
+            "enterToActivate": "Eingabetaste drücken zum Aktivieren"
         },
         "menu": {
             "home": "Startseite",
