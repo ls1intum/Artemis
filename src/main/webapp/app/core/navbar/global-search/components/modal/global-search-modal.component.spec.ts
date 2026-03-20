@@ -38,12 +38,12 @@ describe('GlobalSearchModalComponent', () => {
     };
 
     const mockSearchService = {
-        search: vi.fn(() => of([])),
+        search: vi.fn(() => of<GlobalSearchResult[]>([])),
     };
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockSearchService.search.mockReturnValue(of([]));
+        mockSearchService.search.mockReturnValue(of<GlobalSearchResult[]>([]));
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
