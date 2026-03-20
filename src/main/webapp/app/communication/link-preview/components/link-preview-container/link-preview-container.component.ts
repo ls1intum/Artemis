@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
+import { Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
@@ -15,6 +16,7 @@ import { Link, LinkifyService } from 'app/communication/link-preview/services/li
 export class LinkPreviewContainerComponent implements OnInit {
     private readonly linkPreviewService: LinkPreviewService = inject(LinkPreviewService);
     private readonly linkifyService: LinkifyService = inject(LinkifyService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly data = input<string>();
     readonly author = input<User>();
@@ -29,6 +31,7 @@ export class LinkPreviewContainerComponent implements OnInit {
     readonly multiple = signal<boolean>(false);
 
     private initialized = false;
+    private pendingFetches = new Subscription();
 
     constructor() {
         effect(() => {
@@ -44,6 +47,9 @@ export class LinkPreviewContainerComponent implements OnInit {
                 }
             });
         });
+        this.destroyRef.onDestroy(() => {
+            this.pendingFetches.unsubscribe();
+        });
     }
 
     ngOnInit() {
@@ -52,6 +58,8 @@ export class LinkPreviewContainerComponent implements OnInit {
     }
 
     private reloadLinkPreviews() {
+        this.pendingFetches.unsubscribe();
+        this.pendingFetches = new Subscription();
         this.loaded.set(false);
         this.showLoadingsProgress.set(true);
         this.linkPreviews.set([]); // Clear the existing link previews
@@ -68,7 +76,7 @@ export class LinkPreviewContainerComponent implements OnInit {
             return;
         }
         previewableLinks.forEach((link) => {
-            this.linkPreviewService.fetchLink(link.href).subscribe({
+            const sub = this.linkPreviewService.fetchLink(link.href).subscribe({
                 next: (linkPreview) => {
                     linkPreview.shouldPreviewBeShown = !!(linkPreview.url && linkPreview.title && linkPreview.description && linkPreview.image);
 
@@ -89,6 +97,7 @@ export class LinkPreviewContainerComponent implements OnInit {
                     this.multiple.set(this.linkPreviews().length > 1);
                 },
             });
+            this.pendingFetches.add(sub);
         });
     }
 
