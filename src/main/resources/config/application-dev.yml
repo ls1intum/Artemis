@@ -155,8 +155,8 @@ artemis:
         vectorizer-module: none           # Vectorizer module: "none" (docker/weaviate.yml), "text2vec-transformers" (docker/weaviate-embeddings.yml), or "text2vec-openai" (for OpenAI-compatible APIs like Ollama)
         # The following properties are only required when using vectorizer-module: text2vec-openai
         # api-embedding-model: qwen3-embedding:8b                     # Embedding model name served by the OpenAI-compatible API
-        # api-base-url: http://host.docker.internal:11434             # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix
-        # api-key: dummy                                              # API key (use any non-empty value for Ollama)
+        # api-base-url: http://host.docker.internal:11434             # Base URL for the OpenAI-compatible API (e.g. Ollama); note: no /v1 suffix; use https://gpu.aet.cit.tum.de/ for the GPU server
+        # api-key: yourApiKey                                         # API key (use any non-empty value for Ollama)
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
 sentry:
