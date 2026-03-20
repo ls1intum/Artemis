@@ -120,7 +120,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
             await examAPIRequests.deleteExam(exam);
         });
     });
@@ -228,7 +229,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
             await examAPIRequests.deleteExam(exam);
         });
     });
@@ -269,7 +271,8 @@ test.describe('Exam participation', () => {
             await examManagement.verifySubmitted(course.id!, exam.id!, studentFourName);
         });
 
-        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
             await examAPIRequests.deleteExam(exam);
         });
     });
@@ -313,7 +316,7 @@ test.describe('Exam participation', () => {
                 await examParticipation.startParticipation(studentTwo, course, exam);
                 await examNavigation.openOrSaveExerciseByTitle(programmingExercise.exerciseGroup!.title!);
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
-                await examParticipation.checkExerciseScore(cAllSuccessfulSubmission.expectedResult);
+                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
                 await login(instructor);
@@ -327,7 +330,8 @@ test.describe('Exam participation', () => {
                 });
             }
 
-            test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+            test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+                await login(admin);
                 await examAPIRequests.deleteExam(exam);
             });
         });
@@ -412,7 +416,6 @@ test.describe('Exam participation', () => {
             await examManagement.confirmWorkingTimeChange(exam.title!);
 
             for (const studentPage of studentPages) {
-                const examParticipationActions = new ExamParticipationActions(studentPage);
                 const modalDialog = new ModalDialogBox(studentPage);
                 const timeChangeMessage = 'The working time of the exam has been changed.';
                 await modalDialog.checkExamTimeChangeDialog('1h 2min', '32min');
@@ -476,7 +479,8 @@ test.describe('Exam participation', () => {
             },
         );
 
-        test.afterEach('Delete exam', async ({ examAPIRequests }) => {
+        test.afterEach('Delete exam', async ({ login, examAPIRequests }) => {
+            await login(admin);
             await examAPIRequests.deleteExam(exam);
         });
     });
