@@ -167,6 +167,10 @@ public class WeaviateService {
                     collection.vectorConfig(VectorConfig.selfProvided());
                 }
 
+                // Enable null state indexing so that properties with null values can be used in filters
+                // (e.g. release_date IS NULL, or filtering on exam properties that are null for non-exam exercises)
+                collection.invertedIndex(idx -> idx.indexNulls(true));
+
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
                     collection.properties(createProperty(prop));
@@ -184,7 +188,7 @@ public class WeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-            throw new WeaviateException("Failed to create collection: " + collectionName, e);
+            throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
         }
         catch (WeaviateApiException e) {
             // In test environments, multiple Spring contexts may share one Weaviate instance,
@@ -194,7 +198,7 @@ public class WeaviateService {
             }
             else {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-                throw new WeaviateException("Failed to create collection: " + collectionName, e);
+                throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
             }
         }
     }
