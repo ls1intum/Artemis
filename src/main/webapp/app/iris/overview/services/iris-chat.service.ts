@@ -207,7 +207,6 @@ export class IrisChatService implements OnDestroy {
             tap((response: HttpResponse<IrisMessageResponseDTO>) => {
                 this.suggestions.next([]);
                 this.replaceOrAddMessage(this.mapMessageDTO(response.body!));
-                this.updateCurrentSessionLastActivityDate();
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
@@ -256,7 +255,6 @@ export class IrisChatService implements OnDestroy {
             map((r: HttpResponse<IrisMessageResponseDTO>) => this.mapMessageDTO(r.body!)),
             tap((m) => {
                 this.replaceMessage(m);
-                this.updateCurrentSessionLastActivityDate();
             }),
             map(() => undefined),
             catchError((error: HttpErrorResponse) => {
@@ -392,13 +390,6 @@ export class IrisChatService implements OnDestroy {
             }
             this.updateChatSessions(currentSessions, true);
         }
-    }
-
-    private updateCurrentSessionLastActivityDate(): void {
-        if (!this.sessionId) return;
-        const sessions = this.chatSessions.getValue();
-        const updated = sessions.map((s) => (s.id === this.sessionId ? { ...s, lastActivityDate: new Date() } : s));
-        this.chatSessions.next(updated);
     }
 
     /**

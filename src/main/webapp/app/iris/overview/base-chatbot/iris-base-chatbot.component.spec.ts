@@ -45,7 +45,9 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
+import { ConfirmationService } from 'primeng/api';
 import { DialogService } from 'primeng/dynamicdialog';
+import { AlertService } from 'app/shared/service/alert.service';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -93,6 +95,7 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
+                MockProvider(AlertService),
                 MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
@@ -190,44 +193,6 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update lastActivityDate on the current session after sendMessage', async () => {
-        // given
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-
-        const oldDate = new Date('2025-01-01T00:00:00.000Z');
-        const mockSession: IrisSessionDTO = {
-            id: mockServerSessionHttpResponse.body!.id,
-            creationDate: oldDate,
-            lastActivityDate: oldDate,
-            chatMode: ChatServiceMode.COURSE,
-            entityId: 123,
-            entityName: 'Course 1',
-        };
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
-
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-        component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
-
-        const beforeSend = new Date();
-
-        // when
-        component.onSend();
-        await fixture.whenStable();
-
-        // then
-        const sessions = chatService.chatSessions.getValue();
-        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
-        expect(updatedSession).toBeDefined();
-        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeSend.getTime());
-    });
-
     it('should resend message', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
@@ -253,44 +218,6 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.messages()).toContainEqual(createdMessage);
         expect(stub).toHaveBeenCalledWith(createdMessage);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should update lastActivityDate on the current session after resendMessage', async () => {
-        // given
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-
-        const oldDate = new Date('2025-01-01T00:00:00.000Z');
-        const mockSession: IrisSessionDTO = {
-            id: mockServerSessionHttpResponse.body!.id,
-            creationDate: oldDate,
-            lastActivityDate: oldDate,
-            chatMode: ChatServiceMode.COURSE,
-            entityId: 123,
-            entityName: 'Course 1',
-        };
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
-
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        createdMessage.id = 2;
-        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
-
-        const beforeResend = new Date();
-
-        // when
-        component.resendMessage(createdMessage);
-        await fixture.whenStable();
-
-        // then
-        const sessions = chatService.chatSessions.getValue();
-        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
-        expect(updatedSession).toBeDefined();
-        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeResend.getTime());
     });
 
     it('should rate message', async () => {
@@ -1397,6 +1324,76 @@ describe('IrisBaseChatbotComponent', () => {
             const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
             expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
             expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        });
+    });
+
+    describe('onDeleteSession', () => {
+        let confirmationService: ConfirmationService;
+        let alertService: AlertService;
+        const mockSession: IrisSessionDTO = {
+            id: 42,
+            title: 'Test session',
+            creationDate: new Date('2025-06-20T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        beforeEach(() => {
+            confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            alertService = TestBed.inject(AlertService);
+        });
+
+        it('should show confirmation dialog with correct i18n keys', () => {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+            component.onDeleteSession(mockSession);
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            const callArgs = confirmSpy.mock.calls[0][0];
+            expect(callArgs.header).toBe('artemisApp.iris.chatHistory.deleteSessionHeader');
+            expect(callArgs.message).toContain('artemisApp.iris.chatHistory.deleteSessionQuestion');
+            expect(callArgs.acceptLabel).toBe('entity.action.delete');
+            expect(callArgs.rejectLabel).toBe('entity.action.cancel');
+        });
+
+        it('should call chatService.deleteSession on accept', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                confirmation.accept!();
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+
+            component.onDeleteSession(mockSession);
+
+            expect(deleteSessionSpy).toHaveBeenCalledWith(42);
+        });
+
+        it('should show success alert after successful deletion', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                confirmation.accept!();
+                return confirmationService;
+            });
+            vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.onDeleteSession(mockSession);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionSuccess');
+        });
+
+        it('should not call deleteSession on rejection', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                if (confirmation.reject) {
+                    confirmation.reject();
+                }
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
+
+            component.onDeleteSession(mockSession);
+
+            expect(deleteSessionSpy).not.toHaveBeenCalled();
         });
     });
 
