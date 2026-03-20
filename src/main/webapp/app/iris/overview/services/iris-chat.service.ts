@@ -394,12 +394,19 @@ export class IrisChatService implements OnDestroy {
         }
     }
 
+    private updateCurrentSessionLastActivityDate(): void {
+        if (!this.sessionId) return;
+        const sessions = this.chatSessions.getValue();
+        const updated = sessions.map((s) => (s.id === this.sessionId ? { ...s, lastActivityDate: new Date() } : s));
+        this.chatSessions.next(updated);
+    }
+
     /**
      * Updates the currently active chat context used by UI components.
      * Falls back to legacy `mode` field for compatibility.
      */
     private updateCurrentSessionContext(session: IrisSession | IrisSessionDTO): void {
-        const chatMode = session.chatMode ?? (session as { mode?: ChatServiceMode }).mode;
+        const chatMode = 'chatMode' in session && session.chatMode !== undefined ? session.chatMode : (session as IrisSession).mode;
         if (chatMode !== undefined) {
             this.currentChatModeSubject.next(chatMode);
         }

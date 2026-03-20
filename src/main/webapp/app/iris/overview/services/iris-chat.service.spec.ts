@@ -114,7 +114,7 @@ describe('IrisChatService', () => {
 
     it('should initialize current chat context from newly loaded session', async () => {
         const relatedEntityId = 77;
-        const newSession: IrisSession = { ...mockConversationWithNoMessages, id: 333, chatMode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: relatedEntityId };
+        const newSession: IrisSession = { ...mockConversationWithNoMessages, id: 333, mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: relatedEntityId };
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of({ body: newSession } as HttpResponse<IrisSession>));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
