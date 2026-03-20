@@ -319,7 +319,10 @@ public class ProgrammingExerciseCreationUpdateService {
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
+        // Note: individual due date removal is handled in ProgrammingExerciseUpdateResource
+        // using the saved originalDueDate (programmingExerciseBeforeUpdate is the same
+        // Hibernate L1 cache entity as updatedProgrammingExercise, so getDueDate() returns
+        // the already-mutated value)
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
         if (programmingExerciseBeforeUpdate.isCourseExercise()) {
