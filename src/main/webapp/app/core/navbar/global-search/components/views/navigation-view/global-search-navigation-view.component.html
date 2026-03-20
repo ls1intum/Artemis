@@ -38,18 +38,24 @@
 
 <!-- Results list when searching or filter is active -->
 @if (showResults() && !isLoading() && !searchError()) {
-    <div class="search-results-list mt-3">
-        @for (result of results(); track result.id; let i = $index) {
-            <div #selectableItem>
-                <jhi-global-search-result-item
-                    [result]="result"
-                    [icon]="getIconForType(result.type, result.badge)"
-                    [isSelected]="selectedIndex() === i"
-                    (resultClick)="navigateToResult($event)"
-                />
-            </div>
-        }
-    </div>
+    @if (results().length > 0) {
+        <div class="search-results-list mt-3">
+            @for (result of results(); track result.id; let i = $index) {
+                <div #selectableItem>
+                    <jhi-global-search-result-item
+                        [result]="result"
+                        [icon]="getIconForType(result.type, result.badge)"
+                        [isSelected]="selectedIndex() === i"
+                        (resultClick)="navigateToResult($event)"
+                    />
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="no-results-state mt-3 p-3 text-center text-secondary">
+            <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
+        </div>
+    }
 } @else if (isLoading()) {
     <!-- Skeleton loading placeholders -->
     <div class="search-results-list mt-3">
