@@ -1070,7 +1070,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (updateQuizExerciseDTO.channelName() != null) {
             quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
         }
-        // TODO: we must support empty competency links, so checking for null here might be a problem
         if (updateQuizExerciseDTO.categories() != null) {
             quizExercise.setCategories(updateQuizExerciseDTO.categories());
         }
@@ -1087,7 +1086,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         if (updateQuizExerciseDTO.quizMode() != null) {
             quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
         }
-        // TODO: should it really be possible to update quiz batches in the quiz exercise update endpoint?
         if (updateQuizExerciseDTO.quizBatches() != null) {
             // Convert DTOs to new entities to avoid detached entity issues
             Set<QuizBatch> newBatches = updateQuizExerciseDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
