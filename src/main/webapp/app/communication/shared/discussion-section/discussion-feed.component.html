@@ -1,0 +1,97 @@
+@if (course) {
+    @if (isNoChannelAvailable) {
+        <div jhiTranslate="artemisApp.metis.channel.noChannel"></div>
+    } @else {
+        @if (currentPost !== undefined) {
+            <div class="d-flex align-items-center my-2">
+                <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable" />
+                <small jhiTranslate="artemisApp.metis.post.showAllPosts"></small>
+            </div>
+            <jhi-posting-thread [post]="currentPost" [showAnswers]="true" [id]="'item-' + currentPost?.id" [showChannelReference]="false" />
+        } @else {
+            <jhi-search-filter (newSearchEvent)="onSearch($event)" />
+            <form [formGroup]="formGroup">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
+                    <!-- filters -->
+                    <div class="d-flex align-items-center flex-wrap gap-2">
+                        <fa-icon [icon]="faFilter" />
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" formControlName="filterToUnresolved" id="filterToUnresolved" (change)="onSelectContext()" />
+                            <label for="filterToUnresolved" jhiTranslate="artemisApp.metis.overview.filterToUnresolved"></label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input class="form-check-input" type="checkbox" formControlName="filterToOwn" id="filterToOwn" (change)="onSelectContext()" />
+                            <label for="filterToOwn" jhiTranslate="artemisApp.metis.overview.filterToOwn"></label>
+                        </div>
+                        <div class="form-check mb-0">
+                            <input
+                                class="form-check-input"
+                                type="checkbox"
+                                formControlName="filterToAnsweredOrReacted"
+                                id="filterToAnsweredOrReacted"
+                                (change)="onSelectContext()"
+                            />
+                            <label for="filterToAnsweredOrReacted" jhiTranslate="artemisApp.metis.overview.filterToAnsweredOrReacted"></label>
+                        </div>
+                    </div>
+                    <!-- sort -->
+                    <div class="d-flex align-items-center gap-1">
+                        <span jhiTranslate="artemisApp.metis.discussionSection.sortByDate"></span>
+                        <fa-icon
+                            class="clickable"
+                            [icon]="
+                                currentSortDirection === SortDirection.ASCENDING
+                                    ? faLongArrowAltUp
+                                    : currentSortDirection === SortDirection.DESCENDING
+                                      ? faLongArrowAltDown
+                                      : faLongArrowRight
+                            "
+                            [ngbTooltip]="
+                                currentSortDirection === SortDirection.ASCENDING
+                                    ? ('artemisApp.metis.overview.sortAscending' | artemisTranslate)
+                                    : currentSortDirection === SortDirection.DESCENDING
+                                      ? ('artemisApp.metis.overview.sortDescending' | artemisTranslate)
+                                      : ('artemisApp.metis.discussionSection.defaultSortCriterion' | artemisTranslate)
+                            "
+                            (click)="onChangeSortDir()"
+                        />
+                    </div>
+                </div>
+            </form>
+            <hr class="my-2 border-2" />
+            <div #itemsContainer class="overflow-y-auto flex-grow-1" infinite-scroll [scrollWindow]="false" (scrolledUp)="fetchNextPage()">
+                @for (post of posts; track post.id) {
+                    <jhi-posting-thread
+                        #postingThread
+                        [id]="'item-' + post.id"
+                        class="item"
+                        [post]="post"
+                        [showAnswers]="posts.length === 1"
+                        [showChannelReference]="false"
+                        [isCommunicationPage]="false"
+                    />
+                }
+            </div>
+        }
+        <!-- loading posts -->
+        @if (isLoading) {
+            <div class="post-result-information mt-2" jhiTranslate="artemisApp.metis.discussionSection.loadingMessages"></div>
+        }
+        <!-- no posts -->
+        @if (!isLoading && posts.length === 0) {
+            <div class="post-result-information mt-2" jhiTranslate="artemisApp.metis.discussionSection.noMessages"></div>
+        }
+        <!-- new post button -->
+        @if (createdPost && !isLoading && !channel.isArchived) {
+            <div class="d-flex flex-column mt-2">
+                <button id="new-post" class="btn btn-sm btn-primary align-self-start" (click)="toggleSendMessage()">
+                    <fa-icon [icon]="shouldSendMessage ? faTimes : faPlus" />
+                    <span class="d-none d-md-inline" jhiTranslate="{{ shouldSendMessage ? 'artemisApp.metis.collapseNewMessage' : 'artemisApp.metis.newMessage' }}"></span>
+                </button>
+                @if (shouldSendMessage) {
+                    <jhi-message-inline-input class="message-input" [posting]="createdPost" (onCreate)="createEmptyPost()" />
+                }
+            </div>
+        }
+    }
+}

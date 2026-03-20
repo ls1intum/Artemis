@@ -8,10 +8,6 @@ $discussion-section-card-min-width: 370px;
     display: flex;
     height: 100%;
     margin-left: auto;
-
-    .back-instruction {
-        font-size: 12px;
-    }
 }
 
 .expanded-discussion {
@@ -47,13 +43,6 @@ $discussion-section-card-min-width: 370px;
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
-            }
-        }
-
-        .card-body {
-            .items-container {
-                max-height: 700px;
-                overflow-y: auto;
             }
         }
     }

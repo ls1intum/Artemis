@@ -27,7 +27,7 @@
 
     @if (showDiscussion()) {
         <ng-template jhiPanel label="Chat" [icon]="faComment">
-            <jhi-discussion-section [exercise]="exercise()" />
+            <jhi-discussion-feed [exercise]="exercise()" />
         </ng-template>
     }
 

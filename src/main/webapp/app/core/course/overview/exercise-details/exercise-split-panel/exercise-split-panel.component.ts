@@ -4,7 +4,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
+import { DiscussionFeedComponent } from 'app/communication/shared/discussion-section/discussion-feed.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
@@ -21,7 +21,7 @@ import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/
         ResizablePanelsComponent,
         PanelDirective,
         ProblemStatementComponent,
-        DiscussionSectionComponent,
+        DiscussionFeedComponent,
         TextEditorComponent,
         CodeEditorStudentContainerComponent,
         ModelingSubmissionComponent,
