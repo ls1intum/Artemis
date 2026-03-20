@@ -60,18 +60,24 @@ public class ProblemStatementRenderingService {
     // @formatter:off
     private static final String EMBEDDED_CSS = """
             <style>
+            .artemis-problem-statement{color:var(--body-color,#212529)}
             .artemis-problem-statement svg{max-width:100%;height:auto}
+            .artemis-problem-statement a{color:var(--link-color,#3e8acc)}
+            .artemis-problem-statement pre{background:var(--artemis-pre-background,#f5f5f5);color:var(--artemis-pre-color,#333);border:1px solid var(--artemis-pre-border,#ccc);border-radius:4px;padding:10px;white-space:pre-wrap;overflow-wrap:break-word}
+            .artemis-problem-statement :not(pre)>code{font-size:87.5%}
+            .artemis-problem-statement blockquote{color:var(--markdown-preview-blockquote,#6a737d);border-left:4px solid var(--markdown-preview-blockquote-border,#dfe2e5);padding:0 1em;margin:0 0 16px}
+            .artemis-problem-statement img{max-width:100%}
             .artemis-task{cursor:pointer;font-weight:600}
-            .artemis-icon-success{color:var(--artemis-success-color,#28a745)}
-            .artemis-icon-fail{color:var(--artemis-danger-color,#dc3545)}
+            .artemis-icon-success{color:var(--success,#28a745)}
+            .artemis-icon-fail{color:var(--danger,#dc3545)}
             .artemis-task-stats{font-weight:400;font-size:.9em;margin-left:4px;text-decoration:underline}
-            .artemis-task-success .artemis-task-stats{color:var(--artemis-success-color,#28a745)}
-            .artemis-task-fail .artemis-task-stats{color:var(--artemis-danger-color,#dc3545)}
-            .artemis-task-not-executed .artemis-task-stats{color:var(--artemis-secondary-color,#6c757d)}
-            .markdown-alert{border-left:4px solid var(--artemis-info-color,#17a2b8);padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+            .artemis-task-success .artemis-task-stats{color:var(--success,#28a745)}
+            .artemis-task-fail .artemis-task-stats{color:var(--danger,#dc3545)}
+            .artemis-task-not-executed .artemis-task-stats{color:var(--secondary,#6c757d)}
+            .markdown-alert{border-left:4px solid var(--info,#17a2b8);padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
             .markdown-alert-title{font-weight:600}
             table.table{border-collapse:collapse;width:100%}
-            table.table th,table.table td{border:1px solid var(--artemis-border-color,#dee2e6);padding:8px}
+            table.table th,table.table td{border:1px solid var(--border-color,#dee2e6);padding:8px}
             </style>
             """;
     // @formatter:on
