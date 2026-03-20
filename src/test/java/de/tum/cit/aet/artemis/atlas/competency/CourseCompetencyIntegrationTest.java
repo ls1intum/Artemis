@@ -346,6 +346,8 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
         void getCompetencyStudentProgressMultipleExercises() throws Exception {
             // The scheduling for all results interferes with the competency progress calculation, since only one per second is allowed
             // Therefore creating the participant scores manually
+            // First wait for any pending async tasks to complete before shutting down
+            await().until(() -> participantScoreScheduleService.isIdle());
             participantScoreScheduleService.shutdown();
 
             User student1 = userTestRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
