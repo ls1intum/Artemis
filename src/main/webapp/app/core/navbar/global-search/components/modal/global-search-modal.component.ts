@@ -41,6 +41,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly results = signal<GlobalSearchResult[]>([]);
     protected readonly isLoading = signal<boolean>(false);
     protected readonly hasSearched = signal<boolean>(false);
+    protected readonly searchError = signal<string | undefined>(undefined);
     protected readonly selectedIndex = signal(-1);
     private readonly activeView = viewChild(SearchResultView);
     private readonly maxIndex = computed(() => (this.activeView()?.itemCount() ?? 0) - 1);
@@ -78,10 +79,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         this.results.set([]);
                         this.hasSearched.set(false);
                         this.isLoading.set(false);
+                        this.searchError.set(undefined);
                         return of([]);
                     }
 
                     this.isLoading.set(true);
+                    this.searchError.set(undefined);
                     const typeFilter = hasFilter ? this.activeFilters()[0] : undefined;
 
                     // If no valid query but has filter, fetch recent items
@@ -97,6 +100,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     return this.searchService.search(searchQuery, options).pipe(
                         catchError(() => {
                             this.isLoading.set(false);
+                            this.searchError.set('global.search.searchFailed');
                             return of([]);
                         }),
                     );
@@ -131,6 +135,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     protected onSearchInput(query: string): void {
         this.searchQuery.set(query);
+        this.searchError.set(undefined);
 
         // Show skeleton immediately while debounce waits, for a responsive feel
         const trimmedQuery = query?.trim() || '';
@@ -197,12 +202,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         if (!type) return;
 
         this.isLoading.set(true);
+        this.searchError.set(undefined);
         // Search with empty query but with filter to get recent items
         this.searchService
             .search('', { type, sortBy: 'dueDate', limit: 10 })
             .pipe(
                 catchError(() => {
                     this.isLoading.set(false);
+                    this.searchError.set('global.search.searchFailed');
                     return of([]);
                 }),
                 takeUntilDestroyed(this.destroyRef),
@@ -222,6 +229,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.selectedIndex.set(-1);
         this.hasSearched.set(false);
         this.isLoading.set(false);
+        this.searchError.set(undefined);
         this.currentView.set(SearchView.Navigation);
     }
 

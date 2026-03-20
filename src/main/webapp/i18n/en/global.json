@@ -75,7 +75,8 @@
                 "points": "points"
             },
             "comingSoon": "Coming soon",
-            "enterToActivate": "Press Enter to activate"
+            "enterToActivate": "Press Enter to activate",
+            "searchFailed": "Search failed. Please try again."
         },
         "menu": {
             "home": "Home",

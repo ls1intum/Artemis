@@ -29,8 +29,15 @@
     </div>
 }
 
+<!-- Error state -->
+@if (searchError()) {
+    <div class="search-error-state mt-3 p-3 text-center text-danger">
+        <p>{{ searchError()! | artemisTranslate }}</p>
+    </div>
+}
+
 <!-- Results list when searching or filter is active -->
-@if (showResults() && !isLoading()) {
+@if (showResults() && !isLoading() && !searchError()) {
     <div class="search-results-list mt-3">
         @for (result of results(); track result.id; let i = $index) {
             <div #selectableItem>

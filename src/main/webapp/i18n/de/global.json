@@ -75,7 +75,8 @@
                 "points": "Punkte"
             },
             "comingSoon": "Demnächst verfügbar",
-            "enterToActivate": "Eingabetaste drücken zum Aktivieren"
+            "enterToActivate": "Eingabetaste drücken zum Aktivieren",
+            "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut."
         },
         "menu": {
             "home": "Startseite",

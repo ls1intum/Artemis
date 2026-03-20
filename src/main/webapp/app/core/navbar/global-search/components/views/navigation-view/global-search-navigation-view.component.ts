@@ -52,6 +52,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly hasSearched = input<boolean>(false);
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
+    readonly searchError = input<string | undefined>(undefined);
 
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
