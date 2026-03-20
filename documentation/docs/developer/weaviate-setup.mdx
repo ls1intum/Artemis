@@ -128,8 +128,8 @@ If you have access to a remote GPU server running Ollama, you only need to start
   When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`api-base-url`, `api-embedding-model`, `api-key`),
   you must delete the existing collections first and restart Artemis so they are recreated with the new configuration.</p>
 
-  <p>On startup, if a collection already exists, Artemis will log:<br/>
-  <code>Collection 'Artemis_Exercises' already exists, skipping creation. Delete the collection and restart to apply configuration changes.</code></p>
+  <p>On startup, if a collection already exists and its vectorizer configuration differs from the application config, Artemis will log a warning like:<br/>
+  <code>Collection 'Artemis_Exercises' exists but its vectorizer configuration differs from the application config: api-base-url: existing='...', configured='...'. Delete the collection and restart Artemis to apply the new settings: curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"</code></p>
 
   <p>To delete all Artemis collections:</p>
 

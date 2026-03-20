@@ -3,7 +3,11 @@ package de.tum.cit.aet.artemis.globalsearch.service;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 import jakarta.annotation.PostConstruct;
 
@@ -26,10 +30,12 @@ import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateSchemas;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
 import io.weaviate.client6.v1.api.WeaviateApiException;
 import io.weaviate.client6.v1.api.WeaviateClient;
+import io.weaviate.client6.v1.api.collections.CollectionConfig;
 import io.weaviate.client6.v1.api.collections.CollectionHandle;
 import io.weaviate.client6.v1.api.collections.Property;
 import io.weaviate.client6.v1.api.collections.ReferenceProperty;
 import io.weaviate.client6.v1.api.collections.VectorConfig;
+import io.weaviate.client6.v1.api.collections.vectorizers.Text2VecOpenAiVectorizer;
 
 /**
  * Infrastructure service for Weaviate vector database.
@@ -200,6 +206,64 @@ public class WeaviateService {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
                 throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
             }
+        }
+    }
+
+    /**
+     * Compares the existing collection's vectorizer configuration with the application config.
+     * Logs a warning if there is a mismatch, guiding the developer to delete and recreate the collection.
+     *
+     * @param collectionName the fully-qualified collection name (with prefix)
+     */
+    private void checkForConfigurationDrift(String collectionName) {
+        try {
+            Optional<CollectionConfig> existingConfig = client.collections.getConfig(collectionName);
+            if (existingConfig.isEmpty()) {
+                return;
+            }
+
+            Map<String, VectorConfig> vectors = existingConfig.get().vectors();
+            if (vectors == null || vectors.isEmpty()) {
+                return;
+            }
+
+            // Weaviate stores the default vector under the key "default"
+            VectorConfig existingVector = vectors.values().iterator().next();
+            VectorConfig.Kind existingKind = existingVector._kind();
+
+            // Determine the expected kind from the configured vectorizer module
+            VectorConfig.Kind expectedKind = switch (vectorizerModule) {
+                case "text2vec-openai" -> VectorConfig.Kind.TEXT2VEC_OPENAI;
+                case "text2vec-transformers" -> VectorConfig.Kind.TEXT2VEC_TRANSFORMERS;
+                default -> VectorConfig.Kind.NONE;
+            };
+
+            List<String> mismatches = new ArrayList<>();
+
+            if (existingKind != expectedKind) {
+                mismatches.add("vectorizer module: existing='%s', configured='%s'".formatted(existingKind.jsonValue(), vectorizerModule));
+            }
+
+            // For text2vec-openai, also compare baseUrl and model
+            if (existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI) {
+                Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
+                if (!Objects.equals(existingOpenAi.baseUrl(), weaviateApiBaseUrl)) {
+                    mismatches.add("api-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), weaviateApiBaseUrl));
+                }
+                if (!Objects.equals(existingOpenAi.model(), weaviateApiEmbeddingModel)) {
+                    mismatches.add("api-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), weaviateApiEmbeddingModel));
+                }
+            }
+
+            if (!mismatches.isEmpty()) {
+                log.warn(
+                        "Collection '{}' exists but its vectorizer configuration differs from the application config: {}. "
+                                + "Delete the collection and restart Artemis to apply the new settings: curl -X DELETE \"http://{}:{}/v1/schema/{}\"",
+                        collectionName, String.join("; ", mismatches), weaviateHost, weaviateHttpPort, collectionName);
+            }
+        }
+        catch (Exception e) {
+            log.debug("Could not verify configuration of existing collection '{}': {}", collectionName, e.getMessage());
         }
     }
 
