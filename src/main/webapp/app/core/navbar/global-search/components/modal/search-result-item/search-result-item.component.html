@@ -29,7 +29,7 @@
                     @if (result().metadata['dueDate']) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
-                            <span>Due: {{ result().metadata['dueDate'] }}</span>
+                            <span>{{ 'global.search.results.due' | artemisTranslate: { date: result().metadata['dueDate'] } }}</span>
                         </span>
                     }
                     @if (result().metadata['dueDate'] && result().metadata['points']) {
