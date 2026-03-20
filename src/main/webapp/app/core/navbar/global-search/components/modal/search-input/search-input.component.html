@@ -21,6 +21,6 @@
     />
 
     @if (isLoading()) {
-        <span class="spinner-border spinner-border-sm text-secondary" role="status" aria-label="Loading"></span>
+        <span class="spinner-border spinner-border-sm text-secondary" role="status" [attr.aria-label]="'global.search.searching' | artemisTranslate"></span>
     }
 </div>
