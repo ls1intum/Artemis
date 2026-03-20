@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
@@ -72,7 +73,7 @@ public class ProblemStatementRenderingService {
     /**
      * Holds feedback detail for a single test case.
      */
-    public record TestFeedbackDetail(Long testId, String testName, boolean passed, String message) {
+    public record TestFeedbackDetail(Long testId, String testName, boolean passed, @Nullable String message) {
     }
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
@@ -154,24 +155,14 @@ public class ProblemStatementRenderingService {
         AssetRequirementsDTO assets;
 
         if (useGraalJs) {
-            html = markdownItRenderingService.render(processedMarkdown);
-            html = rewriteUrlsAndSanitize(html);
+            html = renderWithGraalJs(processedMarkdown);
             rendererVersion = GRAALJS_VERSION;
             assets = new AssetRequirementsDTO("absent", "absent", diagramMode, GRAALJS_REQUIRED_CSS);
         }
         else {
-            boolean needsKatex = KATEX_INLINE_PATTERN.matcher(processedMarkdown).find() || KATEX_BLOCK_PATTERN.matcher(processedMarkdown).find()
-                    || KATEX_BEGIN_PATTERN.matcher(processedMarkdown).find();
-            boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(processedMarkdown).find();
-
-            var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
-            Parser parser = Parser.builder().extensions(extensions).build();
-            HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
-                    .build();
-            html = renderer.render(parser.parse(processedMarkdown));
-            html = sanitizeHtml(html);
+            html = renderWithCommonMark(processedMarkdown);
             rendererVersion = COMMONMARK_VERSION;
-            assets = new AssetRequirementsDTO(needsKatex ? "required" : "absent", needsHighlighting ? "required" : "absent", diagramMode, List.of());
+            assets = detectAssetRequirements(processedMarkdown, diagramMode);
         }
 
         // Step 4: Inject PlantUML SVGs after sanitization.
@@ -202,6 +193,26 @@ public class ProblemStatementRenderingService {
         String contentHash = computeHash(html);
 
         return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams);
+    }
+
+    private String renderWithGraalJs(String markdown) {
+        String html = markdownItRenderingService.render(markdown);
+        return rewriteUrlsAndSanitize(html);
+    }
+
+    private String renderWithCommonMark(String markdown) {
+        var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
+        Parser parser = Parser.builder().extensions(extensions).build();
+        HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
+                .build();
+        String html = renderer.render(parser.parse(markdown));
+        return sanitizeHtml(html);
+    }
+
+    private static AssetRequirementsDTO detectAssetRequirements(String markdown, String diagramMode) {
+        boolean needsKatex = KATEX_INLINE_PATTERN.matcher(markdown).find() || KATEX_BLOCK_PATTERN.matcher(markdown).find() || KATEX_BEGIN_PATTERN.matcher(markdown).find();
+        boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(markdown).find();
+        return new AssetRequirementsDTO(needsKatex ? "required" : "absent", needsHighlighting ? "required" : "absent", diagramMode, List.of());
     }
 
     private String extractPlantUmlDiagrams(String markdown, long exerciseId, boolean selfContained, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs,
@@ -291,21 +302,19 @@ public class ProblemStatementRenderingService {
     /**
      * Resolves a single test ID to a PlantUML color based on test results.
      */
+    /**
+     * Resolves a test ID (guaranteed digits-only by regex) to a PlantUML color.
+     */
     private static String resolveTestColor(String testIdStr, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         if (testResults == null) {
             return "grey";
         }
-        try {
-            long testId = Long.parseLong(testIdStr);
-            TestFeedbackDetail detail = testResults.get(testId);
-            if (detail == null) {
-                return "grey";
-            }
-            return detail.passed() ? "green" : "red";
-        }
-        catch (NumberFormatException e) {
+        long testId = Long.parseLong(testIdStr);
+        TestFeedbackDetail detail = testResults.get(testId);
+        if (detail == null) {
             return "grey";
         }
+        return detail.passed() ? "green" : "red";
     }
 
     private String extractTasks(String markdown, List<TaskRenderInfoDTO> tasks, @Nullable Map<Long, TestFeedbackDetail> testResults) {
@@ -330,55 +339,62 @@ public class ProblemStatementRenderingService {
             int failCount = counts[1];
             int total = testIds.size();
 
-            String testIdsStr = testIds.stream().map(String::valueOf).reduce((a, b) -> a + "," + b).orElse("");
-            String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
-            String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
-
-            // Build task HTML with icon, test summary, and feedback data attribute
             boolean hasFeedback = testResults != null && !testIds.isEmpty();
+            String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, total, hasFeedback ? testResults : null);
 
-            StringBuilder taskHtml = new StringBuilder();
-            taskHtml.append("<span class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(escapeHtmlAttribute(taskName)).append("\" data-test-ids=\"")
-                    .append(testIdsStr).append("\"").append(statusAttr);
-
-            // Encode feedback details as JSON data attribute for client-side popup rendering
-            if (hasFeedback) {
-                StringBuilder feedbackJson = new StringBuilder("[");
-                boolean first = true;
-                for (Long testId : testIds) {
-                    TestFeedbackDetail detail = testResults.get(testId);
-                    if (detail != null) {
-                        if (!first) {
-                            feedbackJson.append(",");
-                        }
-                        feedbackJson.append("{&quot;name&quot;:&quot;").append(escapeHtmlAttribute(detail.testName())).append("&quot;,&quot;passed&quot;:").append(detail.passed());
-                        if (detail.message() != null && !detail.message().isBlank()) {
-                            feedbackJson.append(",&quot;message&quot;:&quot;").append(escapeHtmlAttribute(detail.message())).append("&quot;");
-                        }
-                        feedbackJson.append("}");
-                        first = false;
-                    }
-                }
-                feedbackJson.append("]");
-                taskHtml.append(" data-feedback=\"").append(feedbackJson).append("\"");
-            }
-
-            taskHtml.append(">");
-            if (testStatus != null) {
-                String iconClass = "success".equals(testStatus) ? "fa-check-circle artemis-icon-success" : "fa-times-circle artemis-icon-fail";
-                taskHtml.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
-            }
-            taskHtml.append(escapeHtml(taskName));
-            if (hasFeedback) {
-                taskHtml.append(" <span class=\"artemis-task-stats\">").append(successCount).append(" von ").append(total).append(" Tests bestanden</span>");
-            }
-            taskHtml.append("</span><br>");
-
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml.toString()));
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
             tasks.add(new TaskRenderInfoDTO(taskName, testIds, testStatus, hasFeedback ? successCount : null, hasFeedback ? failCount : null));
         }
         matcher.appendTail(sb);
         return sb.toString();
+    }
+
+    private static String buildTaskHtml(String taskName, List<Long> testIds, @Nullable String testStatus, int successCount, int total,
+            @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        String testIdsStr = testIds.stream().map(String::valueOf).collect(Collectors.joining(","));
+        String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
+        String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
+
+        StringBuilder html = new StringBuilder();
+        html.append("<span class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(escapeHtmlAttribute(taskName)).append("\" data-test-ids=\"")
+                .append(testIdsStr).append("\"").append(statusAttr);
+
+        if (testResults != null) {
+            html.append(" data-feedback=\"").append(buildFeedbackJson(testIds, testResults)).append("\"");
+        }
+
+        html.append(">");
+        if (testStatus != null) {
+            String iconClass = "success".equals(testStatus) ? "fa-check-circle artemis-icon-success" : "fa-times-circle artemis-icon-fail";
+            html.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
+        }
+        html.append(escapeHtml(taskName));
+        if (testResults != null && !testIds.isEmpty()) {
+            html.append(" <span class=\"artemis-task-stats\">").append(successCount).append(" von ").append(total).append(" Tests bestanden</span>");
+        }
+        html.append("</span><br>");
+        return html.toString();
+    }
+
+    private static String buildFeedbackJson(List<Long> testIds, Map<Long, TestFeedbackDetail> testResults) {
+        StringBuilder json = new StringBuilder("[");
+        boolean first = true;
+        for (Long testId : testIds) {
+            TestFeedbackDetail detail = testResults.get(testId);
+            if (detail != null) {
+                if (!first) {
+                    json.append(",");
+                }
+                json.append("{&quot;name&quot;:&quot;").append(escapeHtmlAttribute(detail.testName())).append("&quot;,&quot;passed&quot;:").append(detail.passed());
+                if (detail.message() != null && !detail.message().isBlank()) {
+                    json.append(",&quot;message&quot;:&quot;").append(escapeHtmlAttribute(detail.message())).append("&quot;");
+                }
+                json.append("}");
+                first = false;
+            }
+        }
+        json.append("]");
+        return json.toString();
     }
 
     /**

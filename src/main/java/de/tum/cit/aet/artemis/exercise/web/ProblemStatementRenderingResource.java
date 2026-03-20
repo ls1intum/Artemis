@@ -128,12 +128,13 @@ public class ProblemStatementRenderingResource {
      * @return a map of testCaseId → feedback detail, or null if no results available
      */
     private @Nullable Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> fetchTestResults(Exercise exercise, User user) {
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), user.getId());
-        if (participations.isEmpty()) {
+        // Single ordered query: get the student's non-test-run participation with latest result
+        var participation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(exercise.getId(), user.getId(), false);
+        if (participation.isEmpty()) {
             return null;
         }
 
-        long participationId = participations.getFirst().getId();
+        long participationId = participation.get().getId();
         Optional<Result> latestResult = resultRepository.findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         if (latestResult.isEmpty()) {
             return null;

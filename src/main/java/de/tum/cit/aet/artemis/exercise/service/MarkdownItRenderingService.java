@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -23,8 +22,9 @@ import org.springframework.stereotype.Service;
  * Service that renders Markdown to HTML using the same markdown-it pipeline
  * as the Angular client, executed inside GraalJS.
  * <p>
- * Thread safety: the {@link Engine} is shared (thread-safe), while each thread
- * gets its own {@link Context} via a {@link ThreadLocal} (contexts are NOT thread-safe).
+ * Thread safety: the {@link Engine} is shared (thread-safe) and caches compiled code.
+ * Each render call creates a short-lived {@link Context} (NOT thread-safe) via
+ * try-with-resources, avoiding ThreadLocal leaks.
  */
 @Profile(PROFILE_CORE)
 @Lazy
@@ -40,10 +40,6 @@ public class MarkdownItRenderingService {
     private Source bundleSource;
 
     private volatile boolean available;
-
-    private final ConcurrentLinkedQueue<Context> allContexts = new ConcurrentLinkedQueue<>();
-
-    private final ThreadLocal<Context> threadContext = new ThreadLocal<>();
 
     /**
      * Loads the JS bundle and warms up the GraalJS engine.
@@ -82,6 +78,8 @@ public class MarkdownItRenderingService {
 
     /**
      * Renders the given Markdown text to HTML using the GraalJS markdown-it pipeline.
+     * Creates a short-lived Context per call (the shared Engine caches compiled code,
+     * so Context creation is cheap).
      *
      * @param markdown the raw Markdown text
      * @return the rendered HTML string
@@ -92,9 +90,11 @@ public class MarkdownItRenderingService {
             throw new IllegalStateException("GraalJS markdown renderer is not available");
         }
 
-        Context ctx = getOrCreateContext();
-        Value renderFn = ctx.getBindings("js").getMember("renderMarkdown");
-        return renderFn.execute(markdown).asString();
+        try (Context ctx = Context.newBuilder("js").engine(engine).build()) {
+            ctx.eval(bundleSource);
+            Value renderFn = ctx.getBindings("js").getMember("renderMarkdown");
+            return renderFn.execute(markdown).asString();
+        }
     }
 
     /**
@@ -104,30 +104,11 @@ public class MarkdownItRenderingService {
         return available;
     }
 
-    private Context getOrCreateContext() {
-        Context ctx = threadContext.get();
-        if (ctx == null) {
-            ctx = Context.newBuilder("js").engine(engine).build();
-            ctx.eval(bundleSource);
-            threadContext.set(ctx);
-            allContexts.add(ctx);
-        }
-        return ctx;
-    }
-
     /**
-     * Closes all GraalJS contexts and the shared engine.
+     * Closes the shared GraalJS engine.
      */
     @PreDestroy
     public void destroy() {
-        for (Context ctx : allContexts) {
-            try {
-                ctx.close();
-            }
-            catch (Exception e) {
-                log.debug("Error closing GraalJS context", e);
-            }
-        }
         if (engine != null) {
             try {
                 engine.close();
