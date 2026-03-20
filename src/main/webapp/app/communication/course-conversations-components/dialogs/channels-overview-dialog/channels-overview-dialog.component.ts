@@ -54,7 +54,8 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         }
     }
 
-    ngOnInit(): void {
+    override ngOnInit(): void {
+        super.ngOnInit();
         this.channelActions$.pipe(debounceTime(500), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((channelAction) => {
             this.performChannelAction(channelAction);
         });

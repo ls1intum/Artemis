@@ -1,4 +1,4 @@
-import { Directive, WritableSignal, inject, isSignal } from '@angular/core';
+import { Directive, OnInit, WritableSignal, inject, isSignal } from '@angular/core';
 import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { captureException } from '@sentry/angular';
 
@@ -7,10 +7,14 @@ function isWritableSignal(value: unknown): value is WritableSignal<unknown> {
 }
 
 @Directive()
-export abstract class AbstractDialogComponent {
+export abstract class AbstractDialogComponent implements OnInit {
     dialogRef = inject(DynamicDialogRef);
     dialogConfig = inject(DynamicDialogConfig);
     isInitialized = false;
+
+    ngOnInit() {
+        this.initialize();
+    }
 
     initialize(requiredInputs?: string[]) {
         // Apply data from DynamicDialogConfig to component properties
