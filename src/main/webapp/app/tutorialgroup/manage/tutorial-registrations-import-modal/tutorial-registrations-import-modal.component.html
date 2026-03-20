@@ -1,4 +1,4 @@
-<p-dialog [header]="header()" [modal]="true" appendTo="body" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
+<p-dialog [header]="header()" [modal]="true" appendTo="body" resizable="false" [visible]="isOpen()" (visibleChange)="isOpen.set($event)">
     @let step = flowStep();
     <div class="frame">
         @if (step === ImportFlowStep.RESULTS && allStudentsExist()) {
@@ -33,7 +33,11 @@
                     }
                 }
             }
-            <jhi-tutorial-registrations-import-modal-table [rows]="tableRows()" />
+            <div class="table-container-scroll-container">
+                <div class="table-container">
+                    <jhi-tutorial-registrations-import-modal-table [rows]="tableRows()" />
+                </div>
+            </div>
         }
         <div class="controls-footer">
             @switch (step) {
@@ -45,7 +49,7 @@
                         class="p-button-primary p-button-sm"
                         jhiTranslate="artemisApp.pages.tutorialGroupRegistrations.importModal.chooseFileButtonLabel"
                         data-testid="choose-file-button"
-                        (click)="fileUploadInput.click()"
+                        (click)="openFilePicker(fileUploadInput)"
                     ></button>
                 }
                 @case (ImportFlowStep.CONFIRMATION) {

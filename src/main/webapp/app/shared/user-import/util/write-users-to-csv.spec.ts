@@ -57,4 +57,28 @@ describe('write-users-to-csv', () => {
         expect(exportToCsvMocks.download).toHaveBeenCalledWith(expect.objectContaining({ filename: 'user-export', columnHeaders: keys }));
         expect(exportToCsvMocks.downloadExecutor).toHaveBeenCalledWith('csv-data');
     });
+
+    it('should sanitize spreadsheet formulas before generating csv data', () => {
+        const rows = [
+            {
+                [NAME_KEY]: '=HYPERLINK("https://example.com")',
+                [USERNAME_KEY]: '+ada',
+                [EMAIL_KEY]: ' normal@example.com',
+                [REGISTRATION_NUMBER_KEY]: '@123456',
+            },
+        ];
+        const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
+        exportToCsvMocks.generateCsvExecutor.mockReturnValue('csv-data');
+
+        exportUserInformationAsCsv(rows, keys, 'user-export');
+
+        expect(exportToCsvMocks.generateCsvExecutor).toHaveBeenCalledWith([
+            {
+                [NAME_KEY]: '\'=HYPERLINK("https://example.com")',
+                [USERNAME_KEY]: "'+ada",
+                [EMAIL_KEY]: ' normal@example.com',
+                [REGISTRATION_NUMBER_KEY]: "'@123456",
+            },
+        ]);
+    });
 });

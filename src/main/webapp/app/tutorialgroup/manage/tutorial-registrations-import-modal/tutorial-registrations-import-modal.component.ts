@@ -65,6 +65,11 @@ export class TutorialRegistrationsImportModalComponent {
         this.isOpen.set(false);
     }
 
+    openFilePicker(input: HTMLInputElement) {
+        input.value = '';
+        input.click();
+    }
+
     async parseStudents(event: Event) {
         this.isLoading.set(true);
         const input = event.target as HTMLInputElement;
@@ -83,7 +88,7 @@ export class TutorialRegistrationsImportModalComponent {
         }
 
         const parsedStudents: TutorialGroupRegisterStudentDTO[] = result.students.map((student) => {
-            return { login: student.login || undefined, registrationNumber: student.registrationNumber || undefined };
+            return { login: student.login, registrationNumber: student.registrationNumber };
         });
         if (parsedStudents.length === 0) {
             this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.noFileEntriesAlert');
@@ -162,16 +167,14 @@ export class TutorialRegistrationsImportModalComponent {
             case ImportFlowStep.CONFIRMATION:
                 return this.parsedStudents().map((student) => {
                     return {
-                        login: student.login,
-                        registrationNumber: student.registrationNumber,
+                        ...student,
                         markFilledCells: false,
                     };
                 });
             case ImportFlowStep.RESULTS:
                 return this.importResults().map((result) => {
                     return {
-                        login: result.student.login,
-                        registrationNumber: result.student.registrationNumber,
+                        ...result.student,
                         markFilledCells: !result.exists,
                     };
                 });
