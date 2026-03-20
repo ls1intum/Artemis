@@ -272,23 +272,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examNavigation: async ({ page }, use) => {
         await use(new ExamNavigationBar(page));
     },
-    examParticipation: async (
-        { page, courseList, courseOverview, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor },
-        use,
-    ) => {
-        await use(
-            new ExamParticipationPage(
-                courseList,
-                courseOverview,
-                examNavigation,
-                examStartEnd,
-                modelingExerciseEditor,
-                programmingExerciseEditor,
-                quizExerciseMultipleChoice,
-                textExerciseEditor,
-                page,
-            ),
-        );
+    examParticipation: async ({ page, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor }, use) => {
+        await use(new ExamParticipationPage(examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor, page));
     },
     examParticipationActions: async ({ page }, use) => {
         await use(new ExamParticipationActions(page));
