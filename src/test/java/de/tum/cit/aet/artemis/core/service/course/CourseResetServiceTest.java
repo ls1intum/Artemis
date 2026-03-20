@@ -12,8 +12,6 @@ import de.tum.cit.aet.artemis.core.domain.LLMServiceType;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageRequest;
 import de.tum.cit.aet.artemis.core.domain.LLMTokenUsageTrace;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageRequestRepository;
-import de.tum.cit.aet.artemis.core.repository.LLMTokenUsageTraceRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageRequestTestRepository;
 import de.tum.cit.aet.artemis.core.test_repository.LLMTokenUsageTraceTestRepository;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
@@ -28,12 +26,6 @@ import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTe
 class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "courseresetservice";
-
-    @Autowired
-    private LLMTokenUsageTraceRepository llmTokenUsageTraceRepository;
-
-    @Autowired
-    private LLMTokenUsageRequestRepository llmTokenUsageRequestRepository;
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceTestRepository;
@@ -66,7 +58,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         trace.setCourseId(course.getId());
         trace.setUserId(student.getId());
         trace.setServiceType(LLMServiceType.IRIS);
-        trace = llmTokenUsageTraceRepository.save(trace);
+        trace = llmTokenUsageTraceTestRepository.save(trace);
 
         var request = new LLMTokenUsageRequest();
         request.setModel("gpt-4");
@@ -76,7 +68,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         request.setCostPerMillionOutputTokens(60.0f);
         request.setServicePipelineId("test-pipeline");
         request.setTrace(trace);
-        llmTokenUsageRequestRepository.save(request);
+        llmTokenUsageRequestTestRepository.save(request);
 
         // Verify data exists before deletion
         assertThat(llmTokenUsageTraceTestRepository.findAllByCourseId(course.getId())).hasSize(1);
@@ -84,8 +76,8 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         // Delete requests first, then traces — this is the order used by CourseResetService
         // Previously, only traces were deleted, causing FK constraint violations
-        llmTokenUsageRequestRepository.deleteAllByTraceCourseId(course.getId());
-        llmTokenUsageTraceRepository.deleteAllByCourseId(course.getId());
+        llmTokenUsageRequestTestRepository.deleteAllByTraceCourseId(course.getId());
+        llmTokenUsageTraceTestRepository.deleteAllByCourseId(course.getId());
 
         // Verify both requests and traces are deleted
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).isEmpty();
@@ -100,7 +92,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         trace.setCourseId(course.getId());
         trace.setUserId(student.getId());
         trace.setServiceType(LLMServiceType.IRIS);
-        trace = llmTokenUsageTraceRepository.save(trace);
+        trace = llmTokenUsageTraceTestRepository.save(trace);
 
         for (int i = 0; i < 3; i++) {
             var request = new LLMTokenUsageRequest();
@@ -111,13 +103,13 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
             request.setCostPerMillionOutputTokens(60.0f);
             request.setServicePipelineId("pipeline-" + i);
             request.setTrace(trace);
-            llmTokenUsageRequestRepository.save(request);
+            llmTokenUsageRequestTestRepository.save(request);
         }
 
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).hasSize(3);
 
-        llmTokenUsageRequestRepository.deleteAllByTraceCourseId(course.getId());
-        llmTokenUsageTraceRepository.deleteAllByCourseId(course.getId());
+        llmTokenUsageRequestTestRepository.deleteAllByTraceCourseId(course.getId());
+        llmTokenUsageTraceTestRepository.deleteAllByCourseId(course.getId());
 
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).isEmpty();
         assertThat(llmTokenUsageTraceTestRepository.findAllByCourseId(course.getId())).isEmpty();
