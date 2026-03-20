@@ -1312,7 +1312,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Restore competency links with proper exercise reference and save again
         if (competencyLinks != null && !competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksFromDTOsForCreation(savedExercise, competencyLinks);
+            exerciseService.updateCompetencyLinks(() -> competencyLinks, savedExercise);
             savedExercise = save(savedExercise);
         }
 
