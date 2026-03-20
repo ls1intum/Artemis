@@ -16,7 +16,6 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { AlertService } from 'app/shared/service/alert.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
