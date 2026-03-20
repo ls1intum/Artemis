@@ -17,7 +17,7 @@
         <span class="action-description text-secondary">{{ description() }}</span>
     </span>
     @if (selected()) {
-        <kbd class="key-hint-enter position-absolute" aria-label="Press Enter to activate">
+        <kbd class="key-hint-enter position-absolute" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate">
             <fa-icon [icon]="faLevelDownAlt" />
         </kbd>
     }
