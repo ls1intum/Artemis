@@ -166,6 +166,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 course: this.course,
                 activeConversation: this.activeConversation,
                 selectedTab,
+                onUserNameClicked: (userId: number) => {
+                    ref?.close();
+                    this.metisConversationService.createOneToOneChatWithId(userId).subscribe();
+                },
             },
         });
 

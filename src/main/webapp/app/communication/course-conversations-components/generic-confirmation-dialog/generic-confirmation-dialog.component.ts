@@ -29,6 +29,6 @@ export class GenericConfirmationDialogComponent extends AbstractDialogComponent 
     }
 
     confirm() {
-        this.close();
+        this.close(true);
     }
 }

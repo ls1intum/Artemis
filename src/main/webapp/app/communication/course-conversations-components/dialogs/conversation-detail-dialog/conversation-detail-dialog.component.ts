@@ -107,6 +107,11 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
      */
     onUserNameClicked(userId: number) {
         this.userNameClicked.emit(userId);
+        // Also invoke callback passed via dialog data (for DynamicDialog callers)
+        const callback = this.dialogConfig?.data?.onUserNameClicked;
+        if (callback) {
+            callback(userId);
+        }
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
