@@ -53,10 +53,14 @@ export class IrisExerciseChatbotButtonComponent {
 
     // Convert stages observable to signal for processing indicator
     private readonly currentStages = toSignal(this.chatService.stages, { initialValue: [] as IrisStageDTO[] });
-    readonly isProcessing = computed(() => this.currentStages().some((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
+    private readonly visibleStages = computed(() => this.currentStages().filter((s) => !s.internal));
 
-    // Active stage and display name for minimized indicator
-    readonly activeStage = computed(() => this.currentStages().find((s) => s.state === IrisStageStateDTO.IN_PROGRESS || s.state === IrisStageStateDTO.NOT_STARTED));
+    // Active stage: first visible stage that is not completed (ERROR, NOT_STARTED, IN_PROGRESS are all "unfinished")
+    readonly activeStage = computed(() => this.visibleStages().find((s) => s.state !== IrisStageStateDTO.DONE && s.state !== IrisStageStateDTO.SKIPPED));
+    readonly isProcessing = computed(() => {
+        const stage = this.activeStage();
+        return stage?.state === IrisStageStateDTO.IN_PROGRESS || stage?.state === IrisStageStateDTO.NOT_STARTED;
+    });
     readonly stageDisplayName = computed(() => {
         this.currentLocale();
         const name = this.activeStage()?.name;

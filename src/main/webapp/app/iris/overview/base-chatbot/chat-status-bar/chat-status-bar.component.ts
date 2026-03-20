@@ -30,7 +30,7 @@ export class ChatStatusBarComponent {
 
     faCircleXmark = faCircleXmark;
 
-    private readonly ROTATION_KEYS = [
+    private readonly rotationKeys = [
         'artemisApp.iris.stages.thinking',
         'artemisApp.iris.stages.analyzing',
         'artemisApp.iris.stages.processing',
@@ -45,18 +45,20 @@ export class ChatStatusBarComponent {
             const stages = this.stages();
             // Read locale to re-run translations on language change
             this.currentLocale();
-            const firstUnfinished = stages.find((stage) => !this.isStageFinished(stage));
+            const visibleStages = stages.filter((stage) => !stage.internal);
+            const firstUnfinished = visibleStages.find((stage) => !this.isStageFinished(stage));
+            const current = untracked(() => this.activeStage());
             if (firstUnfinished) {
-                this.open.set(true);
-                this.activeStage.set(firstUnfinished);
+                if (current?.name !== firstUnfinished.name || current?.state !== firstUnfinished.state) {
+                    this.open.set(true);
+                    this.activeStage.set(firstUnfinished);
+                }
                 const label = firstUnfinished.message || firstUnfinished.name;
                 this.stageMessage.set(label ? this.translateLabel(label) : undefined);
-            } else {
+            } else if (current !== undefined) {
                 this.activeStage.set(undefined);
-                if (this.open()) {
-                    this.open.set(false);
-                    this.stageMessage.set(undefined);
-                }
+                this.open.set(false);
+                this.stageMessage.set(undefined);
             }
         });
 
@@ -68,29 +70,34 @@ export class ChatStatusBarComponent {
             const name = stage?.name ?? '';
             const translated = name ? this.translateLabel(name) : '';
 
-            // Clear any existing rotation interval on every run
-            if (this.rotationIntervalId) {
-                clearInterval(this.rotationIntervalId);
-                this.rotationIntervalId = undefined;
-            }
-
             if (translated) {
-                if (translated !== untracked(() => this.displayName())) {
+                const currentDisplay = untracked(() => this.displayName());
+                const isAlreadyRotating = this.rotationIntervalId !== undefined;
+                const shouldRotate = stage?.state === IrisStageStateDTO.IN_PROGRESS;
+
+                if (translated !== currentDisplay && !isAlreadyRotating) {
                     this.displayName.set(translated);
                     this.animToggle.update((v) => !v);
                 }
 
-                // Start rotation if stage is IN_PROGRESS
-                if (stage?.state === IrisStageStateDTO.IN_PROGRESS) {
+                // Only restart rotation if rotation state changed
+                if (shouldRotate && !isAlreadyRotating) {
                     this.rotationIndex = 0;
                     this.rotationIntervalId = setInterval(() => {
-                        this.rotationIndex = (this.rotationIndex + 1) % this.ROTATION_KEYS.length;
-                        const rotated = this.translateLabel(this.ROTATION_KEYS[this.rotationIndex]);
+                        this.rotationIndex = (this.rotationIndex + 1) % this.rotationKeys.length;
+                        const rotated = this.translateLabel(this.rotationKeys[this.rotationIndex]);
                         this.displayName.set(rotated);
                         this.animToggle.update((v) => !v);
                     }, 2500);
+                } else if (!shouldRotate && isAlreadyRotating) {
+                    clearInterval(this.rotationIntervalId);
+                    this.rotationIntervalId = undefined;
                 }
             } else {
+                if (this.rotationIntervalId) {
+                    clearInterval(this.rotationIntervalId);
+                    this.rotationIntervalId = undefined;
+                }
                 this.displayName.set('');
             }
         });
