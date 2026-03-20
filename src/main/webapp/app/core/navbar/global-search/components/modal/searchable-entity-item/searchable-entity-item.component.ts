@@ -11,11 +11,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     styleUrls: ['./searchable-entity-item.component.scss'],
 })
 export class SearchableEntityItemComponent {
-    // Inputs
     entity = input.required<SearchableEntity>();
     isSelected = input.required<boolean>();
 
-    // Outputs
     entityClick = output<SearchableEntity>();
 
     protected onClick() {

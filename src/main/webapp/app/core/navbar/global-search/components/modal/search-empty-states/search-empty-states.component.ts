@@ -10,12 +10,9 @@ export type SearchStateType = 'loading' | 'empty' | 'fallback';
     standalone: true,
     imports: [FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './search-empty-states.component.html',
-    styleUrls: ['./search-empty-states.component.scss'],
 })
 export class SearchEmptyStatesComponent {
-    // Inputs
-    stateType = input.required<SearchStateType>();
-
-    // Icons
     protected readonly faSearch = faSearch;
+
+    stateType = input.required<SearchStateType>();
 }

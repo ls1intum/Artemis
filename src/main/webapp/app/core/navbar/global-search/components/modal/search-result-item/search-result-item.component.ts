@@ -14,19 +14,16 @@ import dayjs from 'dayjs/esm';
     styleUrls: ['./search-result-item.component.scss'],
 })
 export class SearchResultItemComponent {
-    // Inputs
-    result = input.required<GlobalSearchResult>();
-    icon = input.required<IconDefinition>();
-    isSelected = input.required<boolean>();
-
-    // Outputs
-    resultClick = output<GlobalSearchResult>();
-
-    // Icons
     protected readonly faBook = faBook;
     protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faTrophy = faTrophy;
     protected readonly faLevelDownAlt = faLevelDownAlt;
+
+    result = input.required<GlobalSearchResult>();
+    icon = input.required<IconDefinition>();
+    isSelected = input.required<boolean>();
+
+    resultClick = output<GlobalSearchResult>();
 
     protected formattedDueDate = computed(() => {
         const dueDate = this.result().metadata?.['dueDate'];
