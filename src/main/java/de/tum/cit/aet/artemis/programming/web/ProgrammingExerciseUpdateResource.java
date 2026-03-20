@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -283,42 +284,24 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
-        // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        // Only set boolean/optional values if they are explicitly provided (not null)
+        setIfNotNull(exercise::setAllowComplaintsForAutomaticAssessments, dto.allowComplaintsForAutomaticAssessments());
+        setIfNotNull(exercise::setAllowFeedbackRequests, dto.allowFeedbackRequests());
+        setIfNotNull(exercise::setPresentationScoreEnabled, dto.presentationScoreEnabled());
+        setIfNotNull(exercise::setSecondCorrectionEnabled, dto.secondCorrectionEnabled());
 
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields
-        if (dto.allowOnlineEditor() != null) {
-            exercise.setAllowOnlineEditor(dto.allowOnlineEditor());
-        }
-        if (dto.allowOfflineIde() != null) {
-            exercise.setAllowOfflineIde(dto.allowOfflineIde());
-        }
+        setIfNotNull(exercise::setAllowOnlineEditor, dto.allowOnlineEditor());
+        setIfNotNull(exercise::setAllowOfflineIde, dto.allowOfflineIde());
         exercise.setAllowOnlineIde(dto.allowOnlineIde());
-
-        if (dto.maxStaticCodeAnalysisPenalty() != null) {
-            exercise.setMaxStaticCodeAnalysisPenalty(dto.maxStaticCodeAnalysisPenalty());
-        }
+        setIfNotNull(exercise::setMaxStaticCodeAnalysisPenalty, dto.maxStaticCodeAnalysisPenalty());
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
-
-        if (dto.testCasesChanged() != null) {
-            exercise.setTestCasesChanged(dto.testCasesChanged());
-        }
+        setIfNotNull(exercise::setTestCasesChanged, dto.testCasesChanged());
 
         exercise.setSubmissionPolicy(dto.submissionPolicy());
         exercise.setProjectType(dto.projectType());
@@ -353,16 +336,10 @@ public class ProgrammingExerciseUpdateResource {
             return;
         }
 
-        if (dto.sequentialTestRuns() != null) {
-            buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
-        }
+        setIfNotNull(buildConfig::setSequentialTestRuns, dto.sequentialTestRuns());
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null) {
-            buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-        }
-        if (dto.buildScript() != null) {
-            buildConfig.setBuildScript(dto.buildScript());
-        }
+        setIfNotNull(buildConfig::setBuildPlanConfiguration, dto.buildPlanConfiguration());
+        setIfNotNull(buildConfig::setBuildScript, dto.buildScript());
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());
@@ -423,5 +400,11 @@ public class ProgrammingExerciseUpdateResource {
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateProgrammingExercise(updateDTO, null);
+    }
+
+    private static <T> void setIfNotNull(Consumer<T> setter, T value) {
+        if (value != null) {
+            setter.accept(value);
+        }
     }
 }

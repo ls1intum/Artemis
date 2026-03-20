@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -338,19 +339,11 @@ public class TextExerciseCreationUpdateResource {
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
 
-        // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        // Only set boolean/optional values if they are explicitly provided (not null)
+        setIfNotNull(exercise::setAllowComplaintsForAutomaticAssessments, dto.allowComplaintsForAutomaticAssessments());
+        setIfNotNull(exercise::setAllowFeedbackRequests, dto.allowFeedbackRequests());
+        setIfNotNull(exercise::setPresentationScoreEnabled, dto.presentationScoreEnabled());
+        setIfNotNull(exercise::setSecondCorrectionEnabled, dto.secondCorrectionEnabled());
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
@@ -450,6 +443,8 @@ public class TextExerciseCreationUpdateResource {
      * Applies DTO values to a new TextExercise entity for creation via PUT.
      * Sets courseId/exerciseGroupId as proxy objects so that
      * {@link CourseService#retrieveCourseOverExerciseGroupOrCourseId} can resolve them.
+     * Unlike {@link #update}, this does not handle grading criteria or competency links,
+     * as those are handled by the creation path in {@link #createTextExercise}.
      */
     private void applyDtoToNewExercise(UpdateTextExerciseDTO dto, TextExercise exercise) {
         exercise.setTitle(dto.title());
@@ -469,18 +464,10 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        setIfNotNull(exercise::setAllowComplaintsForAutomaticAssessments, dto.allowComplaintsForAutomaticAssessments());
+        setIfNotNull(exercise::setAllowFeedbackRequests, dto.allowFeedbackRequests());
+        setIfNotNull(exercise::setPresentationScoreEnabled, dto.presentationScoreEnabled());
+        setIfNotNull(exercise::setSecondCorrectionEnabled, dto.secondCorrectionEnabled());
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {
@@ -492,6 +479,12 @@ public class TextExerciseCreationUpdateResource {
             var exerciseGroup = new de.tum.cit.aet.artemis.exam.domain.ExerciseGroup();
             exerciseGroup.setId(dto.exerciseGroupId());
             exercise.setExerciseGroup(exerciseGroup);
+        }
+    }
+
+    private static <T> void setIfNotNull(Consumer<T> setter, T value) {
+        if (value != null) {
+            setter.accept(value);
         }
     }
 

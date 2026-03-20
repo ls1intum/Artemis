@@ -910,35 +910,35 @@ public class ExerciseService {
         }
         if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
             entity.getCompetencyLinks().clear();
+            return;
         }
-        else {
-            final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
 
-            Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
+        final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+        var course = entity.getCourseViaExerciseGroupOrCourseMember();
+        Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
 
-            for (var dtoLink : dto.competencyLinks()) {
-                long competencyId = dtoLink.competency().id();
-                double weight = dtoLink.weight();
-
-                var existingLink = existingLinksByCompetencyId.get(competencyId);
-                if (existingLink != null) {
-                    existingLink.setWeight(weight);
-                    updatedLinks.add(existingLink);
-                }
-                else {
-                    var competency = competencyRelationApi.get().findCompetencyByIdElseThrow(competencyId);
-                    var course = entity.getCourseViaExerciseGroupOrCourseMember();
-                    if (competency.getCourse() == null || !competency.getCourse().getId().equals(course.getId())) {
-                        throw new EntityNotFoundException("Competency", competencyId);
-                    }
-                    var newLink = new CompetencyExerciseLink(competency, entity, weight);
-                    updatedLinks.add(newLink);
-                }
+        for (var dtoLink : dto.competencyLinks()) {
+            long competencyId = dtoLink.competency().id();
+            var existingLink = existingLinksByCompetencyId.get(competencyId);
+            if (existingLink != null) {
+                existingLink.setWeight(dtoLink.weight());
+                updatedLinks.add(existingLink);
             }
-
-            entity.getCompetencyLinks().clear();
-            entity.getCompetencyLinks().addAll(updatedLinks);
+            else {
+                updatedLinks.add(createNewCompetencyLink(competencyId, dtoLink.weight(), entity, course));
+            }
         }
+
+        entity.getCompetencyLinks().clear();
+        entity.getCompetencyLinks().addAll(updatedLinks);
+    }
+
+    private CompetencyExerciseLink createNewCompetencyLink(long competencyId, double weight, Exercise entity, Course course) {
+        var competency = competencyRelationApi.get().findCompetencyByIdElseThrow(competencyId);
+        if (competency.getCourse() == null || !competency.getCourse().getId().equals(course.getId())) {
+            throw new EntityNotFoundException("Competency", competencyId);
+        }
+        return new CompetencyExerciseLink(competency, entity, weight);
     }
 
     /**
@@ -967,10 +967,7 @@ public class ExerciseService {
      * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
      */
     public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        if (competencyLinks == null || competencyLinks.isEmpty()) {
-            return;
-        }
-        if (competencyRelationApi.isEmpty()) {
+        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRelationApi.isEmpty()) {
             return;
         }
         // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
