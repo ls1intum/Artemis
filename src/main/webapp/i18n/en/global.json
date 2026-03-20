@@ -47,6 +47,7 @@
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
             "arrowUpAriaLabel": "Arrow up",
             "arrowDownAriaLabel": "Arrow down",
+            "actionBadge": "Action",
             "actions": {
                 "askIrisTitle": "Ask Iris",
                 "askIrisDescription": "Chat with Iris AI assistant",

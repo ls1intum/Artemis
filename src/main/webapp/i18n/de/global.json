@@ -47,6 +47,7 @@
             "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
             "arrowUpAriaLabel": "Pfeil nach oben",
             "arrowDownAriaLabel": "Pfeil nach unten",
+            "actionBadge": "Aktion",
             "actions": {
                 "askIrisTitle": "Iris fragen",
                 "askIrisDescription": "Mit Iris KI-Assistent chatten",
