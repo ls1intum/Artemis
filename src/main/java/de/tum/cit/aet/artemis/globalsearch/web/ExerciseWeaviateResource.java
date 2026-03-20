@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -55,38 +54,6 @@ public class ExerciseWeaviateResource {
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
-    }
-
-    /**
-     * GET /courses/:courseId/programming-exercises/weaviate : get programming exercises for a course from Weaviate.
-     * <p>
-     * Access control:
-     * - Students: only see non-exam exercises with a release date in the past, and exam exercises after the exam has started
-     * - Tutors/TAs: see all non-exam exercises; see exam exercises only after the exam has ended
-     * - Editors/Instructors/Admins: see all exercises
-     *
-     * @param courseId the ID of the course to fetch exercises for
-     * @return the ResponseEntity with status 200 (OK) and the list of programming exercises in body
-     */
-    @GetMapping("courses/{courseId}/programming-exercises/weaviate")
-    @EnforceAtLeastStudent
-    public ResponseEntity<List<GlobalSearchResultDTO>> getProgrammingExercisesFromWeaviate(@PathVariable Long courseId) {
-        log.debug("REST request to get programming exercises from Weaviate for course {}", courseId);
-
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-
-        Filter programmingFilter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseId)
-                .and(Filter.property(ExerciseSchema.Properties.EXERCISE_TYPE).eq("programming"));
-
-        Filter accessFilter = buildAccessFilterForRole(getUserRoleInCourse(user, course));
-        Filter combinedFilter = accessFilter != null ? Filter.and(programmingFilter, accessFilter) : programmingFilter;
-
-        var exerciseProperties = exerciseWeaviateService.fetchExercisesWithFilter(combinedFilter, 100);
-        var exercises = exerciseProperties.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
-
-        return ResponseEntity.ok(exercises);
     }
 
     /**
