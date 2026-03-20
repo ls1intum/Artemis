@@ -69,6 +69,10 @@
                 "calendarTitle": "Calendar",
                 "calendarDescription": "View your schedule and deadlines"
             },
+            "results": {
+                "point": "point",
+                "points": "points"
+            },
             "comingSoon": "Coming soon"
         },
         "menu": {

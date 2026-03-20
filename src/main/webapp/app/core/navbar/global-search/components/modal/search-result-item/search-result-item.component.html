@@ -38,7 +38,10 @@
                     @if (result().metadata['points']) {
                         <span class="d-flex align-items-center gap-1">
                             <fa-icon [icon]="faTrophy" size="sm" aria-hidden="true" />
-                            <span>{{ result().metadata['points'] }} {{ result().metadata['points'] === 1 ? 'point' : 'points' }}</span>
+                            <span
+                                >{{ result().metadata['points'] }}
+                                {{ (result().metadata['points'] === 1 ? 'global.search.results.point' : 'global.search.results.points') | artemisTranslate }}</span
+                            >
                         </span>
                     }
                     @if (result().metadata['difficulty'] && (result().metadata['dueDate'] || result().metadata['points'])) {

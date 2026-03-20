@@ -69,6 +69,10 @@
                 "calendarTitle": "Kalender",
                 "calendarDescription": "Termine und Fristen ansehen"
             },
+            "results": {
+                "point": "Punkt",
+                "points": "Punkte"
+            },
             "comingSoon": "Demnächst verfügbar"
         },
         "menu": {

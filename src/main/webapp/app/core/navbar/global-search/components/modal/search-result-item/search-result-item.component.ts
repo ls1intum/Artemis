@@ -3,11 +3,12 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faLevelDownAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from '../../../services/global-search.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 @Component({
     selector: 'jhi-global-search-result-item',
     standalone: true,
-    imports: [FaIconComponent],
+    imports: [FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './search-result-item.component.html',
     styleUrls: ['./search-result-item.component.scss'],
 })
