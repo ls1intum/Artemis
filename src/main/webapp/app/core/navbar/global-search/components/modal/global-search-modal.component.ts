@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, distinctUntilChanged, filter, map, of, switchMap, timer } from 'rxjs';
+import { EMPTY, Subject, catchError, filter, map, of, switchMap, tap, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -50,6 +50,8 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly activeView = viewChild(SearchResultView);
     private readonly maxIndex = computed(() => (this.activeView()?.itemCount() ?? 0) - 1);
     private readonly searchSubject = new Subject<SearchState | null>();
+    // Cache for placeholder results (empty-query + filter) so re-adding a filter serves from cache
+    private readonly placeholderCache = new Map<string, GlobalSearchResult[]>();
 
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
@@ -82,9 +84,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     }
                     return timer(300).pipe(map(() => event));
                 }),
-                distinctUntilChanged(
-                    (prev, curr) => prev.query === curr.query && prev.filters.length === curr.filters.length && prev.filters.every((f, i) => f === curr.filters[i]),
-                ),
                 switchMap(({ query, filters }) => {
                     const hasFilter = filters.length > 0;
                     const trimmedQuery = query?.trim() || '';
@@ -99,21 +98,35 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         return EMPTY;
                     }
 
-                    this.isLoading.set(true);
                     this.searchError.set(undefined);
                     const typeFilter = hasFilter ? filters[0] : undefined;
 
-                    // If no valid query but has filter, fetch recent items
+                    // If no valid query but has filter, fetch recent/placeholder items
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const options: GlobalSearchOptions = { type: typeFilter };
 
-                    if (!hasValidQuery) {
-                        // Fetching recent items when filter is active but query is empty
+                    if (!hasValidQuery && hasFilter) {
                         options.sortBy = 'dueDate';
                         options.limit = 10;
+
+                        // Serve from cache if we already loaded placeholder results for this filter
+                        const cacheKey = typeFilter!;
+                        const cached = this.placeholderCache.get(cacheKey);
+                        if (cached) {
+                            this.isLoading.set(false);
+                            return of(cached);
+                        }
                     }
 
+                    this.isLoading.set(true);
+
                     return this.searchService.search(searchQuery, options).pipe(
+                        tap((results) => {
+                            // Cache placeholder results (empty query + filter) for reuse
+                            if (!hasValidQuery && hasFilter && typeFilter) {
+                                this.placeholderCache.set(typeFilter, results);
+                            }
+                        }),
                         catchError(() => {
                             this.isLoading.set(false);
                             this.searchError.set('global.search.searchFailed');
@@ -179,7 +192,14 @@ export class GlobalSearchModalComponent implements OnDestroy {
         if (!this.activeFilters().includes(filterType)) {
             const newFilters = [filterType];
             this.activeFilters.set(newFilters);
-            this.isLoading.set(true);
+
+            // Only show loading if we don't have cached placeholder results
+            const query = this.searchQuery()?.trim() || '';
+            const hasCached = !query && this.placeholderCache.has(filterType);
+            if (!hasCached) {
+                this.isLoading.set(true);
+            }
+
             // Re-trigger search with new filter
             this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
         }
@@ -218,6 +238,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.isLoading.set(false);
         this.searchError.set(undefined);
         this.currentView.set(SearchView.Navigation);
+        this.placeholderCache.clear();
     }
 
     protected focusInput() {
