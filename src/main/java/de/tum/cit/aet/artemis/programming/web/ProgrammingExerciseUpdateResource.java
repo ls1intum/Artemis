@@ -174,6 +174,10 @@ public class ProgrammingExerciseUpdateResource {
         final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
         final Double originalMaxPoints = programmingExerciseBeforeUpdate.getMaxPoints();
         final Double originalBonusPoints = programmingExerciseBeforeUpdate.getBonusPoints();
+        // Save auxiliary repos before update() overwrites them on the same entity (L1 cache)
+        final List<AuxiliaryRepository> originalAuxRepos = programmingExerciseBeforeUpdate.getAuxiliaryRepositories() != null
+                ? new ArrayList<>(programmingExerciseBeforeUpdate.getAuxiliaryRepositories())
+                : new ArrayList<>();
 
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
@@ -250,17 +254,26 @@ public class ProgrammingExerciseUpdateResource {
         athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch - preserve the original
-        updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
+        if (updatedProgrammingExercise.getBuildConfig() != null) {
+            updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
+        }
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
+        // Create a proxy with the original aux repos for comparison (L1 cache means
+        // programmingExerciseBeforeUpdate is already mutated by update())
+        ProgrammingExercise exerciseWithOriginalAuxRepos = new ProgrammingExercise();
+        exerciseWithOriginalAuxRepos.setId(updatedProgrammingExercise.getId());
+        exerciseWithOriginalAuxRepos.setProgrammingLanguage(updatedProgrammingExercise.getProgrammingLanguage());
+        exerciseWithOriginalAuxRepos.setAuxiliaryRepositories(originalAuxRepos);
+
         // Update the auxiliary repositories in the DB and ProgrammingExercise instance
-        auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseWithOriginalAuxRepos, updatedProgrammingExercise);
 
         // Update the auxiliary repositories in the VCS
-        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseWithOriginalAuxRepos, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             updatedProgrammingExercise.setBonusPoints(0.0);

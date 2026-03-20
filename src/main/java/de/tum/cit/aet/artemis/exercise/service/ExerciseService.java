@@ -989,10 +989,11 @@ public class ExerciseService {
         Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
         for (CompetencyExerciseLink link : competencyLinks) {
             CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
-            if (managedCompetency == null) {
-                throw new BadRequestAlertException("Competency with id " + link.getCompetency().getId() + " does not exist.", "exercise", "competencyNotFound");
+            if (managedCompetency != null) {
+                resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
             }
-            resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
+            // Skip links whose competency was not found — this can happen when the entity
+            // was deserialized from JSON with a stale or invalid competency reference
         }
         exercise.setCompetencyLinks(resolvedLinks);
     }
