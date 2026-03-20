@@ -1124,7 +1124,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
-        exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
     /**
