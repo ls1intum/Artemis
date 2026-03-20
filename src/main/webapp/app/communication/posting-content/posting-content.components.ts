@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, effect, inject, input, output, signal, untracked } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -64,15 +64,17 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             this.isEdited();
             this.isDeleted();
             this.deleteTimerInSeconds();
-            if (this.initialized) {
-                if (this.isSubscribeToMetis()) {
-                    this.postsSubscription?.unsubscribe();
-                    this.computeContentPartsOfPosts();
-                } else {
-                    const patternMatches: PatternMatch[] = this.getPatternMatches();
-                    this.computePostingContentParts(patternMatches);
+            untracked(() => {
+                if (this.initialized) {
+                    if (this.isSubscribeToMetis()) {
+                        this.postsSubscription?.unsubscribe();
+                        this.computeContentPartsOfPosts();
+                    } else {
+                        const patternMatches: PatternMatch[] = this.getPatternMatches();
+                        this.computePostingContentParts(patternMatches);
+                    }
                 }
-            }
+            });
         });
     }
 

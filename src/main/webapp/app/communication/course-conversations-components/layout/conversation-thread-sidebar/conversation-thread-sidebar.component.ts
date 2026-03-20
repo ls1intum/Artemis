@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, effect, inject, input, output, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -39,17 +39,21 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
     constructor() {
         effect(() => {
             const conversation = this.activeConversation();
-            if (conversation) {
-                this.conversation = conversation as ConversationDTO;
-                this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
-            }
+            untracked(() => {
+                if (conversation) {
+                    this.conversation = conversation as ConversationDTO;
+                    this.hasChannelModerationRights = getAsChannelDTO(this.conversation)?.hasChannelModerationRights ?? false;
+                }
+            });
         });
         effect(() => {
             const activePost = this.activePost();
-            if (activePost) {
-                this.post = activePost;
-                this.createdAnswerPost = this.createEmptyAnswerPost();
-            }
+            untracked(() => {
+                if (activePost) {
+                    this.post = activePost;
+                    this.createdAnswerPost = this.createEmptyAnswerPost();
+                }
+            });
         });
     }
 

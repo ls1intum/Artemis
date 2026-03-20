@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, effect, inject, input, output, untracked } from '@angular/core';
 import { faChevronLeft, faPeopleGroup, faSearch, faUserGroup, faUserPlus } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DialogService } from 'primeng/dynamicdialog';
@@ -41,10 +41,12 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         effect(() => {
             // Track pinnedMessageCount signal input (replaces ngOnChanges)
             const currentCount = this.pinnedMessageCount();
-            if (this.showPinnedMessages && currentCount === 0) {
-                this.showPinnedMessages = false;
-                this.cdr.detectChanges();
-            }
+            untracked(() => {
+                if (this.showPinnedMessages && currentCount === 0) {
+                    this.showPinnedMessages = false;
+                    this.cdr.detectChanges();
+                }
+            });
         });
     }
 

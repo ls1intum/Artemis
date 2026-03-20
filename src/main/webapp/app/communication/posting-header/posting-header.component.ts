@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, effect, inject, input, output } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -62,8 +62,10 @@ export class PostingHeaderComponent implements OnInit {
             // Track signal inputs that were monitored in ngOnChanges
             this.posting();
             this.hasChannelModerationRights();
-            this.setUserProperties();
-            this.setUserAuthorityIconAndTooltip();
+            untracked(() => {
+                this.setUserProperties();
+                this.setUserAuthorityIconAndTooltip();
+            });
         });
     }
 

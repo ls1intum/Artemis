@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, effect, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, effect, inject, input, untracked } from '@angular/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { Subscription, of } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, shareReplay, skip, switchMap, take, tap } from 'rxjs/operators';
@@ -43,14 +43,16 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
             // Track signal inputs that were monitored in ngOnChanges
             const post = this.post();
             this.course();
-            if (this.irisEnabled) {
-                if (post) {
-                    this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
-                    this.messagesSubscription?.unsubscribe();
-                    this.subscribeToIrisActivation();
+            untracked(() => {
+                if (this.irisEnabled) {
+                    if (post) {
+                        this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
+                        this.messagesSubscription?.unsubscribe();
+                        this.subscribeToIrisActivation();
+                    }
+                    this.fetchMessages();
                 }
-                this.fetchMessages();
-            }
+            });
         });
     }
 

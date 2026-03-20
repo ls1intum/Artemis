@@ -1,4 +1,4 @@
-import { Component, OnInit, effect, inject, input, output, viewChild } from '@angular/core';
+import { Component, OnInit, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
@@ -97,16 +97,18 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.posting();
             this.isReadOnlyMode();
             this.previewMode();
-            this.updatePostingWithReactions();
-            this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting() as Posting);
-            this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-            this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
-            if (this.getPostingType() === 'post') {
-                this.resetTooltipsAndPriority();
-            }
-            this.setMayDelete();
-            this.setMayEdit();
-            this.setCanMarkAsUnread();
+            untracked(() => {
+                this.updatePostingWithReactions();
+                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting() as Posting);
+                this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
+                this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
+                if (this.getPostingType() === 'post') {
+                    this.resetTooltipsAndPriority();
+                }
+                this.setMayDelete();
+                this.setMayEdit();
+                this.setCanMarkAsUnread();
+            });
         });
     }
 

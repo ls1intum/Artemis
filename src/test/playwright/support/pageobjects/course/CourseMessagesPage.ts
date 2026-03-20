@@ -91,7 +91,7 @@ export class CourseMessagesPage {
      * @param name - The name to be set.
      */
     async setName(name: string) {
-        const locator = this.page.locator('.modal-content #name');
+        const locator = this.page.locator('.p-dialog-content #name');
         await locator.clear();
         await locator.fill(name);
     }
@@ -101,7 +101,7 @@ export class CourseMessagesPage {
      * @param description - The description to be set.
      */
     async setDescription(description: string) {
-        const locator = this.page.locator('.modal-content #description');
+        const locator = this.page.locator('.p-dialog-content #description');
         await locator.clear();
         await locator.fill(description);
     }
@@ -110,35 +110,35 @@ export class CourseMessagesPage {
      * Sets a channel to be private in the modal dialog.
      */
     async setPrivate() {
-        await this.page.locator('.modal-content label[for="private"]').click();
+        await this.page.locator('.p-dialog-content label[for="private"]').click();
     }
 
     /**
      * Sets a channel to be public in the modal dialog.
      */
     async setPublic() {
-        await this.page.locator('.modal-content label[for="public"]').click();
+        await this.page.locator('.p-dialog-content label[for="public"]').click();
     }
 
     /**
      * Marks a channel as course-wide in the modal dialog.
      */
     async setCourseWideChannel() {
-        await this.page.locator('.modal-content label[for="isCourseWideChannel"]').click();
+        await this.page.locator('.p-dialog-content label[for="isCourseWideChannel"]').click();
     }
 
     /**
      * Marks a channel as an announcement channel in the modal dialog.
      */
     async setAnnouncementChannel() {
-        await this.page.locator('.modal-content label[for="isAnnouncementChannel"]').click();
+        await this.page.locator('.p-dialog-content label[for="isAnnouncementChannel"]').click();
     }
 
     /**
      * Marks a channel as unrestricted in the modal dialog.
      */
     async setUnrestrictedChannel() {
-        await this.page.locator('.modal-content label[for="isNotAnnouncementChannel"]').click();
+        await this.page.locator('.p-dialog-content label[for="isNotAnnouncementChannel"]').click();
     }
 
     /**
@@ -150,7 +150,7 @@ export class CourseMessagesPage {
         const responsePromise = this.page.waitForResponse(
             (resp) => resp.url().includes('api/communication/courses/') && resp.url().endsWith('/channels') && resp.request().method() === 'POST' && resp.status() === 201,
         );
-        await this.page.locator('.modal-content #submitButton').click();
+        await this.page.locator('.p-dialog-content #submitButton').click();
         const response = await responsePromise;
         const channel: ChannelDTO = await response.json();
         await this.page.waitForURL(`**/communication?conversationId=${channel.id}`);
