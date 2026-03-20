@@ -1,9 +1,10 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, input, output } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faBook, faCalendarAlt, faLevelDownAlt, faTrophy } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { GlobalSearchResult } from '../../../services/global-search.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-global-search-result-item',
@@ -26,6 +27,14 @@ export class SearchResultItemComponent {
     protected readonly faCalendarAlt = faCalendarAlt;
     protected readonly faTrophy = faTrophy;
     protected readonly faLevelDownAlt = faLevelDownAlt;
+
+    protected formattedDueDate = computed(() => {
+        const dueDate = this.result().metadata?.['dueDate'];
+        if (!dueDate) {
+            return '';
+        }
+        return dayjs(dueDate).format('MMM D, HH:mm');
+    });
 
     protected onClick() {
         this.resultClick.emit(this.result());
