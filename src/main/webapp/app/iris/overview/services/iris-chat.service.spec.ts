@@ -25,7 +25,7 @@ import {
     mockWebsocketStatusMessage,
     mockWebsocketStatusMessageWithInteralStage,
 } from 'test/helpers/sample/iris-sample-data';
-import { IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import 'app/shared/util/array.extension';
 import { Router } from '@angular/router';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -150,7 +150,7 @@ describe('IrisChatService', () => {
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         const createdMessage = mockUserMessageWithContent(message);
-        const stub = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        const stub = vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
         service.switchTo(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.sendMessage(message));
@@ -207,7 +207,7 @@ describe('IrisChatService', () => {
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
         const message = mockServerMessage;
         const updatedMessage = Object.assign({}, message, { helpful: true });
-        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({ body: updatedMessage } as HttpResponse<IrisMessage>));
+        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({ body: updatedMessage } as unknown as HttpResponse<IrisMessageResponseDTO>));
         service.switchTo(ChatServiceMode.COURSE, id);
         await waitForSessionId();
         await firstValueFrom(service.rateMessage(message, true));
@@ -222,7 +222,7 @@ describe('IrisChatService', () => {
 
         const message = mockUserMessageWithContent('resend message');
         message.id = mockClientMessage.id;
-        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: message } as HttpResponse<IrisMessage>));
+        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: message } as HttpResponse<IrisMessageResponseDTO>));
 
         service.switchTo(ChatServiceMode.COURSE, id);
         await waitForSessionId();
@@ -390,11 +390,12 @@ describe('IrisChatService', () => {
             service['sessionCreationIdentifier'] = 'tutor-suggestion/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
+            const newSessionFull = { id: 12, mode: ChatServiceMode.TUTOR_SUGGESTION, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
 
             const closeSpy = vi.spyOn(service as any, 'close');
             const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSessionFull));
 
             service.sessionId = id;
 
@@ -413,11 +414,12 @@ describe('IrisChatService', () => {
             service['sessionCreationIdentifier'] = 'course/1';
 
             const newSession = { id: 12, chatMode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1 } as IrisSessionDTO;
+            const newSessionFull = { id: 12, mode: ChatServiceMode.COURSE, creationDate: new Date(), entityId: 1, userId: 1 } as IrisSession;
 
             const closeSpy = vi.spyOn(service as any, 'close');
             const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
             vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
-            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSession));
+            vi.spyOn(httpService, 'getChatSessionById').mockReturnValue(of(newSessionFull));
 
             service.sessionId = id;
 

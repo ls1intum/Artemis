@@ -32,7 +32,8 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -170,7 +171,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
 
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
@@ -189,6 +190,44 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should update lastActivityDate on the current session after sendMessage', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+        const oldDate = new Date('2025-01-01T00:00:00.000Z');
+        const mockSession: IrisSessionDTO = {
+            id: mockServerSessionHttpResponse.body!.id,
+            creationDate: oldDate,
+            lastActivityDate: oldDate,
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 123,
+            entityName: 'Course 1',
+        };
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        component.newMessageTextContent.set(content);
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        const beforeSend = new Date();
+
+        // when
+        component.onSend();
+        await fixture.whenStable();
+
+        // then
+        const sessions = chatService.chatSessions.getValue();
+        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
+        expect(updatedSession).toBeDefined();
+        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeSend.getTime());
+    });
+
     it('should resend message', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
@@ -198,7 +237,7 @@ describe('IrisBaseChatbotComponent', () => {
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
         createdMessage.id = 2;
-        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
         const stub = vi.spyOn(chatService, 'resendMessage');
@@ -216,12 +255,50 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
+    it('should update lastActivityDate on the current session after resendMessage', async () => {
+        // given
+        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
+        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
+
+        const oldDate = new Date('2025-01-01T00:00:00.000Z');
+        const mockSession: IrisSessionDTO = {
+            id: mockServerSessionHttpResponse.body!.id,
+            creationDate: oldDate,
+            lastActivityDate: oldDate,
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 123,
+            entityName: 'Course 1',
+        };
+        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
+
+        const content = 'Hello';
+        const createdMessage = mockUserMessageWithContent(content);
+        createdMessage.id = 2;
+        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
+        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
+
+        chatService.switchTo(ChatServiceMode.COURSE, 123);
+        await fixture.whenStable();
+
+        const beforeResend = new Date();
+
+        // when
+        component.resendMessage(createdMessage);
+        await fixture.whenStable();
+
+        // then
+        const sessions = chatService.chatSessions.getValue();
+        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
+        expect(updatedSession).toBeDefined();
+        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeResend.getTime());
+    });
+
     it('should rate message', async () => {
         // given
         const id = 123;
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessage>));
+        vi.spyOn(httpService, 'rateMessage').mockReturnValueOnce(of({} as HttpResponse<IrisMessageResponseDTO>));
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
         const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
@@ -248,7 +325,7 @@ describe('IrisBaseChatbotComponent', () => {
 
         const content = 'Hello';
         const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisUserMessage>));
+        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
 
         vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
 
