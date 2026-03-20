@@ -46,7 +46,30 @@
             "tipTitle": "Schnellsuche",
             "tipDescription": "Suche nach Aufgaben, Vorlesungen und mehr. Verwende Filter, um deine Ergebnisse einzugrenzen.",
             "arrowUpAriaLabel": "Pfeil nach oben",
-            "arrowDownAriaLabel": "Pfeil nach unten"
+            "arrowDownAriaLabel": "Pfeil nach unten",
+            "actions": {
+                "askIrisTitle": "Iris fragen",
+                "askIrisDescription": "Mit Iris KI-Assistent chatten",
+                "lectureSearchTitle": "Vorlesungssuche",
+                "lectureSearchDescription": "Vorlesungsinhalte und Folien durchsuchen"
+            },
+            "entities": {
+                "exercisesTitle": "Aufgaben",
+                "exercisesDescription": "Kursaufgaben ansehen und bearbeiten",
+                "lecturesTitle": "Vorlesungsdetails",
+                "lecturesDescription": "Vorlesungsinhalte und Einheiten ansehen",
+                "communicationTitle": "Kommunikation",
+                "communicationDescription": "Mit Kommilitonen und Dozenten chatten",
+                "irisTitle": "Dashboard mit Iris",
+                "irisDescription": "Mit Iris KI-Assistent chatten",
+                "usersTitle": "Benutzerverwaltung",
+                "usersDescription": "Benutzer und Berechtigungen verwalten",
+                "statisticsTitle": "Statistiken",
+                "statisticsDescription": "Kursstatistiken und Analysen ansehen",
+                "calendarTitle": "Kalender",
+                "calendarDescription": "Termine und Fristen ansehen"
+            },
+            "comingSoon": "Demnächst verfügbar"
         },
         "menu": {
             "home": "Startseite",

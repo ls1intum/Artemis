@@ -22,6 +22,7 @@ import {
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SearchableEntity } from 'app/core/navbar/global-search/models/searchable-entity.model';
 import { SearchableEntityItemComponent } from 'app/core/navbar/global-search/components/modal/searchable-entity-item/searchable-entity-item.component';
 import { GlobalSearchResult } from 'app/core/navbar/global-search/services/global-search.service';
@@ -39,7 +40,7 @@ export const NAV_ACTION_COUNT = 2;
     selector: 'jhi-global-search-navigation-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule],
+    imports: [GlobalSearchActionItemComponent, FaIconComponent, SearchableEntityItemComponent, SearchResultItemComponent, SkeletonModule, ArtemisTranslatePipe],
     templateUrl: './global-search-navigation-view.component.html',
     styleUrls: ['./global-search-navigation-view.component.scss'],
     providers: [{ provide: SearchResultView, useExisting: forwardRef(() => GlobalSearchNavigationViewComponent) }],
@@ -100,8 +101,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     protected searchableEntities: SearchableEntity[] = [
         {
             id: 'exercises',
-            title: 'Exercises',
-            description: 'View and complete course exercises',
+            title: 'global.search.entities.exercisesTitle',
+            description: 'global.search.entities.exercisesDescription',
             icon: faCube,
             type: 'page',
             enabled: true,
@@ -109,48 +110,48 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
         },
         {
             id: 'lectures',
-            title: 'Lecture Details',
-            description: 'View lecture content and units',
+            title: 'global.search.entities.lecturesTitle',
+            description: 'global.search.entities.lecturesDescription',
             icon: faBook,
             type: 'page',
             enabled: false,
         },
         {
             id: 'communication',
-            title: 'Communication',
-            description: 'Chat with classmates and instructors',
+            title: 'global.search.entities.communicationTitle',
+            description: 'global.search.entities.communicationDescription',
             icon: faComments,
             type: 'page',
             enabled: false,
         },
         {
             id: 'iris',
-            title: 'Dashboard with Iris',
-            description: 'Chat with Iris AI assistant',
+            title: 'global.search.entities.irisTitle',
+            description: 'global.search.entities.irisDescription',
             icon: faHashtag,
             type: 'page',
             enabled: false,
         },
         {
             id: 'users',
-            title: 'User Management',
-            description: 'Manage users and permissions',
+            title: 'global.search.entities.usersTitle',
+            description: 'global.search.entities.usersDescription',
             icon: faUsers,
             type: 'page',
             enabled: false,
         },
         {
             id: 'statistics',
-            title: 'Statistics',
-            description: 'View course statistics and analytics',
+            title: 'global.search.entities.statisticsTitle',
+            description: 'global.search.entities.statisticsDescription',
             icon: faChartBar,
             type: 'feature',
             enabled: false,
         },
         {
             id: 'calendar',
-            title: 'Calendar',
-            description: 'View your schedule and deadlines',
+            title: 'global.search.entities.calendarTitle',
+            description: 'global.search.entities.calendarDescription',
             icon: faCalendarAlt,
             type: 'feature',
             enabled: false,

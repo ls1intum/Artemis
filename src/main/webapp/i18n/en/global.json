@@ -46,7 +46,30 @@
             "tipTitle": "Quick Search",
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
             "arrowUpAriaLabel": "Arrow up",
-            "arrowDownAriaLabel": "Arrow down"
+            "arrowDownAriaLabel": "Arrow down",
+            "actions": {
+                "askIrisTitle": "Ask Iris",
+                "askIrisDescription": "Chat with Iris AI assistant",
+                "lectureSearchTitle": "Lecture Search",
+                "lectureSearchDescription": "Search through lecture content and slides"
+            },
+            "entities": {
+                "exercisesTitle": "Exercises",
+                "exercisesDescription": "View and complete course exercises",
+                "lecturesTitle": "Lecture Details",
+                "lecturesDescription": "View lecture content and units",
+                "communicationTitle": "Communication",
+                "communicationDescription": "Chat with classmates and instructors",
+                "irisTitle": "Dashboard with Iris",
+                "irisDescription": "Chat with Iris AI assistant",
+                "usersTitle": "User Management",
+                "usersDescription": "Manage users and permissions",
+                "statisticsTitle": "Statistics",
+                "statisticsDescription": "View course statistics and analytics",
+                "calendarTitle": "Calendar",
+                "calendarDescription": "View your schedule and deadlines"
+            },
+            "comingSoon": "Coming soon"
         },
         "menu": {
             "home": "Home",

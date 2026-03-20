@@ -3,8 +3,8 @@
     <!-- Action button: Ask Iris (index 0) - Placeholder -->
     <div #selectableItem>
         <jhi-global-search-action-item
-            [title]="'Ask Iris'"
-            [description]="'Chat with Iris AI assistant'"
+            [title]="'global.search.actions.askIrisTitle' | artemisTranslate"
+            [description]="'global.search.actions.askIrisDescription' | artemisTranslate"
             [selected]="selectedIndex() === 0"
             accentColor="var(--bs-primary)"
             secondaryAccentColor="var(--bs-info)"
@@ -17,8 +17,8 @@
     <!-- Action button: Search Lecture Content (index 1) - Placeholder -->
     <div #selectableItem>
         <jhi-global-search-action-item
-            [title]="'Lecture Search'"
-            [description]="'Search through lecture content and slides'"
+            [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
+            [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
             [selected]="selectedIndex() === 1"
             accentColor="var(--global-search-lecture-accent)"
             secondaryAccentColor="var(--bs-primary)"
