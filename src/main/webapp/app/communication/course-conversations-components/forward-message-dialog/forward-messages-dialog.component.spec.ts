@@ -1,9 +1,8 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
@@ -18,20 +17,15 @@ import { PostingContentComponent } from 'app/communication/posting-content/posti
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Subject } from 'rxjs';
 
 describe('ForwardMessageDialogComponent', () => {
-    setupTestBed({ zoneless: true });
-
     let component: ForwardMessageDialogComponent;
     let fixture: ComponentFixture<ForwardMessageDialogComponent>;
     let searchInput: any;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [
-                FormsModule,
+            declarations: [
                 ForwardMessageDialogComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(MarkdownEditorMonacoComponent),
@@ -39,14 +33,16 @@ describe('ForwardMessageDialogComponent', () => {
                 MockComponent(PostingContentComponent),
             ],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
-                { provide: DynamicDialogConfig, useValue: { data: {} } },
+                MockProvider(NgbActiveModal),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
-        });
+            imports: [FormsModule],
+        }).compileComponents();
 
-        global.ResizeObserver = MockResizeObserver as unknown as typeof ResizeObserver;
+        global.ResizeObserver = jest.fn().mockImplementation((callback: ResizeObserverCallback) => {
+            return new MockResizeObserver(callback);
+        });
 
         fixture = TestBed.createComponent(ForwardMessageDialogComponent);
         component = fixture.componentInstance;
@@ -76,7 +72,7 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     afterEach(() => {
-        vi.restoreAllMocks();
+        jest.restoreAllMocks();
     });
 
     it('should create the component', () => {
@@ -136,8 +132,8 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should send selected items when Send button is clicked', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const activeModal = TestBed.inject(NgbActiveModal);
+        const closeSpy = jest.spyOn(activeModal, 'close');
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.newPost.content = 'Test content';
         fixture.detectChanges();
@@ -153,18 +149,18 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should close the modal when cancel button is clicked', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const activeModal = TestBed.inject(NgbActiveModal);
+        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
 
         const cancelButton = fixture.debugElement.query(By.css('.btn-close')).nativeElement;
         cancelButton.click();
 
-        expect(closeSpy).toHaveBeenCalled();
+        expect(dismissSpy).toHaveBeenCalled();
     });
 
     it('should focus the input field', () => {
         const inputElement = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
-        vi.spyOn(inputElement, 'focus');
+        jest.spyOn(inputElement, 'focus');
 
         component.focusInput();
 
@@ -172,9 +168,7 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should handle missing input element gracefully when focusInput is called', () => {
-        // Clear the document body to simulate missing element
-        const container = document.createElement('div');
-        document.body.appendChild(container);
+        document.body.innerHTML = ``;
         expect(() => component.focusInput()).not.toThrow();
     });
 
@@ -183,17 +177,17 @@ describe('ForwardMessageDialogComponent', () => {
 
         inputElement.dispatchEvent(new Event('focus'));
         fixture.detectChanges();
-        expect(component.showDropdown).toBe(true);
+        expect(component.showDropdown).toBeTrue();
 
         document.body.click();
         fixture.detectChanges();
-        expect(component.showDropdown).toBe(false);
+        expect(component.showDropdown).toBeFalse();
     });
 
     it('should clear filteredOptions when no matching results are found', async () => {
-        const localSearchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
-        localSearchInput.value = 'NonExistentOption';
-        localSearchInput.dispatchEvent(new Event('input'));
+        const searchInput = fixture.debugElement.query(By.css('input.tag-input')).nativeElement;
+        searchInput.value = 'NonExistentOption';
+        searchInput.dispatchEvent(new Event('input'));
 
         await component.filterOptions();
         fixture.detectChanges();
@@ -212,7 +206,7 @@ describe('ForwardMessageDialogComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBe(true);
+        expect(component.isContentLong).toBeTrue();
     });
 
     it('should disable Send button if no content and no selections are made', () => {
@@ -222,12 +216,12 @@ describe('ForwardMessageDialogComponent', () => {
         fixture.detectChanges();
 
         const sendButton = fixture.debugElement.query(By.css('button.btn-primary')).nativeElement;
-        expect(sendButton.disabled).toBe(true);
+        expect(sendButton.disabled).toBeTrue();
     });
 
     it('should send both channels and chats when selections are made', () => {
-        const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const activeModal = TestBed.inject(NgbActiveModal);
+        const closeSpy = jest.spyOn(activeModal, 'close');
 
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];
@@ -259,13 +253,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should toggle showFullForwardedMessage and reflect changes', () => {
-        expect(component.showFullForwardedMessage).toBe(false);
+        expect(component.showFullForwardedMessage).toBeFalse();
 
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBe(true);
+        expect(component.showFullForwardedMessage).toBeTrue();
 
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBe(false);
+        expect(component.showFullForwardedMessage).toBeFalse();
     });
 
     it('should update newPost.content with the provided value', () => {

@@ -6,14 +6,12 @@ import { Posting, PostingType, SavedPostStatus } from 'app/communication/shared/
 import { ConversationType } from 'app/communication/shared/entities/conversation/conversation.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MetisService } from 'app/communication/service/metis.service';
-import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
@@ -51,22 +49,16 @@ describe('PostingSummaryComponent', () => {
                 MockDirective(TranslateDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
-            providers: [
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: TranslateService, useClass: MockTranslateService },
-            ],
-        });
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        })
+            .overrideComponent(PostingSummaryComponent, {
+                remove: { imports: [PostingContentComponent] },
+                add: { imports: [MockComponent(PostingContentComponent)] },
+            })
+            .compileComponents();
 
         fixture = TestBed.createComponent(PostingSummaryComponent);
         component = fixture.componentInstance;
-    });
-
-    beforeEach(() => {
-        vi.useFakeTimers();
-    });
-
-    afterEach(() => {
-        vi.useRealTimers();
     });
 
     it('should create', () => {
@@ -193,10 +185,10 @@ describe('PostingSummaryComponent', () => {
     describe('Template rendering', () => {
         setupTestBed({ zoneless: true });
 
-        beforeEach(() => {
+        beforeEach(async () => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
-            vi.advanceTimersByTime(0);
+            await fixture.whenStable();
             fixture.detectChanges();
         });
 
