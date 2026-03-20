@@ -118,7 +118,9 @@ public class CourseUpdateResource {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseUpdateDTO.id());
+        // Always use the path variable for lookups to prevent a DTO with a mismatched id
+        // from loading (and potentially modifying) a different course than the URL indicates
+        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");

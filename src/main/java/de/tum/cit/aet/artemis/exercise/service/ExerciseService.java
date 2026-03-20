@@ -912,7 +912,12 @@ public class ExerciseService {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+        if (dto.competencyLinks() == null) {
+            // null means "not provided" — do not change existing links (PATCH semantics)
+            return;
+        }
+        if (dto.competencyLinks().isEmpty()) {
+            // empty set means "remove all" — clear existing links
             entity.getCompetencyLinks().clear();
         }
         else {
