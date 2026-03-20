@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subject, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
@@ -30,6 +30,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly searchService = inject(GlobalSearchService);
+    private readonly destroyRef = inject(DestroyRef);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
@@ -204,6 +205,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
                     this.isLoading.set(false);
                     return of([]);
                 }),
+                takeUntilDestroyed(this.destroyRef),
             )
             .subscribe((results) => {
                 this.results.set(results);
