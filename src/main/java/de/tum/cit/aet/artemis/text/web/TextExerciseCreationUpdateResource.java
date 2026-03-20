@@ -469,18 +469,10 @@ public class TextExerciseCreationUpdateResource {
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        exercise.setAllowComplaintsForAutomaticAssessments(Boolean.TRUE.equals(dto.allowComplaintsForAutomaticAssessments()));
+        exercise.setAllowFeedbackRequests(Boolean.TRUE.equals(dto.allowFeedbackRequests()));
+        exercise.setPresentationScoreEnabled(Boolean.TRUE.equals(dto.presentationScoreEnabled()));
+        exercise.setSecondCorrectionEnabled(Boolean.TRUE.equals(dto.secondCorrectionEnabled()));
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {
