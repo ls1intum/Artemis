@@ -61,12 +61,17 @@ export class IrisExerciseChatbotButtonComponent {
         const stage = this.activeStage();
         return stage?.state === IrisStageStateDTO.IN_PROGRESS || stage?.state === IrisStageStateDTO.NOT_STARTED;
     });
-    readonly stageDisplayName = computed(() => {
-        this.currentLocale();
-        const name = this.activeStage()?.name;
-        return name ? this.translateLabel(name) : '';
-    });
+    readonly displayName = signal('');
     readonly animToggle = signal(false);
+
+    private readonly rotationKeys = [
+        'artemisApp.iris.stages.thinking',
+        'artemisApp.iris.stages.analyzing',
+        'artemisApp.iris.stages.processing',
+        'artemisApp.iris.stages.formulating',
+    ];
+    private rotationIntervalId: ReturnType<typeof setInterval> | undefined;
+    private rotationIndex = 0;
 
     // Convert newIrisMessage observable to signal for tracking incoming messages
     private readonly latestIrisMessageContent = toSignal(
@@ -96,17 +101,17 @@ export class IrisExerciseChatbotButtonComponent {
 
     private readonly shouldReopenChat = toSignal(this.chatService.shouldReopenChat$, { initialValue: false });
 
-    // Track previous display name for animation toggle
-    private previousDisplayName = '';
-
     constructor() {
-        // Register cleanup for dialog
+        // Register cleanup for dialog and rotation interval
         this.destroyRef.onDestroy(() => {
             if (this.dialogRef) {
                 this.dialogRef.close();
             }
             if (this.bubbleTimeoutId) {
                 clearTimeout(this.bubbleTimeoutId);
+            }
+            if (this.rotationIntervalId) {
+                clearInterval(this.rotationIntervalId);
             }
         });
 
@@ -160,13 +165,52 @@ export class IrisExerciseChatbotButtonComponent {
             }
         });
 
-        // Toggle animation when stage display name changes
+        // Display name effect — show stage message, rotate labels during IN_PROGRESS
         effect(() => {
-            const name = this.stageDisplayName();
-            if (name && name !== this.previousDisplayName) {
-                this.animToggle.update((v) => !v);
+            const stage = this.activeStage();
+            this.currentLocale();
+            const name = stage?.message || '';
+            const translated = name ? this.translateLabel(name) : '';
+
+            if (translated) {
+                const currentDisplay = untracked(() => this.displayName());
+                const isAlreadyRotating = this.rotationIntervalId !== undefined;
+
+                if (isAlreadyRotating && translated !== currentDisplay) {
+                    clearInterval(this.rotationIntervalId);
+                    this.rotationIntervalId = undefined;
+                }
+
+                const isRotating = this.rotationIntervalId !== undefined;
+
+                if (translated !== currentDisplay && !isRotating) {
+                    this.displayName.set(translated);
+                    this.animToggle.update((v) => !v);
+                }
             }
-            this.previousDisplayName = name;
+
+            const shouldRotate = stage?.state === IrisStageStateDTO.IN_PROGRESS;
+            const isRotating = this.rotationIntervalId !== undefined;
+
+            if (shouldRotate && !isRotating) {
+                if (!translated) {
+                    const firstLabel = this.translateLabel(this.rotationKeys[0]);
+                    this.displayName.set(firstLabel);
+                    this.animToggle.update((v) => !v);
+                }
+                this.rotationIndex = 0;
+                this.rotationIntervalId = setInterval(() => {
+                    this.rotationIndex = (this.rotationIndex + 1) % this.rotationKeys.length;
+                    const rotated = this.translateLabel(this.rotationKeys[this.rotationIndex]);
+                    this.displayName.set(rotated);
+                    this.animToggle.update((v) => !v);
+                }, 2600);
+            } else if (!shouldRotate && isRotating) {
+                clearInterval(this.rotationIntervalId);
+                this.rotationIntervalId = undefined;
+            } else if (!shouldRotate && !translated) {
+                this.displayName.set('');
+            }
         });
 
         effect(() => {

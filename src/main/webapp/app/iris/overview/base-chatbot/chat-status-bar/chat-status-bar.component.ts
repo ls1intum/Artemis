@@ -53,7 +53,7 @@ export class ChatStatusBarComponent {
                     this.open.set(true);
                     this.activeStage.set(firstUnfinished);
                 }
-                const label = firstUnfinished.message || firstUnfinished.name;
+                const label = firstUnfinished.message || '';
                 this.stageMessage.set(label ? this.translateLabel(label) : undefined);
             } else if (current !== undefined) {
                 this.activeStage.set(undefined);
@@ -67,37 +67,48 @@ export class ChatStatusBarComponent {
             const stage = this.activeStage();
             // Read locale to re-run translations on language change
             this.currentLocale();
-            const name = stage?.name ?? '';
+            const name = stage?.message || '';
             const translated = name ? this.translateLabel(name) : '';
 
             if (translated) {
                 const currentDisplay = untracked(() => this.displayName());
                 const isAlreadyRotating = this.rotationIntervalId !== undefined;
-                const shouldRotate = stage?.state === IrisStageStateDTO.IN_PROGRESS;
 
-                if (translated !== currentDisplay && !isAlreadyRotating) {
+                // If the stage changed while rotation is running, clear it so it restarts
+                if (isAlreadyRotating && translated !== currentDisplay) {
+                    clearInterval(this.rotationIntervalId);
+                    this.rotationIntervalId = undefined;
+                }
+
+                const isRotating = this.rotationIntervalId !== undefined;
+
+                if (translated !== currentDisplay && !isRotating) {
                     this.displayName.set(translated);
                     this.animToggle.update((v) => !v);
                 }
+            }
 
-                // Only restart rotation if rotation state changed
-                if (shouldRotate && !isAlreadyRotating) {
-                    this.rotationIndex = 0;
-                    this.rotationIntervalId = setInterval(() => {
-                        this.rotationIndex = (this.rotationIndex + 1) % this.rotationKeys.length;
-                        const rotated = this.translateLabel(this.rotationKeys[this.rotationIndex]);
-                        this.displayName.set(rotated);
-                        this.animToggle.update((v) => !v);
-                    }, 2500);
-                } else if (!shouldRotate && isAlreadyRotating) {
-                    clearInterval(this.rotationIntervalId);
-                    this.rotationIntervalId = undefined;
+            const shouldRotate = stage?.state === IrisStageStateDTO.IN_PROGRESS;
+            const isRotating = this.rotationIntervalId !== undefined;
+
+            if (shouldRotate && !isRotating) {
+                // If no initial label was set, show the first rotation key immediately
+                if (!translated) {
+                    const firstLabel = this.translateLabel(this.rotationKeys[0]);
+                    this.displayName.set(firstLabel);
+                    this.animToggle.update((v) => !v);
                 }
-            } else {
-                if (this.rotationIntervalId) {
-                    clearInterval(this.rotationIntervalId);
-                    this.rotationIntervalId = undefined;
-                }
+                this.rotationIndex = 0;
+                this.rotationIntervalId = setInterval(() => {
+                    this.rotationIndex = (this.rotationIndex + 1) % this.rotationKeys.length;
+                    const rotated = this.translateLabel(this.rotationKeys[this.rotationIndex]);
+                    this.displayName.set(rotated);
+                    this.animToggle.update((v) => !v);
+                }, 2600);
+            } else if (!shouldRotate && isRotating) {
+                clearInterval(this.rotationIntervalId);
+                this.rotationIntervalId = undefined;
+            } else if (!shouldRotate && !translated) {
                 this.displayName.set('');
             }
         });

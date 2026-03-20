@@ -274,11 +274,19 @@ describe('ExerciseChatbotButtonComponent', () => {
     });
 
     describe('stage display name', () => {
-        it('should reflect the active stage name', async () => {
-            chatService.stages.next([{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: '', internal: false }]);
+        it('should show rotation label when stage message is empty', async () => {
+            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: '', internal: false }]);
             await fixture.whenStable();
 
-            expect(component.stageDisplayName()).toBe('Thinking hard');
+            expect(component.displayName()).toBe('artemisApp.iris.stages.thinking');
+            expect(component.isProcessing()).toBe(true);
+        });
+
+        it('should show stage message when provided', async () => {
+            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: 'Checking info', internal: false }]);
+            await fixture.whenStable();
+
+            expect(component.displayName()).toBe('Checking info');
             expect(component.isProcessing()).toBe(true);
         });
 
@@ -286,7 +294,7 @@ describe('ExerciseChatbotButtonComponent', () => {
             chatService.stages.next([{ name: 'Done Stage', state: IrisStageStateDTO.DONE, weight: 10, message: '', internal: false }]);
             await fixture.whenStable();
 
-            expect(component.stageDisplayName()).toBe('');
+            expect(component.displayName()).toBe('');
             expect(component.isProcessing()).toBe(false);
         });
     });

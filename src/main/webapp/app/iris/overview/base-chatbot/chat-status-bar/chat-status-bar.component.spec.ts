@@ -124,28 +124,38 @@ describe('ChatStatusBarComponent', () => {
         expect(errorIcon).toBeTruthy();
     });
 
-    it('should display the active stage name', async () => {
-        const stages = [{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false }];
+    it('should prefer stage.message over stage.name for displayName', async () => {
+        const stages = [{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Checking the available information', internal: false }];
         fixture.componentRef.setInput('stages', stages);
         await fixture.whenStable();
         fixture.detectChanges();
-        expect(component.displayName()).toBe('Thinking hard');
+        expect(component.displayName()).toBe('Checking the available information');
         const statusText = fixture.debugElement.query(By.css('.status-text'));
-        expect(statusText.nativeElement.textContent.trim()).toBe('Thinking hard');
+        expect(statusText.nativeElement.textContent.trim()).toBe('Checking the available information');
+    });
+
+    it('should show rotation label immediately when message is empty during IN_PROGRESS', async () => {
+        const stages = [{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false }];
+        fixture.componentRef.setInput('stages', stages);
+        await fixture.whenStable();
+        fixture.detectChanges();
+        // Should NOT show the raw Pyris name; should show the first rotation key instead
+        expect(component.displayName()).not.toBe('Executing pipeline');
+        expect(component.displayName()).toBe('artemisApp.iris.stages.thinking');
     });
 
     it('should update displayName when stage changes', async () => {
-        const stages1 = [{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false }];
+        const stages1 = [{ name: 'Thinking hard', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Analyzing your code', internal: false }];
         fixture.componentRef.setInput('stages', stages1);
         await fixture.whenStable();
-        expect(component.displayName()).toBe('Thinking hard');
+        expect(component.displayName()).toBe('Analyzing your code');
 
         const stages2 = [
             { name: 'Thinking hard', state: IrisStageStateDTO.DONE, weight: 1, message: '', internal: false },
-            { name: 'Analyzing context', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: '', internal: false },
+            { name: 'Analyzing context', state: IrisStageStateDTO.IN_PROGRESS, weight: 1, message: 'Formulating response', internal: false },
         ];
         fixture.componentRef.setInput('stages', stages2);
         await fixture.whenStable();
-        expect(component.displayName()).toBe('Analyzing context');
+        expect(component.displayName()).toBe('Formulating response');
     });
 });

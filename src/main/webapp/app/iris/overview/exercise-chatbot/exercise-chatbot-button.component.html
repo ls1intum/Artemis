@@ -6,8 +6,8 @@
     }
     @if (isProcessing() && !newIrisMessage()) {
         <button type="button" class="status-indicator" (click)="handleButtonClick()">
-            <span class="visually-hidden" role="status" aria-live="polite">{{ stageDisplayName() }}</span>
-            <span class="status-label" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ stageDisplayName() }}</span>
+            <span class="visually-hidden" role="status" aria-live="polite">{{ displayName() }}</span>
+            <span class="status-label" aria-hidden="true" [class.anim-a]="animToggle()" [class.anim-b]="!animToggle()">{{ displayName() }}</span>
             <div class="typing-dots" aria-hidden="true">
                 <span class="dot"></span>
                 <span class="dot"></span>
