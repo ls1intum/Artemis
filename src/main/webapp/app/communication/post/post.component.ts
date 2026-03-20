@@ -13,6 +13,7 @@ import {
     model,
     output,
     signal,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -137,9 +138,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.course = this.metisService.getCourse() ?? throwError(() => new Error('Course not found'));
         // Reactive check: if forwarded post/answer is deleted, update flag
         effect(() => {
-            const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
-            const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
-            this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
+            const forwardedPosts = this.forwardedPosts();
+            const forwardedAnswerPosts = this.forwardedAnswerPosts();
+            untracked(() => {
+                const hasDeletedForwardedPost = forwardedPosts.length > 0 && forwardedPosts[0] === undefined;
+                const hasDeletedForwardedAnswerPost = forwardedAnswerPosts.length > 0 && forwardedAnswerPosts[0] === undefined;
+                this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
+            });
         });
     }
 

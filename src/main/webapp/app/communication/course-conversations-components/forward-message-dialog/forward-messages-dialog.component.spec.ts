@@ -133,8 +133,8 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should send selected items when Send button is clicked', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const closeSpy = jest.spyOn(dialogRef, 'close');
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.newPost.content = 'Test content';
         fixture.detectChanges();
@@ -150,13 +150,13 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should close the modal when cancel button is clicked', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        const dismissSpy = jest.spyOn(activeModal, 'dismiss');
+        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const closeSpy = jest.spyOn(dialogRef, 'close');
 
         const cancelButton = fixture.debugElement.query(By.css('.btn-close')).nativeElement;
         cancelButton.click();
 
-        expect(dismissSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalled();
     });
 
     it('should focus the input field', () => {
@@ -221,8 +221,8 @@ describe('ForwardMessageDialogComponent', () => {
     });
 
     it('should send both channels and chats when selections are made', () => {
-        const activeModal = TestBed.inject(NgbActiveModal);
-        const closeSpy = jest.spyOn(activeModal, 'close');
+        const dialogRef = TestBed.inject(DynamicDialogRef);
+        const closeSpy = jest.spyOn(dialogRef, 'close');
 
         component.selectedChannels = [{ id: 1, name: 'General' } as ChannelDTO];
         component.selectedUsers = [{ id: 3 } as UserPublicInfoDTO];

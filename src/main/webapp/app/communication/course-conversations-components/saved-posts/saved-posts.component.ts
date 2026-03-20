@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, untracked } from '@angular/core';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
@@ -33,22 +33,26 @@ export class SavedPostsComponent {
 
     constructor() {
         effect(() => {
-            this.isShowDeleteNotice = this.savedPostStatus() !== SavedPostStatus.IN_PROGRESS;
+            const savedPostStatus = this.savedPostStatus();
+            const courseId = this.courseId();
+            untracked(() => {
+                this.isShowDeleteNotice = savedPostStatus !== SavedPostStatus.IN_PROGRESS;
 
-            this.savedPostService.fetchSavedPosts(this.courseId(), this.savedPostStatus()).subscribe({
-                next: (response) => {
-                    if (!response.body) {
+                this.savedPostService.fetchSavedPosts(courseId, savedPostStatus).subscribe({
+                    next: (response) => {
+                        if (!response.body) {
+                            this.posts = [];
+                        } else {
+                            this.posts = response.body.map(this.savedPostService.convertPostingToCorrespondingType);
+                        }
+                    },
+                    error: () => {
                         this.posts = [];
-                    } else {
-                        this.posts = response.body.map(this.savedPostService.convertPostingToCorrespondingType);
-                    }
-                },
-                error: () => {
-                    this.posts = [];
-                },
-                complete: () => {
-                    this.hiddenPosts = [];
-                },
+                    },
+                    complete: () => {
+                        this.hiddenPosts = [];
+                    },
+                });
             });
         });
     }

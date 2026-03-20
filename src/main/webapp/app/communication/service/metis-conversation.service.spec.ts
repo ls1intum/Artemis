@@ -405,9 +405,12 @@ describe('MetisConversationService', () => {
 
         const acceptStub = vi.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
         metisConversationService.acceptCodeOfConduct(course);
-        metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
-            expect(isCodeOfConductAccepted).toBe(true);
+        let acceptedValue: boolean | undefined;
+        const sub2 = metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+            acceptedValue = isCodeOfConductAccepted;
         });
+        expect(acceptedValue).toBe(true);
+        sub2.unsubscribe();
         expect(acceptStub).toHaveBeenCalledOnce();
     });
 
@@ -628,8 +631,11 @@ describe('MetisConversationService', () => {
             { unreadMessagesCount: 0, isMuted: true },
         ];
         (metisConversationService as any).hasUnreadMessagesCheck();
-        metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
-            expect(hasUnread).toBe(true);
+        let hasUnreadValue: boolean | undefined;
+        const sub = metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
+            hasUnreadValue = hasUnread;
         });
+        expect(hasUnreadValue).toBe(true);
+        sub.unsubscribe();
     });
 });
