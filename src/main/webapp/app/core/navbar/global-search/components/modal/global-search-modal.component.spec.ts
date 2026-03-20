@@ -316,6 +316,30 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(false);
         });
 
+        it('should show base results again when filter is removed and re-added', () => {
+            mockSearchService.search.mockReturnValue(of(filteredResults));
+
+            // Add exercise filter → triggers search → shows results
+            component['addFilter']('exercise');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual(filteredResults);
+            expect(component['isLoading']()).toBe(false);
+
+            // Remove exercise filter (no query) → resets to initial state
+            component['removeFilter']('exercise');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual([]);
+            expect(component['hasSearched']()).toBe(false);
+            expect(component['isLoading']()).toBe(false);
+
+            // Re-add exercise filter → must trigger search again, not stay loading
+            mockSearchService.search.mockReturnValue(of(queryResults));
+            component['addFilter']('exercise');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual(queryResults);
+            expect(component['isLoading']()).toBe(false);
+        });
+
         it('should route onEntityClick through the main pipeline instead of a separate subscription', () => {
             mockSearchService.search.mockReturnValue(of(filteredResults));
 

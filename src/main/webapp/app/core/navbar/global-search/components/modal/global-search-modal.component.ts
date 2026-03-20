@@ -189,15 +189,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
         const newFilters = this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
 
-        // If no filters remain and no query, reset to initial state
-        if (newFilters.length === 0 && !this.searchQuery()) {
-            this.results.set([]);
-            this.hasSearched.set(false);
-            this.isLoading.set(false);
-        } else {
-            // Re-trigger search to update results
-            this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
-        }
+        // Always emit through the pipeline so distinctUntilChanged tracks the current state.
+        // Without this, re-adding the same filter would be suppressed as a duplicate.
+        this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
     }
 
     protected onEntityClick(entity: SearchableEntity) {
