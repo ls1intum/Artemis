@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -33,7 +33,8 @@ describe('ForwardMessageDialogComponent', () => {
                 MockComponent(PostingContentComponent),
             ],
             providers: [
-                MockProvider(NgbActiveModal),
+                MockProvider(DynamicDialogRef),
+                MockProvider(DynamicDialogConfig),
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],

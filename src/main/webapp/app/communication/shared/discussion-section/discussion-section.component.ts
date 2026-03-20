@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, untracked, viewChild, viewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -89,7 +89,11 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     constructor() {
         super();
-        effect(() => this.loadData(this.exercise(), this.lecture()));
+        effect(() => {
+            const exerciseValue = this.exercise();
+            const lectureValue = this.lecture();
+            untracked(() => this.loadData(exerciseValue, lectureValue));
+        });
     }
 
     loadData(exercise?: Exercise, lecture?: Lecture): void {

@@ -94,14 +94,14 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
     constructor() {
         effect(() => {
             // Track signal inputs that were monitored in ngOnChanges
-            this.posting();
+            const postingValue = this.posting();
             this.isReadOnlyMode();
             this.previewMode();
             untracked(() => {
                 this.updatePostingWithReactions();
-                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(this.posting() as Posting);
+                this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue as Posting);
                 this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-                this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((this.posting() as AnswerPost).post!) : false;
+                this.isAuthorOfOriginalPost = this.getPostingType() === 'answerPost' ? this.metisService.metisUserIsAuthorOfPosting((postingValue as AnswerPost).post!) : false;
                 if (this.getPostingType() === 'post') {
                     this.resetTooltipsAndPriority();
                 }

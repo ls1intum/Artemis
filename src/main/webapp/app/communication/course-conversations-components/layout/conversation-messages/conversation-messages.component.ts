@@ -11,6 +11,7 @@ import {
     inject,
     input,
     output,
+    untracked,
     viewChild,
     viewChildren,
 } from '@angular/core';
@@ -141,8 +142,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     constructor() {
         effect(() => {
-            this.focusOnPostId = this.focusPostId();
-            this.isOpenThreadOnFocus = this.openThreadOnFocus();
+            const focusPostIdValue = this.focusPostId();
+            const openThreadOnFocusValue = this.openThreadOnFocus();
+            untracked(() => {
+                this.focusOnPostId = focusPostIdValue;
+                this.isOpenThreadOnFocus = openThreadOnFocusValue;
+            });
         });
 
         // viewChildren returns a signal; use effect() to react to changes.
@@ -152,21 +157,27 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         effect(() => {
             // Read the signal to track changes
             void this.messages();
-            this.handleScrollOnNewMessage();
+            untracked(() => {
+                this.handleScrollOnNewMessage();
+            });
         });
         effect(() => {
             // Read the signal to track changes
             void this.messages();
-            if (!this.createdNewMessage && this.posts.length > 0) {
-                this.scrollToStoredId();
-            }
+            untracked(() => {
+                if (!this.createdNewMessage && this.posts.length > 0) {
+                    this.scrollToStoredId();
+                }
+            });
         });
         effect(() => {
             // Track showOnlyPinned signal input (replaces ngOnChanges)
             this.showOnlyPinned();
-            if (this.initialized) {
-                this.setPosts();
-            }
+            untracked(() => {
+                if (this.initialized) {
+                    this.setPosts();
+                }
+            });
         });
     }
 

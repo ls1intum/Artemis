@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, effect, inject, input, signal, untracked } from '@angular/core';
 import { User } from 'app/core/user/user.model';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { LinkPreviewComponent } from '../link-preview/link-preview.component';
@@ -38,9 +38,11 @@ export class LinkPreviewContainerComponent implements OnInit {
             this.posting();
             this.isEdited();
             this.isReply();
-            if (this.initialized) {
-                this.reloadLinkPreviews();
-            }
+            untracked(() => {
+                if (this.initialized) {
+                    this.reloadLinkPreviews();
+                }
+            });
         });
     }
 
