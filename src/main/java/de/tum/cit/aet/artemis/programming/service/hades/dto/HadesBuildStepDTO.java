@@ -13,8 +13,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * The API Specification for Hades can be found here: https://github.com/ls1intum/hades/blob/main/shared/payload/payload.go
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String workingDir, HashMap<String, String> metadata, String script)
-        implements Serializable {
+public record HadesBuildStepDTO(Integer id, String name, String image, List<VolumeMount> volumeMounts, String workingDir, HashMap<String, String> metadata, String script,
+        boolean ContinueOnError) implements Serializable {
 
     public record VolumeMount(String name, String mountPath) {
     }
