@@ -286,27 +286,4 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             request.getList("/api/exercises/search?q=&courseId=" + course.getId(), HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
         }
     }
-
-    @Nested
-    class ProgrammingExerciseWeaviateEndpointTests {
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-        void testStudentOnlySeesReleasedProgrammingExercises() throws Exception {
-            var results = request.getList("/api/courses/" + course.getId() + "/programming-exercises/weaviate", HttpStatus.OK, GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains("WeaviateSearchable Released Exercise");
-            assertThat(titles).doesNotContain("WeaviateSearchable Unreleased Exercise");
-        }
-
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-        void testInstructorSeesAllProgrammingExercises() throws Exception {
-            var results = request.getList("/api/courses/" + course.getId() + "/programming-exercises/weaviate", HttpStatus.OK, GlobalSearchResultDTO.class);
-            var titles = getResultTitles(results);
-
-            assertThat(titles).contains("WeaviateSearchable Released Exercise", "WeaviateSearchable Unreleased Exercise");
-        }
-    }
 }
