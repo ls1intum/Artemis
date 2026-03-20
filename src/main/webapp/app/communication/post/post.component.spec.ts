@@ -247,7 +247,7 @@ describe('PostComponent', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
         const createOneToOneChatSpy = jest.fn().mockReturnValue(of({ body: { id: 1 } } as HttpResponse<OneToOneChatDTO>));
         Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
-        component.isCommunicationPage = true;
+        fixture.componentRef.setInput('isCommunicationPage', true);
 
         component.onUserReferenceClicked(metisUser1.login!);
 
@@ -270,7 +270,7 @@ describe('PostComponent', () => {
         const metisConversationService = TestBed.inject(MetisConversationService);
         const setActiveConversationSpy = jest.fn();
         Object.defineProperty(metisConversationService, 'setActiveConversation', { value: setActiveConversationSpy });
-        component.isCommunicationPage = true;
+        fixture.componentRef.setInput('isCommunicationPage', true);
 
         component.onChannelReferenceClicked(metisChannel.id!);
 
