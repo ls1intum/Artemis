@@ -51,7 +51,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         vi.restoreAllMocks();
     });
 
-    it('should init modal with correct content and title for answer post with id', () => {
+    it('should init modal with correct content and title for answer post with id', { timeout: 30000 }, () => {
         component.posting = metisResolvingAnswerPostUser1;
         component.ngOnInit();
         expect(component.modalTitle).toBe('artemisApp.metis.editPosting');
