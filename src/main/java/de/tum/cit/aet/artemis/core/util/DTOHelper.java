@@ -46,10 +46,13 @@ public final class DTOHelper {
      */
     @Nullable
     public static <S, D> Set<D> mapInitializedSet(@Nullable Collection<S> collection, Function<S, D> mapper) {
-        if (collection != null && Hibernate.isInitialized(collection)) {
-            return collection.isEmpty() ? Set.of() : collection.stream().map(mapper).collect(Collectors.toSet());
+        if (collection == null || !Hibernate.isInitialized(collection)) {
+            return null;
         }
-        return null;
+        if (collection.isEmpty()) {
+            return Set.of();
+        }
+        return collection.stream().map(mapper).collect(Collectors.toSet());
     }
 
     /**

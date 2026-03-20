@@ -173,27 +173,9 @@ public class ProgrammingExerciseUpdateResource {
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
         // Validate immutable fields haven't changed
-        if (!Objects.equals(originalExercise.getShortName(), updateDTO.shortName())) {
-            throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
-        }
-        if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
-            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
-        }
-        // Check if Theia is enabled
-        if (moduleFeatureService.isTheiaEnabled()) {
-            // Require 1 / 3 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
-        else {
-            // Require 1 / 2 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
+        validateImmutableFields(originalExercise, updateDTO);
+        // Validate at least one participation mode is enabled
+        validateParticipationModes(updateDTO);
 
         // Verify that the checkout directories have not been changed
         programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(originalExercise, updatedProgrammingExercise);
@@ -398,5 +380,37 @@ public class ProgrammingExerciseUpdateResource {
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateProgrammingExercise(updateDTO, null);
+    }
+
+    /**
+     * Validates that immutable fields (short name, static code analysis) haven't changed.
+     */
+    private void validateImmutableFields(ProgrammingExercise originalExercise, UpdateProgrammingExerciseDTO updateDTO) {
+        if (!Objects.equals(originalExercise.getShortName(), updateDTO.shortName())) {
+            throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
+        }
+        if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
+            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
+        }
+    }
+
+    /**
+     * Validates that at least one participation mode (online editor, offline IDE, or online IDE) is enabled.
+     */
+    private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
+        boolean hasOnlineEditor = Boolean.TRUE.equals(updateDTO.allowOnlineEditor());
+        boolean hasOfflineIde = Boolean.TRUE.equals(updateDTO.allowOfflineIde());
+        boolean hasOnlineIde = updateDTO.allowOnlineIde();
+
+        if (moduleFeatureService.isTheiaEnabled()) {
+            if (!hasOnlineEditor && !hasOfflineIde && !hasOnlineIde) {
+                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
+                        "noParticipationModeAllowed");
+            }
+        }
+        else if (!hasOnlineEditor && !hasOfflineIde) {
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
+                    "noParticipationModeAllowed");
+        }
     }
 }

@@ -277,9 +277,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     private scrollToUnreadOrBottom(): void {
         if (!this.currentUser) {
-            this.scrollToBottomOfMessages();
-            this.canStartSaving = true;
-            this.initialScrollComplete = true;
+            this.completeInitialScroll();
             return;
         }
         this.computeLastReadState();
@@ -294,16 +292,19 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
                     this.canStartSaving = true;
                     this.initialScrollComplete = true;
                 });
-            } else {
-                this.scrollToBottomOfMessages();
-                this.canStartSaving = true;
-                this.initialScrollComplete = true;
+                return;
             }
-        } else {
-            this.scrollToBottomOfMessages();
-            this.canStartSaving = true;
-            this.initialScrollComplete = true;
         }
+        this.completeInitialScroll();
+    }
+
+    /**
+     * Scrolls to the bottom and marks the initial scroll as complete.
+     */
+    private completeInitialScroll(): void {
+        this.scrollToBottomOfMessages();
+        this.canStartSaving = true;
+        this.initialScrollComplete = true;
     }
 
     private onActiveConversationChange() {
@@ -690,9 +691,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     async goToLastSelectedElement(lastScrollPosition: number, isOpenThread: boolean) {
         if (!lastScrollPosition) {
-            this.scrollToBottomOfMessages();
-            this.canStartSaving = true;
-            this.initialScrollComplete = true;
+            this.completeInitialScroll();
             return;
         }
         const messageArray = this.messages.toArray();

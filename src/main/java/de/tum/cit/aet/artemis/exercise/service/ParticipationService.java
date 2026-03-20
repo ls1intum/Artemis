@@ -700,22 +700,7 @@ public class ParticipationService {
             if (optionalOriginalParticipation.isEmpty()) {
                 continue;
             }
-            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
-
-            // individual due dates can only exist if the exercise has a due date
-            // they also have to be after the exercise due date
-            final ZonedDateTime newIndividualDueDate;
-            if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
-                newIndividualDueDate = null;
-            }
-            else {
-                newIndividualDueDate = toBeUpdated.getIndividualDueDate();
-            }
-
-            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
-                originalParticipation.setIndividualDueDate(newIndividualDueDate);
-                changedParticipations.add(originalParticipation);
-            }
+            applyIndividualDueDateChange(exercise, optionalOriginalParticipation.get(), toBeUpdated.getIndividualDueDate(), changedParticipations);
         }
 
         return changedParticipations;
@@ -737,23 +722,34 @@ public class ParticipationService {
             if (optionalOriginalParticipation.isEmpty()) {
                 continue;
             }
-            final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
-
-            final ZonedDateTime newIndividualDueDate;
-            if (exercise.getDueDate() == null || (dto.individualDueDate() != null && dto.individualDueDate().isBefore(exercise.getDueDate()))) {
-                newIndividualDueDate = null;
-            }
-            else {
-                newIndividualDueDate = dto.individualDueDate();
-            }
-
-            if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
-                originalParticipation.setIndividualDueDate(newIndividualDueDate);
-                changedParticipations.add(originalParticipation);
-            }
+            applyIndividualDueDateChange(exercise, optionalOriginalParticipation.get(), dto.individualDueDate(), changedParticipations);
         }
 
         return changedParticipations;
+    }
+
+    /**
+     * Resolves and applies an individual due date change to a participation.
+     * Individual due dates can only exist if the exercise has a due date and must be after it.
+     */
+    private void applyIndividualDueDateChange(final Exercise exercise, final StudentParticipation originalParticipation, final ZonedDateTime proposedDueDate,
+            final List<StudentParticipation> changedParticipations) {
+        final ZonedDateTime newIndividualDueDate = resolveIndividualDueDate(exercise.getDueDate(), proposedDueDate);
+        if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
+            originalParticipation.setIndividualDueDate(newIndividualDueDate);
+            changedParticipations.add(originalParticipation);
+        }
+    }
+
+    /**
+     * Resolves the effective individual due date given the exercise due date and a proposed individual due date.
+     * Returns null if the exercise has no due date or if the proposed date is before the exercise due date.
+     */
+    private ZonedDateTime resolveIndividualDueDate(final ZonedDateTime exerciseDueDate, final ZonedDateTime proposedDate) {
+        if (exerciseDueDate == null || (proposedDate != null && proposedDate.isBefore(exerciseDueDate))) {
+            return null;
+        }
+        return proposedDate;
     }
 
     /**

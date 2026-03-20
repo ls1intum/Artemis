@@ -368,17 +368,27 @@ public class TextExerciseCreationUpdateResource {
         Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
                 .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
 
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> Optional.ofNullable(gcDto.id()).map(existingById::get).map(existing -> {
-            gcDto.applyTo(existing);
-            return existing;
-        }).orElseGet(() -> {
-            GradingCriterion newCriterion = gcDto.toEntity();
-            newCriterion.setExercise(exercise);
-            return newCriterion;
-        })).collect(Collectors.toSet());
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> resolveGradingCriterion(gcDto, existingById, exercise)).collect(Collectors.toSet());
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);
+    }
+
+    /**
+     * Resolves a single grading criterion from a DTO, reusing an existing managed criterion if available.
+     */
+    private GradingCriterion resolveGradingCriterion(de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO gcDto, Map<Long, GradingCriterion> existingById,
+            TextExercise exercise) {
+        if (gcDto.id() != null) {
+            GradingCriterion existing = existingById.get(gcDto.id());
+            if (existing != null) {
+                gcDto.applyTo(existing);
+                return existing;
+            }
+        }
+        GradingCriterion newCriterion = gcDto.toEntity();
+        newCriterion.setExercise(exercise);
+        return newCriterion;
     }
 
     /**
@@ -398,23 +408,30 @@ public class TextExerciseCreationUpdateResource {
 
         Long exerciseCourseId = Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null);
 
-        Set<CompetencyExerciseLink> updated = dto.competencyLinks().stream().map(linkDto -> {
-            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-            }
-            Long competencyId = linkDto.courseCompetencyDTO().id();
-            return Optional.ofNullable(existingByCompetencyId.get(competencyId)).map(existing -> {
-                existing.setWeight(linkDto.weight());
-                return existing;
-            }).orElseGet(() -> {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                return new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            });
-        }).collect(Collectors.toSet());
+        Set<CompetencyExerciseLink> updated = dto.competencyLinks().stream().map(linkDto -> resolveCompetencyLink(linkDto, existingByCompetencyId, exerciseCourseId, exercise, api))
+                .collect(Collectors.toSet());
 
         managedLinks.clear();
         managedLinks.addAll(updated);
+    }
+
+    /**
+     * Resolves a single competency link from a DTO, reusing an existing managed link if available.
+     */
+    private CompetencyExerciseLink resolveCompetencyLink(de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO linkDto,
+            Map<Long, CompetencyExerciseLink> existingByCompetencyId, Long exerciseCourseId, TextExercise exercise, CompetencyApi api) {
+        if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
+            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
+        }
+        Long competencyId = linkDto.courseCompetencyDTO().id();
+        CompetencyExerciseLink existing = existingByCompetencyId.get(competencyId);
+        if (existing != null) {
+            existing.setWeight(linkDto.weight());
+            return existing;
+        }
+        Competency competencyRef = api.loadCompetency(competencyId);
+        competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
+        return new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
     }
 
     /**

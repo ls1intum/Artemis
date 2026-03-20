@@ -77,6 +77,7 @@ import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -919,17 +920,25 @@ public class ExerciseService {
 
         final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
 
-        Set<CompetencyExerciseLink> updatedLinks = dto.competencyLinks().stream().map(dtoLink -> {
-            long competencyId = dtoLink.competency().id();
-            double weight = dtoLink.weight();
-            return Optional.ofNullable(existingLinksByCompetencyId.get(competencyId)).map(existing -> {
-                existing.setWeight(weight);
-                return existing;
-            }).orElseGet(() -> new CompetencyExerciseLink(competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId), entity, weight));
-        }).collect(Collectors.toSet());
+        Set<CompetencyExerciseLink> updatedLinks = dto.competencyLinks().stream().map(dtoLink -> resolveCompetencyLink(dtoLink, existingLinksByCompetencyId, entity))
+                .collect(Collectors.toSet());
 
         entity.getCompetencyLinks().clear();
         entity.getCompetencyLinks().addAll(updatedLinks);
+    }
+
+    /**
+     * Resolves a single competency link from a DTO, reusing an existing managed link if one exists for the same competency.
+     */
+    private CompetencyExerciseLink resolveCompetencyLink(CompetencyLinkDTO dtoLink, Map<Long, CompetencyExerciseLink> existingLinksByCompetencyId, Exercise entity) {
+        long competencyId = dtoLink.competency().id();
+        double weight = dtoLink.weight();
+        CompetencyExerciseLink existing = existingLinksByCompetencyId.get(competencyId);
+        if (existing != null) {
+            existing.setWeight(weight);
+            return existing;
+        }
+        return new CompetencyExerciseLink(competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId), entity, weight);
     }
 
     /**
