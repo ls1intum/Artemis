@@ -21,7 +21,6 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
-import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
@@ -45,9 +44,9 @@ public class ExerciseWeaviateService {
 
     private final boolean useHybridSearch;
 
-    public ExerciseWeaviateService(WeaviateService weaviateService, WeaviateConfigurationProperties properties) {
+    public ExerciseWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
-        this.useHybridSearch = !WeaviateConfigurationProperties.VECTORIZER_NONE.equals(properties.vectorizerModule());
+        this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
 
     /**
@@ -358,25 +357,30 @@ public class ExerciseWeaviateService {
         try {
             var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
 
-            var result = weaviateService.isVectorizerAvailable() ? collection.query.hybrid(query, h -> {
-                h.limit(limit);
-                if (filter != null) {
-                    h.filters(filter);
-                }
-                return h;
-            }) : collection.query.bm25(query, b -> {
-                b.limit(limit);
-                if (filter != null) {
-                    b.filters(filter);
-                }
-                return b;
-            });
-
-            return result.objects().stream().map(WeaviateObject::properties).toList();
+            if (useHybridSearch) {
+                var result = collection.query.hybrid(query, hybridQueryBuilder -> {
+                    hybridQueryBuilder.limit(limit);
+                    if (filter != null) {
+                        hybridQueryBuilder.filters(filter);
+                    }
+                    return hybridQueryBuilder;
+                });
+                return result.objects().stream().map(WeaviateObject::properties).toList();
+            }
+            else {
+                var result = collection.query.bm25(query, bm25QueryBuilder -> {
+                    bm25QueryBuilder.limit(limit);
+                    if (filter != null) {
+                        bm25QueryBuilder.filters(filter);
+                    }
+                    return bm25QueryBuilder;
+                });
+                return result.objects().stream().map(WeaviateObject::properties).toList();
+            }
         }
         catch (Exception e) {
-            log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
-            throw new WeaviateException("Failed to search exercises", e);
+            log.error("Failed to search exercises (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
+            throw new WeaviateException("Failed to search exercises in Weaviate: " + e.getMessage(), e);
         }
     }
 
