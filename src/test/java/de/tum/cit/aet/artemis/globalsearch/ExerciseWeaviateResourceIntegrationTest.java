@@ -229,7 +229,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void testGlobalSearchStudentFiltersCorrectly() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable", HttpStatus.OK, GlobalSearchResultDTO.class);
+            // Use a high limit because the Weaviate collection is shared across test classes and may contain exercises from other tests
+            var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchableReleasedExercise");
@@ -239,7 +240,8 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
         void testGlobalSearchInstructorSeesAll() throws Exception {
-            var results = request.getList("/api/search?q=WeaviateSearchable", HttpStatus.OK, GlobalSearchResultDTO.class);
+            // Use a high limit because the Weaviate collection is shared across test classes and may contain exercises from other tests
+            var results = request.getList("/api/search?q=WeaviateSearchable&limit=100", HttpStatus.OK, GlobalSearchResultDTO.class);
             var titles = getResultTitles(results);
 
             assertThat(titles).contains("WeaviateSearchableReleasedExercise", "WeaviateSearchableUnreleasedExercise", "WeaviateSearchableNotStartedExamExercise",

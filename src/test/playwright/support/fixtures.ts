@@ -267,23 +267,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     examNavigation: async ({ page }, use) => {
         await use(new ExamNavigationBar(page));
     },
-    examParticipation: async (
-        { page, courseList, courseOverview, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor },
-        use,
-    ) => {
-        await use(
-            new ExamParticipationPage(
-                courseList,
-                courseOverview,
-                examNavigation,
-                examStartEnd,
-                modelingExerciseEditor,
-                programmingExerciseEditor,
-                quizExerciseMultipleChoice,
-                textExerciseEditor,
-                page,
-            ),
-        );
+    examParticipation: async ({ page, examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor }, use) => {
+        await use(new ExamParticipationPage(examNavigation, examStartEnd, modelingExerciseEditor, programmingExerciseEditor, quizExerciseMultipleChoice, textExerciseEditor, page));
     },
     examParticipationActions: async ({ page }, use) => {
         await use(new ExamParticipationActions(page));
@@ -334,8 +319,8 @@ export const test = base.extend<ArtemisPageObjects & ArtemisCommands & ArtemisRe
     programmingExerciseFeedback: async ({ page }, use) => {
         await use(new ProgrammingExerciseFeedbackPage(page));
     },
-    programmingExerciseOverview: async ({ page, courseList, courseOverview }, use) => {
-        await use(new ProgrammingExerciseOverviewPage(page, courseList, courseOverview));
+    programmingExerciseOverview: async ({ page, courseOverview }, use) => {
+        await use(new ProgrammingExerciseOverviewPage(page, courseOverview));
     },
     programmingExerciseParticipations: async ({ page }, use) => {
         await use(new ProgrammingExerciseParticipationsPage(page));

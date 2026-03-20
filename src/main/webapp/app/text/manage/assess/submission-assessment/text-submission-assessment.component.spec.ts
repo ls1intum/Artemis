@@ -203,6 +203,8 @@ describe('TextSubmissionAssessmentComponent', () => {
         textAssessmentService = TestBed.inject(TextAssessmentService);
         athenaService = TestBed.inject(AthenaService);
         router = TestBed.inject(Router);
+        vi.spyOn(router, 'navigate').mockReturnValue(Promise.resolve(true));
+        vi.spyOn(router, 'navigateByUrl').mockReturnValue(Promise.resolve(true));
 
         fixture.changeDetectorRef.detectChanges();
     });

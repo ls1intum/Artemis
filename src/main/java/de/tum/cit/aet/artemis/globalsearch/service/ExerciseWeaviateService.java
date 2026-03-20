@@ -21,10 +21,12 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.event.ExerciseVersionCreatedEvent;
+import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 import io.weaviate.client6.v1.api.collections.query.SortBy;
 
@@ -41,8 +43,11 @@ public class ExerciseWeaviateService {
 
     private final WeaviateService weaviateService;
 
-    public ExerciseWeaviateService(WeaviateService weaviateService) {
+    private final boolean useHybridSearch;
+
+    public ExerciseWeaviateService(WeaviateService weaviateService, WeaviateConfigurationProperties properties) {
         this.weaviateService = weaviateService;
+        this.useHybridSearch = !WeaviateConfigurationProperties.VECTORIZER_NONE.equals(properties.vectorizerModule());
     }
 
     /**
@@ -75,7 +80,7 @@ public class ExerciseWeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to upsert exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
-            throw new WeaviateException("Failed to upsert exercise: " + exerciseWeaviateDTO.exerciseId(), e);
+            throw new WeaviateException("Failed to upsert exercise " + exerciseWeaviateDTO.exerciseId() + " in Weaviate: " + e.getMessage(), e);
         }
     }
 
@@ -367,7 +372,7 @@ public class ExerciseWeaviateService {
                 return b;
             });
 
-            return result.objects().stream().map(obj -> obj.properties()).toList();
+            return result.objects().stream().map(WeaviateObject::properties).toList();
         }
         catch (Exception e) {
             log.error("Failed to search exercises with query '{}': {}", query, e.getMessage(), e);
@@ -396,7 +401,7 @@ public class ExerciseWeaviateService {
                 return q;
             });
 
-            return result.objects().stream().map(obj -> obj.properties()).toList();
+            return result.objects().stream().map(WeaviateObject::properties).toList();
         }
         catch (Exception e) {
             log.error("Failed to fetch exercises: {}", e.getMessage(), e);
