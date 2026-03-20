@@ -1,5 +1,5 @@
 <button
-    class="d-flex align-items-center border-0 text-start action-item my-2 w-100"
+    class="d-flex align-items-center border-0 text-start action-item my-2 w-100 position-relative"
     [class.is-selected]="selected()"
     type="button"
     [style.--accent]="accentColor()"
@@ -10,7 +10,13 @@
         <ng-content select="[slot=icon]" />
     </span>
     <span class="d-flex flex-column flex-grow-1 action-text">
-        <span class="action-title fw-medium text-body">{{ title() }}</span>
+        <span class="d-flex align-items-center gap-2">
+            <span class="action-title fw-medium text-body">{{ title() }}</span>
+            <span class="badge bg-secondary text-white px-2 py-1 small">{{ 'global.search.actionBadge' | artemisTranslate }}</span>
+        </span>
         <span class="action-description text-secondary">{{ description() }}</span>
     </span>
+    @if (selected()) {
+        <kbd class="key-hint-enter position-absolute" [attr.aria-label]="'global.search.enterToActivate' | artemisTranslate"> </kbd>
+    }
 </button>

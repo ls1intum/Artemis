@@ -3,14 +3,24 @@
     padding: 0.625rem 0.75rem;
     border-radius: 0.5rem;
     background: linear-gradient(to right, color-mix(in srgb, var(--accent) 7%, var(--module-bg)), color-mix(in srgb, var(--accent-secondary, var(--accent)) 7%, var(--module-bg)));
+    transition: all 0.15s ease-in-out;
 
-    &.is-selected,
     &:hover {
         background: linear-gradient(
             to right,
-            color-mix(in srgb, var(--accent) 12%, var(--module-bg)),
-            color-mix(in srgb, var(--accent-secondary, var(--accent)) 12%, var(--module-bg))
+            color-mix(in srgb, var(--accent) 18%, var(--module-bg)),
+            color-mix(in srgb, var(--accent-secondary, var(--accent)) 18%, var(--module-bg))
         );
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    }
+
+    &.is-selected {
+        background: linear-gradient(
+            to right,
+            color-mix(in srgb, var(--accent) 15%, var(--module-bg)),
+            color-mix(in srgb, var(--accent-secondary, var(--accent)) 15%, var(--module-bg))
+        );
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     }
 }
 
@@ -34,4 +44,29 @@
 
 .action-description {
     font-size: 0.75rem;
+}
+
+.key-hint-enter {
+    top: 50%;
+    right: 0.75rem;
+    transform: translateY(-50%);
+    padding: 0.25rem 0.5rem;
+    background: var(--global-search-kbd-bg);
+    border: 1px solid var(--global-search-kbd-border);
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    font-family: monospace;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+    min-width: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--bs-body-color);
+}
+
+.badge {
+    font-weight: 500;
+    font-size: 0.75rem;
+    border-radius: 0.25rem;
 }

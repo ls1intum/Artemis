@@ -9,33 +9,45 @@
     [showHeader]="false"
     [closeOnEscape]="false"
     [dismissableMask]="true"
-    [style]="{ width: '100%', 'max-width': '700px', height: '60vh', 'max-height': '600px', 'margin-top': '15vh', overflow: 'hidden', background: 'var(--module-bg)' }"
+    [style]="{ width: '100%', 'max-width': '700px', height: '60vh', 'max-height': '600px', 'margin-top': '15vh', overflow: 'hidden', background: 'var(--global-search-modal-bg)' }"
     contentStyleClass="p-0 d-flex flex-column h-100 overflow-hidden"
     position="top"
     styleClass="global-search-dialog"
 >
-    <!-- Search Input -->
-    <div class="search-input-container d-flex align-items-center p-0 flex-shrink-0">
-        <fa-icon [icon]="faSearch" class="search-icon text-secondary" aria-hidden="true" />
-        <input
-            #searchInput
-            type="text"
-            [placeholder]="'global.search.placeholder' | artemisTranslate"
-            class="search-input border-0 bg-transparent text-body"
-            [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
-            (input)="onSearchInput($event)"
-        />
-    </div>
+    <!-- Search Input Container -->
+    <jhi-global-search-input
+        [searchQuery]="searchQuery()"
+        [activeFilters]="activeFilters()"
+        [isLoading]="isLoading()"
+        (searchInput)="onSearchInput($event)"
+        (searchKeyDown)="onSearchKeyDown($event)"
+        (filterRemoved)="removeFilter($event)"
+    />
     <!-- Results Area -->
     <div class="results-container">
         @switch (currentView()) {
             @case (SearchView.Navigation) {
-                <jhi-global-search-navigation-view [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" (viewSelected)="navigateTo($event)" />
+                <jhi-global-search-navigation-view
+                    [searchQuery]="searchQuery()"
+                    [selectedIndex]="selectedIndex()"
+                    [results]="results()"
+                    [hasSearched]="hasSearched()"
+                    [showResults]="showResults()"
+                    [isLoading]="isLoading()"
+                    [searchError]="searchError()"
+                    (viewSelected)="navigateTo($event)"
+                    (entityClick)="onEntityClick($event)"
+                />
             }
             @case (SearchView.Lecture) {
                 <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />
             }
-            @case (SearchView.Iris) {}
+            @case (SearchView.Iris) {
+                <!-- Placeholder for Ask Iris view -->
+                <div class="p-3 text-center text-secondary">
+                    <p>Ask Iris placeholder - to be replaced with actual component from PR #12191</p>
+                </div>
+            }
         }
     </div>
     <!-- Keyboard hints footer -->

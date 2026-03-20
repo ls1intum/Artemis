@@ -1,7 +1,7 @@
 /* Search input section */
 .search-input-container {
     gap: 0.75rem;
-    border-bottom: 1px solid var(--bs-border-color);
+    border-bottom: 1px solid var(--global-search-border-color);
 }
 
 .search-icon {
@@ -31,7 +31,7 @@
 .search-footer {
     padding: 0.75rem 1rem;
     background: var(--global-search-modal-footer-bg);
-    border-top: 1px solid var(--bs-border-color);
+    border-top: 1px solid var(--global-search-border-color);
 }
 
 .keyboard-hints {
@@ -40,7 +40,8 @@
 
 .key-hint-small {
     padding: 0.25rem 0.35rem;
-    background: var(--module-bg);
+    background: var(--global-search-kbd-bg);
+    border: 1px solid var(--global-search-kbd-border);
     border-radius: 0.25rem;
     font-size: 0.75rem;
 }

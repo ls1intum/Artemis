@@ -1,10 +1,25 @@
-<!-- Action button: Search Lecture Content (index 0, only when iris is enabled) -->
-@if (irisEnabled) {
+<!-- Action buttons: Only show when no filter is active and active button is enabled -->
+@if (!showResults() && irisEnabled) {
+    <!-- Action button: Ask Iris (index 0) - Placeholder -->
     <div #selectableItem>
         <jhi-global-search-action-item
-            [title]="'global.search.searchLectureContent' | artemisTranslate"
-            [description]="'global.search.searchLectureContentDescription' | artemisTranslate"
+            [title]="'global.search.actions.askIrisTitle' | artemisTranslate"
+            [description]="'global.search.actions.askIrisDescription' | artemisTranslate"
             [selected]="selectedIndex() === 0"
+            accentColor="var(--bs-primary)"
+            secondaryAccentColor="var(--bs-info)"
+            (clicked)="viewSelected.emit(SearchView.Iris)"
+        >
+            <fa-icon slot="icon" [icon]="faHashtag" aria-hidden="true" />
+        </jhi-global-search-action-item>
+    </div>
+
+    <!-- Action button: Search Lecture Content (index 1) - Placeholder -->
+    <div #selectableItem>
+        <jhi-global-search-action-item
+            [title]="'global.search.actions.lectureSearchTitle' | artemisTranslate"
+            [description]="'global.search.actions.lectureSearchDescription' | artemisTranslate"
+            [selected]="selectedIndex() === 1"
             accentColor="var(--global-search-lecture-accent)"
             secondaryAccentColor="var(--bs-primary)"
             (clicked)="viewSelected.emit(SearchView.Lecture)"
@@ -14,22 +29,61 @@
     </div>
 }
 
-<!-- TODO: Add navigation search results here (indices NAV_ACTION_COUNT and above).
-     Use resultSelectedIndex() as the selected index offset for your results list.
-     See GlobalSearchLectureResultsComponent for the full pattern (viewChildren, effect for scroll,
-     toObservable → debounce → switchMap → catchError pipeline).
+<!-- Error state -->
+@if (searchError()) {
+    <div class="search-error-state mt-3 p-3 text-center text-danger">
+        <p>{{ searchError()! | artemisTranslate }}</p>
+    </div>
+}
 
-     Example structure:
-     @if (navResults().length > 0) {
-         <div class="nav-results-list" role="list" [attr.aria-label]="'...' | artemisTranslate">
-             @for (result of navResults(); track $index) {
-                 <a #selectableItem
-                    role="listitem"
-                    [class.is-selected]="resultSelectedIndex() === $index"
-                    [routerLink]="result.link">
-                     {{ result.title }}
-                 </a>
-             }
-         </div>
-     }
--->
+<!-- Results list when searching or filter is active -->
+@if (showResults() && !isLoading() && !searchError()) {
+    @if (results().length > 0) {
+        <div class="search-results-list mt-3">
+            @for (result of results(); track result.id; let i = $index) {
+                <div #selectableItem>
+                    <jhi-global-search-result-item
+                        [result]="result"
+                        [icon]="getIconForType(result.type, result.badge)"
+                        [isSelected]="selectedIndex() === i"
+                        (resultClick)="navigateToResult($event)"
+                    />
+                </div>
+            }
+        </div>
+    } @else {
+        <div class="no-results-state mt-3 p-3 text-center text-secondary">
+            <p>{{ 'global.search.noResultsFound' | artemisTranslate }}</p>
+        </div>
+    }
+} @else if (isLoading()) {
+    <!-- Skeleton loading placeholders -->
+    <div class="search-results-list mt-3">
+        @for (_ of skeletonItems; track $index) {
+            <div class="skeleton-result-item p-3" aria-hidden="true">
+                <div class="d-flex align-items-start gap-3">
+                    <!-- Icon placeholder -->
+                    <p-skeleton width="2.5rem" height="2.5rem" borderRadius="0.375rem" class="flex-shrink-0" />
+                    <!-- Content placeholder -->
+                    <div class="d-flex flex-column flex-grow-1" style="gap: 0.5rem">
+                        <div class="d-flex align-items-center gap-2">
+                            <p-skeleton width="45%" height="1rem" borderRadius="0.25rem" />
+                            <p-skeleton width="4.5rem" height="1.25rem" borderRadius="0.25rem" />
+                        </div>
+                        <p-skeleton width="65%" height="0.75rem" borderRadius="0.25rem" />
+                        <p-skeleton width="80%" height="0.75rem" borderRadius="0.25rem" />
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+} @else {
+    <!-- Searchable entities list (initial state) -->
+    <div class="entity-list mt-3">
+        @for (entity of searchableEntities; track entity.id; let i = $index) {
+            <div #selectableItem>
+                <jhi-global-search-entity-item [entity]="entity" [isSelected]="selectedIndex() === NAV_ACTION_COUNT + i" (entityClick)="onEntityItemClick($event)" />
+            </div>
+        }
+    </div>
+}
