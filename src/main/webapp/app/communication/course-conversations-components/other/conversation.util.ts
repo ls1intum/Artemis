@@ -33,16 +33,18 @@ export function getChannelSubTypeReferenceTranslationKey(subType: ChannelSubType
 export const defaultFirstLayerDialogOptions = {
     width: '50rem',
     modal: true,
-    closable: true,
+    closable: false,
     closeOnEscape: true,
     dismissableMask: false,
+    showHeader: false,
 };
 
 export const defaultSecondLayerDialogOptions = {
     width: '50rem',
     modal: true,
-    closable: true,
+    closable: false,
     closeOnEscape: true,
     dismissableMask: false,
+    showHeader: false,
     styleClass: 'second-layer-modal-bg',
 };
