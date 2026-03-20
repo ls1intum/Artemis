@@ -5,6 +5,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateService } from '@ngx-translate/core';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
+import { createStageRotation, translateLabel } from 'app/iris/overview/iris-stage-rotation.util';
 
 @Component({
     selector: 'jhi-chat-status-bar',
@@ -21,23 +22,15 @@ export class ChatStatusBarComponent {
     readonly activeStage = signal<IrisStageDTO | undefined>(undefined);
     readonly stageMessage = signal<string | undefined>(undefined);
 
-    readonly animToggle = signal(false);
-    readonly displayName = signal('');
+    private readonly stageRotation = createStageRotation(this.translateService, this.destroyRef);
+    readonly animToggle = this.stageRotation.animToggle;
+    readonly displayName = this.stageRotation.displayName;
 
     readonly isError = computed(() => this.activeStage()?.state === IrisStageStateDTO.ERROR);
 
     stages = input<IrisStageDTO[]>([]);
 
     faCircleXmark = faCircleXmark;
-
-    private readonly rotationKeys = [
-        'artemisApp.iris.stages.thinking',
-        'artemisApp.iris.stages.analyzing',
-        'artemisApp.iris.stages.processing',
-        'artemisApp.iris.stages.formulating',
-    ];
-    private rotationIntervalId: ReturnType<typeof setInterval> | undefined;
-    private rotationIndex = 0;
 
     constructor() {
         // Stage detection effect
@@ -54,7 +47,7 @@ export class ChatStatusBarComponent {
                     this.activeStage.set(firstUnfinished);
                 }
                 const label = firstUnfinished.message || '';
-                this.stageMessage.set(label ? this.translateLabel(label) : undefined);
+                this.stageMessage.set(label ? translateLabel(this.translateService, label) : undefined);
             } else if (current !== undefined) {
                 this.activeStage.set(undefined);
                 this.open.set(false);
@@ -65,68 +58,12 @@ export class ChatStatusBarComponent {
         // Display name effect — show the active stage name, rotate labels during IN_PROGRESS
         effect(() => {
             const stage = this.activeStage();
-            // Read locale to re-run translations on language change
             this.currentLocale();
-            const name = stage?.message || '';
-            const translated = name ? this.translateLabel(name) : '';
-
-            if (translated) {
-                const currentDisplay = untracked(() => this.displayName());
-                const isAlreadyRotating = this.rotationIntervalId !== undefined;
-
-                // If the stage changed while rotation is running, clear it so it restarts
-                if (isAlreadyRotating && translated !== currentDisplay) {
-                    clearInterval(this.rotationIntervalId);
-                    this.rotationIntervalId = undefined;
-                }
-
-                const isRotating = this.rotationIntervalId !== undefined;
-
-                if (translated !== currentDisplay && !isRotating) {
-                    this.displayName.set(translated);
-                    this.animToggle.update((v) => !v);
-                }
-            }
-
-            const shouldRotate = stage?.state === IrisStageStateDTO.IN_PROGRESS;
-            const isRotating = this.rotationIntervalId !== undefined;
-
-            if (shouldRotate && !isRotating) {
-                // If no initial label was set, show the first rotation key immediately
-                if (!translated) {
-                    const firstLabel = this.translateLabel(this.rotationKeys[0]);
-                    this.displayName.set(firstLabel);
-                    this.animToggle.update((v) => !v);
-                }
-                this.rotationIndex = 0;
-                this.rotationIntervalId = setInterval(() => {
-                    this.rotationIndex = (this.rotationIndex + 1) % this.rotationKeys.length;
-                    const rotated = this.translateLabel(this.rotationKeys[this.rotationIndex]);
-                    this.displayName.set(rotated);
-                    this.animToggle.update((v) => !v);
-                }, 2600);
-            } else if (!shouldRotate && isRotating) {
-                clearInterval(this.rotationIntervalId);
-                this.rotationIntervalId = undefined;
-            } else if (!shouldRotate && !translated) {
-                this.displayName.set('');
-            }
-        });
-
-        // Cleanup rotation interval on destroy
-        this.destroyRef.onDestroy(() => {
-            if (this.rotationIntervalId) {
-                clearInterval(this.rotationIntervalId);
-            }
+            this.stageRotation.update(stage);
         });
     }
 
     isStageFinished(stage: IrisStageDTO) {
         return stage.state === IrisStageStateDTO.DONE || stage.state === IrisStageStateDTO.SKIPPED;
-    }
-
-    private translateLabel(key: string): string {
-        const translated = this.translateService.instant(key);
-        return typeof translated === 'string' && translated.startsWith('translation-not-found[') ? key : translated;
     }
 }
