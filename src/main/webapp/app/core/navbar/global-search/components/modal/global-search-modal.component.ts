@@ -1,7 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Subject, catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { EMPTY, Subject, catchError, distinctUntilChanged, filter, map, of, switchMap, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -15,6 +15,11 @@ import { SearchResultView } from 'app/core/navbar/global-search/components/views
 import { GlobalSearchOptions, GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchableEntity } from '../../models/searchable-entity.model';
+
+interface SearchState {
+    query: string;
+    filters: string[];
+}
 
 @Component({
     selector: 'jhi-global-search-modal',
@@ -30,7 +35,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     private readonly accountService = inject(AccountService);
     private readonly router = inject(Router);
     private readonly searchService = inject(GlobalSearchService);
-    private readonly destroyRef = inject(DestroyRef);
     protected readonly faArrowUp = faArrowUp;
     protected readonly faArrowDown = faArrowDown;
     protected readonly searchInputComponent = viewChild<SearchInputComponent>(SearchInputComponent);
@@ -45,7 +49,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected readonly selectedIndex = signal(-1);
     private readonly activeView = viewChild(SearchResultView);
     private readonly maxIndex = computed(() => (this.activeView()?.itemCount() ?? 0) - 1);
-    private searchSubject = new Subject<string>();
+    private readonly searchSubject = new Subject<SearchState | null>();
 
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
@@ -64,13 +68,25 @@ export class GlobalSearchModalComponent implements OnDestroy {
             this.selectedIndex.set(-1);
         });
 
-        // Set up search debouncing with RxJS
+        // Search pipeline: switchMap + timer acts as a cancellable debounce.
+        // Emitting null (reset) cancels any pending debounce timer via switchMap unsubscription.
         this.searchSubject
             .pipe(
-                debounceTime(300),
-                distinctUntilChanged(),
-                switchMap((query) => {
-                    const hasFilter = this.activeFilters().length > 0;
+                switchMap((event) => {
+                    if (event === null) {
+                        this.results.set([]);
+                        this.hasSearched.set(false);
+                        this.isLoading.set(false);
+                        this.searchError.set(undefined);
+                        return EMPTY;
+                    }
+                    return timer(300).pipe(map(() => event));
+                }),
+                distinctUntilChanged(
+                    (prev, curr) => prev.query === curr.query && prev.filters.length === curr.filters.length && prev.filters.every((f, i) => f === curr.filters[i]),
+                ),
+                switchMap(({ query, filters }) => {
+                    const hasFilter = filters.length > 0;
                     const trimmedQuery = query?.trim() || '';
                     const hasValidQuery = trimmedQuery.length >= 2;
 
@@ -80,12 +96,12 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         this.hasSearched.set(false);
                         this.isLoading.set(false);
                         this.searchError.set(undefined);
-                        return of([]);
+                        return EMPTY;
                     }
 
                     this.isLoading.set(true);
                     this.searchError.set(undefined);
-                    const typeFilter = hasFilter ? this.activeFilters()[0] : undefined;
+                    const typeFilter = hasFilter ? filters[0] : undefined;
 
                     // If no valid query but has filter, fetch recent items
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
@@ -144,7 +160,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
             this.isLoading.set(true);
         }
 
-        this.searchSubject.next(query);
+        this.searchSubject.next({ query, filters: this.activeFilters() });
     }
 
     protected onSearchKeyDown(event: KeyboardEvent) {
@@ -161,23 +177,26 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected addFilter(filterType: string) {
         // For now, only one filter at a time (can be extended later)
         if (!this.activeFilters().includes(filterType)) {
-            this.activeFilters.set([filterType]);
+            const newFilters = [filterType];
+            this.activeFilters.set(newFilters);
+            this.isLoading.set(true);
             // Re-trigger search with new filter
-            this.searchSubject.next(this.searchQuery());
+            this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
         }
     }
 
     protected removeFilter(filterType: string) {
-        this.activeFilters.set(this.activeFilters().filter((f) => f !== filterType));
+        const newFilters = this.activeFilters().filter((f) => f !== filterType);
+        this.activeFilters.set(newFilters);
 
         // If no filters remain and no query, reset to initial state
-        if (this.activeFilters().length === 0 && !this.searchQuery()) {
+        if (newFilters.length === 0 && !this.searchQuery()) {
             this.results.set([]);
             this.hasSearched.set(false);
             this.isLoading.set(false);
         } else {
             // Re-trigger search to update results
-            this.searchSubject.next(this.searchQuery());
+            this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
         }
     }
 
@@ -186,43 +205,17 @@ export class GlobalSearchModalComponent implements OnDestroy {
             return;
         }
 
-        // Add the filter
+        // Add the filter — this pushes through the main debounced pipeline
         if (entity.filterTag) {
             this.addFilter(entity.filterTag);
         }
-
-        // Load recent items for this entity type
-        this.loadRecentItems(entity.filterTag);
 
         // Keep search input focused so user can start typing immediately
         this.focusInput();
     }
 
-    private loadRecentItems(type?: string) {
-        if (!type) return;
-
-        this.isLoading.set(true);
-        this.searchError.set(undefined);
-        // Search with empty query but with filter to get recent items
-        this.searchService
-            .search('', { type, sortBy: 'dueDate', limit: 10 })
-            .pipe(
-                catchError(() => {
-                    this.isLoading.set(false);
-                    this.searchError.set('global.search.searchFailed');
-                    return of([]);
-                }),
-                takeUntilDestroyed(this.destroyRef),
-            )
-            .subscribe((results) => {
-                this.results.set(results);
-                this.selectedIndex.set(-1);
-                this.isLoading.set(false);
-                this.hasSearched.set(true);
-            });
-    }
-
     private resetSearch() {
+        this.searchSubject.next(null);
         this.searchQuery.set('');
         this.activeFilters.set([]);
         this.results.set([]);

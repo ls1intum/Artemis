@@ -6,6 +6,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { signal } from '@angular/core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { of, throwError } from 'rxjs';
 import { GlobalSearchModalComponent } from './global-search-modal.component';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
@@ -15,6 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 
 describe('GlobalSearchModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -35,8 +37,13 @@ describe('GlobalSearchModalComponent', () => {
         isMac: vi.fn(() => true),
     };
 
+    const mockSearchService = {
+        search: vi.fn(() => of([])),
+    };
+
     beforeEach(() => {
         vi.clearAllMocks();
+        mockSearchService.search.mockReturnValue(of([]));
         TestBed.configureTestingModule({
             imports: [GlobalSearchModalComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
@@ -46,6 +53,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: OsDetectorService, useValue: mockOsDetectorService },
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: GlobalSearchService, useValue: mockSearchService },
             ],
         });
 
@@ -248,6 +256,75 @@ describe('GlobalSearchModalComponent', () => {
 
             const icons = fixture.nativeElement.querySelectorAll('.key-hint-small fa-icon');
             expect(icons.length).toBeGreaterThanOrEqual(2);
+        });
+    });
+
+    describe('Search Pipeline', () => {
+        const queryResults: GlobalSearchResult[] = [{ id: '1', type: 'exercise', title: 'Test Exercise', badge: 'Programming', metadata: {} }];
+        const filteredResults: GlobalSearchResult[] = [{ id: '2', type: 'exercise', title: 'Filtered Exercise', badge: 'Quiz', metadata: {} }];
+
+        beforeEach(() => {
+            vi.useFakeTimers();
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('should re-trigger search when filter changes even if query stays the same', () => {
+            mockSearchService.search.mockReturnValue(of(queryResults));
+
+            // Type a query
+            component['onSearchInput']('test');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.search).toHaveBeenCalledWith('test', { type: undefined });
+            expect(component['results']()).toEqual(queryResults);
+
+            // Now toggle a filter with the same query — should still re-trigger
+            mockSearchService.search.mockReturnValue(of(filteredResults));
+            component['addFilter']('exercise');
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.search).toHaveBeenCalledWith('test', { type: 'exercise' });
+            expect(component['results']()).toEqual(filteredResults);
+        });
+
+        it('should set searchError on HTTP failure', () => {
+            mockSearchService.search.mockReturnValue(throwError(() => new Error('Network error')));
+
+            component['onSearchInput']('test');
+            vi.advanceTimersByTime(300);
+
+            expect(component['searchError']()).toBe('global.search.searchFailed');
+            expect(component['isLoading']()).toBe(false);
+        });
+
+        it('should cancel pending search when modal is closed via resetSearch', () => {
+            mockSearchService.search.mockReturnValue(of(queryResults));
+
+            // Type a query but don't wait for debounce
+            component['onSearchInput']('test');
+
+            // Close modal before debounce fires — resetSubject emits immediately via switchMap
+            component['resetSearch']();
+
+            vi.advanceTimersByTime(300);
+
+            // Results should remain empty because reset cancelled the pending search
+            expect(component['results']()).toEqual([]);
+            expect(component['hasSearched']()).toBe(false);
+        });
+
+        it('should route onEntityClick through the main pipeline instead of a separate subscription', () => {
+            mockSearchService.search.mockReturnValue(of(filteredResults));
+
+            component['onEntityClick']({ id: 'ex', title: 'Exercises', description: '', icon: {} as any, type: 'feature', enabled: true, filterTag: 'exercise' });
+            vi.advanceTimersByTime(300);
+
+            expect(mockSearchService.search).toHaveBeenCalledOnce();
+            expect(mockSearchService.search).toHaveBeenCalledWith('', { type: 'exercise', sortBy: 'dueDate', limit: 10 });
+            expect(component['results']()).toEqual(filteredResults);
         });
     });
 });
