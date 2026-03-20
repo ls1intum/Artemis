@@ -55,7 +55,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
     // Computed properties
     protected hasResults = computed(() => this.results().length > 0);
-    protected showResults = computed(() => this.isLoading() || (this.hasSearched() && (this.hasResults() || this.activeFilters().length > 0)));
+    protected showResults = computed(() => this.isLoading() || this.hasSearched());
 
     ngOnDestroy(): void {
         if (this.overlay.isOpen()) {
