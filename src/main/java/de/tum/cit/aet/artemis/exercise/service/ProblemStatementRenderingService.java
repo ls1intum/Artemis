@@ -50,6 +50,25 @@ public class ProblemStatementRenderingService {
 
     private static final List<String> GRAALJS_REQUIRED_CSS = List.of("katex", "hljs", "github-alerts");
 
+    // @formatter:off
+    private static final String EMBEDDED_CSS = """
+            <style>
+            .artemis-problem-statement svg{max-width:100%;height:auto}
+            .artemis-task{cursor:pointer;font-weight:600}
+            .artemis-icon-success{color:#28a745}
+            .artemis-icon-fail{color:#dc3545}
+            .artemis-task-stats{font-weight:400;font-size:.9em;margin-left:4px;text-decoration:underline}
+            .artemis-task-success .artemis-task-stats{color:#28a745}
+            .artemis-task-fail .artemis-task-stats{color:#dc3545}
+            .artemis-task-not-executed .artemis-task-stats{color:#6c757d}
+            .markdown-alert{border-left:4px solid #17a2b8;padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
+            .markdown-alert-title{font-weight:600}
+            table.table{border-collapse:collapse;width:100%}
+            table.table th,table.table td{border:1px solid #dee2e6;padding:8px}
+            </style>
+            """;
+    // @formatter:on
+
     /**
      * Holds feedback detail for a single test case.
      */
@@ -176,7 +195,10 @@ public class ProblemStatementRenderingService {
         // Step 6: Strip any remaining testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Step 7: Compute content hash and build DTO
+        // Step 7: Prepend embedded CSS (after sanitization, since jsoup strips <style> tags)
+        html = EMBEDDED_CSS + html;
+
+        // Step 8: Compute content hash and build DTO
         String contentHash = computeHash(html);
 
         return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams);
@@ -199,13 +221,13 @@ public class ProblemStatementRenderingService {
             // Resolve or clean Artemis-specific testsColor()/testid markup for PlantUML rendering
             String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
 
-            // Build SVG URL with cleaned source
-            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8);
+            // Build SVG URL with cleaned source (request dark theme for proper background)
+            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8) + "&useDarkTheme=true";
 
             String inlineSvg = null;
             if (selfContained) {
                 try {
-                    inlineSvg = plantUmlService.generateSvg(cleanedSource, false);
+                    inlineSvg = plantUmlService.generateSvg(cleanedSource, true);
                 }
                 catch (IOException e) {
                     log.error("Failed to generate inline SVG for diagram {} in exercise {}", diagramId, exerciseId, e);
@@ -312,41 +334,45 @@ public class ProblemStatementRenderingService {
             String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
             String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
 
-            // Build task HTML with icon, test summary, and expandable feedback details
-            StringBuilder taskHtml = new StringBuilder();
+            // Build task HTML with icon, test summary, and feedback data attribute
             boolean hasFeedback = testResults != null && !testIds.isEmpty();
 
-            if (hasFeedback) {
-                // Use <details>/<summary> for native click-to-expand (no JS needed)
-                taskHtml.append("<details class=\"artemis-task-details\">");
-                taskHtml.append("<summary class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(escapeHtmlAttribute(taskName))
-                        .append("\" data-test-ids=\"").append(testIdsStr).append("\"").append(statusAttr).append(">");
-                String icon = "success".equals(testStatus) ? "✅" : "❌";
-                taskHtml.append(icon).append(" ").append(escapeHtml(taskName));
-                taskHtml.append(" <span class=\"artemis-task-stats\">").append(successCount).append(" von ").append(total).append(" Tests bestanden</span>");
-                taskHtml.append("</summary>");
+            StringBuilder taskHtml = new StringBuilder();
+            taskHtml.append("<span class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(escapeHtmlAttribute(taskName)).append("\" data-test-ids=\"")
+                    .append(testIdsStr).append("\"").append(statusAttr);
 
-                // Render feedback details
-                taskHtml.append("<ul class=\"artemis-feedback-list\">");
+            // Encode feedback details as JSON data attribute for client-side popup rendering
+            if (hasFeedback) {
+                StringBuilder feedbackJson = new StringBuilder("[");
+                boolean first = true;
                 for (Long testId : testIds) {
                     TestFeedbackDetail detail = testResults.get(testId);
                     if (detail != null) {
-                        String fbClass = detail.passed() ? "artemis-feedback-success" : "artemis-feedback-fail";
-                        String fbIcon = detail.passed() ? "✅" : "❌";
-                        taskHtml.append("<li class=\"").append(fbClass).append("\">").append(fbIcon).append(" <strong>").append(escapeHtml(detail.testName())).append("</strong>");
-                        if (detail.message() != null && !detail.message().isBlank()) {
-                            taskHtml.append("<br>").append(escapeHtml(detail.message()));
+                        if (!first) {
+                            feedbackJson.append(",");
                         }
-                        taskHtml.append("</li>");
+                        feedbackJson.append("{&quot;name&quot;:&quot;").append(escapeHtmlAttribute(detail.testName())).append("&quot;,&quot;passed&quot;:").append(detail.passed());
+                        if (detail.message() != null && !detail.message().isBlank()) {
+                            feedbackJson.append(",&quot;message&quot;:&quot;").append(escapeHtmlAttribute(detail.message())).append("&quot;");
+                        }
+                        feedbackJson.append("}");
+                        first = false;
                     }
                 }
-                taskHtml.append("</ul></details>");
+                feedbackJson.append("]");
+                taskHtml.append(" data-feedback=\"").append(feedbackJson).append("\"");
             }
-            else {
-                // No test results: plain span without expandable details
-                taskHtml.append("<span class=\"artemis-task\" data-task-name=\"").append(escapeHtmlAttribute(taskName)).append("\" data-test-ids=\"").append(testIdsStr)
-                        .append("\">").append(escapeHtml(taskName)).append("</span>");
+
+            taskHtml.append(">");
+            if (testStatus != null) {
+                String iconClass = "success".equals(testStatus) ? "fa-check-circle artemis-icon-success" : "fa-times-circle artemis-icon-fail";
+                taskHtml.append("<i class=\"fa ").append(iconClass).append("\"></i> ");
             }
+            taskHtml.append(escapeHtml(taskName));
+            if (hasFeedback) {
+                taskHtml.append(" <span class=\"artemis-task-stats\">").append(successCount).append(" von ").append(total).append(" Tests bestanden</span>");
+            }
+            taskHtml.append("</span><br>");
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml.toString()));
             tasks.add(new TaskRenderInfoDTO(taskName, testIds, testStatus, hasFeedback ? successCount : null, hasFeedback ? failCount : null));
@@ -438,7 +464,7 @@ public class ProblemStatementRenderingService {
 
         // Custom elements for tasks and diagrams
         safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url");
-        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-svg-index");
+        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
 
@@ -455,10 +481,8 @@ public class ProblemStatementRenderingService {
         // GitHub alerts: class on p and div (div already has class above)
         safelist.addAttributes("p", "class");
 
-        // Expandable task feedback: <details>/<summary> (native HTML5 click-to-expand)
-        safelist.addTags("details", "summary");
-        safelist.addAttributes("details", "class");
-        safelist.addAttributes("summary", "class", "data-task-name", "data-test-ids", "data-test-status");
+        // FontAwesome icons for task status
+        safelist.addAttributes("i", "class");
 
         // MathML tags for KaTeX accessibility
         safelist.addTags("math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "ms", "mtext", "msup", "msub", "msubsup", "mfrac", "msqrt", "mroot", "mover", "munder",
