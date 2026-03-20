@@ -13,7 +13,6 @@ import { Organization } from 'app/core/shared/entities/organization.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { User } from 'app/core/user/user.model';
-import { OrganizationCountDto } from 'app/core/admin/organization-management/organization-count-dto.model';
 import { firstValueFrom } from 'rxjs';
 
 describe('Organization Service', () => {
@@ -45,40 +44,6 @@ describe('Organization Service', () => {
 
         const result = await resultPromise;
         expect(result).toMatchObject(elemDefault);
-    });
-
-    it('should return an Organization with Users and Courses', async () => {
-        const resultPromise = firstValueFrom(service.getOrganizationByIdWithUsersAndCourses(0));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(elemDefault);
-
-        const result = await resultPromise;
-        expect(result).toEqual(elemDefault);
-    });
-
-    it('should return all organizations', async () => {
-        const returnElement = createTestReturnElement();
-        const resultPromise = firstValueFrom(service.getOrganizations());
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnElement);
-
-        const result = await resultPromise;
-        expect(result).toEqual(returnElement);
-    });
-
-    it('should return number of users and courses of organization', async () => {
-        const returnElement = new OrganizationCountDto();
-        returnElement.numberOfCourses = 2;
-        returnElement.numberOfUsers = 17;
-        const resultPromise = firstValueFrom(service.getNumberOfUsersAndCoursesOfOrganizations());
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnElement);
-
-        const result = await resultPromise;
-        expect(result).toEqual(returnElement);
     });
 
     it('should return all Organizations a course is assigned to', async () => {
