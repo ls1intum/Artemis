@@ -53,16 +53,7 @@ export default defineConfig({
             'src/main/webapp/app/programming/manage/version-history/**/*.spec.ts', // include programming version history tests
             'src/main/webapp/app/communication/**/*.spec.ts', // include all communication module tests
         ],
-        exclude: [
-            '**/node_modules/**',
-            '**/build/**',
-            // These tests hang in vitest due to deep PostingContentComponent import chains causing module resolution issues.
-            // They remain as Jest tests until the root cause is resolved.
-            'src/main/webapp/app/communication/posting-content/posting-content.component.spec.ts',
-            'src/main/webapp/app/communication/answer-post/answer-post.component.spec.ts',
-            'src/main/webapp/app/communication/post/post.component.spec.ts',
-            'src/main/webapp/app/communication/course-conversations-components/forward-message-dialog/forward-messages-dialog.component.spec.ts',
-        ],
+        exclude: ['**/node_modules/**', '**/build/**'],
         testTimeout: 10000,
         reporters: ['default', 'junit'],
         outputFile: './build/test-results/vitest/junit.xml',
