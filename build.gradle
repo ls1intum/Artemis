@@ -468,6 +468,10 @@ dependencies {
     implementation "org.commonmark:commonmark:0.28.0"
     implementation "org.commonmark:commonmark-ext-gfm-tables:0.27.1"
     implementation "org.commonmark:commonmark-ext-gfm-strikethrough:0.27.1"
+
+    // GraalJS for server-side markdown rendering (markdown-it pipeline)
+    implementation "org.graalvm.polyglot:polyglot:24.2.1"
+    runtimeOnly "org.graalvm.polyglot:js-community:24.2.1"
     implementation "commons-fileupload:commons-fileupload:1.6.0"
     implementation "net.lingala.zip4j:zip4j:2.11.6"
 
@@ -607,6 +611,15 @@ tasks.register("stage") {
 tasks.register("npmSetCacheDockerfile", NpmTask) {
     args = ["set", "cache", "/opt/artemis/.npm"]
 }
+
+// Build server-side markdown renderer bundle (GraalJS)
+tasks.register("buildServerRenderer", NpmTask) {
+    dependsOn npmInstall
+    inputs.files("package-lock.json", "src/main/scripts/build-server-renderer.js")
+    outputs.file("build/resources/main/graaljs/markdown-renderer.bundle.js")
+    args = ["run", "build:server-renderer"]
+}
+processResources.dependsOn buildServerRenderer
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {

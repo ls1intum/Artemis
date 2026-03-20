@@ -6,5 +6,5 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TaskRenderInfoDTO(String taskName, List<Long> testIds) implements Serializable {
+public record TaskRenderInfoDTO(String taskName, List<Long> testIds, String testStatus, Integer successfulTests, Integer failedTests) implements Serializable {
 }

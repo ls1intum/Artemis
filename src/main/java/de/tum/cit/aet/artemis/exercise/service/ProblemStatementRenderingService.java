@@ -9,6 +9,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,7 +18,10 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Safelist;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -40,7 +44,17 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
-    private static final String RENDERER_VERSION = "1.0.0";
+    private static final String COMMONMARK_VERSION = "1.0.0";
+
+    private static final String GRAALJS_VERSION = "2.0.0";
+
+    private static final List<String> GRAALJS_REQUIRED_CSS = List.of("katex", "hljs", "github-alerts");
+
+    /**
+     * Holds feedback detail for a single test case.
+     */
+    public record TestFeedbackDetail(Long testId, String testName, boolean passed, String message) {
+    }
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
 
@@ -48,6 +62,12 @@ public class ProblemStatementRenderingService {
             .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
 
     private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
+
+    // Artemis-specific markup in PlantUML: <color:testsColor(<testid>N</testid>)>text</color>
+    private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(<testid>(\\d+)</testid>\\)>(.*?)</color>");
+
+    // Artemis-specific markup in PlantUML: #testsColor(<testid>N</testid>) on arrows
+    private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(<testid>(\\d+)</testid>\\)");
 
     private static final Pattern KATEX_INLINE_PATTERN = Pattern.compile("(?<!\\\\)\\$(?!\\$)(.+?)(?<!\\\\)\\$");
 
@@ -61,13 +81,22 @@ public class ProblemStatementRenderingService {
 
     private static final String SVG_PLACEHOLDER_SUFFIX = "\"></span>";
 
+    private static final Safelist HTML_SAFELIST = buildSafelist();
+
     private final PlantUmlService plantUmlService;
+
+    private final MarkdownItRenderingService markdownItRenderingService;
 
     private final String serverUrl;
 
-    public ProblemStatementRenderingService(PlantUmlService plantUmlService, @Value("${server.url}") String serverUrl) {
+    private final boolean useMarkdownIt;
+
+    public ProblemStatementRenderingService(PlantUmlService plantUmlService, MarkdownItRenderingService markdownItRenderingService, @Value("${server.url}") String serverUrl,
+            @Value("${artemis.rendering.use-markdown-it:true}") boolean useMarkdownIt) {
         this.plantUmlService = plantUmlService;
+        this.markdownItRenderingService = markdownItRenderingService;
         this.serverUrl = serverUrl;
+        this.useMarkdownIt = useMarkdownIt;
     }
 
     /**
@@ -75,12 +104,17 @@ public class ProblemStatementRenderingService {
      *
      * @param exercise      the exercise whose problem statement should be rendered
      * @param selfContained if true, PlantUML diagrams are inlined as SVG; otherwise URLs are provided
+     * @param testResults   map of testCaseId → passed (true/false), or null if no results available
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained) {
+    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         String problemStatement = exercise.getProblemStatement();
+        boolean useGraalJs = useMarkdownIt && markdownItRenderingService.isAvailable();
+        String diagramMode = selfContained ? "inline" : "url";
+
         if (problemStatement == null || problemStatement.isBlank()) {
-            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, new AssetRequirementsDTO("absent", "absent", selfContained ? "inline" : "url"), List.of(),
+            String rendererVersion = useGraalJs ? GRAALJS_VERSION : COMMONMARK_VERSION;
+            return new RenderedProblemStatementDTO("", computeHash(""), rendererVersion, new AssetRequirementsDTO("absent", "absent", diagramMode, List.of()), List.of(),
                     List.of());
         }
 
@@ -89,29 +123,39 @@ public class ProblemStatementRenderingService {
         // Step 1: Extract and replace PlantUML blocks
         List<DiagramRenderInfoDTO> diagrams = new ArrayList<>();
         List<String> inlineSvgs = new ArrayList<>();
-        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, exercise.getId(), selfContained, diagrams, inlineSvgs);
+        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, exercise.getId(), selfContained, diagrams, inlineSvgs, testResults);
 
         // Step 2: Extract and replace task markers
         List<TaskRenderInfoDTO> tasks = new ArrayList<>();
-        processedMarkdown = extractTasks(processedMarkdown, tasks);
+        processedMarkdown = extractTasks(processedMarkdown, tasks, testResults);
 
-        // Step 3: Detect asset requirements
-        boolean needsKatex = KATEX_INLINE_PATTERN.matcher(processedMarkdown).find() || KATEX_BLOCK_PATTERN.matcher(processedMarkdown).find()
-                || KATEX_BEGIN_PATTERN.matcher(processedMarkdown).find();
-        boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(processedMarkdown).find();
-        String diagramMode = selfContained ? "inline" : "url";
+        // Step 3: Render markdown to HTML and determine asset requirements
+        String html;
+        String rendererVersion;
+        AssetRequirementsDTO assets;
 
-        // Step 4: Render markdown to HTML
-        var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
-        Parser parser = Parser.builder().extensions(extensions).build();
-        HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
-                .build();
-        String html = renderer.render(parser.parse(processedMarkdown));
+        if (useGraalJs) {
+            html = markdownItRenderingService.render(processedMarkdown);
+            html = rewriteUrlsAndSanitize(html);
+            rendererVersion = GRAALJS_VERSION;
+            assets = new AssetRequirementsDTO("absent", "absent", diagramMode, GRAALJS_REQUIRED_CSS);
+        }
+        else {
+            boolean needsKatex = KATEX_INLINE_PATTERN.matcher(processedMarkdown).find() || KATEX_BLOCK_PATTERN.matcher(processedMarkdown).find()
+                    || KATEX_BEGIN_PATTERN.matcher(processedMarkdown).find();
+            boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(processedMarkdown).find();
 
-        // Step 5: Sanitize HTML (without SVGs — those are injected after)
-        html = sanitizeHtml(html);
+            var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
+            Parser parser = Parser.builder().extensions(extensions).build();
+            HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
+                    .build();
+            html = renderer.render(parser.parse(processedMarkdown));
+            html = sanitizeHtml(html);
+            rendererVersion = COMMONMARK_VERSION;
+            assets = new AssetRequirementsDTO(needsKatex ? "required" : "absent", needsHighlighting ? "required" : "absent", diagramMode, List.of());
+        }
 
-        // Step 6: Inject PlantUML SVGs after sanitization.
+        // Step 4: Inject PlantUML SVGs after sanitization.
         // SECURITY ASSUMPTION: We treat PlantUML-generated SVGs as trusted output. PlantUML converts
         // its own DSL into SVG shapes/text, and we assume it does not propagate user-controlled content
         // into executable SVG contexts (e.g., script, onload). This is the same trust model as the
@@ -126,20 +170,20 @@ public class ProblemStatementRenderingService {
             }
         }
 
-        // Step 7: Wrap in container div
+        // Step 5: Wrap in container div
         html = "<div class=\"artemis-problem-statement\">" + html + "</div>";
 
-        // Step 8: Strip any remaining testid tags
+        // Step 6: Strip any remaining testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Step 9: Compute content hash and build DTO
+        // Step 7: Compute content hash and build DTO
         String contentHash = computeHash(html);
-        var assets = new AssetRequirementsDTO(needsKatex ? "required" : "absent", needsHighlighting ? "required" : "absent", diagramMode);
 
-        return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, assets, tasks, diagrams);
+        return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, long exerciseId, boolean selfContained, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs) {
+    private String extractPlantUmlDiagrams(String markdown, long exerciseId, boolean selfContained, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs,
+            @Nullable Map<Long, TestFeedbackDetail> testResults) {
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -149,16 +193,19 @@ public class ProblemStatementRenderingService {
             String diagramId = "uml-" + diagramIndex;
             String sourceHash = computeHash(fullMatch);
 
-            // Extract test references from testsColor()
+            // Extract test references from testsColor() before cleaning
             List<Long> testIds = extractTestsColorIds(fullMatch);
 
-            // Build SVG URL
-            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(fullMatch, StandardCharsets.UTF_8);
+            // Resolve or clean Artemis-specific testsColor()/testid markup for PlantUML rendering
+            String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
+
+            // Build SVG URL with cleaned source
+            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8);
 
             String inlineSvg = null;
             if (selfContained) {
                 try {
-                    inlineSvg = plantUmlService.generateSvg(fullMatch, false);
+                    inlineSvg = plantUmlService.generateSvg(cleanedSource, false);
                 }
                 catch (IOException e) {
                     log.error("Failed to generate inline SVG for diagram {} in exercise {}", diagramId, exerciseId, e);
@@ -186,19 +233,60 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Extracts test references from testsColor() calls in PlantUML source.
-     * Currently returns an empty list because testsColor() references test NAMES (strings),
-     * not numeric IDs. Resolving names to database IDs requires exercise-context lookup,
-     * which is deferred to phase 2.
+     * Extracts numeric test IDs from testsColor() calls in PlantUML source.
      *
      * @param plantUmlSource the PlantUML diagram source
-     * @return an empty list (diagram test ID resolution is not yet implemented)
+     * @return list of test IDs referenced in testsColor() calls
      */
     private List<Long> extractTestsColorIds(String plantUmlSource) {
-        return List.of();
+        List<Long> testIds = new ArrayList<>();
+        Matcher matcher = TESTID_PATTERN.matcher(plantUmlSource);
+        while (matcher.find()) {
+            testIds.add(Long.parseLong(matcher.group(1)));
+        }
+        return testIds;
     }
 
-    private String extractTasks(String markdown, List<TaskRenderInfoDTO> tasks) {
+    /**
+     * Resolves Artemis-specific testsColor() markup in PlantUML source to actual colors.
+     * If test results are available, uses green/red based on pass/fail status.
+     * If no results, uses grey (default/uncolored).
+     */
+    private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        // <color:testsColor(<testid>N</testid>)>text</color> → <color:COLOR>text</color>
+        String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
+            String color = resolveTestColor(match.group(1), testResults);
+            return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
+        });
+        // #testsColor(<testid>N</testid>) on arrows → #COLOR
+        resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> {
+            String color = resolveTestColor(match.group(1), testResults);
+            return Matcher.quoteReplacement("#" + color);
+        });
+        return resolved;
+    }
+
+    /**
+     * Resolves a single test ID to a PlantUML color based on test results.
+     */
+    private static String resolveTestColor(String testIdStr, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        if (testResults == null) {
+            return "grey";
+        }
+        try {
+            long testId = Long.parseLong(testIdStr);
+            TestFeedbackDetail detail = testResults.get(testId);
+            if (detail == null) {
+                return "grey";
+            }
+            return detail.passed() ? "green" : "red";
+        }
+        catch (NumberFormatException e) {
+            return "grey";
+        }
+    }
+
+    private String extractTasks(String markdown, List<TaskRenderInfoDTO> tasks, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
 
@@ -214,29 +302,182 @@ public class ProblemStatementRenderingService {
                 }
             }
 
-            String testIdsStr = testIds.stream().map(String::valueOf).reduce((a, b) -> a + "," + b).orElse("");
-            String replacement = "<span class=\"artemis-task\" data-task-name=\"" + escapeHtmlAttribute(taskName) + "\" data-test-ids=\"" + testIdsStr + "\">"
-                    + escapeHtml(taskName) + "</span>";
+            String testStatus = computeTaskTestStatus(testIds, testResults);
+            int[] counts = countTestResults(testIds, testResults);
+            int successCount = counts[0];
+            int failCount = counts[1];
+            int total = testIds.size();
 
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-            tasks.add(new TaskRenderInfoDTO(taskName, testIds));
+            String testIdsStr = testIds.stream().map(String::valueOf).reduce((a, b) -> a + "," + b).orElse("");
+            String statusClass = testStatus != null ? " artemis-task-" + testStatus : "";
+            String statusAttr = testStatus != null ? " data-test-status=\"" + testStatus + "\"" : "";
+
+            // Build task HTML with icon, test summary, and expandable feedback details
+            StringBuilder taskHtml = new StringBuilder();
+            boolean hasFeedback = testResults != null && !testIds.isEmpty();
+
+            if (hasFeedback) {
+                // Use <details>/<summary> for native click-to-expand (no JS needed)
+                taskHtml.append("<details class=\"artemis-task-details\">");
+                taskHtml.append("<summary class=\"artemis-task").append(statusClass).append("\" data-task-name=\"").append(escapeHtmlAttribute(taskName))
+                        .append("\" data-test-ids=\"").append(testIdsStr).append("\"").append(statusAttr).append(">");
+                String icon = "success".equals(testStatus) ? "✅" : "❌";
+                taskHtml.append(icon).append(" ").append(escapeHtml(taskName));
+                taskHtml.append(" <span class=\"artemis-task-stats\">").append(successCount).append(" von ").append(total).append(" Tests bestanden</span>");
+                taskHtml.append("</summary>");
+
+                // Render feedback details
+                taskHtml.append("<ul class=\"artemis-feedback-list\">");
+                for (Long testId : testIds) {
+                    TestFeedbackDetail detail = testResults.get(testId);
+                    if (detail != null) {
+                        String fbClass = detail.passed() ? "artemis-feedback-success" : "artemis-feedback-fail";
+                        String fbIcon = detail.passed() ? "✅" : "❌";
+                        taskHtml.append("<li class=\"").append(fbClass).append("\">").append(fbIcon).append(" <strong>").append(escapeHtml(detail.testName())).append("</strong>");
+                        if (detail.message() != null && !detail.message().isBlank()) {
+                            taskHtml.append("<br>").append(escapeHtml(detail.message()));
+                        }
+                        taskHtml.append("</li>");
+                    }
+                }
+                taskHtml.append("</ul></details>");
+            }
+            else {
+                // No test results: plain span without expandable details
+                taskHtml.append("<span class=\"artemis-task\" data-task-name=\"").append(escapeHtmlAttribute(taskName)).append("\" data-test-ids=\"").append(testIdsStr)
+                        .append("\">").append(escapeHtml(taskName)).append("</span>");
+            }
+
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml.toString()));
+            tasks.add(new TaskRenderInfoDTO(taskName, testIds, testStatus, hasFeedback ? successCount : null, hasFeedback ? failCount : null));
         }
         matcher.appendTail(sb);
         return sb.toString();
     }
 
+    /**
+     * Computes the aggregate test status for a task.
+     * Mirrors the Angular client's testStatusForTask logic:
+     * FAIL (any failed) > not-executed (any missing) > SUCCESS (all passed).
+     *
+     * @return "success", "fail", "not-executed", or null if no results
+     */
+    private static @Nullable String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        if (testResults == null || testIds.isEmpty()) {
+            return null;
+        }
+
+        boolean anyFailed = false;
+        boolean anyNotExecuted = false;
+
+        for (Long testId : testIds) {
+            TestFeedbackDetail detail = testResults.get(testId);
+            if (detail == null) {
+                anyNotExecuted = true;
+            }
+            else if (!detail.passed()) {
+                anyFailed = true;
+            }
+        }
+
+        if (anyFailed) {
+            return "fail";
+        }
+        if (anyNotExecuted) {
+            return "not-executed";
+        }
+        return "success";
+    }
+
+    /**
+     * Counts successful and failed tests for a task.
+     *
+     * @return int[2]: [successCount, failCount]
+     */
+    private static int[] countTestResults(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        if (testResults == null) {
+            return new int[] { 0, 0 };
+        }
+        int success = 0;
+        int fail = 0;
+        for (Long testId : testIds) {
+            TestFeedbackDetail detail = testResults.get(testId);
+            if (detail != null && detail.passed()) {
+                success++;
+            }
+            else if (detail != null && !detail.passed()) {
+                fail++;
+            }
+        }
+        return new int[] { success, fail };
+    }
+
+    /**
+     * Rewrites relative URLs to absolute and sanitizes HTML.
+     * Used for the GraalJS path where URL rewriting can't happen during rendering.
+     */
+    private String rewriteUrlsAndSanitize(String html) {
+        Document dirty = Jsoup.parseBodyFragment(html);
+        dirty.select("a[href^=/]").forEach(el -> el.attr("href", serverUrl + el.attr("href")));
+        dirty.select("img[src^=/]").forEach(el -> el.attr("src", serverUrl + el.attr("src")));
+        Cleaner cleaner = new Cleaner(HTML_SAFELIST);
+        Document clean = cleaner.clean(dirty);
+        return clean.body().html();
+    }
+
+    /**
+     * Sanitizes HTML using the shared safelist.
+     * Used for the CommonMark fallback path.
+     */
     private String sanitizeHtml(String html) {
+        return Jsoup.clean(html, HTML_SAFELIST);
+    }
+
+    private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
-        // Allow data attributes on div and span for our custom elements
+
+        // Custom elements for tasks and diagrams
         safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url");
-        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-svg-index");
-        // Allow class on code for syntax highlighting
+        safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-svg-index");
         safelist.addAttributes("code", "class");
-        // Allow class on pre for styling
         safelist.addAttributes("pre", "class");
-        // Preserve HTML comments (used as SVG placeholders)
-        // jsoup strips comments by default — we handle SVG injection via string replacement after sanitization
-        return Jsoup.clean(html, safelist);
+
+        // KaTeX HTML output: spans with class, style (sizing/positioning), and aria-hidden.
+        // TRUST BOUNDARY: allowing style on span enables CSS injection (e.g. position:fixed overlays)
+        // from user-authored HTML (markdown-it runs with html:true). This is accepted because:
+        // 1. Problem statements are authored by trusted instructors/editors, not students
+        // 2. CSS cannot execute JavaScript in modern browsers (no expression(), no -moz-binding)
+        // 3. jsoup does not support CSS property whitelisting — it's all-or-nothing for style
+        // 4. KaTeX requires inline styles for layout (strut heights, spacing, etc.)
+        // If this trust model changes (e.g. student-authored content), style must be restricted.
+        safelist.addAttributes("span", "style", "aria-hidden");
+
+        // GitHub alerts: class on p and div (div already has class above)
+        safelist.addAttributes("p", "class");
+
+        // Expandable task feedback: <details>/<summary> (native HTML5 click-to-expand)
+        safelist.addTags("details", "summary");
+        safelist.addAttributes("details", "class");
+        safelist.addAttributes("summary", "class", "data-task-name", "data-test-ids", "data-test-status");
+
+        // MathML tags for KaTeX accessibility
+        safelist.addTags("math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "ms", "mtext", "msup", "msub", "msubsup", "mfrac", "msqrt", "mroot", "mover", "munder",
+                "munderover", "mspace", "mtable", "mtr", "mtd", "menclose", "mpadded", "mphantom", "mstyle", "merror");
+
+        // MathML attributes
+        safelist.addAttributes("math", "xmlns", "display");
+        safelist.addAttributes("annotation", "encoding");
+        safelist.addAttributes("mo", "fence", "stretchy", "symmetric", "lspace", "rspace", "minsize", "maxsize", "separator", "form", "movablelimits");
+        safelist.addAttributes("mi", "mathvariant");
+        safelist.addAttributes("mspace", "width");
+        safelist.addAttributes("mfrac", "linethickness");
+        safelist.addAttributes("mtd", "columnalign");
+        safelist.addAttributes("mover", "accent");
+        safelist.addAttributes("munder", "accentunder");
+        safelist.addAttributes("mpadded", "width", "height", "depth", "lspace", "voffset");
+        safelist.addAttributes("mstyle", "displaystyle", "scriptlevel");
+
+        return safelist;
     }
 
     private static String escapeHtmlAttribute(String value) {

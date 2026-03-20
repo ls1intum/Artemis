@@ -59,7 +59,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         return exerciseRepository.save(exercise);
     }
 
-    // --- Rendering tests ---
+    // --- Basic rendering tests ---
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -116,8 +116,10 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
-        assertThat(result.assets().katex()).isEqualTo("required");
-        assertThat(result.html()).contains("$$E = mc^2$$");
+        // GraalJS renders KaTeX server-side: client doesn't need KaTeX JS
+        assertThat(result.assets().katex()).isEqualTo("absent");
+        // The HTML should contain rendered KaTeX output
+        assertThat(result.html()).contains("katex");
     }
 
     @Test
@@ -127,9 +129,10 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
-        assertThat(result.assets().highlighting()).isEqualTo("required");
+        // GraalJS renders syntax highlighting server-side: client doesn't need highlight.js
+        assertThat(result.assets().highlighting()).isEqualTo("absent");
+        assertThat(result.html()).contains("hljs");
         assertThat(result.html()).contains("<code");
-        assertThat(result.html()).contains("language-java");
     }
 
     @Test
@@ -139,7 +142,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
-        assertThat(result.html()).contains("<table>");
+        // markdown-it tag-class plugin adds class="table" to <table>
+        assertThat(result.html()).contains("<table");
         assertThat(result.html()).contains("<th>Col A</th>");
         assertThat(result.html()).contains("<td>1</td>");
     }
@@ -185,6 +189,116 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result2 = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
         assertThat(result1.contentHash()).isNotEqualTo(result2.contentHash());
+    }
+
+    // --- GraalJS / Phase 2 rendering tests ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRendererVersionIsV2() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.rendererVersion()).isEqualTo("2.0.0");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testRequiredCssWhenServerRendered() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.assets().requiredCss()).containsExactlyInAnyOrder("katex", "hljs", "github-alerts");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testKaTexRenderedServerSide() throws Exception {
+        // Block formula: $$ on its own line
+        TextExercise exercise = createCourseExerciseWithProblemStatement("$$E = mc^2$$");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.assets().katex()).isEqualTo("absent");
+        assertThat(result.html()).contains("class=\"katex");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testHighlightingRenderedServerSide() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("```java\npublic class Foo {}\n```");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.assets().highlighting()).isEqualTo("absent");
+        assertThat(result.html()).contains("hljs");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGithubAlertRendered() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("> [!NOTE]\n> This is a note");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).contains("markdown-alert");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFormulaInsideCodeFenceNotRenderedAsKatex() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("```\n$$E=mc^2$$\n```");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // Formula inside a code block should NOT be rendered as KaTeX
+        assertThat(result.html()).doesNotContain("class=\"katex");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testFormulaCompatibilityInlineDollarDollar() throws Exception {
+        // Inline: $$ with surrounding text → converted to $ for KaTeX inline math
+        TextExercise exercise = createCourseExerciseWithProblemStatement("The energy is $$E=mc^2$$ according to Einstein.");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).contains("katex");
+        // The raw $$ delimiters should not be in the HTML (they were converted to $ and rendered)
+        assertThat(result.html()).doesNotContain("$$");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testAdversarialUserKatexHtml() throws Exception {
+        // User-injected HTML that mimics KaTeX structure with malicious content
+        TextExercise exercise = createCourseExerciseWithProblemStatement("<span class=\"katex\"><script>alert('xss')</script></span>\n<span onclick=\"alert('xss')\">text</span>");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // jsoup must strip dangerous content even inside user-crafted spans
+        assertThat(result.html()).doesNotContain("<script>");
+        assertThat(result.html()).doesNotContain("onclick");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testUserStyleAttributeSurvivesSanitization() throws Exception {
+        // Regression test: style on span is allowed (needed for KaTeX layout).
+        // User-authored spans with style pass through jsoup — this is an accepted trade-off
+        // because problem statements are authored by trusted instructors, not students.
+        // CSS cannot execute JS in modern browsers, so this is cosmetic-only risk.
+        TextExercise exercise = createCourseExerciseWithProblemStatement("<span style=\"color:red\">styled text</span>");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // style attribute IS preserved (intentional — needed for KaTeX)
+        assertThat(result.html()).contains("style=\"color:red\"");
+        // But script/event handlers are still stripped
+        assertThat(result.html()).doesNotContain("<script>");
+        assertThat(result.html()).doesNotContain("onclick");
     }
 
     // --- Authorization tests ---

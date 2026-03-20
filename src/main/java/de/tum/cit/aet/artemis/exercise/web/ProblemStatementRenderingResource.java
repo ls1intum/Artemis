@@ -3,9 +3,12 @@ package de.tum.cit.aet.artemis.exercise.web;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -19,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -32,6 +38,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
 
 @Profile(PROFILE_CORE)
@@ -52,13 +59,20 @@ public class ProblemStatementRenderingResource {
 
     private final ProblemStatementRenderingService renderingService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
+    private final ResultRepository resultRepository;
+
     public ProblemStatementRenderingResource(ExerciseRepository exerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            Optional<ExamDateApi> examDateApi, ProblemStatementRenderingService renderingService) {
+            Optional<ExamDateApi> examDateApi, ProblemStatementRenderingService renderingService, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository) {
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
         this.examDateApi = examDateApi;
         this.renderingService = renderingService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.resultRepository = resultRepository;
     }
 
     /**
@@ -102,8 +116,39 @@ public class ProblemStatementRenderingResource {
             }
         }
 
-        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained);
+        var testResults = fetchTestResults(exercise, user);
+        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, testResults);
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePrivate()).body(result);
+    }
+
+    /**
+     * Fetches the current user's latest test feedback for the given exercise.
+     *
+     * @return a map of testCaseId → feedback detail, or null if no results available
+     */
+    private @Nullable Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> fetchTestResults(Exercise exercise, User user) {
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentId(exercise.getId(), user.getId());
+        if (participations.isEmpty()) {
+            return null;
+        }
+
+        long participationId = participations.getFirst().getId();
+        Optional<Result> latestResult = resultRepository.findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (latestResult.isEmpty()) {
+            return null;
+        }
+
+        Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults = new HashMap<>();
+        for (Feedback feedback : latestResult.get().getFeedbacks()) {
+            if (feedback.getTestCase() != null && feedback.getTestCase().getId() != null) {
+                var testCase = feedback.getTestCase();
+                String testName = testCase.getTestName() != null ? testCase.getTestName() : "Test " + testCase.getId();
+                boolean passed = Boolean.TRUE.equals(feedback.isPositive());
+                String message = feedback.getDetailText();
+                testResults.put(testCase.getId(), new ProblemStatementRenderingService.TestFeedbackDetail(testCase.getId(), testName, passed, message));
+            }
+        }
+        return testResults;
     }
 }
