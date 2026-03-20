@@ -12,7 +12,7 @@ import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
 import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
-import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
+import { GlobalSearchOptions, GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchableEntity } from '../../models/searchable-entity.model';
 
@@ -85,7 +85,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
                     // If no valid query but has filter, fetch recent items
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
-                    const options: any = { type: typeFilter };
+                    const options: GlobalSearchOptions = { type: typeFilter };
 
                     if (!hasValidQuery) {
                         // Fetching recent items when filter is active but query is empty
