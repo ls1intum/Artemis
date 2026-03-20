@@ -992,8 +992,6 @@ public class ExerciseService {
             if (managedCompetency != null) {
                 resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
             }
-            // Skip links whose competency was not found — this can happen when the entity
-            // was deserialized from JSON with a stale or invalid competency reference
         }
         exercise.setCompetencyLinks(resolvedLinks);
     }
