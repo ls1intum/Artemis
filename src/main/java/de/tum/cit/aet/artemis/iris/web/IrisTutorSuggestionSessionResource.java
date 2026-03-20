@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.communication.repository.PostRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisTutorSuggestionSession;
+import de.tum.cit.aet.artemis.iris.dto.IrisChatSessionResponseDTO;
 import de.tum.cit.aet.artemis.iris.repository.IrisTutorSuggestionSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 
@@ -53,7 +54,7 @@ public class IrisTutorSuggestionSessionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("{postId}/sessions/current")
-    public ResponseEntity<IrisTutorSuggestionSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> getCurrentSessionOrCreateIfNotExists(@PathVariable Long postId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
         var course = post.getCoursePostingBelongsTo();
@@ -65,7 +66,7 @@ public class IrisTutorSuggestionSessionResource {
         var sessionOptional = irisTutorSuggestionSessionRepository.findLatestSessionsByPostIdAndUserIdWithMessages(postId, user.getId(), Pageable.ofSize(1)).stream().findFirst();
         if (sessionOptional.isPresent()) {
             var session = sessionOptional.get();
-            return ResponseEntity.ok(session);
+            return ResponseEntity.ok(IrisChatSessionResponseDTO.ofWithMessages(session));
         }
         return createSessionForPost(postId);
     }
@@ -78,7 +79,7 @@ public class IrisTutorSuggestionSessionResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("{postId}/sessions")
-    public ResponseEntity<IrisTutorSuggestionSession> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
+    public ResponseEntity<IrisChatSessionResponseDTO> createSessionForPost(@PathVariable Long postId) throws URISyntaxException {
         var post = postRepository.findPostOrMessagePostByIdElseThrow(postId);
 
         var course = post.getCoursePostingBelongsTo();
@@ -91,7 +92,7 @@ public class IrisTutorSuggestionSessionResource {
         var session = irisTutorSuggestionSessionRepository.save(new IrisTutorSuggestionSession(post.getId(), user));
         var uriString = "/api/iris/sessions/" + session.getId();
 
-        return ResponseEntity.created(new URI(uriString)).body(session);
+        return ResponseEntity.created(new URI(uriString)).body(IrisChatSessionResponseDTO.of(session));
     }
 
 }
