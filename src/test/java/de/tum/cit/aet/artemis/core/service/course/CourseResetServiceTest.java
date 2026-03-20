@@ -19,13 +19,17 @@ import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 
 /**
- * Tests for the deletion of LLM token usage data during course reset.
- * Verifies that child records (requests) are deleted before parent records (traces)
- * to avoid foreign key constraint violations.
+ * Integration tests for {@link CourseResetService#resetStudentData(long)}.
+ * Verifies that resetting a course with LLM token usage data does not cause
+ * foreign key constraint violations by ensuring child records (requests) are
+ * deleted before parent records (traces).
  */
 class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     private static final String TEST_PREFIX = "courseresetservice";
+
+    @Autowired
+    private CourseResetService courseResetService;
 
     @Autowired
     private LLMTokenUsageTraceTestRepository llmTokenUsageTraceTestRepository;
@@ -52,8 +56,8 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteLLMTokenUsageTracesWithRequests_shouldNotViolateForeignKeyConstraint() {
-        // Create a trace with associated requests (simulating real LLM usage)
+    void testResetCourseWithLLMTokenUsageData_shouldNotViolateForeignKeyConstraint() {
+        // Create a trace with an associated request (simulating real LLM usage)
         var trace = new LLMTokenUsageTrace();
         trace.setCourseId(course.getId());
         trace.setUserId(student.getId());
@@ -70,14 +74,12 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
         request.setTrace(trace);
         llmTokenUsageRequestTestRepository.save(request);
 
-        // Verify data exists before deletion
+        // Verify data exists before reset
         assertThat(llmTokenUsageTraceTestRepository.findAllByCourseId(course.getId())).hasSize(1);
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).hasSize(1);
 
-        // Delete requests first, then traces — this is the order used by CourseResetService
-        // Previously, only traces were deleted, causing FK constraint violations
-        llmTokenUsageRequestTestRepository.deleteAllByTraceCourseId(course.getId());
-        llmTokenUsageTraceTestRepository.deleteAllByCourseId(course.getId());
+        // Reset the course — this should not throw a FK constraint violation
+        courseResetService.resetStudentData(course.getId());
 
         // Verify both requests and traces are deleted
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).isEmpty();
@@ -86,7 +88,7 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testDeleteLLMTokenUsageTracesWithMultipleRequests_shouldDeleteAll() {
+    void testResetCourseWithMultipleLLMTokenUsageRequests_shouldDeleteAll() {
         // Create a trace with multiple requests
         var trace = new LLMTokenUsageTrace();
         trace.setCourseId(course.getId());
@@ -108,8 +110,8 @@ class CourseResetServiceTest extends AbstractSpringIntegrationIndependentTest {
 
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).hasSize(3);
 
-        llmTokenUsageRequestTestRepository.deleteAllByTraceCourseId(course.getId());
-        llmTokenUsageTraceTestRepository.deleteAllByCourseId(course.getId());
+        // Reset the course — this should not throw a FK constraint violation
+        courseResetService.resetStudentData(course.getId());
 
         assertThat(llmTokenUsageRequestTestRepository.findAllByTraceCourseId(course.getId())).isEmpty();
         assertThat(llmTokenUsageTraceTestRepository.findAllByCourseId(course.getId())).isEmpty();
