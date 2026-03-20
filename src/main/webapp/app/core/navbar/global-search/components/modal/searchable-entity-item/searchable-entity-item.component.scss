@@ -20,11 +20,6 @@
         opacity: 0.6;
         cursor: not-allowed;
 
-        .entity-title,
-        .entity-description {
-            color: var(--bs-secondary);
-        }
-
         &.selected {
             background-color: var(--global-search-item-hover-bg);
             border-left: 3px solid var(--bs-secondary);
@@ -56,6 +51,13 @@
 .entity-description {
     font-size: 0.875rem;
     line-height: 1.4;
+}
+
+.entity-item.disabled {
+    .entity-title,
+    .entity-description {
+        color: var(--bs-secondary);
+    }
 }
 
 .entity-coming-soon {
