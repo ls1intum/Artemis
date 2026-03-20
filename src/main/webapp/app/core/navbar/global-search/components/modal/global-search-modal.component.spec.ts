@@ -392,5 +392,31 @@ describe('GlobalSearchModalComponent', () => {
             expect(mockSearchService.search).toHaveBeenCalledWith('', { type: 'exercise', sortBy: 'dueDate', limit: 10 });
             expect(component['results']()).toEqual(filteredResults);
         });
+
+        it('should serve cached filter results synchronously without waiting for 300ms debounce', () => {
+            mockSearchService.search.mockReturnValue(of(filteredResults));
+
+            // First add: needs debounce + HTTP
+            component['addFilter']('exercise');
+            vi.advanceTimersByTime(300);
+            expect(component['results']()).toEqual(filteredResults);
+            expect(mockSearchService.search).toHaveBeenCalledOnce();
+
+            // Remove filter — synchronous branch, no debounce needed
+            component['removeFilter']('exercise');
+            // Don't advance timers — verify it clears synchronously
+            expect(component['results']()).toEqual([]);
+            expect(component['isLoading']()).toBe(false);
+            expect(component['hasSearched']()).toBe(false);
+
+            // Re-add filter — cached branch should also run synchronously
+            component['addFilter']('exercise');
+            // At time 0 (no timer advancement), results should already appear from cache
+            expect(component['results']()).toEqual(filteredResults);
+            expect(component['isLoading']()).toBe(false);
+            expect(component['hasSearched']()).toBe(true);
+            // No additional HTTP call: still only the 1 from the first add
+            expect(mockSearchService.search).toHaveBeenCalledOnce();
+        });
     });
 });

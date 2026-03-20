@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, HostListener, OnDestroy, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EMPTY, Subject, catchError, filter, map, of, switchMap, tap, timer } from 'rxjs';
+import { EMPTY, Subject, catchError, filter, of, switchMap, tap, timer } from 'rxjs';
 import { SearchOverlayService } from '../../services/search-overlay.service';
 import { OsDetectorService } from '../../services/os-detector.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -75,6 +75,7 @@ export class GlobalSearchModalComponent implements OnDestroy {
         this.searchSubject
             .pipe(
                 switchMap((event) => {
+                    // Null (reset) — execute synchronously, cancel any pending debounce
                     if (event === null) {
                         this.results.set([]);
                         this.hasSearched.set(false);
@@ -82,14 +83,13 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         this.searchError.set(undefined);
                         return EMPTY;
                     }
-                    return timer(300).pipe(map(() => event));
-                }),
-                switchMap(({ query, filters }) => {
+
+                    const { query, filters } = event;
                     const hasFilter = filters.length > 0;
                     const trimmedQuery = query?.trim() || '';
                     const hasValidQuery = trimmedQuery.length >= 2;
 
-                    // Clear results if no valid query and no filter
+                    // No valid query and no filter — clear results synchronously
                     if (!hasValidQuery && !hasFilter) {
                         this.results.set([]);
                         this.hasSearched.set(false);
@@ -100,38 +100,38 @@ export class GlobalSearchModalComponent implements OnDestroy {
 
                     this.searchError.set(undefined);
                     const typeFilter = hasFilter ? filters[0] : undefined;
-
-                    // If no valid query but has filter, fetch recent/placeholder items
                     const searchQuery = hasValidQuery ? trimmedQuery : '';
                     const options: GlobalSearchOptions = { type: typeFilter };
 
+                    // Empty query with filter — serve from cache synchronously if available
                     if (!hasValidQuery && hasFilter) {
                         options.sortBy = 'dueDate';
                         options.limit = 10;
 
-                        // Serve from cache if we already loaded placeholder results for this filter
-                        const cacheKey = typeFilter!;
-                        const cached = this.placeholderCache.get(cacheKey);
+                        const cached = this.placeholderCache.get(typeFilter!);
                         if (cached) {
                             this.isLoading.set(false);
                             return of(cached);
                         }
                     }
 
+                    // Network search — debounce 300ms, then fire HTTP request
                     this.isLoading.set(true);
-
-                    return this.searchService.search(searchQuery, options).pipe(
-                        tap((results) => {
-                            // Cache placeholder results (empty query + filter) for reuse
-                            if (!hasValidQuery && hasFilter && typeFilter) {
-                                this.placeholderCache.set(typeFilter, results);
-                            }
-                        }),
-                        catchError(() => {
-                            this.isLoading.set(false);
-                            this.searchError.set('global.search.searchFailed');
-                            return of([]);
-                        }),
+                    return timer(300).pipe(
+                        switchMap(() =>
+                            this.searchService.search(searchQuery, options).pipe(
+                                tap((results) => {
+                                    if (!hasValidQuery && hasFilter && typeFilter) {
+                                        this.placeholderCache.set(typeFilter, results);
+                                    }
+                                }),
+                                catchError(() => {
+                                    this.isLoading.set(false);
+                                    this.searchError.set('global.search.searchFailed');
+                                    return of([]);
+                                }),
+                            ),
+                        ),
                     );
                 }),
                 takeUntilDestroyed(),
@@ -208,9 +208,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
     protected removeFilter(filterType: string) {
         const newFilters = this.activeFilters().filter((f) => f !== filterType);
         this.activeFilters.set(newFilters);
-
-        // Always emit through the pipeline so distinctUntilChanged tracks the current state.
-        // Without this, re-adding the same filter would be suppressed as a duplicate.
         this.searchSubject.next({ query: this.searchQuery(), filters: newFilters });
     }
 
