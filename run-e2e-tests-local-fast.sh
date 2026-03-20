@@ -89,10 +89,23 @@ check_port_available() {
 
     listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
     if [ -n "$listeners" ]; then
-        echo -e "${RED}ERROR: Port ${port} is already in use by another process, so the ${service_name} cannot start.${NC}"
-        echo "$listeners"
-        echo "Stop the conflicting process or rerun with the corresponding --skip-* flag if you intentionally want to reuse that service."
-        exit 1
+        echo -e "${YELLOW}Port ${port} (${service_name}) is in use — killing existing process...${NC}"
+        # Extract PIDs from lsof output (skip header line) and kill them
+        local pids
+        pids=$(echo "$listeners" | awk 'NR>1 {print $2}' | sort -u)
+        for pid in $pids; do
+            echo "  Killing PID $pid..."
+            kill_tree "$pid"
+        done
+        sleep 2
+        # Verify port is now free
+        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        if [ -n "$listeners" ]; then
+            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes. Cannot start ${service_name}.${NC}"
+            echo "$listeners"
+            exit 1
+        fi
+        echo -e "${GREEN}Port ${port} is now free.${NC}"
     fi
 }
 

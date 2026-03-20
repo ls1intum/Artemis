@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -204,6 +205,27 @@ class HyperionConsistencyCheckServiceTest {
         assertThat(promptText).contains("Already discussed naming mismatch");
         assertThat(promptText).doesNotContain("This user reply should not be part of prompt context");
         assertThat(promptText).contains("threads");
+    }
+
+    @Test
+    void checkConsistency_skipThreadContext_doesNotInvokeRendererAndPassesEmptyThreads() throws Exception {
+        final var exercise = getProgrammingExercise();
+        when(programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(42L)).thenReturn(exercise);
+        when(repositoryService.getFilesContentFromBareRepositoryForLastCommit(any(LocalVCRepositoryUri.class)))
+                .thenReturn(Map.of("src/main/java/App.java", "class App { int sum(int a,int b){return a+b;} }"));
+
+        when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage("{\"issues\": []}")))));
+
+        hyperionConsistencyCheckService.checkConsistency(exercise.getId(), true);
+
+        verify(commentThreadRepository, never()).findWithCommentsAndGroupByExerciseId(42L);
+
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(chatModel, atLeastOnce()).call(promptCaptor.capture());
+
+        String promptText = promptCaptor.getAllValues().stream().flatMap(prompt -> prompt.getInstructions().stream())
+                .map(content -> Objects.toString(content.getText(), content.toString())).collect(Collectors.joining("\n"));
+        assertThat(promptText).contains("\"threads\":[]");
     }
 
     @Test
