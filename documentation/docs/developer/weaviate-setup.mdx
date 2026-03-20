@@ -124,8 +124,20 @@ If you have access to a remote GPU server running Ollama, you only need to start
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
-  You need to delete the existing Weaviate collection or reset the Docker volume when switching between `weaviate.yml` and `weaviate-embeddings.yml`, as otherwise Artemis will not create the collection with the new vectorizer settings.
-  Either to it directly via curl `curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"`, or reset the [docker volume](#resetting-data)
+  <p><strong>Collections must be recreated when changing vectorizer settings.</strong> Weaviate does not update the vectorizer configuration of existing collections.
+  When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`api-base-url`, `api-embedding-model`, `api-key`),
+  you must delete the existing collections first and restart Artemis so they are recreated with the new configuration.</p>
+
+  <p>On startup, if a collection already exists, Artemis will log:<br/>
+  <code>Collection 'Artemis_Exercises' already exists, skipping creation. Delete the collection and restart to apply configuration changes.</code></p>
+
+  <p>To delete all Artemis collections:</p>
+
+  ```bash
+  curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"
+  ```
+
+  <p>Or reset the entire Weaviate volume (see <a href="#resetting-data">Resetting Data</a>).</p>
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
@@ -286,17 +298,17 @@ DISK_USE_WARNING_PERCENTAGE=80
 
 ### Configuration Options
 
-| Variable                                  | Default                         | Description                                                                       |
-|-------------------------------------------|---------------------------------|-----------------------------------------------------------------------------------|
-| `QUERY_DEFAULTS_LIMIT`                    | 25                              | Default limit for query results                                                   |
-| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                            | Allow anonymous access (development only - we do not support an auth version yet) |
-| `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate               | Path for data persistence inside container                                        |
-| `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers / text2vec-openai | Default vectorizer module                                                |
-| `ENABLE_MODULES`                          | (empty) / text2vec-transformers / text2vec-openai | Modules to enable                                                    |
-| `TRANSFORMERS_INFERENCE_API`              | http://t2v-transformers:8080    | URL of the transformer inference service (embeddings only)                        |
-| `CLUSTER_HOSTNAME`                        | artemis                         | Hostname for the Weaviate cluster node                                            |
-| `LIMIT_RESOURCES`                         | true                            | Enable resource limiting                                                          |
-| `DISK_USE_WARNING_PERCENTAGE`             | 80                              | Warn when disk usage exceeds this percentage                                      |
+| Variable                                  | Default                                           | Description                                                                       |
+|-------------------------------------------|---------------------------------------------------|-----------------------------------------------------------------------------------|
+| `QUERY_DEFAULTS_LIMIT`                    | 25                                                | Default limit for query results                                                   |
+| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                                              | Allow anonymous access (development only - we do not support an auth version yet) |
+| `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate                                 | Path for data persistence inside container                                        |
+| `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers / text2vec-openai    | Default vectorizer module                                                         |
+| `ENABLE_MODULES`                          | (empty) / text2vec-transformers / text2vec-openai | Modules to enable                                                                 |
+| `TRANSFORMERS_INFERENCE_API`              | http://t2v-transformers:8080                      | URL of the transformer inference service (embeddings only)                        |
+| `CLUSTER_HOSTNAME`                        | artemis                                           | Hostname for the Weaviate cluster node                                            |
+| `LIMIT_RESOURCES`                         | true                                              | Enable resource limiting                                                          |
+| `DISK_USE_WARNING_PERCENTAGE`             | 80                                                | Warn when disk usage exceeds this percentage                                      |
 
 ### Data Persistence
 

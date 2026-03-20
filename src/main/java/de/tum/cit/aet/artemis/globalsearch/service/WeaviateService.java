@@ -130,11 +130,11 @@ public class WeaviateService {
 
         try {
             if (client.collections.exists(collectionName)) {
-                log.debug("Collection '{}' already exists", collectionName);
+                log.info("Collection '{}' already exists, skipping creation. Delete the collection and restart to apply configuration changes.", collectionName);
                 return;
             }
 
-            log.info("Creating collection '{}'...", collectionName);
+            log.info("Creating collection '{}' with vectorizer '{}'...", collectionName, vectorizerModule);
 
             client.collections.create(collectionName, collection -> {
                 // Configure vectorizer based on deployment setup
@@ -142,7 +142,6 @@ public class WeaviateService {
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
                 // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
                 if (VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue().equals(vectorizerModule)) {
-                    log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue());
                     collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
                         if (StringUtils.hasText(weaviateApiBaseUrl)) {
                             builder.baseUrl(weaviateApiBaseUrl);
@@ -152,15 +151,15 @@ public class WeaviateService {
                         }
                         return builder;
                     }));
-                    log.debug("OpenAI vectorizer config for '{}': baseUrl configured = {}, model configured = {}, api key configured = {}", collectionName,
-                            StringUtils.hasText(weaviateApiBaseUrl), StringUtils.hasText(weaviateApiEmbeddingModel), StringUtils.hasText(weaviateApiKey));
+                    log.info("Configured collection '{}' with text2vec-openai: baseUrl='{}', model='{}', apiKey configured={}", collectionName, weaviateApiBaseUrl,
+                            weaviateApiEmbeddingModel, StringUtils.hasText(weaviateApiKey));
                 }
                 else if (VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue().equals(vectorizerModule)) {
-                    log.debug("Configuring collection '{}' with '{}' vectorizer", collectionName, VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue());
+                    log.info("Configured collection '{}' with text2vec-transformers vectorizer", collectionName);
                     collection.vectorConfig(VectorConfig.text2vecTransformers());
                 }
                 else if (VectorConfig.Kind.NONE.jsonValue().equals(vectorizerModule)) {
-                    log.debug("Configuring collection '{}' with self-provided vectors", collectionName);
+                    log.info("Configured collection '{}' with self-provided vectors (no automatic embeddings)", collectionName);
                     collection.vectorConfig(VectorConfig.selfProvided());
                 }
                 else {
