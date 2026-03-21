@@ -20,6 +20,7 @@ set -e
 #   --ui                Open Playwright UI mode
 #   --video             Enable video recording (off by default to save CPU)
 #   --coverage          Enable coverage collection (off by default, requires extra memory)
+#   --debug             Show server and client output inline (normally only in log files)
 #   --help              Show this help message
 # =============================================================================
 
@@ -35,6 +36,7 @@ STOP=false
 SKIP_SERVER=false
 SKIP_CLIENT=false
 SKIP_DB=false
+DEBUG=false
 TEST_FILTER=""
 PLAYWRIGHT_EXTRA_ARGS=()
 export PLAYWRIGHT_VIDEO_MODE="${PLAYWRIGHT_VIDEO_MODE:-off}"
@@ -50,6 +52,7 @@ while [[ $# -gt 0 ]]; do
         --ui) PLAYWRIGHT_EXTRA_ARGS+=("--ui"); shift ;;
         --video) unset PLAYWRIGHT_VIDEO_MODE; shift ;;
         --coverage) unset PLAYWRIGHT_COVERAGE; export NODE_OPTIONS="${NODE_OPTIONS:+$NODE_OPTIONS }--max-old-space-size=8192"; shift ;;
+        --debug) DEBUG=true; shift ;;
         --filter)
             if [[ -z "$2" || "${2:0:1}" == "-" ]]; then
                 echo -e "${RED}ERROR: --filter requires a non-empty pattern argument${NC}"
@@ -60,7 +63,7 @@ while [[ $# -gt 0 ]]; do
             TEST_FILTER="$2"
             shift 2
             ;;
-        --help) head -20 "$0" | tail -16; exit 0 ;;
+        --help) head -25 "$0" | tail -21; exit 0 ;;
         *) echo -e "${RED}Unknown option: $1${NC}"; exit 1 ;;
     esac
 done
@@ -77,6 +80,33 @@ kill_tree() {
         kill_tree "$child"
     done
     kill "$pid" 2>/dev/null || true
+}
+
+check_port_available() {
+    local port=$1
+    local service_name=$2
+    local listeners
+
+    listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+    if [ -n "$listeners" ]; then
+        echo -e "${YELLOW}Port ${port} (${service_name}) is in use — killing existing process...${NC}"
+        # Extract PIDs from lsof output (skip header line) and kill them
+        local pids
+        pids=$(echo "$listeners" | awk 'NR>1 {print $2}' | sort -u)
+        for pid in $pids; do
+            echo "  Killing PID $pid..."
+            kill_tree "$pid"
+        done
+        sleep 2
+        # Verify port is now free
+        listeners=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null || true)
+        if [ -n "$listeners" ]; then
+            echo -e "${RED}ERROR: Port ${port} is still in use after killing processes. Cannot start ${service_name}.${NC}"
+            echo "$listeners"
+            exit 1
+        fi
+        echo -e "${GREEN}Port ${port} is now free.${NC}"
+    fi
 }
 
 # =============================================================================
@@ -196,6 +226,9 @@ if [ "$SKIP_SERVER" = false ]; then
         fi
     fi
 
+    check_port_available 8080 "Artemis server"
+    check_port_available 7921 "local VC SSH server"
+
     # Server environment variables
     export SPRING_PROFILES_ACTIVE="artemis,scheduling,localvc,localci,buildagent,core,dev"
     export SPRING_DATASOURCE_URL="jdbc:postgresql://localhost:5432/Artemis?sslmode=disable"
@@ -240,7 +273,11 @@ if [ "$SKIP_SERVER" = false ]; then
     fi
 
     # Start server in background
-    ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
+    if [ "$DEBUG" = true ]; then
+        ./gradlew bootRun -x webapp > >(tee "$LOCAL_DIR/server.log") 2>&1 &
+    else
+        ./gradlew bootRun -x webapp > "$LOCAL_DIR/server.log" 2>&1 &
+    fi
     SERVER_PID=$!
     echo "$SERVER_PID" > "$LOCAL_DIR/server.pid"
     echo "Server starting (PID $SERVER_PID), log: $LOCAL_DIR/server.log"
@@ -267,7 +304,13 @@ if [ "$SKIP_CLIENT" = false ]; then
         fi
     fi
 
-    npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    check_port_available 9000 "Angular client"
+
+    if [ "$DEBUG" = true ]; then
+        npm start > >(tee "$LOCAL_DIR/client.log") 2>&1 &
+    else
+        npm start > "$LOCAL_DIR/client.log" 2>&1 &
+    fi
     CLIENT_PID=$!
     echo "$CLIENT_PID" > "$LOCAL_DIR/client.pid"
     echo "Client starting (PID $CLIENT_PID), log: $LOCAL_DIR/client.log"
@@ -572,6 +615,8 @@ else
     echo "  Time: ${TEST_MINS}m ${TEST_SECS}s"
 fi
 
+echo ""
+echo -e "${BLUE}Logs:${NC} $LOCAL_DIR/ (server.log, client.log, cpu-usage.csv)"
 echo ""
 echo -e "${BLUE}Services are still running. Quick re-run:${NC}"
 echo "  ./run-e2e-tests-local-fast.sh --skip-server --skip-client --skip-db [--filter \"Test\"]"

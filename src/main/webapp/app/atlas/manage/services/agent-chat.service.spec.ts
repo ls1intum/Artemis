@@ -94,7 +94,7 @@ describe('AgentChatService', () => {
             const req = httpMock.expectOne(expectedUrl);
             req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });
 
-            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             expect(result.message).toBe(fallbackMessage);
         });
 
@@ -119,7 +119,7 @@ describe('AgentChatService', () => {
             // Verify catchError worked - no error thrown, fallback response returned
             expect(errorOccurred).toBeFalsy();
             expect(result.message).toBe(fallbackMessage);
-            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+            expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
         });
 
         describe('sendMessage - timeout handling', () => {
@@ -152,7 +152,7 @@ describe('AgentChatService', () => {
                 // Assert - timeout should trigger catchError which returns fallback response
                 expect(result).toBeDefined();
                 expect(result.competenciesModified).toBeFalsy();
-                expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(translateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
         });
 
@@ -215,7 +215,7 @@ describe('AgentChatService', () => {
                 expect(result).toBeDefined();
                 expect(result.message).toBe('Translated error message');
                 expect(result.competenciesModified).toBeFalsy();
-                expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
 
             it('should include timestamp in error response', () => {
@@ -339,7 +339,7 @@ describe('AgentChatService', () => {
                 req.error(new ProgressEvent('Error'));
 
                 expect(mockTranslateService.instant).toHaveBeenCalledOnce();
-                expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error');
+                expect(mockTranslateService.instant).toHaveBeenCalledWith('artemisApp.agent.chat.error.general');
             });
 
             it('should use translated message in error response', () => {

@@ -202,6 +202,10 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
+        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
+        // the (already bulk-deleted) feedbacks during merge, which would fail due to
+        // null indices in the @OrderColumn list.
+        result.setFeedbacks(List.of());
         resultRepository.delete(result);
     }
 
@@ -222,6 +226,8 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
+        longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
+        feedbackRepository.deleteByResult_Id(resultId);
     }
 
     /**
