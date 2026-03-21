@@ -301,14 +301,6 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Run the verification prompt to filter false positives.
-     *
-     * @param input          prompt variables (rendered_context, detected_issues_json)
-     * @param parentObs      parent observation for tracing
-     * @param usageCollector list to collect LLM request data
-     * @return filtered list of issues
-     */
-    /**
      * Run the verification prompt to filter false positives, deduplicate overlapping issues from the two checkers,
      * and improve surviving issues (line numbers, descriptions, category corrections).
      * <p>
