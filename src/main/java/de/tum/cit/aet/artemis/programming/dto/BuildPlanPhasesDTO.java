@@ -50,11 +50,11 @@ public record BuildPlanPhasesDTO(List<@Valid BuildPhaseDTO> phases, String docke
         return "cd \"" + workdir + "\"\n" + script;
     }
 
-    public static BuildPlanPhasesDTO deserialize(String json) throws JsonProcessingException {
-        return mapper.readValue(json, BuildPlanPhasesDTO.class);
+    public static BuildPlanPhasesDTO fromBuildPlanConfiguration(String buildPlanConfiguration) throws JsonProcessingException {
+        return mapper.readValue(buildPlanConfiguration, BuildPlanPhasesDTO.class);
     }
 
-    public String serialize() throws JsonProcessingException {
+    public String toBuildPlanConfiguration() throws JsonProcessingException {
         return mapper.writeValueAsString(this);
     }
 }

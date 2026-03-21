@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -255,20 +256,20 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
      *
      * @return the {@link BuildPlanPhasesDTO} object, or null if the configuration is null, empty, or in Windfile format
      */
-    public BuildPlanPhasesDTO getBuildPlanPhases() {
+    public Optional<BuildPlanPhasesDTO> getBuildPlanPhases() {
         if (buildPlanConfiguration == null) {
-            return null;
+            return Optional.empty();
         }
         try {
-            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.deserialize(buildPlanConfiguration);
+            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
             if (phases.phases() != null) {
-                return phases;
+                return Optional.of(phases);
             }
         }
         catch (JsonProcessingException e) {
-            // Not in phases format — fall through to windfile path
+            // Not in phases format
         }
-        return null;
+        return Optional.empty();
     }
 
     public void filterSensitiveInformation() {

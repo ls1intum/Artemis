@@ -39,13 +39,20 @@ public class BuildPhaseEvaluationService {
      * instructors receive full feedback regardless of the exercise due date.
      * <p>
      *
-     * @param phases        the build plan phases configuration
+     * @param phasesDTO     the build plan phases configuration
      * @param participation the participation for which the build is being triggered
      * @return the evaluated build plan with active phases and result paths
      */
-    public List<BuildPhaseDTO> evaluate(BuildPlanPhasesDTO phases, ProgrammingExerciseParticipation participation) {
-        final boolean allPhasesActive = isInstructorParticipation(participation) || exerciseDateService.isAfterDueDate(participation);
-        return phases.phases() != null ? phases.phases().stream().filter(phase -> isPhaseActive(phase, allPhasesActive)).toList() : List.of();
+    public List<BuildPhaseDTO> determineActiveBuildPhases(BuildPlanPhasesDTO phasesDTO, ProgrammingExerciseParticipation participation) {
+        if (phasesDTO == null || phasesDTO.phases() == null)
+            return List.of();
+        final List<BuildPhaseDTO> phases = phasesDTO.phases();
+
+        if (isInstructorParticipation(participation))
+            return phases;
+
+        final boolean isAfterDueDate = exerciseDateService.isAfterDueDate(participation);
+        return phases.stream().filter(phase -> isPhaseActive(phase, isAfterDueDate)).toList();
     }
 
     public static Set<String> gatherResultPaths(List<BuildPhaseDTO> activePhases) {
@@ -59,10 +66,10 @@ public class BuildPhaseEvaluationService {
         return participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation;
     }
 
-    private boolean isPhaseActive(BuildPhaseDTO phase, boolean allPhasesActive) {
+    private boolean isPhaseActive(BuildPhaseDTO phase, boolean isAfterDueDate) {
         return switch (phase.condition()) {
             case ALWAYS -> true;
-            case AFTER_DUE_DATE -> allPhasesActive;
+            case AFTER_DUE_DATE -> isAfterDueDate;
         };
     }
 }

@@ -479,7 +479,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                     new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
-            buildConfig.setBuildPlanConfiguration(phases.serialize());
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
@@ -504,7 +504,7 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
             ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
             BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
                     new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
-            buildConfig.setBuildPlanConfiguration(phases.serialize());
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
             programmingExerciseBuildConfigRepository.save(buildConfig);
 
             ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);

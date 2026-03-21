@@ -41,7 +41,46 @@ public class LocalCIBuildConfigurationService {
      * @return the build script
      */
     public String createBuildScript(ProgrammingExercise programmingExercise) {
-        return createBuildScript(programmingExercise, null);
+
+        StringBuilder buildScriptBuilder = new StringBuilder();
+        buildScriptBuilder.append("#!/bin/bash\n");
+        buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
+
+        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+        String customScript = buildConfig.getBuildScript();
+        // Todo: get default script if custom script is null before trying to get actions from windfile
+        if (customScript != null) {
+            buildScriptBuilder.append(customScript);
+        }
+        else {
+            List<ScriptAction> actions;
+
+            Windfile windfile = buildConfig.getWindfile();
+
+            if (windfile == null) {
+                windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
+            }
+            if (windfile != null) {
+                actions = windfile.scriptActions();
+            }
+            else {
+                throw new LocalCIException("No windfile found for programming exercise " + programmingExercise.getId());
+            }
+
+            actions.forEach(action -> {
+                String workdir = action.workdir();
+                if (workdir != null) {
+                    buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
+                }
+                buildScriptBuilder.append(action.script()).append("\n");
+                if (workdir != null) {
+                    buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
+                }
+            });
+
+        }
+        return buildScriptProviderService.replacePlaceholders(buildScriptBuilder.toString(), programmingExercise.getBuildConfig().getAssignmentCheckoutPath(),
+                programmingExercise.getBuildConfig().getSolutionCheckoutPath(), programmingExercise.getBuildConfig().getTestCheckoutPath());
     }
 
     /**
@@ -54,57 +93,12 @@ public class LocalCIBuildConfigurationService {
      * <li>Else: use windfile actions (custom or default template)</li>
      * </ol>
      *
-     * @param programmingExercise the programming exercise for which the build script should be created
-     * @param activePhases        the pre-evaluated active build phases, or null to fall back to existing paths
+     * @param buildConfig  the programming exercise build config for which the build script should be created
+     * @param activePhases the pre-evaluated active build phases, or null to fall back to existing paths
      * @return the build script
      */
-    public String createBuildScript(ProgrammingExercise programmingExercise, List<BuildPhaseDTO> activePhases) {
-        ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
-
-        String buildScript;
-        if (activePhases != null) {
-            buildScript = computeAeolusStyleScript(activePhases);
-        }
-        else {
-            StringBuilder buildScriptBuilder = new StringBuilder();
-            // else keep the other logic the same for now
-            buildScriptBuilder.append("#!/bin/bash\n");
-            buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
-
-            String customScript = buildConfig.getBuildScript();
-            // Todo: get default script if custom script is null before trying to get actions from windfile
-            if (customScript != null) {
-                buildScriptBuilder.append(customScript);
-            }
-            else {
-                List<ScriptAction> actions;
-
-                Windfile windfile = buildConfig.getWindfile();
-
-                if (windfile == null) {
-                    windfile = aeolusTemplateService.getDefaultWindfileFor(programmingExercise);
-                }
-                if (windfile != null) {
-                    actions = windfile.scriptActions();
-                }
-                else {
-                    throw new LocalCIException("No windfile found for programming exercise " + programmingExercise.getId());
-                }
-
-                actions.forEach(action -> {
-                    String workdir = action.workdir();
-                    if (workdir != null) {
-                        buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir/").append(workdir).append("\n");
-                    }
-                    buildScriptBuilder.append(action.script()).append("\n");
-                    if (workdir != null) {
-                        buildScriptBuilder.append("cd ").append(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY).append("/testing-dir\n");
-                    }
-                });
-            }
-            buildScript = buildScriptBuilder.toString();
-        }
-
+    public String createBuildScriptFromActivePhases(ProgrammingExerciseBuildConfig buildConfig, List<BuildPhaseDTO> activePhases) {
+        String buildScript = computeAeolusStyleScript(activePhases);
         return buildScriptProviderService.replacePlaceholders(buildScript, buildConfig.getAssignmentCheckoutPath(), buildConfig.getSolutionCheckoutPath(),
                 buildConfig.getTestCheckoutPath());
     }
@@ -132,11 +126,12 @@ public class LocalCIBuildConfigurationService {
             appendPhaseFunction(scriptBuilder, phase);
         }
 
-        if (!forceRunPhases.isEmpty()) {
+        final boolean hasRunAlwaysPhases = !forceRunPhases.isEmpty();
+        if (hasRunAlwaysPhases) {
             appendForceRunPostPhase(scriptBuilder, forceRunPhases);
         }
 
-        appendMainFunction(scriptBuilder, nonForceRunPhases, !forceRunPhases.isEmpty());
+        appendMainFunction(scriptBuilder, nonForceRunPhases, hasRunAlwaysPhases);
 
         scriptBuilder.append("main \"${@}\"\n");
         return scriptBuilder.toString();
@@ -168,14 +163,14 @@ public class LocalCIBuildConfigurationService {
         scriptBuilder.append("}\n\n");
     }
 
-    private static void appendMainFunction(StringBuilder scriptBuilder, List<BuildPhaseDTO> nonForceRunPhase, boolean hasRunAlwaysActions) {
+    private static void appendMainFunction(StringBuilder scriptBuilder, List<BuildPhaseDTO> nonForceRunPhase, boolean hasRunAlwaysPhases) {
         scriptBuilder.append("main () {\n");
         scriptBuilder.append("  if [[ \"${1}\" == \"aeolus_sourcing\" ]]; then\n");
         scriptBuilder.append("    return 0 # just source to use the methods in the subshell, no execution\n");
         scriptBuilder.append("  fi\n");
         scriptBuilder.append("  local _script_name\n");
         scriptBuilder.append("  _script_name=${BASH_SOURCE[0]:-$0}\n");
-        if (hasRunAlwaysActions) {
+        if (hasRunAlwaysPhases) {
             scriptBuilder.append("  trap final_aeolus_post_action EXIT\n\n");
         }
 

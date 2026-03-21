@@ -284,13 +284,17 @@ public class ProgrammingExerciseValidationService {
      * @param programmingExercise the programming exercise to validate
      */
     public void validateBuildPhaseNames(ProgrammingExercise programmingExercise) {
-        BuildPlanPhasesDTO buildPlanPhases = programmingExercise.getBuildConfig().getBuildPlanPhases();
-        if (buildPlanPhases == null || buildPlanPhases.phases() == null) {
+        Optional<BuildPlanPhasesDTO> buildPlanPhasesOptional = programmingExercise.getBuildConfig().getBuildPlanPhases();
+        if (buildPlanPhasesOptional.isEmpty()) {
             return;
+        }
+        BuildPlanPhasesDTO buildPlanPhases = buildPlanPhasesOptional.orElseThrow();
+        if (buildPlanPhases.phases() == null || buildPlanPhases.phases().isEmpty()) {
+            throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPases");
         }
 
         Set<String> normalizedNames = new HashSet<>();
-        for (var phase : buildPlanPhases.phases()) {
+        for (BuildPhaseDTO phase : buildPlanPhasesOptional.orElseThrow().phases()) {
             if (phase == null || phase.name() == null || !BuildPhaseDTO.BUILD_PHASE_NAME_PATTERN.matcher(phase.name()).matches()) {
                 throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
             }

@@ -119,7 +119,7 @@ public class ProgrammingExerciseBuildPlanService {
 
         if (windfile != null) {
             BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromWindfile(windfile);
-            buildConfig.setBuildPlanConfiguration(phases.serialize());
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
             programmingExerciseBuildConfigRepository.saveAndFlush(buildConfig);
         }
         else {

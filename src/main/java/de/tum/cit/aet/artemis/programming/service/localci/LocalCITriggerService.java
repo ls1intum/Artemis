@@ -334,10 +334,10 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         DockerRunConfig dockerRunConfig = programmingExerciseBuildConfigService.getDockerRunConfig(buildConfig);
 
         // Try the new build phases format first
-        BuildPlanPhasesDTO buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
-        if (buildPlanPhasesDTO != null) {
-            return getBuildConfigFromPhases(buildPlanPhasesDTO, participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash, testCommitHash, branch,
-                    programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
+        Optional<BuildPlanPhasesDTO> buildPlanPhasesDTO = buildConfig.getBuildPlanPhases();
+        if (buildPlanPhasesDTO.isPresent()) {
+            return getBuildConfigFromPhases(buildPlanPhasesDTO.orElseThrow(), participation, programmingExercise, buildConfig, commitHashToBuild, assignmentCommitHash,
+                    testCommitHash, branch, programmingLanguage, projectType, staticCodeAnalysisEnabled, sequentialTestRunsEnabled, dockerRunConfig);
         }
 
         // Fall back to existing windfile path
@@ -355,7 +355,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
             ProgrammingLanguage programmingLanguage, ProjectType projectType, boolean staticCodeAnalysisEnabled, boolean sequentialTestRunsEnabled,
             DockerRunConfig dockerRunConfig) {
 
-        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.evaluate(buildPlanPhasesDTO, participation);
+        final List<BuildPhaseDTO> activePhases = buildPhaseEvaluationService.determineActiveBuildPhases(buildPlanPhasesDTO, participation);
 
         // Docker image: use the one stored in BuildPlanPhases, or fall back to language default
         String dockerImage = buildPlanPhasesDTO.dockerImage();
@@ -368,7 +368,7 @@ public class LocalCITriggerService implements ContinuousIntegrationTriggerServic
         resultPaths = buildScriptProviderService.replaceResultPathsPlaceholders(resultPaths, buildConfig);
 
         programmingExercise.setBuildConfig(buildConfig);
-        String buildScript = localCIBuildConfigurationService.createBuildScript(programmingExercise, activePhases);
+        String buildScript = localCIBuildConfigurationService.createBuildScriptFromActivePhases(programmingExercise.getBuildConfig(), activePhases);
 
         return new BuildConfig(buildScript, dockerImage, commitHashToBuild, assignmentCommitHash, testCommitHash, branch, programmingLanguage, projectType,
                 staticCodeAnalysisEnabled, sequentialTestRunsEnabled, resultPaths, buildConfig.getTimeoutSeconds(), buildConfig.getAssignmentCheckoutPath(),
