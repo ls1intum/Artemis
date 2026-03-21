@@ -2,7 +2,7 @@
 <!-- main chat section -->
 <div class="chat-layout">
     @if (isChatHistoryAvailable()) {
-        <div class="chat-history" [ngClass]="{ 'chat-history-open': isChatHistoryOpen() }">
+        <div class="chat-history" [class.chat-history-open]="isChatHistoryOpen()">
             @if (!isChatHistoryOpen()) {
                 <div class="chat-history-collapsed">
                     <div

@@ -59,7 +59,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { NgClass, formatDate } from '@angular/common';
+import { formatDate } from '@angular/common';
 import { MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -106,7 +106,6 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         AsPipe,
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
-        NgClass,
         SearchFilterComponent,
         IrisCitationTextComponent,
         IrisChatMemoriesIndicatorComponent,
@@ -207,14 +206,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             return sessions;
         }
         return sessions.filter((session) => (session.title ?? '').toLowerCase().includes(search));
-    });
-    readonly newChatSessions = computed(() => {
-        const sessions = this.filteredSessions().filter((session) => this.isNewChatSession(session));
-        if (sessions.length === 0) {
-            return [];
-        }
-        const newestNewChat = sessions.reduce((latest, current) => (new Date(current.creationDate).getTime() > new Date(latest.creationDate).getTime() ? current : latest));
-        return [newestNewChat];
     });
     readonly filteredNonNewSessions = computed(() => this.filteredSessions().filter((session) => !this.isNewChatSession(session)));
     readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0, false, this.dayTick()));
