@@ -917,6 +917,7 @@ public class ExerciseService {
         }
         else {
             final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
+            Course course = entity.getCourseViaExerciseGroupOrCourseMember();
 
             Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
 
@@ -931,6 +932,9 @@ public class ExerciseService {
                 }
                 else {
                     var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    if (!competency.getCourse().getId().equals(course.getId())) {
+                        throw new EntityNotFoundException("CourseCompetency", competencyId);
+                    }
                     var newLink = new CompetencyExerciseLink(competency, entity, weight);
                     updatedLinks.add(newLink);
                 }
