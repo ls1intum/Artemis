@@ -1307,9 +1307,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizExercise.validateGeneralSettings();
         handleDndQuizFileCreation(quizExercise, files);
 
-        // Clear competency links before the first save to avoid transient entity issues
+        // Replace competency links with a mutable empty set before the first save to avoid transient entity issues
         // (links reference detached competencies that are not managed by Hibernate)
-        quizExercise.getCompetencyLinks().clear();
+        quizExercise.setCompetencyLinks(new HashSet<>());
 
         // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
         QuizExercise savedExercise = save(quizExercise);
