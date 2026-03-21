@@ -595,7 +595,8 @@ def getMajorVersion = { String version ->
 }
 
 tasks.named("dependencyUpdates").configure {
-    def skipMajor = System.getProperty("skipMajorUpdates") != null
+    def rawSkipMajor = System.getProperty("skipMajorUpdates")
+    def skipMajor = rawSkipMajor != null && (rawSkipMajor.isBlank() || rawSkipMajor.toBoolean())
     rejectVersionIf {
         isNonStable(it.candidate.version) || (skipMajor && getMajorVersion(it.candidate.version) != getMajorVersion(it.currentVersion))
     }
