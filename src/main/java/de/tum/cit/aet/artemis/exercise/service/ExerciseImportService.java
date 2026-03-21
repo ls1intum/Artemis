@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,10 +68,12 @@ public abstract class ExerciseImportService {
         newExercise.setGradingInstructions(importedExercise.getGradingInstructions());
         newExercise.setGradingCriteria(importedExercise.copyGradingCriteria(gradingInstructionCopyTracker));
         // Copy competency links as NEW unmanaged objects (not sharing managed entities from the template)
+        // Must check initialization first: the source exercise may be detached (OSIV is disabled) with an uninitialized lazy proxy
         Set<CompetencyExerciseLink> copiedLinks = new HashSet<>();
-        for (CompetencyExerciseLink link : importedExercise.getCompetencyLinks()) {
-            // Create a new link with just the competency reference and weight (exercise will be set later)
-            copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
+        if (Hibernate.isInitialized(importedExercise.getCompetencyLinks())) {
+            for (CompetencyExerciseLink link : importedExercise.getCompetencyLinks()) {
+                copiedLinks.add(new CompetencyExerciseLink(link.getCompetency(), newExercise, link.getWeight()));
+            }
         }
         newExercise.setCompetencyLinks(copiedLinks);
 
