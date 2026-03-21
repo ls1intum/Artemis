@@ -256,6 +256,107 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
                 accessLog.getAuthenticationMechanism()));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testVcsAccessLog_userVcsToken_logsCorrectMechanism() {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+
+        // Set user VCS token with valid expiry
+        String token = "vcpat-valid-token-for-log-test-exactly50characters";
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
+
+        // Clear any existing logs
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // Fetch using the user VCS token
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Wait for the access log to be saved
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            return logs.stream().anyMatch(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
+        });
+
+        var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        var tokenAuthLogs = logs.stream().filter(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).toList();
+        assertThat(tokenAuthLogs).hasSize(1);
+        var logEntry = tokenAuthLogs.getFirst();
+        assertThat(logEntry.getUser().getLogin()).isEqualTo(student1Login);
+        assertThat(logEntry.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testVcsAccessLog_multipleFetches_logsEachOperation() {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Clear any existing logs
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // First fetch
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Second fetch
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Wait for access logs to be saved
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            return logs.size() >= 2;
+        });
+
+        var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        assertThat(logs).hasSizeGreaterThanOrEqualTo(2);
+
+        // Both fetches should have correct user and password-based auth
+        logs.forEach(accessLog -> {
+            assertThat(accessLog.getUser().getLogin()).isEqualTo(student1Login);
+            assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
+            assertThat(accessLog.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testVcsAccessLog_fetchAndPush_logsCorrectData() {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Clear any existing logs
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // Fetch the repository
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push to the repository
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Wait for access logs to be saved
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            return logs.size() >= 2;
+        });
+
+        var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        assertThat(logs).hasSizeGreaterThanOrEqualTo(2);
+
+        // Verify all logs have correct user and authentication mechanism
+        for (var accessLog : logs) {
+            assertThat(accessLog.getUser().getLogin()).isEqualTo(student1Login);
+            assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
+        }
+
+        // Verify we have both read (PULL/CLONE) and write (PUSH) operations logged
+        var readLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PULL || log.getRepositoryActionType() == RepositoryActionType.CLONE)
+                .toList();
+        assertThat(readLogs).as("Fetch should be logged as read operation").isNotEmpty();
+        var pushLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PUSH).toList();
+        assertThat(pushLogs).as("Push should be logged").isNotEmpty();
+    }
+
     @Disabled("Submission policy test requires build results to be processed for submission counting")
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")

@@ -34,10 +34,10 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyLectureUnitLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.service.competency.CompetencyWithTailRelation;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.ApiProfileNotPresentException;
 import de.tum.cit.aet.artemis.core.exception.NoUniqueQueryException;
@@ -145,9 +145,9 @@ public class LearningObjectImportService {
      * @param courseToImportInto       The course to import the learning objects into.
      * @param importOptions            The import options.
      */
-    public void importRelatedLearningObjects(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
+    public void importRelatedLearningObjects(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelation> idToImportedCompetency,
             Course courseToImportInto, CompetencyImportOptionsDTO importOptions) {
-        Set<CourseCompetency> importedCourseCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelationDTO::competency).collect(Collectors.toSet());
+        Set<CourseCompetency> importedCourseCompetencies = idToImportedCompetency.values().stream().map(CompetencyWithTailRelation::competency).collect(Collectors.toSet());
 
         Set<Exercise> importedExercises = new HashSet<>();
         if (importOptions.importExercises()) {
@@ -170,7 +170,7 @@ public class LearningObjectImportService {
         api.saveAll(importedLectures);
     }
 
-    private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
+    private void importOrLoadExercises(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelation> idToImportedCompetency,
             Course courseToImportInto, Set<Exercise> importedExercises) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             sourceCourseCompetency.getExerciseLinks().forEach(sourceExerciseLink -> {
@@ -310,7 +310,7 @@ public class LearningObjectImportService {
      * @param titleToImportedLectures  A map from the source lecture titles to the imported lectures
      * @param importedLectureUnits     The set of imported lecture units
      */
-    private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency,
+    private void importOrLoadLectureUnits(Collection<? extends CourseCompetency> sourceCourseCompetencies, Map<Long, CompetencyWithTailRelation> idToImportedCompetency,
             Course courseToImportInto, Map<String, Lecture> titleToImportedLectures, Set<LectureUnit> importedLectureUnits) {
         for (CourseCompetency sourceCourseCompetency : sourceCourseCompetencies) {
             for (CompetencyLectureUnitLink sourceLectureUnitLink : sourceCourseCompetency.getLectureUnitLinks()) {
@@ -327,7 +327,7 @@ public class LearningObjectImportService {
     }
 
     private void importOrLoadLectureUnit(CompetencyLectureUnitLink sourceLectureUnitLink, CourseCompetency sourceCourseCompetency,
-            Map<Long, CompetencyWithTailRelationDTO> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
+            Map<Long, CompetencyWithTailRelation> idToImportedCompetency, Course courseToImportInto, Map<String, Lecture> titleToImportedLectures,
             Set<LectureUnit> importedLectureUnits) throws NoUniqueQueryException {
         if (lectureUnitApi.isEmpty() || lectureUnitRepositoryApi.isEmpty()) {
             return;

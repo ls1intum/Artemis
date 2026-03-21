@@ -29,10 +29,8 @@ services:
           chmod +x ./run-tests.sh &&
           npm ci &&
           npm run playwright:setup &&
-                npm run playwright:test:filtered &&
-                    if [ -f ./test-reports/results-parallel.xml ] || [ -f ./test-reports/results-sequential.xml ]; then
-                            rm -f ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml
-                    fi
+          rm -f ./test-reports/results.xml ./test-reports/results-*.xml &&
+          npm run playwright:test:filtered
           '
         volumes:
             - ..:/app/artemis
