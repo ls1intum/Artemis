@@ -97,6 +97,7 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
     informationBoxData: InformationBox[] = [];
 
     readonly targetUnitId = signal<number | undefined>(undefined);
+    readonly targetVideoTimestamp = signal<number | undefined>(undefined);
     readonly targetPdfPage = signal<number | undefined>(undefined);
 
     ngOnInit(): void {
@@ -121,10 +122,23 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         this.activatedRoute.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const unitId = Number(params['unit']);
-            this.targetUnitId.set(Number.isInteger(unitId) && unitId > 0 ? unitId : undefined);
+            if (Number.isInteger(unitId) && unitId > 0) {
+                this.targetUnitId.set(unitId);
 
-            const pageNum = Number(params['page']);
-            this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
+                const timestamp = Number(params['timestamp']);
+                this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
+
+                const pageNum = Number(params['page']);
+                this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
+            } else {
+                this.targetUnitId.set(undefined);
+                this.targetVideoTimestamp.set(undefined);
+                this.targetPdfPage.set(undefined);
+            }
+
+            if (this.lectureUnits.length > 0) {
+                this.ensureValidDeepLinkTargets();
+            }
         });
     }
 
@@ -222,9 +236,30 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             return;
         }
 
-        const hasUnit = this.lectureUnits.some((unit) => unit.id === targetUnitId);
-        if (!hasUnit) {
+        const targetUnit = this.lectureUnits.find((unit) => unit.id === targetUnitId);
+        if (!targetUnit) {
+            // Unit doesn't exist - clear all targets
             this.targetUnitId.set(undefined);
+            this.targetVideoTimestamp.set(undefined);
+            this.targetPdfPage.set(undefined);
+            return;
+        }
+
+        // Validate type-specific targets
+        if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
+            const attachmentUnit = targetUnit as AttachmentVideoUnit;
+            const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
+
+            if (isPdf) {
+                // PDF unit - clear video timestamp
+                this.targetVideoTimestamp.set(undefined);
+            } else {
+                // Video unit - clear PDF page
+                this.targetPdfPage.set(undefined);
+            }
+        } else {
+            // Not an ATTACHMENT_VIDEO unit - clear both
+            this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);
         }
     }

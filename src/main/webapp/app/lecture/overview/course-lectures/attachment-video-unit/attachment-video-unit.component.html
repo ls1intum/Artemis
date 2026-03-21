@@ -54,7 +54,7 @@
                 </div>
             </div>
         } @else if (playlistUrl() && hasTranscript()) {
-            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" />
+            <jhi-video-player [videoUrl]="playlistUrl()!" [transcriptSegments]="transcriptSegments()" [initialTimestamp]="targetTimestamp()" />
         } @else {
             <div class="video-player-container">
                 <div class="ratio ratio-16x9">

@@ -53,7 +53,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
     private readonly httpClient = inject(HttpClient);
 
-    targetPdfPage = input<number | undefined>(undefined);
+    targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
+    targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
