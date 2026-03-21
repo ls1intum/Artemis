@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { GlobalSearchNavigationViewComponent, NAV_ACTION_COUNT } from './global-search-navigation-view.component';
+import { GlobalSearchNavigationViewComponent } from './global-search-navigation-view.component';
 import { GlobalSearchActionItemComponent } from 'app/core/navbar/global-search/components/action-item/global-search-action-item.component';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
@@ -46,14 +46,14 @@ describe('GlobalSearchNavigationViewComponent', () => {
         });
 
         describe('itemCount', () => {
-            it('should equal NAV_ACTION_COUNT (1) with no nav results', () => {
-                expect(component.itemCount()).toBe(NAV_ACTION_COUNT);
-                expect(component.itemCount()).toBe(1);
+            it('should equal action button count plus searchable entities when not searching', () => {
+                // actionButtonCount = 2 (iris + lecture both visible), searchableEntities.length = 7
+                expect(component.itemCount()).toBe(9);
             });
         });
 
         describe('Keyboard navigation', () => {
-            it('should emit SearchView.Lecture when Enter is pressed at index 0', () => {
+            it('should emit SearchView.Iris when Enter is pressed at index 0', () => {
                 const spy = vi.fn();
                 component.viewSelected.subscribe(spy);
 
@@ -63,7 +63,7 @@ describe('GlobalSearchNavigationViewComponent', () => {
                 const event = new KeyboardEvent('keydown', { key: 'Enter' });
                 component.handleKeydown(event);
 
-                expect(spy).toHaveBeenCalledWith(SearchView.Lecture);
+                expect(spy).toHaveBeenCalledWith(SearchView.Iris);
             });
 
             it('should call preventDefault when Enter is pressed at index 0', () => {
@@ -105,15 +105,6 @@ describe('GlobalSearchNavigationViewComponent', () => {
             });
         });
 
-        describe('resultSelectedIndex', () => {
-            it('should subtract NAV_ACTION_COUNT from selectedIndex', () => {
-                fixture.componentRef.setInput('selectedIndex', 3);
-                fixture.detectChanges();
-
-                expect((component as any).resultSelectedIndex()).toBe(3 - NAV_ACTION_COUNT);
-            });
-        });
-
         describe('template', () => {
             it('should render the lecture content action button', () => {
                 const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
@@ -132,8 +123,9 @@ describe('GlobalSearchNavigationViewComponent', () => {
             expect(component).toBeTruthy();
         });
 
-        it('itemCount should be 0 with no nav results', () => {
-            expect(component.itemCount()).toBe(0);
+        it('itemCount should equal searchableEntities count when iris is disabled', () => {
+            // actionButtonCount = 0 (iris disabled), searchableEntities.length = 7
+            expect(component.itemCount()).toBe(7);
         });
 
         it('should not emit when Enter is pressed at index 0', () => {
@@ -152,16 +144,6 @@ describe('GlobalSearchNavigationViewComponent', () => {
         it('should not render the lecture content action button', () => {
             const button = fixture.nativeElement.querySelector('jhi-global-search-action-item');
             expect(button).toBeNull();
-        });
-
-        describe('resultSelectedIndex', () => {
-            it('should return selectedIndex unchanged when iris is disabled', () => {
-                fixture.componentRef.setInput('selectedIndex', 3);
-                fixture.detectChanges();
-
-                // When iris is disabled the offset is 0, so resultSelectedIndex = selectedIndex
-                expect((component as any).resultSelectedIndex()).toBe(3);
-            });
         });
     });
 });
