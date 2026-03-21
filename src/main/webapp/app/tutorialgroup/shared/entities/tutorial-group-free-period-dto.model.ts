@@ -13,7 +13,7 @@ export interface TutorialGroupFreePeriodDTO {
     start: string;
     end: string;
     reason?: string;
-    tutorialGroupConfigurationId: number;
+    tutorialGroupConfigurationId?: number;
 }
 
 /**
@@ -47,7 +47,7 @@ export const entityToTutorialGroupFreePeriodDTO = (entity?: TutorialGroupFreePer
         start: convertDateFromClient(entity.start)!,
         end: convertDateFromClient(entity.end)!,
         reason: entity.reason,
-        tutorialGroupConfigurationId: entity.tutorialGroupConfiguration!.id!,
+        tutorialGroupConfigurationId: entity.tutorialGroupConfiguration?.id,
     };
 };
 

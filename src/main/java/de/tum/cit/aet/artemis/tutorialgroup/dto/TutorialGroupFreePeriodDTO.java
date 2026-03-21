@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
  * @param tutorialGroupConfigurationId the ID of the associated tutorial group configuration
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record TutorialGroupFreePeriodDTO(Long id, @NotNull LocalDateTime start, @NotNull LocalDateTime end, String reason, @NotNull Long tutorialGroupConfigurationId) {
+public record TutorialGroupFreePeriodDTO(Long id, @NotNull LocalDateTime start, @NotNull LocalDateTime end, String reason, Long tutorialGroupConfigurationId) {
 
     /**
      * Creates a DTO from the given {@link TutorialGroupFreePeriod} entity.
@@ -46,9 +46,11 @@ public record TutorialGroupFreePeriodDTO(Long id, @NotNull LocalDateTime start, 
         Objects.requireNonNull(freePeriod, "tutorialGroupFreePeriod must exist");
         Objects.requireNonNull(freePeriod.getStart(), "Tutorial group free period start date must be set.");
         Objects.requireNonNull(freePeriod.getEnd(), "Tutorial group free period end date must be set.");
-        Objects.requireNonNull(freePeriod.getTutorialGroupsConfiguration(), "Tutorial group configuration must be set.");
         Objects.requireNonNull(courseZone, "Course time zone must be set.");
+
+        Long tutorialGroupConfigurationId = freePeriod.getTutorialGroupsConfiguration() != null ? freePeriod.getTutorialGroupsConfiguration().getId() : null;
+
         return new TutorialGroupFreePeriodDTO(freePeriod.getId(), freePeriod.getStart().withZoneSameInstant(courseZone).toLocalDateTime(),
-                freePeriod.getEnd().withZoneSameInstant(courseZone).toLocalDateTime(), freePeriod.getReason(), freePeriod.getTutorialGroupsConfiguration().getId());
+                freePeriod.getEnd().withZoneSameInstant(courseZone).toLocalDateTime(), freePeriod.getReason(), tutorialGroupConfigurationId);
     }
 }
