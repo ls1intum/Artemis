@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
+import java.util.Objects;
+
 import jakarta.validation.constraints.NotNull;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -30,5 +32,18 @@ public record GradeStepDTO(Long id, double lowerBoundPercentage, boolean lowerBo
         gradeStep.setGradeName(gradeName);
         gradeStep.setIsPassingGrade(isPassingGrade);
         return gradeStep;
+    }
+
+    /**
+     * Creates a {@link GradeStepDTO} from a {@link GradeStep} entity.
+     *
+     * @param gradeStep the grade step entity to convert
+     * @return the corresponding grade step DTO
+     */
+    public static GradeStepDTO of(GradeStep gradeStep) {
+        Objects.requireNonNull(gradeStep, "GradeStep must be set");
+
+        return new GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(), gradeStep.getUpperBoundPercentage(),
+                gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade());
     }
 }

@@ -131,10 +131,7 @@ public class GradeStepResource {
         for (GradeStep gradeStep : gradeSteps) {
             gradeStep.setGradingScale(null);
         }
-        var newGradeSteps = gradeSteps
-                .stream().map(gradeStep -> new GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
-                        gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
-                .collect(Collectors.toSet());
+        var newGradeSteps = gradeSteps.stream().map(GradeStepDTO::of).collect(Collectors.toSet());
         return new GradeStepsDTO(title, gradingScale.getGradeType(), newGradeSteps, maxPoints, gradingScale.getPlagiarismGradeOrDefault(),
                 gradingScale.getNoParticipationGradeOrDefault(), gradingScale.getPresentationsNumber(), gradingScale.getPresentationsWeight());
     }

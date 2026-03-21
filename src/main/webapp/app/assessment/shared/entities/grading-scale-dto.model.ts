@@ -1,4 +1,4 @@
-import { BonusDTO } from 'app/assessment/shared/entities/bonus.model';
+import { BonusDTO, toBonusDTOs } from 'app/assessment/shared/entities/bonus.model';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -55,6 +55,6 @@ export function toGradingScaleDTO(entity?: GradingScale): GradingScaleDTO {
         id: entity.id,
         gradeSteps: gradeStepsDTO,
         bonusStrategy: entity.bonusStrategy,
-        bonusFrom: [],
+        bonusFrom: toBonusDTOs(entity.bonusFrom),
     };
 }

@@ -68,8 +68,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         Set<GradeStepDTO> gradeStepDTOs = new HashSet<>();
         if (gradingScale.getGradeSteps() != null) {
             for (GradeStep step : gradingScale.getGradeSteps()) {
-                gradeStepDTOs.add(new GradeStepDTO(step.getId(), step.getLowerBoundPercentage(), step.isLowerBoundInclusive(), step.getUpperBoundPercentage(),
-                        step.isUpperBoundInclusive(), step.getGradeName(), step.getIsPassingGrade()));
+                gradeStepDTOs.add(GradeStepDTO.of(step));
             }
         }
         return new GradingScaleRequestDTO(gradingScale.getGradeType(), gradingScale.getBonusStrategy(), gradingScale.getPlagiarismGrade(), gradingScale.getNoParticipationGrade(),
@@ -314,7 +313,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
     }
 
     /**
@@ -348,7 +348,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(examGradingScale);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
     }
 
     /**
@@ -391,7 +392,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO expectedDto = GradingScaleDTO.of(courseGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
     }
 
     /**
@@ -438,7 +440,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
         GradingScaleDTO expectedDto = GradingScaleDTO.of(examGradingScale);
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).hasSameSizeAs(expectedDto.gradeSteps().gradeSteps());
         assertThat(savedGradingScale.gradeSteps().gradeSteps()).allMatch(gradeStep -> isGradeStepInSet(expectedDto.gradeSteps().gradeSteps(), gradeStep));
-        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(examGradingScale);
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "gradeSteps.gradeSteps.id", "course", "exam").ignoringCollectionOrder()
+                .isEqualTo(expectedDto);
     }
 
     /**

@@ -1,8 +1,8 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.HashSet;
 import java.util.Set;
 
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -26,7 +26,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
  * @param noParticipationGrade    the grade for no participation
  * @param presentationsNumber     the number of presentations
  * @param presentationsWeight     the weight of presentations
- * @param gradeSteps              the grade steps for this scale (can be null or empty)
+ * @param gradeSteps              the grade steps for this scale (non-empty)
  * @param courseMaxPoints         optional: max points for the course (for course grading scales)
  * @param coursePresentationScore optional: presentation score for the course
  * @param examMaxPoints           optional: max points for the exam (for exam grading scales)
@@ -34,15 +34,9 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleRequestDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
-        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,
-        @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
-
-    /**
-     * Returns the grade steps, defaulting to an empty set if null.
-     */
-    public Set<GradeStepDTO> gradeStepsOrEmpty() {
-        return gradeSteps != null ? gradeSteps : new HashSet<>();
-    }
+        @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight,
+        @NotEmpty(message = "A grading scale must contain grade steps") Set<GradeStepDTO> gradeSteps, @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore,
+        @Nullable Integer examMaxPoints) {
 
     /**
      * Applies this DTO's values to an existing GradingScale entity.
@@ -59,7 +53,7 @@ public record GradingScaleRequestDTO(@NotNull GradeType gradeType, @Nullable Bon
 
         // Clear existing grade steps and add new ones
         gradingScale.getGradeSteps().clear();
-        for (GradeStepDTO gradeStepDTO : gradeStepsOrEmpty()) {
+        for (GradeStepDTO gradeStepDTO : gradeSteps) {
             GradeStep gradeStep = gradeStepDTO.toEntity(gradingScale);
             gradingScale.getGradeSteps().add(gradeStep);
         }

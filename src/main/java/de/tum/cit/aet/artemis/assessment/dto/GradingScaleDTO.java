@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.cit.aet.artemis.assessment.domain.Bonus;
 import de.tum.cit.aet.artemis.assessment.domain.BonusStrategy;
 import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 
 /**
  * DTO representing a {@link GradingScale}.
@@ -35,8 +35,6 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BonusDTO(Long id, double weight, @NotNull Long sourceGradingScaleId) {
 
-        private static final String BONUS_ENTITY_NAME = "Bonus";
-
         /**
          * Creates a {@link BonusDTO} from a {@link Bonus} entity.
          *
@@ -47,8 +45,7 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
             Objects.requireNonNull(bonus, "bonus must exist");
 
             if (bonus.getSourceGradingScale() == null || bonus.getSourceGradingScale().getId() == null) {
-                throw new BadRequestAlertException("The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists.", BONUS_ENTITY_NAME,
-                        "invalidSourceGradingScale");
+                throw new InternalServerErrorException("The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists.");
             }
             return new BonusDTO(bonus.getId(), bonus.getWeight(), bonus.getSourceGradingScale().getId());
         }
@@ -65,10 +62,7 @@ public record GradingScaleDTO(Long id, @NotNull GradeStepsDTO gradeSteps, BonusS
 
         Set<GradeStepDTO> gradeSteps = Set.of();
         if (Hibernate.isInitialized(scale.getGradeSteps()) && scale.getGradeSteps() != null) {
-            gradeSteps = scale.getGradeSteps().stream()
-                    .map(gradeStep -> new GradeStepDTO(gradeStep.getId(), gradeStep.getLowerBoundPercentage(), gradeStep.isLowerBoundInclusive(),
-                            gradeStep.getUpperBoundPercentage(), gradeStep.isUpperBoundInclusive(), gradeStep.getGradeName(), gradeStep.getIsPassingGrade()))
-                    .collect(Collectors.toSet());
+            gradeSteps = scale.getGradeSteps().stream().map(GradeStepDTO::of).collect(Collectors.toSet());
         }
         GradeStepsDTO steps = new GradeStepsDTO(scale.getTitle(), scale.getGradeType(), gradeSteps, scale.getMaxPoints(), scale.getPlagiarismGrade(),
                 scale.getNoParticipationGrade(), scale.getPresentationsNumber(), scale.getPresentationsWeight());
