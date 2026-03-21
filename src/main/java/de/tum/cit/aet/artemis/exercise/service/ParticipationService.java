@@ -298,21 +298,8 @@ public class ParticipationService {
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
-            // create a new participation only if no participation can be found
-            if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation(defaultBranch);
-            }
-            else {
-                participation = new StudentParticipation();
-            }
-            participation.setInitializationState(InitializationState.UNINITIALIZED);
-            participation.setExercise(exercise);
-            participation.setParticipant(participant);
+            participation = createNewParticipation(exercise, participant);
             participation.setPracticeMode(true);
-            participation = studentParticipationRepository.saveAndFlush(participation);
-            if (participant instanceof User user && exercise instanceof ProgrammingExercise) {
-                participationVCSAccessTokenService.createParticipationVCSAccessToken(user, participation);
-            }
         }
         else {
             // make sure participation and exercise are connected
