@@ -31,20 +31,21 @@ export function getChannelSubTypeReferenceTranslationKey(subType: ChannelSubType
 }
 
 export const defaultFirstLayerDialogOptions = {
-    width: '50rem',
+    width: '55rem',
     modal: true,
-    closable: false,
+    closable: true,
     closeOnEscape: true,
-    dismissableMask: false,
+    dismissableMask: true,
     showHeader: false,
+    styleClass: 'communication-dialog',
 };
 
 export const defaultSecondLayerDialogOptions = {
-    width: '50rem',
+    width: '40rem',
     modal: true,
-    closable: false,
+    closable: true,
     closeOnEscape: true,
-    dismissableMask: false,
+    dismissableMask: true,
     showHeader: false,
-    styleClass: 'second-layer-modal-bg',
+    styleClass: 'communication-dialog',
 };

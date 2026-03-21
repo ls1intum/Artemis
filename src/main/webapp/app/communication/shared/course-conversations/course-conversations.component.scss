@@ -3,30 +3,7 @@
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-mixins';
 
-.second-layer-modal-bg {
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-    border-radius: var(--bs-border-radius-lg);
-
-    .p-dialog-content {
-        background-color: var(--bs-body-bg);
-        color: var(--bs-body-color);
-        border-radius: var(--bs-border-radius-lg);
-        padding: 0;
-    }
-
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 1rem 1.5rem;
-        border-bottom: 1px solid var(--bs-border-color);
-    }
-
-    .modal-body {
-        padding: 1rem 1.5rem;
-    }
-}
+// .second-layer-modal-bg styles are in global.scss for proper PrimeNG specificity
 
 .scrollable-communication-content {
     --channel-search-height: 59px;

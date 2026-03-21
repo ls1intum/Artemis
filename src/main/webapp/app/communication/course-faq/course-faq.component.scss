@@ -1,11 +1,1 @@
-.second-layer-modal-bg {
-    background-color: var(--bs-body-bg);
-    color: var(--bs-body-color);
-    border-radius: var(--bs-border-radius-lg);
-
-    .p-dialog-content {
-        background-color: var(--bs-body-bg);
-        color: var(--bs-body-color);
-        border-radius: var(--bs-border-radius-lg);
-    }
-}
+// .second-layer-modal-bg styles are in global.scss for proper PrimeNG specificity
