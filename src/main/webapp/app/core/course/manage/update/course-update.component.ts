@@ -724,6 +724,11 @@ export class CourseUpdateComponent implements OnInit {
         this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 
+    onOrgUnitChanged() {
+        this.selectedCampusOnlineCourse = undefined;
+        this.campusOnlineSuggestions.set([]);
+    }
+
     searchCampusOnline(event: { query: string }) {
         if (!this.selectedOrgUnit) {
             this.campusOnlineSuggestions.set([]);

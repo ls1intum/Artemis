@@ -11,7 +11,7 @@
             "noOrgUnits": "Noch keine Organisationseinheiten konfiguriert.",
             "importNoValidRows": "Keine gültigen Zeilen gefunden. Die CSV-Datei muss Spalten für externe ID und Name enthalten.",
             "importSuccess": "{{ created }} Organisationseinheit(en) erfolgreich importiert. {{ skipped }} übersprungen (existieren bereits).",
-            "importParseFailed": "CSV konnte nicht geparst werden: {{ message }}",
+            "importParseFailed": "Die CSV-Datei konnte nicht verarbeitet werden. Bitte überprüfe die Datei und versuche es erneut.",
             "delete": {
                 "question": "Bist du sicher, dass du die Organisationseinheit <strong>{{ name }}</strong> löschen möchtest?"
             }

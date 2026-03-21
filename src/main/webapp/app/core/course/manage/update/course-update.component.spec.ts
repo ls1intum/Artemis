@@ -1283,6 +1283,26 @@ describe('Course Management Update Component', () => {
             expect(comp.campusOnlineSuggestions()).toEqual([]);
         });
 
+        it('should clear selected course and suggestions when org unit changes', () => {
+            comp.selectedCampusOnlineCourse = {
+                campusOnlineCourseId: 'CO-101',
+                title: 'CS Course',
+                alreadyImported: false,
+            };
+            comp.campusOnlineSuggestions.set([
+                {
+                    campusOnlineCourseId: 'CO-101',
+                    title: 'CS Course',
+                    alreadyImported: false,
+                },
+            ]);
+
+            comp.onOrgUnitChanged();
+
+            expect(comp.selectedCampusOnlineCourse).toBeUndefined();
+            expect(comp.campusOnlineSuggestions()).toEqual([]);
+        });
+
         it('should link campus online course for new course (no id)', () => {
             const newCourse = new Course();
             comp.course = newCourse;

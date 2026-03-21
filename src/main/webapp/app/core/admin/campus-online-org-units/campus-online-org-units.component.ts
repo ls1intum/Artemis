@@ -81,7 +81,7 @@ export class CampusOnlineOrgUnitsComponent implements OnInit {
         };
         reader.onerror = () => {
             this.isImporting.set(false);
-            this.alertService.error('artemisApp.campusOnlineOrgUnits.importParseFailed', { message: 'Failed to read file' });
+            this.alertService.error('artemisApp.campusOnlineOrgUnits.importParseFailed');
         };
         reader.readAsText(file);
     }
@@ -122,9 +122,9 @@ export class CampusOnlineOrgUnitsComponent implements OnInit {
                     },
                 });
             },
-            error: (error: { message: string }) => {
+            error: () => {
                 this.isImporting.set(false);
-                this.alertService.error('artemisApp.campusOnlineOrgUnits.importParseFailed', { message: error.message });
+                this.alertService.error('artemisApp.campusOnlineOrgUnits.importParseFailed');
             },
         });
     }

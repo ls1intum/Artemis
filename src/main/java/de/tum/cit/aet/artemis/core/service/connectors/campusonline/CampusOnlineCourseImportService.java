@@ -95,6 +95,9 @@ public class CampusOnlineCourseImportService {
         checkDuplicateLink(request.campusOnlineCourseId());
 
         CampusOnlineCourseMetadataResponseDTO metadata = campusOnlineClient.fetchCourseMetadata(request.campusOnlineCourseId());
+        if (metadata.courseName() == null || metadata.courseName().isBlank()) {
+            throw new CampusOnlineApiException("CAMPUSOnline API returned no course name for course ID: " + request.campusOnlineCourseId());
+        }
 
         CampusOnlineConfiguration config = new CampusOnlineConfiguration();
         config.setCampusOnlineCourseId(request.campusOnlineCourseId());

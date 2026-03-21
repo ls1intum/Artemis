@@ -127,6 +127,7 @@
                         } @else {
                             <p-select
                                 [(ngModel)]="selectedOrgUnit"
+                                (ngModelChange)="onOrgUnitChanged()"
                                 [options]="campusOnlineOrgUnits()"
                                 optionLabel="name"
                                 [placeholder]="'artemisApp.course.campusOnline.selectOrgUnit' | artemisTranslate"

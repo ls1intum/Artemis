@@ -11,7 +11,7 @@
             "noOrgUnits": "No organizational units configured yet.",
             "importNoValidRows": "No valid rows found. CSV must have columns for external ID and name.",
             "importSuccess": "{{ created }} organizational unit(s) imported successfully. {{ skipped }} skipped (already exist).",
-            "importParseFailed": "Failed to parse CSV: {{ message }}",
+            "importParseFailed": "Failed to parse the CSV file. Please check that the file is valid and try again.",
             "delete": {
                 "question": "Are you sure you want to delete the organizational unit <strong>{{ name }}</strong>?"
             }
