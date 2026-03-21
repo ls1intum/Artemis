@@ -39,7 +39,11 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
             throw new BadRequestAlertException("No text exercise was provided.", "textExercise", "textExercise.isNull");
         }
 
-        Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+        // For course exercises: set courseId, leave exerciseGroupId null
+        // For exam exercises: set exerciseGroupId, leave courseId null
+        // This matches the conflict check in TextExerciseCreationUpdateResource
+        Long courseId = exercise.isCourseExercise() && exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId()
+                : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterionDTO> gradingCriterionDTOs;
