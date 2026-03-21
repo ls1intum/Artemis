@@ -62,6 +62,12 @@ describe('TutorialGroupManagementDetailComponent', () => {
     });
 
     it('should initialize', () => {
+        const tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        const response: HttpResponse<TutorialGroup> = new HttpResponse({
+            body: generateExampleTutorialGroup({ id: 1 }),
+            status: 200,
+        });
+        vi.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
         fixture.detectChanges();
         expect(component).not.toBeNull();
     });
