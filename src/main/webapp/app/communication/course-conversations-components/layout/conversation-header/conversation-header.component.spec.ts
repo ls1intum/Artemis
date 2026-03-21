@@ -110,10 +110,8 @@ examples.forEach((activeConversation) => {
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             fixture.changeDetectorRef.detectChanges();
             addUsersButton.click();
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
-            });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
         });
 
         it('should open dialog details dialog with members tab', () => {
@@ -131,10 +129,7 @@ examples.forEach((activeConversation) => {
             const toggleSearchSpy = vi.spyOn(component, 'toggleSearchBar');
             fixture.detectChanges();
             searchButton.click();
-
-            fixture.whenStable().then(() => {
-                expect(toggleSearchSpy).toHaveBeenCalledOnce();
-            });
+            expect(toggleSearchSpy).toHaveBeenCalledOnce();
         });
 
         it('should set otherUser to the non-requesting user in a one-to-one conversation', () => {
@@ -261,10 +256,8 @@ examples.forEach((activeConversation) => {
             const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef);
             fixture.changeDetectorRef.detectChanges();
             detailButton.click();
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, expect.anything());
-            });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, expect.anything());
         }
     });
 });

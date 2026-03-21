@@ -3,8 +3,6 @@
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-mixins';
 
-// .second-layer-modal-bg styles are in global.scss for proper PrimeNG specificity
-
 .scrollable-communication-content {
     --channel-search-height: 59px;
     @include dynamic-content-height(--header-height, --channel-search-height);

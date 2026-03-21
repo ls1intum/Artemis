@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, map, takeUntil } from 'rxjs';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -32,7 +32,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     canCreateChannel = canCreateChannel;
 
-    readonly createChannelFn = input<(channel: ChannelDTO) => Observable<never>>();
+    createChannelFn = signal<((channel: ChannelDTO) => Observable<never>) | undefined>(undefined);
     course = signal<Course | undefined>(undefined);
     channelSubType = signal<ChannelSubType | undefined>(undefined);
 

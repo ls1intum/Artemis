@@ -66,7 +66,14 @@ export class CourseNotificationComponent {
                             if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
                                 acc[key] = value;
                             } else {
-                                acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString()))?.replace(/<[^>]*>/g, '') || '';
+                                let sanitized = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString())) || '';
+                                // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags like <scr<script>ipt>)
+                                let previous: string;
+                                do {
+                                    previous = sanitized;
+                                    sanitized = sanitized.replace(/<[^>]*>/g, '');
+                                } while (sanitized !== previous);
+                                acc[key] = sanitized;
                             }
 
                             return acc;
