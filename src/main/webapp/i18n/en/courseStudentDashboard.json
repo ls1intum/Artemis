@@ -22,13 +22,6 @@
                 "averageLatenessLabel": "Average lateness",
                 "xAxisLabel": "Exercises",
                 "yAxisLabel": "Relative lateness (%)"
-            },
-            "judgementOfLearning": {
-                "title": "How would you rate your mastery?",
-                "info": "Rate how well you understand and can apply the skills from this competency. Artemis also provides a rating based on your performance to help you see where you stand.",
-                "artemisRating": "Artemis rates your mastery as",
-                "error": "An error occurred while saving your rating.",
-                "redirectButton": "Rate mastery on dashboard"
             }
         }
     }

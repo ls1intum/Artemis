@@ -15,7 +15,6 @@ class IrisApiArchitectureTest extends AbstractModuleAccessArchitectureTest {
     protected Set<Class<?>> getIgnoredClasses() {
         // @formatter:off
         return Set.of(
-            de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent.class,
             de.tum.cit.aet.artemis.iris.service.pyris.dto.competency.PyrisCompetencyExtractionInputDTO.class,
             de.tum.cit.aet.artemis.iris.config.PyrisAuthorizationInterceptor.class,
             de.tum.cit.aet.artemis.iris.config.IrisEnabled.class,
