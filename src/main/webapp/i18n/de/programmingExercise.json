@@ -142,7 +142,7 @@
                 "phaseNamePlaceholder": "z. B. compile",
                 "phaseNameInvalidCharacters": "Phasenname ist ungültig",
                 "phaseNameDuplicate": "Phasennamen müssen eindeutig sein",
-                "invalidPhaseNames": "Build-Phasennamen sind ungültig. Verwende nur Buchstaben, Zahlen, '-' und '_' und stelle sicher, dass Namen eindeutig sind.",
+                "invalidPhaseNames": "Build-Phasennamen sind ungültig. Verwende nur Buchstaben, Zahlen und '_', beginne mit einem Buchstaben oder '_' und stelle sicher, dass Namen eindeutig sind.",
                 "condition": "Inklusionsbedingung",
                 "forceRun": "Ausführung erzwingen",
                 "forceRunHelp": "Wenn aktiviert, wird diese Phase am Ende des Builds ausgeführt, selbst wenn vorherige Phasen fehlschlagen.",

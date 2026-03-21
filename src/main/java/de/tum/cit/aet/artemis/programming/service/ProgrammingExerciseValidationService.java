@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.MAX_ENVIRONMENT_VARIA
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -299,7 +300,10 @@ public class ProgrammingExerciseValidationService {
                 throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
             }
 
-            String normalizedName = phase.name().toLowerCase();
+            String normalizedName = phase.name().toLowerCase(Locale.ROOT);
+            if (BuildPhaseDTO.RESERVED_PHASE_NAMES.contains(normalizedName)) {
+                throw new BadRequestAlertException("Invalid build phase name", "programmingExercise", "invalidBuildPhaseName");
+            }
             if (!normalizedNames.add(normalizedName)) {
                 throw new BadRequestAlertException("Build phase names must be unique", "programmingExercise", "duplicateBuildPhaseNames");
             }

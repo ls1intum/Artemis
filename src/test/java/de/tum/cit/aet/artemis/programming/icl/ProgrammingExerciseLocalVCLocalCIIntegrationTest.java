@@ -336,6 +336,26 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateProgrammingExercise_reservedBuildPhaseName_caseInsensitive() throws Exception {
+        programmingExercise.getBuildConfig().setBuildPlanConfiguration("""
+                {
+                  "phases": [
+                    {
+                      "name": "main",
+                      "script": "echo build",
+                      "condition": "ALWAYS",
+                      "forceRun": false,
+                      "resultPaths": []
+                    }
+                  ]
+                }
+                """);
+
+        request.put("/api/programming/programming-exercises", programmingExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteProgrammingExercise() throws Exception {
         programmingExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, programmingExercise, 1)));
         programmingExerciseRepository.save(programmingExercise);

@@ -371,6 +371,27 @@ describe('ProgrammingExercise Custom Build Plan', () => {
             expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
         });
 
+        it('should return undefined when phase name starts with number', () => {
+            const phases: BuildPhase[] = [{ name: '1build', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+            comp.buildPlanPhases = { phases, dockerImage: 'node:18' };
+
+            expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+        });
+
+        it('should return undefined when phase names contain hyphen', () => {
+            const phases: BuildPhase[] = [{ name: 'build-phase', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+            comp.buildPlanPhases = { phases, dockerImage: 'node:18' };
+
+            expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+        });
+
+        it('should return undefined for reserved phase names case-insensitively', () => {
+            const phases: BuildPhase[] = [{ name: 'MAIN', script: 'npm test', condition: 'ALWAYS', forceRun: false, resultPaths: [] }];
+            comp.buildPlanPhases = { phases, dockerImage: 'node:18' };
+
+            expect(comp.getBuildPlanPhasesJSON()).toBeUndefined();
+        });
+
         it('should return undefined when phase names are duplicates case-insensitively', () => {
             const phases: BuildPhase[] = [
                 { name: 'Build', script: 'npm build', condition: 'ALWAYS', forceRun: false, resultPaths: [] },

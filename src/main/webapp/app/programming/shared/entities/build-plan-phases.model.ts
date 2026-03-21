@@ -29,3 +29,6 @@ export interface BuildPlanPhases {
     phases: BuildPhase[];
     dockerImage?: string;
 }
+
+export const BUILD_PHASE_NAME_PATTERN = RegExp('^[A-Za-z_][A-Za-z0-9_]*$');
+export const BUILD_PHASE_RESERVED_NAMES = new Set(['main', 'final_aeolus_post_action']);

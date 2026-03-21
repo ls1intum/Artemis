@@ -2,8 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, inject, input, model, out
 import { TranslateService } from '@ngx-translate/core';
 
 import { faArrowDown, faArrowUp, faPlus, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { BUILD_PHASE_CONDITION, BuildPhase, BuildPhaseCondition } from 'app/programming/shared/entities/build-plan-phases.model';
-import { BUILD_PHASE_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import {
+    BUILD_PHASE_CONDITION,
+    BUILD_PHASE_NAME_PATTERN,
+    BUILD_PHASE_RESERVED_NAMES,
+    BuildPhase,
+    BuildPhaseCondition,
+} from 'app/programming/shared/entities/build-plan-phases.model';
 import { FormsModule } from '@angular/forms';
 import { Select } from 'primeng/select';
 import { InputText } from 'primeng/inputtext';
@@ -69,6 +74,7 @@ export class BuildPhaseEditorComponent {
     readonly isOnly = computed(() => this.isFirst() && this.isLast());
 
     readonly isNamePatternValid = computed(() => BUILD_PHASE_NAME_PATTERN.test(this.phase().name));
+    readonly isNameReserved = computed(() => BUILD_PHASE_RESERVED_NAMES.has(this.phase().name.toLowerCase()));
 
     readonly isNameUnique = computed(() => {
         const currentIndex = this.index();
@@ -79,10 +85,10 @@ export class BuildPhaseEditorComponent {
         return this.phaseNames().every((phaseName, index) => index === currentIndex || phaseName.toLowerCase() !== normalizedCurrentName);
     });
 
-    readonly isNameValid = computed(() => this.isNamePatternValid() && this.isNameUnique());
+    readonly isNameValid = computed(() => this.isNamePatternValid() && !this.isNameReserved() && this.isNameUnique());
 
     readonly nameValidationMessageKey = computed(() =>
-        this.phase().name && this.isNamePatternValid()
+        this.phase().name && this.isNamePatternValid() && !this.isNameReserved()
             ? 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameDuplicate'
             : 'artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters',
     );

@@ -8,10 +8,9 @@ import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
-import { BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
 import { ScriptAction } from 'app/programming/shared/entities/build.action';
 import { WindFile } from 'app/programming/shared/entities/wind.file';
-import { BUILD_PHASE_NAME_PATTERN } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
@@ -166,7 +165,8 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, O
         const normalizedNames = phases.map((phase) => phase.name.toLowerCase());
         const namesAreUnique = new Set(normalizedNames).size === normalizedNames.length;
         const namesArePatternValid = phases.every((phase) => BUILD_PHASE_NAME_PATTERN.test(phase.name));
-        return namesAreUnique && namesArePatternValid;
+        const namesAreNotReserved = phases.every((phase) => !BUILD_PHASE_RESERVED_NAMES.has(phase.name.toLowerCase()));
+        return namesAreUnique && namesArePatternValid && namesAreNotReserved;
     }
 
     setTimeout(timeout: number) {

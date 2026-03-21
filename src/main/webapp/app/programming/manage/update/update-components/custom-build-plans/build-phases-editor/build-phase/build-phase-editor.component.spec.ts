@@ -109,6 +109,17 @@ describe('BuildPhaseEditorComponent', () => {
             expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters');
         });
 
+        it('should report reserved names as invalid', () => {
+            component.phase.set({ ...component.phase(), name: 'main' });
+            fixture.detectChanges();
+
+            expect(component.isNamePatternValid()).toBe(true);
+            expect(component.isNameReserved()).toBe(true);
+            expect(component.isNameValid()).toBe(false);
+            expect(component.shouldShowNameValidationError()).toBe(true);
+            expect(component.nameValidationMessageKey()).toBe('artemisApp.programmingExercise.buildPhasesEditor.phaseNameInvalidCharacters');
+        });
+
         it('should show validation error for empty phase name', () => {
             component.phase.set({ ...component.phase(), name: '' });
             fixture.detectChanges();
