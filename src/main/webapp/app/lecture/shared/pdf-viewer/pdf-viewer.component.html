@@ -13,7 +13,7 @@
             <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailedDetail"></span>
         </div>
     }
-    @if (!isLoading() && totalPages() > 0) {
+    @if (showToolbar()) {
         <div class="d-flex align-items-center justify-content-between mb-0 small text-secondary">
             <div class="d-flex align-items-center gap-0">
                 <button
@@ -22,7 +22,7 @@
                     [text]="true"
                     severity="secondary"
                     (click)="zoomOut()"
-                    [disabled]="zoomLevel() <= 0.5"
+                    [disabled]="!canZoomOut()"
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
                 >
                     <fa-icon [icon]="faSearchMinus" />
@@ -34,7 +34,7 @@
                     [text]="true"
                     severity="secondary"
                     (click)="zoomIn()"
-                    [disabled]="zoomLevel() >= 3.0"
+                    [disabled]="!canZoomIn()"
                     [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
                 >
                     <fa-icon [icon]="faSearchPlus" />
@@ -55,29 +55,10 @@
             </div>
         </div>
     }
-    <div class="pdf-viewer-box hide-scrollbar-unless-scrolling" #viewerHost [class.zoomed-out]="zoomLevel() <= 1.0">
-        <ngx-extended-pdf-viewer
-            class="pdf-extended-viewer"
-            [src]="pdfUrl()"
-            [page]="currentPage()"
-            [zoom]="viewerZoomBinding()"
-            [minZoom]="0.5 * (fitWidthZoomFactor() || 1)"
-            [maxZoom]="3.0 * (fitWidthZoomFactor() || 1)"
-            [height]="'100%'"
-            [backgroundColor]="'var(--body-bg)'"
-            [showToolbar]="false"
-            [showSidebarButton]="false"
-            [showSecondaryToolbarButton]="false"
-            [showFindButton]="false"
-            [showPagingButtons]="false"
-            [sidebarVisible]="false"
-            [ignoreKeys]="['CTRL++', 'CTRL+-', 'CTRL+0', 'CMD++', 'CMD+-', 'CMD+0', 'META++', 'META+-', 'META+0']"
-            (pageChange)="onPageChange($event)"
-            (currentZoomFactor)="onZoomFactorChange($event)"
-            (pdfLoadingStarts)="onPdfLoadingStarts()"
-            (pdfLoaded)="onPdfLoaded($event)"
-            (pdfLoadingFailed)="onPdfLoadingFailed()"
-        />
+    <div class="pdf-viewer-box hide-scrollbar-unless-scrolling" #pdfViewerBox [class.zoomed-out]="zoomLevel() <= 1.0">
+        <div class="pdf-zoom-wrapper">
+            <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error() || isRendering()"></div>
+        </div>
     </div>
     @if (uploadDate() || version()) {
         <div class="mt-2 small text-secondary">
