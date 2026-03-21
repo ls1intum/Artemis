@@ -290,7 +290,7 @@ public class ProgrammingExerciseValidationService {
         }
         BuildPlanPhasesDTO buildPlanPhases = buildPlanPhasesOptional.orElseThrow();
         if (buildPlanPhases.phases() == null || buildPlanPhases.phases().isEmpty()) {
-            throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPases");
+            throw new BadRequestAlertException("Build plan must include at least one phase", "programmingExercise", "noBuildPhases");
         }
 
         Set<String> normalizedNames = new HashSet<>();
