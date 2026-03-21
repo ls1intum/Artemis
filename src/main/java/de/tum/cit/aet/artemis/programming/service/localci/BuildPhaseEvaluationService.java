@@ -44,8 +44,9 @@ public class BuildPhaseEvaluationService {
      * @return the evaluated build plan with active phases and result paths
      */
     public List<BuildPhaseDTO> determineActiveBuildPhases(BuildPlanPhasesDTO phasesDTO, ProgrammingExerciseParticipation participation) {
-        if (phasesDTO == null || phasesDTO.phases() == null)
+        if (phasesDTO == null || phasesDTO.phases() == null) {
             return List.of();
+        }
         final List<BuildPhaseDTO> phases = phasesDTO.phases();
 
         if (isInstructorParticipation(participation))
