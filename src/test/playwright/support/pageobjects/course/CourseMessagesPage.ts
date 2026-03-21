@@ -107,38 +107,38 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Sets a channel to be private in the modal dialog.
+     * Sets a channel to be private in the modal dialog (PrimeNG SelectButton).
      */
     async setPrivate() {
-        await this.page.locator('.p-dialog-content label[for="private"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Private').click();
     }
 
     /**
-     * Sets a channel to be public in the modal dialog.
+     * Sets a channel to be public in the modal dialog (PrimeNG SelectButton).
      */
     async setPublic() {
-        await this.page.locator('.p-dialog-content label[for="public"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').first().getByText('Public').click();
     }
 
     /**
-     * Marks a channel as course-wide in the modal dialog.
+     * Marks a channel as course-wide in the modal dialog (PrimeNG SelectButton).
      */
     async setCourseWideChannel() {
-        await this.page.locator('.p-dialog-content label[for="isCourseWideChannel"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').nth(1).getByText('Course-wide Channel').click();
     }
 
     /**
-     * Marks a channel as an announcement channel in the modal dialog.
+     * Marks a channel as an announcement channel in the modal dialog (PrimeNG SelectButton).
      */
     async setAnnouncementChannel() {
-        await this.page.locator('.p-dialog-content label[for="isAnnouncementChannel"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Announcement Channel').click();
     }
 
     /**
-     * Marks a channel as unrestricted in the modal dialog.
+     * Marks a channel as unrestricted in the modal dialog (PrimeNG SelectButton).
      */
     async setUnrestrictedChannel() {
-        await this.page.locator('.p-dialog-content label[for="isNotAnnouncementChannel"]').click();
+        await this.page.locator('.p-dialog-content p-selectbutton').nth(2).getByText('Unrestricted Channel').click();
     }
 
     /**
@@ -183,51 +183,52 @@ export class CourseMessagesPage {
     }
 
     /**
-     * Edits the name of the conversation to a new name.
+     * Edits the name of the conversation inline with auto-save.
+     * Opens the detail dialog via the header name click (which opens the Info tab).
      * @param newName - The new name for the conversation.
      */
     async editName(newName: string) {
         await this.getName().click();
-        await this.page.locator('#name-section .action-button').click();
-        const nameField = this.page.locator('.channels-overview #name');
-        await nameField.clear();
-        await nameField.fill(newName);
-        await this.page.locator('#submitButton').click();
-        await expect(this.page.locator('#name-section textarea')).toHaveValue(newName);
+        const nameInput = this.page.locator('#name-input');
+        await nameInput.waitFor({ state: 'visible', timeout: 5000 });
+        await nameInput.clear();
+        await nameInput.fill(newName);
+        // Wait for auto-save debounce (1s) + server response
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await responsePromise;
         await this.closeEditPanel();
-        await this.page.waitForTimeout(200);
     }
 
     /**
-     * Edits the topic of the conversation to a new topic.
+     * Edits the topic of the conversation inline with auto-save.
      * @param newTopic - The new topic for the conversation.
      */
     async editTopic(newTopic: string) {
         await this.getName().click();
-        await this.page.locator('#topic-section .action-button').click();
-        const topicField = this.page.locator('.channels-overview #topic');
-        await topicField.clear();
-        await topicField.fill(newTopic);
-        await this.page.locator('#submitButton').click();
-        await expect(this.page.locator('#topic-section textarea')).toHaveValue(newTopic);
+        const topicInput = this.page.locator('#topic-input');
+        await topicInput.waitFor({ state: 'visible', timeout: 5000 });
+        await topicInput.clear();
+        await topicInput.fill(newTopic);
+        // Wait for auto-save debounce (1s) + server response
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await responsePromise;
         await this.closeEditPanel();
-        await this.page.waitForTimeout(200);
     }
 
     /**
-     * Edits the description of the conversation to a new description.
+     * Edits the description of the conversation inline with auto-save.
      * @param newDescription - The new description for the conversation.
      */
     async editDescription(newDescription: string) {
         await this.getName().click();
-        await this.page.locator('#description-section .action-button').click();
-        const descriptionField = this.page.locator('.channels-overview #description');
-        await descriptionField.clear();
-        await descriptionField.fill(newDescription);
-        await this.page.locator('#submitButton').click();
-        await expect(this.page.locator('#description-section textarea')).toHaveValue(newDescription);
+        const descInput = this.page.locator('#description-input');
+        await descInput.waitFor({ state: 'visible', timeout: 5000 });
+        await descInput.clear();
+        await descInput.fill(newDescription);
+        // Wait for auto-save debounce (1s) + server response
+        const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await responsePromise;
         await this.closeEditPanel();
-        await this.page.waitForTimeout(200);
     }
 
     /**
