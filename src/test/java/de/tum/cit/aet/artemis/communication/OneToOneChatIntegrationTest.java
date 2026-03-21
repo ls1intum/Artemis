@@ -13,18 +13,23 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.communication.dto.MetisCrudAction;
 import de.tum.cit.aet.artemis.communication.dto.OneToOneChatDTO;
 import de.tum.cit.aet.artemis.communication.dto.PostDTO;
+import de.tum.cit.aet.artemis.communication.service.conversation.ConversationService;
 import de.tum.cit.aet.artemis.core.domain.CourseInformationSharingConfiguration;
 import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 
 class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     private static final String TEST_PREFIX = "ootest";
+
+    @Autowired
+    private ConversationService conversationService;
 
     @BeforeEach
     @Override
@@ -38,8 +43,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @AfterEach
     void tearDown() {
-        conversationMessageRepository.deleteAll();
-        conversationRepository.deleteAllByCourseId(exampleCourseId);
+        var conversations = conversationRepository.findAllByCourseId(exampleCourseId);
+        conversations.forEach(conversation -> conversationService.deleteConversation(conversation.getId()));
     }
 
     @Override
