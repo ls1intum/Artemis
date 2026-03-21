@@ -45,7 +45,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
                 provideRouter([]),
                 { provide: LectureSearchService, useValue: mockSearchService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(false) } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
 
