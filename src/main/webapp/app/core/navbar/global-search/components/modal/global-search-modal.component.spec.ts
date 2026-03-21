@@ -470,13 +470,13 @@ describe('GlobalSearchModalComponent', () => {
         });
 
         it('should not exceed maxIndex on ArrowDown', () => {
-            // maxIndex is 0 because the navigation view reports itemCount = NAV_ACTION_COUNT = 1
-            (component as any).selectedIndex.set(0);
+            const maxIdx = (component as any).maxIndex();
+            (component as any).selectedIndex.set(maxIdx);
 
             const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
             component.handleKeyboardEvent(event);
 
-            expect((component as any).selectedIndex()).toBe(0);
+            expect((component as any).selectedIndex()).toBe(maxIdx);
         });
 
         it('should decrement selectedIndex on ArrowUp', () => {

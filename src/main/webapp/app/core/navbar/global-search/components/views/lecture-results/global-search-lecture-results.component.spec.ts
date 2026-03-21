@@ -10,6 +10,7 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { GlobalSearchLectureResultsComponent } from './global-search-lecture-results.component';
 import { LectureSearchService } from 'app/core/navbar/global-search/services/lecture-search.service';
 import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 const mockResult: LectureSearchResult = {
     course: { id: 1, name: 'Advanced Web Development' },
@@ -40,7 +41,12 @@ describe('GlobalSearchLectureResultsComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [GlobalSearchLectureResultsComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [provideRouter([]), { provide: LectureSearchService, useValue: mockSearchService }, { provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                provideRouter([]),
+                { provide: LectureSearchService, useValue: mockSearchService },
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(false) } },
+            ],
         });
 
         fixture = TestBed.createComponent(GlobalSearchLectureResultsComponent);

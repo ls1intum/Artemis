@@ -1,6 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { MockPipe } from 'ng-mocks';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchActionItemComponent } from './global-search-action-item.component';
 
 describe('GlobalSearchActionItemComponent', () => {
@@ -13,7 +17,8 @@ describe('GlobalSearchActionItemComponent', () => {
         vi.clearAllMocks();
 
         TestBed.configureTestingModule({
-            imports: [GlobalSearchActionItemComponent],
+            imports: [GlobalSearchActionItemComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         });
 
         fixture = TestBed.createComponent(GlobalSearchActionItemComponent);
