@@ -223,7 +223,7 @@ public class HyperionConsistencyCheckService {
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);
         var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
 
-        log.info("Consistency check for exercise {} complete: {} issues (structural+semantic), {} issues (verified)", exerciseId, issueDTOs.size());
+        log.info("Consistency check for exercise {} complete: {} issues", exerciseId, issueDTOs.size());
 
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
     }
