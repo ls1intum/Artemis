@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, ViewEncapsulation, computed, effect, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, computed, effect, input, signal, viewChild } from '@angular/core';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
@@ -15,7 +15,6 @@ import { ButtonDirective } from 'primeng/button';
     imports: [FontAwesomeModule, TranslateModule, ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, ButtonDirective, NgxExtendedPdfViewerModule],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
-    encapsulation: ViewEncapsulation.None,
 })
 export class PdfViewerComponent implements OnDestroy {
     pdfUrl = input.required<string>();
@@ -34,7 +33,6 @@ export class PdfViewerComponent implements OnDestroy {
         const zoom = this.zoomLevel() * (this.fitWidthZoomFactor() || 1);
         return this.isPinchZoomActive() ? undefined : Number.isFinite(zoom) ? Number((zoom * 100).toFixed(2)) : 100;
     });
-    readonly showToolbar = computed(() => !this.isLoading() && this.totalPages() > 0);
     protected readonly faSearchMinus = faSearchMinus;
     protected readonly faSearchPlus = faSearchPlus;
     protected readonly faRotateLeft = faRotateLeft;

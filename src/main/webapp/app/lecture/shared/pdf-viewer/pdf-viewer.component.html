@@ -13,7 +13,7 @@
             <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailedDetail"></span>
         </div>
     }
-    @if (showToolbar()) {
+    @if (!isLoading() && totalPages() > 0) {
         <div class="d-flex align-items-center justify-content-between mb-0 small text-secondary">
             <div class="d-flex align-items-center gap-0">
                 <button
@@ -64,7 +64,7 @@
             [minZoom]="0.5 * (fitWidthZoomFactor() || 1)"
             [maxZoom]="3.0 * (fitWidthZoomFactor() || 1)"
             [height]="'100%'"
-            [backgroundColor]="'var(--pdf-viewer-bg)'"
+            [backgroundColor]="'var(--body-bg)'"
             [showToolbar]="false"
             [showSidebarButton]="false"
             [showSecondaryToolbarButton]="false"

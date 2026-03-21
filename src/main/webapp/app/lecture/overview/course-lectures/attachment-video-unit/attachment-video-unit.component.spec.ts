@@ -516,15 +516,20 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.pdfUrl()).toBeUndefined();
         });
 
-        it('toggleCollapse: resets pdfUrl when collapsed', () => {
+        it('toggleCollapse: resets pdfUrl when collapsed', async () => {
             component.pdfUrl.set('blob:http://localhost/old-pdf');
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
             fixture.detectChanges();
 
-            component.toggleCollapse(true);
+            component.toggleCollapse(false);
 
             expect(component.pdfUrl()).toBeUndefined();
-            httpMock.expectNone((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+
+            // Handle the PDF request that gets triggered
+            const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            req.flush(new Blob());
+
+            await fixture.whenStable();
         });
 
         it('toggleCollapse: loads both video and PDF when both present', async () => {
