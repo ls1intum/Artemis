@@ -711,7 +711,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
      */
     private ProgrammingExerciseStudentParticipation createParticipationWithRepository(ProgrammingExercise exercise) throws Exception {
         var participation = ParticipationFactory.generateProgrammingExerciseStudentParticipation(InitializationState.INACTIVE, exercise,
-                userUtilService.getUserByLogin("participationintegrationstudent1"));
+                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         RepositoryExportTestUtil.seedStudentRepositoryForParticipation(localVCLocalCITestService, participation);
         return participationRepo.save(participation);
     }
@@ -838,6 +838,25 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         assertThat(invokedResult.isAthenaBased()).isTrue();
         assertThat(invokedResult.getFeedbacks()).hasSize(1);
         assertThat(invokedResult.getScore()).isEqualTo(100.0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void requestFeedback_feedbackRequestAlreadySent() throws Exception {
+        programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+        RepositoryExportTestUtil.createAndWireBaseRepositories(localVCLocalCITestService, programmingExercise);
+        programmingExercise = exerciseRepository.save(programmingExercise);
+
+        var participation = createParticipationWithRepository(programmingExercise);
+
+        Result result1 = participationUtilService.createSubmissionAndResult(participation, 100, false);
+        Result result2 = participationUtilService.addResultToSubmission(participation, result1.getSubmission());
+        result2.setAssessmentType(AssessmentType.AUTOMATIC_ATHENA);
+        result2.setCompletionDate(ZonedDateTime.now().plusMinutes(5));
+        resultRepository.save(result2);
+
+        request.putAndExpectError("/api/exercise/exercises/" + programmingExercise.getId() + "/participations/" + participation.getId() + "/request-feedback", null,
+                HttpStatus.BAD_REQUEST, "feedbackRequestAlreadySent");
     }
 
     @Test
