@@ -10,7 +10,7 @@ export function initializeDialog(component: AbstractDialogComponent, fixture: Co
     // so that AbstractDialogComponent.initialize() can apply them correctly
     // (including setting writable signals via .set()).
     Object.keys(requiredInputs).forEach((key) => {
-        component.dialogConfig.data[key] = requiredInputs[key];
+        component.dialogConfig!.data[key] = requiredInputs[key];
     });
 
     component.initialize();

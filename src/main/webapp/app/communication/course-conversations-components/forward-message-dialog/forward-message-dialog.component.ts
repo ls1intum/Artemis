@@ -127,7 +127,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      * Checks whether the forwarded message content exceeds its visible container height.
      */
     checkIfContentOverflows(): void {
-        if (this.messageContent) {
+        if (this.messageContent()) {
             const nativeElement = this.messageContent()!.nativeElement;
             this.isContentLong = nativeElement.scrollHeight > nativeElement.clientHeight;
             this.cdr.detectChanges();
@@ -286,7 +286,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
 
     /** Programmatically focuses on the search input field */
     focusInput(): void {
-        if (this.searchInput) {
+        if (this.searchInput()) {
             this.renderer.selectRootElement(this.searchInput()!.nativeElement, true).focus();
         }
     }
@@ -296,7 +296,7 @@ export class ForwardMessageDialogComponent implements OnInit, AfterViewInit {
      */
     @HostListener('document:click', ['$event'])
     onClickOutside(event: Event): void {
-        if (this.searchInput && !this.searchInput()!.nativeElement.contains(event.target)) {
+        if (this.searchInput() && !this.searchInput()!.nativeElement.contains(event.target)) {
             this.showDropdown = false;
         }
     }

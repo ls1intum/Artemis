@@ -92,7 +92,7 @@ examples.forEach((exampleChannel) => {
 
             registerUsersToChannelSpy = vi.spyOn(channelService, 'registerUsersToChannel').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
             deregisterUsersFromChannelSpy = vi.spyOn(channelService, 'deregisterUsersFromChannel').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
-            closeSpy = vi.spyOn(component.dialogRef, 'close');
+            closeSpy = vi.spyOn(component.dialogRef!, 'close');
             createChannelFnSpy = createChannelFn?.mockReturnValue(EMPTY);
 
             fixture.detectChanges();

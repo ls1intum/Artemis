@@ -158,7 +158,7 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
     private openModal(ref: DynamicDialogRef | null, callback: () => void) {
         ref?.onClose
             .pipe(
-                filter((result) => result !== undefined),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(callback);

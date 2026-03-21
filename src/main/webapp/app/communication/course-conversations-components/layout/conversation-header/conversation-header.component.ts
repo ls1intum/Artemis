@@ -9,7 +9,7 @@ import { MetisConversationService } from 'app/communication/service/metis-conver
 import { Subject, takeUntil } from 'rxjs';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
-import { filter } from 'rxjs/operators';
+
 import { MetisService } from 'app/communication/service/metis.service';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
 import { getAsOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
@@ -140,16 +140,11 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 activeConversation: this.activeConversation,
             },
         });
-        ref?.onClose
-            .pipe(
-                filter((result) => result !== undefined),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.metisConversationService.forceRefresh().subscribe({
-                    complete: () => {},
-                });
+        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            this.metisConversationService.forceRefresh().subscribe({
+                complete: () => {},
             });
+        });
     }
 
     /**
@@ -173,17 +168,12 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             },
         });
 
-        ref?.onClose
-            .pipe(
-                filter((result) => result !== undefined),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.metisConversationService.forceRefresh().subscribe({
-                    complete: () => {},
-                });
-                this.onUpdateSidebar.emit();
+        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            this.metisConversationService.forceRefresh().subscribe({
+                complete: () => {},
             });
+            this.onUpdateSidebar.emit();
+        });
     }
 
     toggleSearchBar() {

@@ -269,7 +269,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
         ref?.onClose
             .pipe(
-                filter((result) => result !== undefined),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe(() => {

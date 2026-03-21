@@ -12,7 +12,6 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { ConversationUserDTO } from 'app/communication/shared/entities/conversation/conversation-user-dto.model';
 import { defaultSecondLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
-import { filter } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -107,14 +106,9 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                 activeConversation: this.activeConversation(),
             },
         });
-        ref?.onClose
-            .pipe(
-                filter((result) => result !== undefined),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe(() => {
-                this.onChangePerformed();
-            });
+        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
+            this.onChangePerformed();
+        });
     }
 
     onChangePerformed() {

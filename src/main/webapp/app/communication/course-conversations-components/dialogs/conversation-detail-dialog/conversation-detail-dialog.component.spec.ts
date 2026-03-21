@@ -186,7 +186,7 @@ examples.forEach((activeConversation) => {
         it('should invoke the username click callback from dialog data without replacing the component method', () => {
             const testUserId = 42;
             const callback = vi.fn();
-            component.dialogConfig.data.onUserNameClicked = callback;
+            component.dialogConfig!.data.onUserNameClicked = callback;
             const emitSpy = vi.spyOn(component.userNameClicked, 'emit');
 
             component.onUserNameClicked(testUserId);
