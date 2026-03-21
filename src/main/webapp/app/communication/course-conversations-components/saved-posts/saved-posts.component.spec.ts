@@ -69,8 +69,6 @@ describe('SavedPostsComponent', () => {
     });
 
     describe('Initialization', () => {
-        setupTestBed({ zoneless: true });
-
         it('should fetch saved posts successfully', () => {
             const courseId = 123;
             const status = SavedPostStatus.IN_PROGRESS;
@@ -111,8 +109,6 @@ describe('SavedPostsComponent', () => {
     });
 
     describe('Change post status', () => {
-        setupTestBed({ zoneless: true });
-
         it('should update post status and add to hidden posts', () => {
             const newStatus = SavedPostStatus.ARCHIVED;
             savedPostService.changeSavedPostStatus.mockReturnValue(of({}));
@@ -135,8 +131,6 @@ describe('SavedPostsComponent', () => {
     });
 
     describe('Remove saved post', () => {
-        setupTestBed({ zoneless: true });
-
         it('should remove saved post and add to hidden posts', () => {
             savedPostService.removeSavedPost.mockReturnValue(of({}));
             component['removeSavedPost'](mockPosting);
@@ -155,8 +149,6 @@ describe('SavedPostsComponent', () => {
     });
 
     describe('Navigation', () => {
-        setupTestBed({ zoneless: true });
-
         it('should emit post when navigating', () => {
             const emitSpy = vi.spyOn(component.onNavigateToPost, 'emit');
 
@@ -167,8 +159,6 @@ describe('SavedPostsComponent', () => {
     });
 
     describe('Template interaction', () => {
-        setupTestBed({ zoneless: true });
-
         beforeEach(async () => {
             const status = SavedPostStatus.IN_PROGRESS;
             fixture.componentRef.setInput('savedPostStatus', status);

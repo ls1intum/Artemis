@@ -45,7 +45,7 @@ describe('EmojiPickerComponent', () => {
     });
 
     it('should emit an event on emoji select', () => {
-        const emitSpy = vi.spyOn(comp.emojiSelect, 'emit').mockReturnValue();
+        const emitSpy = vi.spyOn(comp.emojiSelect, 'emit');
         comp.onEmojiSelect({ test: 123 });
         expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith({ test: 123 });

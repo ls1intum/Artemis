@@ -10,6 +10,8 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClient } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
+import { of } from 'rxjs';
 
 describe('Course Conversations Code Of Conduct Component', () => {
     setupTestBed({ zoneless: true });
@@ -32,9 +34,8 @@ describe('Course Conversations Code Of Conduct Component', () => {
     });
 
     it('should initialize', () => {
-        const getResponsibleUsersSpy = vi.spyOn(conversationService, 'getResponsibleUsersForCodeOfConduct');
+        const getResponsibleUsersSpy = vi.spyOn(conversationService, 'getResponsibleUsersForCodeOfConduct').mockReturnValue(of(new HttpResponse({ body: [] })));
         fixture.detectChanges();
         expect(getResponsibleUsersSpy).toHaveBeenCalled();
-        expect(CourseConversationsCodeOfConductComponent).not.toBeNull();
     });
 });

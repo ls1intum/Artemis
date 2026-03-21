@@ -17,13 +17,13 @@ export class ChannelItemComponent {
     canLeaveConversation = canLeaveConversation;
 
     readonly channelAction = output<ChannelAction>();
-    readonly channel = input<ChannelDTO>();
+    readonly channel = input.required<ChannelDTO>();
 
     emitChannelAction($event: MouseEvent, action: ChannelActionType) {
         $event.stopPropagation();
         this.channelAction.emit({
             action,
-            channel: this.channel()!,
+            channel: this.channel(),
         } as ChannelAction);
     }
 }

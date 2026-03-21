@@ -66,8 +66,6 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Input handling', () => {
-        setupTestBed({ zoneless: true });
-
         it('should handle post input', () => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
@@ -86,8 +84,6 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('PostingType detection', () => {
-        setupTestBed({ zoneless: true });
-
         it('should detect answer post', () => {
             const answerPost = { ...mockPost, postingType: PostingType.ANSWER.valueOf() };
 
@@ -106,8 +102,6 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Date handling', () => {
-        setupTestBed({ zoneless: true });
-
         it('should detect post from today', () => {
             const todayPost = { ...mockPost, creationDate: dayjs() };
 
@@ -128,8 +122,6 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Event emissions', () => {
-        setupTestBed({ zoneless: true });
-
         it('should emit status change', () => {
             const mockEvent = { stopPropagation: vi.fn() } as unknown as MouseEvent;
             const emitSpy = vi.spyOn(component.onChangeSavedPostStatus, 'emit');
@@ -183,8 +175,6 @@ describe('PostingSummaryComponent', () => {
     });
 
     describe('Template rendering', () => {
-        setupTestBed({ zoneless: true });
-
         beforeEach(async () => {
             fixture.componentRef.setInput('post', mockPost);
             fixture.detectChanges();
