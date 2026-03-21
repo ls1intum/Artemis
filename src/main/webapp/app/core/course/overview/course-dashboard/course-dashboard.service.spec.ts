@@ -9,7 +9,6 @@ import dayjs from 'dayjs/esm';
 import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { ExerciseCategory } from 'app/exercise/shared/entities/exercise/exercise-category.model';
-import { CompetencyJol } from 'app/atlas/shared/entities/competency.model';
 
 describe('CourseDashboardService', () => {
     setupTestBed({ zoneless: true });
@@ -128,22 +127,6 @@ describe('CourseDashboardService', () => {
                 confidence: {
                     5: 0.8,
                 },
-                currentJolValues: {
-                    5: {
-                        competencyId: 5,
-                        jolValue: 2,
-                        judgementTime: '2024-03-01T00:00:00Z',
-                        competencyProgress: 0.5,
-                        competencyConfidence: 0.8,
-                    } as CompetencyJol,
-                    6: {
-                        competencyId: 6,
-                        jolValue: 1,
-                        judgementTime: '2024-03-02T00:00:00Z',
-                        competencyProgress: 0.2,
-                        competencyConfidence: 0.2,
-                    } as CompetencyJol,
-                },
             },
         };
 
@@ -176,9 +159,6 @@ describe('CourseDashboardService', () => {
                 const competencies = response.body?.competencyMetrics?.competencyInformation;
                 expect(dayjs.isDayjs(competencies?.['5'].softDueDate)).toBe(true);
                 expect(competencies?.['6'].softDueDate).toBeUndefined();
-
-                const jolValues = response.body?.competencyMetrics?.currentJolValues ?? {};
-                expect(Object.keys(jolValues)).toEqual(['5']);
             });
 
         const req = httpMock.expectOne({ method: 'GET', url: 'api/atlas/metrics/course/123/student' });
