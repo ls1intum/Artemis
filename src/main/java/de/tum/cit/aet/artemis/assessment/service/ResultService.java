@@ -206,6 +206,10 @@ public class ResultService {
         // to prevent foreign key constraint violations from the async ParticipantScoreScheduleService
         // recreating participant_score rows between a prior bulk delete and this result deletion
         participantScoreRepository.clearAllByResultId(result.getId());
+        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
+        // the (already bulk-deleted) feedbacks during merge, which would fail due to
+        // null indices in the @OrderColumn list.
+        result.setFeedbacks(List.of());
         resultRepository.delete(result);
     }
 
@@ -226,6 +230,8 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
+        longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
+        feedbackRepository.deleteByResult_Id(resultId);
     }
 
     /**
