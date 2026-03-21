@@ -10,8 +10,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamAPIRequests } from './requests/ExamAPIRequests';
 import { ExerciseAPIRequests } from './requests/ExerciseAPIRequests';
 import { ExamExerciseGroupCreationPage } from './pageobjects/exam/ExamExerciseGroupCreationPage';
-import { CoursesPage } from './pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from './pageobjects/course/CourseOverviewPage';
 import { ModelingEditor } from './pageobjects/exercises/modeling/ModelingEditor';
 import { OnlineEditorPage } from './pageobjects/exercises/programming/OnlineEditorPage';
 import { MultipleChoiceQuiz } from './pageobjects/exercises/quiz/MultipleChoiceQuiz';
@@ -393,8 +391,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examAPIRequests = new ExamAPIRequests(page);
     const exerciseAPIRequests = new ExerciseAPIRequests(page);
     const examExerciseGroupCreation = new ExamExerciseGroupCreationPage(page, examAPIRequests, exerciseAPIRequests);
-    const courseList = new CoursesPage(page);
-    const courseOverview = new CourseOverviewPage(page);
     const modelingExerciseEditor = new ModelingEditor(page);
     const programmingExerciseEditor = new OnlineEditorPage(page);
     const quizExerciseMultipleChoice = new MultipleChoiceQuiz(page);
@@ -402,8 +398,6 @@ export async function prepareExam(course: Course, end: dayjs.Dayjs, exerciseType
     const examNavigation = new ExamNavigationBar(page);
     const examStartEnd = new ExamStartEndPage(page);
     const examParticipation = new ExamParticipationPage(
-        courseList,
-        courseOverview,
         examNavigation,
         examStartEnd,
         modelingExerciseEditor,
