@@ -20,18 +20,23 @@
     }
 
     <ng-template jhiPanel label="Problem statement" [icon]="faAlignLeft">
-        <div class="d-flex flex-fill p-3">
+        <div class="d-flex flex-fill">
             <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()!" />
         </div>
     </ng-template>
+
+    @if (showIris()) {
+        <ng-template #irisLogoTpl>
+            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+        </ng-template>
+        <ng-template jhiPanel label="Iris" [iconTemplate]="irisLogoTpl">
+            <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" [isEmbeddedChat]="true" />
+        </ng-template>
+    }
 
     @if (showDiscussion()) {
         <ng-template jhiPanel label="Chat" [icon]="faComment">
             <jhi-discussion-feed [exercise]="exercise()" />
         </ng-template>
     }
-
-    <ng-template jhiPanel label="Iris" [icon]="faGraduationCap">
-        <!-- Iris content coming soon -->
-    </ng-template>
 </jhi-resizable-panels>

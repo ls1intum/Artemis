@@ -9,7 +9,12 @@
             [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
         />
 
-        <jhi-exercise-split-panel class="d-flex flex-fill" [exercise]="exercise" [studentParticipation]="practiceStudentParticipation() ?? gradedStudentParticipation()" />
+        <jhi-exercise-split-panel
+            class="d-flex flex-fill"
+            [exercise]="exercise"
+            [studentParticipation]="practiceStudentParticipation() ?? gradedStudentParticipation()"
+            [irisEnabled]="irisEnabled() && irisChatEnabled()"
+        />
     </div>
 
     <div id="course-exercise-details" class="px-3 pt-2 pb-3 scrollable-content module-bg">

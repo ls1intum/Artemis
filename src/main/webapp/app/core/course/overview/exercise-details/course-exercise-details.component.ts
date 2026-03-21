@@ -289,9 +289,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
             this._allowComplaintsForAutomaticAssessments.set(!!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint);
             this._submissionPolicy.set(programmingExercise.submissionPolicy);
+        }
 
+        if ((this.exercise?.type === ExerciseType.PROGRAMMING || this.exercise?.type === ExerciseType.TEXT) && !this.exercise.exerciseGroup && this.courseId) {
             this._irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
-            if (this.irisEnabled() && !this.exercise.exerciseGroup && this.courseId) {
+            if (this.irisEnabled()) {
                 this.irisSettingsService
                     .getCourseSettingsWithRateLimit(this.courseId)
                     .pipe(takeUntilDestroyed(this.destroyRef))
