@@ -165,6 +165,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             modal: true,
             closable: true,
             closeOnEscape: true,
+            showHeader: false,
             styleClass: 'second-layer-modal-bg',
             data: {
                 propertyName,

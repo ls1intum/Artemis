@@ -72,7 +72,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     clear() {
         if (this.changesWerePerformed) {
-            this.close();
+            this.close(true);
         } else {
             this.dismiss();
         }

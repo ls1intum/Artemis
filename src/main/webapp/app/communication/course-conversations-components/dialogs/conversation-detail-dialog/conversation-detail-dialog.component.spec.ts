@@ -132,15 +132,15 @@ examples.forEach((activeConversation) => {
                 const closeSpy = vi.spyOn(dialogRef, 'close');
 
                 settingsComponent.channelArchivalChange.emit();
-                expect(closeSpy).toHaveBeenCalledOnce();
+                expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
                 closeSpy.mockClear();
                 settingsComponent.channelDeleted.emit();
-                expect(closeSpy).toHaveBeenCalledOnce();
+                expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
                 closeSpy.mockClear();
                 settingsComponent.conversationLeave.emit();
-                expect(closeSpy).toHaveBeenCalledOnce();
+                expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
             }
         });
 
@@ -152,28 +152,28 @@ examples.forEach((activeConversation) => {
 
             component.onPrivacyChange();
             expect(component.changesWerePerformed).toBe(true);
-            expect(closeSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
             component.changesWerePerformed = false;
 
             component.onArchivalChange();
             expect(component.changesWerePerformed).toBe(true);
-            expect(closeSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
             component.changesWerePerformed = false;
 
             component.onChannelDeleted();
             expect(component.changesWerePerformed).toBe(true);
-            expect(closeSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
 
             closeSpy.mockClear();
             component.changesWerePerformed = false;
 
             component.onConversationLeave();
             expect(component.changesWerePerformed).toBe(true);
-            expect(closeSpy).toHaveBeenCalledOnce();
+            expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
         });
 
         it('should emit userNameClicked event when onUserNameClicked is called', () => {
@@ -181,6 +181,18 @@ examples.forEach((activeConversation) => {
             const spy = vi.spyOn(component.userNameClicked, 'emit');
             component.onUserNameClicked(testUserId);
             expect(spy).toHaveBeenCalledWith(testUserId);
+        });
+
+        it('should invoke the username click callback from dialog data without replacing the component method', () => {
+            const testUserId = 42;
+            const callback = vi.fn();
+            component.dialogConfig.data.onUserNameClicked = callback;
+            const emitSpy = vi.spyOn(component.userNameClicked, 'emit');
+
+            component.onUserNameClicked(testUserId);
+
+            expect(emitSpy).toHaveBeenCalledWith(testUserId);
+            expect(callback).toHaveBeenCalledWith(testUserId);
         });
     });
 });

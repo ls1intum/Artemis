@@ -95,7 +95,7 @@ examples.forEach((activeConversation) => {
                     addUsersFormData.addAllInstructors,
                     addUsersFormData.selectedUsers?.map((user) => user.login),
                 );
-                expect(dialogRef.close).toHaveBeenCalledOnce();
+                expect(dialogRef.close).toHaveBeenCalledExactlyOnceWith(true);
             }
 
             if (isGroupChatDTO(activeConversation)) {
@@ -110,7 +110,7 @@ examples.forEach((activeConversation) => {
                     activeConversation.id,
                     addUsersFormData.selectedUsers?.map((user) => user.login),
                 );
-                expect(dialogRef.close).toHaveBeenCalledOnce();
+                expect(dialogRef.close).toHaveBeenCalledExactlyOnceWith(true);
             }
         });
     });

@@ -554,6 +554,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
                         width: '50vw',
                         modal: true,
                         closable: false,
+                        showHeader: false,
                         data: {
                             users: [],
                             channels: this.channels,

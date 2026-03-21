@@ -22,7 +22,7 @@ describe('GenericUpdateTextPropertyDialog', () => {
         TestBed.configureTestingModule({
             imports: [FormsModule, ReactiveFormsModule, GenericUpdateTextPropertyDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -69,11 +69,11 @@ describe('GenericUpdateTextPropertyDialog', () => {
     it('should dismiss modal if cancel is selected', () => {
         setUpDialog();
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const destroySpy = vi.spyOn(dialogRef, 'destroy');
         const dismissButton = fixture.debugElement.nativeElement.querySelector('.dismiss');
         dismissButton.click();
         vi.advanceTimersByTime(0);
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 
     function setUpDialog() {

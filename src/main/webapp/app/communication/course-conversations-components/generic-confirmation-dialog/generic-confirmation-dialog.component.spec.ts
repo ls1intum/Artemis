@@ -21,7 +21,7 @@ describe('GenericConfirmationDialogComponent', () => {
         TestBed.configureTestingModule({
             imports: [GenericConfirmationDialogComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -49,19 +49,33 @@ describe('GenericConfirmationDialogComponent', () => {
         expect(component).toBeTruthy();
     });
 
+    it('should initialize when inputs are assigned directly before initialize() is called', () => {
+        component.isInitialized = false;
+        component.translationKeys = {
+            titleKey: 'title',
+            questionKey: 'question',
+            descriptionKey: 'description',
+            confirmButtonKey: 'confirm',
+        };
+
+        component.initialize();
+
+        expect(component.isInitialized).toBe(true);
+    });
+
     it('should close modal if confirm is selected', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
         const closeSpy = vi.spyOn(dialogRef, 'close');
         const confirmButton = fixture.debugElement.nativeElement.querySelector('.confirm');
         confirmButton.click();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(closeSpy).toHaveBeenCalledExactlyOnceWith(true);
     });
 
     it('should dismiss modal if cancel is selected', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const destroySpy = vi.spyOn(dialogRef, 'destroy');
         const cancelButton = fixture.debugElement.nativeElement.querySelector('.cancel');
         cancelButton.click();
-        expect(closeSpy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 });

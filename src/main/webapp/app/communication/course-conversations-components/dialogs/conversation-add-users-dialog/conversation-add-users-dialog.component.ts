@@ -71,32 +71,34 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
             this.channelService
                 .registerUsersToChannel(this.course()!.id!, activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
-                    finalize(() => this.close()),
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
                     takeUntil(this.ngUnsubscribe),
                 )
                 .subscribe({
-                    next: () => {},
+                    next: () => {
+                        this.close(true);
+                    },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                    },
-                    complete: () => {
-                        this.isLoading = false;
                     },
                 });
         } else if (isGroupChatDTO(activeConversation)) {
             this.groupChatService
                 .addUsersToGroupChat(this.course()!.id!, activeConversation.id!, userLogins)
                 .pipe(
-                    finalize(() => this.close()),
+                    finalize(() => {
+                        this.isLoading = false;
+                    }),
                     takeUntil(this.ngUnsubscribe),
                 )
                 .subscribe({
-                    next: () => {},
+                    next: () => {
+                        this.close(true);
+                    },
                     error: (errorResponse: HttpErrorResponse) => {
                         onError(this.alertService, errorResponse);
-                    },
-                    complete: () => {
-                        this.isLoading = false;
                     },
                 });
         } else {
