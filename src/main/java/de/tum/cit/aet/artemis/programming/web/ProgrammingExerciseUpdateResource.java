@@ -125,32 +125,19 @@ public class ProgrammingExerciseUpdateResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) throws JsonProcessingException {
         log.debug("REST request to update ProgrammingExercise with id: {}", updateDTO.id());
 
-        if (updateDTO.id() == null || updateDTO.id() == 0) {
+        boolean hasValidId = updateDTO.id() != null && updateDTO.id() != 0;
+        if (!hasValidId) {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
         }
 
-        // Validate that either courseId or exerciseGroupId is set, but not both
-        if (updateDTO.courseId() == null && updateDTO.exerciseGroupId() == null) {
-            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set", ENTITY_NAME, "noCourseOrExerciseGroup");
-        }
-        if (updateDTO.courseId() != null && updateDTO.exerciseGroupId() != null) {
-            throw new BadRequestAlertException("A programming exercise can only be associated with either a course or an exercise group, not both", ENTITY_NAME,
-                    "bothCourseAndExerciseGroupSet");
-        }
+        // Validate courseId/exerciseGroupId exclusivity and immutability
+        validateCourseExerciseGroupIds(updateDTO);
 
         // Load the existing exercise from the database with all necessary associations
         var programmingExerciseBeforeUpdate = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
 
         // Validate that courseId or exerciseGroupId hasn't changed
-        // For course exercises: courseId must match
-        // For exam exercises: exerciseGroupId must match
-        Long existingCourseId = programmingExerciseBeforeUpdate.isCourseExercise()
-                ? Optional.ofNullable(programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null)
-                : null;
-        Long existingExerciseGroupId = Optional.ofNullable(programmingExerciseBeforeUpdate.getExerciseGroup()).map(g -> g.getId()).orElse(null);
-        if (!Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId())) {
-            throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
-        }
+        validateCourseExerciseGroupUnchanged(programmingExerciseBeforeUpdate, updateDTO);
 
         // Create a copy for "before update" state to track changes
         var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
@@ -312,7 +299,10 @@ public class ProgrammingExerciseUpdateResource {
      * @param buildConfig the existing build config entity to update
      */
     private void updateBuildConfig(UpdateProgrammingExerciseBuildConfigDTO dto, ProgrammingExerciseBuildConfig buildConfig) {
-        if (dto == null || buildConfig == null) {
+        if (dto == null) {
+            return;
+        }
+        if (buildConfig == null) {
             return;
         }
 
@@ -369,7 +359,8 @@ public class ProgrammingExerciseUpdateResource {
         // Check that the exercise exists for given id (with grading criteria and example submissions for re-evaluation)
         var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(exerciseId);
 
-        if (updateDTO.id() == null || exerciseId != updateDTO.id()) {
+        boolean idMismatch = updateDTO.id() == null || exerciseId != updateDTO.id();
+        if (idMismatch) {
             throw new ConflictException("Exercise id in path does not match id in request body", ENTITY_NAME, "idMismatch");
         }
 
@@ -395,14 +386,39 @@ public class ProgrammingExerciseUpdateResource {
     }
 
     /**
-     * Validates that at least one participation mode (online editor, offline IDE, or online IDE) is enabled.
+     * Validates that exactly one of courseId or exerciseGroupId is set.
      */
+    private void validateCourseExerciseGroupIds(UpdateProgrammingExerciseDTO updateDTO) {
+        boolean hasCourseId = updateDTO.courseId() != null;
+        boolean hasGroupId = updateDTO.exerciseGroupId() != null;
+        if (!hasCourseId && !hasGroupId) {
+            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set", ENTITY_NAME, "noCourseOrExerciseGroup");
+        }
+        if (hasCourseId && hasGroupId) {
+            throw new BadRequestAlertException("A programming exercise can only be associated with either a course or an exercise group, not both", ENTITY_NAME,
+                    "bothCourseAndExerciseGroupSet");
+        }
+    }
+
+    /**
+     * Validates that courseId/exerciseGroupId haven't changed from the existing exercise.
+     */
+    private void validateCourseExerciseGroupUnchanged(ProgrammingExercise existing, UpdateProgrammingExerciseDTO updateDTO) {
+        Long existingCourseId = existing.isCourseExercise() ? Optional.ofNullable(existing.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null) : null;
+        Long existingExerciseGroupId = Optional.ofNullable(existing.getExerciseGroup()).map(g -> g.getId()).orElse(null);
+        boolean courseChanged = !Objects.equals(existingCourseId, updateDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateDTO.exerciseGroupId());
+        if (courseChanged) {
+            throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
+        }
+    }
+
     private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
         boolean hasOnlineEditor = Boolean.TRUE.equals(updateDTO.allowOnlineEditor());
         boolean hasOfflineIde = Boolean.TRUE.equals(updateDTO.allowOfflineIde());
         boolean hasOnlineIde = moduleFeatureService.isTheiaEnabled() && updateDTO.allowOnlineIde();
+        boolean hasAnyMode = hasOnlineEditor || hasOfflineIde || hasOnlineIde;
 
-        if (!hasOnlineEditor && !hasOfflineIde && !hasOnlineIde) {
+        if (!hasAnyMode) {
             String message = moduleFeatureService.isTheiaEnabled() ? "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE"
                     : "You need to allow at least one participation mode, the online editor or the offline IDE";
             throw new BadRequestAlertException(message, ENTITY_NAME, "noParticipationModeAllowed");

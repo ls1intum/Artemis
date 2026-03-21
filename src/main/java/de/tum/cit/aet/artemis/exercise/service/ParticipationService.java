@@ -746,10 +746,8 @@ public class ParticipationService {
      * Returns null if the exercise has no due date or if the proposed date is before the exercise due date.
      */
     private ZonedDateTime resolveIndividualDueDate(final ZonedDateTime exerciseDueDate, final ZonedDateTime proposedDate) {
-        if (exerciseDueDate == null || (proposedDate != null && proposedDate.isBefore(exerciseDueDate))) {
-            return null;
-        }
-        return proposedDate;
+        boolean shouldClear = exerciseDueDate == null || (proposedDate != null && proposedDate.isBefore(exerciseDueDate));
+        return shouldClear ? null : proposedDate;
     }
 
     /**

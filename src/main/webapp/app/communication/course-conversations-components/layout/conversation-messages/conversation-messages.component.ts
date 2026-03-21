@@ -282,20 +282,16 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         this.computeLastReadState();
         this.setFirstUnreadPostId();
-        if (this.firstUnreadPostId) {
-            const messageArray = this.messages.toArray();
-            const unreadComponent = messageArray.find((m) => m.post.id === this.firstUnreadPostId);
-            if (unreadComponent?.elementRef?.nativeElement) {
-                requestAnimationFrame(() => {
-                    const offsetTop = unreadComponent.elementRef.nativeElement.offsetTop;
-                    this.content.nativeElement.scrollTop = Math.max(offsetTop - 15, 0);
-                    this.canStartSaving = true;
-                    this.initialScrollComplete = true;
-                });
-                return;
-            }
+        const unreadElement = this.firstUnreadPostId ? this.messages.toArray().find((m) => m.post.id === this.firstUnreadPostId)?.elementRef?.nativeElement : undefined;
+        if (!unreadElement) {
+            this.completeInitialScroll();
+            return;
         }
-        this.completeInitialScroll();
+        requestAnimationFrame(() => {
+            this.content.nativeElement.scrollTop = Math.max(unreadElement.offsetTop - 15, 0);
+            this.canStartSaving = true;
+            this.initialScrollComplete = true;
+        });
     }
 
     /**

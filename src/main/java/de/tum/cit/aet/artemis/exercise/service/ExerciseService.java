@@ -913,7 +913,8 @@ public class ExerciseService {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+        boolean hasLinks = dto.competencyLinks() != null && !dto.competencyLinks().isEmpty();
+        if (!hasLinks) {
             entity.getCompetencyLinks().clear();
             return;
         }
@@ -967,7 +968,8 @@ public class ExerciseService {
      * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
      */
     public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRepositoryApi.isEmpty()) {
+        boolean shouldSkip = competencyLinks == null || competencyLinks.isEmpty() || competencyRepositoryApi.isEmpty();
+        if (shouldSkip) {
             return;
         }
         // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+

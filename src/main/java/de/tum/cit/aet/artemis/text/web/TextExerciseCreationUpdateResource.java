@@ -395,43 +395,32 @@ public class TextExerciseCreationUpdateResource {
      * Replaces the competency links of the given exercise according to PUT semantics.
      */
     private void updateCompetencyLinks(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
+        boolean hasLinks = dto.competencyLinks() != null && !dto.competencyLinks().isEmpty();
+        if (!hasLinks) {
             clearInitializedCollection(exercise.getCompetencyLinks());
             return;
         }
         CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
 
         Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-
         Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
                 .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
 
         Long exerciseCourseId = Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null);
-
-        Set<CompetencyExerciseLink> updated = dto.competencyLinks().stream().map(linkDto -> resolveCompetencyLink(linkDto, existingByCompetencyId, exerciseCourseId, exercise, api))
-                .collect(Collectors.toSet());
+        Set<CompetencyExerciseLink> updated = dto.competencyLinks().stream().map(linkDto -> {
+            Long competencyId = linkDto.courseCompetencyDTO().id();
+            CompetencyExerciseLink existing = existingByCompetencyId.get(competencyId);
+            if (existing != null) {
+                existing.setWeight(linkDto.weight());
+                return existing;
+            }
+            Competency competencyRef = api.loadCompetency(competencyId);
+            competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
+            return new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+        }).collect(Collectors.toSet());
 
         managedLinks.clear();
         managedLinks.addAll(updated);
-    }
-
-    /**
-     * Resolves a single competency link from a DTO, reusing an existing managed link if available.
-     */
-    private CompetencyExerciseLink resolveCompetencyLink(de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO linkDto,
-            Map<Long, CompetencyExerciseLink> existingByCompetencyId, Long exerciseCourseId, TextExercise exercise, CompetencyApi api) {
-        if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-            throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-        }
-        Long competencyId = linkDto.courseCompetencyDTO().id();
-        CompetencyExerciseLink existing = existingByCompetencyId.get(competencyId);
-        if (existing != null) {
-            existing.setWeight(linkDto.weight());
-            return existing;
-        }
-        Competency competencyRef = api.loadCompetency(competencyId);
-        competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-        return new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
     }
 
     /**
