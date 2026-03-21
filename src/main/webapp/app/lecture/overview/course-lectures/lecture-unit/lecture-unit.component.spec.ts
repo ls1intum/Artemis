@@ -35,6 +35,7 @@ describe('LectureUnitComponent', () => {
         fixture = TestBed.createComponent(LectureUnitComponent);
         component = fixture.componentInstance;
 
+        fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('lectureUnit', lectureUnit);
         fixture.componentRef.setInput('showViewIsolatedButton', true);
         fixture.componentRef.setInput('isPresentationMode', false);
