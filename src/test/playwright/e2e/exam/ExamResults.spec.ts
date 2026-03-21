@@ -10,8 +10,6 @@ import { ModelingExerciseAssessmentEditor } from '../../support/pageobjects/asse
 import { ExamParticipationPage } from '../../support/pageobjects/exam/ExamParticipationPage';
 import { ExamNavigationBar } from '../../support/pageobjects/exam/ExamNavigationBar';
 import { ExamStartEndPage } from '../../support/pageobjects/exam/ExamStartEndPage';
-import { CoursesPage } from '../../support/pageobjects/course/CoursesPage';
-import { CourseOverviewPage } from '../../support/pageobjects/course/CourseOverviewPage';
 import { ModelingEditor } from '../../support/pageobjects/exercises/modeling/ModelingEditor';
 import { OnlineEditorPage } from '../../support/pageobjects/exercises/programming/OnlineEditorPage';
 import { MultipleChoiceQuiz } from '../../support/pageobjects/exercises/quiz/MultipleChoiceQuiz';
@@ -85,8 +83,6 @@ test.describe.serial('Exam Results', { tag: '@slow' }, () => {
         const examNavigation = new ExamNavigationBar(page);
         const examStartEnd = new ExamStartEndPage(page);
         const examParticipation = new ExamParticipationPage(
-            new CoursesPage(page),
-            new CourseOverviewPage(page),
             examNavigation,
             examStartEnd,
             new ModelingEditor(page),

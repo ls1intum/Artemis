@@ -2,6 +2,7 @@ import { expect, Page } from '@playwright/test';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
+import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class ProgrammingExerciseOverviewPage {
     private readonly page: Page;
@@ -14,8 +15,8 @@ export class ProgrammingExerciseOverviewPage {
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await Commands.reloadUntilFound(this.page, resultScore, 5000, 120000);
-        await expect(resultScore.getByText(expectedResult)).toBeVisible({ timeout: 30000 });
+        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT * 2);
+        await expect(resultScore).toContainText(expectedResult);
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
@@ -46,10 +47,13 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async getCloneUrl() {
-        return await this.page.locator('.clone-url').innerText();
+        return (await this.page.locator('.clone-url').innerText()).trim();
     }
 
-    async copyCloneUrl() {
+    async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
+        if (cloneMethod !== GitCloneMethod.httpsWithToken) {
+            return await this.getCloneUrl();
+        }
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
         const button = this.getCloneUrlButton();
         // The copy button lives inside the Code popover (autoClose='outside').
@@ -59,8 +63,23 @@ export class ProgrammingExerciseOverviewPage {
         if (!(await button.isVisible())) {
             await this.getCodeButton().click();
         }
-        // Wait for the button to be enabled — starts disabled until VCS access token loads
-        await expect(button).toBeEnabled({ timeout: 10000 });
+        // Wait for the button to be enabled — starts disabled until VCS access token loads.
+        // The token is fetched via an async HTTP call triggered by an effect() in code-button.component.ts.
+        // Under parallel test load, this can take longer than 10s, so use a generous timeout.
+        try {
+            await expect(button).toBeEnabled({ timeout: 30000 });
+        } catch {
+            // For SSH cloning, the copyEnabled signal depends on doesUserHaveSSHkeys() which
+            // is set asynchronously in ngOnInit(). If the Code button was opened before this
+            // check completed, copyEnabled was set to false and never re-evaluated.
+            // Re-opening the popover triggers onClick() → useSshUrl() which re-reads the
+            // now-updated doesUserHaveSSHkeys signal.
+            await this.getCodeButton().click();
+            await this.page.waitForTimeout(500);
+            await this.getCodeButton().click();
+            await this.page.locator('.popover-body').waitFor({ state: 'visible' });
+            await expect(button).toBeEnabled({ timeout: 15000 });
+        }
         await button.click();
         return await this.page.evaluate(async () => {
             return await navigator.clipboard.readText();
