@@ -91,32 +91,17 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     Double findAverageScoreForExercise(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Safely removes the result from all participant scores by setting it to null.
-     * Participant scores that become fully orphaned (both last result and last rated result null)
-     * are deleted immediately, since result deletion uses JPQL DELETE which bypasses the
-     * {@code @PreRemove} entity lifecycle callback on {@link de.tum.cit.aet.artemis.assessment.ResultListener}.
+     * Safely removes the result from all participant scores by setting the reference to null.
+     * The participant score is kept even if both references become null, because the
+     * {@link ParticipantScoreScheduleService} will recalculate it from the remaining results.
      *
      * @param resultId the id of the result to be removed
      * @see ParticipantScoreScheduleService
      */
-    @Transactional // ok because of delete
     default void clearAllByResultId(Long resultId) {
         this.clearLastResultByResultId(resultId);
         this.clearLastRatedResultByResultId(resultId);
-        this.deleteOrphanedParticipantScores();
     }
-
-    /**
-     * Delete participant scores where both last result and last rated result are null.
-     * These are orphaned records that no longer reference any result.
-     */
-    @Transactional // ok because of delete
-    @Modifying
-    @Query("""
-            DELETE FROM ParticipantScore p
-            WHERE p.lastResult IS NULL AND p.lastRatedResult IS NULL
-            """)
-    void deleteOrphanedParticipantScores();
 
     @Query("""
             SELECT MAX(ps.lastModifiedDate) AS latestModifiedDate

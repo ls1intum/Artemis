@@ -52,6 +52,7 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -124,12 +125,15 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
+            @Lazy InstanceMessageSendService instanceMessageSendService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -149,6 +153,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -210,6 +215,13 @@ public class ResultService {
         // A JPQL DELETE bypasses this entirely since all child references are
         // already cleaned up by deleteResultReferences above.
         resultRepository.deleteByResultId(result.getId());
+        // JPQL DELETE bypasses @PreRemove on ResultListener, so we must manually
+        // trigger participant score recalculation here. The scheduler will find
+        // the remaining results and update the participant score accordingly.
+        if (shouldClearParticipantScore && result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation
+                && participation.getParticipant() != null) {
+            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
+        }
     }
 
     /**
