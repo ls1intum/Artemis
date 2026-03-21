@@ -27,7 +27,15 @@ interface SearchState {
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent, GlobalSearchIrisAnswerComponent],
+    imports: [
+        DialogModule,
+        FaIconComponent,
+        ArtemisTranslatePipe,
+        GlobalSearchNavigationViewComponent,
+        GlobalSearchLectureResultsComponent,
+        SearchInputComponent,
+        GlobalSearchIrisAnswerComponent,
+    ],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -265,14 +273,6 @@ export class GlobalSearchModalComponent implements OnDestroy {
         setTimeout(() => {
             this.searchInputComponent()?.focusInput();
         }, 0);
-    }
-
-    protected resetState() {
-        this.overlay.close();
-        this.currentView.set(SearchView.Navigation);
-        this.irisSourceView.set(SearchView.Navigation);
-        this.activeSplitPanel.set('left');
-        this.selectedIndex.set(-1);
     }
 
     @HostListener('window:keydown', ['$event'])
