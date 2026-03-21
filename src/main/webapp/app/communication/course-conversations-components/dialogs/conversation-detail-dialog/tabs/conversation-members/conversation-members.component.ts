@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, OnDestroy, OnInit, inject, input, output, signal } from '@angular/core';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -22,6 +22,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { SelectModule } from 'primeng/select';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SearchQuery {
     searchTerm: string;
@@ -30,7 +32,8 @@ interface SearchQuery {
 @Component({
     selector: 'jhi-conversation-members',
     templateUrl: './conversation-members.component.html',
-    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe],
+    styleUrls: ['./conversation-members.component.scss'],
+    imports: [FaIconComponent, TranslateDirective, FormsModule, ConversationMemberRowComponent, ItemCountComponent, NgbPagination, ArtemisTranslatePipe, SelectModule],
 })
 export class ConversationMembersComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
@@ -73,6 +76,23 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
     private cdr = inject(ChangeDetectorRef);
+    private translateService = inject(TranslateService);
+
+    filterOptions = computed(() => {
+        const options = [
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.allFilter'), value: ConversationMemberSearchFilter.ALL },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.instructorFilter'), value: ConversationMemberSearchFilter.INSTRUCTOR },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.tutorFilter'), value: ConversationMemberSearchFilter.TUTOR },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.studentFilter'), value: ConversationMemberSearchFilter.STUDENT },
+        ];
+        if (isChannelDTO(this.activeConversation()!)) {
+            options.push({
+                label: this.translateService.instant('artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter'),
+                value: ConversationMemberSearchFilter.CHANNEL_MODERATOR,
+            });
+        }
+        return options;
+    });
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;

@@ -4,6 +4,8 @@ import { ChannelIconComponent } from 'app/communication/course-conversations-com
 import { Subject, takeUntil } from 'rxjs';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { SelectButton } from 'primeng/selectbutton';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface ChannelFormData {
     name?: string;
@@ -20,12 +22,17 @@ export const channelRegex = new RegExp('^[a-z0-9-]{1}[a-z0-9:\\-]{0,30}$');
 @Component({
     selector: 'jhi-channel-form',
     templateUrl: './channel-form.component.html',
-    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe],
+    imports: [FormsModule, ReactiveFormsModule, TranslateDirective, ChannelIconComponent, ArtemisTranslatePipe, SelectButton],
 })
 export class ChannelFormComponent implements OnInit, OnDestroy {
     private fb = inject(FormBuilder);
+    private translateService = inject(TranslateService);
 
     private ngUnsubscribe = new Subject<void>();
+
+    visibilityOptions: { label: string; value: boolean }[] = [];
+    scopeOptions: { label: string; value: boolean }[] = [];
+    typeOptions: { label: string; value: boolean }[] = [];
 
     formData: ChannelFormData = {
         name: undefined,
@@ -66,6 +73,18 @@ export class ChannelFormComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
+        this.visibilityOptions = [
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isPublicInput.public'), value: true },
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isPublicInput.private'), value: false },
+        ];
+        this.scopeOptions = [
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.true'), value: true },
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isCourseWideChannelInput.false'), value: false },
+        ];
+        this.typeOptions = [
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.true'), value: true },
+            { label: this.translateService.instant('artemisApp.dialogs.createChannel.channelForm.isAnnouncementChannelInput.false'), value: false },
+        ];
         this.initializeForm();
     }
 

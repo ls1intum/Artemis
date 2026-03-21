@@ -4,21 +4,17 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelService } from 'app/communication/conversations/service/channel.service';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
-import { Subject } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from 'test/helpers/sample/conversationExampleModels';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import { GroupChatDTO, isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
+import { isGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { channelRegex } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { of, throwError } from 'rxjs';
-import { GenericUpdateTextPropertyDialogComponent } from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ConversationInfoComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-info/conversation-info.component';
 import { ConversationService } from 'app/communication/conversations/service/conversation.service';
@@ -59,7 +55,6 @@ examples.forEach((activeConversation) => {
                 providers: [
                     MockProvider(ChannelService),
                     MockProvider(GroupChatService),
-                    MockProvider(DialogService),
                     MockProvider(AlertService),
                     MockProvider(ConversationService),
                     MockProvider(CourseNotificationSettingService),
@@ -136,57 +131,63 @@ examples.forEach((activeConversation) => {
             }
         });
 
-        it('should hide the action buttons if the user is missing the permissions', () => {
+        it('should show editable input when user has permissions', () => {
             if (isChannelDTO(activeConversation)) {
-                checkThatActionButtonOfSectionExistsInTemplate('name');
-                checkThatActionButtonOfSectionExistsInTemplate('topic');
-                checkThatActionButtonOfSectionExistsInTemplate('description');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeTruthy();
+                expect(fixture.nativeElement.querySelector('#topic-input')).toBeTruthy();
+                expect(fixture.nativeElement.querySelector('#description-input')).toBeTruthy();
 
                 canChangeChannelProperties.mockReturnValue(false);
                 fixture.changeDetectorRef.detectChanges();
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('name');
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('topic');
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('description');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeFalsy();
+                expect(fixture.nativeElement.querySelector('#topic-input')).toBeFalsy();
+                expect(fixture.nativeElement.querySelector('#description-input')).toBeFalsy();
             }
 
             if (isGroupChatDTO(activeConversation)) {
-                checkThatActionButtonOfSectionExistsInTemplate('name');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeTruthy();
                 canChangeGroupChatProperties.mockReturnValue(false);
                 fixture.changeDetectorRef.detectChanges();
-                checkThatActionButtonOfSectionDoesNotExistInTemplate('name');
+                expect(fixture.nativeElement.querySelector('#name-input')).toBeFalsy();
             }
         });
 
-        it('should open the edit name dialog when the respective action button is clicked', () => {
+        it('should auto-save name after debounce', () => {
             if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
-                genericEditPropertyDialogTest('name', {
-                    propertyName: 'name',
-                    maxPropertyLength: 20,
-                    isRequired: true,
-                    regexPattern: channelRegex,
-                });
+                component.onNameInput('new-name');
+                expect(component.saveStatus()).toBe('unsaved');
+                vi.advanceTimersByTime(1000);
+
+                if (isChannelDTO(activeConversation)) {
+                    expect(updateChannelSpy).toHaveBeenCalled();
+                } else {
+                    expect(updateGroupChatSpy).toHaveBeenCalled();
+                }
             }
         });
 
-        it('should open the edit topic dialog when the respective action button is clicked', () => {
+        it('should auto-save topic after debounce', () => {
             if (isChannelDTO(activeConversation)) {
-                genericEditPropertyDialogTest('topic', {
-                    propertyName: 'topic',
-                    maxPropertyLength: 250,
-                    isRequired: false,
-                    regexPattern: undefined,
-                });
+                component.onTopicInput('new topic');
+                vi.advanceTimersByTime(1000);
+                expect(updateChannelSpy).toHaveBeenCalled();
             }
         });
 
-        it('should open the edit description dialog when the respective action button is clicked', () => {
+        it('should auto-save description after debounce', () => {
             if (isChannelDTO(activeConversation)) {
-                genericEditPropertyDialogTest('description', {
-                    propertyName: 'description',
-                    maxPropertyLength: 250,
-                    isRequired: false,
-                    regexPattern: undefined,
-                });
+                component.onDescriptionInput('new description');
+                vi.advanceTimersByTime(1000);
+                expect(updateChannelSpy).toHaveBeenCalled();
+            }
+        });
+
+        it('should not auto-save name if validation fails', () => {
+            if (isChannelDTO(activeConversation) || isGroupChatDTO(activeConversation)) {
+                component.onNameInput('INVALID NAME');
+                vi.advanceTimersByTime(1000);
+                expect(updateChannelSpy).not.toHaveBeenCalled();
+                expect(updateGroupChatSpy).not.toHaveBeenCalled();
             }
         });
 
@@ -196,12 +197,12 @@ examples.forEach((activeConversation) => {
 
         it('should emit correct mute state on toggle with debounce logic', () => {
             activeConversation.isMuted = false;
-            component.onMuteToggle();
+            component.onMuteOptionChange(true);
             vi.advanceTimersByTime(100);
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, true);
 
             activeConversation.isMuted = true;
-            component.onMuteToggle();
+            component.onMuteOptionChange(false);
             vi.advanceTimersByTime(100);
             expect(updateIsMutedSpy).toHaveBeenCalledWith(course.id, activeConversation.id, false);
         });
@@ -217,7 +218,7 @@ examples.forEach((activeConversation) => {
         it('should handle errors when toggling mute state', () => {
             updateIsMutedSpy.mockReturnValue(throwError(() => new Error('Test error')));
             const onErrorSpy = vi.spyOn(globalUtils, 'onError');
-            component.onMuteToggle();
+            component.onMuteOptionChange(true);
             vi.advanceTimersByTime(100);
             expect(onErrorSpy).toHaveBeenCalled();
         });
@@ -238,8 +239,8 @@ examples.forEach((activeConversation) => {
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
 
-            const toggle = fixture.nativeElement.querySelector('#muteSwitch') as HTMLInputElement;
-            expect(toggle.checked).toBe(false);
+            const muteSelectButton = fixture.nativeElement.querySelector('#muteSelectButton');
+            expect(muteSelectButton).toBeTruthy();
         });
 
         it('should show disabled notification message when course notifications are disabled', () => {
@@ -257,7 +258,7 @@ examples.forEach((activeConversation) => {
 
             activeConversation.isMuted = false;
             component['loadNotificationSettings']();
-            vi.advanceTimersByTime(0); // Wait for the service response to be processed
+            vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeFalsy();
@@ -279,15 +280,15 @@ examples.forEach((activeConversation) => {
 
             activeConversation.isMuted = true;
             component['loadNotificationSettings']();
-            vi.advanceTimersByTime(0); // Wait for the service response to be processed
+            vi.advanceTimersByTime(0);
             fixture.changeDetectorRef.detectChanges();
 
             expect(component.isNotificationsEnabled).toBeTruthy();
             const desc = fixture.nativeElement.querySelector('#notification-section .text-muted');
             expect(desc).toBeTruthy();
 
-            const toggle = fixture.nativeElement.querySelector('#muteSwitch') as HTMLInputElement;
-            expect(toggle.checked).toBe(true);
+            const muteSelectButton = fixture.nativeElement.querySelector('#muteSelectButton');
+            expect(muteSelectButton).toBeTruthy();
         });
 
         it('should show error if loadNotificationSettings fails', () => {
@@ -325,6 +326,7 @@ examples.forEach((activeConversation) => {
                 vi.advanceTimersByTime(0);
 
                 expect(alertService.error).toHaveBeenCalledWith('error.http.400');
+                expect(component.saveStatus()).toBe('unsaved');
             }
         });
 
@@ -372,18 +374,21 @@ examples.forEach((activeConversation) => {
                 vi.advanceTimersByTime(0);
 
                 expect(alertService.error).toHaveBeenCalledWith('error.http.400');
+                expect(component.saveStatus()).toBe('unsaved');
             }
         });
 
-        function checkThatActionButtonOfSectionExistsInTemplate(sectionName: string) {
-            const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
-            expect(actionButtonElement).toBeTruthy();
-        }
+        it('should set save status to saved after successful update', () => {
+            if (isChannelDTO(activeConversation)) {
+                component.onNameInput('new-name');
+                vi.advanceTimersByTime(1000);
+                expect(component.saveStatus()).toBe('saved');
 
-        function checkThatActionButtonOfSectionDoesNotExistInTemplate(sectionName: string) {
-            const actionButtonElement = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
-            expect(actionButtonElement).toBeFalsy();
-        }
+                // Auto-reset to idle after 2s
+                vi.advanceTimersByTime(2000);
+                expect(component.saveStatus()).toBe('idle');
+            }
+        });
 
         function checkThatSectionExistsInTemplate(sectionName: string) {
             const section = fixture.debugElement.nativeElement.querySelector(`#${sectionName}-section`);
@@ -393,44 +398,6 @@ examples.forEach((activeConversation) => {
         function checkThatSectionDoesNotExistInTemplate(sectionName: string) {
             const section = fixture.debugElement.nativeElement.querySelector(`#${sectionName}-section`);
             expect(section).toBeFalsy();
-        }
-
-        function genericEditPropertyDialogTest(sectionName: string, expectedComponentInstance: any) {
-            const button = fixture.nativeElement.querySelector(`#${sectionName}-section .action-button`);
-            const dialogService = TestBed.inject(DialogService);
-            const mockOnClose = new Subject<any>();
-            const mockDialogRef = {
-                onClose: mockOnClose.asObservable(),
-                close: vi.fn(),
-            };
-            const openDialogSpy = vi.spyOn(dialogService, 'open').mockReturnValue(mockDialogRef as unknown as DynamicDialogRef);
-            fixture.changeDetectorRef.detectChanges();
-
-            button.click();
-            mockOnClose.next('updated');
-            mockOnClose.complete();
-            vi.advanceTimersByTime(0);
-
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(GenericUpdateTextPropertyDialogComponent, expect.anything());
-
-                if (isGroupChatDTO(activeConversation)) {
-                    const expectedUpdateDTO = new GroupChatDTO();
-                    (expectedUpdateDTO as any)[expectedComponentInstance['propertyName']] = 'updated';
-                    expect(updateGroupChatSpy).toHaveBeenCalledOnce();
-                    expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
-                }
-
-                if (isChannelDTO(activeConversation)) {
-                    const expectedUpdateDTO = new ChannelDTO();
-                    (expectedUpdateDTO as any)[expectedComponentInstance['propertyName']] = 'updated';
-                    expect(updateChannelSpy).toHaveBeenCalledOnce();
-                    expect(updateChannelSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
-                }
-
-                expect((activeConversation as any)[expectedComponentInstance['propertyName']]).toBe('updated');
-            });
         }
     });
 });

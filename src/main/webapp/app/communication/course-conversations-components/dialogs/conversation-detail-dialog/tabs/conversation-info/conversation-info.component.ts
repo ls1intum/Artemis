@@ -1,14 +1,8 @@
-import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, input, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { ChannelDTO, getAsChannelDTO, isChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { getUserLabel } from 'app/communication/course-conversations-components/other/conversation.util';
 import { Course } from 'app/core/course/shared/entities/course.model';
-import { DialogService } from 'primeng/dynamicdialog';
-import { get } from 'lodash-es';
-import {
-    GenericUpdateTextPropertyDialogComponent,
-    GenericUpdateTextPropertyTranslationKeys,
-} from 'app/communication/course-conversations-components/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
 import { Subject, debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,20 +20,27 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarPlus, faUser, faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
+import { SelectButton } from 'primeng/selectbutton';
+import { TranslateService } from '@ngx-translate/core';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { RouterLink } from '@angular/router';
+import { InputTextModule } from 'primeng/inputtext';
+import { TextareaModule } from 'primeng/textarea';
 
 @Component({
     selector: 'jhi-conversation-info',
     templateUrl: './conversation-info.component.html',
     styleUrls: ['./conversation-info.component.scss'],
-    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent, RouterLink],
+    imports: [TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, CommonModule, FormsModule, FaIconComponent, RouterLink, SelectButton, InputTextModule, TextareaModule],
 })
 export class ConversationInfoComponent implements OnInit, OnDestroy {
     private ngUnsubscribe = new Subject<void>();
     private mute$ = new Subject<boolean>();
+    private nameChange$ = new Subject<string>();
+    private topicChange$ = new Subject<string>();
+    private descriptionChange$ = new Subject<string>();
 
     isGroupChat = isGroupChatDTO;
     isChannel = isChannelDTO;
@@ -47,6 +48,33 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     getUserLabel = getUserLabel;
     canChangeChannelProperties = canChangeChannelProperties;
     canChangeGroupChatProperties = canChangeGroupChatProperties;
+
+    // Inline editing state
+    editableName = signal('');
+    editableTopic = signal('');
+    editableDescription = signal('');
+    saveStatus = signal<'idle' | 'unsaved' | 'saving' | 'saved'>('idle');
+
+    nameError = computed(() => {
+        const name = this.editableName();
+        if (!name || name.trim().length === 0) {
+            return 'required';
+        }
+        if (name.length > 20) {
+            return 'maxLength';
+        }
+        if (!channelRegex.test(name)) {
+            return 'pattern';
+        }
+        return undefined;
+    });
+
+    canEditName(): boolean {
+        if (this.readOnlyMode) return false;
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
+        if (!channelOrGroupChat) return false;
+        return isChannelDTO(channelOrGroupChat) ? this.canChangeChannelProperties(channelOrGroupChat) : this.canChangeGroupChatProperties(channelOrGroupChat);
+    }
 
     getAsChannelOrGroupChat(conversation: ConversationDTO): ChannelDTO | GroupChatDTO | undefined {
         return getAsChannelDTO(conversation) || getAsGroupChatDTO(conversation);
@@ -62,25 +90,47 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
 
     private channelService = inject(ChannelService);
     private groupChatService = inject(GroupChatService);
-    private dialogService = inject(DialogService);
     private alertService = inject(AlertService);
     private conversationService = inject(ConversationService);
     private courseNotificationSettingService = inject(CourseNotificationSettingService);
+    private translateService = inject(TranslateService);
 
     readOnlyMode = false;
     notificationSettings?: CourseNotificationSettingInfo;
     isNotificationsEnabled = false;
 
+    muteOptions: { label: string; value: boolean }[] = [];
+
     protected readonly faVolumeXmark = faVolumeXmark;
+    protected readonly faCalendarPlus = faCalendarPlus;
+    protected readonly faUser = faUser;
 
     ngOnInit(): void {
+        this.muteOptions = [
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.infoTab.unmuted'), value: false },
+            { label: this.translateService.instant('artemisApp.dialogs.conversationDetail.infoTab.muted'), value: true },
+        ];
         if (this.activeConversation()) {
             if (getAsChannelDTO(this.activeConversation())) {
                 this.readOnlyMode = !!getAsChannelDTO(this.activeConversation())?.isArchived;
             }
         }
+        this.initEditableValues();
         this.loadNotificationSettings();
         this.updateConversationIsMuted();
+        this.setupAutoSave();
+    }
+
+    private initEditableValues() {
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation());
+        if (channelOrGroupChat) {
+            this.editableName.set(channelOrGroupChat.name ?? '');
+        }
+        const channel = getAsChannelDTO(this.activeConversation());
+        if (channel) {
+            this.editableTopic.set(channel.topic ?? '');
+            this.editableDescription.set(channel.description ?? '');
+        }
     }
 
     ngOnDestroy() {
@@ -92,109 +142,54 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         this.changesPerformed.emit();
     }
 
-    openEditNameModal(event: MouseEvent) {
-        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation()!);
-        if (!channelOrGroupChat) {
-            return;
-        }
-
-        const keys = {
-            labelKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.label',
-            titleKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.label',
-            helpKey: '',
-            maxLengthErrorKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError',
-            requiredErrorKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError',
-            regexErrorKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError',
-        };
-
-        event.stopPropagation();
-        this.openEditPropertyDialog(channelOrGroupChat, 'name', 20, true, channelRegex, keys);
+    onNameInput(value: string) {
+        this.editableName.set(value);
+        this.saveStatus.set('unsaved');
+        this.nameChange$.next(value);
     }
 
-    openEditTopicModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation());
-        if (!channel) {
-            return;
-        }
-
-        const keys = {
-            labelKey: 'artemisApp.dialogs.editChannelTopic.topicInput.label',
-            titleKey: 'artemisApp.dialogs.editChannelTopic.topicInput.topicHelp',
-            helpKey: 'artemisApp.dialogs.editChannelTopic.topicInput.topicHelp',
-            maxLengthErrorKey: 'artemisApp.dialogs.editChannelTopic.topicInput.maxLengthValidationError',
-            requiredErrorKey: '',
-            regexErrorKey: '',
-        };
-
-        event.stopPropagation();
-        this.openEditPropertyDialog(channel, 'topic', 250, false, undefined, keys);
+    onTopicInput(value: string) {
+        this.editableTopic.set(value);
+        this.saveStatus.set('unsaved');
+        this.topicChange$.next(value);
     }
 
-    openDescriptionTopicModal(event: MouseEvent) {
-        const channel = getAsChannelDTO(this.activeConversation());
-        if (!channel) {
-            return;
-        }
-
-        const keys = {
-            labelKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label',
-            titleKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label',
-            helpKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp',
-            maxLengthErrorKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError',
-            requiredErrorKey: '',
-            regexErrorKey: '',
-        };
-
-        event.stopPropagation();
-        this.openEditPropertyDialog(channel, 'description', 250, false, undefined, keys);
+    onDescriptionInput(value: string) {
+        this.editableDescription.set(value);
+        this.saveStatus.set('unsaved');
+        this.descriptionChange$.next(value);
     }
 
-    private openEditPropertyDialog(
-        channelOrGroupChat: ChannelDTO | GroupChatDTO,
-        propertyName: string,
-        maxLength: number,
-        isRequired: boolean,
-        regexPattern: RegExp | undefined,
-        translationKeys: GenericUpdateTextPropertyTranslationKeys,
-    ) {
-        const property = get(channelOrGroupChat, propertyName);
-        const initialValue = property && typeof property === 'string' && property.length > 0 ? property : undefined;
-
-        const ref = this.dialogService.open(GenericUpdateTextPropertyDialogComponent, {
-            width: '50rem',
-            modal: true,
-            closable: true,
-            closeOnEscape: true,
-            showHeader: false,
-            styleClass: 'second-layer-modal-bg',
-            data: {
-                propertyName,
-                maxPropertyLength: maxLength,
-                translationKeys,
-                isRequired,
-                regexPattern,
-                initialValue,
-            },
+    private setupAutoSave() {
+        this.nameChange$.pipe(debounceTime(1000), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+            this.autoSaveProperty('name', value);
         });
 
-        ref?.onClose
-            .pipe(
-                filter((newValue) => newValue !== undefined),
-                takeUntil(this.ngUnsubscribe),
-            )
-            .subscribe((newValue: string) => {
-                let updateValue: string;
-                if (newValue && newValue.trim().length > 0) {
-                    updateValue = newValue.trim();
-                } else {
-                    updateValue = '';
-                }
-                if (isChannelDTO(channelOrGroupChat)) {
-                    this.updateChannel(channelOrGroupChat, propertyName as keyof ChannelDTO, updateValue);
-                } else {
-                    this.updateGroupChat(channelOrGroupChat, propertyName as keyof GroupChatDTO, updateValue);
-                }
-            });
+        this.topicChange$.pipe(debounceTime(1000), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+            this.autoSaveProperty('topic', value);
+        });
+
+        this.descriptionChange$.pipe(debounceTime(1000), distinctUntilChanged(), takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+            this.autoSaveProperty('description', value);
+        });
+    }
+
+    autoSaveProperty(propertyName: string, value: string) {
+        if (propertyName === 'name' && this.nameError()) {
+            return;
+        }
+
+        const trimmedValue = value.trim();
+        const channelOrGroupChat = this.getAsChannelOrGroupChat(this.activeConversation()!);
+        if (!channelOrGroupChat) return;
+
+        this.saveStatus.set('saving');
+
+        if (isChannelDTO(channelOrGroupChat)) {
+            this.updateChannel(channelOrGroupChat, propertyName as keyof ChannelDTO, trimmedValue);
+        } else {
+            this.updateGroupChat(channelOrGroupChat, propertyName as keyof GroupChatDTO, trimmedValue);
+        }
     }
 
     private updateGroupChat<K extends keyof GroupChatDTO>(groupChat: GroupChatDTO, propertyName: K, updateValue: GroupChatDTO[K]) {
@@ -214,9 +209,13 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (updatedGroupChat: GroupChatDTO) => {
                     groupChat[propertyName] = updatedGroupChat[propertyName];
+                    this.markSaved();
                     this.onChangePerformed();
                 },
-                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+                error: (errorResponse: HttpErrorResponse) => {
+                    this.saveStatus.set('unsaved');
+                    onError(this.alertService, errorResponse);
+                },
             });
     }
 
@@ -236,9 +235,11 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (updatedChannel: ChannelDTO) => {
                     channel[propertyName] = updatedChannel[propertyName];
+                    this.markSaved();
                     this.onChangePerformed();
                 },
                 error: (errorResponse: HttpErrorResponse) => {
+                    this.saveStatus.set('unsaved');
                     if (errorResponse.error?.skipAlert) {
                         onError(this.alertService, errorResponse);
                     }
@@ -246,9 +247,22 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
             });
     }
 
+    private markSaved() {
+        this.saveStatus.set('saved');
+        setTimeout(() => {
+            if (this.saveStatus() === 'saved') {
+                this.saveStatus.set('idle');
+            }
+        }, 2000);
+    }
+
     onMuteToggle(): void {
         const currentMuted = this.activeConversation()?.isMuted ?? false;
         this.mute$.next(!currentMuted);
+    }
+
+    onMuteOptionChange(value: boolean): void {
+        this.mute$.next(value);
     }
 
     private updateConversationIsMuted() {

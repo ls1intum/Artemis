@@ -11,6 +11,7 @@ import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { SelectButton } from 'primeng/selectbutton';
 
 describe('ChannelFormComponent', () => {
     setupTestBed({ zoneless: true });
@@ -32,6 +33,7 @@ describe('ChannelFormComponent', () => {
                 MockComponent(ChannelIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(TranslateDirective),
+                SelectButton,
             ],
             providers: [
                 { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },

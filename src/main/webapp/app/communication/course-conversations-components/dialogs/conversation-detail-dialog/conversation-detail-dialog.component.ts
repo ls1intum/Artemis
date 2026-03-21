@@ -27,6 +27,7 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
+    styleUrls: ['./conversation-detail-dialog.component.scss'],
     imports: [
         ChannelIconComponent,
         FaIconComponent,

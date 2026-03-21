@@ -30,6 +30,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConversationMembersComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/tabs/conversation-members/conversation-members.component';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { SelectModule } from 'primeng/select';
 
 const examples: ConversationDTO[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({} as ChannelDTO)];
 
@@ -54,6 +55,7 @@ examples.forEach((activeConversation) => {
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(ItemCountComponent),
                     MockDirective(TranslateDirective),
+                    SelectModule,
                 ],
                 providers: [
                     MockProvider(ConversationService),
@@ -131,11 +133,9 @@ examples.forEach((activeConversation) => {
             vi.advanceTimersByTime(301);
             searchMembersOfConversationSpy.mockClear();
 
-            const searchFilter = fixture.debugElement.nativeElement.querySelector('#searchFilter');
-            searchFilter.value = ConversationMemberSearchFilter.INSTRUCTOR;
-            searchFilter.dispatchEvent(new Event('change'));
+            component.onFilterChange(ConversationMemberSearchFilter.INSTRUCTOR);
             vi.advanceTimersByTime(301);
-            expect(component.selectedFilter).toEqual('' + ConversationMemberSearchFilter.INSTRUCTOR);
+            expect(component.selectedFilter).toEqual(ConversationMemberSearchFilter.INSTRUCTOR);
             expectSearchPerformed('', ConversationMemberSearchFilter.INSTRUCTOR);
         });
 
