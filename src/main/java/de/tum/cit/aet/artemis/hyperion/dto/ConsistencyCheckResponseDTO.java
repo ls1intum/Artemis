@@ -14,7 +14,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
  * The {@code issues} field uses a bare {@code @JsonInclude} (no explicit value = ALWAYS) to ensure an empty list
  * is always serialized as {@code "issues": []}, allowing evaluation scripts to correctly count false negatives.
  */
-@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
 @Schema(description = "Response containing consistency check results")
 public record ConsistencyCheckResponseDTO(
 
