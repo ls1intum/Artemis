@@ -1,0 +1,273 @@
+import Callout from "../../src/components/Callout/Callout";
+import {CalloutVariant} from "../../src/components/Callout/Callout.types";
+
+# Keycloak SAML2 Setup
+
+This guide explains how to set up Keycloak as a SAML2 Identity Provider (IdP) for local development with Artemis.
+The provided Keycloak configuration includes a preconfigured `artemis` realm with SAML2 client settings, attribute mappers, and test users.
+
+<Callout variant={CalloutVariant.info}>
+    This setup is only needed when developing or testing SAML2 authentication features.
+    If you don't need SAML2 functionality, you can skip this setup.
+</Callout>
+
+---
+
+## Prerequisites
+
+- **Docker** and **Docker Compose** installed on your machine
+- **OpenSSL** installed (for generating signing credentials)
+
+---
+
+## Step 1: Start Keycloak
+
+```bash
+docker compose -f docker/saml-test.yml up -d
+```
+
+This starts Keycloak with the following configuration:
+
+| Service        | Port | Description                     |
+|----------------|------|---------------------------------|
+| Admin Console  | 9080 | Keycloak admin UI               |
+| SAML Endpoint  | 9080 | SAML2 protocol endpoint         |
+
+Verify Keycloak is running by opening the admin console:
+
+```
+http://localhost:9080
+```
+
+Login with `admin` / `admin`.
+
+---
+
+## Step 2: Generate SAML2 Signing Credentials
+
+Spring Security requires signing credentials for the SAML2 relying party registration, even if the IdP does not require signed authentication requests.
+
+Generate a self-signed certificate and private key:
+
+```bash
+# Generate a self-signed certificate and RSA private key
+openssl req -x509 -newkey rsa:2048 -keyout saml-key.pem -out saml-cert.crt -days 365 -nodes -subj "/CN=artemis"
+
+# Convert the private key to PKCS#8 format (required by Spring Security)
+openssl pkcs8 -topk8 -inform PEM -outform PEM -nocrypt -in saml-key.pem -out saml-key-pkcs8.pem
+```
+
+Find the absolute paths to the generated files (needed for the configuration):
+
+```bash
+# Unix/macOS
+realpath saml-key-pkcs8.pem saml-cert.crt
+```
+
+<Callout variant={CalloutVariant.warning}>
+    Keep these files outside of version control. The generated key and certificate are for local development only.
+</Callout>
+
+---
+
+## Step 3: Configure Artemis
+
+### Add the `saml2` Spring Profile
+
+Add `saml2` to the active Spring profiles in your IntelliJ run configuration or as an environment variable:
+
+```bash
+SPRING_PROFILES_ACTIVE=artemis,scheduling,core,dev,local,saml2
+```
+
+<Callout variant={CalloutVariant.warning}>
+    Do **not** set `spring.profiles.active` inside `application-local.yml`.
+    Spring Boot does not allow setting active profiles from within a profile-specific configuration file, and the application will fail to start.
+</Callout>
+
+### Add SAML2 Configuration to `application-local.yml`
+
+Add the following to `src/main/resources/config/application-local.yml`.
+
+**When accessing Artemis at `http://localhost:8080`** (direct Spring Boot, or `./gradlew bootRun`):
+
+```yaml
+spring:
+    security:
+        saml2:
+            relyingparty:
+                registration:
+                    keycloak:
+                        entity-id: artemis
+                        signing:
+                            credentials:
+                                - private-key-location: file:<ABSOLUTE_PATH>/saml-key-pkcs8.pem
+                                  certificate-location: file:<ABSOLUTE_PATH>/saml-cert.crt
+                        assertingparty:
+                            metadata-uri: http://localhost:9080/realms/artemis/protocol/saml/descriptor
+
+saml2:
+    username-pattern: 'saml2-{first_name}_{last_name}'
+    first-name-pattern: '{first_name}'
+    last-name-pattern: '{last_name}'
+    email-pattern: '{email}'
+    registration-number-pattern: '{uid}'
+    identity-providers:
+        - metadata: http://localhost:9080/realms/artemis/protocol/saml/descriptor
+          registration-id: keycloak
+          entity-id: artemis
+
+info.saml2:
+    buttonLabel: 'SAML2 Login'
+    passwordLoginDisabled: false
+    enablePassword: true
+```
+
+Replace `<ABSOLUTE_PATH>` with the actual absolute path from `realpath` in Step 2.
+
+<Callout variant={CalloutVariant.info}>
+    The `entity-id: artemis` must match the client ID configured in the Keycloak realm (`artemis`).
+    Without this, Spring Security generates a default entity ID based on the application URL, which Keycloak will reject with an **"Invalid Request"** error.
+</Callout>
+
+### Angular Dev Server (port 9000)
+
+When using `npm start` (Angular dev server on port 9000), the SAML2 paths must be proxied to the Spring Boot backend. The proxy configuration in `proxy.conf.mjs` must include `/saml2/` and `/login/saml2/` — these are already configured in the project.
+
+The Keycloak realm also needs `http://localhost:9000/login/saml2/sso/keycloak` as an allowed redirect URI. This is preconfigured in the provided `artemis-realm.json`.
+
+<Callout variant={CalloutVariant.info}>
+    The SAML2 configuration in `application-local.yml` is the same regardless of whether you access
+    Artemis via port 8080 or port 9000. The Spring Boot server always runs on port 8080 — the Angular
+    dev server on port 9000 simply proxies requests to it.
+</Callout>
+
+---
+
+## Containerized Artemis Setup
+
+When running Artemis as a Docker container, combine the SAML2 compose file with your Artemis compose file:
+
+```bash
+docker compose -f docker/artemis-dev-mysql.yml -f docker/saml-test.yml up
+```
+
+Then uncomment the `artemis-app` service section in `docker/saml-test.yml` to mount the SAML2 configuration into the Artemis container:
+
+```yaml
+artemis-app:
+    volumes:
+        - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
+```
+
+You also need to add `saml2` to the `SPRING_PROFILES_ACTIVE` environment variable in your Artemis compose configuration.
+
+<Callout variant={CalloutVariant.warning}>
+    The containerized setup still requires signing credentials. Generate them as described in [Step 2](#step-2-generate-saml2-signing-credentials),
+    then uncomment and update the `signing.credentials` section in `docker/saml-test/application-saml2.yml` with the paths where the credentials
+    are mounted inside the container.
+</Callout>
+
+<Callout variant={CalloutVariant.info}>
+    The containerized setup uses `keycloak:9080` as the metadata URL (Docker's internal DNS) instead of `localhost:9080`.
+    This is already configured in `docker/saml-test/application-saml2.yml`.
+</Callout>
+
+---
+
+## Step 4: Test the SAML2 Login
+
+1. Start Keycloak: `docker compose -f docker/saml-test.yml up -d`
+2. Start Artemis with the `saml2` profile and the configuration above
+3. Open Artemis in your browser
+4. Click **"SAML2 Login"** on the login page
+5. Authenticate with a test user:
+    - `saml2user1` / `password`
+    - `saml2user2` / `password`
+6. You should be redirected back to Artemis and logged in
+
+---
+
+## Keycloak Admin Console
+
+The Keycloak admin console is available at `http://localhost:9080` (credentials: `admin` / `admin`).
+
+The preconfigured `artemis` realm includes:
+
+| Item              | Details                                                    |
+|-------------------|------------------------------------------------------------|
+| SAML Client       | Client ID: `artemis`                                       |
+| Test Users        | `saml2user1` / `password`, `saml2user2` / `password`       |
+| Attribute Mappers | `first_name`, `last_name`, `email`, `uid`                  |
+| Allowed Redirects | `http://localhost:8080/...` and `http://localhost:9000/...` |
+
+---
+
+## Troubleshooting
+
+### "Invalid Request" on Keycloak Login Page
+
+This usually means the SAML entity ID sent by Artemis does not match the client ID in Keycloak.
+
+**Fix:** Ensure `entity-id: artemis` is set in the Spring Security registration config (under `spring.security.saml2.relyingparty.registration.keycloak`).
+
+### "Invalid redirect uri" on Keycloak Login Page
+
+Keycloak is rejecting the Assertion Consumer Service (ACS) URL because it is not in the allowed redirect URIs list.
+
+**Fix:** The preconfigured realm allows both `localhost:8080` and `localhost:9000`. If you changed the port, update the redirect URIs in the Keycloak admin console: **Realm: artemis → Clients → artemis → Valid Redirect URIs**.
+
+<Callout variant={CalloutVariant.info}>
+    The Keycloak realm is imported from `docker/saml-test/artemis-realm.json` only when the container is **first created**.
+    If you modify the realm JSON, you must **recreate** the container (not just restart it) for changes to take effect:
+
+    ```bash
+    docker compose -f docker/saml-test.yml down
+    docker compose -f docker/saml-test.yml up -d
+    ```
+</Callout>
+
+### "Signing credentials must not be empty" on Artemis Startup
+
+Spring Security requires signing credentials for the SAML2 relying party registration.
+
+**Fix:** Generate the signing credentials as described in [Step 2](#step-2-generate-saml2-signing-credentials) and add the `signing.credentials` section to your `application-local.yml`.
+
+### "Private key location does not exist" on Artemis Startup
+
+The file path in `private-key-location` is incorrect or the file does not exist.
+
+**Fix:** Use `realpath saml-key-pkcs8.pem` to find the correct absolute path. The path must be prefixed with `file:` (e.g., `file:/Users/you/project/saml-key-pkcs8.pem`).
+
+### "spring.profiles.active is invalid in a profile-specific resource" on Startup
+
+You have `spring.profiles.active` set inside `application-local.yml`, which Spring Boot does not allow in profile-specific files.
+
+**Fix:** Remove `spring.profiles.active` from `application-local.yml` and set the profiles via your IntelliJ run configuration or the `SPRING_PROFILES_ACTIVE` environment variable instead.
+
+### SAML2 Login Button Clicks but Nothing Happens (401)
+
+The browser stays on the Artemis login page after clicking "SAML2 Login".
+
+**Fix (Angular dev server):** Ensure the proxy config in `proxy.conf.mjs` includes `/saml2/` and `/login/saml2/`. Restart `npm start` after changes.
+
+### Container Logs
+
+Check Keycloak logs for errors:
+
+```bash
+docker compose -f docker/saml-test.yml logs keycloak
+```
+
+### Resetting the Keycloak Realm
+
+To completely reset the Keycloak configuration and re-import the realm:
+
+```bash
+docker compose -f docker/saml-test.yml down -v
+docker compose -f docker/saml-test.yml up -d
+```
+
+<Callout variant={CalloutVariant.warning}>
+    The `-v` flag removes the Keycloak data volume. Any manual changes made via the admin console will be lost.
+</Callout>
