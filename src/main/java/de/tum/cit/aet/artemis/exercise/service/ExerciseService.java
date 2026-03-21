@@ -989,9 +989,10 @@ public class ExerciseService {
         Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
         for (CompetencyExerciseLink link : competencyLinks) {
             CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
-            if (managedCompetency != null) {
-                resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
+            if (managedCompetency == null) {
+                throw new BadRequestAlertException("Competency with id " + link.getCompetency().getId() + " not found", "exercise", "competencyNotFound");
             }
+            resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
         }
         exercise.setCompetencyLinks(resolvedLinks);
     }
