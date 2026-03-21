@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -15,7 +16,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
+import de.tum.cit.aet.artemis.assessment.repository.LongFeedbackTextRepository;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
@@ -44,6 +48,12 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private ResultService resultService;
+
+    @Autowired
+    private FeedbackRepository feedbackRepository;
+
+    @Autowired
+    private LongFeedbackTextRepository longFeedbackTextRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationTestRepository participationRepository;
@@ -266,5 +276,48 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
         assertThat(expectedFeedbacks).hasSize(3);
         assertThat(resultService.filterFeedbackForClient(result)).containsExactlyInAnyOrderElementsOf(expectedFeedbacks);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteResultWithFeedback_shouldNotViolateForeignKeyConstraint() {
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+
+        assertThat(result.getFeedbacks()).isNotEmpty();
+
+        // This should not throw a FK constraint violation
+        resultService.deleteResult(result, true);
+
+        assertThat(resultRepository.findById(result.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteResultWithFeedbackAndLongFeedbackText_shouldNotViolateForeignKeyConstraint() {
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
+
+        // Create feedback with associated long feedback text
+        Feedback feedback = new Feedback();
+        feedback.setDetailText("short text");
+        feedback.setHasLongFeedbackText(true);
+        feedback = feedbackRepository.save(feedback);
+
+        LongFeedbackText longFeedbackText = new LongFeedbackText();
+        longFeedbackText.setFeedback(feedback);
+        longFeedbackText.setText("This is a very long feedback text that exceeds the normal limit");
+        longFeedbackTextRepository.save(longFeedbackText);
+
+        feedback.setLongFeedbackText(Set.of(longFeedbackText));
+        result.addFeedback(feedback);
+        result = resultRepository.save(result);
+
+        assertThat(result.getFeedbacks()).hasSize(1);
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedback.getId())).isPresent();
+
+        // This should not throw a FK constraint violation
+        resultService.deleteResult(result, true);
+
+        assertThat(resultRepository.findById(result.getId())).isEmpty();
     }
 }
