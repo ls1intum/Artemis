@@ -25,6 +25,7 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.ExerciseWeaviateDTO;
 import de.tum.cit.aet.artemis.globalsearch.exception.WeaviateException;
+import io.weaviate.client6.v1.api.collections.WeaviateObject;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -40,8 +41,11 @@ public class ExerciseWeaviateService {
 
     private final WeaviateService weaviateService;
 
+    private final boolean useHybridSearch;
+
     public ExerciseWeaviateService(WeaviateService weaviateService) {
         this.weaviateService = weaviateService;
+        this.useHybridSearch = weaviateService.isVectorizerAvailable();
     }
 
     /**
@@ -74,7 +78,7 @@ public class ExerciseWeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to upsert exercise {} in Weaviate: {}", exerciseWeaviateDTO.exerciseId(), e.getMessage(), e);
-            throw new WeaviateException("Failed to upsert exercise: " + exerciseWeaviateDTO.exerciseId(), e);
+            throw new WeaviateException("Failed to upsert exercise " + exerciseWeaviateDTO.exerciseId() + " in Weaviate: " + e.getMessage(), e);
         }
     }
 
@@ -335,5 +339,75 @@ public class ExerciseWeaviateService {
         }
 
         return dateTime.format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
+    }
+
+    /**
+     * Performs a search on exercises using a pre-built filter.
+     * Uses hybrid (semantic + keyword) search when a vectorizer is available,
+     * or falls back to BM25 (keyword-only) search otherwise.
+     * The filter should include both course access restrictions and role-based access control.
+     *
+     * @param query  the search query
+     * @param filter the Weaviate filter (may be null for no filtering)
+     * @param limit  maximum number of results
+     * @return list of exercise search results from Weaviate
+     */
+    public List<Map<String, Object>> searchExercisesWithFilter(String query, Filter filter, int limit) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            if (useHybridSearch) {
+                var result = collection.query.hybrid(query, hybridQueryBuilder -> {
+                    hybridQueryBuilder.limit(limit);
+                    if (filter != null) {
+                        hybridQueryBuilder.filters(filter);
+                    }
+                    return hybridQueryBuilder;
+                });
+                return result.objects().stream().map(WeaviateObject::properties).toList();
+            }
+            else {
+                var result = collection.query.bm25(query, bm25QueryBuilder -> {
+                    bm25QueryBuilder.limit(limit);
+                    if (filter != null) {
+                        bm25QueryBuilder.filters(filter);
+                    }
+                    return bm25QueryBuilder;
+                });
+                return result.objects().stream().map(WeaviateObject::properties).toList();
+            }
+        }
+        catch (Exception e) {
+            log.error("Failed to search exercises (query length={}): {}", query != null ? query.length() : 0, e.getMessage(), e);
+            throw new WeaviateException("Failed to search exercises in Weaviate: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Fetches exercises using a pre-built filter (no search query).
+     * The filter should include both course access restrictions and role-based access control.
+     *
+     * @param filter the Weaviate filter (may be null for no filtering)
+     * @param limit  maximum number of results
+     * @return list of exercise results from Weaviate
+     */
+    public List<Map<String, Object>> fetchExercisesWithFilter(Filter filter, int limit) {
+        try {
+            var collection = weaviateService.getCollection(ExerciseSchema.COLLECTION_NAME);
+
+            var result = collection.query.fetchObjects(queryBuilder -> {
+                queryBuilder.limit(limit);
+                if (filter != null) {
+                    queryBuilder.filters(filter);
+                }
+                return queryBuilder;
+            });
+
+            return result.objects().stream().map(WeaviateObject::properties).toList();
+        }
+        catch (Exception e) {
+            log.error("Failed to fetch exercises: {}", e.getMessage(), e);
+            throw new WeaviateException("Failed to fetch exercises from Weaviate: " + e.getMessage(), e);
+        }
     }
 }
