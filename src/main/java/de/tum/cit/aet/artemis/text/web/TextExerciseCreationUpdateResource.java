@@ -214,8 +214,13 @@ public class TextExerciseCreationUpdateResource {
         if (updateTextExerciseDTO.courseId() == null && updateTextExerciseDTO.exerciseGroupId() == null) {
             throw new BadRequestAlertException("Either courseId or exerciseGroupId must be provided.", ENTITY_NAME, "courseOrExerciseGroupMissing");
         }
-        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateTextExerciseDTO.courseId())) {
-            throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
+        // For course exercises: courseId must match; for exam exercises: exerciseGroupId must match
+        Long existingCourseId = originalExercise.isCourseExercise() && originalExercise.getCourseViaExerciseGroupOrCourseMember() != null
+                ? originalExercise.getCourseViaExerciseGroupOrCourseMember().getId()
+                : null;
+        Long existingExerciseGroupId = originalExercise.getExerciseGroup() != null ? originalExercise.getExerciseGroup().getId() : null;
+        if (!Objects.equals(existingCourseId, updateTextExerciseDTO.courseId()) || !Objects.equals(existingExerciseGroupId, updateTextExerciseDTO.exerciseGroupId())) {
+            throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "cannotChangeCourseId");
         }
 
         ZonedDateTime oldDueDate = originalExercise.getDueDate();
