@@ -16,30 +16,29 @@ export class Commands {
      */
     static login = async (page: Page, credentials: UserCredentials, url?: string): Promise<void> => {
         await Commands.logout(page);
+        await page.context().clearCookies();
         const { username, password } = credentials;
+        const response = await page.request.post(`api/core/public/authenticate`, {
+            data: {
+                username,
+                password,
+                rememberMe: true,
+            },
+            failOnStatusCode: false,
+        });
 
-        const jwtCookie = await page
-            .context()
-            .cookies()
-            .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
-        if (!jwtCookie) {
-            const response = await page.request.post(`api/core/public/authenticate`, {
-                data: {
-                    username,
-                    password,
-                    rememberMe: true,
-                },
-                failOnStatusCode: false,
-            });
+        expect(response.status()).toBe(200);
 
-            expect(response.status()).toBe(200);
-
-            const newJwtCookie = await page
-                .context()
-                .cookies()
-                .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt'));
-            expect(newJwtCookie).not.toBeNull();
-        }
+        await expect
+            .poll(
+                async () =>
+                    page
+                        .context()
+                        .cookies()
+                        .then((cookies) => cookies.find((cookie) => cookie.name === 'jwt')?.value),
+                { timeout: 10000 },
+            )
+            .toBeTruthy();
 
         if (url) {
             await page.goto(url);
@@ -76,6 +75,34 @@ export class Commands {
         }
 
         throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
+    };
+
+    static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string, interval = 5000, timeout = 60000) => {
+        const startTime = Date.now();
+
+        while (Date.now() - startTime < timeout) {
+            try {
+                await locator.waitFor({ state: 'visible', timeout: interval });
+                const text = await locator.textContent();
+                if (text?.includes(expectedText)) {
+                    return;
+                }
+            } catch {
+                // Ignore and retry with a page reload below.
+            }
+
+            if (page.isClosed()) {
+                throw new Error(`Page was closed while waiting for text "${expectedText}" in locator "${locator}"`);
+            }
+
+            try {
+                await page.reload();
+            } catch (reloadError) {
+                throw new Error(`Failed to reload page while waiting for text "${expectedText}": ${reloadError}`);
+            }
+        }
+
+        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()})`);
     };
 
     /**

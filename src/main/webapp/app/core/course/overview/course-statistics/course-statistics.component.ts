@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, ViewChild, inject } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, TemplateRef, inject, viewChild } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { faClipboard, faFilter, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateService } from '@ngx-translate/core';
@@ -239,7 +239,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     faClipboard = faClipboard;
 
     // The extracted controls template from our template to be rendered in the top bar of "CourseOverviewComponent"
-    @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
+    private readonly controls = viewChild.required<TemplateRef<any>>('controls');
     // Provides the control configuration to be read and used by "CourseOverviewComponent"
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
@@ -281,8 +281,9 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     ngAfterViewInit() {
         // Send our controls template to parent so it will be rendered in the top bar
-        if (this.controls) {
-            this.controlConfiguration.subject!.next(this.controls);
+        const controls = this.controls();
+        if (controls) {
+            this.controlConfiguration.subject!.next(controls);
             this.controlsRendered.emit();
         }
     }

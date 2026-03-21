@@ -13,7 +13,6 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Prerequisite;
 import de.tum.cit.aet.artemis.atlas.dto.CompetencyImportOptionsDTO;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyWithTailRelationDTO;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyProgressRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
@@ -58,7 +57,7 @@ public class PrerequisiteService extends CourseCompetencyService {
      * @param importOptions the options for importing the prerequisites
      * @return The set of imported prerequisites, each also containing the relations for which it is the tail prerequisite for.
      */
-    public Set<CompetencyWithTailRelationDTO> importPrerequisites(Course course, Collection<? extends CourseCompetency> prerequisites, CompetencyImportOptionsDTO importOptions) {
+    public Set<CompetencyWithTailRelation> importPrerequisites(Course course, Collection<? extends CourseCompetency> prerequisites, CompetencyImportOptionsDTO importOptions) {
         return importCourseCompetencies(course, prerequisites, importOptions, Prerequisite::new);
     }
 
