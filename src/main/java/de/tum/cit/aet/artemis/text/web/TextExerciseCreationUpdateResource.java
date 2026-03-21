@@ -315,43 +315,43 @@ public class TextExerciseCreationUpdateResource {
         if (dto == null) {
             throw new BadRequestAlertException("No text exercise was provided.", ENTITY_NAME, "isNull");
         }
-        exercise.setTitle(dto.title());
+        applyCommonFields(dto, exercise);
         exercise.validateTitle();
-        exercise.setShortName(dto.shortName());
         exercise.setProblemStatement(Objects.requireNonNullElse(dto.problemStatement(), ""));
 
+        // validates general settings: points, dates, etc.
+        exercise.validateGeneralSettings();
+
+        updateGradingCriteria(dto, exercise);
+        updateCompetencyLinks(dto, exercise);
+
+        return exercise;
+    }
+
+    /**
+     * Applies fields common to both create and update operations from the DTO to the exercise.
+     */
+    private void applyCommonFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        exercise.setTitle(dto.title());
+        exercise.setShortName(dto.shortName());
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
         exercise.setDifficulty(dto.difficulty());
-
         exercise.setMaxPoints(dto.maxPoints());
         exercise.setBonusPoints(dto.bonusPoints());
         exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-
         exercise.setReleaseDate(dto.releaseDate());
         exercise.setStartDate(dto.startDate());
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
-
-        // validates general settings: points, dates, etc.
-        exercise.validateGeneralSettings();
-
-        // Only set boolean values if they are explicitly provided (not null)
         setIfPresent(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
         setIfPresent(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
         setIfPresent(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
         setIfPresent(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
-
-        // TextExercise specific fields
         exercise.setExampleSolution(dto.exampleSolution());
-
-        updateGradingCriteria(dto, exercise);
-        updateCompetencyLinks(dto, exercise);
-
-        return exercise;
     }
 
     /**
@@ -447,27 +447,8 @@ public class TextExerciseCreationUpdateResource {
      * {@link CourseService#retrieveCourseOverExerciseGroupOrCourseId} can resolve them.
      */
     private void applyDtoToNewExercise(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        exercise.setTitle(dto.title());
-        exercise.setShortName(dto.shortName());
+        applyCommonFields(dto, exercise);
         exercise.setProblemStatement(dto.problemStatement());
-        exercise.setChannelName(dto.channelName());
-        exercise.setCategories(dto.categories());
-        exercise.setDifficulty(dto.difficulty());
-        exercise.setMaxPoints(dto.maxPoints());
-        exercise.setBonusPoints(dto.bonusPoints());
-        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-        exercise.setReleaseDate(dto.releaseDate());
-        exercise.setStartDate(dto.startDate());
-        exercise.setDueDate(dto.dueDate());
-        exercise.setAssessmentDueDate(dto.assessmentDueDate());
-        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
-        exercise.setGradingInstructions(dto.gradingInstructions());
-        exercise.setExampleSolution(dto.exampleSolution());
-        setIfPresent(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
-        setIfPresent(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
-        setIfPresent(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
-        setIfPresent(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {

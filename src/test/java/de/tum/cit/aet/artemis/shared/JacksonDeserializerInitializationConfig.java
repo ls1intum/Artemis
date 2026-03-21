@@ -50,207 +50,54 @@ public class JacksonDeserializerInitializationConfig {
     public void initializeDeserializers() {
         log.debug("Eagerly initializing Jackson deserializers for entity types");
 
-        // Initialize User first since it's referenced by many other entities
-        initializeUser();
+        initializeDeserializer("User", User.class, """
+                {"id": 1, "login": "testuser", "firstName": "Test", "lastName": "User", "email": "test@test.com", "activated": true, "imageUrl": null}
+                """);
 
-        // Initialize Organization with nested User and Course
-        initializeOrganization();
+        initializeDeserializer("Organization", Organization.class, """
+                {"id": 1, "name": "Test Organization", "shortName": "TO", "emailPattern": ".*@test.com",
+                 "users": [{"id": 1, "login": "testuser", "firstName": "Test", "lastName": "User", "email": "test@test.com", "activated": true}],
+                 "courses": [{"id": 1, "title": "Test Course", "shortName": "TC"}]}
+                """);
 
-        // Initialize Course with nested relationships (exercises, lectures, etc.)
-        initializeCourse();
+        initializeDeserializer("Course", Course.class, """
+                {"id": 1, "title": "Test Course", "shortName": "TC",
+                 "exercises": [{"id": 1, "title": "Test Exercise", "type": "text"}],
+                 "lectures": [{"id": 1, "title": "Test Lecture"}],
+                 "organizations": [{"id": 1, "name": "Test Org"}]}
+                """);
 
-        // Initialize Exam with nested relationships (exercise groups, student exams, etc.)
-        initializeExam();
+        initializeDeserializer("Exam", Exam.class, """
+                {"id": 1, "title": "Test Exam",
+                 "exerciseGroups": [{"id": 1, "title": "Test Group", "exercises": []}],
+                 "studentExams": [{"id": 1, "submitted": false}]}
+                """);
 
-        // Initialize TutorialGroup with nested registrations containing User references
-        initializeTutorialGroup();
+        initializeDeserializer("TutorialGroup", TutorialGroup.class, """
+                {"id": 1, "title": "Test Group", "capacity": 10, "isOnline": false, "campus": "Test Campus", "language": "ENGLISH",
+                 "registrations": [{"id": 1, "student": {"id": 1, "login": "testuser", "firstName": "Test", "lastName": "User"}, "type": "INSTRUCTOR_REGISTRATION"}],
+                 "teachingAssistant": {"id": 2, "login": "tutor1", "firstName": "Tutor", "lastName": "One"}}
+                """);
 
-        // Initialize Post and Reaction with nested User references (used via @JsonIncludeProperties)
-        initializePostAndReaction();
+        initializeDeserializer("Reaction", Reaction.class, """
+                {"id": 1, "emojiId": "smiley", "user": {"id": 1, "name": "Test User"}, "post": {"id": 1}}
+                """);
+
+        initializeDeserializer("Post", Post.class, """
+                {"id": 1, "content": "Test",
+                 "reactions": [{"id": 1, "emojiId": "smiley", "user": {"id": 1, "name": "Test User"}}],
+                 "author": {"id": 1, "name": "Author", "imageUrl": null}}
+                """);
 
         log.debug("Successfully initialized Jackson deserializers");
     }
 
-    private void initializeUser() {
+    private void initializeDeserializer(String entityName, Class<?> type, String sampleJson) {
         try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "login": "testuser",
-                        "firstName": "Test",
-                        "lastName": "User",
-                        "email": "test@test.com",
-                        "activated": true,
-                        "imageUrl": null
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, User.class);
+            objectMapper.readValue(sampleJson, type);
         }
         catch (Exception e) {
-            log.warn("Failed to pre-initialize User deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeOrganization() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "name": "Test Organization",
-                        "shortName": "TO",
-                        "emailPattern": ".*@test.com",
-                        "users": [{
-                            "id": 1,
-                            "login": "testuser",
-                            "firstName": "Test",
-                            "lastName": "User",
-                            "email": "test@test.com",
-                            "activated": true
-                        }],
-                        "courses": [{
-                            "id": 1,
-                            "title": "Test Course",
-                            "shortName": "TC"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Organization.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Organization deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeCourse() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Course",
-                        "shortName": "TC",
-                        "exercises": [{
-                            "id": 1,
-                            "title": "Test Exercise",
-                            "type": "text"
-                        }],
-                        "lectures": [{
-                            "id": 1,
-                            "title": "Test Lecture"
-                        }],
-                        "organizations": [{
-                            "id": 1,
-                            "name": "Test Org"
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Course.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Course deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeExam() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Exam",
-                        "exerciseGroups": [{
-                            "id": 1,
-                            "title": "Test Group",
-                            "exercises": []
-                        }],
-                        "studentExams": [{
-                            "id": 1,
-                            "submitted": false
-                        }]
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, Exam.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Exam deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializeTutorialGroup() {
-        try {
-            String sampleJson = """
-                    {
-                        "id": 1,
-                        "title": "Test Group",
-                        "capacity": 10,
-                        "isOnline": false,
-                        "campus": "Test Campus",
-                        "language": "ENGLISH",
-                        "registrations": [{
-                            "id": 1,
-                            "student": {
-                                "id": 1,
-                                "login": "testuser",
-                                "firstName": "Test",
-                                "lastName": "User"
-                            },
-                            "type": "INSTRUCTOR_REGISTRATION"
-                        }],
-                        "teachingAssistant": {
-                            "id": 2,
-                            "login": "tutor1",
-                            "firstName": "Tutor",
-                            "lastName": "One"
-                        }
-                    }
-                    """;
-            objectMapper.readValue(sampleJson, TutorialGroup.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize TutorialGroup deserializer: {}", e.getMessage());
-        }
-    }
-
-    private void initializePostAndReaction() {
-        try {
-            // Initialize Reaction with User via @JsonIncludeProperties path
-            String reactionJson = """
-                    {
-                        "id": 1,
-                        "emojiId": "smiley",
-                        "user": {
-                            "id": 1,
-                            "name": "Test User"
-                        },
-                        "post": {
-                            "id": 1
-                        }
-                    }
-                    """;
-            objectMapper.readValue(reactionJson, Reaction.class);
-
-            // Initialize Post with nested reactions
-            String postJson = """
-                    {
-                        "id": 1,
-                        "content": "Test",
-                        "reactions": [{
-                            "id": 1,
-                            "emojiId": "smiley",
-                            "user": {
-                                "id": 1,
-                                "name": "Test User"
-                            }
-                        }],
-                        "author": {
-                            "id": 1,
-                            "name": "Author",
-                            "imageUrl": null
-                        }
-                    }
-                    """;
-            objectMapper.readValue(postJson, Post.class);
-        }
-        catch (Exception e) {
-            log.warn("Failed to pre-initialize Post/Reaction deserializer: {}", e.getMessage());
+            log.warn("Failed to pre-initialize {} deserializer: {}", entityName, e.getMessage());
         }
     }
 }

@@ -400,17 +400,12 @@ public class ProgrammingExerciseUpdateResource {
     private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
         boolean hasOnlineEditor = Boolean.TRUE.equals(updateDTO.allowOnlineEditor());
         boolean hasOfflineIde = Boolean.TRUE.equals(updateDTO.allowOfflineIde());
-        boolean hasOnlineIde = updateDTO.allowOnlineIde();
+        boolean hasOnlineIde = moduleFeatureService.isTheiaEnabled() && updateDTO.allowOnlineIde();
 
-        if (moduleFeatureService.isTheiaEnabled()) {
-            if (!hasOnlineEditor && !hasOfflineIde && !hasOnlineIde) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
-        else if (!hasOnlineEditor && !hasOfflineIde) {
-            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                    "noParticipationModeAllowed");
+        if (!hasOnlineEditor && !hasOfflineIde && !hasOnlineIde) {
+            String message = moduleFeatureService.isTheiaEnabled() ? "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE"
+                    : "You need to allow at least one participation mode, the online editor or the offline IDE";
+            throw new BadRequestAlertException(message, ENTITY_NAME, "noParticipationModeAllowed");
         }
     }
 }
