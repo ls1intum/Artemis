@@ -1,24 +1,26 @@
-import { Component, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnInit, computed, inject, input, output } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
+import { ActionType, EntitySummary } from 'app/shared/delete-dialog/delete-dialog.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { faClipboardCheck, faEye, faFileExport, faListAlt, faSignal, faTable, faTrash, faUndo, faWrench } from '@fortawesome/free-solid-svg-icons';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ButtonComponent } from 'app/shared/components/buttons/button/button.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exercise-manage-buttons',
     templateUrl: './quiz-exercise-manage-buttons.component.html',
-    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective],
+    imports: [RouterLink, FaIconComponent, TranslateDirective, ButtonComponent, DeleteButtonDirective, ArtemisTranslatePipe],
 })
 export class QuizExerciseManageButtonsComponent implements OnInit {
     private quizExerciseService = inject(QuizExerciseService);
@@ -55,6 +57,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
     isDetailPage = input(false);
 
     quizExercise = input.required<QuizExercise>();
+    course = computed(() => getCourseFromExercise(this.quizExercise()));
 
     loadQuizExercises = output<void>();
 
@@ -96,7 +99,7 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 });
                 this.dialogErrorSource.next('');
                 if (this.isDetailPage()) {
-                    this.router.navigate(['course-management', this.quizExercise().course!.id, 'exercises']);
+                    this.router.navigate(['course-management', this.courseId, 'exercises']);
                 }
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -133,5 +136,9 @@ export class QuizExerciseManageButtonsComponent implements OnInit {
                 this.isEvaluatingQuizExercise = false;
             },
         });
+    }
+
+    fetchExerciseDeletionSummary(): Observable<EntitySummary> {
+        return this.exerciseService.getDeletionSummary(this.quizExercise());
     }
 }

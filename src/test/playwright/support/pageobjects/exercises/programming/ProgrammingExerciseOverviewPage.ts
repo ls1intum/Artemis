@@ -2,6 +2,7 @@ import { expect, Page } from '@playwright/test';
 import { UserCredentials } from '../../../users';
 import { Commands } from '../../../commands';
 import { CourseOverviewPage } from '../../course/CourseOverviewPage';
+import { BUILD_RESULT_TIMEOUT, POLLING_INTERVAL } from '../../../timeouts';
 
 export class ProgrammingExerciseOverviewPage {
     private readonly page: Page;
@@ -14,8 +15,8 @@ export class ProgrammingExerciseOverviewPage {
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await Commands.reloadUntilFound(this.page, resultScore, 5000, 120000);
-        await expect(resultScore.getByText(expectedResult)).toBeVisible({ timeout: 30000 });
+        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT * 2);
+        await expect(resultScore).toContainText(expectedResult);
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials) {
@@ -46,10 +47,13 @@ export class ProgrammingExerciseOverviewPage {
     }
 
     async getCloneUrl() {
-        return await this.page.locator('.clone-url').innerText();
+        return (await this.page.locator('.clone-url').innerText()).trim();
     }
 
-    async copyCloneUrl() {
+    async copyCloneUrl(cloneMethod: GitCloneMethod = GitCloneMethod.https) {
+        if (cloneMethod !== GitCloneMethod.httpsWithToken) {
+            return await this.getCloneUrl();
+        }
         await this.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
         const button = this.getCloneUrlButton();
         // The copy button lives inside the Code popover (autoClose='outside').
