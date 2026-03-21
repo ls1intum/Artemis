@@ -105,7 +105,7 @@ public class ProgrammingExerciseBuildPlanService {
         var buildConfig = programmingExercise.getBuildConfig();
 
         // already in phases format, nothing to do
-        if (buildConfig.getBuildPlanPhases().isEmpty()) {
+        if (buildConfig.getBuildPlanPhases().isPresent()) {
             return;
         }
 
