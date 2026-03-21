@@ -61,21 +61,12 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
     }
 
     private static Exercise createExerciseByType(ExerciseType type) {
-        if (type == ExerciseType.MODELING) {
-            return new ModelingExercise();
-        }
-        else if (type == ExerciseType.TEXT) {
-            return new TextExercise();
-        }
-        else if (type == ExerciseType.PROGRAMMING) {
-            return new ProgrammingExercise();
-        }
-        else if (type == ExerciseType.FILE_UPLOAD) {
-            return new FileUploadExercise();
-        }
-        else if (type == ExerciseType.QUIZ) {
-            return new QuizExercise();
-        }
-        throw new IllegalArgumentException("Unknown exercise type: " + type);
+        return switch (type) {
+            case MODELING -> new ModelingExercise();
+            case TEXT -> new TextExercise();
+            case PROGRAMMING -> new ProgrammingExercise();
+            case FILE_UPLOAD -> new FileUploadExercise();
+            case QUIZ -> new QuizExercise();
+        };
     }
 }

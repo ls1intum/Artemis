@@ -172,46 +172,18 @@ public class ProgrammingExerciseUpdateResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
-        // Validate immutable fields haven't changed
-        if (!Objects.equals(originalExercise.getShortName(), updateDTO.shortName())) {
-            throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
-        }
-        if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
-            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
-        }
-        // Check if Theia is enabled
-        if (moduleFeatureService.isTheiaEnabled()) {
-            // Require 1 / 3 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
-        else {
-            // Require 1 / 2 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
+        validateImmutableFields(originalExercise, updateDTO);
+        validateParticipationModes(updateDTO);
 
-        // Verify that the checkout directories have not been changed
         programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(originalExercise, updatedProgrammingExercise);
-
-        // Verify that the programming language supports the selected network access option
         programmingExerciseValidationService.validateDockerFlags(updatedProgrammingExercise);
 
-        // Verify that a theia image is provided when the online IDE is enabled
         if (updatedProgrammingExercise.isAllowOnlineIde() && updatedProgrammingExercise.getBuildConfig().getTheiaImage() == null) {
             throw new BadRequestAlertException("You need to provide a Theia image when the online IDE is enabled", ENTITY_NAME, "noTheiaImageProvided");
         }
-
-        // Forbid changing the course the exercise belongs to
         if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
-
-        // Forbid conversion between normal course exercise and exam exercise
         exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, originalExercise, ENTITY_NAME);
 
         // Check that only allowed Athena modules are used
@@ -261,29 +233,45 @@ public class ProgrammingExerciseUpdateResource {
             throw new BadRequestAlertException("No programming exercise was provided.", ENTITY_NAME, "isNull");
         }
 
-        // Update base exercise fields
+        applyBaseExerciseFields(dto, exercise);
+        applyProgrammingSpecificFields(dto, exercise);
+
+        // Update build config
+        updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
+        updateGradingCriteria(dto, exercise);
+        exerciseService.updateCompetencyLinks(dto, exercise);
+
+        return exercise;
+    }
+
+    /**
+     * Applies the common base exercise fields from the DTO to the entity.
+     */
+    private static void applyBaseExerciseFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
         exercise.setTitle(dto.title());
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
-
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
-
+        exercise.setProblemStatement(dto.problemStatement() == null ? "" : dto.problemStatement());
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
         exercise.setDifficulty(dto.difficulty());
-
         exercise.setMaxPoints(dto.maxPoints());
         exercise.setBonusPoints(dto.bonusPoints());
         exercise.setIncludedInOverallScore(dto.includedInOverallScore());
-
         exercise.setReleaseDate(dto.releaseDate());
         exercise.setStartDate(dto.startDate());
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
+        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
+        exercise.setGradingInstructions(dto.gradingInstructions());
+        applyOptionalBooleans(dto, exercise);
+    }
 
-        // Only set boolean values if they are explicitly provided (not null)
+    /**
+     * Sets optional boolean fields only when explicitly provided (not null).
+     */
+    private static void applyOptionalBooleans(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
         if (dto.allowComplaintsForAutomaticAssessments() != null) {
             exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
         }
@@ -296,11 +284,12 @@ public class ProgrammingExerciseUpdateResource {
         if (dto.secondCorrectionEnabled() != null) {
             exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
+    }
 
-        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
-        exercise.setGradingInstructions(dto.gradingInstructions());
-
-        // Update programming exercise specific fields
+    /**
+     * Applies programming-exercise-specific fields from the DTO.
+     */
+    private static void applyProgrammingSpecificFields(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
         if (dto.allowOnlineEditor() != null) {
             exercise.setAllowOnlineEditor(dto.allowOnlineEditor());
         }
@@ -308,38 +297,22 @@ public class ProgrammingExerciseUpdateResource {
             exercise.setAllowOfflineIde(dto.allowOfflineIde());
         }
         exercise.setAllowOnlineIde(dto.allowOnlineIde());
-
         if (dto.maxStaticCodeAnalysisPenalty() != null) {
             exercise.setMaxStaticCodeAnalysisPenalty(dto.maxStaticCodeAnalysisPenalty());
         }
-
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
-
         if (dto.testCasesChanged() != null) {
             exercise.setTestCasesChanged(dto.testCasesChanged());
         }
-
         exercise.setSubmissionPolicy(dto.submissionPolicy());
         exercise.setProjectType(dto.projectType());
         exercise.setReleaseTestsWithExampleSolution(dto.releaseTestsWithExampleSolution());
 
-        // Update auxiliary repositories
         if (dto.auxiliaryRepositories() != null) {
             List<AuxiliaryRepository> auxRepos = dto.auxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::toEntity).toList();
             exercise.setAuxiliaryRepositories(new ArrayList<>(auxRepos));
         }
-
-        // Update build config
-        updateBuildConfig(dto.buildConfig(), exercise.getBuildConfig());
-
-        // Update grading criteria
-        updateGradingCriteria(dto, exercise);
-
-        // Update competency links using the proper mechanism
-        exerciseService.updateCompetencyLinks(dto, exercise);
-
-        return exercise;
     }
 
     /**
@@ -423,5 +396,36 @@ public class ProgrammingExerciseUpdateResource {
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateProgrammingExercise(updateDTO, null);
+    }
+
+    /**
+     * Validates that immutable fields (short name, static code analysis) haven't changed.
+     */
+    private static void validateImmutableFields(ProgrammingExercise originalExercise, UpdateProgrammingExerciseDTO updateDTO) {
+        if (!Objects.equals(originalExercise.getShortName(), updateDTO.shortName())) {
+            throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
+        }
+        if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
+            throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
+        }
+    }
+
+    /**
+     * Validates that at least one participation mode is enabled.
+     */
+    private void validateParticipationModes(UpdateProgrammingExerciseDTO updateDTO) {
+        boolean hasOnlineEditor = Boolean.TRUE.equals(updateDTO.allowOnlineEditor());
+        boolean hasOfflineIde = Boolean.TRUE.equals(updateDTO.allowOfflineIde());
+
+        if (moduleFeatureService.isTheiaEnabled()) {
+            if (!hasOnlineEditor && !hasOfflineIde && !updateDTO.allowOnlineIde()) {
+                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
+                        "noParticipationModeAllowed");
+            }
+        }
+        else if (!hasOnlineEditor && !hasOfflineIde) {
+            throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
+                    "noParticipationModeAllowed");
+        }
     }
 }

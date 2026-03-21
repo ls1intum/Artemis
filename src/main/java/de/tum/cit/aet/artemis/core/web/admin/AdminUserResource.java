@@ -317,24 +317,30 @@ public class AdminUserResource {
         List<StudentDTO> failedUsers = new ArrayList<>();
         for (var userDto : userDtos) {
             var optionalStudent = userService.findUser(userDto.registrationNumber(), userDto.login(), userDto.email());
-            if (optionalStudent.isEmpty()) {
-                if (!StringUtils.hasText(userDto.login())) {
-                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
-                    continue;
-                }
-                try {
-                    String normalizedPassword = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
-                    userCreationService.createUser(userDto.login(), normalizedPassword, null, userDto.firstName() != null ? userDto.firstName() : "",
-                            userDto.lastName() != null ? userDto.lastName() : "", userDto.email() != null ? userDto.email() : userDto.login() + "@invalid",
-                            userDto.registrationNumber(), "", DEFAULT_LANGUAGE, true);
-                }
-                catch (Exception ex) {
-                    log.warn("Failed to create internal user with login '{}': {}", userDto.login(), ex.getMessage());
-                    failedUsers.add(new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email()));
-                }
+            if (optionalStudent.isPresent()) {
+                continue;
+            }
+            if (!StringUtils.hasText(userDto.login())) {
+                failedUsers.add(toFailedStudentDTO(userDto));
+                continue;
+            }
+            try {
+                String password = StringUtils.hasText(userDto.password()) ? userDto.password() : null;
+                String firstName = userDto.firstName() != null ? userDto.firstName() : "";
+                String lastName = userDto.lastName() != null ? userDto.lastName() : "";
+                String email = userDto.email() != null ? userDto.email() : userDto.login() + "@invalid";
+                userCreationService.createUser(userDto.login(), password, null, firstName, lastName, email, userDto.registrationNumber(), "", DEFAULT_LANGUAGE, true);
+            }
+            catch (Exception ex) {
+                log.warn("Failed to create internal user with login '{}': {}", userDto.login(), ex.getMessage());
+                failedUsers.add(toFailedStudentDTO(userDto));
             }
         }
         return failedUsers;
+    }
+
+    private static StudentDTO toFailedStudentDTO(StudentDTO userDto) {
+        return new StudentDTO(userDto.login(), userDto.firstName(), userDto.lastName(), userDto.registrationNumber(), userDto.email());
     }
 
     /**
