@@ -87,7 +87,7 @@ public class HyperionConsistencyCheckService {
 
     private final ObservationRegistry observationRegistry;
 
-    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
     /**
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
@@ -100,10 +100,11 @@ public class HyperionConsistencyCheckService {
      * @param observationRegistry           Micrometer observation registry
      * @param llmTokenUsageService          service for persisting token usage
      * @param userRepository                repository for resolving current user id
+     * @param objectMapper                  Spring-managed Jackson ObjectMapper
      */
     public HyperionConsistencyCheckService(ProgrammingExerciseRepository programmingExerciseRepository, @Nullable ChatClient chatClient, HyperionPromptTemplateService templates,
             HyperionProgrammingExerciseContextRendererService exerciseContextRenderer, HyperionReviewCommentContextRendererService reviewCommentContextRenderer,
-            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository) {
+            ObservationRegistry observationRegistry, LLMTokenUsageService llmTokenUsageService, UserRepository userRepository, ObjectMapper objectMapper) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.chatClient = chatClient;
         this.templates = templates;
@@ -112,6 +113,7 @@ public class HyperionConsistencyCheckService {
         this.llmTokenUsageService = llmTokenUsageService;
         this.userRepository = userRepository;
         this.observationRegistry = observationRegistry;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -187,7 +189,7 @@ public class HyperionConsistencyCheckService {
         // issues = verifier output; fallback to combined if verifier fails
         List<ConsistencyIssueDTO> issueDTOs;
         try {
-            String issuesJson = HyperionConsistencyCheckService.OBJECT_MAPPER.writeValueAsString(combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
+            String issuesJson = objectMapper.writeValueAsString(Map.of("issues", combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList()));
             var verificationInput = new HashMap<>(input);
             verificationInput.put("detected_issues_json", issuesJson);
             List<ConsistencyIssue> verifiedIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);

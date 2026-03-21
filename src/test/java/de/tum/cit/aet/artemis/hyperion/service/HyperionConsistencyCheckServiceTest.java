@@ -96,7 +96,7 @@ class HyperionConsistencyCheckServiceTest {
         var observationRegistry = ObservationRegistry.create();
         var reviewCommentContextRenderer = new HyperionReviewCommentContextRendererService(commentThreadRepository, new ObjectMapper());
         this.hyperionConsistencyCheckService = new HyperionConsistencyCheckService(programmingExerciseRepository, chatClient, templateService, exerciseContextRenderer,
-                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository);
+                reviewCommentContextRenderer, observationRegistry, llmTokenUsageService, userRepository, new ObjectMapper());
     }
 
     @Test
