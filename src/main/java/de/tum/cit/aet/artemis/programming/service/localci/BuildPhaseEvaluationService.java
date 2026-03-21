@@ -49,8 +49,9 @@ public class BuildPhaseEvaluationService {
         }
         final List<BuildPhaseDTO> phases = phasesDTO.phases();
 
-        if (isInstructorParticipation(participation))
+        if (isInstructorParticipation(participation)) {
             return phases;
+        }
 
         final boolean isAfterDueDate = exerciseDateService.isAfterDueDate(participation);
         return phases.stream().filter(phase -> isPhaseActive(phase, isAfterDueDate)).toList();
