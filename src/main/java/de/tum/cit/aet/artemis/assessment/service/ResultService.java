@@ -201,12 +201,19 @@ public class ResultService {
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
-        deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
-        result.setFeedbacks(List.of());
-        resultRepository.delete(result);
+        Long resultId = result.getId();
+        // Delete non-cascaded references that would cause FK constraint violations
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        ratingRepository.deleteByResult_Id(resultId);
+        if (shouldClearParticipantScore) {
+            participantScoreRepository.clearAllByResultId(resultId);
+        }
+        // Do NOT bulk-delete feedbacks or long feedback texts here. Hibernate cascade
+        // from Result → Feedback → LongFeedbackText handles their deletion. Bulk-deleting
+        // them first makes the L2 cache stale, which causes Hibernate 6.6+ to fail when
+        // it tries to initialize the feedbacks PersistentList during entity merge/remove.
+        resultRepository.deleteById(resultId);
     }
 
     /**
