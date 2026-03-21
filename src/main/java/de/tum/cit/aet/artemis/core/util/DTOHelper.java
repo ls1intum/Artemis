@@ -49,9 +49,6 @@ public final class DTOHelper {
         if (collection == null || !Hibernate.isInitialized(collection)) {
             return null;
         }
-        if (collection.isEmpty()) {
-            return Set.of();
-        }
         return collection.stream().map(mapper).collect(Collectors.toSet());
     }
 

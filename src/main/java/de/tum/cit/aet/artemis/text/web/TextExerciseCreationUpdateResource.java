@@ -359,7 +359,7 @@ public class TextExerciseCreationUpdateResource {
      */
     private void updateGradingCriteria(UpdateTextExerciseDTO dto, TextExercise exercise) {
         if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
-            clearInitializedCollection(exercise.getGradingCriteria());
+            DTOHelper.clearIfInitialized(exercise.getGradingCriteria());
             return;
         }
 
@@ -397,7 +397,7 @@ public class TextExerciseCreationUpdateResource {
     private void updateCompetencyLinks(UpdateTextExerciseDTO dto, TextExercise exercise) {
         boolean hasLinks = dto.competencyLinks() != null && !dto.competencyLinks().isEmpty();
         if (!hasLinks) {
-            clearInitializedCollection(exercise.getCompetencyLinks());
+            DTOHelper.clearIfInitialized(exercise.getCompetencyLinks());
             return;
         }
         CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
@@ -421,13 +421,6 @@ public class TextExerciseCreationUpdateResource {
 
         managedLinks.clear();
         managedLinks.addAll(updated);
-    }
-
-    /**
-     * Clears the given collection if it is initialized.
-     */
-    private static <T> void clearInitializedCollection(Set<T> set) {
-        DTOHelper.clearIfInitialized(set);
     }
 
     /**
