@@ -1,5 +1,3 @@
-# Sorting using `<algorithm>` building blocks
-
 An array `v` is considered _sorted_ if each pair of neighboring elements fulfills `v[i] <= v[i + 1]`.
 Sorting an array means rearranging the elements such that it is sorted. This also means that
 sorting may not add or remove elements. This is usually achieved by swapping elements.
