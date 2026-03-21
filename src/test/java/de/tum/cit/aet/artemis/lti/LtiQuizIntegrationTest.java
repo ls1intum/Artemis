@@ -120,7 +120,8 @@ class LtiQuizIntegrationTest extends AbstractLtiIntegrationTest {
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
         assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
-        verify(lti13Service, times(10)).onNewResult(any());
+        // Wait for @Async LTI callbacks to complete before verifying
+        await().atMost(5, SECONDS).untilAsserted(() -> verify(lti13Service, times(10)).onNewResult(any()));
 
     }
 
