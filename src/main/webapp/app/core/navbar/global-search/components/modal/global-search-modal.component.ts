@@ -11,7 +11,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
-import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchOptions, GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchableEntity } from '../../models/searchable-entity.model';
@@ -116,9 +116,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         }
                     }
 
-                    // Network search — debounce 300ms, then fire HTTP request
+                    // Network search — debounce, then fire HTTP request
                     this.isLoading.set(true);
-                    return timer(300).pipe(
+                    return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
                             this.searchService.search(searchQuery, options).pipe(
                                 tap((results) => {

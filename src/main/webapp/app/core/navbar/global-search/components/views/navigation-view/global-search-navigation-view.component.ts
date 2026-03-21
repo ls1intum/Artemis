@@ -57,6 +57,7 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     readonly showResults = input<boolean>(false);
     readonly isLoading = input<boolean>(false);
     readonly searchError = input<string | undefined>(undefined);
+    readonly activeFilters = input<string[]>([]);
 
     // Skeleton placeholder array for loading animation
     protected readonly skeletonItems = Array(5);
@@ -75,6 +76,13 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     // False when artemis.iris.enabled = false in the server config; the button is hidden.
     protected readonly irisEnabled = this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS);
+    // Lecture search button is only visible when no filter is active
+    protected readonly showLectureButton = computed(() => this.activeFilters().length === 0);
+    // Number of action buttons currently visible (for index calculations)
+    protected readonly actionButtonCount = computed(() => {
+        if (!this.irisEnabled) return 0;
+        return this.showLectureButton() ? 2 : 1; // Iris always visible when enabled, Lecture conditional
+    });
     // Auto-scroll selected item into view when selection changes
     constructor() {
         super();
@@ -167,12 +175,13 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
 
     // Total selectable items reported to the modal to bound ArrowDown/ArrowUp.
     readonly itemCount = computed(() => {
+        const buttonCount = this.actionButtonCount();
         if (this.showResults()) {
-            // When showing results, action buttons are hidden, only count results
-            return this.results().length;
+            // When showing results, action buttons may be visible + results
+            return buttonCount + this.results().length;
         } else {
             // When showing entities, count action buttons + entities
-            return (this.irisEnabled ? NAV_ACTION_COUNT : 0) + this.searchableEntities.length;
+            return buttonCount + this.searchableEntities.length;
         }
     });
 
@@ -210,29 +219,37 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
     handleKeydown(event: KeyboardEvent): void {
         if (event.key !== 'Enter') return;
         const idx = this.selectedIndex();
+        const buttonCount = this.actionButtonCount();
+
+        // Iris button is always at index 0 when irisEnabled
+        if (this.irisEnabled && idx === 0) {
+            event.preventDefault();
+            this.viewSelected.emit(SearchView.Iris);
+            return;
+        }
+        // Lecture button is at index 1 when both buttons are visible
+        if (this.showLectureButton() && this.irisEnabled && idx === 1) {
+            event.preventDefault();
+            this.viewSelected.emit(SearchView.Lecture);
+            return;
+        }
+
+        // Handle items after action buttons
+        const itemIndex = idx - buttonCount;
 
         if (this.showResults()) {
-            // When showing results, no action buttons are present
+            // When showing results
             event.preventDefault();
-            const result = this.results()[idx];
+            const result = this.results()[itemIndex];
             if (result) {
                 this.navigateToResult(result);
             }
         } else {
-            // When showing entities, action buttons are present
-            if (this.irisEnabled && idx === 0) {
-                event.preventDefault();
-                this.viewSelected.emit(SearchView.Iris);
-            } else if (this.irisEnabled && idx === 1) {
-                event.preventDefault();
-                this.viewSelected.emit(SearchView.Lecture);
-            } else if (idx >= NAV_ACTION_COUNT) {
-                event.preventDefault();
-                const entityIndex = idx - NAV_ACTION_COUNT;
-                const entity = this.searchableEntities[entityIndex];
-                if (entity && entity.enabled) {
-                    this.entityClick.emit(entity);
-                }
+            // When showing entities
+            event.preventDefault();
+            const entity = this.searchableEntities[itemIndex];
+            if (entity && entity.enabled) {
+                this.entityClick.emit(entity);
             }
         }
     }

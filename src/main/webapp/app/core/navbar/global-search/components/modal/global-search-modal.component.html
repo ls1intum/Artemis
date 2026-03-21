@@ -1,8 +1,8 @@
 <p-dialog
     [attr.aria-label]="'global.search.placeholder' | artemisTranslate"
     [visible]="overlay.isOpen()"
-    (visibleChange)="$event ? overlay.open() : resetState()"
-    (onHide)="resetState()"
+    (visibleChange)="$event ? overlay.open() : overlay.close()"
+    (onHide)="overlay.close()"
     (onShow)="focusInput()"
     [modal]="true"
     [closable]="true"
@@ -35,12 +35,18 @@
                     [showResults]="showResults()"
                     [isLoading]="isLoading()"
                     [searchError]="searchError()"
+                    [activeFilters]="activeFilters()"
                     (viewSelected)="navigateTo($event)"
                     (entityClick)="onEntityClick($event)"
                 />
             }
             @case (SearchView.Lecture) {
-                <jhi-global-search-lecture-results (back)="navigateTo(SearchView.Navigation)" [searchQuery]="searchQuery()" [selectedIndex]="selectedIndex()" />
+                <jhi-global-search-lecture-results
+                    (back)="navigateTo(SearchView.Navigation)"
+                    (viewSelected)="navigateTo($event)"
+                    [searchQuery]="searchQuery()"
+                    [selectedIndex]="selectedIndex()"
+                />
             }
             @case (SearchView.Iris) {
                 <!-- Placeholder for Ask Iris view -->
