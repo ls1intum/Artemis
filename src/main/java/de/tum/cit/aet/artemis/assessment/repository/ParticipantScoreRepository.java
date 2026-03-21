@@ -92,7 +92,9 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
 
     /**
      * Safely removes the result from all participant scores by setting it to null.
-     * The scheduler will later evaluate and delete the participant score if no older result exists.
+     * Participant scores that become fully orphaned (both last result and last rated result null)
+     * are deleted immediately, since result deletion uses JPQL DELETE which bypasses the
+     * {@code @PreRemove} entity lifecycle callback on {@link de.tum.cit.aet.artemis.assessment.ResultListener}.
      *
      * @param resultId the id of the result to be removed
      * @see ParticipantScoreScheduleService
@@ -101,7 +103,20 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     default void clearAllByResultId(Long resultId) {
         this.clearLastResultByResultId(resultId);
         this.clearLastRatedResultByResultId(resultId);
+        this.deleteOrphanedParticipantScores();
     }
+
+    /**
+     * Delete participant scores where both last result and last rated result are null.
+     * These are orphaned records that no longer reference any result.
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("""
+            DELETE FROM ParticipantScore p
+            WHERE p.lastResult IS NULL AND p.lastRatedResult IS NULL
+            """)
+    void deleteOrphanedParticipantScores();
 
     @Query("""
             SELECT MAX(ps.lastModifiedDate) AS latestModifiedDate
