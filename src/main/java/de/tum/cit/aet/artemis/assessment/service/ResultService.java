@@ -201,11 +201,19 @@ public class ResultService {
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
-        deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
-        result.setFeedbacks(List.of());
+        long resultId = result.getId();
+        // Delete entities that reference this result but are NOT cascade-deleted
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        ratingRepository.deleteByResult_Id(resultId);
+        if (shouldClearParticipantScore) {
+            participantScoreRepository.clearAllByResultId(resultId);
+        }
+        // NOTE: Feedbacks and LongFeedbackTexts must NOT be bulk-deleted here because
+        // they are cascade-deleted by Hibernate (CascadeType.ALL + orphanRemoval on
+        // Result.feedbacks). Bulk-deleting them first would leave the L2 collection
+        // cache (@Cache on Result.feedbacks) stale, causing EntityNotFoundException
+        // when Hibernate merges the detached result entity during delete().
         resultRepository.delete(result);
     }
 
