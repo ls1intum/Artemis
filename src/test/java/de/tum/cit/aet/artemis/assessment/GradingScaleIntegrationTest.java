@@ -25,7 +25,7 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingScaleRepository;
 import de.tum.cit.aet.artemis.assessment.util.GradingScaleUtilService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
-import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
+import de.tum.cit.aet.artemis.core.exception.InternalServerErrorException;
 import de.tum.cit.aet.artemis.core.util.PageableSearchUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
@@ -626,7 +626,8 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationIndependentTe
             bonus.setWeight(5.0);
             bonus.setSourceGradingScale(null);
 
-            assertThatThrownBy(() -> GradingScaleDTO.BonusDTO.of(bonus)).isInstanceOf(BadRequestAlertException.class).hasMessageContaining("grading scale could not be found");
+            assertThatThrownBy(() -> GradingScaleDTO.BonusDTO.of(bonus)).isInstanceOf(InternalServerErrorException.class)
+                    .hasMessageContaining("The bonus source's grading scale could not be found. Please ensure that a valid grading scale exists.");
         }
     }
 }

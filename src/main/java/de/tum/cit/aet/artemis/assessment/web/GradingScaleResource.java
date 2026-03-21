@@ -150,10 +150,14 @@ public class GradingScaleResource {
         GradingScale gradingScale = gradingScaleDto.toEntity();
         gradingScale.setCourse(course);
 
-        // Apply DTO values to the course before validation so that presentation config is validated correctly
-        if (gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null) {
+        boolean courseValuesProvided = gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null;
+
+        if (courseValuesProvided) {
             applyCourseValuesFromDTO(gradingScaleDto, course);
-            validatePresentationsConfiguration(gradingScale);
+        }
+        validatePresentationsConfiguration(gradingScale);
+
+        if (courseValuesProvided) {
             courseRepository.save(course);
         }
 
@@ -220,13 +224,16 @@ public class GradingScaleResource {
         gradingScaleDto.applyTo(existingGradingScale);
         existingGradingScale.setCourse(course);
 
-        // Apply DTO values to the course before validation so that presentation config is validated correctly
-        if (gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null) {
+        boolean courseValuesProvided = gradingScaleDto.courseMaxPoints() != null || gradingScaleDto.coursePresentationScore() != null;
+
+        if (courseValuesProvided) {
             applyCourseValuesFromDTO(gradingScaleDto, course);
-            validatePresentationsConfiguration(existingGradingScale);
+        }
+        validatePresentationsConfiguration(existingGradingScale);
+
+        if (courseValuesProvided) {
             courseRepository.save(course);
         }
-
         GradingScale savedGradingScale = gradingScaleService.saveGradingScale(existingGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(GradingScaleDTO.of(savedGradingScale));
     }

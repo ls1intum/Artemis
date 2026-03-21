@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.assessment.dto;
 
 import java.util.Set;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -35,8 +36,8 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record GradingScaleRequestDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
         @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight,
-        @NotEmpty(message = "A grading scale must contain grade steps") Set<GradeStepDTO> gradeSteps, @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore,
-        @Nullable Integer examMaxPoints) {
+        @NotEmpty(message = "A grading scale must contain grade steps") @Valid Set<GradeStepDTO> gradeSteps, @Nullable Integer courseMaxPoints,
+        @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
 
     /**
      * Applies this DTO's values to an existing GradingScale entity.
