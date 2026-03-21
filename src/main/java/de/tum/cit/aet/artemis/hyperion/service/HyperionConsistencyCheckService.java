@@ -87,6 +87,8 @@ public class HyperionConsistencyCheckService {
 
     private final ObservationRegistry observationRegistry;
 
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     /**
      * Creates the consistency-check orchestration service with all required persistence, prompt, and observability dependencies.
      *
@@ -185,14 +187,13 @@ public class HyperionConsistencyCheckService {
         // issues = verifier output; fallback to combined if verifier fails
         List<ConsistencyIssueDTO> issueDTOs;
         try {
-            ObjectMapper mapper = new ObjectMapper();
-            String issuesJson = mapper.writeValueAsString(combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
+            String issuesJson = HyperionConsistencyCheckService.OBJECT_MAPPER.writeValueAsString(combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList());
             var verificationInput = new HashMap<>(input);
             verificationInput.put("detected_issues_json", issuesJson);
             List<ConsistencyIssue> verifiedIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);
             issueDTOs = verifiedIssues != null ? verifiedIssues.stream().map(this::mapConsistencyIssueToDto).toList()
                     : combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList();
-            log.info("Verification step: {} raw issues → {} verified issues", combinedIssues.size(), issueDTOs.size());
+            log.info("Verification step: {} raw issues -> {} verified issues", combinedIssues.size(), issueDTOs.size());
         }
         catch (Exception e) {
             log.error("Verification step failed — falling back to pre-verification results", e);
@@ -223,7 +224,8 @@ public class HyperionConsistencyCheckService {
         var tokenDTO = new TokensDTO(totalPromptTokens, totalCompletionTokens, totalPromptTokens + totalCompletionTokens);
         var costsDto = new CostsDTO(promptCost, completionCost, promptCost + completionCost);
 
-        log.info("Consistency check for exercise {} complete: {} issues", exerciseId, issueDTOs.size());
+        log.debug("Consistency check for exercise {} complete: {} issues", exerciseId, issueDTOs.size());
+        issueDTOs.forEach(issue -> log.debug("Issue [{}] {}: {}", issue.severity(), issue.category(), issue.description()));
 
         return new ConsistencyCheckResponseDTO(startTime, issueDTOs, timingDTO, tokenDTO, costsDto);
     }
@@ -321,14 +323,8 @@ public class HyperionConsistencyCheckService {
         var resourcePath = "/prompts/hyperion/consistency_verification.st";
         String renderedPrompt = templates.render(resourcePath, input);
         try (Observation.Scope scope = child.openScope()) {
-            var verificationResponse = chatClient.prompt().system("""
-                    You are a senior educational quality assurance engineer reviewing consistency issues in programming exercises.
-                    Your tasks in order:
-                    1. Remove false positives: pedagogical gaps (empty stubs, TODOs, missing method bodies), hallucinated issues, and intentional design variations.
-                    2. Deduplicate: merge overlapping issues reported by independent checkers into one well-categorised issue.
-                    3. Improve surviving issues: correct inaccurate line numbers, sharpen vague descriptions, fix miscategorised categories.
-                    Return only JSON matching the schema. Do not include explanatory text outside the JSON.
-                    """).user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
+            var verificationResponse = chatClient.prompt().system("You are a senior educational quality assurance engineer. Return only JSON matching the schema.")
+                    .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
 
             usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
             return toGenericConsistencyIssue(verificationResponse.entity());
