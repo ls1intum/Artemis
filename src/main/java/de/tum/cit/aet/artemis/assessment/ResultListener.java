@@ -8,10 +8,12 @@ import jakarta.persistence.PreRemove;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ResultDeletedEvent;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -68,5 +70,16 @@ public class ResultListener {
         if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
             instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
         }
+    }
+
+    /**
+     * Handles participant score recalculation for results deleted via JPQL (which bypasses @PreRemove).
+     * This event is published by {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult}.
+     *
+     * @param event the result deleted event
+     */
+    @EventListener
+    public void onResultDeleted(ResultDeletedEvent event) {
+        instanceMessageSendService.sendParticipantScoreSchedule(event.exerciseId(), event.participantId(), event.resultId());
     }
 }

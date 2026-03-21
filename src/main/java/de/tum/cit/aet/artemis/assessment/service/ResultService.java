@@ -20,6 +20,7 @@ import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.ResultDeletedEvent;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
@@ -52,7 +54,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -125,14 +126,14 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -152,7 +153,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
-        this.instanceMessageSendService = instanceMessageSendService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -214,12 +215,13 @@ public class ResultService {
         // A JPQL DELETE bypasses this entirely since all child references are
         // already cleaned up by deleteResultReferences above.
         resultRepository.deleteByResultId(result.getId());
-        // JPQL DELETE bypasses @PreRemove on ResultListener, so we must manually
-        // trigger participant score recalculation here. The scheduler will find
-        // the remaining results and update the participant score accordingly.
+        // JPQL DELETE bypasses @PreRemove on ResultListener, so we publish an event
+        // to trigger participant score recalculation. Using an event avoids a direct
+        // dependency on InstanceMessageSendService, which would create a circular
+        // dependency (ResultService → InstanceMessageSendService → ... → ResultService).
         if (shouldClearParticipantScore && result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation
                 && participation.getParticipant() != null) {
-            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
+            eventPublisher.publishEvent(new ResultDeletedEvent(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId()));
         }
     }
 
