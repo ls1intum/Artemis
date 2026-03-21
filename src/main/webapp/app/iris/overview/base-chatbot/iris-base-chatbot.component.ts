@@ -310,7 +310,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
         // Reset clicked suggestion when new suggestions arrive
         effect(() => {
-            const _suggestions = this.suggestions();
+            this.suggestions();
             this.clickedSuggestion.set(undefined);
         });
 
