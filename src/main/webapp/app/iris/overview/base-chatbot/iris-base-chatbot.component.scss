@@ -372,6 +372,7 @@ pre {
     }
 
     .chat-body {
+        position: relative;
         height: 100%;
         overflow-y: hidden;
         display: flex;
@@ -623,7 +624,8 @@ pre {
 
 .scroll-to-bottom {
     position: absolute;
-    top: calc(-44px);
+    bottom: 100px;
+    top: auto;
     left: 50%;
     transform: translateX(-50%);
     width: 30px;
