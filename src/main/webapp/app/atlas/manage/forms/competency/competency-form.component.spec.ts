@@ -90,6 +90,7 @@ describe('CompetencyFormComponent', () => {
             vi.advanceTimersByTime(250); // async validator fires after 250ms and fully filled in form should now be valid!
             expect(competencyFormComponent.form.valid).toBeTruthy();
             expect(getAllTitlesSpy).toHaveBeenCalledOnce();
+            expect(getAllTitlesSpy).toHaveBeenCalledWith(0, undefined);
             const submitFormSpy = vi.spyOn(competencyFormComponent, 'submitForm');
             const submitFormEventSpy = vi.spyOn(competencyFormComponent.formSubmitted, 'emit');
 
@@ -170,7 +171,7 @@ describe('CompetencyFormComponent', () => {
             const courseCompetencyService = TestBed.inject(CourseCompetencyService);
             vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: existingTitles, status: 200 })));
             competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
-            competencyFormComponentFixture.componentRef.setInput('formData', { title: 'initialName' } as CourseCompetencyFormData);
+            competencyFormComponentFixture.componentRef.setInput('formData', { id: 7, title: 'initialName' } as CourseCompetencyFormData);
             competencyFormComponentFixture.detectChanges();
 
             const titleControl = competencyFormComponent.titleControl!;
@@ -188,6 +189,25 @@ describe('CompetencyFormComponent', () => {
             titleControl.setValue('nameExisting');
             vi.advanceTimersByTime(250);
             expect(titleControl.errors?.titleUnique).toBeDefined();
+        } finally {
+            vi.useRealTimers();
+        }
+    });
+
+    it('validator should exclude the edited competency id when checking titles', () => {
+        vi.useFakeTimers();
+        try {
+            const courseCompetencyService = TestBed.inject(CourseCompetencyService);
+            const getTitlesSpy = vi.spyOn(courseCompetencyService, 'getCourseCompetencyTitles').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
+            competencyFormComponentFixture.componentRef.setInput('isEditMode', true);
+            competencyFormComponentFixture.componentRef.setInput('courseId', 42);
+            competencyFormComponentFixture.componentRef.setInput('formData', { id: 7, title: 'initialName' } as CourseCompetencyFormData);
+            competencyFormComponentFixture.detectChanges();
+
+            competencyFormComponent.titleControl!.setValue('changed title');
+            vi.advanceTimersByTime(250);
+
+            expect(getTitlesSpy).toHaveBeenLastCalledWith(42, 7);
         } finally {
             vi.useRealTimers();
         }

@@ -39,3 +39,5 @@
         </div>
     </div>
 </div>
+
+<jhi-unsaved-changes-warning [(visible)]="showUnsavedChangesWarning" [textMessage]="warningTextMessage()" (discarded)="onDiscardChanges()" />

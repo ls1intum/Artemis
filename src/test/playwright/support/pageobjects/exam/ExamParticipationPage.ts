@@ -4,8 +4,6 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { AdditionalData, ExerciseType } from '../../constants';
 import { UserCredentials } from '../../users';
 import { OnlineEditorPage, ProgrammingExerciseSubmission } from '../exercises/programming/OnlineEditorPage';
-import { CoursesPage } from '../course/CoursesPage';
-import { CourseOverviewPage } from '../course/CourseOverviewPage';
 import { ExamNavigationBar } from './ExamNavigationBar';
 import { ExamStartEndPage } from './ExamStartEndPage';
 import { ModelingEditor } from '../exercises/modeling/ModelingEditor';
@@ -14,10 +12,9 @@ import { TextEditorPage } from '../exercises/text/TextEditorPage';
 import { Commands } from '../../commands';
 import { Fixtures } from '../../../fixtures/fixtures';
 import { ExamParticipationActions } from './ExamParticipationActions';
+import { BUILD_RESULT_TIMEOUT } from '../../timeouts';
 
 export class ExamParticipationPage extends ExamParticipationActions {
-    private readonly courseList: CoursesPage;
-    private readonly courseOverview: CourseOverviewPage;
     private readonly examNavigation: ExamNavigationBar;
     private readonly examStartEnd: ExamStartEndPage;
     private readonly modelingExerciseEditor: ModelingEditor;
@@ -26,8 +23,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
     private readonly textExerciseEditor: TextEditorPage;
 
     constructor(
-        courseList: CoursesPage,
-        courseOverview: CourseOverviewPage,
         examNavigation: ExamNavigationBar,
         examStartEnd: ExamStartEndPage,
         modelingExerciseEditor: ModelingEditor,
@@ -37,8 +32,6 @@ export class ExamParticipationPage extends ExamParticipationActions {
         page: Page,
     ) {
         super(page);
-        this.courseList = courseList;
-        this.courseOverview = courseOverview;
         this.examNavigation = examNavigation;
         this.examStartEnd = examStartEnd;
         this.modelingExerciseEditor = modelingExerciseEditor;
@@ -123,9 +116,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(expectedResult: string) {
-        const resultScore = this.page.locator('.editor-statusbar').locator('#result-score');
-        await resultScore.waitFor({ state: 'visible' });
-        await expect(resultScore.getByText(expectedResult)).toBeVisible();
+    async checkExerciseScore(exerciseID: number, expectedResult: string) {
+        // In exam mode, page.reload() navigates away from the active exercise tab,
+        // so we rely on WebSocket to push build results and use Playwright's auto-retry.
+        const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
+        await expect(resultScore).toContainText(expectedResult, { timeout: BUILD_RESULT_TIMEOUT });
     }
 }
