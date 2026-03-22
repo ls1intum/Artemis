@@ -23,10 +23,11 @@
             [isProblemStatementVisible]="false"
             [editable]="!repositoryIsLocked"
             [participation]="participation"
-            [showEditorInstructions]="showEditorInstructions"
+            [showEditorInstructions]="!lightweight() && showEditorInstructions"
             [isTutorAssessment]="hasTutorAssessment"
             [readOnlyManualFeedback]="true"
             [course]="course"
+            [showNavbar]="!lightweight()"
         >
             <div editorTitle>
                 <span>{{ exercise?.title }}</span>
@@ -79,14 +80,16 @@
                 [btnSize]="ButtonSize.MEDIUM"
               />
             </div>
-            <jhi-programming-exercise-instructions
-                editorSidebar
-                (onNoInstructionsAvailable)="showEditorInstructions = false"
-                [exercise]="exercise"
-                [participation]="participation"
-                [personalParticipation]="true"
-                class="instructions-wrapper__content card-body p-0"
-            />
+            @if (!lightweight()) {
+                <jhi-programming-exercise-instructions
+                    editorSidebar
+                    (onNoInstructionsAvailable)="showEditorInstructions = false"
+                    [exercise]="exercise"
+                    [participation]="participation"
+                    [personalParticipation]="true"
+                    class="instructions-wrapper__content card-body p-0"
+                />
+            }
         </jhi-code-editor-container>
     }
     <div class="row ms-0">

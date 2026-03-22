@@ -5,7 +5,7 @@
                 <jhi-text-editor [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
             }
             @if (showCodeEditor()) {
-                <jhi-code-editor-student [participationId]="studentParticipation()!.id" />
+                <jhi-code-editor-student [participationId]="studentParticipation()!.id" [lightweight]="true" />
             }
             @if (exercise().type === ExerciseType.MODELING) {
                 <jhi-modeling-submission [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />

@@ -1,4 +1,4 @@
-<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()">
+<jhi-code-editor-grid #grid [isTutorAssessment]="isTutorAssessment()" [showEditorNavbar]="showNavbar()" [showEditorSidebarRight]="showEditorInstructions()">
     <div editorNavbar class="d-flex flex-wrap align-items-center">
         <span>
             <h4 class="editor-title"><ng-content select="[editorTitle]" /></h4>
@@ -42,6 +42,7 @@
         [fileBadges]="fileBadges"
         [allowHiddenFiles]="allowHiddenFiles()"
         [fileSyncService]="fileSyncService()"
+        [showHeader]="showNavbar()"
         [(selectedFile)]="selectedFile"
         [(commitState)]="commitState"
         (onFileChange)="onFileChange($event)"
@@ -63,6 +64,7 @@
         <!-- Regular Code Editor - always in DOM, hidden when Problem Statement is selected -->
         <jhi-code-editor-monaco
             [hidden]="shouldShowProblemStatement()"
+            [secondaryHeader]="!showNavbar()"
             [commitState]="commitState"
             [editorState]="editorState"
             [course]="course()"
@@ -105,6 +107,7 @@
         @if (buildable()) {
             <jhi-code-editor-build-output
                 [participation]="participation()"
+                [secondaryHeader]="!showNavbar()"
                 (onAnnotations)="onAnnotations($event)"
                 (onError)="onError($event)"
                 (onToggleCollapse)="onToggleCollapse($event, CollapsableCodeEditorElement.BuildOutput)"

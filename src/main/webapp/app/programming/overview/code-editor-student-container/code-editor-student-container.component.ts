@@ -55,6 +55,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     readonly participationId = input<number>();
+    readonly lightweight = input<boolean>(false);
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
