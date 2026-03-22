@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { IrisCitationParsed } from './iris-citation-text.model';
-import { escapeHtml, formatCitationLabel, getCitationLabelText, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -66,13 +66,10 @@ export class IrisCitationTextComponent {
         const hasSummary = !!parsed.summary;
         const classes = `iris-citation ${typeClass}${hasSummary ? ' iris-citation--has-summary' : ''}`;
         const iconSvg = this.getIconSvg(typeClass);
-        const summaryFallbackTitle = getCitationLabelText(parsed);
-
-        // Include summary tooltip with fallback title and lecture context if available
         const summaryContent = hasSummary
             ? `<span class="iris-citation__summary">
                    <span class="iris-citation__summary-content">
-                       ${this.renderSummaryContent(parsed.summary, meta, summaryFallbackTitle)}
+                       ${this.renderSummaryContent(parsed.summary, meta)}
                    </span>
                </span>`
             : '';
@@ -123,11 +120,11 @@ export class IrisCitationTextComponent {
     /**
      * Renders the content of a citation summary tooltip including summary text and optional lecture metadata.
      */
-    private renderSummaryContent(summary: string, meta?: IrisCitationMetaDTO, fallbackTitle?: string): string {
+    private renderSummaryContent(summary: string, meta?: IrisCitationMetaDTO): string {
         const lectureUnitTitle = meta?.lectureUnitTitle?.trim();
         const lectureTitle = meta?.lectureTitle?.trim();
         const summaryText = summary?.trim();
-        const unitTitle = lectureUnitTitle || fallbackTitle || '';
+        const unitTitle = lectureUnitTitle || '';
         const hasUnit = !!unitTitle;
         const hasLecture = !!lectureTitle;
         const hasMeta = hasUnit || hasLecture;
@@ -174,13 +171,12 @@ export class IrisCitationTextComponent {
 
                 const meta = metas[index];
                 const isActive = summaryIndex === 0 ? 'is-active' : '';
-                const summaryFallbackTitle = getCitationLabelText(cite);
                 summaryIndex++;
 
                 return `
                     <span class="iris-citation__summary-item ${isActive}"
                           data-citation-index="${index}">
-                        ${this.renderSummaryContent(cite.summary, meta, summaryFallbackTitle)}
+                        ${this.renderSummaryContent(cite.summary, meta)}
                     </span>
                 `.trim();
             })
