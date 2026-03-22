@@ -9,7 +9,8 @@
 .pdf-viewer-container {
     .pdf-viewer {
         display: block;
-        height: 80vh;
+        width: 100%;
+        aspect-ratio: 2 / 1;
 
         ::ng-deep #viewerContainer {
             background-color: var(--gray-200) !important;
