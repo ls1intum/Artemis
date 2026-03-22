@@ -5,14 +5,17 @@
             [exercise]="exercise"
             [courseId]="courseId"
             [studentParticipation]="gradedStudentParticipation()"
+            [practiceParticipation]="practiceStudentParticipation()"
             [submissionPolicy]="submissionPolicy()"
             [onSubmitExercise]="splitPanel()?.canSubmit() ? submitExercise : undefined"
+            [participationMode]="participationMode()"
+            (participationModeChange)="participationMode.set($event)"
         />
 
         <jhi-exercise-split-panel
             class="d-flex flex-fill"
             [exercise]="exercise"
-            [studentParticipation]="practiceStudentParticipation() ?? gradedStudentParticipation()"
+            [studentParticipation]="activeParticipation()"
             [irisEnabled]="irisEnabled() && irisChatEnabled()"
         />
     </div>

@@ -1,13 +1,14 @@
 <div id="exercise-header" class="d-flex flex-column flex-fill">
     <div class="d-flex align-items-center justify-content-between gap-2">
-        @if (exerciseIcon()) {
-            <h5 class="mb-0">
-                @if (exerciseIcon()) {
+        <div class="d-flex align-items-center gap-3">
+            @if (exerciseIcon()) {
+                <h5 class="mb-0">
                     <fa-icon [icon]="exerciseIcon()!" />
-                }
-                {{ exercise().title }}
-            </h5>
-        }
+                    {{ exercise().title }}
+                </h5>
+            }
+            <jhi-participation-mode-toggle [mode]="participationMode()" (modeChange)="participationMode.set($event)" [hasPractice]="hasPractice()" />
+        </div>
         <jhi-exercise-header-actions class="w-auto" [courseId]="courseId()" [exercise]="exercise()" [onSubmitExercise]="onSubmitExercise()" />
     </div>
 
@@ -15,8 +16,9 @@
 
     <jhi-exercise-headers-information
         [exercise]="exercise()"
-        [studentParticipation]="studentParticipation()"
+        [studentParticipation]="activeParticipation()"
         [submissionPolicy]="submissionPolicy()"
         [course]="exercise().course"
+        [isPractice]="participationMode() === 'practice'"
     />
 </div>

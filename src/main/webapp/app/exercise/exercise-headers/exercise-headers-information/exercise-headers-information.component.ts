@@ -54,6 +54,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     @Input() course?: Course;
     @Input() submissionPolicy?: SubmissionPolicy;
     @Input() sortedHistoryResults: Result[] = [];
+    @Input() isPractice: boolean = false;
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;

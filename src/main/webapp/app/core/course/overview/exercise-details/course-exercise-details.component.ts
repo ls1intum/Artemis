@@ -56,6 +56,7 @@ import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
 import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
+import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 
 interface InstructorActionItem {
     routerLink: string;
@@ -163,6 +164,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     readonly numberOfPracticeResults = computed(() => {
         return this.practiceStudentParticipation()?.submissions?.flatMap((submission) => submission.results)?.length ?? 0;
+    });
+
+    readonly participationMode = signal<ParticipationMode>('graded');
+
+    readonly activeParticipation = computed(() => {
+        return this.participationMode() === 'practice' ? (this.practiceStudentParticipation() ?? this.gradedStudentParticipation()) : this.gradedStudentParticipation();
     });
 
     // Sorted results signal

@@ -43,7 +43,7 @@ export class ResultHistoryDropdownComponent {
     sortedHistoryResults = input.required<Result[]>();
     studentParticipation = input<StudentParticipation>();
 
-    displayedResults = computed(() => [...this.sortedHistoryResults()].reverse());
+    displayedResults = computed(() => this.sortedHistoryResults());
 
     activeResultId = computed(() => {
         const participation = this.studentParticipation();
