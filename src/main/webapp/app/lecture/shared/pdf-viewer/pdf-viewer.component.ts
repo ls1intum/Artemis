@@ -1,9 +1,9 @@
-import { Component, ViewEncapsulation, computed, input, signal } from '@angular/core';
+import { Component, ViewEncapsulation, computed, inject, input, signal } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { NgxExtendedPdfViewerModule, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
+import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 
@@ -18,6 +18,8 @@ pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
     encapsulation: ViewEncapsulation.None,
 })
 export class PdfViewerComponent {
+    private readonly pdfNotificationService = inject(PDFNotificationService);
+
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
     version = input<number | undefined>(undefined);
@@ -39,16 +41,15 @@ export class PdfViewerComponent {
     }
 
     zoomIn(): void {
-        const PDFViewerApplication = (window as any).PDFViewerApplication;
-        if (PDFViewerApplication?.eventBus) {
-            PDFViewerApplication.eventBus.dispatch('zoomin');
-        }
+        this.dispatchZoomEvent('zoomin');
     }
 
     zoomOut(): void {
-        const PDFViewerApplication = (window as any).PDFViewerApplication;
-        if (PDFViewerApplication?.eventBus) {
-            PDFViewerApplication.eventBus.dispatch('zoomout');
-        }
+        this.dispatchZoomEvent('zoomout');
+    }
+
+    private dispatchZoomEvent(eventName: 'zoomin' | 'zoomout'): void {
+        const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal();
+        pdfViewerApplication?.eventBus?.dispatch(eventName);
     }
 }

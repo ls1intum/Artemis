@@ -1,11 +1,11 @@
-import { Component, input, output } from '@angular/core';
+import { Component, input, output, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
-import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
+import { NgxExtendedPdfViewerModule, PDFNotificationService } from 'ngx-extended-pdf-viewer';
 import { PdfViewerComponent } from './pdf-viewer.component';
 
 @Component({
@@ -78,6 +78,12 @@ describe('PdfViewerComponent', () => {
                         getCurrentLang: () => 'en',
                     },
                 },
+                {
+                    provide: PDFNotificationService,
+                    useValue: {
+                        onPDFJSInitSignal: signal(undefined),
+                    },
+                },
             ],
         })
             .overrideComponent(PdfViewerComponent, {
@@ -119,9 +125,8 @@ describe('PdfViewerComponent', () => {
         const mockEventBus = {
             dispatch: vi.fn(),
         };
-        (window as any).PDFViewerApplication = {
-            eventBus: mockEventBus,
-        };
+        const pdfNotificationService = TestBed.inject(PDFNotificationService) as { onPDFJSInitSignal: { set: (value: unknown) => void } };
+        pdfNotificationService.onPDFJSInitSignal.set({ eventBus: mockEventBus });
 
         const component = fixture.componentInstance;
         component.zoomIn();
@@ -133,9 +138,8 @@ describe('PdfViewerComponent', () => {
         const mockEventBus = {
             dispatch: vi.fn(),
         };
-        (window as any).PDFViewerApplication = {
-            eventBus: mockEventBus,
-        };
+        const pdfNotificationService = TestBed.inject(PDFNotificationService) as { onPDFJSInitSignal: { set: (value: unknown) => void } };
+        pdfNotificationService.onPDFJSInitSignal.set({ eventBus: mockEventBus });
 
         const component = fixture.componentInstance;
         component.zoomOut();
