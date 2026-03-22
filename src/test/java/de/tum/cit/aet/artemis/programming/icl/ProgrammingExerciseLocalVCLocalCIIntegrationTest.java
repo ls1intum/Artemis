@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.queryExe
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -16,7 +17,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.eclipse.jgit.transport.CredentialsProvider;
@@ -257,7 +257,7 @@ class ProgrammingExerciseLocalVCLocalCIIntegrationTest extends AbstractProgrammi
         // Compare as instants because PostgreSQL stores timestamps as UTC and the
         // original timezone offset is not preserved through the database round-trip.
         assertThat(updatedExercise.getReleaseDate().toInstant()).isEqualTo(newReleaseDate.toInstant());
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(eq(programmingExercise), eq(Optional.of(programmingExercise)));
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(eq(Set.of()), any());
 
         if (!WeaviateTestUtil.shouldSkipWeaviateAssertions(weaviateService)) {
             await().atMost(Duration.ofSeconds(20)).untilAsserted(() -> {
