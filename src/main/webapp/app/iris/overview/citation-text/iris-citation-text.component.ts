@@ -121,39 +121,43 @@ export class IrisCitationTextComponent {
     }
 
     /**
-     * Renders the content of a citation summary tooltip including title, lecture context, and summary text.
+     * Renders the content of a citation summary tooltip including summary text and optional lecture metadata.
      */
     private renderSummaryContent(summary: string, meta?: IrisCitationMetaDTO, fallbackTitle?: string): string {
         const lectureUnitTitle = meta?.lectureUnitTitle?.trim();
         const lectureTitle = meta?.lectureTitle?.trim();
         const summaryText = summary?.trim();
         const unitTitle = lectureUnitTitle || fallbackTitle || '';
+        const hasUnit = !!unitTitle;
+        const hasLecture = !!lectureTitle;
+        const hasMeta = hasUnit || hasLecture;
+
+        const summaryHtml = summaryText ? `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>` : '';
+        if (!hasMeta) {
+            return summaryHtml;
+        }
 
         const unitLabel = escapeHtml(this.translateService.instant('artemisApp.iris.citation.unitLabel'));
         const lectureLabel = escapeHtml(this.translateService.instant('artemisApp.iris.citation.lectureLabel'));
-
-        const summaryHtml = summaryText ? `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>` : '';
         const dividerHtml = '<span class="iris-citation__summary-divider"></span>';
-        const unitHtml = `
-            <span class="iris-citation__summary-row iris-citation__summary-row--unit">
-                <span class="iris-citation__summary-label">${unitLabel}</span>
-                <span class="iris-citation__summary-value">${escapeHtml(unitTitle)}</span>
-            </span>
-        `.trim();
-        const lectureHtml = `
-            <span class="iris-citation__summary-row iris-citation__summary-row--lecture">
-                <span class="iris-citation__summary-label">${lectureLabel}</span>
-                <span class="iris-citation__summary-value">${escapeHtml(lectureTitle ?? '')}</span>
-            </span>
-        `.trim();
+        const unitHtml = hasUnit ? this.renderSummaryMetaRow('unit', unitLabel, unitTitle) : '';
+        const lectureHtml = hasLecture ? this.renderSummaryMetaRow('lecture', lectureLabel, lectureTitle ?? '') : '';
         const metaHtml = `
             <span class="iris-citation__summary-meta">
-                ${unitHtml}
-                ${lectureHtml}
+                ${unitHtml}${lectureHtml}
             </span>
         `.trim();
 
         return `${summaryHtml}${dividerHtml}${metaHtml}`;
+    }
+
+    private renderSummaryMetaRow(type: 'unit' | 'lecture', label: string, value: string): string {
+        return `
+            <span class="iris-citation__summary-row iris-citation__summary-row--${type}">
+                <span class="iris-citation__summary-label">${label}</span>
+                <span class="iris-citation__summary-value">${escapeHtml(value)}</span>
+            </span>
+        `.trim();
     }
 
     /**

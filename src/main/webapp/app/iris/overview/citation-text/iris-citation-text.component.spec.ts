@@ -102,6 +102,14 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelector('.iris-citation__summary-row--lecture .iris-citation__summary-value')?.textContent?.trim()).toBe('Lecture');
     });
 
+    it('hides lecture metadata when no unit or lecture title is available', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: '', lectureUnitTitle: '' }];
+        const el = render('[cite:L:7:::::Summary]', citationInfo);
+
+        expect(el.querySelector('.iris-citation__summary-divider')).toBeFalsy();
+        expect(el.querySelector('.iris-citation__summary-meta')).toBeFalsy();
+    });
+
     it('renders group without summary section', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
             { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
