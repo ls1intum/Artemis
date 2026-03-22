@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
@@ -124,12 +126,14 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
+    private final EntityManager entityManager;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -149,6 +153,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -202,13 +207,16 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Delete assessment notes before the result (cascade won't work with JPQL DELETE)
+        // Delete assessment notes before the result
         resultRepository.deleteAssessmentNotesByResultId(result.getId());
-        // Use JPQL bulk DELETE to avoid Hibernate L2 cache staleness issues that occur
-        // when using resultRepository.delete(entity) after bulk-deleting feedbacks.
-        // The entity delete path calls em.merge() which tries to initialize the stale
-        // PersistentList from L2 cache, causing failures.
-        resultRepository.deleteByResultId(result.getId());
+        // Evict the Result from L2 cache to prevent stale PersistentList references
+        // when Hibernate merges the entity during delete. The feedbacks were already
+        // bulk-deleted in deleteResultReferences, but L2 cache may still hold them.
+        entityManager.getEntityManagerFactory().getCache().evict(Result.class, result.getId());
+        result.setFeedbacks(List.of());
+        // Use entity-based delete to preserve @PreRemove lifecycle callback in ResultListener,
+        // which schedules participant score recalculation
+        resultRepository.delete(result);
     }
 
     /**

@@ -62,18 +62,6 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     void deleteAssessmentNotesByResultId(@Param("resultId") long resultId);
 
     /**
-     * Deletes a result by id using JPQL bulk DELETE to avoid Hibernate L2 cache staleness
-     * issues that occur when using resultRepository.delete(entity) after bulk-deleting
-     * feedbacks via JPQL (the merge path tries to initialize stale PersistentList references).
-     *
-     * @param resultId the id of the result to delete
-     */
-    @Transactional // ok because of delete
-    @Modifying
-    @Query("DELETE FROM Result r WHERE r.id = :resultId")
-    void deleteByResultId(@Param("resultId") long resultId);
-
-    /**
      * Count the number of results for a course by its exercise IDs.
      * Uses the denormalized result.exerciseId to avoid expensive joins through submission -> participation -> exercise -> course.
      *
