@@ -15,6 +15,8 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import jakarta.persistence.EntityManager;
+
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
@@ -124,12 +126,14 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
+    private final EntityManager entityManager;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, EntityManager entityManager) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -149,6 +153,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
+        this.entityManager = entityManager;
     }
 
     /**
@@ -206,9 +211,12 @@ public class ResultService {
         // to prevent foreign key constraint violations from the async ParticipantScoreScheduleService
         // recreating participant_score rows between a prior bulk delete and this result deletion
         participantScoreRepository.clearAllByResultId(result.getId());
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
+        // Evict the feedbacks collection from the L2 cache. The JPQL bulk deletes in
+        // deleteResultReferences bypass Hibernate's entity lifecycle, so the L2 cache
+        // retains stale references to already-deleted Feedback entities. Without eviction,
+        // resultRepository.delete() triggers cascade/orphan-removal which initializes the
+        // feedbacks PersistentList from the stale L2 cache, causing EntityNotFoundException.
+        entityManager.unwrap(org.hibernate.Session.class).getSessionFactory().getCache().evictCollectionData(Result.class.getName() + ".feedbacks", result.getId());
         result.setFeedbacks(List.of());
         resultRepository.delete(result);
     }
