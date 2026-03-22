@@ -134,6 +134,8 @@ export class ContextSelectionComponent {
                             exercises: cached.exercises ?? [],
                         });
                     }
+                    // Fallback: Load from server
+                    // TODO: Replace with a lighter endpoint that only fetches exercises and lectures (without competencies)
                     return this.courseManagementService.findWithExercisesAndLecturesAndCompetencies(courseId).pipe(
                         map((r) => ({
                             courseName: r.body?.title ?? '',

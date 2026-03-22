@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { ContextSelectionComponent } from './context-selection.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -13,6 +13,7 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('ContextSelectionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -77,7 +78,7 @@ describe('ContextSelectionComponent', () => {
         });
 
         TestBed.configureTestingModule({
-            imports: [ContextSelectionComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective)],
+            imports: [ContextSelectionComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: IrisChatService, useValue: chatServiceMock },
@@ -285,38 +286,30 @@ describe('ContextSelectionComponent', () => {
         });
     });
 
-    describe('sessionStorage persistence', () => {
-        beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+    describe('Data loading falls back to server when cache has empty arrays', () => {
+        it('should fetch from server when cache has no lectures and no exercises', async () => {
+            courseStorageServiceMock.getCourse.mockReturnValue({
+                title: 'Cached Course',
+                lectures: [],
+                exercises: [],
+            });
+            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(
+                of({
+                    body: {
+                        title: 'Server Course',
+                        lectures: mockLectures,
+                        exercises: mockExercises,
+                    },
+                }),
+            );
+
+            fixture.componentRef.setInput('courseId', 5);
             await fixture.whenStable();
-        });
 
-        it('should save course context to sessionStorage when course is selected', () => {
-            component.onSelectionChange(`${ChatServiceMode.COURSE}:1`);
-
-            const stored = JSON.parse(sessionStorage.getItem('iris-context-1')!);
-            expect(stored).toEqual({ mode: ChatServiceMode.COURSE, entityId: 1 });
-        });
-
-        it('should save lecture context to sessionStorage when lecture is selected', () => {
-            component.onSelectionChange(`${ChatServiceMode.LECTURE}:1`);
-
-            const stored = JSON.parse(sessionStorage.getItem('iris-context-1')!);
-            expect(stored).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 1 });
-        });
-
-        it('should save exercise context to sessionStorage when exercise is selected', () => {
-            component.onSelectionChange(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
-
-            const stored = JSON.parse(sessionStorage.getItem('iris-context-1')!);
-            expect(stored).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 1 });
-        });
-
-        it('should not write to sessionStorage when courseId is undefined', () => {
-            const freshFixture = TestBed.createComponent(ContextSelectionComponent);
-            // No courseId set — no storage should be written
-            expect(sessionStorage.getItem('iris-context-undefined')).toBeNull();
-            freshFixture.destroy();
+            expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(5);
+            expect(component.courseName()).toBe('Server Course');
+            expect(component.lectures()).toEqual(mockLectures);
+            expect(component.exercises()).toEqual(mockExercises);
         });
     });
 

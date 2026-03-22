@@ -216,7 +216,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
-    readonly showIconAndHelpOffer = signal(true);
 
     // Animation state (internal tracking)
     private shouldAnimate = false;
