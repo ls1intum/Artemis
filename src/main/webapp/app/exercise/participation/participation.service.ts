@@ -148,7 +148,7 @@ export class ParticipationService {
             params['scoreRangeUpper'] = search.scoreRangeUpper;
         }
         return this.http
-            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/search`, {
+            .get<ParticipationScoreDTO[]>(`api/exercise/exercises/${exerciseId}/participations/scores`, {
                 params,
                 observe: 'response',
             })
