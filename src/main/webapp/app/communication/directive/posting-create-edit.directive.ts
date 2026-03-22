@@ -1,6 +1,5 @@
 import { Directive, Input, OnChanges, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PostingEditType } from 'app/communication/metis.util';
@@ -13,14 +12,12 @@ const MAX_CONTENT_LENGTH = 5000;
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit, OnChanges {
     protected metisService = inject(MetisService);
-    protected modalService = inject(DialogService);
     protected formBuilder = inject(FormBuilder);
 
     @Input() posting: T;
     readonly onCreate = output<T>();
     readonly isModalOpen = output<void>();
 
-    modalRef?: DynamicDialogRef;
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
     editorHeight = MarkdownEditorHeight.INLINE;

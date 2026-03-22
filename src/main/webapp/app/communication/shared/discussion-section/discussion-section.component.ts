@@ -150,7 +150,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     ngOnDestroy(): void {
         super.onDestroy();
-        this.postCreateEditModal()?.modalRef?.close();
+        this.postCreateEditModal()?.close();
     }
 
     /**

@@ -11,7 +11,7 @@ import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdo
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { PageType } from 'app/communication/metis.util';
-import { DialogService } from 'primeng/dynamicdialog';
+
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { PostComponent } from 'app/communication/post/post.component';
 import { metisCourse, metisExercise, metisPostLectureUser1, metisPostTechSupport, metisPostToCreateUser1 } from 'test/helpers/sample/metis-sample-data';
@@ -41,13 +41,7 @@ describe('PostCreateEditModalComponent', () => {
                 MockComponent(PostingButtonComponent),
                 MockComponent(HelpIconComponent),
             ],
-            providers: [
-                provideHttpClient(),
-                provideHttpClientTesting(),
-                FormBuilder,
-                { provide: MetisService, useClass: MockMetisService },
-                { provide: DialogService, useValue: { open: vi.fn() } },
-            ],
+            providers: [provideHttpClient(), provideHttpClientTesting(), FormBuilder, { provide: MetisService, useClass: MockMetisService }],
         });
         fixture = TestBed.createComponent(PostCreateEditModalComponent);
         component = fixture.componentInstance;
