@@ -11,7 +11,13 @@
         display: block;
         height: 80vh;
 
-        ::ng-deep #viewerContainer,
+        ::ng-deep #viewerContainer {
+            background-color: var(--gray-200) !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: flex-start !important;
+        }
+
         ::ng-deep .pdfViewer,
         ::ng-deep #viewer,
         ::ng-deep .viewer,
