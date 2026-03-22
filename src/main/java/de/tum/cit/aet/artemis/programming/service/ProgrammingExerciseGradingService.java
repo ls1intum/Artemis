@@ -655,13 +655,7 @@ public class ProgrammingExerciseGradingService {
             setVisibilityForFeedbacksWithTestCase(result);
 
             // If there was an initialization error, create a dedicated feedback to prominently display the error
-            if (initializationErrorMessage != null && !initializationErrorMessage.isBlank()) {
-                Feedback initializationErrorFeedback = new Feedback().type(FeedbackType.AUTOMATIC).text("Test Initialization Error")
-                        .detailText("An error occurred during test initialization. This typically happens when test setup code (like @BeforeAll methods) fails:\n\n"
-                                + initializationErrorMessage)
-                        .positive(false);
-                result.addFeedback(initializationErrorFeedback);
-            }
+            addInitializationErrorFeedbackIfPresent(result, initializationErrorMessage);
 
             createFeedbackForNotExecutedTests(result, relevantTestCases, initializationErrorMessage);
             boolean hasDuplicateTestCases = createFeedbacksForDuplicateTests(result, exercise);
@@ -750,13 +744,24 @@ public class ProgrammingExerciseGradingService {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
         // If there was an initialization error, create a feedback to display the error message
-        if (initializationErrorMessage != null && !initializationErrorMessage.isBlank()) {
-            Feedback initializationErrorFeedback = new Feedback().type(FeedbackType.AUTOMATIC).text("Test Initialization Error")
-                    .detailText("An error occurred during test initialization: " + initializationErrorMessage).positive(false);
-            result.addFeedback(initializationErrorFeedback);
-        }
+        addInitializationErrorFeedbackIfPresent(result, initializationErrorMessage);
 
         createFeedbacksForDuplicateTests(result, exercise);
+    }
+
+    /**
+     * Creates and adds a "Test Initialization Error" feedback to the result if the given error message is non-blank.
+     *
+     * @param result                     to which the feedback should be added
+     * @param initializationErrorMessage the error message from test initialization failure, may be null or blank
+     */
+    private void addInitializationErrorFeedbackIfPresent(Result result, String initializationErrorMessage) {
+        if (initializationErrorMessage != null && !initializationErrorMessage.isBlank()) {
+            Feedback initializationErrorFeedback = new Feedback().type(FeedbackType.AUTOMATIC).text("Test Initialization Error").detailText(
+                    "An error occurred during test initialization. This typically happens when test setup code (like @BeforeAll methods) fails:\n\n" + initializationErrorMessage)
+                    .positive(false);
+            result.addFeedback(initializationErrorFeedback);
+        }
     }
 
     /**
