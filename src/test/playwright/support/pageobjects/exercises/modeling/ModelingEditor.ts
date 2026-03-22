@@ -99,6 +99,14 @@ export class ModelingEditor {
         return this.page.locator('#modeling-editor-canvas');
     }
 
+    async waitForExampleSolutionEditor() {
+        const sidebar = this.page.locator('#modeling-editor-sidebar');
+        await sidebar.waitFor({ state: 'visible', timeout: 30000 });
+        const canvas = this.page.locator(MODELING_EDITOR_CANVAS);
+        await canvas.waitFor({ state: 'visible', timeout: 30000 });
+        await this.waitForApollonEditor('jhi-modeling-editor');
+    }
+
     async addComponentToExampleSolutionModel(componentNumber: number) {
         const sidebar = this.page.locator('#modeling-editor-sidebar');
         await sidebar.waitFor({ state: 'visible' });

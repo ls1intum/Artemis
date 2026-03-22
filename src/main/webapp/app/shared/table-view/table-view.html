@@ -1,0 +1,95 @@
+<div class="jhi-table-view-container" [class.jhi-scrollable]="resolvedOptions().scrollable">
+    <p-table
+        #dt
+        [stripedRows]="resolvedOptions().striped"
+        [columns]="cols()"
+        [value]="vals()"
+        [totalRecords]="effectiveTotalRows()"
+        [tableStyle]="resolvedOptions().tableStyle"
+        [paginator]="resolvedOptions().paginated"
+        [rows]="effectivePageSize()"
+        [rowsPerPageOptions]="resolvedOptions().pageSizeOptions"
+        [showCurrentPageReport]="resolvedOptions().showCurrentPageReport"
+        [currentPageReportTemplate]="'global.item-count' | artemisTranslate: { first: itemRangeBegin(), second: itemRangeEnd(), total: effectiveTotalRows() }"
+        (onPage)="pageChange($event)"
+        [loading]="loading()"
+        [selectionMode]="resolvedOptions().selectionMode"
+        [(selection)]="selectedRow"
+        [dataKey]="resolvedOptions().dataKey"
+        (onRowSelect)="onRowSelect.emit($event.data)"
+        [lazy]="resolvedOptions().lazy"
+        (onLazyLoad)="handleLazyLoad($event)"
+        [scrollable]="resolvedOptions().scrollable"
+        [scrollHeight]="resolvedOptions().scrollHeight"
+    >
+        <ng-template #caption>
+            <div class="d-flex align-items-center gap-2">
+                @if (resolvedOptions().showSearch) {
+                    <div class="flex-grow-1">
+                        <jhi-search-filter (newSearchEvent)="onGlobalSearch($event)" />
+                    </div>
+                }
+                @if (tableActions()) {
+                    <ng-container [ngTemplateOutlet]="tableActions()!" />
+                }
+            </div>
+        </ng-template>
+        <ng-template #header let-columns>
+            <tr>
+                @for (col of columns; track col) {
+                    <th [pSortableColumn]="col?.sort ? col.field : undefined" [style]="{ 'min-width': col?.width ?? 'auto' }">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                @if (col?.headerKey) {
+                                    <span [jhiTranslate]="col.headerKey"></span>
+                                } @else {
+                                    <span>{{ col?.header ?? '' }}</span>
+                                }
+                                @if (col?.sort && col?.field) {
+                                    <p-sortIcon [field]="col.field" />
+                                }
+                            </div>
+                            @if (col?.filterType && col?.field) {
+                                <p-columnFilter [type]="col.filterType" [field]="col?.field" display="menu" class="ml-auto" />
+                            }
+                        </div>
+                    </th>
+                }
+                @if (rowActions()) {
+                    <th></th>
+                }
+            </tr>
+        </ng-template>
+
+        <ng-template #body let-rowData let-columns="columns">
+            @let rowParams = renderedRows().get(rowData);
+            <tr [pSelectableRow]="rowData">
+                @for (col of columns; track col; let colIndex = $index) {
+                    <td>
+                        @if (col?.templateRef) {
+                            <ng-container [ngTemplateOutlet]="col.templateRef" [ngTemplateOutletContext]="{ $implicit: rowParams?.[colIndex] }" />
+                        } @else if (col?.cellRenderer) {
+                            <!-- ngComponentOutlet is used intentionally: @-syntax has no equivalent for dynamic component instantiation -->
+                            <ng-container *ngComponentOutlet="col.cellRenderer; inputs: { params: rowParams?.[colIndex] }" />
+                        } @else {
+                            {{ rowData?.[col?.field] }}
+                        }
+                    </td>
+                }
+                @if (rowActions()) {
+                    <td class="text-end">
+                        <ng-container [ngTemplateOutlet]="rowActions()!" [ngTemplateOutletContext]="{ $implicit: rowData }" />
+                    </td>
+                }
+            </tr>
+        </ng-template>
+
+        <ng-template #emptymessage>
+            <tr>
+                <td [colSpan]="cols().length + (rowActions() ? 1 : 0)" class="text-secondary">
+                    <span [jhiTranslate]="resolvedOptions().emptyMessageTranslation"></span>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>
