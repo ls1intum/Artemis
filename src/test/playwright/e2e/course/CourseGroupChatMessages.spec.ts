@@ -87,7 +87,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             groupChat = await communicationAPIRequests.createCourseMessageGroupChat(course2, [studentTwo.username, tutor.username]);
         });
 
-        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Tutors should be able to add a user to group chat', async ({ login, courseMessages, page }) => {
             await login(tutor);
@@ -127,7 +127,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             await communicationAPIRequests.updateCourseMessageGroupChatName(course2, groupChat, groupChatName);
         });
 
-        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Tutors should be able to leave a group chat', async ({ login, courseMessages, page }) => {
             await login(tutor);
@@ -163,7 +163,7 @@ test.describe('Group chat messages', { tag: '@fast' }, () => {
             groupChat = await communicationAPIRequests.createCourseMessageGroupChat(course2, [studentOne.username, tutor.username]);
         });
 
-        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id!));
+        test.afterEach(() => deleteGroupChatFromDB(groupChat?.id));
 
         test('Students should be able to write a message in group chat', async ({ login, courseMessages }) => {
             await login(studentOne);
