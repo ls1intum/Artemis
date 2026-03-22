@@ -21,6 +21,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ExamUserDTO } from 'app/exam/shared/entities/exam-user-dto.model';
 import { DialogModule } from 'primeng/dialog';
+import * as readUsersFromCsv from 'app/shared/user-import/util/read-users-from-csv';
 
 describe('UsersImportDialogComponent', () => {
     let fixture: ComponentFixture<UsersImportDialogComponent>;
@@ -124,6 +125,19 @@ describe('UsersImportDialogComponent', () => {
         await component.onCSVFileSelect(event);
 
         expect(component.validationError).toHaveLength(1);
+    });
+
+    it('should stop parsing and show a generic error when csv parsing fails unexpectedly', async () => {
+        jest.spyOn(readUsersFromCsv, 'readStudentDTOsFromCSVFile').mockRejectedValue(new Error('parse failed'));
+        const alertService = TestBed.inject(AlertService);
+        const alertSpy = jest.spyOn(alertService, 'error');
+        const event = { target: { files: [studentCsvColumns], value: 'students.csv' } };
+
+        await component.onCSVFileSelect(event);
+
+        expect(alertSpy).toHaveBeenCalledWith('artemisApp.importUsers.genericErrorMessage');
+        expect(component.isParsing).toBeFalse();
+        expect(event.target.value).toBe('');
     });
 
     it('should import students', () => {

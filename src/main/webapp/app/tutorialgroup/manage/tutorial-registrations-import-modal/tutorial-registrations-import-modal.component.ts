@@ -80,25 +80,28 @@ export class TutorialRegistrationsImportModalComponent {
             return;
         }
 
-        const result = await readStudentDTOsFromCSVFile(file);
-        if (!result.ok) {
-            this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.invalidFileEntriesAlert');
-            this.isLoading.set(false);
-            return;
-        }
+        try {
+            const result = await readStudentDTOsFromCSVFile(file);
+            if (!result.ok) {
+                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.invalidFileEntriesAlert');
+                return;
+            }
 
-        const parsedStudents: TutorialGroupRegisterStudentDTO[] = result.students.map((student) => {
-            return { login: student.login, registrationNumber: student.registrationNumber };
-        });
-        if (parsedStudents.length === 0) {
-            this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.noFileEntriesAlert');
-            this.isLoading.set(false);
-            return;
-        }
+            const parsedStudents: TutorialGroupRegisterStudentDTO[] = result.students.map((student) => {
+                return { login: student.login, registrationNumber: student.registrationNumber };
+            });
+            if (parsedStudents.length === 0) {
+                this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.noFileEntriesAlert');
+                return;
+            }
 
-        this.isLoading.set(false);
-        this.parsedStudents.set(parsedStudents);
-        this.flowStep.set(ImportFlowStep.CONFIRMATION);
+            this.parsedStudents.set(parsedStudents);
+            this.flowStep.set(ImportFlowStep.CONFIRMATION);
+        } catch {
+            this.alertService.addErrorAlert('artemisApp.pages.tutorialGroupRegistrations.importModal.importErrorAlert');
+        } finally {
+            this.isLoading.set(false);
+        }
     }
 
     importParsedStudents() {
