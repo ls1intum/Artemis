@@ -53,15 +53,15 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
     }
 
     function expectClearedState() {
-        expect(component.date()).toBeUndefined();
+        expect(component.date()).toBeNull();
         expect(component.dateInputTouched()).toBe(false);
-        expect(component.startTime()).toBeUndefined();
+        expect(component.startTime()).toBeNull();
         expect(component.startTimeInputTouched()).toBe(false);
-        expect(component.endTime()).toBeUndefined();
+        expect(component.endTime()).toBeNull();
         expect(component.endTimeInputTouched()).toBe(false);
         expect(component.location()).toBe('');
         expect(component.locationInputTouched()).toBe(false);
-        expect(component.attendance()).toBeUndefined();
+        expect(component.attendance()).toBeNull();
     }
 
     it('should open in create mode with empty inputs, create header, and disabled save button', async () => {
@@ -71,11 +71,11 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
 
         expect(component.isOpen()).toBe(true);
         expectDialogHeader('artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.header.create');
-        expect(component.date()).toBeUndefined();
-        expect(component.startTime()).toBeUndefined();
-        expect(component.endTime()).toBeUndefined();
+        expect(component.date()).toBeNull();
+        expect(component.startTime()).toBeNull();
+        expect(component.endTime()).toBeNull();
         expect(component.location()).toBe('');
-        expect(component.attendance()).toBeUndefined();
+        expect(component.attendance()).toBeNull();
         expect(component.saveButtonDisabled()).toBe(true);
         expect(fixture.debugElement.query(By.directive(PrimeNgDialogStubComponent)).componentInstance.visible()).toBe(true);
     });
