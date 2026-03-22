@@ -723,9 +723,6 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
             }
             return this.translateService.instant('artemisApp.quizExercise.edit.editNotPossibleDuringQuiz');
         }
-        if (!this.quizIsValid) {
-            return '';
-        }
         return '';
     }
 

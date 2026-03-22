@@ -137,8 +137,9 @@ public class QuizExerciseRetrievalResource {
 
         for (QuizExercise quizExercise : quizExercises) {
             boolean isEditable = quizExerciseService.isEditable(quizExercise);
+            boolean effectiveQuizEnded = computeEffectiveQuizEnded(quizExercise);
             quizExercise.setQuizBatches(null);
-            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable));
+            quizExerciseDTOs.add(QuizExerciseForCourseDTO.of(quizExercise, isEditable, effectiveQuizEnded));
         }
         return ResponseEntity.ok(quizExerciseDTOs);
     }
