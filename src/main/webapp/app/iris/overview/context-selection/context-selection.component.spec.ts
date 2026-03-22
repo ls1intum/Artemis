@@ -13,7 +13,6 @@ import { CourseStorageService } from 'app/core/course/manage/services/course-sto
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 
 describe('ContextSelectionComponent', () => {
     setupTestBed({ zoneless: true });
@@ -105,6 +104,14 @@ describe('ContextSelectionComponent', () => {
         it('should start with isLoading false', () => {
             expect(component.isLoading()).toBe(false);
         });
+
+        it('should have no groups when no courseId is set', () => {
+            expect(component.allGroups()).toEqual([]);
+        });
+
+        it('should have undefined selectedValue when no mode is set', () => {
+            expect(component.selectedValue()).toBeUndefined();
+        });
     });
 
     describe('Data loading from cache', () => {
@@ -125,14 +132,6 @@ describe('ContextSelectionComponent', () => {
 
         it('should set isLoading to false after loading', () => {
             expect(component.isLoading()).toBe(false);
-        });
-
-        it('should set default menuLabel to course name', () => {
-            expect(component.menuLabel()).toBe('Test Course');
-        });
-
-        it('should set default menuIcon to faGraduationCap', () => {
-            expect(component.menuIcon()).toBe(faGraduationCap);
         });
     });
 
@@ -176,217 +175,109 @@ describe('ContextSelectionComponent', () => {
         });
     });
 
-    describe('allItems computed', () => {
+    describe('allGroups computed', () => {
         beforeEach(async () => {
             fixture.componentRef.setInput('courseId', 1);
             await fixture.whenStable();
         });
 
         it('should include course group when courseName is set', () => {
-            const courseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.courseGroup');
+            const courseGroup = component.allGroups().find((g) => g.label === 'artemisApp.iris.contextSelection.courseGroup');
             expect(courseGroup).toBeDefined();
             expect(courseGroup!.items).toHaveLength(1);
-            expect(courseGroup!.items![0].label).toBe('Test Course');
+            expect(courseGroup!.items[0].label).toBe('Test Course');
+            expect(courseGroup!.items[0].mode).toBe(ChatServiceMode.COURSE);
+            expect(courseGroup!.items[0].entityId).toBe(1);
         });
 
         it('should include lecture group with all lectures', () => {
-            const lectureGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.lecturesGroup');
+            const lectureGroup = component.allGroups().find((g) => g.label === 'artemisApp.iris.contextSelection.lecturesGroup');
             expect(lectureGroup).toBeDefined();
             expect(lectureGroup!.items).toHaveLength(3);
+            expect(lectureGroup!.items[0].mode).toBe(ChatServiceMode.LECTURE);
         });
 
         it('should include exercise group with only supported exercises', () => {
-            const exerciseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.exercisesGroup');
+            const exerciseGroup = component.allGroups().find((g) => g.label === 'artemisApp.iris.contextSelection.exercisesGroup');
             expect(exerciseGroup).toBeDefined();
             expect(exerciseGroup!.items).toHaveLength(2);
         });
 
         it('should be empty when no courseId is set', () => {
-            // Component without courseId set — lectures/exercises/courseName all empty
             const fresh = TestBed.createComponent(ContextSelectionComponent);
-            expect(fresh.componentInstance.allItems()).toEqual([]);
+            expect(fresh.componentInstance.allGroups()).toEqual([]);
         });
     });
 
-    describe('filteredItems', () => {
+    describe('selectedValue computed', () => {
         beforeEach(async () => {
             fixture.componentRef.setInput('courseId', 1);
             await fixture.whenStable();
         });
 
-        it('should return allItems when searchTerm is empty', () => {
-            expect(component.filteredItems()).toEqual(component.allItems());
-        });
-
-        it('should filter items by search term', () => {
-            component.searchTerm.set('data');
-            const lectureGroup = component.filteredItems().find((i) => i.label === 'artemisApp.iris.contextSelection.lecturesGroup');
-            expect(lectureGroup).toBeDefined();
-            expect(lectureGroup!.items).toHaveLength(1);
-            expect(lectureGroup!.items![0].label).toBe('Data Structures');
-        });
-
-        it('should remove groups with no matching items', () => {
-            component.searchTerm.set('zzznomatch');
-            expect(component.filteredItems()).toHaveLength(0);
-        });
-
-        it('should be case-insensitive', () => {
-            component.searchTerm.set('HELLO');
-            const exerciseGroup = component.filteredItems().find((i) => i.label === 'artemisApp.iris.contextSelection.exercisesGroup');
-            expect(exerciseGroup).toBeDefined();
-            expect(exerciseGroup!.items![0].label).toBe('Hello World');
-        });
-    });
-
-    describe('Item commands', () => {
-        beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
-            await fixture.whenStable();
-        });
-
-        it('should call chatService.switchTo with COURSE mode when course item command is triggered', async () => {
-            const courseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.courseGroup');
-            courseGroup!.items![0].command!({} as any);
-            await fixture.whenStable();
-
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1, true);
-            expect(component.menuLabel()).toBe('Test Course');
-            expect(component.menuIcon()).toBe(faGraduationCap);
-        });
-
-        it('should call chatService.switchTo with LECTURE mode when lecture item command is triggered', async () => {
-            const lectureGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.lecturesGroup');
-            lectureGroup!.items![0].command!({} as any);
-            await fixture.whenStable();
-
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, true);
-            expect(component.menuLabel()).toBe('Introduction to Programming');
-            expect(component.menuIcon()).toBe(faChalkboardUser);
-        });
-
-        it('should call chatService.switchTo with PROGRAMMING_EXERCISE mode when programming exercise command is triggered', async () => {
-            const exerciseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.exercisesGroup');
-            const programmingItem = exerciseGroup!.items!.find((i) => i.label === 'Hello World');
-            programmingItem!.command!({} as any);
-            await fixture.whenStable();
-
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, 1, true);
-            expect(component.menuLabel()).toBe('Hello World');
-        });
-
-        it('should call chatService.switchTo with TEXT_EXERCISE mode when text exercise command is triggered', async () => {
-            const exerciseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.exercisesGroup');
-            const textItem = exerciseGroup!.items!.find((i) => i.label === 'Essay Writing');
-            textItem!.command!({} as any);
-            await fixture.whenStable();
-
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 2, true);
-            expect(component.menuLabel()).toBe('Essay Writing');
-        });
-    });
-
-    describe('Reactive label derivation', () => {
-        beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
-            await fixture.whenStable();
-        });
-
-        it('should show lecture title when chat service reports LECTURE mode', async () => {
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
-            chatServiceMock.entityIdSubject.next(2);
-            await fixture.whenStable();
-
-            expect(component.menuLabel()).toBe('Data Structures');
-            expect(component.menuIcon()).toBe(faChalkboardUser);
-        });
-
-        it('should show exercise title when chat service reports PROGRAMMING_EXERCISE mode', async () => {
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.PROGRAMMING_EXERCISE);
-            chatServiceMock.entityIdSubject.next(1);
-            await fixture.whenStable();
-
-            expect(component.menuLabel()).toBe('Hello World');
-        });
-
-        it('should show exercise title when chat service reports TEXT_EXERCISE mode', async () => {
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.TEXT_EXERCISE);
-            chatServiceMock.entityIdSubject.next(2);
-            await fixture.whenStable();
-
-            expect(component.menuLabel()).toBe('Essay Writing');
-        });
-
-        it('should show course name when chat service reports COURSE mode', async () => {
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
-            chatServiceMock.entityIdSubject.next(1);
-            await fixture.whenStable();
-
+        it('should reflect current chat mode and entity ID', async () => {
             chatServiceMock.chatModeSubject.next(ChatServiceMode.COURSE);
             chatServiceMock.entityIdSubject.next(1);
             await fixture.whenStable();
 
-            expect(component.menuLabel()).toBe('Test Course');
-            expect(component.menuIcon()).toBe(faGraduationCap);
+            expect(component.selectedValue()).toBe(`${ChatServiceMode.COURSE}:1`);
         });
 
-        it('should update label when mode changes after data is loaded', async () => {
+        it('should update when mode changes to lecture', async () => {
             chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
-            chatServiceMock.entityIdSubject.next(1);
+            chatServiceMock.entityIdSubject.next(2);
             await fixture.whenStable();
-            expect(component.menuLabel()).toBe('Introduction to Programming');
 
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.PROGRAMMING_EXERCISE);
-            chatServiceMock.entityIdSubject.next(1);
-            await fixture.whenStable();
-            expect(component.menuLabel()).toBe('Hello World');
+            expect(component.selectedValue()).toBe(`${ChatServiceMode.LECTURE}:2`);
         });
 
-        it('should update label when data arrives after mode is already set', async () => {
-            // Create a fresh component where mode is set before data loads
-            courseStorageServiceMock.getCourse.mockReturnValue(undefined);
-            const delayedSubject = new Subject<any>();
-            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(delayedSubject);
-
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
-            chatServiceMock.entityIdSubject.next(3);
-
-            const freshFixture = TestBed.createComponent(ContextSelectionComponent);
-            freshFixture.componentRef.setInput('courseId', 99);
-            await freshFixture.whenStable();
-
-            // No data yet, label should be empty (effect returns early when courseName is empty)
-            expect(freshFixture.componentInstance.menuLabel()).toBe('');
-
-            // Data arrives
-            delayedSubject.next({
-                body: {
-                    title: 'Late Course',
-                    lectures: mockLectures,
-                    exercises: mockExercises,
-                },
-            });
-            await freshFixture.whenStable();
-
-            expect(freshFixture.componentInstance.menuLabel()).toBe('Algorithms');
+        it('should be undefined when mode is undefined', () => {
+            expect(component.selectedValue()).toBeUndefined();
         });
 
-        it('should fall back to course name when entity ID does not match any lecture', async () => {
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
-            chatServiceMock.entityIdSubject.next(999);
+        it('should be undefined when entityId is undefined', async () => {
+            chatServiceMock.chatModeSubject.next(ChatServiceMode.COURSE);
             await fixture.whenStable();
 
-            expect(component.menuLabel()).toBe('Test Course');
-            expect(component.menuIcon()).toBe(faGraduationCap);
+            expect(component.selectedValue()).toBeUndefined();
+        });
+    });
+
+    describe('onSelectionChange', () => {
+        beforeEach(async () => {
+            fixture.componentRef.setInput('courseId', 1);
+            await fixture.whenStable();
         });
 
-        it('should fall back to course name when entity ID does not match any exercise', async () => {
-            chatServiceMock.chatModeSubject.next(ChatServiceMode.PROGRAMMING_EXERCISE);
-            chatServiceMock.entityIdSubject.next(999);
-            await fixture.whenStable();
+        it('should call chatService.switchTo with COURSE mode', () => {
+            component.onSelectionChange(`${ChatServiceMode.COURSE}:1`);
 
-            expect(component.menuLabel()).toBe('Test Course');
-            expect(component.menuIcon()).toBe(faGraduationCap);
+            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1, true);
+        });
+
+        it('should call chatService.switchTo with LECTURE mode', () => {
+            component.onSelectionChange(`${ChatServiceMode.LECTURE}:1`);
+
+            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, true);
+        });
+
+        it('should call chatService.switchTo with PROGRAMMING_EXERCISE mode', () => {
+            component.onSelectionChange(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
+
+            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, 1, true);
+        });
+
+        it('should call chatService.switchTo with TEXT_EXERCISE mode', () => {
+            component.onSelectionChange(`${ChatServiceMode.TEXT_EXERCISE}:2`);
+
+            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 2, true);
+        });
+
+        it('should not call switchTo for unknown value', () => {
+            chatServiceMock.switchTo.mockClear();
+            component.onSelectionChange('UNKNOWN:999');
+
+            expect(chatServiceMock.switchTo).not.toHaveBeenCalled();
         });
     });
 
@@ -396,26 +287,22 @@ describe('ContextSelectionComponent', () => {
             await fixture.whenStable();
         });
 
-        it('should save course context to sessionStorage when course item is selected', async () => {
-            const courseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.courseGroup');
-            courseGroup!.items![0].command!({} as any);
+        it('should save course context to sessionStorage when course is selected', () => {
+            component.onSelectionChange(`${ChatServiceMode.COURSE}:1`);
 
             const stored = JSON.parse(sessionStorage.getItem('iris-context-1')!);
             expect(stored).toEqual({ mode: ChatServiceMode.COURSE, entityId: 1 });
         });
 
-        it('should save lecture context to sessionStorage when lecture item is selected', async () => {
-            const lectureGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.lecturesGroup');
-            lectureGroup!.items![0].command!({} as any);
+        it('should save lecture context to sessionStorage when lecture is selected', () => {
+            component.onSelectionChange(`${ChatServiceMode.LECTURE}:1`);
 
             const stored = JSON.parse(sessionStorage.getItem('iris-context-1')!);
             expect(stored).toEqual({ mode: ChatServiceMode.LECTURE, entityId: 1 });
         });
 
-        it('should save exercise context to sessionStorage when exercise item is selected', async () => {
-            const exerciseGroup = component.allItems().find((i) => i.label === 'artemisApp.iris.contextSelection.exercisesGroup');
-            const programmingItem = exerciseGroup!.items!.find((i) => i.label === 'Hello World');
-            programmingItem!.command!({} as any);
+        it('should save exercise context to sessionStorage when exercise is selected', () => {
+            component.onSelectionChange(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
 
             const stored = JSON.parse(sessionStorage.getItem('iris-context-1')!);
             expect(stored).toEqual({ mode: ChatServiceMode.PROGRAMMING_EXERCISE, entityId: 1 });
@@ -423,8 +310,7 @@ describe('ContextSelectionComponent', () => {
 
         it('should not write to sessionStorage when courseId is undefined', () => {
             const freshFixture = TestBed.createComponent(ContextSelectionComponent);
-            // No courseId set — trigger a course command manually via the component's method
-            // Since allItems is empty without data, we verify indirectly that no storage is written
+            // No courseId set — no storage should be written
             expect(sessionStorage.getItem('iris-context-undefined')).toBeNull();
             freshFixture.destroy();
         });
@@ -442,6 +328,71 @@ describe('ContextSelectionComponent', () => {
             expect(component.lectures()).toEqual([]);
             expect(component.exercises()).toEqual([]);
             expect(component.isLoading()).toBe(false);
+        });
+    });
+
+    describe('Reactive selection via chat service mode', () => {
+        beforeEach(async () => {
+            fixture.componentRef.setInput('courseId', 1);
+            await fixture.whenStable();
+        });
+
+        it('should update selectedValue when chat service reports LECTURE mode', async () => {
+            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
+            chatServiceMock.entityIdSubject.next(2);
+            await fixture.whenStable();
+
+            expect(component.selectedValue()).toBe(`${ChatServiceMode.LECTURE}:2`);
+        });
+
+        it('should update selectedValue when chat service reports PROGRAMMING_EXERCISE mode', async () => {
+            chatServiceMock.chatModeSubject.next(ChatServiceMode.PROGRAMMING_EXERCISE);
+            chatServiceMock.entityIdSubject.next(1);
+            await fixture.whenStable();
+
+            expect(component.selectedValue()).toBe(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
+        });
+
+        it('should update selectedValue when mode changes multiple times', async () => {
+            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
+            chatServiceMock.entityIdSubject.next(1);
+            await fixture.whenStable();
+            expect(component.selectedValue()).toBe(`${ChatServiceMode.LECTURE}:1`);
+
+            chatServiceMock.chatModeSubject.next(ChatServiceMode.PROGRAMMING_EXERCISE);
+            chatServiceMock.entityIdSubject.next(1);
+            await fixture.whenStable();
+            expect(component.selectedValue()).toBe(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
+        });
+
+        it('should update selectedValue when data arrives after mode is already set', async () => {
+            courseStorageServiceMock.getCourse.mockReturnValue(undefined);
+            const delayedSubject = new Subject<any>();
+            courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(delayedSubject);
+
+            chatServiceMock.chatModeSubject.next(ChatServiceMode.LECTURE);
+            chatServiceMock.entityIdSubject.next(3);
+
+            const freshFixture = TestBed.createComponent(ContextSelectionComponent);
+            freshFixture.componentRef.setInput('courseId', 99);
+            await freshFixture.whenStable();
+
+            // Mode is set but no groups yet
+            expect(freshFixture.componentInstance.selectedValue()).toBe(`${ChatServiceMode.LECTURE}:3`);
+            expect(freshFixture.componentInstance.allGroups()).toEqual([]);
+
+            // Data arrives — groups now populated
+            delayedSubject.next({
+                body: {
+                    title: 'Late Course',
+                    lectures: mockLectures,
+                    exercises: mockExercises,
+                },
+            });
+            await freshFixture.whenStable();
+
+            expect(freshFixture.componentInstance.allGroups().length).toBeGreaterThan(0);
+            expect(freshFixture.componentInstance.selectedValue()).toBe(`${ChatServiceMode.LECTURE}:3`);
         });
     });
 });

@@ -1,36 +1,34 @@
-<p-menu #menu [model]="filteredItems()" [popup]="true" appendTo="body" (onHide)="searchTerm.set('')">
-    <ng-template #start>
-        <div class="p-2">
-            <p-iconfield iconPosition="left" class="w-full">
-                <p-inputicon>
-                    <fa-icon [icon]="faMagnifyingGlass" />
-                </p-inputicon>
-                <input
-                    pInputText
-                    type="text"
-                    [value]="searchTerm()"
-                    (input)="searchTerm.set($any($event.target).value)"
-                    [placeholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
-                    class="w-full"
-                />
-            </p-iconfield>
+<p-select
+    [options]="allGroups()"
+    [group]="true"
+    optionGroupLabel="label"
+    optionGroupChildren="items"
+    optionLabel="label"
+    optionValue="value"
+    [ngModel]="selectedValue()"
+    (onChange)="onSelectionChange($event.value)"
+    [filter]="true"
+    filterBy="label"
+    [filterPlaceholder]="'artemisApp.iris.contextSelection.search' | artemisTranslate"
+    [resetFilterOnHide]="true"
+    scrollHeight="40vh"
+    appendTo="body"
+    variant="outlined"
+    size="small"
+>
+    <ng-template #selectedItem let-selectedOption>
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="selectedOption.faIcon" />
+            <span>{{ selectedOption.label }}</span>
         </div>
     </ng-template>
-    <ng-template #submenuheader let-item>
-        <span [jhiTranslate]="item.label"></span>
+    <ng-template #item let-option>
+        <div class="flex items-center gap-2">
+            <fa-icon [icon]="option.faIcon" />
+            <span>{{ option.label }}</span>
+        </div>
     </ng-template>
-    <ng-template #item let-item>
-        <a pRipple class="flex items-center gap-2 p-menu-item-link">
-            <fa-icon [icon]="item.faIcon" />
-            <span>{{ item.label }}</span>
-            @if (item.label === menuLabel()) {
-                <fa-icon [icon]="faCheck" class="ms-auto text-primary" />
-            }
-        </a>
+    <ng-template #group let-group>
+        <span [jhiTranslate]="group.label"></span>
     </ng-template>
-</p-menu>
-<p-button (click)="menu.toggle($event)" [label]="menuLabel()" variant="outlined">
-    <ng-template pTemplate="icon">
-        <fa-icon [icon]="menuIcon()" />
-    </ng-template>
-</p-button>
+</p-select>

@@ -369,6 +369,19 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
+     * Extracts the entity ID from {@link sessionCreationIdentifier} (e.g. 'lecture-chat/27' → 27).
+     * Returns -1 if the identifier is not set or does not end with a numeric ID.
+     */
+    private parseEntityIdFromIdentifier(): number {
+        if (!this.sessionCreationIdentifier) {
+            return -1;
+        }
+        const parts = this.sessionCreationIdentifier.split('/');
+        const parsed = parseInt(parts[parts.length - 1], 10);
+        return isNaN(parsed) ? -1 : parsed;
+    }
+
+    /**
      * {@link IrisChatHttpService#getChatSessions} returns only sessions that have messages.
      *
      * As we open a new empty session without messages (e.g. when the dashboard is opened) we want to display this session in the history as well.
@@ -382,7 +395,7 @@ export class IrisChatService implements OnDestroy {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
             chatMode: chatMode,
-            entityId: newIrisSession.entityId,
+            entityId: newIrisSession.entityId ?? this.parseEntityIdFromIdentifier(),
             entityName: newIrisSession.entityName ?? '',
             title: newIrisSession.title,
         };

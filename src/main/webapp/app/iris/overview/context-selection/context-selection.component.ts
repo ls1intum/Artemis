@@ -1,14 +1,6 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { MenuItem } from 'primeng/api';
-import { ButtonModule } from 'primeng/button';
-import { MenuModule } from 'primeng/menu';
-import { RippleModule } from 'primeng/ripple';
-import { InputTextModule } from 'primeng/inputtext';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { faChalkboardUser, faCheck, faFolderOpen, faGraduationCap, faMagnifyingGlass } from '@fortawesome/free-solid-svg-icons';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -18,10 +10,21 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iri
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { catchError, filter, map, of, switchMap, tap } from 'rxjs';
+import { SelectModule } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
-interface ContextMenuItem extends MenuItem {
-    faIcon?: IconDefinition;
-    items?: ContextMenuItem[];
+interface ContextOption {
+    label: string;
+    value: string;
+    faIcon: IconDefinition;
+    mode: ChatServiceMode;
+    entityId: number;
+}
+
+interface ContextGroup {
+    label: string;
+    items: ContextOption[];
 }
 
 // Maps exercise types that have Iris chat integration to their ChatServiceMode.
@@ -31,13 +34,11 @@ const EXERCISE_TYPE_TO_CHAT_MODE: Record<string, ChatServiceMode> = {
     [ExerciseType.PROGRAMMING]: ChatServiceMode.PROGRAMMING_EXERCISE,
 };
 
-const CONTEXT_STORAGE_KEY_PREFIX = 'iris-context-';
-
 @Component({
     selector: 'jhi-context-selection',
     templateUrl: './context-selection.component.html',
     styleUrls: ['./context-selection.component.scss'],
-    imports: [ButtonModule, MenuModule, FaIconComponent, RippleModule, InputTextModule, IconFieldModule, InputIconModule, TranslateDirective, ArtemisTranslatePipe],
+    imports: [SelectModule, FormsModule, TranslateDirective, ArtemisTranslatePipe, FaIconComponent],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContextSelectionComponent {
@@ -55,98 +56,69 @@ export class ContextSelectionComponent {
     readonly exercises = signal<Exercise[]>([]);
     readonly courseName = signal<string>('');
 
-    readonly menuLabel = signal<string>('');
-    readonly menuIcon = signal<IconDefinition>(faGraduationCap);
-
-    readonly searchTerm = signal<string>('');
-
     readonly supportedExercises = computed(() => this.exercises().filter((e) => e.type && e.type in EXERCISE_TYPE_TO_CHAT_MODE));
 
-    readonly allItems = computed<ContextMenuItem[]>(() => {
+    readonly selectedValue = computed(() => {
+        const mode = this.currentMode();
+        const entityId = this.currentEntityId();
+        if (mode === undefined || entityId === undefined) return undefined;
+        return `${mode}:${entityId}`;
+    });
+
+    readonly allGroups = computed<ContextGroup[]>(() => {
         const courseId = this.courseId();
         const courseName = this.courseName();
         const lectures = this.lectures();
         const exercises = this.supportedExercises();
-        const items: ContextMenuItem[] = [];
+        const groups: ContextGroup[] = [];
 
-        if (courseName) {
-            items.push(
-                { separator: true },
-                {
-                    label: 'artemisApp.iris.contextSelection.courseGroup',
-                    items: [
-                        {
-                            label: courseName,
-                            faIcon: faGraduationCap,
-                            command: () => {
-                                this.saveContextToStorage(ChatServiceMode.COURSE, courseId);
-                                if (courseId !== undefined) {
-                                    this.chatService.switchTo(ChatServiceMode.COURSE, courseId, true);
-                                }
-                            },
-                        },
-                    ],
-                },
-            );
+        if (courseName && courseId !== undefined) {
+            groups.push({
+                label: 'artemisApp.iris.contextSelection.courseGroup',
+                items: [
+                    {
+                        label: courseName,
+                        value: `${ChatServiceMode.COURSE}:${courseId}`,
+                        faIcon: faGraduationCap,
+                        mode: ChatServiceMode.COURSE,
+                        entityId: courseId,
+                    },
+                ],
+            });
         }
 
         if (lectures.length > 0) {
-            items.push(
-                { separator: true },
-                {
-                    label: 'artemisApp.iris.contextSelection.lecturesGroup',
-                    items: lectures.map((lecture) => ({
-                        label: lecture.title,
+            groups.push({
+                label: 'artemisApp.iris.contextSelection.lecturesGroup',
+                items: lectures
+                    .filter((l) => l.id !== undefined)
+                    .map((lecture) => ({
+                        label: lecture.title ?? '',
+                        value: `${ChatServiceMode.LECTURE}:${lecture.id}`,
                         faIcon: faChalkboardUser,
-                        command: () => {
-                            this.saveContextToStorage(ChatServiceMode.LECTURE, lecture.id);
-                            if (lecture.id !== undefined) {
-                                this.chatService.switchTo(ChatServiceMode.LECTURE, lecture.id, true);
-                            }
-                        },
+                        mode: ChatServiceMode.LECTURE,
+                        entityId: lecture.id!,
                     })),
-                },
-            );
+            });
         }
 
         if (exercises.length > 0) {
-            items.push(
-                { separator: true },
-                {
-                    label: 'artemisApp.iris.contextSelection.exercisesGroup',
-                    items: exercises.map((exercise) => ({
-                        label: exercise.title,
+            groups.push({
+                label: 'artemisApp.iris.contextSelection.exercisesGroup',
+                items: exercises
+                    .filter((e) => e.id !== undefined)
+                    .map((exercise) => ({
+                        label: exercise.title ?? '',
+                        value: `${EXERCISE_TYPE_TO_CHAT_MODE[exercise.type!]}:${exercise.id}`,
                         faIcon: getIcon(exercise.type) as IconDefinition,
-                        command: () => {
-                            const mode = exercise.type ? EXERCISE_TYPE_TO_CHAT_MODE[exercise.type] : undefined;
-                            if (exercise.id !== undefined && mode) {
-                                this.saveContextToStorage(mode, exercise.id);
-                                this.chatService.switchTo(mode, exercise.id, true);
-                            }
-                        },
+                        mode: EXERCISE_TYPE_TO_CHAT_MODE[exercise.type!],
+                        entityId: exercise.id!,
                     })),
-                },
-            );
+            });
         }
 
-        return items;
+        return groups;
     });
-
-    readonly filteredItems = computed<ContextMenuItem[]>(() => {
-        const term = this.searchTerm().trim().toLowerCase();
-        if (!term) return this.allItems();
-        return this.allItems()
-            .filter((item) => !item.separator)
-            .map((group) => ({
-                ...group,
-                items: group.items?.filter((sub) => sub.label?.toLowerCase().includes(term)),
-            }))
-            .filter((group) => (group.items?.length ?? 0) > 0);
-    });
-
-    protected readonly faFolderOpen = faFolderOpen;
-    protected readonly faMagnifyingGlass = faMagnifyingGlass;
-    protected readonly faCheck = faCheck;
 
     constructor() {
         toObservable(this.courseId)
@@ -179,43 +151,14 @@ export class ContextSelectionComponent {
                 this.exercises.set(data.exercises);
                 this.isLoading.set(false);
             });
-
-        effect(() => {
-            const mode = this.currentMode();
-            const entityId = this.currentEntityId();
-            const courseName = this.courseName();
-            const lectures = this.lectures();
-            const exercises = this.supportedExercises();
-
-            if (!courseName) return;
-
-            if (mode === ChatServiceMode.LECTURE && entityId !== undefined) {
-                const lecture = lectures.find((l) => l.id === entityId);
-                if (lecture?.title) {
-                    this.menuLabel.set(lecture.title);
-                    this.menuIcon.set(faChalkboardUser);
-                    return;
-                }
-            }
-
-            if ((mode === ChatServiceMode.PROGRAMMING_EXERCISE || mode === ChatServiceMode.TEXT_EXERCISE) && entityId !== undefined) {
-                const exercise = exercises.find((e) => e.id === entityId);
-                if (exercise?.title) {
-                    this.menuLabel.set(exercise.title);
-                    this.menuIcon.set(getIcon(exercise.type) as IconDefinition);
-                    return;
-                }
-            }
-
-            this.menuLabel.set(courseName);
-            this.menuIcon.set(faGraduationCap);
-        });
     }
 
-    private saveContextToStorage(mode: ChatServiceMode, entityId?: number): void {
-        const courseId = this.courseId();
-        if (courseId !== undefined) {
-            sessionStorage.setItem(CONTEXT_STORAGE_KEY_PREFIX + courseId, JSON.stringify({ mode, entityId }));
+    onSelectionChange(value: string): void {
+        const option = this.allGroups()
+            .flatMap((g) => g.items)
+            .find((o) => o.value === value);
+        if (option) {
+            this.chatService.switchTo(option.mode, option.entityId, true);
         }
     }
 }
