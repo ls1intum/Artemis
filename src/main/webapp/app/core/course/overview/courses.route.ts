@@ -106,14 +106,19 @@ export const courseRoutes: Routes = [
                         loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         pathMatch: 'full',
                     },
+                    {
+                        path: 'text-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
+                    },
                 ],
-            },
-            {
-                path: 'exercises/text-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',

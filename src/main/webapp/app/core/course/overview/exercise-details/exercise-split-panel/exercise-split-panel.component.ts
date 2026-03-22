@@ -1,4 +1,5 @@
 import { Component, computed, effect, inject, input, viewChild } from '@angular/core';
+import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -21,11 +22,11 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
     selector: 'jhi-exercise-split-panel',
     templateUrl: './exercise-split-panel.component.html',
     imports: [
+        RouterOutlet,
         ResizablePanelsComponent,
         PanelDirective,
         ProblemStatementComponent,
         DiscussionFeedComponent,
-        TextEditorComponent,
         CodeEditorStudentContainerComponent,
         ModelingSubmissionComponent,
         FileUploadSubmissionComponent,
@@ -36,6 +37,9 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
 })
 export class ExerciseSplitPanelComponent {
     private readonly chatService = inject(IrisChatService);
+    private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
+    private readonly childrenOutletContexts = inject(ChildrenOutletContexts);
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
@@ -48,7 +52,6 @@ export class ExerciseSplitPanelComponent {
     readonly studentParticipation = input<StudentParticipation>();
     readonly irisEnabled = input<boolean>(false);
 
-    private readonly textEditor = viewChild(TextEditorComponent);
     private readonly codeEditor = viewChild(CodeEditorStudentContainerComponent);
     private readonly modelingSubmission = viewChild(ModelingSubmissionComponent);
     private readonly fileUploadSubmission = viewChild(FileUploadSubmissionComponent);
@@ -83,6 +86,13 @@ export class ExerciseSplitPanelComponent {
                 this.chatService.switchTo(mode, exercise.id);
             }
         });
+        effect(() => {
+            const participation = this.studentParticipation();
+            const exercise = this.exercise();
+            if (exercise.type === ExerciseType.TEXT && participation?.id && exercise.id && !this.route.firstChild) {
+                this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+            }
+        });
     }
 
     readonly showCodeEditor = computed(() => {
@@ -103,7 +113,10 @@ export class ExerciseSplitPanelComponent {
     });
 
     submitExercise(): void {
-        this.textEditor()?.submit();
+        const context = this.childrenOutletContexts.getContext('primary');
+        if (context?.outlet?.isActivated && context.outlet.component instanceof TextEditorComponent) {
+            (context.outlet.component as TextEditorComponent).submit();
+        }
         this.codeEditor()?.commit();
         this.modelingSubmission()?.submit();
         this.fileUploadSubmission()?.submitExercise();

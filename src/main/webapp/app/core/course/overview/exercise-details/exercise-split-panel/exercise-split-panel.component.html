@@ -2,7 +2,7 @@
     @if (studentParticipation()) {
         <ng-template jhiPanel label="Editor" [icon]="getIcon(exercise().type)">
             @if (exercise().type === ExerciseType.TEXT) {
-                <jhi-text-editor [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
+                <router-outlet />
             }
             @if (showCodeEditor()) {
                 <jhi-code-editor-student [participationId]="studentParticipation()!.id" [lightweight]="true" />
