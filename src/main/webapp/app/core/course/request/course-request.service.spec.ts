@@ -277,8 +277,8 @@ describe('CourseRequestService', () => {
                 expect(result[0].title).toBe('Intro to CS');
                 expect(result[0].shortName).toBe('ICS');
                 expect(result[0].semester).toBe('WS2025');
-                expect(result[0].startDate?.isValid()).toBeTrue();
-                expect(result[0].endDate?.isValid()).toBeTrue();
+                expect(result[0].startDate?.isValid()).toBe(true);
+                expect(result[0].endDate?.isValid()).toBe(true);
                 expect(result[1].title).toBe('Advanced AI');
                 expect(result[1].shortName).toBe('AAI');
                 expect(result[1].semester).toBeUndefined();
