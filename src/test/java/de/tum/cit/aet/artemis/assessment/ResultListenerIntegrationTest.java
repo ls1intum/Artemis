@@ -302,11 +302,15 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // removing the result should trigger the entity listener and remove the associated student score
         resultService.deleteResult(persistedResult, true);
 
-        // Wait for the scheduler to execute its task
-        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
-
-        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
-        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
+        // Use await().untilAsserted() with executeScheduledTasks() inside to handle timing issues
+        // with asynchronous participant score updates. The scheduler must be re-triggered inside
+        // the retry loop because the first call may miss newly modified results.
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+            assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
+        });
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -318,11 +322,15 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationLocalCILoca
         // removing the result should trigger the entity listener and remove the associated student score
         resultService.deleteResult(persistedResult, true);
 
-        // Wait for the scheduler to execute its task
-        await().atMost(60, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
-
-        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
-        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
+        // Use await().untilAsserted() with executeScheduledTasks() inside to handle timing issues
+        // with asynchronous participant score updates. The scheduler must be re-triggered inside
+        // the retry loop because the first call may miss newly modified results.
+        await().atMost(60, TimeUnit.SECONDS).untilAsserted(() -> {
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(10, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
+            assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+            assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
+        });
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
