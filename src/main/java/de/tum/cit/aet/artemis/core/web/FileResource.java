@@ -384,6 +384,23 @@ public class FileResource {
     }
 
     /**
+     * GET /files/iris/bot-logo : Returns the Iris bot user profile picture (static classpath resource).
+     *
+     * @return the Iris logo PNG image, or 404 if the resource is missing
+     * @throws IOException if the resource stream cannot be read
+     */
+    @GetMapping("files/iris/bot-logo")
+    @EnforceAtLeastStudent
+    public ResponseEntity<byte[]> getIrisBotLogo() throws IOException {
+        var resource = resourceLoaderService.getResource(Path.of("public", "images", "iris", "iris-logo-small.png"));
+        if (!resource.exists()) {
+            return ResponseEntity.notFound().build();
+        }
+        var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
+        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).cacheControl(cacheControl).body(resource.getInputStream().readAllBytes());
+    }
+
+    /**
      * GET /files/templates/code-of-conduct : Get the Code of Conduct template
      *
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
