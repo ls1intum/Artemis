@@ -32,7 +32,7 @@ describe('OneToOneChatCreateDialogComponent', () => {
                 MockDirective(TranslateDirective),
             ],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -59,10 +59,10 @@ describe('OneToOneChatCreateDialogComponent', () => {
 
     it('should dismiss modal if cancel is selected', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const destroySpy = vi.spyOn(dialogRef, 'destroy');
         const dismissButton = fixture.debugElement.nativeElement.querySelector('.dismiss');
         dismissButton.click();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 
     it('should close the dialog with the selected user once one is selected', () => {
