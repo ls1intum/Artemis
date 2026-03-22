@@ -148,7 +148,9 @@ export class IrisCitationTextComponent {
             </span>
         `.trim();
 
-        return `${summaryHtml}${dividerHtml}${metaHtml}`;
+        const divider = summaryHtml.trim() ? dividerHtml : '';
+
+        return `${summaryHtml}${divider}${metaHtml}`;
     }
 
     private renderSummaryMetaRow(type: 'unit' | 'lecture', label: string, value: string): string {
