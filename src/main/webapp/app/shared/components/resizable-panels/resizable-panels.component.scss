@@ -5,16 +5,11 @@
     overflow: hidden;
 }
 
-// ::ng-deep required: split.js injects gutter elements directly into the DOM,
-// outside Angular's view encapsulation boundary.
-
-// Mirrors .draggable-left from resizeable-container: flex-centered, 15px wide, no borders.
-// background-image and background-color reset split.js's built-in defaults.
 :host ::ng-deep .gutter.gutter-horizontal {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-width: 15px;
+    min-width: 8px;
     cursor: col-resize;
     background-color: transparent;
 
@@ -23,11 +18,9 @@
     }
 }
 
-// Tab: active state uses a 2px primary bottom border as indicator
 .split-tab {
     color: var(--bs-secondary-color);
     border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
 
     &--active {
         color: var(--bs-body-color);
@@ -38,7 +31,7 @@
 // Mimics faGripLinesVertical: two thin vertical bars
 :host ::ng-deep .split-gutter-handle {
     display: flex;
-    gap: 2px;
+    gap: 1px;
     pointer-events: none;
 
     &::before,
@@ -46,7 +39,7 @@
         content: '';
         display: block;
         width: 2px;
-        height: 14px;
+        height: 12px;
         background: var(--bs-body-color);
         border-radius: 1px;
     }
