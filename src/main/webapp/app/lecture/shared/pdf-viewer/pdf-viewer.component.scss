@@ -1,62 +1,90 @@
+:host {
+    display: block;
+    border: 2px solid var(--border-color);
+    border-radius: var(--bs-border-radius);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
 .pdf-viewer-container {
-    .pdf-viewer-box {
-        position: relative;
-        width: 100%;
-        margin: 0 auto;
-        aspect-ratio: 16 / 9.3;
-        max-height: 80vh;
+    .pdf-viewer {
+        display: block;
+        height: 80vh;
 
-        background: var(--body-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--bs-border-radius);
+        ::ng-deep #viewerContainer,
+        ::ng-deep .pdfViewer,
+        ::ng-deep #viewer,
+        ::ng-deep .viewer,
+        ::ng-deep ngx-extended-pdf-viewer {
+            background-color: var(--gray-200) !important;
+        }
 
-        overflow: auto;
-        overscroll-behavior: none;
+        ::ng-deep #toolbarViewer.artemis-pdf-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-color: var(--border-color) !important;
+            background-color: var(--bs-light) !important;
+        }
 
-        contain: strict;
+        ::ng-deep .toolbar,
+        ::ng-deep #toolbarContainer,
+        ::ng-deep #mainContainer {
+            border-color: var(--border-color) !important;
+            border-width: 2px !important;
+        }
 
-        @media (max-width: 600px) {
-            max-height: 70vh;
-            border-radius: var(--bs-border-radius);
+        ::ng-deep * {
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            filter: none !important;
+            -webkit-filter: none !important;
+        }
+
+        ::ng-deep .page,
+        ::ng-deep .pdfPage,
+        ::ng-deep canvas,
+        ::ng-deep .canvasWrapper,
+        ::ng-deep div.page,
+        ::ng-deep .pdfViewer .page,
+        ::ng-deep [data-page-number] {
+            box-shadow: none !important;
+            -webkit-box-shadow: none !important;
+            filter: none !important;
+            -webkit-filter: none !important;
+            border: none !important;
+            outline: none !important;
+        }
+
+        ::ng-deep .page:not(:last-child),
+        ::ng-deep div.page:not(:last-child) {
+            margin-bottom: 0.5rem !important;
+        }
+
+        ::ng-deep .artemis-pdf-toolbar__center {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0 0.75rem;
+        }
+
+        ::ng-deep .artemis-pdf-toolbar__page {
+            margin-left: 0.25rem;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--bs-secondary-color, #6c757d);
         }
     }
 
-    .pdf-zoom-wrapper {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        display: flex;
-        justify-content: flex-start;
-        align-items: flex-start;
-        min-height: 0;
-        height: 100%;
-        font-size: 0;
-    }
-
-    .pdf-viewer-box.zoomed-out .pdf-zoom-wrapper {
-        justify-content: center;
-    }
-
-    .pdf-pages-container {
-        display: inline-flex;
-        vertical-align: top;
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-
-        .pdf-page {
-            background: var(--white);
-            outline: 1px solid var(--artemis-pre-border);
-            padding: 0;
-            margin-bottom: 0;
-
-            canvas {
-                display: block;
-                width: 100%;
-                height: 100%;
-            }
-        }
+    .mt-2 {
+        text-align: center;
+        color: var(--bs-secondary-color, #6c757d) !important;
+        background-color: var(--bs-light);
+        border-top: 2px solid var(--border-color);
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        margin-top: 0 !important;
     }
 }

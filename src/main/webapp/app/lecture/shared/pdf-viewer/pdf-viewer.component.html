@@ -1,65 +1,78 @@
 <div class="pdf-viewer-container">
-    @if (isLoading()) {
-        <div class="d-flex justify-content-center p-3">
-            <div class="spinner-border text-primary" role="status" aria-live="polite">
-                <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
+    <ngx-extended-pdf-viewer
+        class="pdf-viewer"
+        [src]="pdfUrl()"
+        [page]="resolvedPage()"
+        [customToolbar]="customToolbar"
+        (pageChange)="onPageChange($event)"
+        (pagesLoaded)="onPagesLoaded($event)"
+        [showToolbar]="true"
+        [showSidebarButton]="false"
+        [showFindButton]="false"
+        [showOpenFileButton]="false"
+        [showPrintButton]="false"
+        [showDownloadButton]="false"
+        [showSecondaryToolbarButton]="false"
+        [showPresentationModeButton]="false"
+        [showRotateButton]="false"
+        [showRotateCwButton]="false"
+        [showRotateCcwButton]="false"
+        [showHandToolButton]="false"
+        [showSpreadButton]="false"
+        [showPropertiesButton]="false"
+        [showSinglePageModeButton]="false"
+        [showVerticalScrollButton]="false"
+        [showHorizontalScrollButton]="false"
+        [showWrappedScrollButton]="false"
+        [showInfiniteScrollButton]="false"
+        [showBookModeButton]="false"
+        [showTextEditor]="false"
+        [showStampEditor]="false"
+        [showCommentEditor]="false"
+        [showDrawEditor]="false"
+        [showHighlightEditor]="false"
+        [showSignatureEditor]="false"
+        [showMovePageButton]="false"
+        [showPagingButtons]="false"
+        [showFirstAndLastPageButtons]="false"
+        [showPreviousAndNextPageButtons]="false"
+        [showPageNumber]="false"
+        [showPageLabel]="false"
+        [showZoomButtons]="true"
+        [showZoomDropdown]="false"
+        [showScrollingButtons]="false"
+    />
+    <ng-template #customToolbar>
+        <div id="toolbarViewer" class="artemis-pdf-toolbar">
+            <div class="artemis-pdf-toolbar__center">
+                <pdf-shy-button
+                    primaryToolbarId="primaryZoomOut"
+                    class="zoomOut"
+                    title="Zoom Out"
+                    l10nId="pdfjs-zoom-out-button"
+                    l10nLabel="pdfjs-zoom-out-button-label"
+                    eventBusName="zoomout"
+                    [cssClass]="'always-visible'"
+                    [order]="1500"
+                    image="<svg aria-hidden='true' focusable='false' width='24px' height='24px' viewBox='0 0 24 24'><path fill='currentColor' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/><path fill='currentColor' d='M7 9h5v1H7z'/></svg>"
+                />
+                <pdf-shy-button
+                    primaryToolbarId="primaryZoomIn"
+                    class="zoomIn"
+                    title="Zoom In"
+                    l10nId="pdfjs-zoom-in-button"
+                    l10nLabel="pdfjs-zoom-in-button-label"
+                    eventBusName="zoomin"
+                    [cssClass]="'always-visible'"
+                    [order]="1600"
+                    image="<svg aria-hidden='true' focusable='false' width='24px' height='24px' viewBox='0 0 24 24'><path fill='currentColor' d='M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20 15.5 14zM9.5 14C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z'/><path fill='currentColor' d='M9 7h1v5H9zM7 9h5v1H7z'/></svg>"
+                />
+                @if (totalPages() > 0) {
+                    <span class="artemis-pdf-toolbar__page">{{ displayPage() }}/{{ totalPages() }}</span>
+                }
             </div>
         </div>
-    }
-    @if (error()) {
-        <div class="d-flex flex-column align-items-center p-3" role="alert">
-            <fa-icon [icon]="faExclamationTriangle" [size]="'3x'" class="text-warning" />
-            <span class="mt-2" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></span>
-            <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailedDetail"></span>
-        </div>
-    }
-    @if (showToolbar()) {
-        <div class="d-flex align-items-center justify-content-between mb-0 small text-secondary">
-            <div class="d-flex align-items-center gap-0">
-                <button
-                    pButton
-                    type="button"
-                    [text]="true"
-                    severity="secondary"
-                    (click)="zoomOut()"
-                    [disabled]="!canZoomOut()"
-                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomOut' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faSearchMinus" />
-                </button>
-                <span>{{ (zoomLevel() * 100).toFixed(0) }}%</span>
-                <button
-                    pButton
-                    type="button"
-                    [text]="true"
-                    severity="secondary"
-                    (click)="zoomIn()"
-                    [disabled]="!canZoomIn()"
-                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.zoomIn' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faSearchPlus" />
-                </button>
-                <button
-                    pButton
-                    type="button"
-                    [text]="true"
-                    severity="secondary"
-                    (click)="resetZoom()"
-                    [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.resetZoom' | artemisTranslate"
-                >
-                    <fa-icon [icon]="faRotateLeft" />
-                </button>
-            </div>
-            <div class="d-flex align-items-center pe-2">
-                <span>{{ currentPage() }}/{{ totalPages() }}</span>
-            </div>
-        </div>
-    }
-    <div class="pdf-viewer-box hide-scrollbar-unless-scrolling" #pdfViewerBox [class.zoomed-out]="zoomLevel() <= 1.0">
-        <div class="pdf-zoom-wrapper">
-            <div #pdfContainer class="pdf-pages-container" [class.d-none]="isLoading() || error() || isRendering()"></div>
-        </div>
-    </div>
+    </ng-template>
     @if (uploadDate() || version()) {
         <div class="mt-2 small text-secondary">
             @if (uploadDate()) {
