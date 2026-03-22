@@ -1,4 +1,4 @@
-:host {
+jhi-pdf-viewer {
     display: block;
     border: 2px solid var(--border-color);
     border-radius: var(--bs-border-radius);
@@ -11,87 +11,82 @@
         display: block;
         width: 100%;
         aspect-ratio: 2 / 1;
-
-        ::ng-deep #viewerContainer {
-            background-color: var(--gray-200) !important;
-            display: flex !important;
-            justify-content: center !important;
-            align-items: flex-start !important;
-        }
-
-        ::ng-deep .pdfViewer,
-        ::ng-deep #viewer,
-        ::ng-deep .viewer,
-        ::ng-deep ngx-extended-pdf-viewer {
-            background-color: var(--gray-200) !important;
-        }
-
-        ::ng-deep #toolbarViewer.artemis-pdf-toolbar {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-color: var(--border-color) !important;
-            background-color: var(--bs-light) !important;
-        }
-
-        ::ng-deep .toolbar,
-        ::ng-deep #toolbarContainer,
-        ::ng-deep #mainContainer {
-            border-color: var(--border-color) !important;
-            border-width: 2px !important;
-        }
-
-        ::ng-deep * {
-            box-shadow: none !important;
-            -webkit-box-shadow: none !important;
-            filter: none !important;
-            -webkit-filter: none !important;
-        }
-
-        ::ng-deep .page,
-        ::ng-deep .pdfPage,
-        ::ng-deep canvas,
-        ::ng-deep .canvasWrapper,
-        ::ng-deep div.page,
-        ::ng-deep .pdfViewer .page,
-        ::ng-deep [data-page-number] {
-            box-shadow: none !important;
-            -webkit-box-shadow: none !important;
-            filter: none !important;
-            -webkit-filter: none !important;
-            border: none !important;
-            outline: none !important;
-        }
-
-        ::ng-deep .page:not(:last-child),
-        ::ng-deep div.page:not(:last-child) {
-            margin-bottom: 0.5rem !important;
-        }
-
-        ::ng-deep .artemis-pdf-toolbar__center {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            width: 100%;
-            padding: 0 0.75rem;
-        }
-
-        ::ng-deep .artemis-pdf-toolbar__page {
-            margin-left: 0.25rem;
-            font-weight: 500;
-            font-size: 0.9rem;
-            color: var(--bs-secondary-color, #6c757d);
-        }
     }
 
-    .mt-2 {
+    #viewerContainer {
+        background-color: var(--gray-200);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+    }
+
+    .pdfViewer,
+    #viewer,
+    .viewer,
+    ngx-extended-pdf-viewer {
+        background-color: var(--gray-200);
+    }
+
+    #toolbarViewer.artemis-pdf-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-color: var(--border-color);
+        background-color: var(--bs-light);
+    }
+
+    .artemis-pdf-toolbar__center {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0 0.75rem;
+    }
+
+    .artemis-pdf-toolbar__page {
+        margin-left: 0.25rem;
+        font-weight: 500;
+        font-size: 0.9rem;
+        color: var(--bs-secondary-color, #6c757d);
+    }
+
+    .toolbar,
+    #toolbarContainer,
+    #mainContainer {
+        border-color: var(--border-color);
+        border-width: 2px;
+    }
+
+    * {
+        box-shadow: none;
+        filter: none;
+    }
+
+    .page,
+    .pdfPage,
+    canvas,
+    .canvasWrapper,
+    div.page,
+    .pdfViewer .page,
+    [data-page-number] {
+        border: none;
+        outline: none;
+    }
+
+    .page:not(:last-child),
+    div.page:not(:last-child) {
+        margin-bottom: 0.5rem;
+    }
+
+    .pdf-viewer-footer {
         text-align: center;
-        color: var(--bs-secondary-color, #6c757d) !important;
+        font-size: 0.875rem;
+        color: var(--bs-secondary-color, #6c757d);
         background-color: var(--bs-light);
         border-top: 2px solid var(--border-color);
         padding-top: 0.5rem;
         padding-bottom: 0.5rem;
-        margin-top: 0 !important;
+        margin-top: 0;
     }
 }

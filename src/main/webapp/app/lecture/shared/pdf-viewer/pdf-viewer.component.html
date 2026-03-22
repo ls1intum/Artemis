@@ -76,7 +76,7 @@
         </div>
     </ng-template>
     @if (uploadDate() || version()) {
-        <div class="mt-2 small text-secondary">
+        <div class="pdf-viewer-footer">
             @if (uploadDate()) {
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
                 {{ uploadDate() | artemisDate }}

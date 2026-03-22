@@ -1,4 +1,4 @@
-import { Component, computed, input, signal } from '@angular/core';
+import { Component, ViewEncapsulation, computed, input, signal } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -13,6 +13,7 @@ pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
     imports: [NgxExtendedPdfViewerModule, TranslateModule, ArtemisDatePipe, TranslateDirective],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class PdfViewerComponent {
     pdfUrl = input.required<string>();
