@@ -60,19 +60,14 @@ export class PostingContentComponent implements OnInit, OnDestroy {
             // Track signal inputs that were monitored in ngOnChanges
             this.content();
             this.posting();
-            const isSubscribeToMetisValue = this.isSubscribeToMetis();
+            this.isSubscribeToMetis();
             this.isEdited();
             this.isDeleted();
             this.deleteTimerInSeconds();
             untracked(() => {
                 if (this.initialized) {
-                    if (isSubscribeToMetisValue) {
-                        this.postsSubscription?.unsubscribe();
-                        this.computeContentPartsOfPosts();
-                    } else {
-                        const patternMatches: PatternMatch[] = this.getPatternMatches();
-                        this.computePostingContentParts(patternMatches);
-                    }
+                    const patternMatches: PatternMatch[] = this.getPatternMatches();
+                    this.computePostingContentParts(patternMatches);
                 }
             });
         });

@@ -28,7 +28,6 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
             this.sortedAnswerPosts();
             untracked(() => {
                 this.groupAnswerPosts();
-                this.changeDetector.detectChanges();
             });
         });
     }

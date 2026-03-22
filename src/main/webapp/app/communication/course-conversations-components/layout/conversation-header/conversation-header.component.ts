@@ -6,7 +6,7 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 
 import { ChannelDTO, getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, filter, takeUntil } from 'rxjs';
 import { getAsGroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions, getChannelSubTypeReferenceTranslationKey } from 'app/communication/course-conversations-components/other/conversation.util';
 
@@ -140,11 +140,16 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
                 activeConversation: this.activeConversation,
             },
         });
-        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            this.metisConversationService.forceRefresh().subscribe({
-                complete: () => {},
+        ref?.onClose
+            .pipe(
+                filter((result) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {},
+                });
             });
-        });
     }
 
     /**
@@ -168,12 +173,17 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
             },
         });
 
-        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            this.metisConversationService.forceRefresh().subscribe({
-                complete: () => {},
+        ref?.onClose
+            .pipe(
+                filter((result) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.metisConversationService.forceRefresh().subscribe({
+                    complete: () => {},
+                });
+                this.onUpdateSidebar.emit();
             });
-            this.onUpdateSidebar.emit();
-        });
     }
 
     toggleSearchBar() {

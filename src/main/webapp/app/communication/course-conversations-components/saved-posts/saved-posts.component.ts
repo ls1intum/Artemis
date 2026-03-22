@@ -1,11 +1,11 @@
-import { Component, effect, inject, input, output, untracked } from '@angular/core';
+import { Component, OnDestroy, effect, inject, input, output, untracked } from '@angular/core';
 import { Posting, SavedPostStatus } from 'app/communication/shared/entities/posting.model';
 import { SavedPostService } from 'app/communication/service/saved-post.service';
 import { faBookmark, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingSummaryComponent } from 'app/communication/course-conversations-components/posting-summary/posting-summary.component';
-import { take } from 'rxjs';
+import { Subscription, take } from 'rxjs';
 import { AlertService } from 'app/shared/service/alert.service';
 
 @Component({
@@ -14,7 +14,7 @@ import { AlertService } from 'app/shared/service/alert.service';
     styleUrls: ['./saved-posts.component.scss'],
     imports: [TranslateDirective, FaIconComponent, PostingSummaryComponent],
 })
-export class SavedPostsComponent {
+export class SavedPostsComponent implements OnDestroy {
     savedPostStatus = input.required<SavedPostStatus>();
     courseId = input.required<number>();
 
@@ -22,6 +22,7 @@ export class SavedPostsComponent {
 
     private readonly savedPostService = inject(SavedPostService);
     private readonly alertService = inject(AlertService);
+    private fetchSubscription?: Subscription;
 
     protected posts: Posting[];
     protected hiddenPosts: number[] = [];
@@ -38,7 +39,8 @@ export class SavedPostsComponent {
             untracked(() => {
                 this.isShowDeleteNotice = savedPostStatus !== SavedPostStatus.IN_PROGRESS;
 
-                this.savedPostService.fetchSavedPosts(courseId, savedPostStatus).subscribe({
+                this.fetchSubscription?.unsubscribe();
+                this.fetchSubscription = this.savedPostService.fetchSavedPosts(courseId, savedPostStatus).subscribe({
                     next: (response) => {
                         if (!response.body) {
                             this.posts = [];
@@ -55,6 +57,10 @@ export class SavedPostsComponent {
                 });
             });
         });
+    }
+
+    ngOnDestroy(): void {
+        this.fetchSubscription?.unsubscribe();
     }
 
     protected trackPostFunction = (index: number, post: Posting): string => index + '' + post.id!;

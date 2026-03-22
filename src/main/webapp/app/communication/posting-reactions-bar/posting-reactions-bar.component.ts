@@ -98,6 +98,7 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
             this.isReadOnlyMode();
             this.previewMode();
             untracked(() => {
+                if (!postingValue) return;
                 this.updatePostingWithReactions();
                 this.isAuthorOfPosting = this.metisService.metisUserIsAuthorOfPosting(postingValue as Posting);
                 this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();

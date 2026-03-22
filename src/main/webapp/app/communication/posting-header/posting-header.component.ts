@@ -63,8 +63,10 @@ export class PostingHeaderComponent implements OnInit {
             this.posting();
             this.hasChannelModerationRights();
             untracked(() => {
-                this.setUserProperties();
-                this.setUserAuthorityIconAndTooltip();
+                if (this.posting()) {
+                    this.setUserProperties();
+                    this.setUserAuthorityIconAndTooltip();
+                }
             });
         });
     }

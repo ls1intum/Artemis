@@ -38,13 +38,15 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
     imports: [IrisLogoComponent, AsPipe, FormsModule, TranslateDirective, IrisBaseChatbotComponent, ButtonComponent, ArtemisDatePipe, ArtemisTimeAgoPipe, NgbTooltip],
 })
 export class TutorSuggestionComponent implements OnInit, OnDestroy {
+    private initialized = false;
+
     constructor() {
         effect(() => {
             // Track signal inputs that were monitored in ngOnChanges
             const post = this.post();
             this.course();
             untracked(() => {
-                if (this.irisEnabled) {
+                if (this.initialized && this.irisEnabled) {
                     if (post) {
                         this.chatService.switchTo(ChatServiceMode.TUTOR_SUGGESTION, post.id);
                         this.messagesSubscription?.unsubscribe();
@@ -124,6 +126,7 @@ export class TutorSuggestionComponent implements OnInit, OnDestroy {
                 this.irisEnabled = false;
             }
         });
+        this.initialized = true;
     }
 
     ngOnDestroy() {

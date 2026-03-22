@@ -166,12 +166,12 @@ describe('ForwardMessageDialogComponent', () => {
 
     it('should close the modal when cancel button is clicked', () => {
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const destroySpy = vi.spyOn(dialogRef, 'destroy');
 
         const cancelButton = fixture.debugElement.query(By.css('.btn-close')).nativeElement;
         cancelButton.click();
 
-        expect(closeSpy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalled();
     });
 
     it('should focus the input field', () => {

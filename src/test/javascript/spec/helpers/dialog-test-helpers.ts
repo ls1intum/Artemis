@@ -9,9 +9,11 @@ export function initializeDialog(component: AbstractDialogComponent, fixture: Co
     // Populate the DynamicDialogConfig.data with the provided inputs,
     // so that AbstractDialogComponent.initialize() can apply them correctly
     // (including setting writable signals via .set()).
-    Object.keys(requiredInputs).forEach((key) => {
-        component.dialogConfig!.data[key] = requiredInputs[key];
-    });
+    if (component.dialogConfig) {
+        Object.keys(requiredInputs).forEach((key) => {
+            component.dialogConfig!.data[key] = requiredInputs[key];
+        });
+    }
 
     component.initialize();
     fixture.changeDetectorRef.detectChanges();

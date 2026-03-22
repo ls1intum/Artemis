@@ -51,7 +51,7 @@ examples.forEach((activeConversation) => {
                     MockDirective(TranslateDirective),
                 ],
                 providers: [
-                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                     { provide: DynamicDialogConfig, useValue: { data: {} } },
                     MockProvider(ConversationService),
                     provideHttpClient(),

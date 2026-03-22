@@ -41,7 +41,7 @@ examples.forEach((activeConversation) => {
                 imports: [ConversationAddUsersDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)],
                 providers: [
                     MockProvider(AlertService),
-                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                     { provide: DynamicDialogConfig, useValue: { data: {} } },
                     MockProvider(ChannelService),
                     MockProvider(ConversationService),

@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, OnDestroy, OnInit, computed, inject, inpu
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
-import { debounceTime, distinctUntilChanged, switchMap, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { EMPTY, Subject, map } from 'rxjs';
@@ -106,9 +106,14 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
                 activeConversation: this.activeConversation(),
             },
         });
-        ref?.onClose.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            this.onChangePerformed();
-        });
+        ref?.onClose
+            .pipe(
+                filter((result) => !!result),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.onChangePerformed();
+            });
     }
 
     onChangePerformed() {

@@ -62,7 +62,7 @@ examples.forEach((exampleChannel) => {
                     MockProvider(ConversationService),
                     MockProvider(AlertService),
                     MockProvider(DialogService),
-                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                    { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                     { provide: DynamicDialogConfig, useValue: { data: {} } },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
