@@ -8,6 +8,8 @@ import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -192,10 +194,13 @@ public class QuizExerciseCreationUpdateResource {
         log.info("REST request to patch quiz exercise : {}", exerciseId);
         QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
 
+        // Capture original competency IDs before mergeDTOIntoDomainObject() mutates the entity (L1 cache)
+        Set<Long> originalCompetencyIds = quizBase.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+
         QuizExercise originalQuiz = quizExerciseService.copyFieldsForUpdate(quizBase);
 
         quizExerciseService.mergeDTOIntoDomainObject(quizBase, updateQuizExerciseDTO);
-        QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText);
+        QuizExercise result = quizExerciseService.performUpdate(originalQuiz, quizBase, files != null ? files : List.of(), notificationText, originalCompetencyIds);
 
         // Notify AtlasML about the quiz exercise update
         notifyAtlasML(result, OperationTypeDTO.UPDATE, "quiz exercise update");

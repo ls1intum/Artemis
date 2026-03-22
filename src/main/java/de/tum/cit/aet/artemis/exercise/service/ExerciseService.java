@@ -939,6 +939,12 @@ public class ExerciseService {
                 }
                 else {
                     var competency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+                    // Validate that the competency belongs to the same course as the exercise
+                    Long exerciseCourseId = entity.getCourseViaExerciseGroupOrCourseMember() != null ? entity.getCourseViaExerciseGroupOrCourseMember().getId() : null;
+                    Long competencyCourseId = competency.getCourse() != null ? competency.getCourse().getId() : null;
+                    if (exerciseCourseId != null && competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
+                        throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "exercise", "wrongCourse");
+                    }
                     var newLink = new CompetencyExerciseLink(competency, entity, weight);
                     updatedLinks.add(newLink);
                 }
@@ -985,9 +991,15 @@ public class ExerciseService {
         // abstract CourseCompetency (SINGLE_TABLE inheritance) can return empty results
         // under Hibernate 6.6+ due to polymorphic query issues.
         Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
+        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         for (CompetencyExerciseLink link : competencyLinks) {
             long competencyId = link.getCompetency().getId();
             CourseCompetency managedCompetency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
+            // Validate that the competency belongs to the same course as the exercise
+            Long competencyCourseId = managedCompetency.getCourse() != null ? managedCompetency.getCourse().getId() : null;
+            if (exerciseCourseId != null && competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
+                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "exercise", "wrongCourse");
+            }
             resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
         }
         exercise.setCompetencyLinks(resolvedLinks);

@@ -510,12 +510,13 @@ public class TextExerciseCreationUpdateResource {
         // Transfer competency links from the DTO (extractCompetencyLinksForCreation will handle them)
         if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
             for (var linkDto : dto.competencyLinks()) {
-                if (linkDto != null && linkDto.competency() != null) {
-                    Competency competencyRef = new Competency();
-                    competencyRef.setId(linkDto.competency().id());
-                    CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-                    exercise.getCompetencyLinks().add(link);
+                if (linkDto == null || linkDto.competency() == null) {
+                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
                 }
+                Competency competencyRef = new Competency();
+                competencyRef.setId(linkDto.competency().id());
+                CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+                exercise.getCompetencyLinks().add(link);
             }
         }
 

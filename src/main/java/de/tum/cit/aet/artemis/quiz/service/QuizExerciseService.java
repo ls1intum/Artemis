@@ -1004,17 +1004,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * (e.g., to detect changes or prevent invalid modifications) and applies updates from the provided
      * updated quiz exercise.
      *
-     * @param originalQuiz     the original quiz exercise loaded from the database, used for comparisons
-     *                             and checks (e.g., to verify if the quiz has started or for file change detection).
-     * @param updatedQuiz      the quiz exercise object containing the updated values to be applied and saved.
-     * @param files            the list of multipart files for drag-and-drop question updates (may be null or empty).
-     * @param notificationText optional text to include in notifications sent about the exercise update.
+     * @param originalQuiz          the original quiz exercise loaded from the database, used for comparisons
+     *                                  and checks (e.g., to verify if the quiz has started or for file change detection).
+     * @param updatedQuiz           the quiz exercise object containing the updated values to be applied and saved.
+     * @param files                 the list of multipart files for drag-and-drop question updates (may be null or empty).
+     * @param notificationText      optional text to include in notifications sent about the exercise update.
+     * @param originalCompetencyIds the IDs of competencies originally linked to the exercise before the update
      * @return the updated and saved quiz exercise.
      * @throws IOException              if an error occurs during file handling or updates.
      * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
      *                                      quiz has already started, or conversion between exam/course types).
      */
-    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText) throws IOException {
+    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText,
+            Set<Long> originalCompetencyIds) throws IOException {
 
         if (!updatedQuiz.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is not valid", ENTITY_NAME, "invalidQuiz");
@@ -1050,7 +1052,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             updatedQuiz.setChannelName(updatedChannel.getName());
         }
         QuizExercise finalQuizExercise = updatedQuiz;
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, finalQuizExercise));
         slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
         return updatedQuiz;
     }
