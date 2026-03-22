@@ -20,6 +20,23 @@ Instructions wrapper styles
             padding: 1rem;
         }
     }
+
+    &__layout {
+        display: flex;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    &__problem-statement {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: auto;
+    }
+
+    &__tasks {
+        flex: 0 0 auto;
+        overflow-y: auto;
+    }
 }
 
 /* Empty state styling */

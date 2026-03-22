@@ -5,38 +5,46 @@
 $step-font-size: 0.6rem;
 $step-button-size: 21px; // Make sure to keep it uneven so that centering works
 
-.card-second-header {
-    padding: 1rem 1rem 0;
-}
-
 .stepwizard {
-    display: table;
-    width: 100%;
-    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 0.25rem;
 }
 
 .stepwizard-title {
-    display: table-cell;
-    width: 1%;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-align: center;
 }
 
-.stepwizard-row {
+.stepwizard-column {
     display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    flex: 1 1 auto;
+    position: relative;
+
+    &::before {
+        content: '';
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-50%);
+        border-left: 3px solid $gray-500;
+        z-index: 0;
+    }
 }
 
 .stepwizard-step {
-    display: table-cell;
-    text-align: center;
     position: relative;
+    z-index: 1;
 
     .fa {
         vertical-align: initial;
-    }
-
-    p {
-        margin-top: 10px;
     }
 
     button[disabled] {
@@ -84,21 +92,4 @@ $step-button-size: 21px; // Make sure to keep it uneven so that centering works
         color: $gray-600;
         font-size: 0.4rem;
     }
-}
-
-.test-passing {
-    cursor: default !important;
-}
-
-.test-passing:hover {
-    background-color: var(--programming-exercise-instruction-step-wizard-test-passing-hover-color);
-}
-
-.stepwizard-row-line {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    margin: 0;
-    border-top: 3px solid $gray-500;
 }

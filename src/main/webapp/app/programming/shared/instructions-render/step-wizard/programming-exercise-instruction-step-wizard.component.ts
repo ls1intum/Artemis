@@ -27,7 +27,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
 
-    steps: Array<{ done: TestCaseState; title: string; testIds: number[] }>;
+    steps: Array<{ done: TestCaseState; title: string; testIds: number[]; taskId: number }>;
 
     // Icons
     faTimes = faTimes;
@@ -40,10 +40,11 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
      */
     ngOnChanges(changes: SimpleChanges): void {
         if ((changes.tasks && this.tasks) || (this.tasks && changes.latestResult)) {
-            this.steps = this.tasks.map(({ taskName, testIds }) => ({
+            this.steps = this.tasks.map(({ id, taskName, testIds }) => ({
                 done: this.instructionService.testStatusForTask(testIds, this.latestResult).testCaseState,
                 title: taskName,
                 testIds,
+                taskId: id,
             }));
         }
     }
@@ -53,6 +54,14 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
      * @param {string[]} tests - Identifies the testcase
      * @param taskName - the name of the selected task
      */
+    /**
+     * Scrolls the problem statement to the task with the given id.
+     */
+    scrollToTask(taskId: number) {
+        const taskElement = document.querySelector(`.pe-${this.exercise.id}-task-${taskId}`);
+        taskElement?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
     public showDetailsForTests(tests: number[], taskName: string) {
         if (!this.latestResult || !tests.length) {
             return;
