@@ -202,9 +202,14 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
+        // After deleteResultReferences bulk-deleted the feedbacks, the in-memory Result
+        // entity still holds stale feedback proxy references. Under Hibernate 6.6+,
+        // calling resultRepository.delete(result) triggers cascade/orphan-removal logic
+        // that fails with JpaObjectRetrievalFailureException. Clearing the in-memory
+        // feedbacks collection avoids this while preserving @PreRemove lifecycle callbacks.
+        if (Hibernate.isInitialized(result.getFeedbacks())) {
+            result.getFeedbacks().clear();
+        }
         result.setFeedbacks(List.of());
         resultRepository.delete(result);
     }

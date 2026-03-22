@@ -981,17 +981,13 @@ public class ExerciseService {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
-        // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
-        Set<Long> competencyIds = competencyLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-        Map<Long, CourseCompetency> managedCompetencies = competencyRepositoryApi.get().findAllCompetenciesById(competencyIds).stream()
-                .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
-
+        // Load each competency individually as a managed entity. Using findAllById on the
+        // abstract CourseCompetency (SINGLE_TABLE inheritance) can return empty results
+        // under Hibernate 6.6+ due to polymorphic query issues.
         Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
         for (CompetencyExerciseLink link : competencyLinks) {
-            CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
-            if (managedCompetency == null) {
-                throw new BadRequestAlertException("Competency with id " + link.getCompetency().getId() + " not found", "exercise", "competencyNotFound");
-            }
+            long competencyId = link.getCompetency().getId();
+            CourseCompetency managedCompetency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
             resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
         }
         exercise.setCompetencyLinks(resolvedLinks);
