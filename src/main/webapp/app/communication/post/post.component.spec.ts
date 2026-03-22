@@ -116,7 +116,7 @@ describe('PostComponent', () => {
                 { provide: WebsocketService, useClass: MockWebsocketService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
-                { provide: DialogService, useValue: {} },
+                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         }).overrideComponent(PostComponent, {
             remove: { imports: [PostingContentComponent] },

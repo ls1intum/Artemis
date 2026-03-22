@@ -173,10 +173,8 @@ examples.forEach((activeConversation) => {
 
             addUsersButton.click();
             vi.advanceTimersByTime(301);
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
-            });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(ConversationAddUsersDialogComponent, expect.anything());
         });
 
         function expectSearchPerformed(expectedSearchTerm: string, expectedFilter: ConversationMemberSearchFilter = ConversationMemberSearchFilter.ALL) {

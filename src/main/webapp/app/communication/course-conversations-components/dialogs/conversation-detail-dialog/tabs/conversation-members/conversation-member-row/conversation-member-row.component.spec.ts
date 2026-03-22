@@ -369,10 +369,8 @@ examples.forEach((activeConversation) => {
             mockOnClose.complete();
             vi.advanceTimersByTime(0);
 
-            fixture.whenStable().then(() => {
-                expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.anything());
-            });
+            expect(openDialogSpy).toHaveBeenCalledOnce();
+            expect(openDialogSpy).toHaveBeenCalledWith(GenericConfirmationDialogComponent, expect.anything());
         }
     });
 });

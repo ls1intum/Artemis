@@ -70,7 +70,7 @@ describe('AnswerPostComponent', () => {
                 SessionStorageService,
                 { provide: MetisConversationService, useClass: MockMetisConversationService },
                 { provide: AccountService, useClass: MockAccountService },
-                { provide: DialogService, useValue: {} },
+                { provide: DialogService, useValue: { open: vi.fn() } },
             ],
         }).overrideComponent(AnswerPostComponent, {
             remove: { imports: [PostingContentComponent] },
