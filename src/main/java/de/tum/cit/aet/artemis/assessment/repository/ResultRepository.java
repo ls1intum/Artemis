@@ -19,9 +19,11 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -47,6 +49,19 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
+
+    /**
+     * Delete a result by its ID using a JPQL bulk delete.
+     * This bypasses the Hibernate entity lifecycle (merge/persist) and avoids
+     * L2 cache staleness issues that occur with Hibernate 6.6+ when feedbacks
+     * have already been bulk-deleted before the result deletion.
+     *
+     * @param resultId the id of the result to delete
+     */
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("DELETE FROM Result r WHERE r.id = :resultId")
+    void deleteByResultId(@Param("resultId") long resultId);
 
     /**
      * Count the number of results for a course by its exercise IDs.

@@ -26,6 +26,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.assessment.ResultListener;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
@@ -124,12 +125,14 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
+    private final ResultListener resultListener;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, ResultListener resultListener) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -149,6 +152,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
+        this.resultListener = resultListener;
     }
 
     /**
@@ -202,11 +206,14 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
-        result.setFeedbacks(List.of());
-        resultRepository.delete(result);
+        // Manually invoke the @PreRemove callback since the JPQL bulk delete below
+        // bypasses JPA entity lifecycle callbacks. This schedules participant score
+        // recalculation that would normally be triggered by Hibernate's delete lifecycle.
+        resultListener.removeResult(result);
+        // Use JPQL bulk delete to avoid Hibernate 6.6+ L2 cache staleness issues.
+        // When feedbacks are bulk-deleted before the result, Hibernate's merge path
+        // tries to initialize the stale PersistentList from the L2 cache, causing errors.
+        resultRepository.deleteByResultId(result.getId());
     }
 
     /**
