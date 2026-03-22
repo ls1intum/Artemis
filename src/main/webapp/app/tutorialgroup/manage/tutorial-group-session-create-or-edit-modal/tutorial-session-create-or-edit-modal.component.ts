@@ -48,20 +48,20 @@ export class TutorialSessionCreateOrEditModalComponent {
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     isOpen = signal(false);
-    date = signal<Date | undefined>(undefined);
+    date = signal<Date | null>(null);
     dateValidationResult = computed<Validation>(() => this.computeDateValidation());
     dateInputTouched = signal(false);
-    startTime = signal<Date | undefined>(undefined);
+    startTime = signal<Date | null>(null);
     startTimeValidationResult = computed<Validation>(() => this.computeStartTimeValidation());
     startTimeInputTouched = signal(false);
-    endTime = signal<Date | undefined>(undefined);
+    endTime = signal<Date | null>(null);
     endTimeValidationResult = computed<Validation>(() => this.computeEndTimeValidation());
     endTimeInputTouched = signal(false);
     location = signal<string>('');
     locationValidationResult = computed<Validation>(() => this.computeLocationValidation());
     locationInputTouched = signal(false);
     saveButtonDisabled = computed<boolean>(() => this.computeIfSaveButtonDisabled());
-    attendance = signal<number | undefined>(undefined);
+    attendance = signal<number | null>(null);
     header = computed(() => this.computeHeader());
     onUpdate = output<UpdateTutorialGroupSessionData>();
     onCreate = output<CreateOrUpdateTutorialGroupSessionDTO>();
@@ -73,7 +73,7 @@ export class TutorialSessionCreateOrEditModalComponent {
             this.startTime.set(session.start.toDate());
             this.endTime.set(session.end.toDate());
             this.location.set(session.location);
-            this.attendance.set(session.attendance);
+            this.attendance.set(session.attendance ?? null);
         }
         this.isOpen.set(true);
     }
@@ -96,15 +96,15 @@ export class TutorialSessionCreateOrEditModalComponent {
 
     clearData() {
         this.session.set(undefined);
-        this.date.set(undefined);
+        this.date.set(null);
         this.dateInputTouched.set(false);
-        this.startTime.set(undefined);
+        this.startTime.set(null);
         this.startTimeInputTouched.set(false);
-        this.endTime.set(undefined);
+        this.endTime.set(null);
         this.endTimeInputTouched.set(false);
         this.location.set('');
         this.locationInputTouched.set(false);
-        this.attendance.set(undefined);
+        this.attendance.set(null);
     }
 
     private createSession() {
@@ -128,7 +128,7 @@ export class TutorialSessionCreateOrEditModalComponent {
             startTime: dayjs(this.startTime()).format('HH:mm'),
             endTime: dayjs(this.endTime()).format('HH:mm'),
             location: this.location(),
-            attendance: this.attendance(),
+            attendance: this.attendance() ?? undefined,
         };
     }
 
@@ -144,7 +144,7 @@ export class TutorialSessionCreateOrEditModalComponent {
 
     private computeDateValidation(): Validation {
         const date = this.date();
-        if (date === undefined) {
+        if (date === null) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.dateRequired',
@@ -155,7 +155,7 @@ export class TutorialSessionCreateOrEditModalComponent {
 
     private computeStartTimeValidation(): Validation {
         const startTime = this.startTime();
-        if (startTime === undefined) {
+        if (startTime === null) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.startTimeRequired',
@@ -166,7 +166,7 @@ export class TutorialSessionCreateOrEditModalComponent {
 
     private computeEndTimeValidation(): Validation {
         const endTime = this.endTime();
-        if (endTime === undefined) {
+        if (endTime === null) {
             return {
                 status: ValidationStatus.INVALID,
                 message: 'artemisApp.pages.tutorialGroupDetail.createOrEditSessionModal.validationError.endTimeRequired',
