@@ -127,15 +127,33 @@ export class IrisCitationTextComponent {
         const lectureUnitTitle = meta?.lectureUnitTitle?.trim();
         const lectureTitle = meta?.lectureTitle?.trim();
         const summaryText = summary?.trim();
-        const title = lectureUnitTitle || fallbackTitle || '';
+        const unitTitle = lectureUnitTitle || fallbackTitle || '';
 
-        const titleHtml = title ? `<span class="iris-citation__summary-title">${escapeHtml(title)}</span>` : '';
-        const lectureHtml = lectureTitle
-            ? `<span class="iris-citation__summary-lecture">${escapeHtml(this.translateService.instant('artemisApp.iris.citation.inLecture'))} ${escapeHtml(lectureTitle)}</span>`
-            : '';
+        const unitLabel = escapeHtml(this.translateService.instant('artemisApp.iris.citation.unitLabel'));
+        const lectureLabel = escapeHtml(this.translateService.instant('artemisApp.iris.citation.lectureLabel'));
+
         const summaryHtml = summaryText ? `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>` : '';
+        const dividerHtml = '<span class="iris-citation__summary-divider"></span>';
+        const unitHtml = `
+            <span class="iris-citation__summary-row iris-citation__summary-row--unit">
+                <span class="iris-citation__summary-label">${unitLabel}</span>
+                <span class="iris-citation__summary-value">${escapeHtml(unitTitle)}</span>
+            </span>
+        `.trim();
+        const lectureHtml = `
+            <span class="iris-citation__summary-row iris-citation__summary-row--lecture">
+                <span class="iris-citation__summary-label">${lectureLabel}</span>
+                <span class="iris-citation__summary-value">${escapeHtml(lectureTitle ?? '')}</span>
+            </span>
+        `.trim();
+        const metaHtml = `
+            <span class="iris-citation__summary-meta">
+                ${unitHtml}
+                ${lectureHtml}
+            </span>
+        `.trim();
 
-        return `${titleHtml}${lectureHtml}${summaryHtml}`;
+        return `${summaryHtml}${dividerHtml}${metaHtml}`;
     }
 
     /**

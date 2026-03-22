@@ -89,17 +89,17 @@ describe('IrisCitationTextComponent', () => {
         const el = render('Hello [cite:L:7::::Keyword:Summary] world', citationInfo);
 
         expect(el.querySelector('.iris-citation')).toBeTruthy();
-        expect(el.querySelector('.iris-citation__summary-title')?.textContent?.trim()).toBe('My Unit');
         expect(el.querySelector('.iris-citation__summary-text')?.textContent?.trim()).toBe('Summary');
-        expect(el.querySelector('.iris-citation__summary-lecture')).toBeTruthy();
+        expect(el.querySelector('.iris-citation__summary-row--unit .iris-citation__summary-value')?.textContent?.trim()).toBe('My Unit');
+        expect(el.querySelector('.iris-citation__summary-row--lecture .iris-citation__summary-value')?.textContent?.trim()).toBe('My Lecture');
     });
 
     it('uses keyword as summary title when lectureUnitTitle is empty', () => {
         const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'Lecture', lectureUnitTitle: '' }];
         const el = render('[cite:L:7::::MyKeyword:Summary]', citationInfo);
 
-        expect(el.querySelector('.iris-citation__summary-title')?.textContent?.trim()).toBe('MyKeyword');
-        expect(el.querySelector('.iris-citation__summary-lecture')).toBeTruthy();
+        expect(el.querySelector('.iris-citation__summary-row--unit .iris-citation__summary-value')?.textContent?.trim()).toBe('MyKeyword');
+        expect(el.querySelector('.iris-citation__summary-row--lecture .iris-citation__summary-value')?.textContent?.trim()).toBe('Lecture');
     });
 
     it('renders group without summary section', () => {
