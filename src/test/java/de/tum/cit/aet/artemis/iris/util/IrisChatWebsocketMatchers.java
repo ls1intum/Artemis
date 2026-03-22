@@ -9,6 +9,7 @@ import org.mockito.ArgumentMatcher;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageContentResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 
@@ -56,8 +57,9 @@ public class IrisChatWebsocketMatchers {
                 if (websocketDTO.type() != IrisChatWebsocketDTO.IrisWebsocketMessageType.MESSAGE) {
                     return false;
                 }
-                return Objects.equals(websocketDTO.message().getContent().stream().map(IrisMessageContent::getContentAsString).toList(),
-                        content.stream().map(IrisMessageContent::getContentAsString).toList());
+                List<String> actualContent = websocketDTO.message().content().stream().map(IrisMessageContentResponseDTO::textContent).toList();
+                List<String> expectedContent = content.stream().map(IrisMessageContent::getContentAsString).toList();
+                return Objects.equals(actualContent, expectedContent);
             }
 
             @Override
