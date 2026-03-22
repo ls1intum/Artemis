@@ -51,9 +51,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
-     * Deletes all assessment notes associated with a result.
-     * Must be called before {@link #deleteResultById(long)} to avoid FK constraint violations
-     * since JPQL deletes bypass cascade settings.
+     * Deletes all assessment notes for a result. Must be called before {@link #deleteResultById(long)} since JPQL deletes bypass cascade.
      *
      * @param resultId the id of the result whose assessment notes should be deleted
      */
@@ -63,12 +61,8 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     void deleteAssessmentNotesByResultId(@Param("resultId") long resultId);
 
     /**
-     * Deletes a result by its ID using a JPQL bulk delete.
-     * This bypasses the entity lifecycle (no merge, no cascade) which avoids Hibernate 6.6
-     * issues where merging a detached Result tries to initialize the feedbacks collection
-     * from the L2 cache after feedbacks have been bulk-deleted.
-     * All references (feedbacks, complaints, ratings, assessment notes, etc.) must be deleted
-     * before calling this.
+     * Deletes a result by ID using JPQL bulk delete, bypassing entity lifecycle to avoid Hibernate 6.6 L2 cache issues.
+     * All references (feedbacks, complaints, ratings, assessment notes) must be deleted before calling this.
      *
      * @param resultId the id of the result to delete
      */
