@@ -108,40 +108,28 @@ export class TutorialSessionCreateOrEditModalComponent {
     }
 
     private createSession() {
-        const date = dayjs(this.date()).format('YYYY-MM-DD');
-        const startTime = dayjs(this.startTime()).format('HH:mm');
-        const endTime = dayjs(this.endTime()).format('HH:mm');
-        const location = this.location();
-        const attendance = this.attendance();
-        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
-            date: date,
-            startTime: startTime,
-            endTime: endTime,
-            location: location,
-            attendance: attendance,
-        };
+        const createTutorialGroupSessionDTO = this.constructCreateOrUpdateTutorialGroupSessionDTO();
         this.onCreate.emit(createTutorialGroupSessionDTO);
     }
 
     private updateSession(session: TutorialGroupSessionDTO) {
         const tutorialGroupSessionId = session.id;
-        const date = dayjs(this.date()).format('YYYY-MM-DD');
-        const startTime = dayjs(this.startTime()).format('HH:mm');
-        const endTime = dayjs(this.endTime()).format('HH:mm');
-        const location = this.location();
-        const attendance = this.attendance();
-        const updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
-            date: date,
-            startTime: startTime,
-            endTime: endTime,
-            location: location,
-            attendance: attendance,
-        };
+        const updateTutorialGroupSessionDTO = this.constructCreateOrUpdateTutorialGroupSessionDTO();
         const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
             tutorialGroupSessionId: tutorialGroupSessionId,
             updateTutorialGroupSessionDTO: updateTutorialGroupSessionDTO,
         };
         this.onUpdate.emit(updateTutorialGroupSessionData);
+    }
+
+    private constructCreateOrUpdateTutorialGroupSessionDTO(): CreateOrUpdateTutorialGroupSessionDTO {
+        return {
+            date: dayjs(this.date()).format('YYYY-MM-DD'),
+            startTime: dayjs(this.startTime()).format('HH:mm'),
+            endTime: dayjs(this.endTime()).format('HH:mm'),
+            location: this.location(),
+            attendance: this.attendance(),
+        };
     }
 
     private computeIfSaveButtonDisabled(): boolean {
