@@ -25,7 +25,7 @@ describe('ChannelsCreateDialogComponent', () => {
         TestBed.configureTestingModule({
             imports: [ChannelsCreateDialogComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
-                { provide: DynamicDialogRef, useValue: { close: vi.fn(), onClose: new Subject() } },
+                { provide: DynamicDialogRef, useValue: { close: vi.fn(), destroy: vi.fn(), onClose: new Subject() } },
                 { provide: DynamicDialogConfig, useValue: { data: {} } },
                 { provide: TranslateService, useClass: MockTranslateService },
             ],
@@ -54,9 +54,9 @@ describe('ChannelsCreateDialogComponent', () => {
     it('clicking close button in modal header should dismiss the modal', () => {
         const closeButton = fixture.debugElement.nativeElement.querySelector('.modal-header button');
         const dialogRef = TestBed.inject(DynamicDialogRef);
-        const closeSpy = vi.spyOn(dialogRef, 'close');
+        const destroySpy = vi.spyOn(dialogRef, 'destroy');
         closeButton.click();
-        expect(closeSpy).toHaveBeenCalledOnce();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 
     it('should change channel type when channel type is changed in channel form', () => {
