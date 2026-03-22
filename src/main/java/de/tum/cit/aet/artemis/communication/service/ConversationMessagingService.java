@@ -15,6 +15,7 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -57,6 +58,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.iris.service.AutonomousTutorForwardingService;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -76,6 +78,9 @@ public class ConversationMessagingService extends PostingService {
     private final PostRepository postRepository;
 
     private final SingleUserNotificationService singleUserNotificationService;
+
+    @Autowired(required = false)
+    private AutonomousTutorForwardingService autonomousTutorForwardingService;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
@@ -154,6 +159,10 @@ public class ConversationMessagingService extends PostingService {
         Post createdMessage = createdConversationMessage.messageWithHiddenDetails();
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
+
+        if (autonomousTutorForwardingService != null) {
+            autonomousTutorForwardingService.onNewMessage(createdMessage, conversation, course);
+        }
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
