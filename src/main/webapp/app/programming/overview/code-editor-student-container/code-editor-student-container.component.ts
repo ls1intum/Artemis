@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewChild, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild, inject, input, signal } from '@angular/core';
 import { IncludedInScoreBadgeComponent } from 'app/exercise/exercise-headers/included-in-score-badge/included-in-score-badge.component';
 import { UpdatingResultComponent } from 'app/exercise/result/updating-result/updating-result.component';
 import { Observable, Subscription } from 'rxjs';
@@ -55,7 +55,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     readonly IncludedInOverallScore = IncludedInOverallScore;
 
     readonly participationId = input<number>();
-    readonly lightweight = input<boolean>(false);
+    readonly lightweight = signal(false);
     readonly SubmissionPolicyType = SubmissionPolicyType;
 
     ButtonSize = ButtonSize;
@@ -94,6 +94,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
+                        this.lightweight.set(!this.exercise?.exerciseGroup);
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
                         // TODO: load this information from the server in case submission policies are enabled for programming exercises
                         this.repositoryIsLocked = dueDateHasPassed && !isPracticeMode(this.participation);

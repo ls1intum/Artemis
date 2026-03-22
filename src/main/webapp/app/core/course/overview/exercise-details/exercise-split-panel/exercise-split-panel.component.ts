@@ -27,9 +27,6 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
         PanelDirective,
         ProblemStatementComponent,
         DiscussionFeedComponent,
-        CodeEditorStudentContainerComponent,
-        ModelingSubmissionComponent,
-        FileUploadSubmissionComponent,
         QuizParticipationComponent,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
@@ -52,9 +49,6 @@ export class ExerciseSplitPanelComponent {
     readonly studentParticipation = input<StudentParticipation>();
     readonly irisEnabled = input<boolean>(false);
 
-    private readonly codeEditor = viewChild(CodeEditorStudentContainerComponent);
-    private readonly modelingSubmission = viewChild(ModelingSubmissionComponent);
-    private readonly fileUploadSubmission = viewChild(FileUploadSubmissionComponent);
     private readonly quizParticipation = viewChild(QuizParticipationComponent);
 
     readonly showDiscussion = computed(() => {
@@ -78,6 +72,16 @@ export class ExerciseSplitPanelComponent {
         return this.irisEnabled() && !!ExerciseSplitPanelComponent.getChatMode(exercise.type!) && !exercise.exerciseGroup;
     });
 
+    readonly showCodeEditor = computed(() => {
+        const exercise = this.exercise();
+        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
+    });
+
+    readonly usesRouterOutlet = computed(() => {
+        const type = this.exercise().type;
+        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || this.showCodeEditor();
+    });
+
     constructor() {
         effect(() => {
             const exercise = this.exercise();
@@ -89,16 +93,20 @@ export class ExerciseSplitPanelComponent {
         effect(() => {
             const participation = this.studentParticipation();
             const exercise = this.exercise();
-            if (exercise.type === ExerciseType.TEXT && participation?.id && exercise.id && !this.route.firstChild) {
+            if (!participation?.id || !exercise.id || this.route.firstChild) return;
+
+            const type = exercise.type;
+            if (type === ExerciseType.TEXT) {
                 this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+            } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
+                this.router.navigate(['programming-exercises', exercise.id, 'code-editor', participation.id], { relativeTo: this.route.parent });
+            } else if (type === ExerciseType.MODELING) {
+                this.router.navigate(['modeling-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
+            } else if (type === ExerciseType.FILE_UPLOAD) {
+                this.router.navigate(['file-upload-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
             }
         });
     }
-
-    readonly showCodeEditor = computed(() => {
-        const exercise = this.exercise();
-        return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
-    });
 
     readonly canSubmit = computed(() => {
         if (!this.studentParticipation()) return false;
@@ -114,12 +122,18 @@ export class ExerciseSplitPanelComponent {
 
     submitExercise(): void {
         const context = this.childrenOutletContexts.getContext('primary');
-        if (context?.outlet?.isActivated && context.outlet.component instanceof TextEditorComponent) {
-            (context.outlet.component as TextEditorComponent).submit();
+        if (context?.outlet?.isActivated) {
+            const component = context.outlet.component;
+            if (component instanceof TextEditorComponent) {
+                component.submit();
+            } else if (component instanceof CodeEditorStudentContainerComponent) {
+                component.commit();
+            } else if (component instanceof ModelingSubmissionComponent) {
+                component.submit();
+            } else if (component instanceof FileUploadSubmissionComponent) {
+                component.submitExercise();
+            }
         }
-        this.codeEditor()?.commit();
-        this.modelingSubmission()?.submit();
-        this.fileUploadSubmission()?.submitExercise();
         this.quizParticipation()?.onSubmit();
     }
 }
