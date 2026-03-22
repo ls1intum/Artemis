@@ -198,13 +198,10 @@
                 "openChatHistory": "Chatverlauf öffnen",
                 "aboutIris": "Über Iris",
                 "today": "Heute",
-                "yesterday": "Gestern",
-                "last7Days": "Letzten 7 Tage",
-                "last30Days": "Letzten 30 Tage",
                 "older": "Älter",
                 "relatedEntityTooltip": {
-                    "programmingExercise": "Diese Konversation bezieht sich auf eine Programmieraufgabe.",
-                    "lecture": "Diese Konversation bezieht sich auf eine Vorlesung."
+                    "programmingExercise": "Zugehörige Programmieraufgabe:\n{{ name }}",
+                    "lecture": "Zugehörige Vorlesung:\n{{ name }}"
                 },
                 "deleteSession": "Löschen",
                 "deleteSessionHeader": "Chat-Sitzung löschen",

@@ -280,6 +280,64 @@ describe('ModelingSubmissionComponent', () => {
         expect(comp.submission).toEqual(submission);
     });
 
+    it('should initialize with submissionId and resultId (Feedback View with specific result)', () => {
+        // Mock route parameters with both submissionId and resultId
+        const route = {
+            params: of({ courseId: 5, exerciseId: 22, participationId: 1, submissionId: 20, resultId: 99 }),
+        } as any as ActivatedRoute;
+
+        createModelingSubmissionComponent(route);
+
+        // Mock data with multiple results (manual and Athena)
+        const modelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, undefined, undefined);
+        modelingExercise.dueDate = dayjs().add(1, 'days');
+        modelingExercise.maxPoints = 20;
+        modelingExercise.teamMode = false;
+        const participation = new StudentParticipation();
+        participation.exercise = modelingExercise;
+        participation.id = 1;
+        const submission = new ModelingSubmission();
+        submission.id = 20;
+        submission.submitted = true;
+        submission.participation = participation;
+
+        const manualResult = {
+            id: 99,
+            completionDate: dayjs().subtract(1, 'hour'),
+            assessmentType: AssessmentType.MANUAL,
+            successful: true,
+            score: 85,
+        } as Result;
+
+        const athenaResult = {
+            id: 100,
+            completionDate: dayjs(),
+            assessmentType: AssessmentType.AUTOMATIC_ATHENA,
+            successful: true,
+            score: 75,
+        } as Result;
+
+        submission.results = [manualResult, athenaResult];
+        submission.latestResult = athenaResult;
+
+        // Mock service calls
+        vi.spyOn(service, 'getSubmissionsWithResultsForParticipation').mockReturnValue(of([submission]));
+        vi.spyOn(service, 'getLatestSubmissionForModelingEditor').mockReturnValue(of(submission));
+
+        // Initialize component
+        comp.ngOnInit();
+
+        // Assertions
+        expect(comp.isFeedbackView).toBe(true);
+        expect(comp.submissionId).toBe(20);
+        expect(comp.resultId).toBe(99);
+        // When resultId is present, results should NOT be filtered to single result
+        expect(comp.submission?.results).toHaveLength(2);
+        // The specific result should be found and used
+        expect(comp.result?.id).toBe(99);
+        expect(comp.result?.assessmentType).toBe(AssessmentType.MANUAL);
+    });
+
     it('should allow to submit when exercise due date not set', () => {
         createModelingSubmissionComponent();
 

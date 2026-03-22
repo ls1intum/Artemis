@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.RelationType;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLCompetencyRelationDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.AtlasMLExerciseDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToExerciseRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRequestDTO;
@@ -173,5 +174,15 @@ class AtlasMLDtoTest {
         List<CompetencyRelation> mapped = rels.toDomainRelations();
         assertThat(mapped).hasSize(1);
         assertThat(mapped.getFirst().getType()).isEqualTo(RelationType.ASSUMES);
+    }
+
+    @Test
+    void testMapCompetencyToExerciseRequestDTO_jsonRoundTrip() throws JsonProcessingException {
+        MapCompetencyToExerciseRequestDTO dto = new MapCompetencyToExerciseRequestDTO(10L, 5L);
+        String json = objectMapper.writeValueAsString(dto);
+        assertThat(json).contains("exercise_id").contains("competency_id");
+        MapCompetencyToExerciseRequestDTO back = objectMapper.readValue(json, MapCompetencyToExerciseRequestDTO.class);
+        assertThat(back.exerciseId()).isEqualTo(10L);
+        assertThat(back.competencyId()).isEqualTo(5L);
     }
 }
