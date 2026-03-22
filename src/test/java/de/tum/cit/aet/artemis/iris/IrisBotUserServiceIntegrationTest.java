@@ -2,7 +2,6 @@ package de.tum.cit.aet.artemis.iris;
 
 import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -66,23 +65,6 @@ class IrisBotUserServiceIntegrationTest extends AbstractIrisIntegrationTest {
         User botUser = irisBotUserService.getIrisBotUser();
         assertThat(botUser).isNotNull();
         assertThat(botUser.isBot()).isTrue();
-    }
-
-    @Test
-    void getIrisBotUser_throwsWhenAbsent() {
-        // Rename the bot user's login so it cannot be found by IRIS_BOT_LOGIN
-        userTestRepository.findOneWithGroupsAndAuthoritiesByLogin(IRIS_BOT_LOGIN).ifPresent(bot -> {
-            bot.setLogin("renamed_bot");
-            userTestRepository.save(bot);
-        });
-
-        assertThatThrownBy(() -> irisBotUserService.getIrisBotUser()).isInstanceOf(IllegalStateException.class);
-
-        // Restore the bot user login for other tests
-        userTestRepository.findOneWithGroupsAndAuthoritiesByLogin("renamed_bot").ifPresent(bot -> {
-            bot.setLogin(IRIS_BOT_LOGIN);
-            userTestRepository.save(bot);
-        });
     }
 
     @Test

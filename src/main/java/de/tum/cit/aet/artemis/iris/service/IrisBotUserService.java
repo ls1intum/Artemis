@@ -8,11 +8,8 @@ import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -28,7 +25,7 @@ import tech.jhipster.security.RandomUtil;
 
 /**
  * Service responsible for managing the Iris bot user account.
- * The bot user is created at startup when Iris is enabled and is used
+ * The bot user is created on first use and is used
  * by the autonomous tutor pipeline to post replies in communication channels.
  */
 @Service
@@ -51,16 +48,6 @@ public class IrisBotUserService {
         this.passwordService = passwordService;
         this.channelRepository = channelRepository;
         this.conversationService = conversationService;
-    }
-
-    /**
-     * Ensures the Iris bot user exists in the database at application startup.
-     * Runs asynchronously so that bcrypt password hashing does not block the main startup thread.
-     */
-    @Async
-    @EventListener(ApplicationReadyEvent.class)
-    public void onApplicationReady() {
-        ensureIrisBotUserExists();
     }
 
     /**
@@ -102,12 +89,13 @@ public class IrisBotUserService {
     }
 
     /**
-     * Retrieves the Iris bot user from the database.
+     * Retrieves the Iris bot user from the database, creating it if it does not yet exist.
      *
      * @return the Iris bot user
-     * @throws IllegalStateException if the bot user does not exist
+     * @throws IllegalStateException if the bot user cannot be found after creation
      */
     public User getIrisBotUser() {
+        ensureIrisBotUserExists();
         return userRepository.findOneWithGroupsAndAuthoritiesByLogin(IRIS_BOT_LOGIN)
                 .orElseThrow(() -> new IllegalStateException("Iris bot user does not exist. Ensure Iris is enabled and the application has started."));
     }
