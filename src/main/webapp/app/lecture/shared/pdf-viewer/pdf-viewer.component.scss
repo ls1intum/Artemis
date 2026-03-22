@@ -7,7 +7,7 @@ jhi-lecture-pdf-viewer {
 
     .pdf-viewer-container {
         --pdf-bar-height: 36px;
-        --pdf-viewer-bg: var(--gray-200);
+        --pdf-viewer-bg: var(--bs-light);
 
         .pdf-viewer {
             display: block;
@@ -37,7 +37,7 @@ jhi-lecture-pdf-viewer {
             min-height: var(--pdf-bar-height);
             box-sizing: border-box;
             border-color: var(--border-color);
-            background-color: var(--bs-light);
+            background-color: var(--bs-body-bg) !important;
         }
 
         .artemis-pdf-toolbar__center {
@@ -60,16 +60,16 @@ jhi-lecture-pdf-viewer {
             padding: 0;
             border: none;
             background-color: transparent;
-            color: var(--bs-secondary-color, #6c757d);
+            color: var(--bs-secondary-color);
             cursor: pointer;
             transition: color 0.2s ease;
 
             &:hover {
-                color: var(--bs-gray-400, #ced4da);
+                color: var(--bs-emphasis-color);
             }
 
             &:active {
-                color: var(--bs-gray-500, #adb5bd);
+                color: var(--bs-body-color);
             }
 
             fa-icon {
@@ -81,7 +81,7 @@ jhi-lecture-pdf-viewer {
             margin-left: 0.25rem;
             font-weight: 500;
             font-size: 0.9rem;
-            color: var(--bs-secondary-color, #6c757d);
+            color: var(--bs-secondary-color);
         }
 
         .toolbar,
@@ -123,8 +123,8 @@ jhi-lecture-pdf-viewer {
             text-align: center;
             font-size: 0.8rem;
             line-height: 1;
-            color: var(--bs-secondary-color, #6c757d);
-            background-color: var(--bs-light);
+            color: var(--bs-secondary-color);
+            background-color: var(--bs-body-bg) !important;
             border-top: 2px solid var(--border-color);
             margin-top: 0;
             white-space: nowrap;
