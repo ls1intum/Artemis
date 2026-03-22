@@ -300,6 +300,7 @@ public class ProgrammingExerciseCreationUpdateService {
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
      * @param updatedProgrammingExercise      the changed programming exercise with its new values
      * @param notificationText                optional text about the changes for a notification
+     * @param originalCompetencyIds           the IDs of competencies originally linked to the exercise before the update
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
