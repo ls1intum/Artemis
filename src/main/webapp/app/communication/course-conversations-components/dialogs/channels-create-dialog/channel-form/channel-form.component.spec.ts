@@ -163,16 +163,15 @@ describe('ChannelFormComponent', () => {
 
         const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
+        fixture.changeDetectorRef.detectChanges();
 
-        return fixture.whenStable().then(() => {
-            if (expectSubmitEvent) {
-                expect(submitFormSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledWith(expectedFormData);
-            } else {
-                expect(submitFormSpy).not.toHaveBeenCalled();
-                expect(submitFormEventSpy).not.toHaveBeenCalled();
-            }
-        });
+        if (expectSubmitEvent) {
+            expect(submitFormSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
+            expect(submitFormEventSpy).toHaveBeenCalledWith(expectedFormData);
+        } else {
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
+        }
     };
 });
