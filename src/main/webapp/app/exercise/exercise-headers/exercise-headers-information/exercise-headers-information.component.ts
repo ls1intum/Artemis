@@ -87,6 +87,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         if (results.length) {
             // The updated participation by the websocket is not guaranteed to be sorted, find the newest result (highest id)
             this.sortService.sortByProperty(results, 'id', false);
+            this.sortedHistoryResults = results;
 
             const latestRatedResult = results.filter((result) => result.rated).first();
             if (latestRatedResult) {
