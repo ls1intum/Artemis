@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -302,7 +303,7 @@ public class ProgrammingExerciseCreationUpdateService {
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) throws JsonProcessingException {
+            @Nullable String notificationText, Set<Long> originalCompetencyIds) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
@@ -331,7 +332,7 @@ public class ProgrammingExerciseCreationUpdateService {
 
         exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
 
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(originalCompetencyIds, savedProgrammingExercise);
 
         return savedProgrammingExercise;
     }

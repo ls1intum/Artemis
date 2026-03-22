@@ -184,6 +184,8 @@ public class ProgrammingExerciseUpdateResource {
         final List<AuxiliaryRepository> originalAuxRepos = programmingExerciseBeforeUpdate.getAuxiliaryRepositories() != null
                 ? new ArrayList<>(programmingExerciseBeforeUpdate.getAuxiliaryRepositories())
                 : new ArrayList<>();
+        // Capture original competency IDs before update() mutates the entity (L1 cache)
+        final Set<Long> originalCompetencyIds = programmingExerciseBeforeUpdate.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
@@ -287,7 +289,7 @@ public class ProgrammingExerciseUpdateResource {
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExerciseBeforeUpdate,
-                updatedProgrammingExercise, notificationText);
+                updatedProgrammingExercise, notificationText, originalCompetencyIds);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
