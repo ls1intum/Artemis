@@ -55,26 +55,26 @@ export class SentryErrorHandler extends ErrorHandler {
                 // Fall back to default sample rate
                 return inheritOrSampleWith(defaultSampleRate);
             },
-            beforeSend(event) {
+            beforeSend: (event) => {
                 if (event.user) {
                   delete event.user;
                 }
                 return event;
             },
-            beforeSendTransaction(trans) {
+            beforeSendTransaction: (trans) => {
                 if (trans.user) {
                   delete trans.user;
                 }
                 return trans;
             },
-            beforeSendSpan(span) {
+            beforeSendSpan: (span) => {
                 // span.name, spans passed in json
                 if (span.user) {
                   delete span.user;
                 }
                 return span;
             },
-            beforeBreadcrumb(crumb) {
+            beforeBreadcrumb: (crumb) => {
                 if (crumb.user) {
                   delete crumb.user;
                 }
