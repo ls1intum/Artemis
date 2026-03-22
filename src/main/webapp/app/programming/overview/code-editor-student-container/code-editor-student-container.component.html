@@ -80,16 +80,15 @@
                 [btnSize]="ButtonSize.MEDIUM"
               />
             </div>
-            @if (!lightweight()) {
-                <jhi-programming-exercise-instructions
-                    editorSidebar
-                    (onNoInstructionsAvailable)="showEditorInstructions = false"
-                    [exercise]="exercise"
-                    [participation]="participation"
-                    [personalParticipation]="true"
-                    class="instructions-wrapper__content card-body p-0"
-                />
-            }
+            <jhi-programming-exercise-instructions
+                [class.d-none]="lightweight()"
+                editorSidebar
+                (onNoInstructionsAvailable)="showEditorInstructions = false"
+                [exercise]="exercise"
+                [participation]="participation"
+                [personalParticipation]="true"
+                class="instructions-wrapper__content card-body p-0"
+            />
         </jhi-code-editor-container>
     }
     <div class="row ms-0">
