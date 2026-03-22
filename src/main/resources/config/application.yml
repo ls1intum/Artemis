@@ -369,7 +369,6 @@ sentry:
         minimum-event-level: error
     sample-rate: 1
     release: ${artemis.version}
-    send-default-pii: true
     # This is a placeholder value overwritten in both application-prod.yml and application-dev.yml.
     # It is only provided to prevent the SDK from choosing the default value 'production', which might lead to confusion
     environment: test
