@@ -5,8 +5,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -428,14 +430,32 @@ public class ProgrammingExerciseUpdateResource {
      * @param exercise the exercise to update
      */
     private void updateGradingCriteria(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
-        if (dto.gradingCriteria() != null) {
-            exercise.getGradingCriteria().clear();
-            for (GradingCriterionDTO criterionDTO : dto.gradingCriteria()) {
-                GradingCriterion criterion = criterionDTO.toEntity();
-                criterion.setExercise(exercise);
-                exercise.getGradingCriteria().add(criterion);
-            }
+        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
+            Set<GradingCriterion> criteria = exercise.ensureGradingCriteriaSet();
+            criteria.clear();
+            return;
         }
+
+        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+
+        // Preserve existing criteria by matching on ID to avoid dangling Feedback.gradingInstruction references
+        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
+                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
+
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
+            if (criterion == null) {
+                criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+            }
+            else {
+                gcDto.applyTo(criterion);
+            }
+            return criterion;
+        }).collect(Collectors.toSet());
+
+        managedCriteria.clear();
+        managedCriteria.addAll(updated);
     }
 
     /**
@@ -467,6 +487,10 @@ public class ProgrammingExerciseUpdateResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+
+        // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
+        // Compare with TextExerciseCreationUpdateResource.reEvaluateAndUpdateTextExercise.
+        update(updateDTO, programmingExercise);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
         return updateProgrammingExercise(updateDTO, null);

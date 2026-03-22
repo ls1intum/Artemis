@@ -80,7 +80,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.QuizBatchFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -1087,10 +1086,24 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
         }
         if (updateQuizExerciseDTO.quizBatches() != null) {
-            // Convert DTOs to new entities to avoid detached entity issues
-            Set<QuizBatch> newBatches = updateQuizExerciseDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
+            // Preserve existing batch IDs to avoid orphaning QuizSubmission.quizBatch references.
+            // Use applyTo() for existing batches (id != null), toDomainObject() only for new ones.
+            Map<Long, QuizBatch> existingBatchesById = quizExercise.getQuizBatches().stream().filter(b -> b.getId() != null)
+                    .collect(Collectors.toMap(QuizBatch::getId, b -> b, (a, b) -> a));
+
+            Set<QuizBatch> mergedBatches = updateQuizExerciseDTO.quizBatches().stream().map(dto -> {
+                if (dto.id() != null) {
+                    QuizBatch existing = existingBatchesById.get(dto.id());
+                    if (existing != null) {
+                        dto.applyTo(existing);
+                        return existing;
+                    }
+                }
+                return dto.toDomainObject();
+            }).collect(Collectors.toSet());
+
             quizExercise.getQuizBatches().clear();
-            quizExercise.getQuizBatches().addAll(newBatches);
+            quizExercise.getQuizBatches().addAll(mergedBatches);
         }
         if (updateQuizExerciseDTO.releaseDate() != null) {
             quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
