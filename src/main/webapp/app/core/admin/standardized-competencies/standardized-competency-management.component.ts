@@ -100,7 +100,7 @@ export class StandardizedCompetencyManagementComponent extends StandardizedCompe
 
     /** width of the detail panel in px, persisted across panel switches */
     protected readonly detailPanelWidth = signal<number | undefined>(undefined);
-  
+
     // Cancel confirmation dialog state (replaces NgbModal + ConfirmAutofocusModalComponent)
     protected readonly confirmDialogVisible = signal(false);
     protected readonly confirmDialogTitle = signal('');
