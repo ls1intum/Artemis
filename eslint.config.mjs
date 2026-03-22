@@ -172,7 +172,7 @@ export default tseslint.config(
             '@typescript-eslint/no-deprecated': 'warn',
             '@typescript-eslint/no-empty-function': 'off',
             '@typescript-eslint/ban-ts-comment': 'off',
-            '@typescript-eslint/no-var-requires': 'off',
+            '@typescript-eslint/no-require-imports': 'off',
             '@typescript-eslint/no-unused-vars': ['warn', {
                 vars: 'all',
                 varsIgnorePattern: '^_',

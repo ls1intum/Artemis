@@ -19,7 +19,8 @@ const studentTwoName = 'Student Two';
  * Deletes a specific group chat from the database.
  * Group chats have no REST delete API, so we use SQL via docker exec.
  */
-function deleteGroupChatFromDB(conversationId: number) {
+function deleteGroupChatFromDB(conversationId: number | undefined) {
+    if (conversationId === undefined) return;
     try {
         const sql = `DELETE FROM conversation_participant WHERE conversation_id = ${conversationId}; DELETE FROM post WHERE conversation_id = ${conversationId}; DELETE FROM conversation WHERE id = ${conversationId};`;
         execSync(`docker exec artemis-postgres psql -U Artemis -d Artemis -c "${sql}"`, { timeout: 5000, encoding: 'utf-8' });
