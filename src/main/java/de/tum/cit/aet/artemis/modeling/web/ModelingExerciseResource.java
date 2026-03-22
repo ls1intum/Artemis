@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,8 +34,6 @@ import de.tum.cit.aet.artemis.assessment.repository.GradingCriterionRepository;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -555,58 +552,6 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * Replaces the competency links of the given exercise according to PUT semantics.
-     * <p>
-     * If {@code dto.competencyLinks()} is {@code null} or empty, all existing links are removed (if initialized).
-     * Otherwise, weights are updated for existing links and missing links are created using managed competency references.
-     *
-     * <p>
-     * <b>Hibernate note:</b> Uses {@code competencyRepository.getReferenceById(...)} to avoid creating detached entities
-     * and to keep associations consistent with the persistence context.
-     *
-     * @param dto      the update DTO containing competency link updates
-     * @param exercise the exercise to mutate
-     * @throws BadRequestAlertException if a competency does not belong to the exercise's course
-     */
-    private void updateCompetencyLinks(UpdateModelingExerciseDTO dto, ModelingExercise exercise) {
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            clearInitializedCollection(exercise.getCompetencyLinks());
-            return;
-        }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
-
-        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-
-        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
-
-        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-
-        Set<CompetencyExerciseLink> updated = new HashSet<>();
-        for (var linkDto : dto.competencyLinks()) {
-            if (linkDto == null || linkDto.competency() == null) {
-                throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-            }
-            Long competencyId = linkDto.competency().id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
-        }
-
-        managedLinks.clear();
-        managedLinks.addAll(updated);
-    }
-
-    /**
      * Clears the given collection if it is initialized.
      * <p>
      * This avoids triggering lazy initialization in callers that do not fetch the collection.
@@ -687,7 +632,7 @@ public class ModelingExerciseResource {
         exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
 
         updateGradingCriteria(updateModelingExerciseDTO, exercise);
-        updateCompetencyLinks(updateModelingExerciseDTO, exercise);
+        exerciseService.updateCompetencyLinks(updateModelingExerciseDTO, exercise);
 
         return exercise;
     }

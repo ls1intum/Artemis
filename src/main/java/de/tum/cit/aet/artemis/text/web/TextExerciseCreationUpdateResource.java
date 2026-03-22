@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.text.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -377,7 +376,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setExampleSolution(dto.exampleSolution());
 
         updateGradingCriteria(dto, exercise);
-        updateCompetencyLinks(dto, exercise);
+        exerciseService.updateCompetencyLinks(dto, exercise);
 
         return exercise;
     }
@@ -410,47 +409,6 @@ public class TextExerciseCreationUpdateResource {
 
         managedCriteria.clear();
         managedCriteria.addAll(updated);
-    }
-
-    /**
-     * Replaces the competency links of the given exercise according to PUT semantics.
-     */
-    private void updateCompetencyLinks(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            clearInitializedCollection(exercise.getCompetencyLinks());
-            return;
-        }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", ENTITY_NAME, "atlasDisabled"));
-
-        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-
-        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
-
-        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-
-        Set<CompetencyExerciseLink> updated = new HashSet<>();
-        for (var linkDto : dto.competencyLinks()) {
-            if (linkDto == null || linkDto.competency() == null) {
-                throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
-            }
-            Long competencyId = linkDto.competency().id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
-        }
-
-        managedLinks.clear();
-        managedLinks.addAll(updated);
     }
 
     /**

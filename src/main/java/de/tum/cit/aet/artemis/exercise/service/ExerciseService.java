@@ -908,6 +908,7 @@ public class ExerciseService {
      * @param dto    the DTO containing the new competency link state
      * @param entity the exercise entity to update
      */
+    // TODO: duplicated code, try to unify with LectureUnitService.updateCompetencyLinks
     public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
         if (competencyRepositoryApi.isEmpty()) {
             return;
@@ -925,6 +926,7 @@ public class ExerciseService {
 
             Set<CompetencyExerciseLink> updatedLinks = new HashSet<>();
 
+            // TODO: think about optimizing this by loading all new competencies in a single query
             for (var dtoLink : dto.competencyLinks()) {
                 if (dtoLink == null || dtoLink.competency() == null) {
                     throw new BadRequestAlertException("Competency link and its competency must not be null", "exercise", "competencyLinkNull");
@@ -995,10 +997,10 @@ public class ExerciseService {
         for (CompetencyExerciseLink link : competencyLinks) {
             long competencyId = link.getCompetency().getId();
             CourseCompetency managedCompetency = competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
-            // Validate that the competency belongs to the same course as the exercise
+            // Skip competencies that belong to a different course (can happen during cross-course import)
             Long competencyCourseId = managedCompetency.getCourse() != null ? managedCompetency.getCourse().getId() : null;
             if (exerciseCourseId != null && competencyCourseId != null && !Objects.equals(exerciseCourseId, competencyCourseId)) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "exercise", "wrongCourse");
+                continue;
             }
             resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
         }
