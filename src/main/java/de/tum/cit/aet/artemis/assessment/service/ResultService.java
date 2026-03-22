@@ -202,11 +202,26 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
-        result.setFeedbacks(List.of());
-        resultRepository.delete(result);
+        if (Hibernate.isInitialized(result.getFeedbacks())) {
+            // Feedbacks are already loaded: clear the in-memory list so Hibernate does not
+            // attempt to cascade-delete the already bulk-deleted rows via orphanRemoval.
+            result.setFeedbacks(List.of());
+            resultRepository.delete(result);
+        }
+        else {
+            // Feedbacks are a lazy-uninitialized proxy. Calling setFeedbacks() or delete()
+            // would trigger lazy loading, which fails because the rows were already
+            // bulk-deleted above. Use JPQL bulk deletes to bypass Hibernate's cascade logic.
+            // Note: this path skips the @PreRemove callback in ResultListener that schedules
+            // async participant score recalculation. This is acceptable because:
+            // - When shouldClearParticipantScore=true (single result deletion), stale score
+            // references are already cleared synchronously by clearAllByResultId above,
+            // and the score will be recalculated when the next result is saved.
+            // - When shouldClearParticipantScore=false (bulk deletion), participant scores
+            // are already handled by the caller (e.g. participation/exercise deletion).
+            resultRepository.deleteAllAssessmentNotesByResultId(result.getId());
+            resultRepository.deleteResultById(result.getId());
+        }
     }
 
     /**
