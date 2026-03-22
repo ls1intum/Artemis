@@ -286,4 +286,5 @@ class ExerciseWeaviateResourceIntegrationTest extends AbstractProgrammingIntegra
             request.getList("/api/exercises/search?q=&courseId=" + course.getId(), HttpStatus.BAD_REQUEST, GlobalSearchResultDTO.class);
         }
     }
+
 }
