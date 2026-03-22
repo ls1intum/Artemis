@@ -785,7 +785,7 @@ public class ParticipationService {
             stuckBuildCutoff = ZonedDateTime.now().minusSeconds(timeoutSeconds);
         }
 
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsByExerciseIdForManagement(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForManagement(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
                 stuckBuildCutoff, pageable, sortOrder, search.getSortedColumn());
 
         List<Long> ids = idPage.getContent();
@@ -870,7 +870,7 @@ public class ParticipationService {
         boolean teamMode = exercise.isTeamMode();
 
         // Step 1: Get paginated participation IDs with filters
-        Page<Long> idPage = studentParticipationRepository.findParticipationIdsByExerciseIdWithFilters(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
+        Page<Long> idPage = studentParticipationRepository.findParticipationIdsForScores(exercise.getId(), teamMode, search.getSearchTerm(), search.getFilterProp(),
                 search.getScoreRangeLower(), search.getScoreRangeUpper(), pageable, sortOrder, search.getSortedColumn());
 
         List<Long> ids = idPage.getContent();

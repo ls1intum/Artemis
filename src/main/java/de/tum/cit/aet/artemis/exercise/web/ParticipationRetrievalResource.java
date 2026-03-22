@@ -225,15 +225,15 @@ public class ParticipationRetrievalResource {
     }
 
     /**
-     * GET /exercises/:exerciseId/participations/search : get paginated participation scores for the exercise scores view.
+     * GET /exercises/:exerciseId/participations/scores : get paginated participation scores for the exercise scores view.
      *
      * @param exerciseId the exercise to query
      * @param search     search parameters including pagination, sorting, search term, filter, and score range
      * @return a paginated list of ParticipationScoreDTO with pagination headers
      */
-    @GetMapping("exercises/{exerciseId}/participations/search")
+    @GetMapping("exercises/{exerciseId}/participations/scores")
     @EnforceAtLeastTutor
-    public ResponseEntity<List<ParticipationScoreDTO>> searchParticipations(@PathVariable Long exerciseId, @Valid ParticipationScoreSearchDTO search) {
+    public ResponseEntity<List<ParticipationScoreDTO>> getParticipationScores(@PathVariable Long exerciseId, @Valid ParticipationScoreSearchDTO search) {
         log.debug("REST request to search Participations for Exercise {}", exerciseId);
 
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);

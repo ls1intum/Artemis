@@ -26,8 +26,8 @@ public interface CustomStudentParticipationRepository {
      * @param sortedColumn    the column to sort by
      * @return a page of participation IDs
      */
-    Page<Long> findParticipationIdsByExerciseIdWithFilters(long exerciseId, boolean teamMode, String searchTerm, String filterProp, Integer scoreRangeLower,
-            Integer scoreRangeUpper, Pageable pageable, SortingOrder sortOrder, String sortedColumn);
+    Page<Long> findParticipationIdsForScores(long exerciseId, boolean teamMode, String searchTerm, String filterProp, Integer scoreRangeLower, Integer scoreRangeUpper,
+            Pageable pageable, SortingOrder sortOrder, String sortedColumn);
 
     /**
      * Returns a page of participation IDs for the given exercise for the management view, applying search and filter predicates.
@@ -43,6 +43,6 @@ public interface CustomStudentParticipationRepository {
      * @param sortedColumn     the column to sort by
      * @return a page of participation IDs
      */
-    Page<Long> findParticipationIdsByExerciseIdForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff,
-            Pageable pageable, SortingOrder sortOrder, String sortedColumn);
+    Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff, Pageable pageable,
+            SortingOrder sortOrder, String sortedColumn);
 }
