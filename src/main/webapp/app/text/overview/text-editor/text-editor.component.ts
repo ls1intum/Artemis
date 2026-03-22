@@ -31,11 +31,6 @@ import { getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exe
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
-import { IrisCourseSettingsWithRateLimitDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { MODULE_FEATURE_IRIS } from 'app/app.constants';
-import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
@@ -46,7 +41,6 @@ import { TextResultComponent } from '../text-result/text-result.component';
 import { AdditionalFeedbackComponent } from 'app/exercise/additional-feedback/additional-feedback.component';
 import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { UpperCasePipe } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -74,7 +68,6 @@ import { TranslateService } from '@ngx-translate/core';
         RatingComponent,
         ComplaintsStudentViewComponent,
         FaIconComponent,
-        IrisExerciseChatbotButtonComponent,
         UpperCasePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
@@ -88,15 +81,12 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private participationWebsocketService = inject(ParticipationWebsocketService);
     private stringCountService = inject(StringCountService);
     private accountService = inject(AccountService);
-    private profileService = inject(ProfileService);
-    private irisSettingsService = inject(IrisSettingsService);
     private translateService = inject(TranslateService);
 
     readonly ButtonType = ButtonType;
     readonly MAX_CHARACTER_COUNT = MAX_SUBMISSION_TEXT_LENGTH;
     protected readonly Result = Result;
     protected readonly hasExerciseDueDatePassed = hasExerciseDueDatePassed;
-    readonly ChatServiceMode = ChatServiceMode;
     protected readonly isAthenaAIResult = isAthenaAIResult;
 
     participationId = input<number>();
@@ -128,7 +118,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     isAfterAssessmentDueDate: boolean;
     examMode = false;
     isGeneratingFeedback = false;
-    irisSettings?: IrisCourseSettingsWithRateLimitDTO;
 
     // indicates, that it is an exam exercise and the publishResults date is in the past
     isAfterPublishDate: boolean;
@@ -169,7 +158,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.textService.get(participationId!).subscribe({
                 next: (data: StudentParticipation) => {
                     this.updateParticipation(data, this.submissionId);
-                    this.loadIrisSettings();
                 },
                 error: (error: HttpErrorResponse) => onError(this.alertService, error),
             });
@@ -200,21 +188,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 }
                 this.updateParticipation(this.participation);
             });
-    }
-
-    /**
-     * Loads Iris settings for the current exercise if Iris is available and the exercise is not in exam mode.
-     *
-     * This method retrieves the application profile settings and checks if `MODULE_FEATURE_IRIS` is active.
-     * If active and the exercise is not in exam mode, it fetches the Iris settings for the given exercise ID.
-     */
-    private loadIrisSettings(): void {
-        // only load the settings if Iris is available and this is not an exam exercise
-        if (this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS) && !this.examMode && this.course?.id) {
-            this.irisSettingsService.getCourseSettingsWithRateLimit(this.course.id).subscribe((response) => {
-                this.irisSettings = response;
-            });
-        }
     }
 
     private inputValuesArePresent(): boolean {

@@ -1,4 +1,4 @@
-import { Component, computed, input, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -13,6 +13,9 @@ import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/resizable-panels/resizable-panels.component';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
+import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -27,9 +30,13 @@ import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/
         ModelingSubmissionComponent,
         FileUploadSubmissionComponent,
         QuizParticipationComponent,
+        IrisBaseChatbotComponent,
+        IrisLogoComponent,
     ],
 })
 export class ExerciseSplitPanelComponent {
+    private readonly chatService = inject(IrisChatService);
+    protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faGear = faGear;
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
@@ -39,6 +46,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
+    readonly irisEnabled = input<boolean>(false);
 
     private readonly textEditor = viewChild(TextEditorComponent);
     private readonly codeEditor = viewChild(CodeEditorStudentContainerComponent);
@@ -50,6 +58,32 @@ export class ExerciseSplitPanelComponent {
         const course = this.exercise().course;
         return !!course && (isCommunicationEnabled(course) || isMessagingEnabled(course));
     });
+
+    private static getChatMode(type: ExerciseType): ChatServiceMode | undefined {
+        switch (type) {
+            case ExerciseType.PROGRAMMING:
+                return ChatServiceMode.PROGRAMMING_EXERCISE;
+            case ExerciseType.TEXT:
+                return ChatServiceMode.TEXT_EXERCISE;
+            default:
+                return undefined;
+        }
+    }
+
+    readonly showIris = computed(() => {
+        const exercise = this.exercise();
+        return this.irisEnabled() && !!ExerciseSplitPanelComponent.getChatMode(exercise.type!) && !exercise.exerciseGroup;
+    });
+
+    constructor() {
+        effect(() => {
+            const exercise = this.exercise();
+            const mode = ExerciseSplitPanelComponent.getChatMode(exercise.type!);
+            if (this.showIris() && exercise.id && mode) {
+                this.chatService.switchTo(mode, exercise.id);
+            }
+        });
+    }
 
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();

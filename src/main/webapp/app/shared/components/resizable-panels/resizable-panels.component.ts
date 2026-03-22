@@ -24,6 +24,7 @@ import { NgTemplateOutlet } from '@angular/common';
 export class PanelDirective {
     readonly label = input.required<string>();
     readonly icon = input<IconProp>();
+    readonly iconTemplate = input<TemplateRef<unknown>>();
     readonly templateRef = inject(TemplateRef);
 }
 
