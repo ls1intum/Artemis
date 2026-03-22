@@ -576,24 +576,43 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * Switches to a chat mode for the given entity.
+     * Closes the current session and initializes a new one for the given context.
+     * Restores the mode/entityId subjects after close() clears them.
+     */
+    private initializeSession(mode: ChatServiceMode, id: number | undefined, forceNew: boolean): void {
+        this.close();
+        this.currentChatModeSubject.next(mode);
+        this.currentRelatedEntityIdSubject.next(id);
+        if (this.sessionCreationIdentifier) {
+            this.start(forceNew);
+        }
+    }
+
+    /**
+     * Switches to a chat mode for the given entity, reusing an existing session if available.
+     * Only acts when the context actually changes.
      * @param mode The chat mode to switch to
      * @param id The entity ID (course, lecture, or exercise)
-     * @param forceNew If true, creates a new session when switching to a different context instead of reusing an existing one.
      */
-    switchTo(mode: ChatServiceMode, id?: number, forceNew = false): void {
+    switchTo(mode: ChatServiceMode, id?: number): void {
         const modeUrl = chatModeToUrlComponent(mode);
         const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
-        if (isDifferent || forceNew) {
-            this.close();
-            this.currentChatModeSubject.next(mode);
-            this.currentRelatedEntityIdSubject.next(id);
-            if (this.sessionCreationIdentifier) {
-                this.start(forceNew);
-            }
+        if (isDifferent) {
+            this.initializeSession(mode, id, false);
         }
+    }
+
+    /**
+     * Creates a new chat session for the given context, even if one already exists.
+     * @param mode The chat mode for the new session
+     * @param id The entity ID (course, lecture, or exercise)
+     */
+    public createNewChat(mode: ChatServiceMode, id: number): void {
+        const modeUrl = chatModeToUrlComponent(mode);
+        this.sessionCreationIdentifier = modeUrl ? modeUrl + '/' + id : undefined;
+        this.initializeSession(mode, id, true);
     }
 
     switchToSession(session: IrisSessionDTO): void {
@@ -629,9 +648,10 @@ export class IrisChatService implements OnDestroy {
     }
 
     private closeAndStart() {
-        this.close();
-        if (this.sessionCreationIdentifier) {
-            this.start();
+        const mode = this.currentChatModeSubject.value;
+        const id = this.currentRelatedEntityIdSubject.value;
+        if (mode !== undefined) {
+            this.initializeSession(mode, id, false);
         }
     }
 

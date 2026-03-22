@@ -381,7 +381,9 @@
                             >
                             </textarea>
                             <div class="textarea-actions">
-                                <jhi-context-selection [courseId]="courseId()" />
+                                @if (courseId()) {
+                                    <jhi-context-selection [courseId]="courseId()" />
+                                }
                                 <jhi-button
                                     id="irisSendButton"
                                     class="send-button"

@@ -158,7 +158,7 @@ export class ContextSelectionComponent {
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.switchTo(option.mode, option.entityId, true);
+            this.chatService.createNewChat(option.mode, option.entityId);
         }
     }
 }

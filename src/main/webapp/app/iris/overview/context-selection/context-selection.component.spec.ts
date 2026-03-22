@@ -31,6 +31,10 @@ describe('ContextSelectionComponent', () => {
                 chatModeSubject.next(mode);
                 entityIdSubject.next(id);
             }),
+            createNewChat: vi.fn((mode: ChatServiceMode, id: number) => {
+                chatModeSubject.next(mode);
+                entityIdSubject.next(id);
+            }),
             currentChatMode: () => chatModeSubject.asObservable(),
             currentRelatedEntityId: () => entityIdSubject.asObservable(),
             chatModeSubject,
@@ -249,35 +253,35 @@ describe('ContextSelectionComponent', () => {
             await fixture.whenStable();
         });
 
-        it('should call chatService.switchTo with COURSE mode', () => {
+        it('should call chatService.createNewChat with COURSE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.COURSE}:1`);
 
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1, true);
+            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1);
         });
 
-        it('should call chatService.switchTo with LECTURE mode', () => {
+        it('should call chatService.createNewChat with LECTURE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.LECTURE}:1`);
 
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, true);
+            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1);
         });
 
-        it('should call chatService.switchTo with PROGRAMMING_EXERCISE mode', () => {
+        it('should call chatService.createNewChat with PROGRAMMING_EXERCISE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
 
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, 1, true);
+            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, 1);
         });
 
-        it('should call chatService.switchTo with TEXT_EXERCISE mode', () => {
+        it('should call chatService.createNewChat with TEXT_EXERCISE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.TEXT_EXERCISE}:2`);
 
-            expect(chatServiceMock.switchTo).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 2, true);
+            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 2);
         });
 
-        it('should not call switchTo for unknown value', () => {
-            chatServiceMock.switchTo.mockClear();
+        it('should not call createNewChat for unknown value', () => {
+            chatServiceMock.createNewChat.mockClear();
             component.onSelectionChange('UNKNOWN:999');
 
-            expect(chatServiceMock.switchTo).not.toHaveBeenCalled();
+            expect(chatServiceMock.createNewChat).not.toHaveBeenCalled();
         });
     });
 

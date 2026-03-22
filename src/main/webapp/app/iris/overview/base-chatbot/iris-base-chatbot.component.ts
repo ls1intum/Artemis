@@ -766,7 +766,15 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     openNewSession() {
         const courseId = this.courseId();
         if (courseId) {
-            this.chatService.switchTo(ChatServiceMode.COURSE, courseId, true);
+            // Dashboard: always default to course context
+            this.chatService.createNewChat(ChatServiceMode.COURSE, courseId);
+        } else {
+            // Widget (exercise/lecture page): keep current context
+            const mode = this.currentChatMode();
+            const entityId = this.currentRelatedEntityId();
+            if (mode !== undefined && entityId !== undefined) {
+                this.chatService.createNewChat(mode, entityId);
+            }
         }
     }
 

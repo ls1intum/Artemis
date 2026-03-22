@@ -607,13 +607,14 @@ describe('IrisBaseChatbotComponent', () => {
     });
 
     describe('clear chat session', () => {
-        it('should clear chat session when clear button is clicked', async () => {
+        it('should create new chat session when clear button is clicked', async () => {
             vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
             vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
             vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-            vi.spyOn(chatService, 'clearChat').mockReturnValueOnce();
+            const createNewChatSpy = vi.spyOn(chatService, 'createNewChat').mockReturnValue();
             const getChatSessionsSpy = vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
 
+            fixture.componentRef.setInput('courseId', 123);
             chatService.switchTo(ChatServiceMode.COURSE, 123);
 
             fixture.detectChanges();
@@ -623,7 +624,7 @@ describe('IrisBaseChatbotComponent', () => {
             button.click();
             await fixture.whenStable();
 
-            expect(chatService.clearChat).toHaveBeenCalledOnce();
+            expect(createNewChatSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, 123);
             expect(getChatSessionsSpy).toHaveBeenCalledOnce();
         });
 
@@ -662,12 +663,13 @@ describe('IrisBaseChatbotComponent', () => {
             entityId: 1,
             entityName: 'Course 1',
         };
-        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+        fixture.componentRef.setInput('courseId', 1);
+        const createNewChatSpy = vi.spyOn(chatService, 'createNewChat').mockReturnValue();
         const switchToSessionSpy = vi.spyOn(chatService, 'switchToSession').mockReturnValue();
 
         component.onSessionClick(newChatSession);
 
-        expect(clearChatSpy).toHaveBeenCalledOnce();
+        expect(createNewChatSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1);
         expect(switchToSessionSpy).not.toHaveBeenCalled();
     });
 
@@ -699,10 +701,11 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.isChatHistoryOpen()).toBe(false);
     });
 
-    it('should call chatService.clearChat when openNewSession is executed', () => {
-        const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+    it('should call chatService.createNewChat when openNewSession is executed', () => {
+        fixture.componentRef.setInput('courseId', 42);
+        const createNewChatSpy = vi.spyOn(chatService, 'createNewChat').mockReturnValue();
         component.openNewSession();
-        expect(clearChatSpy).toHaveBeenCalledOnce();
+        expect(createNewChatSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, 42);
     });
 
     describe('search/filtering in chat history', () => {
