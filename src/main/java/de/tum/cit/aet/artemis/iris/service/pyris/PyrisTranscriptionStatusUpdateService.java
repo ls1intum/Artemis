@@ -74,7 +74,7 @@ public class PyrisTranscriptionStatusUpdateService {
 
         if (isDone) {
             boolean success = statusUpdate.stages().stream().map(PyrisStageDTO::state).noneMatch(state -> state == PyrisStageState.ERROR);
-            saveTranscriptionResult(job.jobId(), success, statusUpdate.result());
+            saveTranscriptionResult(job.jobId(), job.lectureUnitId(), success, statusUpdate.result());
             pyrisJobService.removeJob(job);
         }
         else {
@@ -85,11 +85,12 @@ public class PyrisTranscriptionStatusUpdateService {
         websocketMessagingService.sendMessage("/topic/lectures/" + job.lectureId() + "/ingestion-status", Map.of("lectureUnitId", job.lectureUnitId()));
     }
 
-    private void saveTranscriptionResult(String jobId, boolean success, String resultJson) {
+    private void saveTranscriptionResult(String jobId, Long lectureUnitId, boolean success, String resultJson) {
         lectureTranscriptionsRepositoryApi.ifPresent(api -> {
             LectureTranscription transcription = api.findByJobId(jobId).orElse(null);
             if (transcription == null) {
-                log.error("No transcription found for jobId: {}", jobId);
+                log.error("No transcription row found for jobId: {} (lectureUnitId: {}) — triggering failure handling on processing state", jobId, lectureUnitId);
+                processingStateCallbackApi.ifPresent(callback -> callback.handleTranscriptionFailureForUnit(lectureUnitId));
                 return;
             }
 

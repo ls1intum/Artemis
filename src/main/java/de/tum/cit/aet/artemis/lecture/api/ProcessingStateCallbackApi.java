@@ -40,6 +40,18 @@ public class ProcessingStateCallbackApi extends AbstractLectureApi {
     }
 
     /**
+     * Called when a transcription job terminates but no {@link de.tum.cit.aet.artemis.lecture.domain.LectureTranscription}
+     * row exists in the database (e.g. the row was never persisted due to a crash).
+     * Triggers failure handling directly on the processing state so the retry scheduler
+     * picks it up instead of waiting for the 2-hour stuck-state timeout.
+     *
+     * @param lectureUnitId the ID of the lecture unit whose transcription failed
+     */
+    public void handleTranscriptionFailureForUnit(Long lectureUnitId) {
+        processingStateCallbackService.handleTranscriptionFailureForUnit(lectureUnitId);
+    }
+
+    /**
      * Called when ingestion completes (from the Pyris webhook callback).
      * This marks the processing as DONE or handles failure.
      * <p>

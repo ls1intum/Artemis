@@ -189,6 +189,27 @@ public class ProcessingStateCallbackService {
     }
 
     /**
+     * Handles a transcription failure when no {@link LectureTranscription} row exists in the database.
+     * Looks up the processing state by lecture unit ID and delegates to
+     * {@link #handleTranscriptionFailure(LectureUnitProcessingState)}.
+     * <p>
+     * Used when the Pyris webhook callback arrives but the transcription row was never persisted
+     * (e.g. a crash between job submission and DB write).
+     *
+     * @param lectureUnitId the ID of the lecture unit whose transcription failed
+     */
+    public void handleTranscriptionFailureForUnit(Long lectureUnitId) {
+        processingStateRepository.findByLectureUnit_Id(lectureUnitId).ifPresent(state -> {
+            if (state.getPhase() != ProcessingPhase.TRANSCRIBING) {
+                log.warn("Received transcription failure for unit {} but phase is {} (expected TRANSCRIBING), ignoring", lectureUnitId, state.getPhase());
+                return;
+            }
+            log.warn("No transcription row found for unit {}, triggering failure handling on processing state", lectureUnitId);
+            handleTranscriptionFailure(state);
+        });
+    }
+
+    /**
      * Handles transcription failure with retry logic.
      * If max retries reached, attempts fallback to PDF-only ingestion.
      *
