@@ -23,11 +23,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.PyrisJobService;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageState;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionResultDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionSegmentDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.dto.transcription.PyrisTranscriptionStatusUpdateDTO;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureTranscription;
-import de.tum.cit.aet.artemis.lecture.domain.LectureTranscriptionSegment;
 import de.tum.cit.aet.artemis.lecture.domain.TranscriptionStatus;
 import de.tum.cit.aet.artemis.lecture.repository.LectureTranscriptionRepository;
 import de.tum.cit.aet.artemis.lecture.test_repository.AttachmentVideoUnitTestRepository;
@@ -95,7 +95,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
         transcription.setLectureUnit(unit);
         lectureTranscriptionRepository.save(transcription);
 
-        PyrisTranscriptionResultDTO result = new PyrisTranscriptionResultDTO(unit.getId(), "en", List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1)));
+        PyrisTranscriptionResultDTO result = new PyrisTranscriptionResultDTO(unit.getId(), "en", List.of(new PyrisTranscriptionSegmentDTO(0.0, 5.0, "Hello world", 1)));
         String resultJson = mapper.writeValueAsString(result);
         PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)),
                 resultJson, unit.getId());
@@ -195,7 +195,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
 
         var saved = lectureTranscriptionRepository.findByJobId(jobToken);
         assertThat(saved).isPresent();
-        assertThat(saved.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.PENDING);
+        assertThat(saved.get().getTranscriptionStatus()).isEqualTo(TranscriptionStatus.FAILED);
         assertThat(pyrisJobService.getJob(jobToken)).isNull();
     }
 
@@ -204,7 +204,7 @@ class PyrisTranscriptionWebhookTest extends AbstractIrisIntegrationTest {
         // Job token exists in Hazelcast but no LectureTranscription row in DB (e.g. persistence failed earlier)
         String jobToken = pyrisJobService.addTranscriptionWebhookJob(course.getId(), lecture.getId(), unit.getId());
 
-        PyrisTranscriptionResultDTO result = new PyrisTranscriptionResultDTO(unit.getId(), "en", List.of(new LectureTranscriptionSegment(0.0, 5.0, "Hello world", 1)));
+        PyrisTranscriptionResultDTO result = new PyrisTranscriptionResultDTO(unit.getId(), "en", List.of(new PyrisTranscriptionSegmentDTO(0.0, 5.0, "Hello world", 1)));
         String resultJson = mapper.writeValueAsString(result);
         PyrisTranscriptionStatusUpdateDTO statusUpdate = new PyrisTranscriptionStatusUpdateDTO(List.of(new PyrisStageDTO("done", 1, PyrisStageState.DONE, "complete", false)),
                 resultJson, unit.getId());
