@@ -441,6 +441,7 @@ export class IrisChatService implements OnDestroy {
         this.suggestions.next(suggestions);
     }
 
+    // TODO: überprüfen ob clearChat() noch benötigt wird, nachdem openNewSession() auf switchTo() umgestellt wurde
     public clearChat(): void {
         this.close();
         this.createNewSession().subscribe({
@@ -585,7 +586,7 @@ export class IrisChatService implements OnDestroy {
         const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
-        if (isDifferent) {
+        if (isDifferent || forceNew) {
             this.close();
             this.currentChatModeSubject.next(mode);
             this.currentRelatedEntityIdSubject.next(id);

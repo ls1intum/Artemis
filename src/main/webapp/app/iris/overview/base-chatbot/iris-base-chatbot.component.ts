@@ -764,7 +764,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openNewSession() {
-        this.chatService.clearChat();
+        const courseId = this.courseId();
+        if (courseId) {
+            this.chatService.switchTo(ChatServiceMode.COURSE, courseId, true);
+        }
     }
 
     openAboutIrisModal(): void {
