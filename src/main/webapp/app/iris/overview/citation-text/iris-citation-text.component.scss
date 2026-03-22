@@ -10,7 +10,8 @@ jhi-iris-citation-text {
     --iris-citation-source-color: var(--iris-label-color);
     --iris-citation-lecture-color: var(--iris-label-color);
 
-    .iris-citation-group {
+    .iris-citation-group,
+    .iris-citation-single {
         display: inline-flex;
         align-items: center;
         position: relative;
@@ -37,6 +38,19 @@ jhi-iris-citation-text {
         text-overflow: ellipsis;
         position: relative;
         z-index: $citation-base-z-index; // Base layer for citation bubbles
+
+        &--clickable {
+            cursor: pointer;
+            transition: opacity 120ms ease;
+
+            &:hover {
+                opacity: 0.8;
+            }
+
+            &:active {
+                opacity: 0.6;
+            }
+        }
     }
 
     .iris-citation__count {
@@ -78,12 +92,14 @@ jhi-iris-citation-text {
         }
     }
 
-    .iris-citation-group .iris-citation__summary {
+    .iris-citation-group .iris-citation__summary,
+    .iris-citation-single .iris-citation__summary {
         font-size: 0.85em;
     }
 
     .iris-citation--has-summary,
-    .iris-citation-group--has-summary {
+    .iris-citation-group--has-summary,
+    .iris-citation-single.iris-citation--has-summary {
         overflow: visible;
 
         &:hover,
@@ -111,6 +127,19 @@ jhi-iris-citation-text {
 
         &.is-active {
             display: block;
+        }
+
+        &--clickable {
+            cursor: pointer;
+            transition: opacity 120ms ease;
+
+            &:hover {
+                opacity: 0.8;
+            }
+
+            &:active {
+                opacity: 0.6;
+            }
         }
     }
 

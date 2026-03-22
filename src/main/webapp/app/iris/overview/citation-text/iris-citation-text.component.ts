@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
@@ -21,6 +22,7 @@ import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faC
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
     private readonly translateService = inject(TranslateService);
+    private readonly router = inject(Router);
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -64,24 +66,45 @@ export class IrisCitationTextComponent {
         const label = formatCitationLabel(parsed);
         const typeClass = resolveCitationTypeClass(parsed);
         const hasSummary = !!parsed.summary;
-        const classes = `iris-citation ${typeClass}${hasSummary ? ' iris-citation--has-summary' : ''}`;
+        const isClickable = !!meta && !!meta.courseId && !!meta.lectureId && !!parsed.entityId && (!!parsed.page || !!parsed.start);
         const iconSvg = this.getIconSvg(typeClass);
         const summaryFallbackTitle = getCitationLabelText(parsed);
 
-        // Include summary tooltip with fallback title and lecture context if available
-        const summaryContent = hasSummary
-            ? `<span class="iris-citation__summary">
-                   <span class="iris-citation__summary-content">
-                       ${this.renderSummaryContent(parsed.summary, meta, summaryFallbackTitle)}
-                   </span>
-               </span>`
-            : '';
+        // Add data attributes for navigation if metadata is available
+        const dataAttrs = this.buildNavigationDataAttributes(parsed, meta);
 
+        // Wrap in a container if has summary (similar to citation groups)
+        // This prevents the summary from being affected by the citation hover opacity
+        if (hasSummary) {
+            const wrapperClasses = `iris-citation-single ${typeClass} iris-citation--has-summary`;
+            const citationClasses = `iris-citation ${typeClass}${isClickable ? ' iris-citation--clickable' : ''}`;
+
+            // Wrap summary content in a clickable item (consistent with grouped citations)
+            const summaryContent = `<span class="iris-citation__summary">
+                   <span class="iris-citation__summary-content">
+                       <span class="iris-citation__summary-item is-active${isClickable ? ' iris-citation__summary-item--clickable' : ''}"${dataAttrs}>
+                           ${this.renderSummaryContent(parsed.summary, meta, summaryFallbackTitle)}
+                       </span>
+                   </span>
+               </span>`;
+
+            return `
+                <span class="${wrapperClasses}">
+                    <span class="${citationClasses}"${dataAttrs}>
+                        <span class="iris-citation__icon">${iconSvg}</span>
+                        <span class="iris-citation__text">${label}</span>
+                    </span>
+                    ${summaryContent}
+                </span>
+            `.trim();
+        }
+
+        // No summary: render as simple citation bubble
+        const classes = `iris-citation ${typeClass}${isClickable ? ' iris-citation--clickable' : ''}`;
         return `
-            <span class="${classes}">
+            <span class="${classes}"${dataAttrs}>
                 <span class="iris-citation__icon">${iconSvg}</span>
                 <span class="iris-citation__text">${label}</span>
-                ${summaryContent}
             </span>
         `.trim();
     }
@@ -91,12 +114,17 @@ export class IrisCitationTextComponent {
      */
     private renderCitationGroupHtml(parsedIrisCitation: IrisCitationParsed[], metadata: Array<IrisCitationMetaDTO | undefined>): string {
         const first = parsedIrisCitation[0];
+        const firstMeta = metadata[0];
         const label = formatCitationLabel(first);
         const typeClass = resolveCitationTypeClass(first);
         const hasSummary = parsedIrisCitation.some((p) => !!p.summary);
+        const isClickable = !!firstMeta && !!firstMeta.courseId && !!firstMeta.lectureId && !!first.entityId && (!!first.page || !!first.start);
         const groupClasses = `iris-citation-group ${typeClass}${hasSummary ? ' iris-citation-group--has-summary' : ''}`;
         const count = parsedIrisCitation.length - 1;
         const iconSvg = this.getIconSvg(typeClass);
+
+        // Add data attributes for navigation if metadata is available for first citation
+        const dataAttrs = this.buildNavigationDataAttributes(first, firstMeta);
 
         // Render summary tooltip with navigation if available
         const summaryContent = hasSummary
@@ -110,7 +138,7 @@ export class IrisCitationTextComponent {
 
         return `
             <span class="${groupClasses}">
-                <span class="iris-citation ${typeClass}">
+                <span class="iris-citation ${typeClass}${isClickable ? ' iris-citation--clickable' : ''}"${dataAttrs}>
                     <span class="iris-citation__icon">${iconSvg}</span>
                     <span class="iris-citation__text">${label}</span>
                 </span>
@@ -150,12 +178,14 @@ export class IrisCitationTextComponent {
 
                 const meta = metas[index];
                 const isActive = summaryIndex === 0 ? 'is-active' : '';
+                const isClickable = !!meta && !!meta.courseId && !!meta.lectureId && !!cite.entityId && (!!cite.page || !!cite.start);
                 const summaryFallbackTitle = getCitationLabelText(cite);
+                const dataAttrs = this.buildNavigationDataAttributes(cite, meta);
                 summaryIndex++;
 
                 return `
-                    <span class="iris-citation__summary-item ${isActive}"
-                          data-citation-index="${index}">
+                    <span class="iris-citation__summary-item ${isActive}${isClickable ? ' iris-citation__summary-item--clickable' : ''}"
+                          data-citation-index="${index}"${dataAttrs}>
                         ${this.renderSummaryContent(cite.summary, meta, summaryFallbackTitle)}
                     </span>
                 `.trim();
@@ -218,13 +248,90 @@ export class IrisCitationTextComponent {
     }
 
     /**
-     * Handles navigation button clicks using event delegation.
+     * Builds data attributes for navigation based on citation and metadata.
+     * Returns empty string if no navigation is possible.
+     */
+    private buildNavigationDataAttributes(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        if (!meta) {
+            return '';
+        }
+
+        const attrs: string[] = [];
+        attrs.push(`data-course-id="${meta.courseId}"`);
+        attrs.push(`data-lecture-id="${meta.lectureId}"`);
+        attrs.push(`data-unit-id="${parsed.entityId}"`);
+
+        // For video citations (have start time)
+        if (parsed.start) {
+            attrs.push(`data-timestamp="${escapeHtml(parsed.start)}"`);
+        }
+
+        // For slide citations (have page)
+        if (parsed.page) {
+            attrs.push(`data-page="${escapeHtml(parsed.page)}"`);
+        }
+
+        return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
+    }
+
+    /**
+     * Navigates to the citation source (lecture unit with timestamp or page).
+     */
+    private navigateToCitation(element: HTMLElement): void {
+        const courseId = element.getAttribute('data-course-id');
+        const lectureId = element.getAttribute('data-lecture-id');
+        const unitId = element.getAttribute('data-unit-id');
+        const timestamp = element.getAttribute('data-timestamp');
+        const page = element.getAttribute('data-page');
+
+        if (!courseId || !lectureId || !unitId) {
+            return;
+        }
+
+        const queryParams: any = { unit: unitId };
+
+        // Add timestamp for video citations
+        if (timestamp) {
+            queryParams.timestamp = timestamp;
+        }
+
+        // Add page for slide citations
+        if (page) {
+            queryParams.page = page;
+        }
+
+        this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams });
+    }
+
+    /**
+     * Handles citation and navigation button clicks using event delegation.
      */
     @HostListener('click', ['$event'])
     onHostClick(event: MouseEvent): void {
         const target = event.target as HTMLElement;
-        const button = target.closest('.iris-citation__nav-button');
 
+        // Handle summary item clicks for navigation
+        const summaryItem = target.closest('.iris-citation__summary-item--clickable') as HTMLElement | null;
+        if (summaryItem) {
+            event.stopPropagation();
+            this.navigateToCitation(summaryItem);
+            return;
+        }
+
+        // Handle citation clicks for navigation
+        const citation = target.closest('.iris-citation--clickable') as HTMLElement | null;
+        if (citation) {
+            // Don't navigate if clicking on the summary tooltip
+            const summaryElement = target.closest('.iris-citation__summary');
+            if (!summaryElement) {
+                event.stopPropagation();
+                this.navigateToCitation(citation);
+                return;
+            }
+        }
+
+        // Handle navigation button clicks
+        const button = target.closest('.iris-citation__nav-button');
         if (!button) return;
 
         event.stopPropagation();
