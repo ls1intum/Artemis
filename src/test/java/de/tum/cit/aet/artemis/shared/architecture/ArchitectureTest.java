@@ -87,11 +87,16 @@ import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import com.tngtech.archunit.library.GeneralCodingRules;
 
+import de.tum.cit.aet.artemis.communication.repository.CustomPostRepositoryImpl;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.authorization.AuthorizationTestService;
 import de.tum.cit.aet.artemis.core.config.ApplicationConfiguration;
 import de.tum.cit.aet.artemis.core.config.ConditionalMetricsExclusionConfiguration;
 import de.tum.cit.aet.artemis.core.config.StaticResourcesConfiguration;
+import de.tum.cit.aet.artemis.core.repository.CustomOrganizationRepositoryImpl;
+import de.tum.cit.aet.artemis.core.repository.base.RepositoryImpl;
+import de.tum.cit.aet.artemis.core.service.TitleCacheEvictionService;
+import de.tum.cit.aet.artemis.exercise.repository.review.CommentRepositoryImpl;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.lecture.domain.LectureUnit;
 import de.tum.cit.aet.artemis.programming.service.GitService;
@@ -362,6 +367,22 @@ class ArchitectureTest extends AbstractArchitectureTest {
     void shouldNotUserAutowiredAnnotation() {
         ArchRule rule = noFields().should().beAnnotatedWith(Autowired.class).because("fields should not rely on field injection via @Autowired");
         final var exceptions = new Class[] { StaticResourcesConfiguration.class };
+        JavaClasses classes = classesExcept(productionClasses, exceptions);
+        rule.check(classes);
+    }
+
+    @Test
+    void shouldNotUseEntityManagerDirectly() {
+        // No class should inject EntityManager or EntityManagerFactory directly.
+        // All persistence operations must go through Spring Data repositories.
+        // Direct EntityManager usage bypasses the repository abstraction, makes code harder to test,
+        // and can introduce subtle persistence context bugs (e.g. stale proxies after JPQL bulk operations).
+        // See server-development.mdx for details.
+        ArchRule rule = noFields().should().haveRawType(jakarta.persistence.EntityManager.class).orShould().haveRawType(jakarta.persistence.EntityManagerFactory.class)
+                .because("classes should use Spring Data repositories instead of EntityManager directly. " + "See server-development.mdx for details.");
+        // TODO: Refactor these classes to eliminate direct EntityManager usage and remove from this exception list.
+        final var exceptions = new Class[] { RepositoryImpl.class, CustomOrganizationRepositoryImpl.class, CommentRepositoryImpl.class, CustomPostRepositoryImpl.class,
+                TitleCacheEvictionService.class };
         JavaClasses classes = classesExcept(productionClasses, exceptions);
         rule.check(classes);
     }

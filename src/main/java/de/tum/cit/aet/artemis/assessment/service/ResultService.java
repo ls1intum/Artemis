@@ -201,22 +201,40 @@ public class ResultService {
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
-        deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // After deleteResultReferences bulk-deleted the feedbacks, the in-memory Result
-        // entity still holds stale feedback proxy references. Under Hibernate 6.6+,
-        // calling resultRepository.delete(result) triggers cascade/orphan-removal logic
-        // that fails with JpaObjectRetrievalFailureException. Clearing the in-memory
-        // feedbacks collection avoids this while preserving @PreRemove lifecycle callbacks.
-        if (Hibernate.isInitialized(result.getFeedbacks())) {
-            result.getFeedbacks().clear();
+        Long resultId = result.getId();
+        // Only delete references that are NOT cascade-reachable from Result.
+        // Feedbacks and LongFeedbackTexts are cascade-deleted by Hibernate via
+        // Result -> Feedback (CascadeType.ALL) -> LongFeedbackText (CascadeType.ALL).
+        // We must NOT bulk-delete feedbacks via JPQL here because it bypasses both
+        // the persistence context and the L2 cache (@Cache on Result.feedbacks),
+        // leaving stale cached references that cause JpaObjectRetrievalFailureException
+        // when the result is subsequently loaded and deleted.
+        deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
+        resultRepository.deleteById(resultId);
+    }
+
+    /**
+     * Deletes references to a result that are NOT cascade-deleted by Hibernate.
+     * Complaints, complaint responses, ratings, and participant scores have no cascade
+     * relationship from Result and must be explicitly deleted.
+     *
+     * @param resultId                    the id of the result
+     * @param shouldClearParticipantScore whether to clear participant scores
+     */
+    private void deleteNonCascadedResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        ratingRepository.deleteByResult_Id(resultId);
+        if (shouldClearParticipantScore) {
+            participantScoreRepository.clearAllByResultId(resultId);
         }
-        result.setFeedbacks(List.of());
-        resultRepository.delete(result);
     }
 
     /**
      * NOTE: this method DOES NOT delete the result itself (e.g. because this will be done automatically when the submission is deleted)
-     * Deletes result with corresponding complaint and complaint response
+     * Deletes all references to a result, including feedbacks and long feedback texts via JPQL bulk delete.
+     * Use this only when the result itself will be deleted by cascade (e.g. via submission or participation deletion),
+     * not via {@link #deleteResult(Result, boolean)}.
      *
      * @param resultId                    the id of the result for which all references should be deleted
      * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
@@ -225,12 +243,7 @@ public class ResultService {
      */
     public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
         log.debug("Delete result references {}", resultId);
-        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
-        complaintRepository.deleteByResult_Id(resultId);
-        ratingRepository.deleteByResult_Id(resultId);
-        if (shouldClearParticipantScore) {
-            participantScoreRepository.clearAllByResultId(resultId);
-        }
+        deleteNonCascadedResultReferences(resultId, shouldClearParticipantScore);
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
     }
