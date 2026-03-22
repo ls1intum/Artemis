@@ -76,7 +76,13 @@
                     "staticCodeAnalysisCategories": "Statische Code-Analyse-Kategorien",
                     "buildPlanConfiguration": "Build-Plan-Konfiguration (JSON)",
                     "noBuildPlanConfiguration": "Keine Build-Plan-Konfiguration in diesem Snapshot",
-                    "noBuildScript": "Kein Build-Skript in diesem Snapshot"
+                    "noBuildScript": "Kein Build-Skript in diesem Snapshot",
+                    "repositoryDiffError": "Der Repository-Diff konnte nicht geladen werden.",
+                    "showTestNamesToStudents": "Testnamen für Studierende anzeigen",
+                    "releaseTestsWithExampleSolution": "Tests mit Beispiellösung veröffentlichen",
+                    "templateBuildPlanId": "Template-Build-Plan-ID",
+                    "solutionBuildPlanId": "Lösungs-Build-Plan-ID",
+                    "submissionPolicyActive": "Abgaberichtlinie aktiv"
                 }
             },
             "wizardMode": {

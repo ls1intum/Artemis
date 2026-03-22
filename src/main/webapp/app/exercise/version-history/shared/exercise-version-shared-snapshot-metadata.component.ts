@@ -277,19 +277,22 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     );
     readonly previousGradingMarkdown = computed(() => serializeGradingCriteriaToMarkdown(this.previousSnapshot()?.gradingInstructions, this.previousSnapshot()?.gradingCriteria));
     readonly currentGradingMarkdown = computed(() => serializeGradingCriteriaToMarkdown(this.snapshot().gradingInstructions, this.snapshot().gradingCriteria));
-    readonly hasVisibleContent = computed(
-        () =>
+    readonly hasVisibleContent = computed(() => {
+        if (!this.isDiffView()) {
+            return true;
+        }
+        return (
             this.generalFields().length > 0 ||
             this.dateFields().length > 0 ||
-            !this.isDiffView() ||
             this.categoriesChanged() ||
             this.competenciesChanged() ||
             this.feedbackFields().length > 0 ||
             this.teamAssignmentFields().length > 0 ||
             this.plagiarismFields().length > 0 ||
             this.problemStatementChanged() ||
-            this.gradingConfigurationChanged(),
-    );
+            this.gradingConfigurationChanged()
+        );
+    });
     readonly hostDisplay = computed(() => (this.hasVisibleContent() ? 'block' : 'none'));
 
     private readonly fallbackLabels: Record<string, string> = {
@@ -416,7 +419,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             .filter((link) => link.competencyId?.competencyId !== undefined)
             .map((link) => ({
                 key: `${link.competencyId?.competencyId}-${link.weight ?? '-'}`,
-                label: `Competency #${link.competencyId?.competencyId}`,
+                label: this.translateService.instant('artemisApp.exercise.versionHistory.snapshot.competencyLabel', { id: link.competencyId?.competencyId }),
                 weight: String(link.weight ?? '-'),
             }))
             .sort((left, right) => left.label.localeCompare(right.label));

@@ -21,7 +21,7 @@ export function serializeGradingCriteriaToMarkdown(gradingInstructions?: string,
         return undefined;
     }
 
-    let markdown = `${gradingInstructions ?? 'Add Assessment Instruction text here'}\n\n`;
+    let markdown = `${topLevelInstructions ?? ''}\n\n`;
     for (const criterion of criteria) {
         if (criterion.title) {
             markdown += `${GradingCriterionAction.IDENTIFIER} ${criterion.title}\n\t`;

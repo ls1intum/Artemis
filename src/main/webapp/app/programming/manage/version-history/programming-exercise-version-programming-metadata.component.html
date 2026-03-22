@@ -20,7 +20,7 @@
                                             {{ field.currentDisplay }}
                                         </span>
                                     </div>
-                                } @else if (field.isEmpty) {
+                                } @else if (field.currentEmpty) {
                                     <span class="metadata-row__value metadata-row__value--empty" jhiTranslate="global.generic.unset"></span>
                                 } @else {
                                     <span class="metadata-row__value">{{ field.currentDisplay }}</span>

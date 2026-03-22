@@ -27,9 +27,9 @@
                     <p-tabs class="snapshot-tabs" [value]="viewMode()" (valueChange)="onTabValueChange($event)">
                         <p-tablist>
                             @if (showDiffTab()) {
-                                <p-tab value="changes">Changes from previous version</p-tab>
+                                <p-tab value="changes"><span jhiTranslate="artemisApp.exercise.versionHistory.tabs.changes"></span></p-tab>
                             }
-                            <p-tab value="full">Full Snapshot</p-tab>
+                            <p-tab value="full"><span jhiTranslate="artemisApp.exercise.versionHistory.tabs.fullSnapshot"></span></p-tab>
                         </p-tablist>
                     </p-tabs>
                 </div>

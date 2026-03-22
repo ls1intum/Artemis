@@ -38,16 +38,33 @@
                     "loadMore": "Mehr laden",
                     "empty": "Noch keine Versionen verfügbar."
                 },
+                "tabs": {
+                    "changes": "Änderungen zur vorherigen Version",
+                    "fullSnapshot": "Vollständiger Snapshot"
+                },
                 "snapshot": {
                     "empty": "Wähle eine Version aus, um die Metadaten anzuzeigen.",
                     "sharedTitle": "Aufgaben-Metadaten",
                     "previousValue": "Vorheriger Wert",
                     "currentValue": "Aktueller Wert",
+                    "presentationScoreEnabled": "Präsentationsbewertung aktiviert",
+                    "secondCorrectionEnabled": "Zweitkorrektur aktiviert",
+                    "feedbackSuggestionModule": "Feedback-Vorschlagsmodul",
                     "competencies": "Kompetenzen",
+                    "competencyLabel": "Kompetenz #{{ id }}",
                     "teamAssignment": "Teamzuweisung",
+                    "teamAssignmentMinSize": "Minimale Teamgröße",
+                    "teamAssignmentMaxSize": "Maximale Teamgröße",
                     "plagiarismDetection": "Plagiatskontrolle",
+                    "continuousPlagiarismControlEnabled": "Kontinuierliche Plagiatskontrolle",
+                    "continuousPlagiarismControlPostDueDateChecksEnabled": "Prüfungen nach Abgabefrist",
+                    "plagiarismCaseStudentResponsePeriod": "Antwortzeitraum für Studierende",
+                    "similarityThreshold": "Ähnlichkeitsschwellenwert",
+                    "minimumScore": "Mindestpunktzahl",
+                    "minimumSize": "Mindestgröße",
                     "problemStatement": "Aufgabenstellung",
-                    "gradingConfiguration": "Bewertungskonfiguration"
+                    "gradingConfiguration": "Bewertungskonfiguration",
+                    "gradingCriteria": "Bewertungskriterien"
                 },
                 "errors": {
                     "invalidExerciseId": "Die Seite konnte nicht geladen werden.",

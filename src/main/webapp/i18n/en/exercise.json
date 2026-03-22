@@ -38,16 +38,33 @@
                     "loadMore": "Load More",
                     "empty": "No versions available yet."
                 },
+                "tabs": {
+                    "changes": "Changes from previous version",
+                    "fullSnapshot": "Full Snapshot"
+                },
                 "snapshot": {
                     "empty": "Select a version to inspect its metadata.",
                     "sharedTitle": "Exercise Metadata",
                     "previousValue": "Previous value",
                     "currentValue": "Current value",
+                    "presentationScoreEnabled": "Presentation Score Enabled",
+                    "secondCorrectionEnabled": "Second Correction Enabled",
+                    "feedbackSuggestionModule": "Feedback Suggestion Module",
                     "competencies": "Competencies",
+                    "competencyLabel": "Competency #{{ id }}",
                     "teamAssignment": "Team Assignment",
+                    "teamAssignmentMinSize": "Minimum Team Size",
+                    "teamAssignmentMaxSize": "Maximum Team Size",
                     "plagiarismDetection": "Plagiarism Detection",
+                    "continuousPlagiarismControlEnabled": "Continuous Plagiarism Control",
+                    "continuousPlagiarismControlPostDueDateChecksEnabled": "Post Due Date Checks",
+                    "plagiarismCaseStudentResponsePeriod": "Student Response Period",
+                    "similarityThreshold": "Similarity Threshold",
+                    "minimumScore": "Minimum Score",
+                    "minimumSize": "Minimum Size",
                     "problemStatement": "Problem Statement",
-                    "gradingConfiguration": "Grading Configuration"
+                    "gradingConfiguration": "Grading Configuration",
+                    "gradingCriteria": "Grading Criteria"
                 },
                 "errors": {
                     "invalidExerciseId": "Could not determine exercise id.",

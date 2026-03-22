@@ -28,10 +28,8 @@ import { TooltipModule } from 'primeng/tooltip';
 interface MetadataField {
     id: string;
     translatedLabel: string;
-    displayValue: string | number;
     currentDisplay: string | number;
     previousDisplay: string | number;
-    isEmpty: boolean;
     currentRaw?: string | number | boolean;
     previousRaw?: string | number | boolean;
     changed: boolean;
@@ -330,19 +328,21 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     readonly buildScriptChanged = computed(() => valuesDiffer(this.currentBuildScript(), this.previousBuildScript()));
 
     readonly hasData = computed(() => !!this.programmingData());
-    readonly hasVisibleContent = computed(
-        () =>
-            !this.hasData() ||
+    readonly hasVisibleContent = computed(() => {
+        if (!this.hasData() || !this.isDiffView()) {
+            return true;
+        }
+        return (
             this.languageFields().length > 0 ||
             this.repositoryFields().length > 0 ||
             this.gradingFields().length > 0 ||
             this.buildConfigurationFields().length > 0 ||
-            !this.isDiffView() ||
             this.buildPlanConfigurationChanged() ||
             this.buildScriptChanged() ||
             this.auxiliaryRepositoriesChanged() ||
-            this.staticCodeAnalysisCategoriesChanged(),
-    );
+            this.staticCodeAnalysisCategoriesChanged()
+        );
+    });
     readonly hostDisplay = computed(() => (this.hasVisibleContent() ? 'block' : 'none'));
 
     private readonly fallbackLabels: Record<string, string> = {
@@ -371,10 +371,8 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         return {
             id: labelId,
             translatedLabel: this.translateLabel(labelKey),
-            displayValue: typeof currentRaw === 'boolean' ? String(currentRaw) : (currentRaw ?? '-'),
             currentDisplay: typeof currentRaw === 'boolean' ? String(currentRaw) : (currentRaw ?? '-'),
             previousDisplay: typeof previousRaw === 'boolean' ? String(previousRaw) : (previousRaw ?? '-'),
-            isEmpty: currentRaw === undefined || currentRaw === '',
             currentRaw,
             previousRaw,
             changed: valuesDiffer(currentRaw, previousRaw),
@@ -396,10 +394,8 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         return {
             id: labelId,
             translatedLabel: this.translateLabel(labelKey),
-            displayValue: currentValue ?? '-',
             currentDisplay: currentValue ?? '-',
             previousDisplay: previousValue ?? '-',
-            isEmpty: currentValue === undefined || currentValue === '',
             currentRaw: currentValue,
             previousRaw: previousValue,
             changed: valuesDiffer(currentValue, previousValue),
@@ -427,10 +423,8 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
         return {
             id: labelId,
             translatedLabel: this.translateLabel(labelKey),
-            displayValue: currentValue ?? '-',
             currentDisplay: currentValue ?? '-',
             previousDisplay: previousValue ?? '-',
-            isEmpty: currentValue === undefined || currentValue === '',
             currentRaw: currentValue,
             previousRaw: previousValue,
             changed: valuesDiffer(currentValue, previousValue),
@@ -521,7 +515,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     }
 
     private toNumber(value?: string): number | undefined {
-        if (!value) {
+        if (!value?.trim()) {
             return undefined;
         }
         const parsed = Number(value);

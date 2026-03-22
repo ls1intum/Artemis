@@ -130,15 +130,15 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
 
         const emptyField = component.languageFields().find((f) => f.translatedLabel.includes('projectType'));
         expect(emptyField).toBeDefined();
-        expect(emptyField!.isEmpty).toBeTruthy();
-        expect(emptyField!.displayValue).toBe('-');
+        expect(emptyField!.currentEmpty).toBeTruthy();
+        expect(emptyField!.currentDisplay).toBe('-');
 
-        const javaField = component.languageFields().find((f) => f.displayValue === 'JAVA');
+        const javaField = component.languageFields().find((f) => f.currentDisplay === 'JAVA');
         expect(javaField).toBeDefined();
-        expect(javaField!.isEmpty).toBeFalsy();
+        expect(javaField!.currentEmpty).toBeFalsy();
     });
 
-    it('should detect empty values correctly via isEmpty', () => {
+    it('should detect empty values correctly via currentEmpty', () => {
         fixture.componentRef.setInput('programmingData', {
             programmingLanguage: 'JAVA',
             projectType: undefined,
@@ -147,11 +147,11 @@ describe('ProgrammingExerciseVersionProgrammingMetadataComponent', () => {
         fixture.detectChanges();
 
         const fields = component.languageFields();
-        const langField = fields.find((f) => f.displayValue === 'JAVA');
-        expect(langField!.isEmpty).toBeFalsy();
+        const langField = fields.find((f) => f.currentDisplay === 'JAVA');
+        expect(langField!.currentEmpty).toBeFalsy();
 
         const projectTypeField = fields.find((f) => f.translatedLabel.includes('projectType'));
-        expect(projectTypeField!.isEmpty).toBeTruthy();
+        expect(projectTypeField!.currentEmpty).toBeTruthy();
     });
 
     it('should hide the language section in diff mode when no language fields changed', () => {

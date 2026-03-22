@@ -116,14 +116,14 @@
 
     .metadata-diff__value--old,
     .metadata-diff__box--old {
-        background: rgba(122, 24, 24, 0.16);
-        border-color: rgba(122, 24, 24, 0.28);
+        background: var(--p-red-50);
+        border-color: var(--p-red-200);
     }
 
     .metadata-diff__value--new,
     .metadata-diff__box--new {
-        background: rgba(16, 95, 48, 0.16);
-        border-color: rgba(16, 95, 48, 0.28);
+        background: var(--p-green-50);
+        border-color: var(--p-green-200);
     }
 
     .metadata-diff__value--old {

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, HostListener, effect, input, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostListener, effect, input, signal, viewChild } from '@angular/core';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/monaco/markdown-editor-monaco.component';
 import { MonacoDiffEditorComponent } from 'app/shared/monaco-editor/diff-editor/monaco-diff-editor.component';
 import { CUSTOM_MARKDOWN_LANGUAGE_ID } from 'app/shared/monaco-editor/model/languages/monaco-custom-markdown.language';
@@ -8,7 +8,7 @@ import { TextEditorDomainAction } from 'app/shared/monaco-editor/model/actions/t
     selector: 'jhi-exercise-version-markdown-diff',
     template: `
         <div class="version-markdown-diff" [style.min-height.px]="initialEditorHeight()">
-            <jhi-monaco-diff-editor [allowSplitView]="renderSideBySide" [languageId]="customMarkdownLanguageId" />
+            <jhi-monaco-diff-editor [allowSplitView]="renderSideBySide()" [languageId]="customMarkdownLanguageId" />
         </div>
     `,
     styles: [
@@ -37,7 +37,7 @@ export class ExerciseVersionMarkdownDiffComponent {
     readonly editor = viewChild(MonacoDiffEditorComponent);
     readonly customMarkdownLanguageId = CUSTOM_MARKDOWN_LANGUAGE_ID;
 
-    renderSideBySide = typeof window === 'undefined' ? true : window.innerWidth >= 1200;
+    readonly renderSideBySide = signal(typeof window === 'undefined' ? true : window.innerWidth >= 1200);
 
     constructor() {
         effect(() => {
@@ -54,6 +54,6 @@ export class ExerciseVersionMarkdownDiffComponent {
 
     @HostListener('window:resize')
     onResize(): void {
-        this.renderSideBySide = window.innerWidth >= 1200;
+        this.renderSideBySide.set(window.innerWidth >= 1200);
     }
 }

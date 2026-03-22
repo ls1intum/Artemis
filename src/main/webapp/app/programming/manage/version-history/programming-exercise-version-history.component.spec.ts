@@ -286,7 +286,6 @@ describe('ProgrammingExerciseVersionHistoryComponent (missing exerciseId)', () =
                         TranslateDirective,
                         MessageModule,
                         SkeletonModule,
-                        ButtonModule,
                         MockExerciseVersionHistoryLayoutComponent,
                         MockExerciseVersionHistoryTimelineComponent,
                         MockExerciseVersionSharedSnapshotMetadataComponent,
