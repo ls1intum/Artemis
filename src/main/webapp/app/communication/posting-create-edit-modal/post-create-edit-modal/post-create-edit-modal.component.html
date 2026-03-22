@@ -1,6 +1,6 @@
 @if (isDialogVisible()) {
     <div class="modal-backdrop" (click)="close()"></div>
-    <div class="modal d-block" tabindex="-1">
+    <div class="modal d-block" tabindex="-1" (keydown.escape)="close()">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <form [formGroup]="formGroup" (ngSubmit)="confirm()">
