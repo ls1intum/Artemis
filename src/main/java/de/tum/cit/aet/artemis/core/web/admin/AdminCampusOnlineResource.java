@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
 
@@ -152,7 +151,7 @@ public class AdminCampusOnlineResource {
             throw new BadRequestAlertException("Import size exceeds maximum of " + MAX_IMPORT_SIZE, "campusOnline", "importTooLarge");
         }
 
-        Set<String> existingExternalIds = orgUnitRepository.findAll().stream().map(CampusOnlineOrgUnit::getExternalId).collect(Collectors.toSet());
+        Set<String> existingExternalIds = orgUnitRepository.findAllExternalIds();
         Set<String> seen = new HashSet<>();
         List<CampusOnlineOrgUnit> toSave = new ArrayList<>();
 

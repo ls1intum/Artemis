@@ -8,7 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,7 +128,7 @@ public class CampusOnlineCourseImportService {
         }
         log.info("Imported CAMPUSOnline course '{}' (ID: {}) as Artemis course '{}' (ID: {})", metadata.courseName(), request.campusOnlineCourseId(), course.getTitle(),
                 course.getId());
-        return new CampusOnlineCourseDTO(config.getCampusOnlineCourseId(), course.getTitle(), course.getSemester(), null, null, null, null, false);
+        return new CampusOnlineCourseDTO(config.getCampusOnlineCourseId(), course.getTitle(), course.getSemester(), null, null, null, null, true);
     }
 
     /**
@@ -231,7 +230,7 @@ public class CampusOnlineCourseImportService {
      * @return set of CAMPUSOnline course IDs that have a corresponding Artemis course
      */
     private Set<String> getAlreadyImportedCourseIds() {
-        return courseRepository.findAllWithCampusOnlineConfiguration().stream().map(c -> c.getCampusOnlineConfiguration().getCampusOnlineCourseId()).collect(Collectors.toSet());
+        return courseRepository.findAllCampusOnlineCourseIds();
     }
 
     /**

@@ -53,6 +53,9 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
             """)
     Set<Course> findAllWithCampusOnlineConfiguration();
 
+    @Query("SELECT co.campusOnlineCourseId FROM Course c JOIN c.campusOnlineConfiguration co")
+    Set<String> findAllCampusOnlineCourseIds();
+
     @Query("""
             SELECT COUNT(c) > 0
             FROM Course c
@@ -148,7 +151,8 @@ public interface CourseRepository extends ArtemisJpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.plagiarismDetectionConfig", "exercises.teamAssignmentConfig", "lectures", "lectures.attachments" })
     Optional<Course> findWithEagerExercisesAndExerciseDetailsAndLecturesById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
+    @EntityGraph(type = LOAD, attributePaths = { "organizations", "competencies", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration",
+            "campusOnlineConfiguration" })
     Optional<Course> findForUpdateById(long courseId);
 
     @Query("""

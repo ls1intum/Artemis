@@ -3,9 +3,11 @@ package de.tum.cit.aet.artemis.core.repository;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
 import de.tum.cit.aet.artemis.core.domain.CampusOnlineOrgUnit;
@@ -35,4 +37,12 @@ public interface CampusOnlineOrgUnitRepository extends ArtemisJpaRepository<Camp
      * @return true if an org unit with this external ID exists
      */
     boolean existsByExternalId(String externalId);
+
+    /**
+     * Retrieves all external IDs of organizational units.
+     *
+     * @return the set of all external IDs
+     */
+    @Query("SELECT o.externalId FROM CampusOnlineOrgUnit o")
+    Set<String> findAllExternalIds();
 }
