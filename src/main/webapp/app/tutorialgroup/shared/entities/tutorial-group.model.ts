@@ -2,10 +2,9 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
-import { RawTutorialGroupSessionDTO, TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import dayjs from 'dayjs/esm';
 import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
 
 export class TutorialGroup implements BaseEntity {
@@ -56,20 +55,7 @@ export class TutorialGroupDetailDTO {
         this.title = tutorialGroupDetail.title;
         this.language = tutorialGroupDetail.language;
         this.isOnline = tutorialGroupDetail.isOnline;
-        this.sessions = (tutorialGroupDetail.sessions ?? []).map(
-            (rawSessionDto: RawTutorialGroupSessionDTO) =>
-                new TutorialGroupSessionDTO(
-                    rawSessionDto.id,
-                    dayjs(rawSessionDto.start),
-                    dayjs(rawSessionDto.end),
-                    rawSessionDto.location,
-                    rawSessionDto.isCancelled,
-                    rawSessionDto.locationChanged,
-                    rawSessionDto.timeChanged,
-                    rawSessionDto.dateChanged,
-                    rawSessionDto.attendanceCount,
-                ),
-        );
+        this.sessions = (tutorialGroupDetail.sessions ?? []).map((rawSessionDto) => new TutorialGroupSessionDTO(rawSessionDto));
         this.tutorName = tutorialGroupDetail.tutorName;
         this.tutorLogin = tutorialGroupDetail.tutorLogin;
         this.tutorId = tutorialGroupDetail.tutorId;

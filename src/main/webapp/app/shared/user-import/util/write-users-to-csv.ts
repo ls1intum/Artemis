@@ -35,6 +35,12 @@ function sanitizeRow(row: ExportUserInformationRow): ExportUserInformationRow {
     };
 }
 
+/**
+ * Prefixes values that look like spreadsheet formulas so Excel and similar tools
+ * treat them as plain text instead of executing them. This prevents CSV injection
+ * because exported fields contain user-controlled input from students, while
+ * the CSV is typically opened by instructors or admins.
+ */
 function sanitizeValue(value: string): string {
     return /^\s*[=+\-@]/.test(value) ? `'${value}` : value;
 }
