@@ -174,6 +174,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
+            this.isImporting = false;
         }
     }
 
