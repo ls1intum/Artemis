@@ -7,6 +7,8 @@ jhi-pdf-viewer {
 }
 
 .pdf-viewer-container {
+    --pdf-bar-height: 36px;
+
     .pdf-viewer {
         display: block;
         width: 100%;
@@ -14,7 +16,7 @@ jhi-pdf-viewer {
     }
 
     #viewerContainer {
-        background-color: var(--gray-200);
+        background-color: var(--gray-200) !important;
         display: flex;
         justify-content: center;
         align-items: flex-start;
@@ -24,13 +26,16 @@ jhi-pdf-viewer {
     #viewer,
     .viewer,
     ngx-extended-pdf-viewer {
-        background-color: var(--gray-200);
+        background-color: var(--gray-200) !important;
     }
 
     #toolbarViewer.artemis-pdf-toolbar {
         display: flex;
         align-items: center;
         justify-content: center;
+        height: var(--pdf-bar-height);
+        min-height: var(--pdf-bar-height);
+        box-sizing: border-box;
         border-color: var(--border-color);
         background-color: var(--bs-light);
     }
@@ -42,6 +47,8 @@ jhi-pdf-viewer {
         gap: 0.5rem;
         width: 100%;
         padding: 0 0.75rem;
+        height: 100%;
+        transform: translateX(-8px);
     }
 
     .artemis-pdf-toolbar__button {
@@ -53,16 +60,16 @@ jhi-pdf-viewer {
         padding: 0;
         border: none;
         background-color: transparent;
-        color: var(--bs-body-color);
+        color: var(--bs-secondary-color, #6c757d);
         cursor: pointer;
         transition: color 0.2s ease;
 
         &:hover {
-            color: var(--bs-gray-400);
+            color: var(--bs-gray-400, #ced4da);
         }
 
         &:active {
-            color: var(--bs-gray-500);
+            color: var(--bs-gray-500, #adb5bd);
         }
 
         fa-icon {
@@ -106,13 +113,24 @@ jhi-pdf-viewer {
     }
 
     .pdf-viewer-footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: var(--pdf-bar-height);
+        height: var(--pdf-bar-height);
+        padding: 0 0.75rem;
+        box-sizing: border-box;
         text-align: center;
-        font-size: 0.875rem;
+        font-size: 0.8rem;
+        line-height: 1;
         color: var(--bs-secondary-color, #6c757d);
         background-color: var(--bs-light);
         border-top: 2px solid var(--border-color);
-        padding-top: 0.5rem;
-        padding-bottom: 0.5rem;
         margin-top: 0;
+        white-space: nowrap;
+    }
+
+    .pdf-viewer-footer__separator {
+        margin: 0 0.35rem;
     }
 }

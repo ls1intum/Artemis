@@ -66,7 +66,7 @@
                 {{ uploadDate() | artemisDate }}
             }
             @if (uploadDate() && version()) {
-                <span> - </span>
+                <span class="pdf-viewer-footer__separator">-</span>
             }
             @if (version()) {
                 <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
