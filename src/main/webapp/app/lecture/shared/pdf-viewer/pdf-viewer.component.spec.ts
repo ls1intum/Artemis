@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateService } from '@ngx-translate/core';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { of } from 'rxjs';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { PdfViewerComponent } from './pdf-viewer.component';
@@ -20,6 +20,8 @@ class MockNgxExtendedPdfViewerComponent {
     pageChange = output<number>();
     pagesLoaded = output<unknown>();
     showToolbar = input<boolean>();
+    ignoreKeyboard = input<boolean>();
+    zoom = input<string>();
     showSidebarButton = input<boolean>();
     showFindButton = input<boolean>();
     showOpenFileButton = input<boolean>();
@@ -56,23 +58,6 @@ class MockNgxExtendedPdfViewerComponent {
     showScrollingButtons = input<boolean>();
 }
 
-@Component({
-    selector: 'pdf-shy-button',
-    standalone: true,
-    template: '',
-})
-class MockPdfShyButtonComponent {
-    primaryToolbarId = input<string>();
-    cssClass = input<string>();
-    eventBusName = input<string>();
-    l10nId = input<string>();
-    l10nLabel = input<string>();
-    title = input<string>();
-    order = input<number>();
-    image = input<string>();
-    disabled = input<boolean>();
-}
-
 describe('PdfViewerComponent', () => {
     setupTestBed({ zoneless: true });
 
@@ -100,7 +85,7 @@ describe('PdfViewerComponent', () => {
                     imports: [NgxExtendedPdfViewerModule],
                 },
                 add: {
-                    imports: [MockNgxExtendedPdfViewerComponent, MockPdfShyButtonComponent],
+                    imports: [MockNgxExtendedPdfViewerComponent],
                 },
             })
             .compileComponents();
@@ -128,5 +113,33 @@ describe('PdfViewerComponent', () => {
         const viewer = fixture.debugElement.query(By.directive(MockNgxExtendedPdfViewerComponent));
         const viewerInstance = viewer.componentInstance as MockNgxExtendedPdfViewerComponent;
         expect(viewerInstance.page()).toBe(3);
+    });
+
+    it('should call zoomIn when zoom in button is clicked', () => {
+        const mockEventBus = {
+            dispatch: vi.fn(),
+        };
+        (window as any).PDFViewerApplication = {
+            eventBus: mockEventBus,
+        };
+
+        const component = fixture.componentInstance;
+        component.zoomIn();
+
+        expect(mockEventBus.dispatch).toHaveBeenCalledWith('zoomin');
+    });
+
+    it('should call zoomOut when zoom out button is clicked', () => {
+        const mockEventBus = {
+            dispatch: vi.fn(),
+        };
+        (window as any).PDFViewerApplication = {
+            eventBus: mockEventBus,
+        };
+
+        const component = fixture.componentInstance;
+        component.zoomOut();
+
+        expect(mockEventBus.dispatch).toHaveBeenCalledWith('zoomout');
     });
 });

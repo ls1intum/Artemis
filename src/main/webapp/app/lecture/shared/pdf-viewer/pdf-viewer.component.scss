@@ -44,6 +44,32 @@ jhi-pdf-viewer {
         padding: 0 0.75rem;
     }
 
+    .artemis-pdf-toolbar__button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        border: none;
+        background-color: transparent;
+        color: var(--bs-body-color);
+        cursor: pointer;
+        transition: color 0.2s ease;
+
+        &:hover {
+            color: var(--bs-gray-400);
+        }
+
+        &:active {
+            color: var(--bs-gray-500);
+        }
+
+        fa-icon {
+            font-size: 1rem;
+        }
+    }
+
     .artemis-pdf-toolbar__page {
         margin-left: 0.25rem;
         font-weight: 500;

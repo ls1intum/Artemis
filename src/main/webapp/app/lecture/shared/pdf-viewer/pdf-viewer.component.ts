@@ -4,13 +4,15 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { NgxExtendedPdfViewerModule, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
 
 @Component({
     selector: 'jhi-pdf-viewer',
     standalone: true,
-    imports: [NgxExtendedPdfViewerModule, TranslateModule, ArtemisDatePipe, TranslateDirective],
+    imports: [NgxExtendedPdfViewerModule, TranslateModule, ArtemisDatePipe, TranslateDirective, FaIconComponent],
     templateUrl: './pdf-viewer.component.html',
     styleUrls: ['./pdf-viewer.component.scss'],
     encapsulation: ViewEncapsulation.None,
@@ -25,11 +27,28 @@ export class PdfViewerComponent {
     readonly totalPages = signal(0);
     readonly displayPage = computed(() => this.currentPage() ?? this.resolvedPage());
 
+    protected readonly faMagnifyingGlassMinus = faMagnifyingGlassMinus;
+    protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
+
     onPageChange(page: number): void {
         this.currentPage.set(page);
     }
 
     onPagesLoaded(event: PagesLoadedEvent): void {
         this.totalPages.set(event.pagesCount ?? 0);
+    }
+
+    zoomIn(): void {
+        const PDFViewerApplication = (window as any).PDFViewerApplication;
+        if (PDFViewerApplication?.eventBus) {
+            PDFViewerApplication.eventBus.dispatch('zoomin');
+        }
+    }
+
+    zoomOut(): void {
+        const PDFViewerApplication = (window as any).PDFViewerApplication;
+        if (PDFViewerApplication?.eventBus) {
+            PDFViewerApplication.eventBus.dispatch('zoomout');
+        }
     }
 }
