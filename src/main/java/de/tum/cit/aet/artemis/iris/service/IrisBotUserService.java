@@ -35,6 +35,8 @@ public class IrisBotUserService {
 
     private static final Logger log = LoggerFactory.getLogger(IrisBotUserService.class);
 
+    public static final String IRIS_BOT_IMAGE_URL = "public/images/iris/iris-logo-small.png";
+
     private final UserRepository userRepository;
 
     private final PasswordService passwordService;
@@ -64,6 +66,7 @@ public class IrisBotUserService {
                 User bot = existingBot.get();
                 bot.setActivated(true);
                 bot.setInternal(true);
+                bot.setImageUrl(IRIS_BOT_IMAGE_URL);
                 userRepository.save(bot);
             }
             else {
@@ -75,6 +78,7 @@ public class IrisBotUserService {
                 bot.setEmail("iris-bot@localhost");
                 bot.setActivated(true);
                 bot.setInternal(true);
+                bot.setImageUrl(IRIS_BOT_IMAGE_URL);
                 bot.setPassword(passwordService.hashPassword(RandomUtil.generatePassword()));
                 bot.setAuthorities(new HashSet<>(Set.of(new Authority("ROLE_USER"))));
                 bot.setGroups(new HashSet<>());

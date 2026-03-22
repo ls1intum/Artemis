@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.iris;
 
 import static de.tum.cit.aet.artemis.core.domain.User.IRIS_BOT_LOGIN;
+import static de.tum.cit.aet.artemis.iris.service.IrisBotUserService.IRIS_BOT_IMAGE_URL;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,7 @@ class IrisBotUserServiceIntegrationTest extends AbstractIrisIntegrationTest {
         assertThat(botUser.get().getActivated()).isTrue();
         assertThat(botUser.get().isInternal()).isTrue();
         assertThat(botUser.get().isBot()).isTrue();
+        assertThat(botUser.get().getImageUrl()).isEqualTo(IRIS_BOT_IMAGE_URL);
     }
 
     @Test
