@@ -132,7 +132,8 @@ public class ResultService {
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
+            @Lazy InstanceMessageSendService instanceMessageSendService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
