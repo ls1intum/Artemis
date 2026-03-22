@@ -335,10 +335,15 @@ public class ExamImportService {
                     if (optionalOriginalQuizExercise.isEmpty()) {
                         yield Optional.empty();
                     }
-                    // The import service copies questions from the second parameter (importedExercise),
-                    // so we need to pass the original quiz with questions but set the new exercise group on it
+                    // The import service copies basis from the second parameter (importedExercise),
+                    // so we apply exerciseToCopy overrides (exercise group, title, shortName, etc.)
+                    // to the original quiz exercise before calling import.
                     var originalQuizExercise = optionalOriginalQuizExercise.get();
                     originalQuizExercise.setExerciseGroup(exerciseToCopy.getExerciseGroup());
+                    originalQuizExercise.setTitle(exerciseToCopy.getTitle());
+                    originalQuizExercise.setShortName(exerciseToCopy.getShortName());
+                    originalQuizExercise.setMaxPoints(exerciseToCopy.getMaxPoints());
+                    originalQuizExercise.setBonusPoints(exerciseToCopy.getBonusPoints());
                     // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
                     yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, originalQuizExercise, null));
                 }

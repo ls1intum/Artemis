@@ -140,8 +140,8 @@ export interface UpdateProgrammingExerciseDTO {
  * @returns the corresponding DTO
  */
 export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): UpdateProgrammingExerciseDTO {
-    // Apply bonus points constraint
-    ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(exercise);
+    // Compute constrained bonus points without mutating the input
+    const bonusPoints = exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (exercise.bonusPoints ?? 0);
 
     // Convert competency links to DTOs
     const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = exercise.competencyLinks?.map((link) => ({
@@ -208,7 +208,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         categories,
         difficulty: exercise.difficulty,
         maxPoints: exercise.maxPoints,
-        bonusPoints: exercise.bonusPoints,
+        bonusPoints,
         includedInOverallScore: exercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: exercise.allowFeedbackRequests,

@@ -281,10 +281,7 @@ public class ExamResource {
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
 
-        // Note: updateExamChannel finds the channel by exam ID and compares the new
-        // channel name against the DB-stored channel name, so passing the same entity
-        // twice is correct here - it does not compare the two exam arguments directly.
-        Channel updatedChannel = channelService.updateExamChannel(originalExam, originalExam);
+        Channel updatedChannel = channelService.updateExamChannel(originalExam);
 
         Exam savedExam = examRepository.save(originalExam);
 

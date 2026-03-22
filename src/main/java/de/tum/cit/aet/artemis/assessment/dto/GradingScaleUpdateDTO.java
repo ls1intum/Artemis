@@ -77,7 +77,9 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
      */
     public void applyTo(GradingScale gradingScale) {
         gradingScale.setGradeType(gradeType);
-        gradingScale.setBonusStrategy(bonusStrategy);
+        if (bonusStrategy != null) {
+            gradingScale.setBonusStrategy(bonusStrategy);
+        }
         gradingScale.setPlagiarismGrade(plagiarismGrade);
         gradingScale.setNoParticipationGrade(noParticipationGrade);
         gradingScale.setPresentationsNumber(presentationsNumber);

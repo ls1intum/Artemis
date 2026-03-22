@@ -97,8 +97,8 @@ export interface UpdateTextExerciseDTO {
  * @returns the corresponding DTO
  */
 export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextExerciseDTO {
-    // Apply bonus points constraint (modifies in place and returns the same object)
-    ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(textExercise);
+    // Compute constrained bonus points without mutating the input
+    const bonusPoints = textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (textExercise.bonusPoints ?? 0);
 
     // Convert competency links to DTOs (just competency ID and weight)
     const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = textExercise.competencyLinks?.map((link) => ({
@@ -134,7 +134,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         title: textExercise.title,
         shortName: textExercise.shortName,
         maxPoints: textExercise.maxPoints!,
-        bonusPoints: textExercise.bonusPoints,
+        bonusPoints,
         assessmentType: textExercise.assessmentType,
         releaseDate: convertDateFromClient(textExercise.releaseDate),
         startDate: convertDateFromClient(textExercise.startDate),
