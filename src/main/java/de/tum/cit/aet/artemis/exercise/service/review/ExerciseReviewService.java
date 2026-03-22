@@ -244,7 +244,18 @@ public class ExerciseReviewService {
     public void deleteComment(long exerciseId, long commentId) {
         Comment comment = commentRepository.findWithThreadById(commentId).orElseThrow(() -> new EntityNotFoundException("Comment", commentId));
         ExerciseReviewValidationUtil.validateExerciseIdMatchesRequest(exerciseId, comment.getThread().getExercise().getId(), COMMENT_ENTITY_NAME);
-        commentRepository.deleteCommentWithCascade(comment);
+
+        long threadId = comment.getThread().getId();
+        Long groupId = comment.getThread().getGroup() != null ? comment.getThread().getGroup().getId() : null;
+
+        commentRepository.deleteById(comment.getId());
+
+        if (commentRepository.countByThreadId(threadId) == 0) {
+            commentThreadRepository.deleteById(threadId);
+            if (groupId != null && commentThreadRepository.countByGroupId(groupId) == 0) {
+                commentThreadGroupRepository.deleteById(groupId);
+            }
+        }
     }
 
     /**
