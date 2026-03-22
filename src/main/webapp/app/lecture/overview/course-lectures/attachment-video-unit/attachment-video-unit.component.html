@@ -79,7 +79,7 @@
                 <fa-icon [icon]="faFileLines" size="3x" class="text-danger" />
             </div>
         } @else if (pdfUrl()) {
-            <jhi-pdf-viewer
+            <jhi-lecture-pdf-viewer
                 [pdfUrl]="pdfUrl()!"
                 [uploadDate]="lectureUnit().attachment?.uploadDate"
                 [version]="lectureUnit().attachment?.version"

@@ -124,10 +124,8 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
             const unitId = Number(params['unit']);
             if (Number.isInteger(unitId) && unitId > 0) {
                 this.targetUnitId.set(unitId);
-
                 const timestamp = Number(params['timestamp']);
                 this.targetVideoTimestamp.set(Number.isFinite(timestamp) && timestamp >= 0 ? timestamp : undefined);
-
                 const pageNum = Number(params['page']);
                 this.targetPdfPage.set(Number.isInteger(pageNum) && pageNum > 0 ? pageNum : undefined);
             } else {
@@ -238,27 +236,22 @@ export class CourseLectureDetailsComponent implements OnInit, OnDestroy {
 
         const targetUnit = this.lectureUnits.find((unit) => unit.id === targetUnitId);
         if (!targetUnit) {
-            // Unit doesn't exist - clear all targets
             this.targetUnitId.set(undefined);
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);
             return;
         }
 
-        // Validate type-specific targets
         if (targetUnit.type === LectureUnitType.ATTACHMENT_VIDEO) {
             const attachmentUnit = targetUnit as AttachmentVideoUnit;
             const isPdf = attachmentUnit.attachment?.link?.toLowerCase().endsWith('.pdf');
 
             if (isPdf) {
-                // PDF unit - clear video timestamp
                 this.targetVideoTimestamp.set(undefined);
             } else {
-                // Video unit - clear PDF page
                 this.targetPdfPage.set(undefined);
             }
         } else {
-            // Not an ATTACHMENT_VIDEO unit - clear both
             this.targetVideoTimestamp.set(undefined);
             this.targetPdfPage.set(undefined);
         }
