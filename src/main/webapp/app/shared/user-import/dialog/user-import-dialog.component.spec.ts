@@ -268,24 +268,13 @@ describe('UsersImportDialogComponent', () => {
         expect(component.examUsersToImport).toEqual(expectedStudentDTOs);
     });
 
-    it('should compute invalid student entries', () => {
-        let rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }]);
-        expect(rowNumbersOrNull).toBe('2');
+    it('should expose multiple invalid student row numbers via validationError', async () => {
+        const csv = `${studentCsvColumns}\n"","Max","Mustermann"\n"","John","Wick"`;
+        const event = { target: { files: [csv], value: 'students.csv' } };
 
-        rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { registrationnumber: '1' }, { login: 'username' }]);
-        expect(rowNumbersOrNull).toBe('2');
+        await component.onCSVFileSelect(event);
 
-        rowNumbersOrNull = component.computeInvalidUserEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
-        expect(rowNumbersOrNull).toBeUndefined();
-
-        rowNumbersOrNull = component.computeInvalidUserEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
-        expect(rowNumbersOrNull).toBeUndefined();
-
-        rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
-        expect(rowNumbersOrNull).toBe('2, 3');
-
-        rowNumbersOrNull = component.computeInvalidUserEntries([]);
-        expect(rowNumbersOrNull).toBeUndefined();
+        expect(component.validationError).toBe('2, 3');
     });
 
     it('should import correctly', () => {
