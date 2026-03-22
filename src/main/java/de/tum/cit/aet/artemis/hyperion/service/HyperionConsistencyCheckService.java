@@ -145,8 +145,9 @@ public class HyperionConsistencyCheckService {
     }
 
     /**
-     * Execute structural and semantic consistency checks. Model calls run concurrently on bounded elastic threads.
-     * Any individual failure degrades gracefully to an empty list; the aggregated response is always non-null.
+     * Execute a three-phase consistency check pipeline: structural and semantic checks run concurrently,
+     * followed by an independent verification pass that removes false positives, deduplicates overlapping issues,
+     * and improves surviving issues. Any individual failure degrades gracefully; the aggregated response is always non-null.
      *
      * @param exerciseId        id of the programming exercise to check consistency for
      * @param skipThreadContext if {@code true}, passes empty thread context to the AI prompts (i.e., no prior findings exist).
