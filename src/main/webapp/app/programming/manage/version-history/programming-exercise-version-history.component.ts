@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
@@ -7,11 +7,13 @@ import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shar
 import { ExerciseVersionHistoryLayoutComponent } from 'app/exercise/version-history/shared/exercise-version-history-layout.component';
 import { ExerciseVersionHistoryTimelineComponent } from 'app/exercise/version-history/shared/exercise-version-history-timeline.component';
 import { ExerciseVersionSharedSnapshotMetadataComponent } from 'app/exercise/version-history/shared/exercise-version-shared-snapshot-metadata.component';
+import { VersionHistoryViewMode } from 'app/exercise/version-history/shared/version-history.utils';
 import { ProgrammingExerciseVersionProgrammingMetadataComponent } from 'app/programming/manage/version-history/programming-exercise-version-programming-metadata.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
-import { Subscription, finalize } from 'rxjs';
+import { Tab, TabList, Tabs } from 'primeng/tabs';
+import { finalize } from 'rxjs';
 
 @Component({
     selector: 'jhi-programming-exercise-version-history',
@@ -21,6 +23,9 @@ import { Subscription, finalize } from 'rxjs';
         TranslateDirective,
         MessageModule,
         SkeletonModule,
+        Tabs,
+        TabList,
+        Tab,
         ExerciseVersionHistoryLayoutComponent,
         ExerciseVersionHistoryTimelineComponent,
         ExerciseVersionSharedSnapshotMetadataComponent,
@@ -37,15 +42,13 @@ import { Subscription, finalize } from 'rxjs';
  * - {@link ExerciseVersionSharedSnapshotMetadataComponent} — exercise-agnostic metadata
  * - {@link ProgrammingExerciseVersionProgrammingMetadataComponent} — programming-specific metadata
  */
-export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDestroy {
+export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly versionHistoryService = inject(ExerciseVersionHistoryService);
     private readonly destroyRef = inject(DestroyRef);
 
-    /** Subscription for the in-flight snapshot request, cancelled when a new version is selected. */
-    private snapshotSubscription?: Subscription;
-
     private readonly pageSize = 20;
+    private snapshotRequestToken = 0;
 
     /** Parsed exercise id from the route, set once in {@link ngOnInit}. */
     readonly exerciseId = signal<number | undefined>(undefined);
@@ -57,26 +60,105 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
     readonly nextPage = signal<number | undefined>(undefined);
     /** Id of the version currently selected in the timeline. */
     readonly selectedVersionId = signal<number | undefined>(undefined);
-    /** Full snapshot for the selected version, fetched on demand. */
-    readonly selectedSnapshot = signal<ExerciseSnapshotDTO | undefined>(undefined);
+    /** Snapshot cache, keyed by version id. */
+    readonly snapshotCache = signal<Record<number, ExerciseSnapshotDTO>>({});
+    /** Per-version loading flags for snapshot requests. */
+    readonly loadingSnapshots = signal<Record<number, boolean>>({});
+    /** Full snapshot for the selected version, read from the cache. */
+    readonly selectedSnapshot = computed(() => {
+        const selectedVersionId = this.selectedVersionId();
+        return selectedVersionId ? this.snapshotCache()[selectedVersionId] : undefined;
+    });
+    /** Version id immediately preceding the selected version, when already loaded. */
+    readonly previousVersionId = computed(() => {
+        const selectedVersionId = this.selectedVersionId();
+        if (!selectedVersionId) {
+            return undefined;
+        }
+
+        const versions = this.versions();
+        const index = versions.findIndex((version) => version.id === selectedVersionId);
+        if (index === -1 || index >= versions.length - 1) {
+            return undefined;
+        }
+
+        return versions[index + 1].id;
+    });
+    /** Cached snapshot for the immediately previous version. */
+    readonly previousSnapshot = computed(() => {
+        const previousVersionId = this.previousVersionId();
+        return previousVersionId ? this.snapshotCache()[previousVersionId] : undefined;
+    });
 
     /** `true` while the initial page of versions is being fetched. */
     readonly isLoadingVersions = signal(false);
     /** `true` while an additional page of versions is being fetched. */
     readonly isLoadingMoreVersions = signal(false);
     /** `true` while the snapshot for the selected version is being fetched. */
-    readonly isLoadingSnapshot = signal(false);
+    readonly isLoadingSnapshot = computed(() => {
+        const selectedVersionId = this.selectedVersionId();
+        return selectedVersionId ? this.loadingSnapshots()[selectedVersionId] === true : false;
+    });
+    /** `true` while the snapshot for the selected version's predecessor is being fetched. */
+    readonly isLoadingPreviousSnapshot = computed(() => {
+        const previousVersionId = this.previousVersionId();
+        return previousVersionId ? this.loadingSnapshots()[previousVersionId] === true : false;
+    });
 
     /** i18n key for timeline-level errors, or `undefined` if none. */
     readonly timelineError = signal<string | undefined>(undefined);
     /** i18n key for snapshot-level errors, or `undefined` if none. */
     readonly snapshotError = signal<string | undefined>(undefined);
+    /** Error message for diff-base snapshot loading, or `undefined` if none. */
+    readonly diffBaseError = signal<string | undefined>(undefined);
+    /** Currently selected snapshot view. */
+    readonly viewMode = signal<VersionHistoryViewMode>('full');
 
     /** Whether there are more pages of versions available on the server. */
     readonly hasMore = computed(() => this.nextPage() !== undefined);
+    /** Whether the selected version may have a predecessor, even if it is not loaded yet. */
+    readonly showDiffTab = computed(() => {
+        const selectedVersionId = this.selectedVersionId();
+        if (!selectedVersionId) {
+            return false;
+        }
 
-    ngOnDestroy(): void {
-        this.snapshotSubscription?.unsubscribe();
+        const versions = this.versions();
+        const index = versions.findIndex((version) => version.id === selectedVersionId);
+        if (index === -1) {
+            return false;
+        }
+
+        return index < versions.length - 1 || this.hasMore();
+    });
+    /** Whether the currently selected version can already be compared to a loaded predecessor snapshot. */
+    readonly canShowDiff = computed(() => this.previousVersionId() !== undefined);
+
+    constructor() {
+        effect(() => {
+            const selectedVersionId = this.selectedVersionId();
+            if (!selectedVersionId) {
+                return;
+            }
+
+            this.ensurePredecessorLoaded(selectedVersionId);
+        });
+
+        effect(() => {
+            if (!this.showDiffTab() && this.viewMode() === 'changes') {
+                this.viewMode.set('full');
+            }
+        });
+
+        effect(() => {
+            const viewMode = this.viewMode();
+            const previousVersionId = this.previousVersionId();
+            if (viewMode !== 'changes' || !previousVersionId) {
+                return;
+            }
+
+            this.loadSnapshot(previousVersionId, 'previous');
+        });
     }
 
     /** Parses the exercise id from the route and triggers the initial version load. */
@@ -99,8 +181,9 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
         }
 
         this.selectedVersionId.set(versionId);
-        this.selectedSnapshot.set(undefined);
         this.snapshotError.set(undefined);
+        this.diffBaseError.set(undefined);
+        this.viewMode.set('changes');
         this.loadSnapshot(versionId);
     }
 
@@ -112,6 +195,22 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
         }
 
         this.loadVersions(page, false);
+    }
+
+    /** Switches between full snapshot and diff view tabs. */
+    onSelectViewMode(viewMode: VersionHistoryViewMode): void {
+        if (viewMode === 'changes' && !this.showDiffTab()) {
+            return;
+        }
+
+        this.viewMode.set(viewMode);
+        this.diffBaseError.set(undefined);
+    }
+
+    onTabValueChange(value: string | number | undefined): void {
+        if (value === 'full' || value === 'changes') {
+            this.onSelectViewMode(value);
+        }
     }
 
     /**
@@ -155,7 +254,6 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
                             this.onSelectVersion(versions[0].id);
                         } else {
                             this.selectedVersionId.set(undefined);
-                            this.selectedSnapshot.set(undefined);
                         }
                     }
                 },
@@ -173,26 +271,57 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit, OnDes
      *
      * @param versionId the version whose snapshot to fetch
      */
-    private loadSnapshot(versionId: number): void {
+    private loadSnapshot(versionId: number, target: 'selected' | 'previous' = 'selected'): void {
         const exerciseId = this.exerciseId();
-        if (!exerciseId) {
+        if (!exerciseId || this.snapshotCache()[versionId] || this.loadingSnapshots()[versionId]) {
             return;
         }
 
-        // Cancel any in-flight snapshot request to avoid spinner race conditions
-        this.snapshotSubscription?.unsubscribe();
+        const requestToken = ++this.snapshotRequestToken;
+        this.setSnapshotLoading(versionId, true);
 
-        this.isLoadingSnapshot.set(true);
-        this.snapshotSubscription = this.versionHistoryService
+        this.versionHistoryService
             .getSnapshot(exerciseId, versionId)
-            .pipe(finalize(() => this.isLoadingSnapshot.set(false)))
+            .pipe(finalize(() => this.setSnapshotLoading(versionId, false)))
             .subscribe({
                 next: (snapshot) => {
-                    this.selectedSnapshot.set(snapshot);
+                    if (requestToken !== this.snapshotRequestToken && target === 'selected' && this.selectedVersionId() !== versionId) {
+                        return;
+                    }
+                    this.snapshotCache.update((snapshotCache) => ({ ...snapshotCache, [versionId]: snapshot }));
                 },
                 error: () => {
-                    this.snapshotError.set('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
+                    if (target === 'selected') {
+                        if (this.selectedVersionId() === versionId) {
+                            this.snapshotError.set('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
+                        }
+                        return;
+                    }
+
+                    this.diffBaseError.set('artemisApp.exercise.versionHistory.errors.snapshotLoadFailed');
                 },
             });
+    }
+
+    private ensurePredecessorLoaded(versionId: number): void {
+        const versions = this.versions();
+        const index = versions.findIndex((version) => version.id === versionId);
+        if (index === -1 || index < versions.length - 1 || this.nextPage() === undefined || this.isLoadingMoreVersions()) {
+            return;
+        }
+
+        this.loadVersions(this.nextPage()!, false);
+    }
+
+    private setSnapshotLoading(versionId: number, isLoading: boolean): void {
+        this.loadingSnapshots.update((loadingSnapshots) => {
+            if (!isLoading) {
+                const nextLoadingSnapshots = { ...loadingSnapshots };
+                delete nextLoadingSnapshots[versionId];
+                return nextLoadingSnapshots;
+            }
+
+            return { ...loadingSnapshots, [versionId]: true };
+        });
     }
 }

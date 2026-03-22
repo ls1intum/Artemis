@@ -72,6 +72,8 @@
                     "assignmentCheckoutPath": "Assignment Checkout Path",
                     "solutionCheckoutPath": "Solution Checkout Path",
                     "testsCheckoutPath": "Tests Checkout Path",
+                    "auxiliaryRepositories": "Auxiliary Repositories",
+                    "staticCodeAnalysisCategories": "Static Code Analysis Categories",
                     "buildPlanConfiguration": "Build Plan Configuration (JSON)",
                     "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
                     "noBuildScript": "No build script in this snapshot"

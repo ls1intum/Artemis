@@ -40,7 +40,14 @@
                 },
                 "snapshot": {
                     "empty": "Wähle eine Version aus, um die Metadaten anzuzeigen.",
-                    "sharedTitle": "Aufgaben-Metadaten"
+                    "sharedTitle": "Aufgaben-Metadaten",
+                    "previousValue": "Vorheriger Wert",
+                    "currentValue": "Aktueller Wert",
+                    "competencies": "Kompetenzen",
+                    "teamAssignment": "Teamzuweisung",
+                    "plagiarismDetection": "Plagiatskontrolle",
+                    "problemStatement": "Aufgabenstellung",
+                    "gradingConfiguration": "Bewertungskonfiguration"
                 },
                 "errors": {
                     "invalidExerciseId": "Die Seite konnte nicht geladen werden.",

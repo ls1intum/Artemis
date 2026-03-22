@@ -36,10 +36,6 @@
     padding: 0.15rem 0.25rem;
 }
 
-.right-pane {
-    padding: 0.35rem 0.45rem;
-}
-
 @media (max-width: 992px) {
     :host ::ng-deep .version-history-splitter {
         flex-direction: column;

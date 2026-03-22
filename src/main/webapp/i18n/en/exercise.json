@@ -40,7 +40,14 @@
                 },
                 "snapshot": {
                     "empty": "Select a version to inspect its metadata.",
-                    "sharedTitle": "Exercise Metadata"
+                    "sharedTitle": "Exercise Metadata",
+                    "previousValue": "Previous value",
+                    "currentValue": "Current value",
+                    "competencies": "Competencies",
+                    "teamAssignment": "Team Assignment",
+                    "plagiarismDetection": "Plagiarism Detection",
+                    "problemStatement": "Problem Statement",
+                    "gradingConfiguration": "Grading Configuration"
                 },
                 "errors": {
                     "invalidExerciseId": "Could not determine exercise id.",
