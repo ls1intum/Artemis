@@ -247,10 +247,18 @@ export class IrisCitationTextComponent {
             return '';
         }
 
+        const courseId = meta.courseId;
+        const lectureId = meta.lectureId;
+        const unitId = parsed.entityId;
+
+        if (courseId === undefined || courseId === null || lectureId === undefined || lectureId === null || !unitId) {
+            return '';
+        }
+
         const attrs: string[] = [];
-        attrs.push(`data-course-id="${meta.courseId}"`);
-        attrs.push(`data-lecture-id="${meta.lectureId}"`);
-        attrs.push(`data-unit-id="${parsed.entityId}"`);
+        attrs.push(`data-course-id="${escapeHtml(String(courseId))}"`);
+        attrs.push(`data-lecture-id="${escapeHtml(String(lectureId))}"`);
+        attrs.push(`data-unit-id="${escapeHtml(String(unitId))}"`);
         if (parsed.start) {
             attrs.push(`data-timestamp="${escapeHtml(parsed.start)}"`);
         }
@@ -314,9 +322,6 @@ export class IrisCitationTextComponent {
             const activeSummaryItem = summary.querySelector('.iris-citation__summary-item.is-active.iris-citation__summary-item--clickable') as HTMLElement | null;
             if (activeSummaryItem) {
                 event.stopPropagation();
-                if (activeSummaryItem instanceof HTMLAnchorElement) {
-                    event.preventDefault();
-                }
                 this.navigateToCitation(activeSummaryItem);
                 return;
             }
