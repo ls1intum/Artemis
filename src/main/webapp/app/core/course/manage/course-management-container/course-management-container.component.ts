@@ -358,9 +358,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         });
 
         // 2–7. Content items (same order as Explore Artemis cards)
-        if (isEditor) {
-            sidebarItems.push(this.sidebarItemService.getExercisesItem(courseId));
-        }
+        sidebarItems.push(this.sidebarItemService.getExercisesItem(courseId));
         if (this.lectureEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getLecturesItem(courseId));
         }
@@ -369,9 +367,7 @@ export class CourseManagementContainerComponent extends BaseCourseContainerCompo
         if (this.atlasEnabled && isEditor) {
             sidebarItems.push(this.sidebarItemService.getCompetenciesManagementItem(courseId));
         }
-        if (isInstructor) {
-            sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
-        }
+        sidebarItems.push(this.sidebarItemService.getFaqManagementItem(courseId));
 
         // 8+. Other management items
         sidebarItems.push(...this.addCommunicationItem(currentCourse));

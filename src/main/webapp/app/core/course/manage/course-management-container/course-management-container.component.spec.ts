@@ -375,7 +375,7 @@ describe('CourseManagementContainerComponent', () => {
         component.course.set(courseWithDisabledFeatures);
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems.find((item) => item.title === 'Communication')).toBeUndefined();
-        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeUndefined();
+        expect(sidebarItems.find((item) => item.title === 'FAQs')).toBeTruthy();
     });
 
     it('should subscribe to course updates when handleCourseIdChange is called', () => {

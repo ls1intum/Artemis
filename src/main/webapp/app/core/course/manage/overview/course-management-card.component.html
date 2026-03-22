@@ -350,7 +350,7 @@
             </a>
         }
 
-        @if (course().isAtLeastInstructor) {
+        @if (course().isAtLeastTutor) {
             <a
                 [routerLink]="['/course-management', course().id, 'faqs']"
                 class="btn btn-info me-1 mb-1"

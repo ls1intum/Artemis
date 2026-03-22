@@ -114,6 +114,7 @@ export class CourseOnboardingComponent implements OnInit {
             },
             error: (error: HttpErrorResponse) => {
                 this.isSaving.set(false);
+                current.onboardingDone = false;
                 onError(this.alertService, error);
             },
         });
