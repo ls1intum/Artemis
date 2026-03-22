@@ -346,6 +346,37 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractProgramming
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void shouldHandleOnlyInitializationErrorsWithNoRegisteredTestCases() {
+        // Delete all test cases so that no registered test cases exist (Case 3)
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
+
+        // Create feedbacks with only initialization errors - no regular test feedback
+        String initializationErrorMessage1 = "java.lang.AssertionError: assignment/src/de/tum/cit/fop does not exist";
+        String initializationErrorMessage2 = "java.lang.NoClassDefFoundError: com/example/MissingClass";
+        List<Feedback> feedbacks = new ArrayList<>();
+        feedbacks.add(new Feedback().text("BehaviorTest." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME).detailText(initializationErrorMessage1)
+                .positive(false).type(FeedbackType.AUTOMATIC));
+        feedbacks.add(new Feedback().text("StructuralTest." + ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME).detailText(initializationErrorMessage2)
+                .positive(false).type(FeedbackType.AUTOMATIC));
+        result.feedbacks(feedbacks);
+
+        gradingService.calculateScoreForResult(result, programmingExercise, true);
+
+        // Verify that the result reflects a failed build with 0% score
+        assertThat(result.isSuccessful()).isFalse();
+        assertThat(result.getScore()).isZero();
+
+        // Verify that all initialization error feedbacks have ALWAYS visibility so students can see them
+        var initializationErrorFeedbacks = result.getFeedbacks().stream()
+                .filter(feedback -> feedback.getText() != null && feedback.getText().contains(ProgrammingExerciseGradingService.TESTCASE_INITIALIZATION_ERROR_NAME)).toList();
+        assertThat(initializationErrorFeedbacks).hasSize(2);
+        for (Feedback feedback : initializationErrorFeedbacks) {
+            assertThat(feedback.getVisibility()).isEqualTo(Visibility.ALWAYS);
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldRecalculateScoreBasedOnTestCasesWeightAutomatic() {
         var tests = getTestCases(programmingExercise);
         tests.put("test4", programmingExerciseUtilService.addTestCaseToProgrammingExercise(programmingExercise, "test4"));

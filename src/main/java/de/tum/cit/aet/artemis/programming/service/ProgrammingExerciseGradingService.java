@@ -757,11 +757,20 @@ public class ProgrammingExerciseGradingService {
      */
     private void addInitializationErrorFeedbackIfPresent(Result result, String initializationErrorMessage) {
         if (initializationErrorMessage != null && !initializationErrorMessage.isBlank()) {
-            Feedback initializationErrorFeedback = new Feedback().type(FeedbackType.AUTOMATIC).text("Test Initialization Error").detailText(
-                    "An error occurred during test initialization. This typically happens when test setup code (like @BeforeAll methods) fails:\n\n" + initializationErrorMessage)
-                    .positive(false);
-            result.addFeedback(initializationErrorFeedback);
+            result.addFeedback(createInitializationErrorFeedback(initializationErrorMessage));
         }
+    }
+
+    /**
+     * Creates a "Test Initialization Error" feedback object for the given error message.
+     *
+     * @param initializationErrorMessage the error message from test initialization failure
+     * @return a new {@link Feedback} describing the initialization error
+     */
+    private Feedback createInitializationErrorFeedback(String initializationErrorMessage) {
+        return new Feedback().type(FeedbackType.AUTOMATIC).text("Test Initialization Error").detailText(
+                "An error occurred during test initialization. This typically happens when test setup code (like @BeforeAll methods) fails:\n\n" + initializationErrorMessage)
+                .positive(false);
     }
 
     /**
