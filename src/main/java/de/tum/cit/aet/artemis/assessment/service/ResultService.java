@@ -20,6 +20,7 @@ import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -31,6 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.Feedback;
 import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
 import de.tum.cit.aet.artemis.assessment.domain.LongFeedbackText;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.event.ResultDeletedEvent;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
@@ -52,7 +54,6 @@ import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.NameSimilarity;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exam.api.StudentExamApi;
@@ -125,14 +126,14 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, ApplicationEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -152,7 +153,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
-        this.instanceMessageSendService = instanceMessageSendService;
+        this.eventPublisher = eventPublisher;
     }
 
     /**
@@ -206,10 +207,12 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Manually trigger participant score recalculation since the JPQL DELETE below
+        // Publish event to trigger participant score recalculation since the JPQL DELETE below
         // bypasses JPA lifecycle callbacks (@PreRemove in ResultListener would normally do this).
+        // Using an event instead of direct InstanceMessageSendService injection avoids a circular
+        // dependency: ResultService -> InstanceMessageSendService -> ... -> ResultService.
         if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
-            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
+            eventPublisher.publishEvent(new ResultDeletedEvent(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId()));
         }
         // Use JPQL DELETE to bypass Hibernate's merge operation, which would fail due to
         // L2 cache staleness after feedbacks have been bulk-deleted by deleteResultReferences.

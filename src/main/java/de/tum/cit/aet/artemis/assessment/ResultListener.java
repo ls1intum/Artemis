@@ -8,10 +8,12 @@ import jakarta.persistence.PreRemove;
 
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 import de.tum.cit.aet.artemis.assessment.domain.ParticipantScore;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.domain.event.ResultDeletedEvent;
 import de.tum.cit.aet.artemis.assessment.service.ParticipantScoreScheduleService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -68,5 +70,19 @@ public class ResultListener {
         if (result.getSubmission() != null && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
             instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
         }
+    }
+
+    /**
+     * Handles the {@link ResultDeletedEvent} published by ResultService when a result is deleted
+     * via JPQL DELETE (which bypasses JPA lifecycle callbacks like {@code @PreRemove}).
+     * <p>
+     * This event-based approach avoids a circular dependency that would occur if ResultService
+     * directly injected InstanceMessageSendService.
+     *
+     * @param event the result deletion event containing exercise, participant, and result IDs
+     */
+    @EventListener
+    public void onResultDeleted(ResultDeletedEvent event) {
+        instanceMessageSendService.sendParticipantScoreSchedule(event.exerciseId(), event.participantId(), event.resultIdToBeDeleted());
     }
 }
