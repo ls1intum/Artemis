@@ -12,6 +12,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -54,10 +55,19 @@ public class IrisBotUserService {
 
     /**
      * Ensures the Iris bot user exists in the database at application startup.
+     * Runs asynchronously so that bcrypt password hashing does not block the main startup thread.
+     */
+    @Async
+    @EventListener(ApplicationReadyEvent.class)
+    public void onApplicationReady() {
+        ensureIrisBotUserExists();
+    }
+
+    /**
+     * Ensures the Iris bot user exists in the database.
      * The bot user is always created when Iris is enabled, regardless of feature toggle state,
      * so it is ready when the AutonomousTutor feature is turned on later.
      */
-    @EventListener(ApplicationReadyEvent.class)
     public void ensureIrisBotUserExists() {
         try {
             SecurityUtils.setAuthorizationObject();
