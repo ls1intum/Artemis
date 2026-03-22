@@ -402,6 +402,8 @@ public class FileUploadExerciseResource {
         Double oldMaxPoints = originalExercise.getMaxPoints();
         Double oldBonusPoints = originalExercise.getBonusPoints();
         String oldProblemStatement = originalExercise.getProblemStatement();
+        // Capture original competency IDs before update() mutates the entity (L1 cache)
+        Set<Long> originalCompetencyIds = originalExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         // ========== 2. Apply DTO values to entity ==========
         FileUploadExercise updatedExercise = update(updateFileUploadExerciseDTO, originalExercise);
@@ -431,7 +433,7 @@ public class FileUploadExerciseResource {
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
         // Update competency progress for affected students
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Sync with AtlasML for AI-based features
         atlasMLApi.ifPresent(api -> {
@@ -632,6 +634,13 @@ public class FileUploadExerciseResource {
         final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
+        // Capture original values BEFORE update() mutates the entity via L1 cache.
+        // updateFileUploadExercise() loads the same L1-cached entity, so it would see
+        // already-mutated "originals" and skip participant score / due date updates.
+        final Double originalMaxPoints = existingExercise.getMaxPoints();
+        final Double originalBonusPoints = existingExercise.getBonusPoints();
+        final ZonedDateTime originalDueDate = existingExercise.getDueDate();
+
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Apply updates for re-evaluation
         FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
@@ -641,7 +650,16 @@ public class FileUploadExerciseResource {
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
         // Delegate to the main update method (same pattern as ModelingExerciseResource)
-        return updateFileUploadExercise(updateFileUploadExerciseDTO, null, exerciseId);
+        ResponseEntity<FileUploadExercise> response = updateFileUploadExercise(updateFileUploadExerciseDTO, null, exerciseId);
+
+        // The call inside updateFileUploadExercise used already-mutated "originals" (no-op).
+        // Apply the correct originals now to ensure participant scores and due dates update.
+        FileUploadExercise savedExercise = response.getBody();
+        if (savedExercise != null) {
+            exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+            participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        }
+        return response;
     }
 
     /**

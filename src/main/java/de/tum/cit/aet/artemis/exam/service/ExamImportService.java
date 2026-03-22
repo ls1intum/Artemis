@@ -335,17 +335,14 @@ public class ExamImportService {
                     if (optionalOriginalQuizExercise.isEmpty()) {
                         yield Optional.empty();
                     }
-                    // The import service copies basis from the second parameter (importedExercise),
-                    // so we apply exerciseToCopy overrides (exercise group, title, shortName, etc.)
-                    // to the original quiz exercise before calling import.
                     var originalQuizExercise = optionalOriginalQuizExercise.get();
-                    originalQuizExercise.setExerciseGroup(exerciseToCopy.getExerciseGroup());
-                    originalQuizExercise.setTitle(exerciseToCopy.getTitle());
-                    originalQuizExercise.setShortName(exerciseToCopy.getShortName());
-                    originalQuizExercise.setMaxPoints(exerciseToCopy.getMaxPoints());
-                    originalQuizExercise.setBonusPoints(exerciseToCopy.getBonusPoints());
+                    // The import service mutates the second parameter (importedExercise) in-place
+                    // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
+                    // same managed entity for both parameters, as that would corrupt the original
+                    // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
+                    // exercise group, title, shortName, etc. from the DTO conversion.
                     // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                    yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, originalQuizExercise, null));
+                    yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, (QuizExercise) exerciseToCopy, null));
                 }
             };
             // Attach the newly created Exercise to the new Exercise Group only if the importing was successful

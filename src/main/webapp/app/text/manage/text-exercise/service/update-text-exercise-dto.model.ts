@@ -1,45 +1,9 @@
 import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
-
-/**
- * DTO for competency reference (just the ID)
- */
-export interface CompetencyDTO {
-    id: number;
-}
-
-/**
- * DTO for competency links with weight
- */
-export interface CompetencyLinkDTO {
-    competency: CompetencyDTO;
-    weight: number;
-}
-
-/**
- * DTO for grading criterion
- */
-export interface GradingCriterionDTO {
-    id?: number;
-    title?: string;
-    structuredGradingInstructions?: GradingInstructionDTO[];
-}
-
-/**
- * DTO for grading instruction
- */
-export interface GradingInstructionDTO {
-    id?: number;
-    credits?: number;
-    gradingScale?: string;
-    instructionDescription?: string;
-    feedback?: string;
-    usageCount?: number;
-}
+import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 /**
  * DTO for updating text exercises.
@@ -53,14 +17,12 @@ export interface UpdateTextExerciseDTO {
     shortName?: string;
     maxPoints: number;
     bonusPoints?: number;
-    assessmentType?: AssessmentType;
     releaseDate?: dayjs.Dayjs | string | null;
     startDate?: dayjs.Dayjs | string | null;
     dueDate?: dayjs.Dayjs | string | null;
     assessmentDueDate?: dayjs.Dayjs | string | null;
     exampleSolutionPublicationDate?: dayjs.Dayjs | string | null;
     difficulty?: DifficultyLevel;
-    mode?: ExerciseMode;
 
     // Exercise fields
     includedInOverallScore?: IncludedInOverallScore;
@@ -135,14 +97,12 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         shortName: textExercise.shortName,
         maxPoints: textExercise.maxPoints!,
         bonusPoints,
-        assessmentType: textExercise.assessmentType,
         releaseDate: convertDateFromClient(textExercise.releaseDate),
         startDate: convertDateFromClient(textExercise.startDate),
         dueDate: convertDateFromClient(textExercise.dueDate),
         assessmentDueDate: convertDateFromClient(textExercise.assessmentDueDate),
         exampleSolutionPublicationDate: convertDateFromClient(textExercise.exampleSolutionPublicationDate),
         difficulty: textExercise.difficulty,
-        mode: textExercise.mode,
         includedInOverallScore: textExercise.includedInOverallScore,
         problemStatement: textExercise.problemStatement,
         gradingInstructions: textExercise.gradingInstructions,

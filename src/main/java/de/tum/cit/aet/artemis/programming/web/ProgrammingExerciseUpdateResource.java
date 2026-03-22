@@ -488,11 +488,27 @@ public class ProgrammingExerciseUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
+        // Capture original values BEFORE update() mutates the entity via L1 cache.
+        // updateProgrammingExercise() loads the same L1-cached entity, so it would see
+        // already-mutated "originals" and skip participant score / due date updates.
+        final Double originalMaxPoints = programmingExercise.getMaxPoints();
+        final Double originalBonusPoints = programmingExercise.getBonusPoints();
+        final ZonedDateTime originalDueDate = programmingExercise.getDueDate();
+
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         // Compare with TextExerciseCreationUpdateResource.reEvaluateAndUpdateTextExercise.
         update(updateDTO, programmingExercise);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateProgrammingExercise(updateDTO, null);
+        ResponseEntity<ProgrammingExercise> response = updateProgrammingExercise(updateDTO, null);
+
+        // The call inside updateProgrammingExercise used already-mutated "originals" (no-op).
+        // Apply the correct originals now to ensure participant scores and due dates update.
+        ProgrammingExercise savedExercise = response.getBody();
+        if (savedExercise != null) {
+            exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+            participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        }
+        return response;
     }
 }

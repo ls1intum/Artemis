@@ -4,42 +4,7 @@ import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-
-/**
- * DTO for competency reference (just the ID)
- */
-export interface CompetencyDTO {
-    id: number;
-}
-
-/**
- * DTO for competency links with weight
- */
-export interface CompetencyLinkDTO {
-    competency: CompetencyDTO;
-    weight: number;
-}
-
-/**
- * DTO for grading criterion
- */
-export interface GradingCriterionDTO {
-    id?: number;
-    title?: string;
-    structuredGradingInstructions?: GradingInstructionDTO[];
-}
-
-/**
- * DTO for grading instruction
- */
-export interface GradingInstructionDTO {
-    id?: number;
-    credits?: number;
-    gradingScale?: string;
-    instructionDescription?: string;
-    feedback?: string;
-    usageCount?: number;
-}
+import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 /**
  * DTO for auxiliary repository
@@ -56,7 +21,9 @@ export interface AuxiliaryRepositoryDTO {
  * DTO for build config
  */
 export interface UpdateProgrammingExerciseBuildConfigDTO {
+    id?: number;
     sequentialTestRuns?: boolean;
+    branch?: string;
     buildPlanConfiguration?: string;
     buildScript?: string;
     checkoutSolutionRepository: boolean;

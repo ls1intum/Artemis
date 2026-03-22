@@ -473,7 +473,7 @@ export class ExamManagementService {
                 isMandatory: group.isMandatory ?? true,
                 exercises: group.exercises?.map((exercise) => ({
                     id: exercise.id,
-                    exerciseType: exercise.type?.toUpperCase().replace('-', '_'),
+                    exerciseType: exercise.type,
                     title: exercise.title,
                     shortName: exercise.shortName,
                     maxPoints: exercise.maxPoints,

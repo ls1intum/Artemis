@@ -278,6 +278,8 @@ public class ModelingExerciseResource {
         Double oldMaxPoints = originalExercise.getMaxPoints();
         Double oldBonusPoints = originalExercise.getBonusPoints();
         String oldProblemStatement = originalExercise.getProblemStatement();
+        // Capture original competency IDs before update() mutates the entity (L1 cache)
+        Set<Long> originalCompetencyIds = originalExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         // whether is exam exercise or course exercise are not changeable
         ModelingExercise updatedExercise = update(updateModelingExerciseDTO, originalExercise);
@@ -302,7 +304,7 @@ public class ModelingExerciseResource {
         exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Notify AtlasML about the modeling exercise update
         atlasMLApi.ifPresent(api -> {
@@ -489,6 +491,13 @@ public class ModelingExerciseResource {
         final ModelingExercise existingExercise = modelingExerciseRepository.findByIdWithExampleSubmissionsResultsCompetenciesAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateModelingExerciseDTO.id());
 
+        // Capture original values BEFORE update() mutates the entity via L1 cache.
+        // updateModelingExercise() loads the same L1-cached entity, so it would see
+        // already-mutated "originals" and skip participant score / due date updates.
+        final Double originalMaxPoints = existingExercise.getMaxPoints();
+        final Double originalBonusPoints = existingExercise.getBonusPoints();
+        final ZonedDateTime originalDueDate = existingExercise.getDueDate();
+
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // make sure the course actually exists
         ModelingExercise exerciseForReevaluation = update(updateModelingExerciseDTO, existingExercise);
@@ -497,7 +506,16 @@ public class ModelingExerciseResource {
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
-        return updateModelingExercise(updateModelingExerciseDTO, null);
+        ResponseEntity<ModelingExercise> response = updateModelingExercise(updateModelingExerciseDTO, null);
+
+        // The call inside updateModelingExercise used already-mutated "originals" (no-op).
+        // Apply the correct originals now to ensure participant scores and due dates update.
+        ModelingExercise savedExercise = response.getBody();
+        if (savedExercise != null) {
+            exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+            participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        }
+        return response;
     }
 
     /**
