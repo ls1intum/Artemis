@@ -19,9 +19,11 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -47,6 +49,29 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
+
+    /**
+     * Deletes assessment notes associated with a result using native SQL because the
+     * AssessmentNote entity has a unidirectional @OneToMany from Result (no result field on AssessmentNote).
+     *
+     * @param resultId the id of the result whose assessment notes should be deleted
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query(value = "DELETE FROM assessment_note WHERE result_id = :resultId", nativeQuery = true)
+    void deleteAssessmentNotesByResultId(@Param("resultId") long resultId);
+
+    /**
+     * Deletes a result by id using JPQL bulk DELETE to avoid Hibernate L2 cache staleness
+     * issues that occur when using resultRepository.delete(entity) after bulk-deleting
+     * feedbacks via JPQL (the merge path tries to initialize stale PersistentList references).
+     *
+     * @param resultId the id of the result to delete
+     */
+    @Transactional // ok because of delete
+    @Modifying
+    @Query("DELETE FROM Result r WHERE r.id = :resultId")
+    void deleteByResultId(@Param("resultId") long resultId);
 
     /**
      * Count the number of results for a course by its exercise IDs.
