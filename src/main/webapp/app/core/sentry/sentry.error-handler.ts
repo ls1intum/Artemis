@@ -40,7 +40,7 @@ export class SentryErrorHandler extends ErrorHandler {
             release: VERSION,
             environment: this.environment,
             integrations: integrations,
-            sendDefaultPII: false,
+            sendDefaultPii: false,
             tracesSampler: (samplingContext) => {
                 const { name, inheritOrSampleWith } = samplingContext;
 
@@ -66,19 +66,6 @@ export class SentryErrorHandler extends ErrorHandler {
                   delete trans.user;
                 }
                 return trans;
-            },
-            beforeSendSpan: (span) => {
-                // span.name, spans passed in json
-                if (span.user) {
-                  delete span.user;
-                }
-                return span;
-            },
-            beforeBreadcrumb: (crumb) => {
-                if (crumb.user) {
-                  delete crumb.user;
-                }
-                return crumb;
             },
         });
 
