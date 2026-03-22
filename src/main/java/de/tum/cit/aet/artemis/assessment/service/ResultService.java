@@ -202,11 +202,15 @@ public class ResultService {
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
-        // Clear the in-memory feedbacks list to prevent Hibernate from trying to load
-        // the (already bulk-deleted) feedbacks during merge, which would fail due to
-        // null indices in the @OrderColumn list.
-        result.setFeedbacks(List.of());
-        resultRepository.delete(result);
+        // Delete assessment notes before the result (JPQL bypasses cascade settings).
+        resultRepository.deleteAssessmentNotesByResultId(result.getId());
+        // Use a direct JPQL delete instead of resultRepository.delete(entity) to avoid
+        // Hibernate 6.6 L2 cache issues. The entity-based delete triggers em.merge() for
+        // detached entities, which initializes the feedbacks @OrderColumn collection from
+        // the L2 cache. Since feedbacks were already bulk-deleted above, the cache contains
+        // stale references causing EntityNotFoundException.
+        // A JPQL delete bypasses the entity lifecycle entirely.
+        resultRepository.deleteResultById(result.getId());
     }
 
     /**
