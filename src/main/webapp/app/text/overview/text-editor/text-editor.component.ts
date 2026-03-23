@@ -92,7 +92,6 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     participationId = input<number>();
     displayHeader = input<boolean>(true);
     expandProblemStatement = input<boolean>(true);
-    showProblemStatement = input<boolean>(true);
     inputExercise = input<TextExercise>();
     inputSubmission = input<TextSubmission>();
     inputParticipation = input<StudentParticipation>();
@@ -206,6 +205,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
     private setupComponentWithInputValues() {
         if (this.inputExercise() !== undefined) {
             this.textExercise = this.inputExercise()!;
+            this.examMode = !!this.textExercise.exerciseGroup;
         }
         if (this.inputSubmission() !== undefined) {
             this.submission = this.inputSubmission()!;

@@ -1,17 +1,8 @@
 <jhi-resizable-panels>
     @if (studentParticipation()) {
         <ng-template jhiPanel label="Editor" [icon]="getIcon(exercise().type)">
-            @if (exercise().type === ExerciseType.TEXT) {
-                <jhi-text-editor [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
-            }
-            @if (showCodeEditor()) {
-                <jhi-code-editor-student [participationId]="studentParticipation()!.id" [lightweight]="true" />
-            }
-            @if (exercise().type === ExerciseType.MODELING) {
-                <jhi-modeling-submission [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
-            }
-            @if (exercise().type === ExerciseType.FILE_UPLOAD) {
-                <jhi-file-upload-submission [participationId]="studentParticipation()!.id" [displayHeader]="false" [showProblemStatement]="false" />
+            @if (usesRouterOutlet()) {
+                <router-outlet />
             }
             @if (exercise().type === ExerciseType.QUIZ) {
                 <jhi-quiz [inputExerciseId]="exercise().id" [inputCourseId]="exercise().course?.id" [inputMode]="'live'" />

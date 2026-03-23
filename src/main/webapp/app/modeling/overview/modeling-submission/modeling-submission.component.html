@@ -1,5 +1,5 @@
 <div [id]="'exercise-' + modelingExercise?.id">
-    @if (displayHeader()) {
+    @if (displayHeader() && examMode) {
         <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExerciseHeader" [participation]="modelingParticipationHeader">
             <span pagetitle>
                 {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}:
@@ -71,7 +71,7 @@
             [isBeingPrinted]="isPrinting()"
             [expandProblemStatement]="expandProblemStatement()"
             [collapsed]="isFeedbackView"
-            [showRightPanel]="showProblemStatement()"
+            [showRightPanel]="showProblemStatement() && examMode"
         >
             <!--region Left Panel-->
             <ng-container left-body>

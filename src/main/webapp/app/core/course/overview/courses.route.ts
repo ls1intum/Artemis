@@ -106,14 +106,55 @@ export const courseRoutes: Routes = [
                         loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         pathMatch: 'full',
                     },
+                    {
+                        path: 'text-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
+                    },
+                    {
+                        path: 'programming-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/programming/overview/programming-exercise-participation.route').then((m) => m.programmingExerciseParticipationRoute),
+                    },
+                    {
+                        path: 'modeling-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/modeling/overview/modeling-exercise-split-panel.route').then((m) => m.modelingExerciseSplitPanelRoute),
+                    },
+                    {
+                        path: 'file-upload-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/fileupload/overview/file-upload-participation.route').then((m) => m.fileUploadParticipationRoute),
+                    },
                 ],
-            },
-            {
-                path: 'exercises/text-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/text/overview/text-editor.route').then((m) => m.textEditorRoute),
             },
             {
                 path: 'exercises/programming-exercises/:exerciseId/code-editor/:participationId',
