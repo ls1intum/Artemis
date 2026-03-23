@@ -35,9 +35,22 @@ public record ShortAnswerQuestionCreateDTO(@NotEmpty String title, String text, 
      * @return the {@link ShortAnswerQuestionCreateDTO} with properties and child DTOs set from the domain object
      */
     public static ShortAnswerQuestionCreateDTO of(ShortAnswerQuestion question) {
-        List<ShortAnswerSpotCreateDTO> spotDTOs = question.getSpots().stream().map(ShortAnswerSpotCreateDTO::of).toList();
-        List<ShortAnswerSolutionCreateDTO> solutionDTOs = question.getSolutions().stream().map(ShortAnswerSolutionCreateDTO::of).toList();
-        List<ShortAnswerMappingCreateDTO> mappingDTOs = question.getCorrectMappings().stream().map(ShortAnswerMappingCreateDTO::of).toList();
+        // Generate stable tempIDs: use real id if persisted, otherwise generate a unique one.
+        long tempIdCounter = 1;
+        Map<ShortAnswerSpot, Long> spotTempIds = new HashMap<>();
+        for (ShortAnswerSpot spot : question.getSpots()) {
+            spotTempIds.put(spot, spot.getId() != null ? spot.getId() : tempIdCounter++);
+        }
+        Map<ShortAnswerSolution, Long> solutionTempIds = new HashMap<>();
+        for (ShortAnswerSolution sol : question.getSolutions()) {
+            solutionTempIds.put(sol, sol.getId() != null ? sol.getId() : tempIdCounter++);
+        }
+
+        List<ShortAnswerSpotCreateDTO> spotDTOs = question.getSpots().stream().map(s -> new ShortAnswerSpotCreateDTO(spotTempIds.get(s), s.getSpotNr(), s.getWidth())).toList();
+        List<ShortAnswerSolutionCreateDTO> solutionDTOs = question.getSolutions().stream().map(s -> new ShortAnswerSolutionCreateDTO(solutionTempIds.get(s), s.getText())).toList();
+        List<ShortAnswerMappingCreateDTO> mappingDTOs = question.getCorrectMappings().stream()
+                .map(m -> new ShortAnswerMappingCreateDTO(solutionTempIds.get(m.getSolution()), spotTempIds.get(m.getSpot()))).toList();
+
         return new ShortAnswerQuestionCreateDTO(question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
                 question.getScoringType(), question.isRandomizeOrder(), spotDTOs, solutionDTOs, mappingDTOs, question.getSimilarityValue(), question.getMatchLetterCase());
     }

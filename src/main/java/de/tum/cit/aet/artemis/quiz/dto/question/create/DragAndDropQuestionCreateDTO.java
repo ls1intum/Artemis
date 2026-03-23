@@ -88,9 +88,25 @@ public record DragAndDropQuestionCreateDTO(@NotEmpty String title, String text, 
      * @return the {@link DragAndDropQuestionCreateDTO} with properties and child DTOs set from the domain object
      */
     public static DragAndDropQuestionCreateDTO of(DragAndDropQuestion question) {
-        List<DropLocationCreateDTO> locationDTOs = question.getDropLocations().stream().map(DropLocationCreateDTO::of).toList();
-        List<DragItemCreateDTO> itemDTOs = question.getDragItems().stream().map(DragItemCreateDTO::of).toList();
-        List<DragAndDropMappingCreateDTO> mappingDTOs = question.getCorrectMappings().stream().map(DragAndDropMappingCreateDTO::of).toList();
+        // Generate stable tempIDs for items: use real id if persisted, otherwise generate a unique one.
+        // This is needed for import where entities may not have DB IDs yet.
+        long tempIdCounter = 1;
+        Map<DragItem, Long> dragItemTempIds = new HashMap<>();
+        for (DragItem item : question.getDragItems()) {
+            dragItemTempIds.put(item, item.getId() != null ? item.getId() : tempIdCounter++);
+        }
+        Map<DropLocation, Long> dropLocationTempIds = new HashMap<>();
+        for (DropLocation loc : question.getDropLocations()) {
+            dropLocationTempIds.put(loc, loc.getId() != null ? loc.getId() : tempIdCounter++);
+        }
+
+        List<DragItemCreateDTO> itemDTOs = question.getDragItems().stream().map(di -> new DragItemCreateDTO(dragItemTempIds.get(di), di.getText(), di.getPictureFilePath()))
+                .toList();
+        List<DropLocationCreateDTO> locationDTOs = question.getDropLocations().stream()
+                .map(dl -> new DropLocationCreateDTO(dropLocationTempIds.get(dl), dl.getPosX(), dl.getPosY(), dl.getWidth(), dl.getHeight())).toList();
+        List<DragAndDropMappingCreateDTO> mappingDTOs = question.getCorrectMappings().stream()
+                .map(m -> new DragAndDropMappingCreateDTO(dragItemTempIds.get(m.getDragItem()), dropLocationTempIds.get(m.getDropLocation()))).toList();
+
         return new DragAndDropQuestionCreateDTO(question.getTitle(), question.getText(), question.getHint(), question.getExplanation(), question.getPoints(),
                 question.getScoringType(), question.isRandomizeOrder(), question.getBackgroundFilePath(), locationDTOs, itemDTOs, mappingDTOs);
     }

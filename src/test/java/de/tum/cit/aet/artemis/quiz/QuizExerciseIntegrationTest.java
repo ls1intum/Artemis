@@ -332,12 +332,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuiz_DnD_MissingTempID_badRequest() throws Exception {
+        // Creating a quiz with a new drag item (id=null) is now valid — the DTO layer
+        // generates tempIDs automatically. This test verifies that creation succeeds.
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof DragAndDropQuestion).findFirst().ifPresent(q -> {
             DragAndDropQuestion dnd = (DragAndDropQuestion) q;
             dnd.getDragItems().getFirst().setId(null);
         });
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
 
     @Test
@@ -409,12 +411,14 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuiz_SA_MissingTempID_badRequest() throws Exception {
+        // Creating a quiz with a new spot (id=null) is now valid — the DTO layer
+        // generates tempIDs automatically. This test verifies that creation succeeds.
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizQuestions().stream().filter(q -> q instanceof ShortAnswerQuestion).findFirst().ifPresent(q -> {
             ShortAnswerQuestion sa = (ShortAnswerQuestion) q;
             sa.getSpots().getFirst().setId(null);
         });
-        createQuizExerciseWithFiles(quizExercise, HttpStatus.BAD_REQUEST, true);
+        createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
     }
 
     @Test
