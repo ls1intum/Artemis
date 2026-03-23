@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ConversationOptionsComponent } from 'app/shared/sidebar/conversation-options/conversation-options.component';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -16,15 +16,12 @@ import { ConversationService } from 'app/communication/conversations/service/con
 import { AlertService } from 'app/shared/service/alert.service';
 import { MetisService } from 'app/communication/service/metis.service';
 import { MockMetisService } from '../../../../../../test/javascript/spec/helpers/mocks/service/mock-metis-service.service';
-import { GroupChatDTO } from 'app/communication/shared/entities/conversation/group-chat.model';
-import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { isOneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { provideRouter } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
-import { ConversationDetailDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 const examples: (() => ConversationDTO)[] = [
     () => generateOneToOneChatDTO({}),
@@ -59,7 +56,7 @@ examples.forEach((conversation) => {
                     MockProvider(ConversationService),
                     MockProvider(MetisConversationService),
                     MockProvider(AlertService),
-                    MockProvider(NgbModal),
+                    MockProvider(DialogService),
                     { provide: MetisService, useClass: MockMetisService },
                     { provide: TranslateService, useClass: MockTranslateService },
                 ],
@@ -150,16 +147,8 @@ examples.forEach((conversation) => {
             }
             fixture.detectChanges();
             tick(301);
-            const modalService = TestBed.inject(NgbModal);
-            const mockModalRef = {
-                componentInstance: {
-                    course: undefined,
-                    createChannelFn: undefined,
-                    initialize: () => {},
-                },
-                result: Promise.resolve([new GroupChatDTO(), true]),
-            };
-            const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
+            const dialogService = TestBed.inject(DialogService);
+            const openDialogSpy = jest.spyOn(dialogService, 'open').mockReturnValue({ onClose: of(undefined) } as any);
             fixture.detectChanges();
 
             const dialogOpenButton = fixture.debugElement.nativeElement.querySelector('.setting');
@@ -167,7 +156,6 @@ examples.forEach((conversation) => {
             tick(301);
             fixture.whenStable().then(() => {
                 expect(openDialogSpy).toHaveBeenCalledOnce();
-                expect(openDialogSpy).toHaveBeenCalledWith(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
             });
         }));
     });

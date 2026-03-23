@@ -1,7 +1,7 @@
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { NgClass } from '@angular/common';
-import { ChangeDetectorRef, Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { ChangeDetectorRef, Component, OnDestroy, OnInit, ViewEncapsulation, computed, inject, output, signal, viewChild } from '@angular/core';
+import { outputToObservable, toSignal } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import {
@@ -20,7 +20,7 @@ import {
     faPlus,
     faTimes,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DialogService } from 'primeng/dynamicdialog';
 import { captureException } from '@sentry/angular';
 import { canCreateChannel } from 'app/communication/conversations/conversation-permissions.utils';
 import { CourseConversationsCodeOfConductComponent } from 'app/communication/course-conversations-components/code-of-conduct/course-conversations-code-of-conduct.component';
@@ -61,8 +61,8 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { EventManager } from 'app/shared/service/event-manager.service';
 import { SidebarComponent } from 'app/shared/sidebar/sidebar.component';
 import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, SidebarData, SidebarItemShowAlways } from 'app/shared/types/sidebar';
-import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
-import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
+import { Observable, Subject, Subscription, firstValueFrom } from 'rxjs';
+import { debounceTime, distinctUntilChanged, filter, map, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
@@ -154,7 +154,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private metisService = inject(MetisService);
     private faqService = inject(FaqService);
     private courseOverviewService = inject(CourseOverviewService);
-    private modalService = inject(NgbModal);
+    private dialogService = inject(DialogService);
     private alertService = inject(AlertService);
     private eventManager = inject(EventManager);
     private breakpointObserver = inject(BreakpointObserver);
@@ -209,7 +209,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     faFilter = faFilter;
 
     createChannelFn?: (channel: ChannelDTO) => Observable<never>;
-    channelActions$ = new EventEmitter<ChannelAction>();
+    readonly channelActions$ = output<ChannelAction>();
 
     private courseSidebarService = inject(CourseSidebarService);
     private changeDetector = inject(ChangeDetectorRef);
@@ -302,7 +302,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
                 this.metisConversationService.checkIsCodeOfConductAccepted(this.course()!);
                 this.isServiceSetUp = true;
                 this.isLoading = false;
-                this.channelActions$
+                outputToObservable(this.channelActions$)
                     .pipe(
                         debounceTime(500),
                         distinctUntilChanged(
@@ -582,12 +582,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateGroupChatDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(GroupChatCreateDialogComponent, {
+            ...defaultFirstLayerDialogOptions,
+            data: { course: this.course() },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result: UserPublicInfoDTO[] | undefined) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((chatPartners: UserPublicInfoDTO[]) => {
@@ -600,12 +601,13 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     openCreateOneToOneChatDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(OneToOneChatCreateDialogComponent, {
+            ...defaultFirstLayerDialogOptions,
+            data: { course: this.course() },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result: UserPublicInfoDTO | undefined) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((chatPartner: UserPublicInfoDTO) => {
@@ -620,16 +622,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Opens the create channel modal dialog.
+     * Opens the create channel dialog.
      * Emits a create action for the given channel on confirmation.
      */
     openCreateChannelDialog() {
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(ChannelsCreateDialogComponent, {
+            ...defaultSecondLayerDialogOptions,
+            data: { course: this.course() },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result: ChannelDTO | undefined) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((channel: ChannelDTO) => {
@@ -652,14 +655,17 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openChannelOverviewDialog() {
         const subType = undefined;
-        const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;
-        modalRef.componentInstance.channelSubType = subType;
-        modalRef.componentInstance.initialize();
-        from(modalRef.result)
+        const ref = this.dialogService.open(ChannelsOverviewDialogComponent, {
+            ...defaultFirstLayerDialogOptions,
+            data: {
+                course: this.course(),
+                createChannelFn: subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined,
+                channelSubType: subType,
+            },
+        });
+        ref?.onClose
             .pipe(
-                catchError(() => EMPTY),
+                filter((result) => !!result),
                 takeUntil(this.ngUnsubscribe),
             )
             .subscribe((result) => {
