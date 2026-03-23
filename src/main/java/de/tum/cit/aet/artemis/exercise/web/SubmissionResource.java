@@ -31,11 +31,13 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
+import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
+import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -80,9 +82,11 @@ public class SubmissionResource {
 
     private final SubmissionVersionRepository submissionVersionRepository;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository) {
+            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository, InstanceMessageSendService instanceMessageSendService) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -92,6 +96,7 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.submissionVersionRepository = submissionVersionRepository;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -113,6 +118,14 @@ public class SubmissionResource {
         }
 
         checkAccessPermissionAtInstructor(submission.get());
+        // Schedule participant score recalculation before deleting results, because
+        // deleteResult may use a JPQL bulk delete that bypasses the @PreRemove callback
+        // in ResultListener when the result's feedbacks collection is not initialized.
+        if (submission.get().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
+            for (Result result : submission.get().getResults()) {
+                instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
+            }
+        }
         List<Result> results = submission.get().getResults();
         for (Result result : results) {
             resultService.deleteResult(result, true);
