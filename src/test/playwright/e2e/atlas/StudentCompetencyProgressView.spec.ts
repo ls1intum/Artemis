@@ -180,7 +180,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             const updateDTO = {
                 competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
             };
-            const patchResponse = await page.request.patch(`api/quiz/quiz-exercises/${quizExercise.id}`, {
+            const patchResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}`, {
                 multipart: {
                     exercise: {
                         name: 'exercise',

@@ -20,9 +20,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
@@ -174,7 +174,7 @@ public class QuizExerciseCreationUpdateResource {
     }
 
     /**
-     * PATCH /quiz-exercises/:exerciseId : Update an existing quizExercise with a
+     * PUT /quiz-exercises/:exerciseId : Update an existing quizExercise with a
      * DTO.
      *
      * @param exerciseId            the id of the quizExercise to save
@@ -190,7 +190,7 @@ public class QuizExerciseCreationUpdateResource {
      *         not valid, or with status 500
      *         (Internal Server Error) if the quizExercise couldn't be updated
      */
-    @PatchMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PutMapping(value = "quiz-exercises/{exerciseId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInExercise
     public ResponseEntity<QuizExerciseWithStatisticsDTO> updateQuizExercise(@PathVariable Long exerciseId,
             @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files,

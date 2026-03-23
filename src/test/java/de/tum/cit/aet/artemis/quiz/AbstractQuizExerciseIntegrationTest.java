@@ -236,7 +236,7 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
             throws Exception {
         UpdateQuizExerciseDTO dto = UpdateQuizExerciseDTO.of(quizExercise);
 
-        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PATCH, "/api/quiz/quiz-exercises/" + quizExercise.getId());
+        var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/quiz/quiz-exercises/" + quizExercise.getId());
         if (params != null) {
             builder.params(params);
         }
