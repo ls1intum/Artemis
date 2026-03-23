@@ -2247,7 +2247,15 @@ public class ProgrammingExerciseIntegrationTestService {
         submission.setCommitHash(commit.getId().getName());
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
 
-        Map<String, String> expectedFiles = Map.of("test.txt", "Initial commit", "C.java", "efg", "B.java", "cde", "A.java", "abc", "README.md", "Initial commit");
+        // @formatter:off
+        Map<String, String> expectedFiles = Map.ofEntries(
+                Map.entry("test.txt", "Initial commit"),
+                Map.entry("C.java", "efg"),
+                Map.entry("B.java", "cde"),
+                Map.entry("A.java", "abc"),
+                Map.entry("README.md", "Initial commit")
+        );
+        // @formatter:on
 
         Map<String, String> actualFiles = request.get(
                 "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK, Map.class);
