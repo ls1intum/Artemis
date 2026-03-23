@@ -1,4 +1,6 @@
-import { TestBed, fakeAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { TestBed } from '@angular/core/testing';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { MockProvider } from 'ng-mocks';
@@ -25,6 +27,8 @@ import { MetisPostDTO } from 'app/communication/shared/entities/metis-post-dto.m
 import { Post } from 'app/communication/shared/entities/post.model';
 
 describe('MetisConversationService', () => {
+    setupTestBed({ zoneless: true });
+
     let metisConversationService: MetisConversationService;
     let conversationService: ConversationService;
     let groupChatService: GroupChatService;
@@ -66,16 +70,16 @@ describe('MetisConversationService', () => {
         conversationService = TestBed.inject(ConversationService);
         alertService = TestBed.inject(AlertService);
 
-        jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse<Course>({ body: course })));
-        jest.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
-        jest.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
+        vi.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of(new HttpResponse<Course>({ body: course })));
+        vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
+        vi.spyOn(conversationService, 'convertServerDates').mockImplementation((conversation) => conversation);
 
         receiveMockSubject = new Subject<ConversationWebsocketDTO>();
-        jest.spyOn(websocketService, 'subscribe').mockReturnValue(receiveMockSubject.asObservable());
+        vi.spyOn(websocketService, 'subscribe').mockReturnValue(receiveMockSubject.asObservable());
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -89,7 +93,7 @@ describe('MetisConversationService', () => {
                     expect(metisConversationService.course).toEqual(course);
                     forkJoin([metisConversationService.isLoading$, metisConversationService.activeConversation$, metisConversationService.conversationsOfUser$]).subscribe({
                         next: ([isLoading, activeConversation, conversations]) => {
-                            expect(isLoading).toBeFalse();
+                            expect(isLoading).toBe(false);
                             expect(activeConversation).toBeUndefined();
                             expect(conversations).toEqual([groupChat, oneToOneChat, channel]);
                             done({});
@@ -138,7 +142,7 @@ describe('MetisConversationService', () => {
                 complete: () => {
                     metisConversationService.setActiveConversation(groupChat);
                     metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages) => {
-                        expect(hasUnreadMessages).toBeTrue();
+                        expect(hasUnreadMessages).toBe(true);
                         done({});
                     });
                 },
@@ -151,7 +155,7 @@ describe('MetisConversationService', () => {
         return new Promise((done) => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
-                    const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+                    const addAlertSpy = vi.spyOn(alertService, 'addAlert');
 
                     metisConversationService.setActiveConversation(4);
                     expect(addAlertSpy).toHaveBeenCalledOnce();
@@ -166,7 +170,7 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     metisConversationService.setActiveConversation(groupChat);
-                    const getConversationsOfUserSpy = jest.spyOn(conversationService, 'getConversationsOfUser');
+                    const getConversationsOfUserSpy = vi.spyOn(conversationService, 'getConversationsOfUser');
                     getConversationsOfUserSpy.mockClear();
                     metisConversationService.forceRefresh().subscribe({
                         complete: () => {
@@ -185,8 +189,8 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newChannel = generateExampleChannelDTO({ id: 99 } as ChannelDTO);
-                    const createChannelSpy = jest.spyOn(channelService, 'create').mockReturnValue(of(new HttpResponse({ body: newChannel })));
-                    const getConversationSpy = jest
+                    const createChannelSpy = vi.spyOn(channelService, 'create').mockReturnValue(of(new HttpResponse({ body: newChannel })));
+                    const getConversationSpy = vi
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newChannel] })));
                     createChannelSpy.mockClear();
@@ -211,8 +215,8 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newGroupChat = generateExampleGroupChatDTO({ id: 99 });
-                    const createGroupChatSpy = jest.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newGroupChat })));
-                    const getConversationSpy = jest
+                    const createGroupChatSpy = vi.spyOn(groupChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newGroupChat })));
+                    const getConversationSpy = vi
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newGroupChat] })));
                     createGroupChatSpy.mockClear();
@@ -237,8 +241,8 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newOneToOneChat = generateOneToOneChatDTO({ id: 99 });
-                    const createOneToOneChatSpy = jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
-                    const getConversationSpy = jest
+                    const createOneToOneChatSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
+                    const getConversationSpy = vi
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newOneToOneChat] })));
                     createOneToOneChatSpy.mockClear();
@@ -263,8 +267,8 @@ describe('MetisConversationService', () => {
             metisConversationService.setUpConversationService(course).subscribe({
                 complete: () => {
                     const newOneToOneChat = generateOneToOneChatDTO({ id: 99 });
-                    const createOneToOneChatSpy = jest.spyOn(oneToOneChatService, 'createWithId').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
-                    const getConversationSpy = jest
+                    const createOneToOneChatSpy = vi.spyOn(oneToOneChatService, 'createWithId').mockReturnValue(of(new HttpResponse({ body: newOneToOneChat })));
+                    const getConversationSpy = vi
                         .spyOn(conversationService, 'getConversationsOfUser')
                         .mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel, newOneToOneChat] })));
                     createOneToOneChatSpy.mockClear();
@@ -338,7 +342,7 @@ describe('MetisConversationService', () => {
                     metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
                         // find updated conversation in cache
                         const updatedConversation = conversationsOfUser.find((conversation) => conversation.id === channel.id);
-                        expect(updatedConversation!.lastMessageDate!.isSame(lastMessageDate)).toBeTrue();
+                        expect(updatedConversation!.lastMessageDate!.isSame(lastMessageDate)).toBe(true);
                         done({});
                     });
                 },
@@ -368,11 +372,11 @@ describe('MetisConversationService', () => {
     });
 
     it.each([true, false])('should update subscription for unread messages', (unreadMessages: boolean) => {
-        jest.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
+        vi.spyOn(conversationService, 'checkForUnreadMessages').mockReturnValue(of(new HttpResponse<boolean>({ body: unreadMessages })));
         let numberOfSubscriptions = 0;
 
         metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
-            expect(hasUnreadMessages).toBeTrue();
+            expect(hasUnreadMessages).toBe(true);
             numberOfSubscriptions++;
         });
 
@@ -384,27 +388,33 @@ describe('MetisConversationService', () => {
     it('should set code of conduct', () => {
         metisConversationService.setCodeOfConduct();
         metisConversationService.isCodeOfConductPresented$.subscribe((isCodeOfConductPresented: boolean) => {
-            expect(isCodeOfConductPresented).toBeTrue();
+            expect(isCodeOfConductPresented).toBe(true);
         });
     });
 
     it('should check and accept code of conduct', () => {
-        const checkStub = jest.spyOn(conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
+        const checkStub = vi.spyOn(conversationService, 'checkIsCodeOfConductAccepted').mockReturnValue(of(new HttpResponse<boolean>({ body: false })));
         metisConversationService.checkIsCodeOfConductAccepted(course);
-        metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
-            expect(isCodeOfConductAccepted).toBeFalse();
+        let lastValue: boolean | undefined;
+        const sub = metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+            lastValue = isCodeOfConductAccepted;
         });
+        expect(lastValue).toBe(false);
+        sub.unsubscribe();
         expect(checkStub).toHaveBeenCalledOnce();
 
-        const acceptStub = jest.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
+        const acceptStub = vi.spyOn(conversationService, 'acceptCodeOfConduct').mockReturnValue(of(new HttpResponse<void>({})));
         metisConversationService.acceptCodeOfConduct(course);
-        metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
-            expect(isCodeOfConductAccepted).toBeTrue();
+        let acceptedValue: boolean | undefined;
+        const sub2 = metisConversationService.isCodeOfConductAccepted$.subscribe((isCodeOfConductAccepted: boolean) => {
+            acceptedValue = isCodeOfConductAccepted;
         });
+        expect(acceptedValue).toBe(true);
+        sub2.unsubscribe();
         expect(acceptStub).toHaveBeenCalledOnce();
     });
 
-    it('should handle new message', fakeAsync(() => {
+    it('should handle new message', () => {
         const postDTO: MetisPostDTO = {
             post: { author: { id: 456 }, content: 'Content', conversation: { id: 1 } } as Post,
             action: MetisPostAction.CREATE,
@@ -412,7 +422,7 @@ describe('MetisConversationService', () => {
         metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 0 } as ConversationDTO];
         metisConversationService.handleNewMessage(postDTO.post.conversation?.id, postDTO.post.conversation?.lastMessageDate);
         expect(metisConversationService['conversationsOfUser'][0].unreadMessagesCount).toBe(1);
-    }));
+    });
 
     it('should mark messages as read', () => {
         metisConversationService['conversationsOfUser'] = [{ id: 1, unreadMessageCount: 1 } as ConversationDTO, { id: 2, unreadMessageCount: 1 } as ConversationDTO];
@@ -421,7 +431,7 @@ describe('MetisConversationService', () => {
     });
 
     it('should call refresh after marking all channels as read', () => {
-        const markAllChannelAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of());
+        const markAllChannelAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of());
         metisConversationService.markAllChannelsAsRead(course);
         expect(markAllChannelAsReadSpy).toHaveBeenCalledOnce();
     });
@@ -433,21 +443,21 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).activeConversation = groupChat;
             (metisConversationService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
             const conversationId = groupChat.id;
             const lastReadDate = dayjs();
             const unreadMessagesCount = 4;
             (metisConversationService as any).updateConversationUnreadState(conversationId, lastReadDate, unreadMessagesCount);
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(unreadMessagesCount);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeTrue();
+            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(true);
             expect((metisConversationService as any).activeConversation.lastReadDate).toBeDefined();
 
             expect((metisConversationService as any).conversationsOfUser[0].unreadMessagesCount).toBe(unreadMessagesCount);
-            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBeTrue();
+            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBe(true);
             expect((metisConversationService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
 
-            expect((metisConversationService as any).isMarkedAsUnread).toBeTrue();
+            expect((metisConversationService as any).isMarkedAsUnread).toBe(true);
             expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
         });
 
@@ -455,7 +465,7 @@ describe('MetisConversationService', () => {
             const nonExistentConversation = { ...groupChat, id: 999 };
             (metisConversationService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
             (metisConversationService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
 
@@ -472,7 +482,7 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).updateConversationUnreadState(nonExistentConversation.id, dayjs(), 5);
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
+            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(false);
         });
     });
 
@@ -483,16 +493,16 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).activeConversation = groupChat;
             (metisConversationService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
             (metisConversationService as any).updateConversationAsRead();
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
+            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(false);
             expect((metisConversationService as any).activeConversation.lastReadDate).toBeDefined();
 
             expect((metisConversationService as any).conversationsOfUser[0].unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBeFalse();
+            expect((metisConversationService as any).conversationsOfUser[0].hasUnreadMessage).toBe(false);
             expect((metisConversationService as any).conversationsOfUser[0].lastReadDate).toBeDefined();
 
             expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
@@ -502,7 +512,7 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).activeConversation = undefined;
             (metisConversationService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
             (metisConversationService as any).updateConversationAsRead();
 
@@ -514,7 +524,7 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).conversationsOfUser = [groupChat];
             (metisConversationService as any).isMarkedAsUnread = true;
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
             (metisConversationService as any).updateConversationAsRead();
 
@@ -528,14 +538,14 @@ describe('MetisConversationService', () => {
             (metisConversationService as any).activeConversation = nonExistentConversation;
             (metisConversationService as any).conversationsOfUser = [groupChat];
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
             (metisConversationService as any).updateConversationAsRead();
 
             expect(nextSpy).not.toHaveBeenCalled();
 
             expect((metisConversationService as any).activeConversation.unreadMessagesCount).toBe(0);
-            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBeFalse();
+            expect((metisConversationService as any).activeConversation.hasUnreadMessage).toBe(false);
         });
     });
 
@@ -560,16 +570,16 @@ describe('MetisConversationService', () => {
             ];
 
             // @ts-ignore
-            const markAllChannelsAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of({}));
+            const markAllChannelsAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of({}));
 
-            const nextSpy = jest.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
+            const nextSpy = vi.spyOn((metisConversationService as any)._conversationsOfUser$, 'next');
 
             metisConversationService.markAllChannelsAsRead(course);
 
             // @ts-ignore
             (metisConversationService as any).conversationsOfUser.forEach((conversation) => {
                 expect(conversation.unreadMessagesCount).toBe(0);
-                expect(conversation.hasUnreadMessage).toBeFalse();
+                expect(conversation.hasUnreadMessage).toBe(false);
             });
 
             expect(nextSpy).toHaveBeenCalledWith((metisConversationService as any).conversationsOfUser);
@@ -580,7 +590,7 @@ describe('MetisConversationService', () => {
         it('should return Observable without calling service when course has no id', () => {
             const courseWithoutId = {} as Course;
 
-            const markAllChannelsAsReadSpy = jest.spyOn(conversationService, 'markAllChannelsAsRead');
+            const markAllChannelsAsReadSpy = vi.spyOn(conversationService, 'markAllChannelsAsRead');
 
             const result = metisConversationService.markAllChannelsAsRead(courseWithoutId);
 
@@ -595,9 +605,9 @@ describe('MetisConversationService', () => {
             const errorResponse = new HttpErrorResponse({ status: 500 });
 
             // @ts-ignore
-            jest.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of(errorResponse));
+            vi.spyOn(conversationService, 'markAllChannelsAsRead').mockReturnValue(of(errorResponse));
 
-            const errorSpy = jest.spyOn(alertService, 'error');
+            const errorSpy = vi.spyOn(alertService, 'error');
 
             metisConversationService.markAllChannelsAsRead(course);
 
@@ -612,9 +622,8 @@ describe('MetisConversationService', () => {
             { unreadMessagesCount: 0, isMuted: false },
         ];
         (metisConversationService as any).hasUnreadMessagesCheck();
-        metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
-            expect(hasUnread).toBeFalse();
-        });
+        // hasUnreadMessages starts as false and check finds no unread non-muted, so value stays false (no emission)
+        expect((metisConversationService as any).hasUnreadMessages).toBe(false);
 
         // Unread in non-muted conversation
         (metisConversationService as any).conversationsOfUser = [
@@ -622,8 +631,11 @@ describe('MetisConversationService', () => {
             { unreadMessagesCount: 0, isMuted: true },
         ];
         (metisConversationService as any).hasUnreadMessagesCheck();
-        metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
-            expect(hasUnread).toBeTrue();
+        let hasUnreadValue: boolean | undefined;
+        const sub = metisConversationService.hasUnreadMessages$.subscribe((hasUnread) => {
+            hasUnreadValue = hasUnread;
         });
+        expect(hasUnreadValue).toBe(true);
+        sub.unsubscribe();
     });
 });
