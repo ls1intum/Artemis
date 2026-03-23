@@ -8,6 +8,7 @@ import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationPr
 import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI;
 import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -242,6 +243,20 @@ public class ConfigurationValidator {
         if (VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule)) {
             if (!StringUtils.hasText(weaviateApiBaseUrl)) {
                 invalidProperties.add("artemis.weaviate.api-base-url (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+            }
+            else {
+                try {
+                    URI uri = URI.create(weaviateApiBaseUrl);
+                    String scheme = uri.getScheme();
+                    if (!uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme))) {
+                        invalidProperties.add(
+                                "artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+                    }
+                }
+                catch (IllegalArgumentException e) {
+                    invalidProperties
+                            .add("artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+                }
             }
             if (!StringUtils.hasText(weaviateApiKey)) {
                 invalidProperties.add("artemis.weaviate.api-key (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer, use a dummy value for Ollama)");
