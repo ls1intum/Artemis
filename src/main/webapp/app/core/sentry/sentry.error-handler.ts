@@ -61,7 +61,7 @@ export class SentryErrorHandler extends ErrorHandler {
             beforeSendTransaction: (t) => {
                 return this.scrubSentryPayload(t);
             },
-            beforeSendBreadcrumb: (crumb) => {
+            beforeBreadcrumb: (crumb) => {
                 if (crumb.message) {
                     crumb.message = this.scrubStringMessage(crumb.message);
                 }
