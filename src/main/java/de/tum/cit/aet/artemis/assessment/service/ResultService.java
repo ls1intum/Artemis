@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
@@ -86,6 +87,8 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
+    private final AssessmentNoteRepository assessmentNoteRepository;
+
     private final Optional<LtiApi> ltiApi;
 
     private final ResultWebsocketService resultWebsocketService;
@@ -126,15 +129,17 @@ public class ResultService {
 
     private final Optional<ParticipantScoreScheduleService> participantScoreScheduleService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
-            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
-            LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
-            BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, AssessmentNoteRepository assessmentNoteRepository, Optional<LtiApi> ltiApi,
+            ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
+            FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
+            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
             ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
             Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
+        this.assessmentNoteRepository = assessmentNoteRepository;
         this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -264,7 +269,7 @@ public class ResultService {
                     && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
                 participantScoreScheduleService.get().scheduleTask(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
             }
-            resultRepository.deleteAllAssessmentNotesByResultId(result.getId());
+            assessmentNoteRepository.deleteByResultId(result.getId());
             resultRepository.deleteResultById(result.getId());
         }
     }
@@ -277,7 +282,7 @@ public class ResultService {
      * See {@link #deleteResult} for the full deletion flow.
      * <p>
      * <b>NOTE:</b> This method does NOT delete {@code assessment_note} rows. Assessment notes are handled in
-     * {@link #deleteResult} via {@code resultRepository.deleteAllAssessmentNotesByResultId()} on the JPQL path,
+     * {@link #deleteResult} via {@code assessmentNoteRepository.deleteByResultId()} on the JPQL path,
      * or via JPA cascade on the standard path.
      * <p>
      * The deletion order is important to respect FK constraints:
