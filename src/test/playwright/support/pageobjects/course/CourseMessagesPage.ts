@@ -208,9 +208,9 @@ export class CourseMessagesPage {
         const topicInput = this.page.locator('#topic-input');
         await topicInput.waitFor({ state: 'visible', timeout: 5000 });
         await topicInput.clear();
-        await topicInput.fill(newTopic);
-        // Wait for auto-save debounce (1s) + server response
+        // Register response listener before triggering the auto-save to avoid race conditions
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await topicInput.fill(newTopic);
         await responsePromise;
         await this.closeEditPanel();
     }
@@ -224,9 +224,9 @@ export class CourseMessagesPage {
         const descInput = this.page.locator('#description-input');
         await descInput.waitFor({ state: 'visible', timeout: 5000 });
         await descInput.clear();
-        await descInput.fill(newDescription);
-        // Wait for auto-save debounce (1s) + server response
+        // Register response listener before triggering the auto-save to avoid race conditions
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await descInput.fill(newDescription);
         await responsePromise;
         await this.closeEditPanel();
     }

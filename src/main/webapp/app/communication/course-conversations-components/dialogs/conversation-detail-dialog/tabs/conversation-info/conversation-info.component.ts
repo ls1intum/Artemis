@@ -256,11 +256,6 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }, 2000);
     }
 
-    onMuteToggle(): void {
-        const currentMuted = this.activeConversation()?.isMuted ?? false;
-        this.mute$.next(!currentMuted);
-    }
-
     onMuteOptionChange(value: boolean): void {
         this.mute$.next(value);
     }
