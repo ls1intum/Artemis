@@ -159,8 +159,6 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
 
-        autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
-
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
         preparePostForBroadcast(createdMessage);
@@ -249,6 +247,13 @@ public class ConversationMessagingService extends PostingService {
         this.courseNotificationService.sendCourseNotification(mentionCourseNotification, mentionedUserRecipients);
 
         conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
+
+        try {
+            autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
+        }
+        catch (Exception e) {
+            log.error("Failed to forward message to autonomous tutor pipeline for post {}", createdMessage.getId(), e);
+        }
     }
 
     /**
