@@ -4,21 +4,16 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
-    EventEmitter,
-    Input,
-    OnChanges,
     OnDestroy,
     OnInit,
-    Output,
-    QueryList,
-    SimpleChanges,
-    ViewChild,
-    ViewChildren,
     ViewEncapsulation,
     effect,
     inject,
     input,
     output,
+    untracked,
+    viewChild,
+    viewChildren,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { faArrowDown, faCircleNotch, faEnvelope, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -70,7 +65,7 @@ interface PostGroup {
         ButtonComponent,
     ],
 })
-export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
+export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnDestroy {
     private sessionStorageService = inject(SessionStorageService);
     private breakpointObserver = inject(BreakpointObserver);
     metisService = inject(MetisService);
@@ -93,12 +88,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     createdNewMessage = false;
     private initialScrollComplete = false;
 
-    @Output() openThread = new EventEmitter<Post>();
+    readonly openThread = output<Post>();
 
-    @ViewChildren('postingThread') messages: QueryList<PostingThreadComponent>;
-    @ViewChild('container') content: ElementRef;
+    readonly messages = viewChildren<PostingThreadComponent>('postingThread');
+    readonly content = viewChild.required<ElementRef>('container');
 
-    @Input() course?: Course;
+    readonly course = input<Course>();
     showOnlyPinned = input<boolean>(false);
     pinnedCount = output<number>();
     pinnedPosts: Post[] = [];
@@ -148,16 +143,46 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     constructor() {
         effect(() => {
-            this.focusOnPostId = this.focusPostId();
-            this.isOpenThreadOnFocus = this.openThreadOnFocus();
+            const focusPostIdValue = this.focusPostId();
+            const openThreadOnFocusValue = this.openThreadOnFocus();
+            untracked(() => {
+                this.focusOnPostId = focusPostIdValue;
+                this.isOpenThreadOnFocus = openThreadOnFocusValue;
+            });
+        });
+
+        // viewChildren returns a signal; use effect() to react to changes.
+        // These effects are created in the constructor (injection context) but
+        // the viewChildren signals won't resolve until after view init, which
+        // is fine because effects re-run reactively.
+        effect(() => {
+            // Read the signal to track changes
+            void this.messages();
+            untracked(() => {
+                this.handleScrollOnNewMessage();
+            });
+        });
+        effect(() => {
+            // Read the signal to track changes
+            void this.messages();
+            untracked(() => {
+                if (!this.createdNewMessage && !this.initialScrollComplete && this.posts.length > 0) {
+                    this.scrollToStoredId();
+                }
+            });
+        });
+        effect(() => {
+            // Track showOnlyPinned signal input (replaces ngOnChanges)
+            this.showOnlyPinned();
+            untracked(() => {
+                if (this.initialized) {
+                    this.setPosts();
+                }
+            });
         });
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['showOnlyPinned'] && !changes['showOnlyPinned'].firstChange) {
-            this.setPosts();
-        }
-    }
+    private initialized = false;
 
     /**
      * Applies pinned message filter based on current toggle state.
@@ -195,6 +220,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         // Ensure that all pinned posts are fetched when the component is initialized
         this.metisService.fetchAllPinnedPosts(this._activeConversation!.id!).subscribe();
         this.cdr.detectChanges();
+        this.initialized = true;
     }
 
     private subscribeToActiveConversation() {
@@ -227,22 +253,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             });
     }
 
-    ngAfterViewInit() {
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(this.handleScrollOnNewMessage);
-        this.messages.changes.pipe(takeUntil(this.ngUnsubscribe)).subscribe(() => {
-            if (!this.createdNewMessage && !this.initialScrollComplete && this.posts.length > 0) {
-                this.scrollToStoredId();
-            }
-        });
-        this.content.nativeElement.addEventListener('scroll', () => {
-            this.findElementsAtScrollPosition();
-        });
+    private scrollListener = () => this.findElementsAtScrollPosition();
+    private mutationObserver: MutationObserver | undefined;
 
-        const el = this.content.nativeElement;
-        const observer = new MutationObserver(() => {
+    ngAfterViewInit() {
+        this.content().nativeElement.addEventListener('scroll', this.scrollListener);
+
+        const el = this.content().nativeElement;
+        this.mutationObserver = new MutationObserver(() => {
             this.findElementsAtScrollPosition();
         });
-        observer.observe(el, {
+        this.mutationObserver.observe(el, {
             childList: true,
             subtree: true,
         });
@@ -252,7 +273,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.scrollSubject.complete();
-        this.content?.nativeElement.removeEventListener('scroll', this.saveScrollPosition);
+        this.content()?.nativeElement.removeEventListener('scroll', this.scrollListener);
+        this.mutationObserver?.disconnect();
     }
 
     private scrollToStoredId() {
@@ -282,13 +304,13 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         this.computeLastReadState();
         this.setFirstUnreadPostId();
-        const unreadElement = this.firstUnreadPostId ? this.messages.toArray().find((m) => m.post.id === this.firstUnreadPostId)?.elementRef?.nativeElement : undefined;
+        const unreadElement = this.firstUnreadPostId ? this.messages().find((m) => m.post().id === this.firstUnreadPostId)?.elementRef?.nativeElement : undefined;
         if (!unreadElement) {
             this.completeInitialScroll();
             return;
         }
         requestAnimationFrame(() => {
-            this.content.nativeElement.scrollTop = Math.max(unreadElement.offsetTop - 15, 0);
+            this.content().nativeElement.scrollTop = Math.max(unreadElement.offsetTop - 15, 0);
             this.canStartSaving = true;
             this.initialScrollComplete = true;
         });
@@ -312,7 +334,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.isHiddenInputWithCallToAction = false;
         }
 
-        if (this.course && this._activeConversation) {
+        if (this.course() && this._activeConversation) {
             this.canStartSaving = false;
             this.initialScrollComplete = false;
             this.onSearch();
@@ -340,7 +362,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     private refreshMetisConversationPostContextFilter(): void {
         this.currentPostContextFilter = {
-            courseId: this.course?.id,
+            courseId: this.course()?.id,
             conversationIds: this._activeConversation?.id ? [this._activeConversation.id] : undefined,
             searchText: this.searchText ? this.searchText.trim() : undefined,
             postSortCriterion: PostSortCriterion.CREATION_DATE,
@@ -431,8 +453,9 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      */
     setPosts(): void {
         // Saves the current scroll position relative to the bottom.
-        if (this.content) {
-            this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
+        const content = this.content();
+        if (content) {
+            this.previousScrollDistanceFromTop = content.nativeElement.scrollHeight - content.nativeElement.scrollTop;
         }
         this.applyPinnedMessageFilter();
         this.reversePosts();
@@ -601,7 +624,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         } else if (!this.canStartSaving) {
             this.canStartSaving = true;
         }
-        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollTop + addBuffer;
+        this.content().nativeElement.scrollTop = this.content().nativeElement.scrollTop + addBuffer;
     }
 
     public commandMetisToFetchPosts(forceUpdate = false) {
@@ -654,7 +677,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         if (!this.initialScrollComplete) {
             return;
         }
-        if ((this.posts.length > 0 && this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
+        if ((this.posts.length > 0 && this.content().nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight) {
             this.scrollToBottomOfMessages();
         }
     };
@@ -662,7 +685,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     scrollToBottomOfMessages() {
         // Use setTimeout to ensure the scroll happens after the new message is rendered
         requestAnimationFrame(() => {
-            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+            this.content().nativeElement.scrollTop = this.content().nativeElement.scrollHeight;
         });
     }
 
@@ -690,8 +713,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             this.completeInitialScroll();
             return;
         }
-        const messageArray = this.messages.toArray();
-        const element = messageArray.find((message) => message.post.id === lastScrollPosition); // Suchen nach dem Post
+        const messageArray = this.messages();
+        const element = messageArray.find((message) => message.post().id === lastScrollPosition); // Suchen nach dem Post
 
         if (!element) {
             const hasMorePosts = this.posts.length < this.totalNumberOfPosts;
@@ -703,11 +726,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         } else {
             // We scroll to the element with a slight buffer to ensure its fully visible (-10)
-            this.content.nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
+            this.content().nativeElement.scrollTop = Math.max(0, element.elementRef.nativeElement.offsetTop - 10);
             this.canStartSaving = true;
             this.initialScrollComplete = true;
             if (isOpenThread) {
-                this.openThread.emit(element.post);
+                this.openThread.emit(element.post());
             }
             this.focusOnPostId = undefined;
             this.isOpenThreadOnFocus = false;
@@ -715,11 +738,11 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     }
 
     findElementsAtScrollPosition() {
-        const messageArray = this.messages.toArray();
-        const containerRect = this.content.nativeElement.getBoundingClientRect();
+        const messageArray = this.messages();
+        const containerRect = this.content().nativeElement.getBoundingClientRect();
         const visibleMessages = [];
         for (const message of messageArray) {
-            if (!message.elementRef?.nativeElement || !message.post?.id) continue;
+            if (!message.elementRef?.nativeElement || !message.post()?.id) continue;
             const rect = message.elementRef.nativeElement.getBoundingClientRect();
             if (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom) {
                 visibleMessages.push(message);
@@ -728,7 +751,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         }
         this.elementsAtScrollPosition = visibleMessages;
         if (this.elementsAtScrollPosition && this.elementsAtScrollPosition.length > 0 && this.canStartSaving) {
-            this.saveScrollPosition(this.elementsAtScrollPosition[0].post.id!);
+            this.saveScrollPosition(this.elementsAtScrollPosition[0].post().id!);
         }
         this.setFirstUnreadPostId();
         this.atNewPostPosition = this.isAnyUnreadPostVisible();
@@ -772,12 +795,12 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             return;
         }
 
-        const component = this.messages.find((m) => m.post.id === this.firstUnreadPostId);
+        const component = this.messages().find((m) => m.post().id === this.firstUnreadPostId);
         if (!component?.elementRef?.nativeElement) {
             return;
         }
 
-        const containerElement = this.content.nativeElement;
+        const containerElement = this.content().nativeElement;
         const { postRect, containerRect } = rects;
 
         const isVisible = postRect.top >= containerRect.top && postRect.bottom <= containerRect.bottom;
@@ -798,17 +821,18 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
      * Returns `undefined` if the post or container is not available in the DOM.
      */
     private getBoundingRectsForPost(postId: number): { postRect: DOMRect; containerRect: DOMRect } | undefined {
-        if (!this.content?.nativeElement) {
+        const content = this.content();
+        if (!content?.nativeElement) {
             return undefined;
         }
 
-        const component = this.messages.find((m) => m.post.id === postId);
+        const component = this.messages().find((m) => m.post().id === postId);
         if (!component?.elementRef?.nativeElement) {
             return undefined;
         }
 
         const postRect = component.elementRef.nativeElement.getBoundingClientRect();
-        const containerRect = this.content.nativeElement.getBoundingClientRect();
+        const containerRect = content.nativeElement.getBoundingClientRect();
 
         return { postRect, containerRect };
     }

@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, input } from '@angular/core';
+import { Component, OnChanges, OnInit, input, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -73,20 +73,22 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         super.ngOnChanges();
     }
 
+    isDialogVisible = signal(false);
+
     /**
      * opens the modal to edit or create a post
      */
     open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor, {
-            size: 'lg',
-            backdrop: 'static',
-            beforeDismiss: () => {
-                // when cancelling the create or update action, we do not want to store the current values
-                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
-                this.resetFormGroup();
-                return true;
-            },
-        });
+        this.isDialogVisible.set(true);
+        this.isModalOpen.emit();
+    }
+
+    /**
+     * closes the modal and resets the form
+     */
+    close(): void {
+        this.resetFormGroup();
+        this.isDialogVisible.set(false);
     }
 
     /**
@@ -118,7 +120,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         create$.subscribe({
             next: (post: Post) => {
                 this.isLoading = false;
-                this.modalRef?.close();
+                this.resetFormGroup();
+                this.isDialogVisible.set(false);
                 this.onCreate.emit(post);
             },
             error: () => {
@@ -136,7 +139,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
-                this.modalRef?.close();
+                this.resetFormGroup();
+                this.isDialogVisible.set(false);
             },
             error: () => {
                 this.isLoading = false;
