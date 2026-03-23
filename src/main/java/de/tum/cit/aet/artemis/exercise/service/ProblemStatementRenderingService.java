@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -31,6 +32,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -57,6 +59,11 @@ public class ProblemStatementRenderingService {
 
     private static final List<String> GRAALJS_REQUIRED_CSS = List.of("katex", "hljs", "github-alerts");
 
+    private static final List<String> SELF_CONTAINED_CSS_RESOURCES = List.of("problem-statement-css/katex.min.css", "problem-statement-css/hljs.min.css",
+            "problem-statement-css/github-colors-light.css", "problem-statement-css/github-base.css");
+
+    private static final @Nullable String SELF_CONTAINED_CSS = loadSelfContainedCss();
+
     // @formatter:off
     private static final String EMBEDDED_CSS = """
             <style>
@@ -64,7 +71,7 @@ public class ProblemStatementRenderingService {
             .artemis-problem-statement svg{max-width:100%;height:auto}
             .artemis-problem-statement a{color:var(--link-color,#3e8acc)}
             .artemis-problem-statement pre{background:var(--artemis-pre-background,#f5f5f5);color:var(--artemis-pre-color,#333);border:1px solid var(--artemis-pre-border,#ccc);border-radius:4px;padding:10px;white-space:pre-wrap;overflow-wrap:break-word}
-            .artemis-problem-statement :not(pre)>code{font-size:87.5%}
+            .artemis-problem-statement :not(pre)>code{font-size:87.5%;color:#d63384}
             .artemis-problem-statement blockquote{color:var(--markdown-preview-blockquote,#6a737d);border-left:4px solid var(--markdown-preview-blockquote-border,#dfe2e5);padding:0 1em;margin:0 0 16px}
             .artemis-problem-statement img{max-width:100%}
             .artemis-task{cursor:pointer;font-weight:600}
@@ -208,7 +215,15 @@ public class ProblemStatementRenderingService {
         // Step 7: Prepend embedded CSS (after sanitization, since jsoup strips <style> tags)
         html = EMBEDDED_CSS + html;
 
-        // Step 8: Compute content hash and build DTO
+        // Step 8: For self-contained mode, inline third-party CSS (katex, hljs, github-alerts)
+        // so the HTML renders correctly without the Angular CSS bundle.
+        // Only clear requiredCss if CSS was actually loaded successfully.
+        if (selfContained && SELF_CONTAINED_CSS != null) {
+            html = SELF_CONTAINED_CSS + html;
+            assets = new AssetRequirementsDTO(assets.katex(), assets.highlighting(), assets.diagramMode(), List.of());
+        }
+
+        // Step 9: Compute content hash and build DTO
         String contentHash = computeHash(html);
 
         return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams);
@@ -567,5 +582,20 @@ public class ProblemStatementRenderingService {
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
+    }
+
+    private static @Nullable String loadSelfContainedCss() {
+        StringBuilder sb = new StringBuilder("<style>\n");
+        for (String resource : SELF_CONTAINED_CSS_RESOURCES) {
+            try (InputStream is = new ClassPathResource(resource).getInputStream()) {
+                sb.append(new String(is.readAllBytes(), StandardCharsets.UTF_8)).append('\n');
+            }
+            catch (IOException e) {
+                log.warn("Could not load CSS resource for self-contained rendering: {}", resource);
+                return null;
+            }
+        }
+        sb.append("</style>\n");
+        return sb.toString();
     }
 }
