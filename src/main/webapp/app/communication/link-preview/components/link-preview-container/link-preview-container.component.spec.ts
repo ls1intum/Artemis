@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockLinkPreviewService } from 'test/helpers/mocks/service/mock-link-preview.service';
 import { of } from 'rxjs';
@@ -6,11 +8,17 @@ import { LinkPreview, LinkPreviewService } from 'app/communication/link-preview/
 import { Link, LinkifyService } from 'app/communication/link-preview/services/linkify.service';
 
 describe('LinkPreviewContainerComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: LinkPreviewContainerComponent;
     let fixture: ComponentFixture<LinkPreviewContainerComponent>;
 
     let linkPreviewService: LinkPreviewService;
     let linkifyService: LinkifyService;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -18,15 +26,12 @@ describe('LinkPreviewContainerComponent', () => {
                 { provide: LinkPreviewService, useClass: MockLinkPreviewService },
                 { provide: LinkifyService, useClass: LinkifyService },
             ],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(LinkPreviewContainerComponent);
-                component = fixture.componentInstance;
+        });
+        fixture = TestBed.createComponent(LinkPreviewContainerComponent);
+        component = fixture.componentInstance;
 
-                linkPreviewService = TestBed.inject(LinkPreviewService);
-                linkifyService = TestBed.inject(LinkifyService);
-            });
+        linkPreviewService = TestBed.inject(LinkPreviewService);
+        linkifyService = TestBed.inject(LinkifyService);
     });
 
     it('should create', () => {
@@ -44,8 +49,8 @@ describe('LinkPreviewContainerComponent', () => {
             { url: 'https://example.com/link2', title: 'Link 2', description: 'Description 2', image: 'image2.jpg', shouldPreviewBeShown: true },
         ];
 
-        const linkifyServiceSpy = jest.spyOn(linkifyService, 'find').mockReturnValue(links);
-        const linkPreviewServiceSpy = jest.spyOn(linkPreviewService, 'fetchLink').mockReturnValueOnce(of(mockLinkPreviews[0])).mockReturnValueOnce(of(mockLinkPreviews[1]));
+        const linkifyServiceSpy = vi.spyOn(linkifyService, 'find').mockReturnValue(links);
+        const linkPreviewServiceSpy = vi.spyOn(linkPreviewService, 'fetchLink').mockReturnValueOnce(of(mockLinkPreviews[0])).mockReturnValueOnce(of(mockLinkPreviews[1]));
 
         component.ngOnInit();
 
@@ -54,9 +59,9 @@ describe('LinkPreviewContainerComponent', () => {
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link1');
         expect(linkPreviewServiceSpy).toHaveBeenCalledWith('https://example.com/link2');
         expect(component.linkPreviews()).toEqual(mockLinkPreviews);
-        expect(component.hasError()).toBeFalse();
-        expect(component.loaded()).toBeTrue();
-        expect(component.showLoadingsProgress()).toBeFalse();
+        expect(component.hasError()).toBe(false);
+        expect(component.loaded()).toBe(true);
+        expect(component.showLoadingsProgress()).toBe(false);
     });
 
     it('should update existing link preview if it already exists', () => {
@@ -71,8 +76,8 @@ describe('LinkPreviewContainerComponent', () => {
         };
         const newLinkPreview: LinkPreview = { url: 'https://example.com/link1', title: 'New Link', description: 'New Description', image: 'new.jpg', shouldPreviewBeShown: true };
 
-        const linkifyServiceSpy = jest.spyOn(linkifyService, 'find').mockReturnValue(links);
-        const linkPreviewServiceSpy = jest.spyOn(linkPreviewService, 'fetchLink').mockReturnValueOnce(of(newLinkPreview));
+        const linkifyServiceSpy = vi.spyOn(linkifyService, 'find').mockReturnValue(links);
+        const linkPreviewServiceSpy = vi.spyOn(linkPreviewService, 'fetchLink').mockReturnValueOnce(of(newLinkPreview));
 
         component.linkPreviews().push(existingLinkPreview);
 
