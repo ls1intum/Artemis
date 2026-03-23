@@ -29,6 +29,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseCreateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
+import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithStatisticsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.UpdateQuizExerciseDTO;
 import de.tum.cit.aet.artemis.quiz.service.QuizExerciseService;
 import de.tum.cit.aet.artemis.quiz.test_repository.QuizExerciseTestRepository;
@@ -80,7 +81,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         MvcResult result = request.performMvcRequest(builder).andExpect(status().is(expectedStatus.value())).andReturn();
         request.restoreSecurityContext();
         if (expectedStatus == HttpStatus.CREATED) {
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+            // The POST endpoint returns QuizExerciseWithStatisticsDTO, so extract the ID and load the full entity from DB
+            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseWithStatisticsDTO.class);
+            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(responseDTO.quizExercise().id());
         }
         return null;
     }
@@ -175,7 +178,9 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
         request.restoreSecurityContext();
         if (HttpStatus.valueOf(result.getResponse().getStatus()).is2xxSuccessful()) {
             assertThat(result.getResponse().getContentAsString()).isNotBlank();
-            return objectMapper.readValue(result.getResponse().getContentAsString(), QuizExercise.class);
+            // The POST endpoint returns QuizExerciseWithStatisticsDTO, so extract the ID and load the full entity from DB
+            var responseDTO = objectMapper.readValue(result.getResponse().getContentAsString(), QuizExerciseWithStatisticsDTO.class);
+            return quizExerciseTestRepository.findOneWithQuestionsAndStatistics(responseDTO.quizExercise().id());
         }
         return null;
     }

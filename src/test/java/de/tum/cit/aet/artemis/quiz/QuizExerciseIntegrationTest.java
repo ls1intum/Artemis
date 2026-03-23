@@ -1773,7 +1773,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importQuizExerciseToSameCourse() throws Exception {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime now = ZonedDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MILLIS);
         QuizExercise quizExercise = quizExerciseUtilService.createQuiz(now.plusHours(2), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.handleDndQuizFileCreation(quizExercise,
                 List.of(new MockMultipartFile("files", "drag-and-drop/drag-items/dragItemImage2.png", MediaType.IMAGE_PNG_VALUE, "dragItemImage".getBytes()),
@@ -1789,7 +1789,7 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
         assertThat(importedExercise.getId()).as("Imported exercise has different id").isNotEqualTo(quizExercise.getId());
         assertThat(importedExercise.getTitle()).as("Imported exercise has updated title").isEqualTo("New title");
-        assertThat(importedExercise.getReleaseDate()).as("Imported exercise has updated release data").isEqualTo(now);
+        assertThat(importedExercise.getReleaseDate().toInstant()).as("Imported exercise has updated release data").isEqualTo(now.toInstant());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember().getId()).as("Imported exercise has same course")
                 .isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         assertThat(importedExercise.getCourseViaExerciseGroupOrCourseMember()).isEqualTo(quizExercise.getCourseViaExerciseGroupOrCourseMember());

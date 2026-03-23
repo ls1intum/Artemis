@@ -107,8 +107,9 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PostMapping(value = "exercise-groups/{exerciseGroupId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditor
-    public ResponseEntity<QuizExercise> createExamQuizExercise(@PathVariable Long exerciseGroupId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
+    public ResponseEntity<QuizExerciseWithStatisticsDTO> createExamQuizExercise(@PathVariable Long exerciseGroupId,
+            @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files)
+            throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in exam exercise group {}", quizExerciseDTO, exerciseGroupId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
         // Competency links are passed separately for proper two-phase persistence
@@ -127,8 +128,9 @@ public class QuizExerciseCreationUpdateResource {
 
         QuizExercise result = quizExerciseService.createQuizExercise(quizExercise, files, true, quizExerciseDTO.competencyLinks());
         exerciseVersionService.createExerciseVersion(result);
+        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
 
     /**
@@ -148,8 +150,9 @@ public class QuizExerciseCreationUpdateResource {
      */
     @PostMapping(value = "courses/{courseId}/quiz-exercises", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<QuizExercise> createCourseQuizExercise(@PathVariable Long courseId, @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO,
-            @RequestPart(value = "files", required = false) List<MultipartFile> files) throws IOException, URISyntaxException {
+    public ResponseEntity<QuizExerciseWithStatisticsDTO> createCourseQuizExercise(@PathVariable Long courseId,
+            @Valid @RequestPart("exercise") QuizExerciseCreateDTO quizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files)
+            throws IOException, URISyntaxException {
         log.info("REST request to create QuizExercise : {} in course {}", quizExerciseDTO, courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         QuizExercise quizExercise = quizExerciseDTO.toDomainObject();
@@ -165,8 +168,9 @@ public class QuizExerciseCreationUpdateResource {
 
         exerciseVersionService.createExerciseVersion(result);
 
+        QuizExerciseWithStatisticsDTO resultDTO = QuizExerciseWithStatisticsDTO.of(result);
         return ResponseEntity.created(new URI("/api/quiz/quiz-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(resultDTO);
     }
 
     /**
