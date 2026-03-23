@@ -27,8 +27,8 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
-        String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue("none") String vectorizerModule, String apiEmbeddingModel, String apiBaseUrl,
-        String apiKey, String authApiKey) {
+        String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue(VECTORIZER_NONE) String vectorizerModule, String apiEmbeddingModel,
+        String apiBaseUrl, String apiKey, String authApiKey) {
 
     public static final String DEFAULT_HTTP_PORT = "8001";
 
