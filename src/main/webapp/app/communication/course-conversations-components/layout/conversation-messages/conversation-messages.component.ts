@@ -252,16 +252,17 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
             });
     }
 
+    private scrollListener = () => this.findElementsAtScrollPosition();
+    private mutationObserver: MutationObserver | undefined;
+
     ngAfterViewInit() {
-        this.content().nativeElement.addEventListener('scroll', () => {
-            this.findElementsAtScrollPosition();
-        });
+        this.content().nativeElement.addEventListener('scroll', this.scrollListener);
 
         const el = this.content().nativeElement;
-        const observer = new MutationObserver(() => {
+        this.mutationObserver = new MutationObserver(() => {
             this.findElementsAtScrollPosition();
         });
-        observer.observe(el, {
+        this.mutationObserver.observe(el, {
             childList: true,
             subtree: true,
         });
@@ -271,7 +272,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
         this.scrollSubject.complete();
-        this.content()?.nativeElement.removeEventListener('scroll', this.saveScrollPosition);
+        this.content()?.nativeElement.removeEventListener('scroll', this.scrollListener);
+        this.mutationObserver?.disconnect();
     }
 
     private scrollToStoredId() {

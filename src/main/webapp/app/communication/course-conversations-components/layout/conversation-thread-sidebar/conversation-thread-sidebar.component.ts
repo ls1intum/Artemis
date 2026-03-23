@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { faArrowLeft, faChevronLeft, faCompress, faExpand, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -22,7 +22,7 @@ import { ConversationSelectionState } from 'app/communication/shared/course-conv
     styleUrls: ['./conversation-thread-sidebar.component.scss'],
     imports: [FaIconComponent, TranslateDirective, NgbTooltip, PostComponent, MessageReplyInlineInputComponent, ArtemisTranslatePipe, NgClass, TutorSuggestionComponent],
 })
-export class ConversationThreadSidebarComponent implements AfterViewInit {
+export class ConversationThreadSidebarComponent implements AfterViewInit, OnDestroy {
     readonly scrollBody = viewChild<ElementRef<HTMLDivElement>>('scrollBody');
     expandTooltip = viewChild<NgbTooltip>('expandTooltip');
     threadContainer = viewChild<ElementRef>('threadContainer');
@@ -105,11 +105,13 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
         this.conversationSelectionState.setOpenPostId(undefined);
     }
 
+    private interactable: ReturnType<typeof interact> | undefined;
+
     /**
      * makes message thread section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        interact('.expanded-thread')
+        this.interactable = interact('.expanded-thread')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
@@ -131,6 +133,10 @@ export class ConversationThreadSidebarComponent implements AfterViewInit {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    ngOnDestroy(): void {
+        this.interactable?.unset();
     }
 
     scrollEditorIntoView(): void {
