@@ -6,6 +6,11 @@ import static de.tum.cit.aet.artemis.globalsearch.util.WeaviateTestUtil.assertQu
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.byLessThan;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.OK;
@@ -21,6 +26,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +53,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.domain.GradingInstruction;
+import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
+import de.tum.cit.aet.artemis.atlas.domain.LearningObject;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -130,6 +139,9 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Autowired
     private StudentParticipationTestRepository studentParticipationRepository;
+
+    @Autowired
+    private CompetencyUtilService competencyUtilService;
 
     @Autowired
     private QuizSubmissionTestRepository quizSubmissionTestRepository;
@@ -1547,6 +1559,81 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         fakeCompetency.setId(999999L);
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(fakeCompetency, quizExercise, 0.25)));
         updateQuizExerciseWithFiles(quizExercise, List.of(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBatchedQuizExercise_keepsExistingBatchJoinable() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusMinutes(5), ZonedDateTime.now().plusHours(1), QuizMode.BATCHED);
+
+        QuizBatch batch = request.putWithResponseBody("/api/quiz/quiz-exercises/" + quizExercise.getId() + "/add-batch", null, QuizBatch.class, OK);
+
+        quizExercise.setTitle("Updated batched quiz title");
+        QuizExercise updatedQuiz = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        assertThat(updatedQuiz.getQuizBatches()).extracting(QuizBatch::getId).contains(batch.getId());
+
+        SecurityContextHolder.getContext().setAuthentication(SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "student1"));
+        request.postWithResponseBody("/api/quiz/quiz-exercises/" + updatedQuiz.getId() + "/start-participation", null, StudentParticipation.class, OK);
+        QuizBatch joinedBatch = request.postWithResponseBody("/api/quiz/quiz-exercises/" + updatedQuiz.getId() + "/join", new QuizBatchJoinDTO(batch.getPassword()),
+                QuizBatch.class, OK);
+
+        assertThat(joinedBatch.getId()).isEqualTo(batch.getId());
+        QuizSubmission submission = quizSubmissionTestRepository.findByParticipation_Exercise_Id(updatedQuiz.getId()).stream().findFirst().orElseThrow();
+        assertThat(submission.getQuizBatch()).isEqualTo(batch.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateQuizExercise_preservesQuizQuestionStatisticForExistingQuestion() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(1), ZonedDateTime.now().plusHours(2), QuizMode.SYNCHRONIZED);
+
+        QuizQuestion questionToUpdate = quizExercise.getQuizQuestions().getFirst();
+        assertThat(questionToUpdate.getQuizQuestionStatistic()).isNotNull();
+
+        Long questionId = questionToUpdate.getId();
+        Long statisticId = questionToUpdate.getQuizQuestionStatistic().getId();
+
+        questionToUpdate.setTitle("Updated question title");
+        QuizExercise updatedQuiz = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        QuizQuestion updatedQuestion = updatedQuiz.getQuizQuestions().stream().filter(question -> Objects.equals(question.getId(), questionId)).findFirst().orElseThrow();
+        assertThat(updatedQuestion.getTitle()).isEqualTo("Updated question title");
+        assertThat(updatedQuestion.getQuizQuestionStatistic()).isNotNull();
+        assertThat(updatedQuestion.getQuizQuestionStatistic().getId()).isEqualTo(statisticId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateQuizWithChangedCompetency_usesOriginalCompetenciesForProgressUpdate() throws Exception {
+        QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1), QuizMode.INDIVIDUAL);
+        Course quizCourse = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+
+        Competency originalCompetency = competencyUtilService.createCompetency(quizCourse);
+        Competency replacementCompetency = competencyUtilService.createCompetency(quizCourse);
+
+        quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(originalCompetency, quizExercise, 0.25)));
+        quizExercise = updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+        clearInvocations(competencyProgressApi);
+
+        AtomicReference<Set<Long>> originalCompetencyIds = new AtomicReference<>();
+        AtomicReference<Set<Long>> updatedCompetencyIds = new AtomicReference<>();
+        doAnswer(invocation -> {
+            LearningObject originalLearningObject = invocation.getArgument(0);
+            @SuppressWarnings("unchecked")
+            Optional<LearningObject> updatedLearningObject = invocation.getArgument(1);
+
+            originalCompetencyIds.set(originalLearningObject.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
+            updatedCompetencyIds.set(updatedLearningObject.orElseThrow().getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
+            return null;
+        }).when(competencyProgressApi).updateProgressForUpdatedLearningObjectAsync(any(), any());
+
+        quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, quizExercise, 0.5)));
+        updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
+
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(any(), any());
+        assertThat(originalCompetencyIds.get()).containsExactly(originalCompetency.getId());
+        assertThat(updatedCompetencyIds.get()).containsExactly(replacementCompetency.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
