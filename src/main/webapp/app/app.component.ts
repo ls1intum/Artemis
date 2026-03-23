@@ -118,6 +118,14 @@ export class AppComponent implements OnInit, OnDestroy {
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
                 this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
+                const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
+                if (!showSkeletonFromRoute && this.showSkeleton) {
+                    this.showSkeleton = false;
+                    this.renderer.addClass(this.document.body, 'transparent-background');
+                } else if (showSkeletonFromRoute && !this.showSkeleton) {
+                    this.showSkeleton = true;
+                    this.renderer.removeClass(this.document.body, 'transparent-background');
+                }
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
@@ -146,13 +154,17 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * The skeleton should not be shown for the problem statement component if it is directly accessed and
-     * for the standalone feedback component.
+     * The skeleton should not be shown for the problem statement component if it is directly accessed,
+     * for the standalone feedback component, or for routes with showSkeleton: false in route data.
      */
     private shouldShowSkeleton(url: string): boolean {
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
         return !isStandaloneProblemStatement && !isStandaloneFeedback;
+    }
+
+    private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean {
+        return this.getDeepestSnapshot(root).data?.['showSkeleton'] ?? true;
     }
 
     ngOnDestroy(): void {

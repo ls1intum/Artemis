@@ -1,0 +1,149 @@
+{
+    "landing": {
+        "pageTitle": "Artemis - Interactive Learning Platform",
+        "navbar": {
+            "home": "Home",
+            "features": "Features",
+            "resources": "Resources",
+            "contact": "Contact",
+            "logIn": "Log in"
+        },
+        "hero": {
+            "tagline": "For universities & technical institutions",
+            "title": "A learning platform built for university education.",
+            "subtitle": "Artemis is an open-source learning platform built for university education — instant feedback on programming exercises, smart quizzes, and collaborative tools that keep both students and instructors in sync."
+        },
+        "spotlight": {
+            "title": "AI that teaches, not just answers",
+            "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions — drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically.",
+            "steps": {
+                "tutor": {
+                    "title": "AI that teaches, not just answers",
+                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions — drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically."
+                },
+                "feedback": {
+                    "title": "Instant feedback, every submission",
+                    "description": "Submit code, a quiz, or a modeling task — and get structured, individual feedback within seconds. Artemis automatically runs test cases, static analysis, and grading criteria so students always know exactly where they stand, without waiting for a tutor."
+                },
+                "faq": {
+                    "title": "Lectures that keep working after class",
+                    "description": "Upload lecture videos and Artemis automatically generates searchable transcriptions. Students revisit specific moments, Iris draws on the content to answer questions, and instructors can link units directly to learning objectives."
+                },
+                "insights": {
+                    "title": "Learning paths that adapt to every student",
+                    "description": "Define competencies, map them to lectures and exercises, and let Artemis build personalized learning paths based on each student's progress — giving struggling students targeted support and advanced learners room to move ahead."
+                }
+            }
+        },
+        "socialProof": {
+            "title": "Adopted across top technical universities"
+        },
+        "features": {
+            "title": "A complete learning ecosystem",
+            "cards": {
+                "assessment": {
+                    "category": "Assessment",
+                    "description": "From anonymous, rubric-based manual grading and AI-assisted correction suggestions, to fully automatic evaluation of quizzes and programming submissions."
+                },
+                "tutorials": {
+                    "category": "Tutorials",
+                    "description": "Structured small-group sessions with exercise assignments, attendance tracking, and tutor tooling designed to scale across large cohorts."
+                },
+                "lectures": {
+                    "category": "Lectures",
+                    "description": "Upload slides, embed videos, and divide content into structured units, all linked directly to learning objectives."
+                },
+                "examMode": {
+                    "category": "Exam Mode",
+                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria."
+                },
+                "communication": {
+                    "category": "Communication",
+                    "description": "Course-wide announcements, discussion threads, and private messaging."
+                },
+                "faq": {
+                    "category": "FAQ",
+                    "description": "Searchable, course-level FAQ library that reduces repetitive queries and feeds directly into Iris for smarter AI responses."
+                },
+                "iris": {
+                    "category": "Iris - AI Tutor",
+                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers."
+                },
+                "mobileApps": {
+                    "category": "Mobile Apps",
+                    "description": "Access courses, exercises, lectures, and discussions on the go."
+                }
+            }
+        },
+        "faq": {
+            "label": "FAQ",
+            "title": "Commonly asked questions",
+            "items": {
+                "free": {
+                    "question": "Is Artemis free to use?",
+                    "answer": "Yes — Artemis is fully open source under the MIT license. You can self-host it or use the hosted version provided by TU Munich for partner institutions."
+                },
+                "languages": {
+                    "question": "Which programming languages does Artemis support?",
+                    "answer": "Artemis supports Java, Python, C, Haskell, Kotlin, Swift, OCaml, and more. It integrates with popular CI systems to run automated tests for any language."
+                },
+                "grading": {
+                    "question": "How does automated grading work?",
+                    "answer": "Student code is built and tested in an isolated container on every submission. Test results are shown instantly. Instructors define the test suite; Artemis handles execution and scoring."
+                },
+                "scale": {
+                    "question": "Can I run exams for 1000+ students?",
+                    "answer": "Yes. Artemis is battle-tested at TU Munich with large cohorts. The exam mode uses question pools to generate unique papers per student and scales horizontally."
+                },
+                "iris": {
+                    "question": "How does Iris differ from ChatGPT?",
+                    "answer": "Iris is designed specifically for education — it guides students with hints and leading questions instead of giving direct answers. It draws on course-specific content and is integrated directly into the learning workflow."
+                },
+                "docs": {
+                    "question": "Where can I find the full documentation?",
+                    "answer": "Full documentation is available at docs.artemis.tum.de, including setup guides, feature references, and developer docs."
+                }
+            }
+        },
+        "footer": {
+            "tagline": "Built by educators, for education.",
+            "subtitle": "Open-source and continuously improved by a growing community of universities and developers.",
+            "getStarted": "Get Started",
+            "description": "A learning platform built for university education.",
+            "links": {
+                "pages": {
+                    "title": "Pages",
+                    "home": "Home",
+                    "contact": "Contact",
+                    "releases": "Releases"
+                },
+                "features": {
+                    "title": "Features",
+                    "exercises": "Interactive Exercises",
+                    "lectures": "Transcribe Lectures",
+                    "communication": "Communication",
+                    "adaptiveLearning": "Adaptive Learning",
+                    "iris": "Iris - AI Tutor"
+                },
+                "instructors": {
+                    "title": "For Instructors",
+                    "examMode": "Exam Mode",
+                    "assessment": "Assessment",
+                    "tutorials": "Tutorials",
+                    "faq": "FAQ"
+                },
+                "resources": {
+                    "title": "Resources",
+                    "documentation": "Documentation",
+                    "publication": "Publication"
+                }
+            },
+            "imprint": {
+                "feedback": "Feedback",
+                "privacy": "Privacy",
+                "imprint": "Imprint"
+            },
+            "copyright": "© 2026 Technical University of Munich. All rights reserved."
+        }
+    }
+}
