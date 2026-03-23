@@ -2238,8 +2238,15 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely
-        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo,
-                Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg", "test.txt", "Initial commit"), "seed student files");
+        // @formatter:off
+        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.of(
+                "README.md",  "Initial commit",
+                "A.java",     "abc",
+                "B.java",     "cde",
+                "C.java",     "efg",
+                "test.txt",   "Initial commit"
+        ), "seed student files");
+        // @formatter:on
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();
