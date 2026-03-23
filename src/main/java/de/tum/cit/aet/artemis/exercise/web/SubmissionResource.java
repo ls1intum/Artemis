@@ -31,13 +31,11 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionVersion;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
-import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionVersionDTO;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionWithComplaintDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
@@ -82,11 +80,9 @@ public class SubmissionResource {
 
     private final SubmissionVersionRepository submissionVersionRepository;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, BuildLogEntryService buildLogEntryService,
             ResultService resultService, StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository, InstanceMessageSendService instanceMessageSendService) {
+            ExerciseRepository exerciseRepository, SubmissionVersionRepository submissionVersionRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.buildLogEntryService = buildLogEntryService;
@@ -96,21 +92,11 @@ public class SubmissionResource {
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.submissionVersionRepository = submissionVersionRepository;
-        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
      * DELETE /submissions/:submissionId : delete the "id" submission.
      * <p>
-     * This endpoint loads the submission with results and assessors but WITHOUT eager feedbacks
-     * ({@code findWithEagerResultsAndAssessorById}). As a consequence, {@link ResultService#deleteResult}
-     * will take the JPQL bulk-delete path (Path 2) for each result, which bypasses the {@code @PreRemove}
-     * callback in {@link ResultListener} that normally schedules participant score recalculation.
-     * <p>
-     * To compensate, we explicitly call {@code sendParticipantScoreSchedule()} for each result BEFORE
-     * deletion. This ensures participant scores are correctly recalculated even though the JPA lifecycle
-     * callback is skipped. See {@link ResultService#deleteResult} for the full explanation of the two
-     * deletion paths.
      *
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -128,15 +114,6 @@ public class SubmissionResource {
         }
 
         checkAccessPermissionAtInstructor(submission.get());
-        // Explicitly schedule participant score recalculation BEFORE deleting results.
-        // This is necessary because deleteResult may use the JPQL bulk-delete path (Path 2)
-        // which skips the @PreRemove callback in ResultListener. Without this, participant
-        // scores would not be recalculated after result deletion.
-        if (submission.get().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
-            for (Result result : submission.get().getResults()) {
-                instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
-            }
-        }
         List<Result> results = submission.get().getResults();
         for (Result result : results) {
             resultService.deleteResult(result, true);

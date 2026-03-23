@@ -124,12 +124,15 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
+    private final Optional<ParticipantScoreScheduleService> participantScoreScheduleService;
+
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
             ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
             LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
             BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
+            Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiApi = ltiApi;
@@ -149,6 +152,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
+        this.participantScoreScheduleService = participantScoreScheduleService;
     }
 
     /**
@@ -216,22 +220,12 @@ public class ResultService {
      * <p>
      * <b>Consequence of Path 2 — {@code @PreRemove} callback is skipped:</b>
      * JPQL bulk deletes do not fire JPA entity lifecycle callbacks. The {@code @PreRemove} callback in
-     * {@link ResultListener#removeResult} schedules an async participant score recalculation via
-     * {@code InstanceMessageSendService.sendParticipantScoreSchedule()}. When Path 2 is taken, this callback
-     * does not execute. This is handled as follows:
-     * <ul>
-     * <li><b>Callers that delete individual results</b> (e.g. {@link
-     * de.tum.cit.aet.artemis.exercise.web.SubmissionResource#deleteSubmission SubmissionResource.deleteSubmission})
-     * must explicitly call {@code sendParticipantScoreSchedule()} BEFORE calling this method to ensure
-     * participant scores are recalculated. See {@code SubmissionResource.deleteSubmission} for the reference
-     * implementation.</li>
-     * <li><b>{@link AssessmentService#cancelAssessmentOfSubmission}</b> deletes a non-submitted draft assessment
-     * whose result was never referenced by participant scores, so no scheduling is needed.</li>
-     * <li><b>Bulk deletion callers</b> (e.g. {@link
-     * de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService ParticipationDeletionService})
-     * pass {@code shouldClearParticipantScore = false} because participant scores are already deleted by the
-     * caller as part of the larger deletion (participation, exercise, or course). No scheduling is needed.</li>
-     * </ul>
+     * {@link ResultListener#removeResult} normally schedules async participant score recalculation. When Path 2
+     * is taken, this method compensates by explicitly calling {@link ParticipantScoreScheduleService#scheduleTask}
+     * when {@code shouldClearParticipantScore = true} (single-result deletion). For bulk deletions
+     * ({@code shouldClearParticipantScore = false}), the caller handles participant scores separately
+     * (e.g. {@link de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService ParticipationDeletionService}),
+     * so the scheduling is skipped to avoid unnecessary overhead.
      * <p>
      * <b>DO NOT CHANGE</b> the two-path structure or the deletion order without carefully considering:
      * (1) Hibernate lazy-loading behavior for uninitialized collections,
@@ -263,8 +257,13 @@ public class ResultService {
             // collection or call resultRepository.delete(result), as either would trigger lazy
             // loading of the already-deleted rows, causing EntityNotFoundException.
             // Instead, use JPQL bulk deletes which bypass Hibernate entirely.
-            // NOTE: This skips @PreRemove in ResultListener — callers that delete individual results
-            // must handle participant score scheduling themselves (see Javadoc above).
+            // Since JPQL bypasses @PreRemove in ResultListener, we must explicitly schedule
+            // participant score recalculation here for single-result deletions. For bulk deletions
+            // (shouldClearParticipantScore=false), the caller handles scores separately.
+            if (shouldClearParticipantScore && participantScoreScheduleService.isPresent() && result.getSubmission() != null
+                    && result.getSubmission().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
+                participantScoreScheduleService.get().scheduleTask(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
+            }
             resultRepository.deleteAllAssessmentNotesByResultId(result.getId());
             resultRepository.deleteResultById(result.getId());
         }
