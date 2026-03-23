@@ -68,6 +68,11 @@ export class CourseManagementExercisesPage {
         // Wait for the delete confirmation dialog to close before asserting DOM changes.
         // Angular needs time to process the response and remove the exercise from the list.
         await expect(this.page.getByTestId('delete-dialog-confirm-button')).not.toBeVisible({ timeout: 10000 });
+        // Reload to ensure the exercise list reflects the deletion.
+        // Angular's change detection sometimes doesn't remove the card from the DOM
+        // even after the DELETE response and dialog close.
+        await this.page.reload();
+        await this.page.waitForLoadState('networkidle');
     }
 
     async deleteFileUploadExercise(exercise: Exercise) {
