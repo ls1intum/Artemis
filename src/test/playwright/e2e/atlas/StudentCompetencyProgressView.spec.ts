@@ -176,11 +176,11 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 duration: 15,
             });
 
-            // Add competency link to the quiz exercise via PATCH
+            // Add competency link to the quiz exercise via PUT
             const updateDTO = {
                 competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
             };
-            const patchResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}`, {
+            const putResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}`, {
                 multipart: {
                     exercise: {
                         name: 'exercise',
@@ -189,7 +189,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                     },
                 },
             });
-            expect(patchResponse.ok(), `PATCH competency link failed: ${patchResponse.status()}`).toBeTruthy();
+            expect(putResponse.ok(), `PUT competency link failed: ${putResponse.status()}`).toBeTruthy();
 
             // Make quiz visible and start it
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);

@@ -195,7 +195,7 @@ public class QuizExerciseCreationUpdateResource {
     public ResponseEntity<QuizExerciseWithStatisticsDTO> updateQuizExercise(@PathVariable Long exerciseId,
             @RequestPart("exercise") @Valid UpdateQuizExerciseDTO updateQuizExerciseDTO, @RequestPart(value = "files", required = false) List<MultipartFile> files,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws IOException {
-        log.info("REST request to patch quiz exercise : {}", exerciseId);
+        log.info("REST request to update quiz exercise : {}", exerciseId);
         QuizExercise quizBase = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaElseThrow(exerciseId);
 
         // Capture original competency IDs before mergeDTOIntoDomainObject() mutates the entity (L1 cache)
