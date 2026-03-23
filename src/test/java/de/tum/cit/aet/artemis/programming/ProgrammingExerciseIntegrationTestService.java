@@ -2258,7 +2258,9 @@ public class ProgrammingExerciseIntegrationTestService {
         // @formatter:on
 
         Map<String, String> actualFiles = request.get(
-                "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK, Map.class);
+                "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                new TypeReference<>() {
+                });
         assertThat(actualFiles).isEqualTo(expectedFiles);
     }
 
