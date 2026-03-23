@@ -1318,7 +1318,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @throws IOException if there is an error handling the files
      */
     public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyLinkDTO> competencyLinks) throws IOException {
-        resolveQuizQuestionMappings(quizExercise);
+        // Mapping resolution is handled in the Create DTO toDomainObject() methods — no need to call resolveQuizQuestionMappings here.
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }

@@ -19,7 +19,6 @@ public record DragItemCreateDTO(@NotNull Long tempID, String text, String pictur
      */
     public DragItem toDomainObject() {
         DragItem dragItem = new DragItem();
-        dragItem.setTempID(tempID);
         dragItem.setText(text);
         dragItem.setPictureFilePath(pictureFilePath);
         return dragItem;

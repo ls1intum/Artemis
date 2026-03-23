@@ -20,7 +20,6 @@ public record ShortAnswerSolutionCreateDTO(@NotNull Long tempID, @NotEmpty Strin
      */
     public ShortAnswerSolution toDomainObject() {
         ShortAnswerSolution solution = new ShortAnswerSolution();
-        solution.setTempID(tempID);
         solution.setText(text);
         return solution;
     }

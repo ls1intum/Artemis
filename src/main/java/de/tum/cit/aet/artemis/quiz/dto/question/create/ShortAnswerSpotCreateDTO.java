@@ -20,7 +20,6 @@ public record ShortAnswerSpotCreateDTO(@NotNull Long tempID, @NotNull Integer sp
      */
     public ShortAnswerSpot toDomainObject() {
         ShortAnswerSpot spot = new ShortAnswerSpot();
-        spot.setTempID(tempID);
         spot.setSpotNr(spotNr);
         spot.setWidth(width);
         return spot;
