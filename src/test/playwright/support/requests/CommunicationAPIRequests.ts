@@ -83,7 +83,7 @@ export class CommunicationAPIRequests {
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
         const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
         const conversations: ConversationDTO[] = await response.json();
-        // @ts-ignore
+        // @ts-expect-error: filter narrows ConversationDTO to ChannelDTO but TS can't infer that
         return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
     }
 

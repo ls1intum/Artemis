@@ -317,6 +317,14 @@ jobs:
     - name: TypeScript Code Style
       run: npm run lint
       if: success() || failure()
+    - name: Install Playwright Dependencies
+      run: npm ci
+      working-directory: src/test/playwright
+      if: success() || failure()
+    - name: Playwright Code Style
+      run: npm run lint
+      working-directory: src/test/playwright
+      if: success() || failure()
 
   client-compilation:
     runs-on: ubuntu-latest
