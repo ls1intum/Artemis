@@ -5,8 +5,6 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,6 +28,5 @@ public interface AssessmentNoteRepository extends ArtemisJpaRepository<Assessmen
      */
     @Modifying
     @Transactional // ok because of delete
-    @Query("DELETE FROM AssessmentNote n WHERE n.id IN (SELECT n2.id FROM Result r JOIN r.assessmentNote n2 WHERE r.id = :resultId)")
-    void deleteByResultId(@Param("resultId") long resultId);
+    void deleteByResultId(long resultId);
 }
