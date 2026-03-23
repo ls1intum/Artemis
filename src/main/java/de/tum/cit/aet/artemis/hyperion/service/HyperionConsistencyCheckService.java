@@ -185,12 +185,12 @@ public class HyperionConsistencyCheckService {
         var semanticIssues = results != null ? results.getT2() : List.<ConsistencyIssue>of();
 
         // issues = combined output of structural + semantic checks (always returned)
-        List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
+        final List<ConsistencyIssue> combinedIssues = Stream.concat(structuralIssues.stream(), semanticIssues.stream()).toList();
 
         // issues = verifier output; fallback to combined if verifier fails
         List<ConsistencyIssueDTO> issueDTOs;
         try {
-            String issuesJson = objectMapper.writeValueAsString(Map.of("issues", combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList()));
+            final String issuesJson = objectMapper.writeValueAsString(Map.of("issues", combinedIssues.stream().map(this::mapConsistencyIssueToDto).toList()));
             var verificationInput = new HashMap<>(input);
             verificationInput.put("detected_issues_json", issuesJson);
             List<ConsistencyIssue> verifiedIssues = runVerificationCheck(verificationInput, parentObs, usageCollector);
@@ -323,15 +323,15 @@ public class HyperionConsistencyCheckService {
                 .lowCardinalityKeyValue(io.micrometer.common.KeyValue.of(AI_SPAN_KEY, AI_SPAN_VALUE))
                 .highCardinalityKeyValue(io.micrometer.common.KeyValue.of(LF_SPAN_NAME_KEY, "verification check")).parentObservation(parentObs).start();
 
-        var resourcePath = "/prompts/hyperion/consistency_verification.st";
-        String renderedPrompt = templates.render(resourcePath, input);
+        final var resourcePath = "/prompts/hyperion/consistency_verification.st";
+        final String renderedPrompt = templates.render(resourcePath, input);
         try (Observation.Scope scope = child.openScope()) {
             var verificationResponse = chatClient.prompt().system("You are a senior educational quality assurance engineer. Return only JSON matching the schema.")
                     .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
 
             usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
             var entity = verificationResponse.entity();
-            return (entity == null || entity.issues == null) ? List.of() : entity.issues;
+            return (entity == null || entity.issues == null) ? List.of() : List.copyOf(entity.issues);
         }
         catch (RuntimeException e) {
             child.error(e);
