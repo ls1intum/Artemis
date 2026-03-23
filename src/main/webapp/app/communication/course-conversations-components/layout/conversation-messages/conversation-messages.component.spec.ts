@@ -828,25 +828,22 @@ examples.forEach((activeConversation) => {
             ];
 
             const mockMessages = [
-                { post: { id: 1 }, elementRef: { nativeElement: { offsetTop: 0, getBoundingClientRect: jest.fn().mockReturnValue({ top: 0, bottom: 50 }) } } },
-                { post: { id: 2 }, elementRef: { nativeElement: { offsetTop: 200, getBoundingClientRect: jest.fn().mockReturnValue({ top: 200, bottom: 250 }) } } },
-                { post: { id: 3 }, elementRef: { nativeElement: { offsetTop: 400, getBoundingClientRect: jest.fn().mockReturnValue({ top: 400, bottom: 450 }) } } },
+                { post: () => ({ id: 1 }), elementRef: { nativeElement: { offsetTop: 0, getBoundingClientRect: vi.fn().mockReturnValue({ top: 0, bottom: 50 }) } } },
+                { post: () => ({ id: 2 }), elementRef: { nativeElement: { offsetTop: 200, getBoundingClientRect: vi.fn().mockReturnValue({ top: 200, bottom: 250 }) } } },
+                { post: () => ({ id: 3 }), elementRef: { nativeElement: { offsetTop: 400, getBoundingClientRect: vi.fn().mockReturnValue({ top: 400, bottom: 450 }) } } },
             ] as unknown as PostingThreadComponent[];
-            component.messages = {
-                toArray: () => mockMessages,
-                find: (fn: any) => mockMessages.find(fn),
-            } as any;
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
 
-            const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
+            const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((fn: FrameRequestCallback) => {
                 fn(0);
                 return 0;
             });
 
             (component as any).scrollToUnreadOrBottom();
 
-            expect(component.content.nativeElement.scrollTop).toBe(Math.max(200 - 15, 0));
-            expect(component.canStartSaving).toBeTrue();
-            expect((component as any).initialScrollComplete).toBeTrue();
+            expect(component.content().nativeElement.scrollTop).toBe(Math.max(200 - 15, 0));
+            expect(component.canStartSaving).toBe(true);
+            expect((component as any).initialScrollComplete).toBe(true);
 
             rafSpy.mockRestore();
         });
@@ -856,22 +853,22 @@ examples.forEach((activeConversation) => {
             component.currentUser = { id: 99, internal: false } as any;
             component.allPosts = [{ id: 1, creationDate: dayjs().subtract(15, 'minutes'), author: { id: 99, internal: false } } as Post];
 
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
 
             (component as any).scrollToUnreadOrBottom();
 
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
-            expect(component.canStartSaving).toBeTrue();
-            expect((component as any).initialScrollComplete).toBeTrue();
+            expect(component.canStartSaving).toBe(true);
+            expect((component as any).initialScrollComplete).toBe(true);
         });
 
         it('should not trigger handleScrollOnNewMessage before initial scroll is complete', () => {
             (component as any).initialScrollComplete = false;
             component.posts = [{ id: 1 } as Post];
-            component.content.nativeElement.scrollTop = 0;
+            component.content().nativeElement.scrollTop = 0;
             component.page = 1;
 
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
 
             component.handleScrollOnNewMessage();
 
@@ -881,54 +878,51 @@ examples.forEach((activeConversation) => {
         it('should trigger handleScrollOnNewMessage after initial scroll is complete', () => {
             (component as any).initialScrollComplete = true;
             component.posts = [{ id: 1 } as Post];
-            component.content.nativeElement.scrollTop = 0;
+            component.content().nativeElement.scrollTop = 0;
             component.page = 1;
 
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages');
 
             component.handleScrollOnNewMessage();
 
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
         });
 
-        it('should reset initialScrollComplete when active conversation changes', fakeAsync(() => {
+        it('should reset initialScrollComplete when active conversation changes', () => {
             (component as any).initialScrollComplete = true;
             component.canStartSaving = true;
 
             const newConversation = Object.assign({}, activeConversation, { id: 999 });
-            jest.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of([]));
+            vi.spyOn(metisService, 'fetchAllPinnedPosts').mockReturnValue(of([]));
 
             component._activeConversation = newConversation;
-            component.course = course;
+            fixture.componentRef.setInput('course', course);
             (component as any).onActiveConversationChange();
-            tick();
 
-            expect((component as any).initialScrollComplete).toBeFalse();
-            expect(component.canStartSaving).toBeFalse();
-        }));
+            expect((component as any).initialScrollComplete).toBe(false);
+            expect(component.canStartSaving).toBe(false);
+        });
 
         it('should set initialScrollComplete to true in goToLastSelectedElement when element is found', async () => {
             (component as any).initialScrollComplete = false;
-            const mockMessages = [{ post: { id: 42 }, elementRef: { nativeElement: { offsetTop: 100 } } }] as unknown as PostingThreadComponent[];
-            component.messages = {
-                toArray: () => mockMessages,
-            } as any;
+            const mockMessages = [{ post: () => ({ id: 42 }), elementRef: { nativeElement: { offsetTop: 100 } } }] as unknown as PostingThreadComponent[];
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
 
             await component.goToLastSelectedElement(42, false);
 
-            expect((component as any).initialScrollComplete).toBeTrue();
-            expect(component.canStartSaving).toBeTrue();
+            expect((component as any).initialScrollComplete).toBe(true);
+            expect(component.canStartSaving).toBe(true);
         });
 
         it('should scroll to bottom when currentUser is not yet available in scrollToUnreadOrBottom', () => {
             component.currentUser = undefined as any;
-            const scrollToBottomSpy = jest.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
+            const scrollToBottomSpy = vi.spyOn(component, 'scrollToBottomOfMessages').mockImplementation(() => {});
 
             (component as any).scrollToUnreadOrBottom();
 
             expect(scrollToBottomSpy).toHaveBeenCalledOnce();
-            expect(component.canStartSaving).toBeTrue();
-            expect((component as any).initialScrollComplete).toBeTrue();
+            expect(component.canStartSaving).toBe(true);
+            expect((component as any).initialScrollComplete).toBe(true);
         });
 
         it('should fall back to scrollToUnreadOrBottom when stored post ID is stale and all pages are loaded', async () => {
@@ -937,16 +931,13 @@ examples.forEach((activeConversation) => {
             component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
 
             const mockMessages = [
-                { post: { id: 1 }, elementRef: { nativeElement: { offsetTop: 0 } } },
-                { post: { id: 2 }, elementRef: { nativeElement: { offsetTop: 100 } } },
+                { post: () => ({ id: 1 }), elementRef: { nativeElement: { offsetTop: 0 } } },
+                { post: () => ({ id: 2 }), elementRef: { nativeElement: { offsetTop: 100 } } },
             ] as unknown as PostingThreadComponent[];
-            component.messages = {
-                toArray: () => mockMessages,
-                find: (fn: any) => mockMessages.find(fn),
-            } as any;
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
 
-            const scrollToUnreadOrBottomSpy = jest.spyOn(component as any, 'scrollToUnreadOrBottom').mockImplementation(() => {});
-            const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
+            const scrollToUnreadOrBottomSpy = vi.spyOn(component as any, 'scrollToUnreadOrBottom').mockImplementation(() => {});
+            const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage');
 
             await component.goToLastSelectedElement(999, false);
 
@@ -960,14 +951,12 @@ examples.forEach((activeConversation) => {
             component.posts = [{ id: 1 } as Post, { id: 2 } as Post];
 
             const mockMessages = [
-                { post: { id: 1 }, elementRef: { nativeElement: { offsetTop: 0 } } },
-                { post: { id: 2 }, elementRef: { nativeElement: { offsetTop: 100 } } },
+                { post: () => ({ id: 1 }), elementRef: { nativeElement: { offsetTop: 0 } } },
+                { post: () => ({ id: 2 }), elementRef: { nativeElement: { offsetTop: 100 } } },
             ] as unknown as PostingThreadComponent[];
-            component.messages = {
-                toArray: () => mockMessages,
-            } as any;
+            (component as any).messages = vi.fn().mockReturnValue(mockMessages);
 
-            const fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
+            const fetchNextPageSpy = vi.spyOn(component, 'fetchNextPage').mockImplementation(() => {});
 
             await component.goToLastSelectedElement(999, false);
 
