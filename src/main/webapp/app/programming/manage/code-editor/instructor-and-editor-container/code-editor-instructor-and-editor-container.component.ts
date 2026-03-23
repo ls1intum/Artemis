@@ -76,8 +76,8 @@ const SEVERITY_ORDER: Record<ConsistencyIssue.SeverityEnum, number> = {
 };
 
 const SUPPORTED_CODE_GENERATION_REPOSITORIES = [RepositoryType.TEMPLATE, RepositoryType.SOLUTION, RepositoryType.TESTS] as const;
-const CODE_GENERATION_SLOT_RELEASE_POLL_INTERVAL_MS = 300;
-const CODE_GENERATION_SLOT_RELEASE_MAX_POLLS = 20;
+const CODE_GENERATION_SLOT_RELEASE_POLL_INTERVAL_MS = 1000;
+const CODE_GENERATION_SLOT_RELEASE_MAX_POLLS = 120;
 const CODE_GENERATION_STATUS_POPOVER_CENTER_OFFSET_PX = -10;
 
 type SupportedCodeGenerationRepositoryType = (typeof SUPPORTED_CODE_GENERATION_REPOSITORIES)[number];
@@ -650,9 +650,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 this.codeEditorContainer?.actions?.executeRefresh();
                 this.updateCodeGenerationStatus(repositoryType, (status) => ({
                     ...status,
-                    state: 'success',
+                    state: event.success ? 'success' : 'error',
                     attempts: event.attempts,
-                    message: event.success ? event.message : undefined,
+                    message: event.message,
                 }));
                 this.codeGenAlertService.addAlert({
                     type: AlertType.SUCCESS,

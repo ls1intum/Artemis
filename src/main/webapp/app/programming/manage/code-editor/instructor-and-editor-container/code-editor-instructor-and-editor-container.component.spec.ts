@@ -396,7 +396,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             );
         });
 
-        it('should call API, subscribe, and show completed alert on DONE without success flag', async () => {
+        it('should mark the repository as error and preserve the message on DONE without success flag', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.SOLUTION;
             selectCodeGenerationRepositories(RepositoryType.SOLUTION);
@@ -410,10 +410,15 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
 
-            job$.next({ type: 'DONE', success: false });
+            job$.next({ type: 'DONE', success: false, message: 'Generation finished without producing files' });
 
             expect(comp.isGeneratingCode()).toBeFalse();
-            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)?.state).toBe('success');
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                expect.objectContaining({
+                    state: 'error',
+                    message: 'Generation finished without producing files',
+                }),
+            );
             expect(addAlertSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
                     type: AlertType.SUCCESS,
@@ -679,7 +684,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
             expect(codeGenerationApi.generateCode).toHaveBeenCalledTimes(2);
 
-            tick(300);
+            tick(1000);
 
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true });
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
@@ -692,8 +697,12 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
         it('should realign the code generation status popover when status content changes while visible', fakeAsync(() => {
             const align = jest.fn();
-            const setProperty = jest.fn();
-            const style = { setProperty, insetInlineStart: '' };
+            const container = document.createElement('div');
+            container.style.insetInlineStart = '';
+            const setPropertySpy = jest.spyOn(container.style, 'setProperty');
+            Object.defineProperty(container, 'getBoundingClientRect', {
+                value: () => ({ left: 80, width: 200 }),
+            });
             jest.spyOn(comp, 'codeGenerationStatusPopover').mockReturnValue({
                 overlayVisible: true,
                 align,
@@ -704,10 +713,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
                             getBoundingClientRect: () => ({ left: 118, width: 12 }),
                         }) as any,
                 },
-                container: {
-                    getBoundingClientRect: () => ({ left: 80, width: 200 }),
-                    style,
-                },
+                container,
             } as any);
 
             (comp as any).updateCodeGenerationStatus(RepositoryType.TEMPLATE, (status: any) => ({
@@ -719,8 +725,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             tick();
 
             expect(align).toHaveBeenCalledOnce();
-            expect(style.insetInlineStart).toBe('20px');
-            expect(setProperty).toHaveBeenCalledWith('--p-popover-arrow-left', '102px');
+            expect(container.style.insetInlineStart).toBe('20px');
+            expect(setPropertySpy).toHaveBeenCalledWith('--p-popover-arrow-left', '102px');
         }));
 
         it('should clear subscription when restore check-only has no active job', () => {

@@ -304,6 +304,7 @@ public class HyperionCodeGenerationExecutionService {
         String lastCommitHash = null;
         int attemptsUsed = 0;
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
+        boolean generatedFilesCommitted = false;
 
         try {
             HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
@@ -327,6 +328,7 @@ public class HyperionCodeGenerationExecutionService {
 
                     String newCommitHash = commitAndGetHash(setupResult.repository(), user, repositoryUri, exercise, repositoryType);
                     lastCommitHash = newCommitHash;
+                    generatedFilesCommitted = true;
                     result = waitForBuildResult(exercise, newCommitHash, repositoryType);
                 }
 
@@ -364,11 +366,43 @@ public class HyperionCodeGenerationExecutionService {
             exerciseVersionService.createExerciseVersion(exercise, user);
         }
 
-        boolean success = result != null && result.isSuccessful();
+        boolean success = generatedFilesCommitted;
         int reportedAttempts = attemptsUsed == 0 ? MAX_ITERATIONS : attemptsUsed;
-        publisher.done(success, reportedAttempts, success ? "Succeeded" : "Failed");
+        String completionMessage = buildCompletionMessage(repositoryType, generatedFilesCommitted, result);
+        publisher.done(success, reportedAttempts, completionMessage);
 
         return result;
+    }
+
+    private String buildCompletionMessage(RepositoryType repositoryType, boolean generatedFilesCommitted, Result result) {
+        if (!generatedFilesCommitted) {
+            return switch (repositoryType) {
+                case TEMPLATE -> "Template generation did not produce any committed files.";
+                case SOLUTION -> "Solution generation did not produce any committed files.";
+                case TESTS -> "Test generation did not produce any committed files.";
+                default -> "Code generation did not produce any committed files.";
+            };
+        }
+
+        if (result == null) {
+            return switch (repositoryType) {
+                case TEMPLATE -> "Template files were generated and committed to the template repository, but the build failed.";
+                case SOLUTION -> "Solution files were generated and committed to the solution repository, but the build failed.";
+                case TESTS -> "Test files were generated and committed to the test repository, but the build failed.";
+                default -> "Files were generated and committed, but the build failed.";
+            };
+        }
+
+        boolean buildSuccessful = result.isSuccessful();
+        return switch (repositoryType) {
+            case TEMPLATE -> buildSuccessful ? "Template files were generated and committed to the template repository."
+                    : "Template files were generated and committed to the template repository, but the latest build did not pass.";
+            case SOLUTION -> buildSuccessful ? "Solution files were generated and committed to the solution repository."
+                    : "Solution files were generated and committed to the solution repository, but the latest build did not pass.";
+            case TESTS -> buildSuccessful ? "Test files were generated and committed to the test repository."
+                    : "Test files were generated and committed to the test repository, but the latest build did not pass.";
+            default -> buildSuccessful ? "Files were generated and committed." : "Files were generated and committed, but the latest build did not pass.";
+        };
     }
 
     /**

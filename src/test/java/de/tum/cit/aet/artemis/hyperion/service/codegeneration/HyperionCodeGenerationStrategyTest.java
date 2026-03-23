@@ -327,7 +327,7 @@ class HyperionCodeGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException("JSON parse failed"));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
-                .hasMessageContaining("JSON parse failed");
+                .hasMessageContaining("AI request failed due to an internal processing error.").hasRootCauseMessage("JSON parse failed");
     }
 
     @Test

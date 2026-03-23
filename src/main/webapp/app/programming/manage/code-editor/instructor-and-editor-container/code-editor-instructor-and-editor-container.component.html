@@ -215,6 +215,7 @@
                                             type="button"
                                             [disabled]="isGeneratingCode()"
                                             [pTooltip]="'artemisApp.programmingExercise.codeGeneration.settingsTooltip' | artemisTranslate"
+                                            [attr.aria-label]="'artemisApp.programmingExercise.codeGeneration.settingsTooltip' | artemisTranslate"
                                             (click)="toggleCodeGenerationSettings($event)"
                                         >
                                             <fa-icon [icon]="faGear" />
@@ -286,6 +287,7 @@
                             type="button"
                             class="ms-1 code-generation-status-toolbar-button"
                             [pTooltip]="'artemisApp.programmingExercise.codeGeneration.statusTooltip' | artemisTranslate"
+                            [attr.aria-label]="'artemisApp.programmingExercise.codeGeneration.statusTooltip' | artemisTranslate"
                             (click)="toggleCodeGenerationStatus($event)"
                         >
                             <fa-icon [icon]="faCircleInfo" />

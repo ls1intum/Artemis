@@ -310,7 +310,7 @@
                 "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
                 "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
                 "unsupportedRepository": "Code-Generierung wird nur für Template-, Lösung- und Test-Repositories unterstützt.",
-                "noRepositorySelected": "Wählen Sie mindestens ein Repository aus, bevor Sie die Code-Generierung starten.",
+                "noRepositorySelected": "Wähle mindestens ein Repository aus, bevor du die Code-Generierung startest.",
                 "settingsTitle": "Generierungs-Einstellungen",
                 "settingsTooltip": "Repositories für die Generierung auswählen",
                 "statusTitle": "Generierungsstatus",
