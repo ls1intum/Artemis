@@ -27,7 +27,7 @@ import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-s
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
 import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
 import { AccountService } from 'app/core/auth/account.service';
-import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
@@ -41,7 +41,6 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
-import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
@@ -52,6 +51,7 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { formatDate } from '@angular/common';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 // Interval (in ms) to check if the date has changed for session bucket recalculation
 const DAY_CHANGE_CHECK_INTERVAL_MS = 60000;
 
@@ -79,10 +79,10 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
         SearchFilterComponent,
-        ContextSelectionComponent,
         IrisCitationTextComponent,
         IrisChatMemoriesIndicatorComponent,
         ConfirmDialogModule,
+        ContextSelectionComponent,
     ],
     providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -216,7 +216,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
-    readonly courseId = input<number>();
     showDeclineButton = input<boolean>(true);
     isChatHistoryAvailable = input<boolean>(false);
     isEmbeddedChat = input<boolean>(false);
@@ -726,17 +725,17 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     openNewSession() {
-        const courseId = this.courseId();
-        if (courseId) {
-            // Dashboard: always default to course context
-            this.chatService.createNewChat(ChatServiceMode.COURSE, courseId);
-        } else {
-            // Widget (exercise/lecture page): keep current context
-            const mode = this.currentChatMode();
-            const entityId = this.currentRelatedEntityId();
-            if (mode !== undefined && entityId !== undefined) {
-                this.chatService.createNewChat(mode, entityId);
+        if (this.isChatHistoryAvailable()) {
+            // Dashboard: always create a new course-level chat
+            const courseId = this.chatService.getCourseId();
+            if (courseId !== undefined) {
+                this.chatService.switchToNewSession(ChatServiceMode.COURSE, courseId);
+            } else {
+                this.chatService.clearChat();
             }
+        } else {
+            // Widget: preserve the current exercise/lecture context
+            this.chatService.clearChat();
         }
     }
 

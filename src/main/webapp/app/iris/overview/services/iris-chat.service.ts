@@ -101,6 +101,9 @@ export class IrisChatService implements OnDestroy {
     private chatSessionByIdSubscription?: Subscription;
 
     private sessionCreationIdentifier?: string;
+    private lastRequestedMode?: ChatServiceMode;
+    private lastRequestedEntityId?: number;
+    private lastRequestedEntityName?: string;
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
@@ -171,7 +174,7 @@ export class IrisChatService implements OnDestroy {
         this.chatSessionByIdSubscription?.unsubscribe();
     }
 
-    protected start(forceNew = false) {
+    protected start() {
         const requiresAcceptance = this.sessionCreationIdentifier
             ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
             : true;
@@ -181,17 +184,10 @@ export class IrisChatService implements OnDestroy {
             this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.CLOUD_AI ||
             this.hasJustAcceptedLLMUsage
         ) {
-            if (forceNew) {
-                this.createNewSession().subscribe({
-                    ...this.handleNewSession(),
-                    complete: () => this.loadChatSessions(),
-                });
-            } else {
-                this.getCurrentSessionOrCreate().subscribe({
-                    ...this.handleNewSession(),
-                    complete: () => this.loadChatSessions(),
-                });
-            }
+            this.getCurrentSessionOrCreate().subscribe({
+                ...this.handleNewSession(),
+                complete: () => this.loadChatSessions(),
+            });
         }
     }
 
@@ -387,19 +383,6 @@ export class IrisChatService implements OnDestroy {
     }
 
     /**
-     * Extracts the entity ID from {@link sessionCreationIdentifier} (e.g. 'lecture-chat/27' → 27).
-     * Returns -1 if the identifier is not set or does not end with a numeric ID.
-     */
-    private parseEntityIdFromIdentifier(): number {
-        if (!this.sessionCreationIdentifier) {
-            return -1;
-        }
-        const parts = this.sessionCreationIdentifier.split('/');
-        const parsed = parseInt(parts[parts.length - 1], 10);
-        return isNaN(parsed) ? -1 : parsed;
-    }
-
-    /**
      * {@link IrisChatHttpService#getChatSessions} returns only sessions that have messages.
      *
      * As we open a new empty session without messages (e.g. when the dashboard is opened) we want to display this session in the history as well.
@@ -407,13 +390,13 @@ export class IrisChatService implements OnDestroy {
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
         const currentSessions = this.chatSessions.getValue();
 
-        const chatMode = newIrisSession.mode ?? ChatServiceMode.COURSE;
+        const chatMode = newIrisSession.mode ?? this.lastRequestedMode ?? ChatServiceMode.COURSE;
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
             chatMode: chatMode,
-            entityId: newIrisSession.entityId ?? this.parseEntityIdFromIdentifier(),
-            entityName: newIrisSession.entityName ?? '',
+            entityId: newIrisSession.entityId ?? this.lastRequestedEntityId!,
+            entityName: this.lastRequestedEntityName ?? '',
             title: newIrisSession.title,
         };
 
@@ -432,6 +415,12 @@ export class IrisChatService implements OnDestroy {
                 this.addLatestEmptySessionToChatSessions(newIrisSession);
 
                 this.sessionId = newIrisSession.id;
+                if (this.lastRequestedMode !== undefined) {
+                    this.currentChatModeSubject.next(this.lastRequestedMode);
+                }
+                if (this.lastRequestedEntityId !== undefined) {
+                    this.currentRelatedEntityIdSubject.next(this.lastRequestedEntityId);
+                }
                 this.citationInfo.next(newIrisSession.citationInfo || []);
                 this.messages.next(newIrisSession.messages || []);
                 this.parseLatestSuggestions(newIrisSession.latestSuggestions);
@@ -458,7 +447,6 @@ export class IrisChatService implements OnDestroy {
         this.suggestions.next(suggestions);
     }
 
-    // TODO: überprüfen ob clearChat() noch benötigt wird, nachdem openNewSession() auf switchTo() umgestellt wurde
     public clearChat(): void {
         this.close();
         this.createNewSession().subscribe({
@@ -598,44 +586,35 @@ export class IrisChatService implements OnDestroy {
         );
     }
 
-    /**
-     * Closes the current session and initializes a new one for the given context.
-     * Restores the mode/entityId subjects after close() clears them.
-     */
-    private initializeSession(mode: ChatServiceMode, id: number | undefined, forceNew: boolean): void {
-        this.close();
-        this.currentChatModeSubject.next(mode);
-        this.currentRelatedEntityIdSubject.next(id);
-        if (this.sessionCreationIdentifier) {
-            this.start(forceNew);
-        }
-    }
-
-    /**
-     * Switches to a chat mode for the given entity, reusing an existing session if available.
-     * Only acts when the context actually changes.
-     * @param mode The chat mode to switch to
-     * @param id The entity ID (course, lecture, or exercise)
-     */
     switchTo(mode: ChatServiceMode, id?: number): void {
         const modeUrl = chatModeToUrlComponent(mode);
         const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
         const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
         this.sessionCreationIdentifier = newIdentifier;
+        this.lastRequestedMode = mode;
+        this.lastRequestedEntityId = id;
         if (isDifferent) {
-            this.initializeSession(mode, id, false);
+            this.closeAndStart();
         }
     }
 
     /**
-     * Creates a new chat session for the given context, even if one already exists.
-     * @param mode The chat mode for the new session
-     * @param id The entity ID (course, lecture, or exercise)
+     * Switches to the given mode/entity and always creates a new session,
+     * unlike {@link switchTo} which resumes the existing session.
      */
-    public createNewChat(mode: ChatServiceMode, id: number): void {
+    switchToNewSession(mode: ChatServiceMode, id?: number, entityName?: string): void {
         const modeUrl = chatModeToUrlComponent(mode);
-        this.sessionCreationIdentifier = modeUrl ? modeUrl + '/' + id : undefined;
-        this.initializeSession(mode, id, true);
+        this.sessionCreationIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
+        this.lastRequestedMode = mode;
+        this.lastRequestedEntityId = id;
+        this.lastRequestedEntityName = entityName;
+        this.close();
+        if (this.sessionCreationIdentifier) {
+            this.createNewSession().subscribe({
+                ...this.handleNewSession(),
+                complete: () => this.loadChatSessions(),
+            });
+        }
     }
 
     switchToSession(session: IrisSessionDTO): void {
@@ -646,13 +625,11 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         const courseId = this.getCourseId();
-        const entityId = session.entityId;
-        const chatMode = session.chatMode;
+        this.lastRequestedMode = session.chatMode;
+        this.lastRequestedEntityId = session.entityId;
         if (courseId) {
             this.chatSessionByIdSubscription?.unsubscribe();
             this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((session) => {
-                this.currentChatModeSubject.next(chatMode);
-                this.currentRelatedEntityIdSubject.next(entityId);
                 this.handleNewSession().next(session);
             });
         } else {
@@ -671,10 +648,9 @@ export class IrisChatService implements OnDestroy {
     }
 
     private closeAndStart() {
-        const mode = this.currentChatModeSubject.value;
-        const id = this.currentRelatedEntityIdSubject.value;
-        if (mode !== undefined) {
-            this.initializeSession(mode, id, false);
+        this.close();
+        if (this.sessionCreationIdentifier) {
+            this.start();
         }
     }
 

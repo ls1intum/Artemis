@@ -294,29 +294,29 @@
                                 #messageTextarea
                             >
                             </textarea>
-                            <div class="textarea-actions">
-                                @if (courseId()) {
-                                    <jhi-context-selection [courseId]="courseId()" />
+                            <div class="input-actions">
+                                @if (isChatHistoryAvailable()) {
+                                    <jhi-context-selection />
                                 }
                                 <jhi-button
-                                id="irisSendButton"
-                                class="send-button"
-                                (onClick)="onSend()"
-                                [btnType]="ButtonType.SUCCESS_OUTLINE"
-                                [icon]="faPaperPlane"
-                                [disabled]="isSendDisabled()"
+                                    id="irisSendButton"
+                                    class="send-button"
+                                    (onClick)="onSend()"
+                                    [btnType]="ButtonType.SUCCESS_OUTLINE"
+                                    [icon]="faPaperPlane"
+                                    [disabled]="isSendDisabled()"
                                 />
-                                <button
+                            </div>
+                            <button
                                 type="button"
                                 class="scroll-to-bottom"
                                 [hidden]="isScrolledToBottom()"
                                 (click)="scrollToBottom('smooth')"
                                 [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-                                 >
+                            >
                                 <fa-icon [icon]="faArrowDown" />
-                                </button>
-                            </div>
-                      </div>
+                            </button>
+                        </div>
                     </div>
                     @if (!isChatGptWrapper()) {
                         <span class="disclaimer-message" jhiTranslate="artemisApp.exerciseChatbot.disclaimer"></span>

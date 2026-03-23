@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed, toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { faChalkboardUser, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
@@ -9,7 +9,7 @@ import { Lecture } from 'app/lecture/shared/entities/lecture.model';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
-import { catchError, filter, map, of, switchMap, tap } from 'rxjs';
+import { catchError, filter, map, of, switchMap } from 'rxjs';
 import { SelectModule } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -47,11 +47,11 @@ export class ContextSelectionComponent {
     private readonly chatService = inject(IrisChatService);
     private readonly destroyRef = inject(DestroyRef);
 
+    readonly courseId = signal<number | undefined>(this.chatService.getCourseId());
+
     private readonly currentMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
     private readonly currentEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
 
-    readonly courseId = input<number>();
-    readonly isLoading = signal(false);
     readonly lectures = signal<Lecture[]>([]);
     readonly exercises = signal<Exercise[]>([]);
     readonly courseName = signal<string>('');
@@ -124,7 +124,6 @@ export class ContextSelectionComponent {
         toObservable(this.courseId)
             .pipe(
                 filter((id): id is number => id !== undefined),
-                tap(() => this.isLoading.set(true)),
                 switchMap((courseId) => {
                     const cached = this.courseStorageService.getCourse(courseId);
                     if (cached?.lectures?.length || cached?.exercises?.length) {
@@ -151,7 +150,6 @@ export class ContextSelectionComponent {
                 this.courseName.set(data.courseName);
                 this.lectures.set(data.lectures);
                 this.exercises.set(data.exercises);
-                this.isLoading.set(false);
             });
     }
 
@@ -160,7 +158,7 @@ export class ContextSelectionComponent {
             .flatMap((g) => g.items)
             .find((o) => o.value === value);
         if (option) {
-            this.chatService.createNewChat(option.mode, option.entityId);
+            this.chatService.switchToNewSession(option.mode, option.entityId, option.label);
         }
     }
 }

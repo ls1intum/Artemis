@@ -489,6 +489,17 @@ pre {
         &:focus-within {
             border-color: var(--primary);
         }
+
+        .input-actions {
+            display: flex;
+            align-items: stretch;
+            justify-content: flex-end;
+            padding: 4px 4px 4px 8px;
+
+            jhi-context-selection {
+                margin-right: auto;
+            }
+        }
     }
 
     .textarea-actions {
