@@ -141,7 +141,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
         @Test
         @WithAnonymousUser
         void testGetPasskeys_AccessDeniedForAnonymous() throws Exception {
-            request.getList("/api/core/passkey/user", HttpStatus.FORBIDDEN, PasskeyDTO.class);
+            request.getList("/api/core/passkey/user", HttpStatus.UNAUTHORIZED, PasskeyDTO.class);
         }
     }
 
@@ -174,7 +174,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             PasskeyDTO modifiedCredential = new PasskeyDTO(existingCredential.getCredentialId(), "newLabel", existingCredential.getCreatedDate(), existingCredential.getLastUsed(),
                     false);
 
-            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.FORBIDDEN);
+            request.put("/api/core/passkey/" + modifiedCredential.credentialId(), modifiedCredential, HttpStatus.UNAUTHORIZED);
         }
 
         @Test
@@ -240,7 +240,7 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
             User user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
             PasskeyCredential credential = passkeyCredentialUtilService.createAndSavePasskeyCredential(user);
 
-            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.FORBIDDEN);
+            request.delete("/api/core/passkey/" + credential.getCredentialId(), HttpStatus.UNAUTHORIZED);
         }
 
         @Test
@@ -379,7 +379,8 @@ class PasskeyIntegrationTest extends AbstractSpringIntegrationIndependentTest {
 
             List<PasskeyAdminDTO> passkeys = request.getList("/api/core/passkey/admin", HttpStatus.OK, PasskeyAdminDTO.class);
 
-            assertThat(passkeys).hasSize(2);
+            // Only assert on the credentials we created, since other admin users may have passkeys from other tests
+            assertThat(passkeys).extracting(PasskeyAdminDTO::credentialId).contains(credential1.getCredentialId(), credential2.getCredentialId());
 
             PasskeyAdminDTO passkeyDto1 = passkeys.stream().filter(p -> p.credentialId().equals(credential1.getCredentialId())).findFirst().orElseThrow();
             assertThat(passkeyDto1.userLogin()).isEqualTo(admin1.getLogin());
