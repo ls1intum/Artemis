@@ -2,7 +2,20 @@ import { Component, computed, effect, inject, input, output, signal, untracked }
 import { RouterLink } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { IconDefinition, faEye, faFileSignature, faFolderOpen, faListAlt, faPlayCircle, faRedo, faSignal, faTable, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import {
+    IconDefinition,
+    faEye,
+    faFileSignature,
+    faFolderOpen,
+    faListAlt,
+    faPaperPlane,
+    faPlayCircle,
+    faRedo,
+    faSignal,
+    faTable,
+    faUsers,
+    faWrench,
+} from '@fortawesome/free-solid-svg-icons';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -72,6 +85,7 @@ export class ExerciseHeaderActionsComponent {
     protected readonly faRedo = faRedo;
     protected readonly faWrench = faWrench;
     protected readonly faFileSignature = faFileSignature;
+    protected readonly faPaperPlane = faPaperPlane;
 
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;

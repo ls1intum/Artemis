@@ -21,27 +21,29 @@
             </div>
         }
 
-        <div class="d-flex flex-column overflow-hidden rounded-3 module-bg border" jhiSplitPane>
-            <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-shrink-0">
-                <p-tablist>
-                    @for (panel of rightPanels(); track panel; let i = $index) {
-                        <p-tab [value]="i">
-                            @if (panel.iconTemplate()) {
-                                <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                            } @else if (panel.icon()) {
-                                <fa-icon [icon]="panel.icon()!" />
-                            }
-                            <span>{{ panel.label() }}</span>
-                        </p-tab>
+        @if (rightPanels().length > 0) {
+            <div class="d-flex flex-column overflow-hidden rounded-3 module-bg border" jhiSplitPane>
+                <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-shrink-0">
+                    <p-tablist>
+                        @for (panel of rightPanels(); track panel; let i = $index) {
+                            <p-tab [value]="i">
+                                @if (panel.iconTemplate()) {
+                                    <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                                } @else if (panel.icon()) {
+                                    <fa-icon [icon]="panel.icon()!" />
+                                }
+                                <span>{{ panel.label() }}</span>
+                            </p-tab>
+                        }
+                    </p-tablist>
+                </p-tabs>
+                <div class="flex-grow-1 overflow-y-auto">
+                    @if (rightPanels()[activeRightIndex()]) {
+                        <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
                     }
-                </p-tablist>
-            </p-tabs>
-            <div class="flex-grow-1 overflow-y-auto">
-                @if (rightPanels()[activeRightIndex()]) {
-                    <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
-                }
+                </div>
             </div>
-        </div>
+        }
     </div>
 } @else {
     <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->

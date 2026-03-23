@@ -17,6 +17,7 @@ import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -30,6 +31,7 @@ import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iri
         QuizParticipationComponent,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
+        TranslateDirective,
     ],
 })
 export class ExerciseSplitPanelComponent {
@@ -75,6 +77,19 @@ export class ExerciseSplitPanelComponent {
     readonly showCodeEditor = computed(() => {
         const exercise = this.exercise();
         return exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor;
+    });
+
+    readonly showEditorPanel = computed(() => {
+        if (!this.studentParticipation()) return false;
+        const type = this.exercise().type;
+        if (type === ExerciseType.PROGRAMMING) {
+            return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
+        }
+        return true;
+    });
+
+    readonly showProblemStatement = computed(() => {
+        return this.exercise().type !== ExerciseType.QUIZ;
     });
 
     readonly usesRouterOutlet = computed(() => {

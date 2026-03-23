@@ -1,5 +1,5 @@
 <jhi-resizable-panels>
-    @if (studentParticipation()) {
+    @if (showEditorPanel()) {
         <ng-template jhiPanel label="Editor" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet />
@@ -8,13 +8,21 @@
                 <jhi-quiz [inputExerciseId]="exercise().id" [inputCourseId]="exercise().course?.id" [inputMode]="'live'" />
             }
         </ng-template>
+    } @else if (exercise().type === ExerciseType.QUIZ) {
+        <ng-template jhiPanel label="Quiz" [icon]="getIcon(exercise().type)">
+            <div class="d-flex align-items-center justify-content-center h-100 text-body-secondary">
+                <span jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotOpened"></span>
+            </div>
+        </ng-template>
     }
 
-    <ng-template jhiPanel label="Problem statement" [icon]="faAlignLeft">
-        <div class="d-flex flex-fill">
-            <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()!" />
-        </div>
-    </ng-template>
+    @if (showProblemStatement()) {
+        <ng-template jhiPanel label="Problem statement" [icon]="faAlignLeft">
+            <div class="d-flex flex-fill">
+                <jhi-problem-statement [exerciseInput]="exercise()" [participationInput]="studentParticipation()!" />
+            </div>
+        </ng-template>
+    }
 
     @if (showIris()) {
         <ng-template #irisLogoTpl>

@@ -171,6 +171,7 @@
                 "exerciseLateSubmission": "Late submission, waiting for feedback.",
                 "exerciseLateFeedback": "Late submission with feedback.",
                 "quizNotStarted": "The quiz is not active.",
+                "quizNotOpened": "Click \"Open Quiz\" to participate in the quiz.",
                 "userNotParticipated": "You did not participate in this live quiz.",
                 "userParticipating": "You are currently participating in this quiz.",
                 "userSubmitted": "You have already submitted.",

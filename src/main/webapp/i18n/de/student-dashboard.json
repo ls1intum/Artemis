@@ -171,6 +171,7 @@
                 "exerciseLateSubmission": "Verspätete Abgabe, noch kein Feedback.",
                 "exerciseLateFeedback": "Verspätete Abgabe, mit Feedback.",
                 "quizNotStarted": "Das Quiz ist nicht aktiv.",
+                "quizNotOpened": "Klicke auf \"Quiz öffnen\", um am Quiz teilzunehmen.",
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
                 "userSubmitted": "Du hast bereits abgegeben.",
