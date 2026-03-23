@@ -70,9 +70,6 @@ public class PyrisTranscriptionStatusUpdateService {
             return;
         }
 
-        // Clear the queued flag on first callback so the UI shows "Transcribing" instead of "Awaiting Processing"
-        processingStateCallbackApi.ifPresent(api -> api.acknowledgeTranscriptionJob(job.lectureUnitId()));
-
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
