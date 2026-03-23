@@ -26,9 +26,7 @@ public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pi
      * @return the corresponding DTO
      */
     public static DragItemFromEditorDTO of(DragItem dragItem) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = dragItem.getTempID() != null ? dragItem.getTempID() : dragItem.getId();
-        return new DragItemFromEditorDTO(dragItem.getId(), effectiveTempID, dragItem.getText(), dragItem.getPictureFilePath());
+        return new DragItemFromEditorDTO(dragItem.getId(), dragItem.getId(), dragItem.getText(), dragItem.getPictureFilePath());
     }
 
     /**

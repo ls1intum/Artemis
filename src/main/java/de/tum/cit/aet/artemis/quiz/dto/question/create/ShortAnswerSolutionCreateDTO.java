@@ -33,6 +33,6 @@ public record ShortAnswerSolutionCreateDTO(@NotNull Long tempID, @NotEmpty Strin
      * @return the {@link ShortAnswerSolutionCreateDTO} with properties set from the domain object
      */
     public static ShortAnswerSolutionCreateDTO of(ShortAnswerSolution solution) {
-        return new ShortAnswerSolutionCreateDTO(solution.getTempID(), solution.getText());
+        return new ShortAnswerSolutionCreateDTO(solution.getId(), solution.getText());
     }
 }

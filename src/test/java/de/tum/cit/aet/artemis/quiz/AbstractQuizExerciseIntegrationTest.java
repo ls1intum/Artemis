@@ -291,21 +291,17 @@ public class AbstractQuizExerciseIntegrationTest extends AbstractSpringIntegrati
             if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 for (var dragItem : dragAndDropQuestion.getDragItems()) {
                     dragItem.setId(null);
-                    dragItem.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
                 }
                 for (var dropLocation : dragAndDropQuestion.getDropLocations()) {
                     dropLocation.setId(null);
-                    dropLocation.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
                 }
             }
             if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
                 for (var spot : shortAnswerQuestion.getSpots()) {
                     spot.setId(null);
-                    spot.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
                 }
                 for (var solution : shortAnswerQuestion.getSolutions()) {
                     solution.setId(null);
-                    solution.setTempID(Math.abs((long) (Math.random() * Long.MAX_VALUE)));
                 }
             }
         }

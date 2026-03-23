@@ -27,9 +27,7 @@ public record ShortAnswerSolutionFromEditorDTO(Long id, Long tempID, @NotEmpty S
      * @return the corresponding DTO
      */
     public static ShortAnswerSolutionFromEditorDTO of(ShortAnswerSolution solution) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = solution.getTempID() != null ? solution.getTempID() : solution.getId();
-        return new ShortAnswerSolutionFromEditorDTO(solution.getId(), effectiveTempID, solution.getText());
+        return new ShortAnswerSolutionFromEditorDTO(solution.getId(), solution.getId(), solution.getText());
     }
 
     /**

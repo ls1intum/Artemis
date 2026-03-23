@@ -1275,53 +1275,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Resolves the mappings in DragAndDrop and ShortAnswer questions within the given QuizExercise.
-     * <p>
-     * This method iterates through all questions in the quiz exercise. For DragAndDropQuestions and ShortAnswerQuestions,
-     * it replaces the temporary objects in the correct mappings with the actual objects from the question's collections,
-     * matching them by their temporary IDs (tempID).
-     * <p>
-     * If a mapping cannot be resolved (i.e., no matching object found for a tempID), a BadRequestAlertException is thrown.
-     *
-     * @param quizExercise the QuizExercise containing the questions to process
-     * @throws BadRequestAlertException if any mapping cannot be resolved due to invalid tempIDs
-     */
-    public void resolveQuizQuestionMappings(QuizExercise quizExercise) throws BadRequestAlertException {
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion dnd) {
-                Map<Long, DragItem> idToDragItem = dnd.getDragItems().stream().collect(Collectors.toMap(DragItem::getTempID, Function.identity()));
-                Map<Long, DropLocation> idToDropLocation = dnd.getDropLocations().stream().collect(Collectors.toMap(DropLocation::getTempID, Function.identity()));
-                for (DragAndDropMapping mapping : dnd.getCorrectMappings()) {
-                    Long dragItemTempId = mapping.getDragItem().getTempID();
-                    Long dropLocationTempId = mapping.getDropLocation().getTempID();
-                    DragItem dragItem = idToDragItem.get(dragItemTempId);
-                    DropLocation dropLocation = idToDropLocation.get(dropLocationTempId);
-                    if (dragItem == null || dropLocation == null) {
-                        throw new BadRequestAlertException("Could not resolve drag and drop mappings", ENTITY_NAME, "invalidMappings");
-                    }
-                    mapping.setDragItem(dragItem);
-                    mapping.setDropLocation(dropLocation);
-                }
-            }
-            else if (question instanceof ShortAnswerQuestion sa) {
-                Map<Long, ShortAnswerSpot> idToSpot = sa.getSpots().stream().collect(Collectors.toMap(ShortAnswerSpot::getTempID, Function.identity()));
-                Map<Long, ShortAnswerSolution> idToSolution = sa.getSolutions().stream().collect(Collectors.toMap(ShortAnswerSolution::getTempID, Function.identity()));
-                for (ShortAnswerMapping mapping : sa.getCorrectMappings()) {
-                    Long spotTempId = mapping.getSpot().getTempID();
-                    Long solutionTempId = mapping.getSolution().getTempID();
-                    ShortAnswerSpot spot = idToSpot.get(spotTempId);
-                    ShortAnswerSolution solution = idToSolution.get(solutionTempId);
-                    if (spot == null || solution == null) {
-                        throw new BadRequestAlertException("Could not resolve short answer mappings", ENTITY_NAME, "invalidMappings");
-                    }
-                    mapping.setSpot(spot);
-                    mapping.setSolution(solution);
-                }
-            }
-        }
-    }
-
-    /**
      * Creates a new quiz exercise, handling validation, file processing, saving, and related updates.
      *
      * @param quizExercise    the quiz exercise domain object to create (without competency links)
@@ -1332,7 +1285,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @throws IOException if there is an error handling the files
      */
     public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyLinkDTO> competencyLinks) throws IOException {
-        // Mapping resolution is handled in the Create DTO toDomainObject() methods — no need to call resolveQuizQuestionMappings here.
+        // Mapping resolution is handled in the Create DTO toDomainObject() methods at question level.
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }

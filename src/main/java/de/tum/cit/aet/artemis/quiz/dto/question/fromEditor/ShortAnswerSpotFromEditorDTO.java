@@ -28,9 +28,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      * @return the corresponding DTO
      */
     public static ShortAnswerSpotFromEditorDTO of(ShortAnswerSpot spot) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = spot.getTempID() != null ? spot.getTempID() : spot.getId();
-        return new ShortAnswerSpotFromEditorDTO(spot.getId(), effectiveTempID, spot.getWidth(), spot.getSpotNr());
+        return new ShortAnswerSpotFromEditorDTO(spot.getId(), spot.getId(), spot.getWidth(), spot.getSpotNr());
     }
 
     /**

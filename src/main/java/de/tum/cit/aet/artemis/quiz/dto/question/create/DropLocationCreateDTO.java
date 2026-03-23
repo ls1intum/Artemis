@@ -37,6 +37,6 @@ public record DropLocationCreateDTO(@NotNull Long tempID, @NotNull Double posX, 
      * @return the {@link DropLocationCreateDTO} with properties set from the domain object
      */
     public static DropLocationCreateDTO of(DropLocation dropLocation) {
-        return new DropLocationCreateDTO(dropLocation.getTempID(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(), dropLocation.getHeight());
+        return new DropLocationCreateDTO(dropLocation.getId(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(), dropLocation.getHeight());
     }
 }

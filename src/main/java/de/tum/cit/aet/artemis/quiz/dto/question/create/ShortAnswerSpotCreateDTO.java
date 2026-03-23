@@ -35,6 +35,6 @@ public record ShortAnswerSpotCreateDTO(@NotNull Long tempID, @NotNull Integer sp
      * @return the {@link ShortAnswerSpotCreateDTO} with properties set from the domain object
      */
     public static ShortAnswerSpotCreateDTO of(ShortAnswerSpot spot) {
-        return new ShortAnswerSpotCreateDTO(spot.getTempID(), spot.getSpotNr(), spot.getWidth());
+        return new ShortAnswerSpotCreateDTO(spot.getId(), spot.getSpotNr(), spot.getWidth());
     }
 }

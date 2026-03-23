@@ -278,7 +278,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         Map<Long, ShortAnswerSpot> spotMap = new HashMap<>();
         for (ShortAnswerSpot oldSpot : original.getSpots()) {
             ShortAnswerSpot newSpot = createNewShortAnswerSpot(oldSpot, copy);
-            Long key = oldSpot.getId() != null ? oldSpot.getId() : oldSpot.getTempID();
+            Long key = oldSpot.getId();
             spotMap.put(key, newSpot);
         }
         copy.setSpots(new ArrayList<>(spotMap.values()));
@@ -287,7 +287,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         Map<Long, ShortAnswerSolution> solutionMap = new HashMap<>();
         for (ShortAnswerSolution oldSolution : original.getSolutions()) {
             ShortAnswerSolution newSolution = createNewShortAnswerSolution(oldSolution, copy);
-            Long key = oldSolution.getId() != null ? oldSolution.getId() : oldSolution.getTempID();
+            Long key = oldSolution.getId();
             solutionMap.put(key, newSolution);
         }
         copy.setSolutions(new ArrayList<>(solutionMap.values()));
@@ -356,14 +356,14 @@ public class QuizExerciseImportService extends ExerciseImportService {
         newMapping.setQuestion(saQuestion);
 
         if (oldMapping.getSolution() != null) {
-            Long solutionKey = oldMapping.getSolution().getId() != null ? oldMapping.getSolution().getId() : oldMapping.getSolution().getTempID();
+            Long solutionKey = oldMapping.getSolution().getId();
             if (solutionKey != null) {
                 newMapping.setSolution(solutionMap.computeIfPresent(solutionKey, (_, v) -> v));
             }
         }
 
         if (oldMapping.getSpot() != null) {
-            Long spotKey = oldMapping.getSpot().getId() != null ? oldMapping.getSpot().getId() : oldMapping.getSpot().getTempID();
+            Long spotKey = oldMapping.getSpot().getId();
             if (spotKey != null) {
                 newMapping.setSpot(spotMap.computeIfPresent(spotKey, (_, v) -> v));
             }

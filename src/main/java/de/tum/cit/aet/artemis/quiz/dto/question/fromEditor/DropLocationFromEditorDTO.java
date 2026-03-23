@@ -30,9 +30,7 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
      * @return the corresponding DTO
      */
     public static DropLocationFromEditorDTO of(DropLocation dropLocation) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = dropLocation.getTempID() != null ? dropLocation.getTempID() : dropLocation.getId();
-        return new DropLocationFromEditorDTO(dropLocation.getId(), effectiveTempID, dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(),
+        return new DropLocationFromEditorDTO(dropLocation.getId(), dropLocation.getId(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(),
                 dropLocation.getHeight());
     }
 
