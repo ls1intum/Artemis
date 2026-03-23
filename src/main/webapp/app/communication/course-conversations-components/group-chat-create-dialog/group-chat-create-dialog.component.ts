@@ -1,4 +1,4 @@
-import { Component, Input, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AbstractDialogComponent } from 'app/communication/course-conversations-components/abstract-dialog.component';
@@ -14,7 +14,7 @@ import { CourseUsersSelectorComponent } from 'app/communication/course-users-sel
 export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
     private fb = inject(FormBuilder);
 
-    @Input() course: Course;
+    course = signal<Course | undefined>(undefined);
     form: FormGroup;
 
     initialize() {
