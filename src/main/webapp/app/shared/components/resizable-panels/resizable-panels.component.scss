@@ -18,17 +18,6 @@
     }
 }
 
-.split-tab {
-    color: var(--bs-secondary-color);
-    border-bottom: 2px solid transparent;
-
-    &--active {
-        color: var(--bs-body-color);
-        border-bottom-color: var(--bs-primary);
-    }
-}
-
-// Mimics faGripLinesVertical: two thin vertical bars
 :host ::ng-deep .split-gutter-handle {
     display: flex;
     gap: 1px;
@@ -42,5 +31,43 @@
         height: 12px;
         background: var(--bs-body-color);
         border-radius: 1px;
+    }
+}
+
+:host ::ng-deep {
+    .p-tablist-tab-list {
+        border-width: 0 0 var(--bs-border-width) 0;
+        border-color: var(--bs-border-color);
+        gap: 0.5rem;
+    }
+
+    .p-tablist-active-bar {
+        display: none;
+    }
+
+    .p-tab {
+        border-width: 0 0 var(--bs-border-width) 0;
+        padding: 8px;
+
+        &.p-tab-active {
+            color: var(--bs-body-color);
+            border-color: var(--bs-primary);
+            background: transparent;
+        }
+
+        &:not(.p-tab-active):not(.p-disabled):hover {
+            color: var(--bs-body-color);
+            background: transparent;
+            border-color: transparent;
+        }
+
+        &:not(.p-disabled):focus-visible {
+            box-shadow: none;
+            outline: none;
+        }
+    }
+
+    .p-tablist {
+        background: transparent;
     }
 }

@@ -19,6 +19,7 @@ import Split from 'split.js';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
+import { TabsModule } from 'primeng/tabs';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
@@ -37,7 +38,7 @@ export class SplitPaneDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective],
+    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly ngZone = inject(NgZone);
@@ -91,12 +92,16 @@ export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
         this.resizeObserver?.disconnect();
     }
 
-    setActiveRight(index: number): void {
-        this._activeRightIndex.set(index);
+    setActiveRight(value: string | number | undefined): void {
+        if (value !== undefined) {
+            this._activeRightIndex.set(Number(value));
+        }
     }
 
-    setActiveSingle(index: number): void {
-        this._activeSingleIndex.set(index);
+    setActiveSingle(value: string | number | undefined): void {
+        if (value !== undefined) {
+            this._activeSingleIndex.set(Number(value));
+        }
     }
 
     private initSplit(elements: HTMLElement[]): void {

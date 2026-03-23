@@ -3,16 +3,18 @@
     <div class="d-flex w-100 h-100 overflow-hidden">
         @if (leftPanel()) {
             <div class="d-flex flex-column overflow-hidden rounded-3 module-bg border" jhiSplitPane>
-                <div class="d-flex align-items-end gap-1 px-2 border-bottom flex-shrink-0">
-                    <button class="split-tab split-tab--active btn btn-link d-inline-flex align-items-center gap-2 px-3 py-2 text-decoration-none" type="button">
-                        @if (leftPanel()!.iconTemplate()) {
-                            <ng-container [ngTemplateOutlet]="leftPanel()!.iconTemplate()!" />
-                        } @else if (leftPanel()!.icon()) {
-                            <fa-icon [icon]="leftPanel()!.icon()!" />
-                        }
-                        <span>{{ leftPanel()!.label() }}</span>
-                    </button>
-                </div>
+                <p-tabs [value]="0" class="flex-shrink-0">
+                    <p-tablist>
+                        <p-tab [value]="0">
+                            @if (leftPanel()!.iconTemplate()) {
+                                <ng-container [ngTemplateOutlet]="leftPanel()!.iconTemplate()!" />
+                            } @else if (leftPanel()!.icon()) {
+                                <fa-icon [icon]="leftPanel()!.icon()!" />
+                            }
+                            <span>{{ leftPanel()!.label() }}</span>
+                        </p-tab>
+                    </p-tablist>
+                </p-tabs>
                 <div class="flex-grow-1 overflow-y-auto">
                     <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
                 </div>
@@ -20,23 +22,20 @@
         }
 
         <div class="d-flex flex-column overflow-hidden rounded-3 module-bg border" jhiSplitPane>
-            <div class="d-flex align-items-end gap-1 px-2 border-bottom flex-shrink-0">
-                @for (panel of rightPanels(); track panel; let i = $index) {
-                    <button
-                        class="split-tab btn btn-link d-inline-flex align-items-center gap-2 px-3 py-2 text-decoration-none"
-                        [class.split-tab--active]="activeRightIndex() === i"
-                        type="button"
-                        (click)="setActiveRight(i)"
-                    >
-                        @if (panel.iconTemplate()) {
-                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                        } @else if (panel.icon()) {
-                            <fa-icon [icon]="panel.icon()!" />
-                        }
-                        <span>{{ panel.label() }}</span>
-                    </button>
-                }
-            </div>
+            <p-tabs [value]="activeRightIndex()" (valueChange)="setActiveRight($event)" class="flex-shrink-0">
+                <p-tablist>
+                    @for (panel of rightPanels(); track panel; let i = $index) {
+                        <p-tab [value]="i">
+                            @if (panel.iconTemplate()) {
+                                <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                            } @else if (panel.icon()) {
+                                <fa-icon [icon]="panel.icon()!" />
+                            }
+                            <span>{{ panel.label() }}</span>
+                        </p-tab>
+                    }
+                </p-tablist>
+            </p-tabs>
             <div class="flex-grow-1 overflow-y-auto">
                 @if (rightPanels()[activeRightIndex()]) {
                     <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
@@ -46,24 +45,21 @@
     </div>
 } @else {
     <!-- ── Narrow mode: single tabbed panel, no resize ────────────────── -->
-    <div class="d-flex flex-column h-100 overflow-hidden rounded-3 module-bg border">
-        <div class="d-flex align-items-end gap-1 px-2 border-bottom flex-shrink-0">
-            @for (panel of panels(); track panel; let i = $index) {
-                <button
-                    class="split-tab btn btn-link d-inline-flex align-items-center gap-2 px-3 py-2 text-decoration-none"
-                    [class.split-tab--active]="activeSingleIndex() === i"
-                    type="button"
-                    (click)="setActiveSingle(i)"
-                >
-                    @if (panel.iconTemplate()) {
-                        <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
-                    } @else if (panel.icon()) {
-                        <fa-icon [icon]="panel.icon()!" />
-                    }
-                    <span>{{ panel.label() }}</span>
-                </button>
-            }
-        </div>
+    <div class="d-flex flex-column h-100 w-100 overflow-hidden rounded-3 module-bg border">
+        <p-tabs [value]="activeSingleIndex()" (valueChange)="setActiveSingle($event)" class="flex-shrink-0">
+            <p-tablist>
+                @for (panel of panels(); track panel; let i = $index) {
+                    <p-tab [value]="i">
+                        @if (panel.iconTemplate()) {
+                            <ng-container [ngTemplateOutlet]="panel.iconTemplate()!" />
+                        } @else if (panel.icon()) {
+                            <fa-icon [icon]="panel.icon()!" />
+                        }
+                        <span>{{ panel.label() }}</span>
+                    </p-tab>
+                }
+            </p-tablist>
+        </p-tabs>
         <div class="flex-grow-1 overflow-y-auto">
             @if (panels()[activeSingleIndex()]) {
                 <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
