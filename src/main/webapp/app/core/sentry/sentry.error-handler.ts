@@ -90,6 +90,10 @@ export class SentryErrorHandler extends ErrorHandler {
             }
         }
 
+        if (trans.request && trans.request.url) {
+            trans.request.url = this.scrubUrl(trans.request.url);
+        }
+
         return trans;
 
     }
