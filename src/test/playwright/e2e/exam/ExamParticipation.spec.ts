@@ -69,6 +69,8 @@ test.describe('Exam participation', () => {
         });
 
         test('Participates as a student in a registered exam', async ({ login, examParticipation, examNavigation, examStartEnd, examManagement }) => {
+            // Submits 4 exercise types including programming (build takes 30-60s under load)
+            test.slow();
             await examParticipation.startParticipation(studentTwo, course, exam);
             for (let j = 0; j < exerciseArray.length; j++) {
                 const exercise = exerciseArray[j];
@@ -342,7 +344,7 @@ test.describe('Exam participation', () => {
                 if (participationId) {
                     await waitForParticipationBuildToFinish(participationId);
                 }
-                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult);
+                await examParticipation.checkExerciseScore(programmingExercise.id!, cAllSuccessfulSubmission.expectedResult, BUILD_RESULT_TIMEOUT * 2);
                 await examParticipation.handInEarly();
                 await examAPIRequests.finishExam(exam);
                 await login(instructor);
