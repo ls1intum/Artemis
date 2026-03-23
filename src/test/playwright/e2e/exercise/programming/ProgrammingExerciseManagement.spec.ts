@@ -83,6 +83,9 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
         });
 
         test('Deletes an existing programming exercise', async ({ login, navigationBar, courseManagement, courseManagementExercises }) => {
+            // The beforeEach creates a C exercise (triggers builds). Under CI load,
+            // the setup + deletion + verification exceeds the 60s fast-test timeout.
+            test.setTimeout(180000);
             await login(admin, '/');
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
