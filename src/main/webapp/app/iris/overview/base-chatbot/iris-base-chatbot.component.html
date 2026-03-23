@@ -171,7 +171,9 @@
                                 @if (message.sender === IrisSender.LLM) {
                                     <div style="width: fit-content; position: relative">
                                         @for (content of message.content; track content.id ?? $index) {
-                                            @if (content.type === IrisMessageContentType.TEXT) {
+                                            @if (isMcqContent(content)) {
+                                                <jhi-iris-mcq-question [mcqData]="getMcqData(content)!" />
+                                            } @else if (content.type === IrisMessageContentType.TEXT) {
                                                 <div class="bubble-left">
                                                     <jhi-iris-citation-text [text]="(content | as: IrisTextMessageContent).textContent" [citationInfo]="citationInfo()" />
                                                     @if (hasMemories(message)) {
