@@ -579,20 +579,28 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private onSaveSuccess(quizExercise: QuizExercise, isCreate: boolean): void {
         this.isSaving = false;
         this.pendingChangesCache = false;
-        this.prepareEntity(quizExercise);
         this.quizQuestionListEditComponent().fileMap.clear();
-        this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
-        this.exerciseService.validateDate(this.quizExercise);
-        this.savedEntity = cloneDeep(this.quizExercise);
-        this.changeDetector.detectChanges();
 
-        // Navigate back only if it's an import
-        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
         if (this.isImport) {
             this.previousState();
         } else if (isCreate) {
-            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, replaceUrl: true });
+            // After creation, fetch the full quiz from the server to get properly typed entities
+            // (the POST response returns a DTO that doesn't map cleanly to QuizExercise).
+            // Then navigate to the edit URL so the browser history is correct.
+            this.quizExerciseService.find(quizExercise.id!).subscribe((response) => {
+                this.quizExercise = response.body!;
+                this.init();
+                this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, replaceUrl: true });
+                this.calendarService.reloadEvents();
+            });
+            return;
+        } else {
+            this.prepareEntity(quizExercise);
+            this.quizExercise = quizExercise;
+            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+            this.exerciseService.validateDate(this.quizExercise);
+            this.savedEntity = cloneDeep(this.quizExercise);
+            this.changeDetector.detectChanges();
         }
         this.calendarService.reloadEvents();
     }
