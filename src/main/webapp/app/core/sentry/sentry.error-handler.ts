@@ -95,7 +95,7 @@ export class SentryErrorHandler extends ErrorHandler {
     }
 
     private scrubStringMessage(message: string): string {
-        const piiPatterns = [/user=\\S+/g, /User{[^}]*}/g, /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g];
+        const piiPatterns = [/user=\S+/g, /User\{[^}]*\}/g, /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g];
         for (const pattern of piiPatterns) {
             message = message.replace(pattern, '');
         }
@@ -105,8 +105,8 @@ export class SentryErrorHandler extends ErrorHandler {
     private scrubUrl(url: string): string {
         var scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([a-z0-9]+)-[^/]+\.git/g, "/git/$1/$2.git");
 
-        if (unscrubbed.includes("-tests.git") || unscrubbed.includes("-exercise.git") || unscrubbed.includes("-solution.git")) {
-            return unscrubbed;
+        if (url.includes("-tests.git") || url.includes("-exercise.git") || url.includes("-solution.git")) {
+            return url;
         }
         return scrubbed;
     }
