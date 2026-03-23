@@ -91,7 +91,7 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
+    importRegistrations(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
         return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos, 'response');
     }
 
