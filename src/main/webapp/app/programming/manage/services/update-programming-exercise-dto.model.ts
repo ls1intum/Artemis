@@ -4,21 +4,7 @@ import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-
-/**
- * DTO for competency reference (just the ID)
- */
-export interface CompetencyDTO {
-    id: number;
-}
-
-/**
- * DTO for competency links with weight
- */
-export interface CompetencyLinkDTO {
-    competency: CompetencyDTO;
-    weight: number;
-}
+import { CompetencyExerciseLinkDTO, mapCompetencyLinks } from 'app/atlas/shared/dto/competency-exercise-link-dto';
 
 /**
  * DTO for grading criterion
@@ -108,7 +94,7 @@ export interface UpdateProgrammingExerciseDTO {
 
     // Grading and competencies
     gradingCriteria?: GradingCriterionDTO[];
-    competencyLinks?: CompetencyLinkDTO[];
+    competencyLinks?: CompetencyExerciseLinkDTO[];
 
     // Programming exercise specific fields
     testRepositoryUri?: string;
@@ -143,11 +129,8 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
     // Apply bonus points constraint
     ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(exercise);
 
-    // Convert competency links to DTOs
-    const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = exercise.competencyLinks?.map((link) => ({
-        competency: { id: link.competency!.id! },
-        weight: link.weight,
-    }));
+    // Convert competency links to DTOs matching server-side CompetencyExerciseLinkDTO
+    const competencyLinkDTOs: CompetencyExerciseLinkDTO[] | undefined = mapCompetencyLinks(exercise.competencyLinks);
 
     // Convert grading criteria to DTOs
     const gradingCriteriaDTOs: GradingCriterionDTO[] | undefined = exercise.gradingCriteria?.map((criterion) => ({

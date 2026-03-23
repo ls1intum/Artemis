@@ -4,21 +4,7 @@ import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exerc
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
-
-/**
- * DTO for competency reference (just the ID)
- */
-export interface CompetencyDTO {
-    id: number;
-}
-
-/**
- * DTO for competency links with weight
- */
-export interface CompetencyLinkDTO {
-    competency: CompetencyDTO;
-    weight: number;
-}
+import { CompetencyExerciseLinkDTO, mapCompetencyLinks } from 'app/atlas/shared/dto/competency-exercise-link-dto';
 
 /**
  * DTO for updating text exercises.
@@ -54,7 +40,7 @@ export interface UpdateTextExerciseDTO {
     channelName?: string;
 
     // Competency links as DTOs
-    competencyLinks?: CompetencyLinkDTO[];
+    competencyLinks?: CompetencyExerciseLinkDTO[];
 
     // Course/ExerciseGroup references (by ID)
     courseId?: number;
@@ -76,11 +62,8 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
     // Apply bonus points constraint (modifies in place and returns the same object)
     ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(textExercise);
 
-    // Convert competency links to DTOs (just competency ID and weight)
-    const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = textExercise.competencyLinks?.map((link) => ({
-        competency: { id: link.competency!.id! },
-        weight: link.weight,
-    }));
+    // Convert competency links to DTOs matching server-side CompetencyExerciseLinkDTO
+    const competencyLinkDTOs: CompetencyExerciseLinkDTO[] | undefined = mapCompetencyLinks(textExercise.competencyLinks);
 
     // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive)
     // For course exercises: set courseId, leave exerciseGroupId undefined

@@ -1308,6 +1308,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         quizExercise.validateGeneralSettings();
         handleDndQuizFileCreation(quizExercise, files);
 
+        // Clear competency links before first save — they are passed separately and will be added after the exercise has an ID.
+        // Without this, CascadeType.ALL on Exercise.competencyLinks would cascade links with null exercise references.
+        quizExercise.setCompetencyLinks(new HashSet<>());
+
         // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
         QuizExercise savedExercise = save(quizExercise);
 
