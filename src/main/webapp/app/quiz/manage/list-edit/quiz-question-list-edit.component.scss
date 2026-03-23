@@ -168,12 +168,7 @@
     left: 0;
     right: 0;
     z-index: 10;
-    border-top: 1px solid var(--border-color);
-    background: var(--edit-quiz-footer-background);
     padding-top: 10px;
-
-    // offset the padding above the footer
-    margin-top: -3rem;
 
     .container {
         height: 100%;
