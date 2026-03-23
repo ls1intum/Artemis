@@ -58,6 +58,9 @@ export class ProgrammingExerciseOverviewPage {
         await startButton.click();
         const response = await responsePromise;
         const participation = await response.json();
+        if (!participation?.id) {
+            throw new Error(`[startParticipation] Participation response missing id for exercise ${exerciseId}. Response: ${JSON.stringify(participation)}`);
+        }
         return participation.id;
     }
 
@@ -157,3 +160,4 @@ export enum GitCloneMethod {
     httpsWithToken = 'https with token',
     ssh = 'ssh',
 }
+
