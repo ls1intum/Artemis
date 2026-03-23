@@ -139,6 +139,12 @@
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
+            "mcq": {
+                "submit": "Antwort abschicken",
+                "correct": "Richtig!",
+                "incorrect": "Falsch.",
+                "explanation": "Erklärung:"
+            },
             "citation": {
                 "unitLabel": "Einheit:",
                 "lectureLabel": "Vorlesung:"
