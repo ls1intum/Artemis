@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CommonModule } from '@angular/common';
@@ -12,8 +14,12 @@ import { MockComponent, MockDirective } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 
 describe('CourseNotificationComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseNotificationComponent;
     let fixture: ComponentFixture<CourseNotificationComponent>;
     let courseNotificationService: CourseNotificationService;
@@ -36,18 +42,24 @@ describe('CourseNotificationComponent', () => {
         );
     };
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         courseNotificationService = {
-            getIconFromType: jest.fn().mockReturnValue(faComment),
-            getDateTranslationKey: jest.fn().mockReturnValue('artemisApp.courseNotification.temporal.now'),
-            getDateTranslationParams: jest.fn().mockReturnValue({ hours: 1 }),
+            getIconFromType: vi.fn().mockReturnValue(faComment),
+            getDateTranslationKey: vi.fn().mockReturnValue('artemisApp.courseNotification.temporal.now'),
+            getDateTranslationParams: vi.fn().mockReturnValue({ hours: 1 }),
         } as unknown as CourseNotificationService;
 
         await TestBed.configureTestingModule({
-            imports: [CommonModule, FaIconComponent],
-            declarations: [CourseNotificationComponent, MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
-            providers: [{ provide: CourseNotificationService, useValue: courseNotificationService }],
-        }).compileComponents();
+            imports: [CommonModule, FaIconComponent, CourseNotificationComponent, MockComponent(ProfilePictureComponent), MockDirective(TranslateDirective)],
+            providers: [
+                { provide: CourseNotificationService, useValue: courseNotificationService },
+                { provide: TranslateService, useClass: MockTranslateService },
+            ],
+        });
 
         fixture = TestBed.createComponent(CourseNotificationComponent);
         component = fixture.componentInstance;
@@ -57,10 +69,6 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', createMockNotification(1, 101));
 
         fixture.detectChanges();
-    });
-
-    afterEach(() => {
-        jest.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -103,7 +111,7 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('isShowClose', true);
         fixture.detectChanges();
 
-        const closeClickedSpy = jest.spyOn(componentAsAny.onCloseClicked, 'emit');
+        const closeClickedSpy = vi.spyOn(componentAsAny.onCloseClicked, 'emit');
         const closeButton = fixture.debugElement.query(By.css('.course-notification-close'));
 
         closeButton.nativeElement.click();
@@ -116,7 +124,7 @@ describe('CourseNotificationComponent', () => {
         fixture.detectChanges();
 
         const notificationWrap = fixture.debugElement.query(By.css('.course-notification-wrap'));
-        expect(notificationWrap.classes['is-unseen']).toBeTrue();
+        expect(notificationWrap.classes['is-unseen']).toBe(true);
     });
 
     it('should not add is-unseen class when isUnseen is false', () => {
@@ -137,7 +145,7 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notificationWithAuthor);
         fixture.detectChanges();
 
-        expect(componentAsAny.isShowProfilePicture).toBeTrue();
+        expect(componentAsAny.isShowProfilePicture).toBe(true);
         expect(componentAsAny.authorName).toBe('Test Author');
         expect(componentAsAny.authorId).toBe(42);
         expect(componentAsAny.authorImageUrl).toBe('test-author-image.jpg');
@@ -152,7 +160,7 @@ describe('CourseNotificationComponent', () => {
         fixture.componentRef.setInput('courseNotification', notificationWithoutAuthor);
         fixture.detectChanges();
 
-        expect(componentAsAny.isShowProfilePicture).toBeFalse();
+        expect(componentAsAny.isShowProfilePicture).toBe(false);
 
         const iconElement = fixture.debugElement.query(By.css('.course-notification-icon'));
         expect(iconElement).not.toBeNull();
@@ -161,7 +169,7 @@ describe('CourseNotificationComponent', () => {
     it('should update notification details when courseNotification input changes', () => {
         const initialType = componentAsAny.notificationType;
 
-        jest.spyOn(courseNotificationService, 'getIconFromType').mockReturnValue(faBell);
+        vi.spyOn(courseNotificationService, 'getIconFromType').mockReturnValue(faBell);
 
         const updatedNotification = createMockNotification(2, 102, 'differentNotificationType');
         fixture.componentRef.setInput('courseNotification', updatedNotification);

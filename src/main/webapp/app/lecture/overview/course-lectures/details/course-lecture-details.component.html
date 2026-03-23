@@ -76,6 +76,7 @@
                                             [lectureUnit]="lectureUnit"
                                             [initiallyExpanded]="lectureUnit.id === targetUnitId()"
                                             [targetTimestamp]="lectureUnit.id === targetUnitId() ? targetVideoTimestamp() : undefined"
+                                            [targetPdfPage]="lectureUnit.id === targetUnitId() ? targetPdfPage() : undefined"
                                             (onCompletion)="completeLectureUnit($event)"
                                         />
                                     }
