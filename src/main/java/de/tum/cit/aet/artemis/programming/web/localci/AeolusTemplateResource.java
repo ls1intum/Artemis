@@ -31,7 +31,7 @@ import de.tum.cit.aet.artemis.programming.service.aeolus.AeolusTemplateService;
  * the different options (static analysis, sequential runs) as well as the default
  * image for the programming language and project type for the artemis instance.
  */
-@Profile("aeolus | localci")
+@Profile("localci")
 @Lazy
 @RestController
 @RequestMapping("api/programming/aeolus/")

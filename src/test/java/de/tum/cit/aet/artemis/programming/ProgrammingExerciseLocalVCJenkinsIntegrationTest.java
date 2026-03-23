@@ -46,7 +46,6 @@ import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider
 import de.tum.cit.aet.artemis.exam.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.SubmissionType;
-import de.tum.cit.aet.artemis.programming.domain.AeolusTarget;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
 
 // TODO: rewrite this test to use LocalVC
@@ -64,14 +63,12 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
         programmingExerciseTestService.setup(this, versionControlService);
         jenkinsRequestMockProvider.enableMockingOfRequests();
-        aeolusRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
         jenkinsRequestMockProvider.reset();
-        aeolusRequestMockProvider.reset();
     }
 
     // TODO: enable or remove the test
@@ -80,7 +77,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "KOTLIN" }, mode = EnumSource.Mode.INCLUDE)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_sequential_validExercise_created(programmingLanguage);
     }
 
@@ -90,7 +86,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_created(ExerciseMode mode) throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_mode_validExercise_created(mode);
     }
 
@@ -100,7 +95,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @MethodSource("de.tum.cit.aet.artemis.programming.util.ArgumentSources#generateJenkinsSupportedLanguages")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language) throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_programmingLanguage_validExercise_created(language,
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
@@ -128,7 +122,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_validExercise_bonusPointsIsNull();
     }
 
@@ -138,7 +131,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT" })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language) throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_validExercise_withStaticCodeAnalysis(language,
                 programmingLanguageFeatureService.getProgrammingLanguageFeatures(language));
     }
@@ -148,7 +140,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExerciseForExam_validExercise_created() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExerciseForExam_validExercise_created();
     }
 
@@ -187,8 +178,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
-        forceDefaultBuildPlanCreation();
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createAndImportJavaProgrammingExercise(staticCodeAnalysisEnabled);
     }
 
@@ -245,7 +234,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_validExercise_structureOracle() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_validExercise_structureOracle();
     }
 
@@ -254,7 +242,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_noTutors_created() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_noTutors_created();
     }
 
@@ -294,21 +281,18 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     void importExerciseFromFile_valid_Java_Exercise_importSuccessful(boolean scaEnabled) throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_validJavaExercise_isSuccessfullyImported(scaEnabled);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_embeddedFiles_filesCopied() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_embeddedFiles_embeddedFilesCopied();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseFromFile_buildPlanPresent_buildPlanSet() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_buildPlanPresent_buildPlanUsed();
     }
 
@@ -316,7 +300,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "HASKELL", "PYTHON" }, mode = EnumSource.Mode.INCLUDE)
     void importExerciseFromFile_valid_Exercise_importSuccessful(ProgrammingLanguage language) throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.importFromFile_validExercise_isSuccessfullyImported(language);
     }
 
@@ -598,7 +581,6 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
-        forceDefaultBuildPlanCreation();
         programmingExerciseTestService.createProgrammingExercise_setValidExampleSolutionPublicationDate();
     }
 
@@ -672,10 +654,5 @@ class ProgrammingExerciseLocalVCJenkinsIntegrationTest extends AbstractProgrammi
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest() throws Exception {
         programmingExerciseTestService.updateProgrammingExercise_invalidPlagiarismDetectionConfig_badRequest();
-    }
-
-    private void forceDefaultBuildPlanCreation() {
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
-        aeolusRequestMockProvider.mockFailedPublishBuildPlan(AeolusTarget.JENKINS);
     }
 }
