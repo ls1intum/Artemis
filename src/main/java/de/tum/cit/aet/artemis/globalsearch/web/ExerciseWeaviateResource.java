@@ -27,6 +27,10 @@ import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -36,6 +40,7 @@ import io.weaviate.client6.v1.api.collections.query.Filter;
 @Conditional(WeaviateEnabled.class)
 @RestController
 @RequestMapping("api/")
+@Tag(name = "Global Search", description = "Weaviate-based semantic search across exercises")
 public class ExerciseWeaviateResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWeaviateResource.class);
@@ -77,8 +82,17 @@ public class ExerciseWeaviateResource {
      */
     @GetMapping("search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") String query, @RequestParam(value = "type", required = false) String type,
-            @RequestParam(value = "courseId", required = false) Long courseId, @RequestParam(value = "limit", defaultValue = "10") int limit) {
+    @Operation(summary = "Perform a unified semantic search across entity types", description = """
+            Searches across multiple entity types with a consistent response format.
+            Currently supports exercises only. When courseId is not specified, the search is performed
+            globally across all courses the authenticated user has access to. When the query is empty,
+            recent items are returned instead.""")
+    @ApiResponse(responseCode = "200", description = "Search results matching the query")
+    @ApiResponse(responseCode = "400", description = "Unsupported entity type requested")
+    public ResponseEntity<List<GlobalSearchResultDTO>> globalSearch(@RequestParam("q") @Parameter(description = "Search query; can be empty to retrieve recent items") String query,
+            @RequestParam(value = "type", required = false) @Parameter(description = "Entity type filter, currently only 'exercise' is supported") String type,
+            @RequestParam(value = "courseId", required = false) @Parameter(description = "Course ID to restrict the search to a single course") Long courseId,
+            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–100, default 10)") int limit) {
 
         log.debug("REST request for global search with query: '{}', type: {}, courseId: {}, limit: {}", query, type, courseId, limit);
 
@@ -124,8 +138,15 @@ public class ExerciseWeaviateResource {
      */
     @GetMapping("exercises/search")
     @EnforceAtLeastStudent
-    public ResponseEntity<List<GlobalSearchResultDTO>> searchExercises(@RequestParam("q") String query, @RequestParam(value = "courseId", required = false) Long courseId,
-            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+    @Operation(summary = "Search exercises using semantic search", description = """
+            Performs a Weaviate-backed semantic search over exercises the authenticated user can access.
+            Results are filtered by the user's role in each course. When courseId is provided,
+            the search is restricted to that course.""")
+    @ApiResponse(responseCode = "200", description = "Exercise search results matching the query")
+    @ApiResponse(responseCode = "400", description = "Query is empty or blank")
+    public ResponseEntity<List<GlobalSearchResultDTO>> searchExercises(@RequestParam("q") @Parameter(description = "Non-empty search query") String query,
+            @RequestParam(value = "courseId", required = false) @Parameter(description = "Course ID to restrict the search to a single course") Long courseId,
+            @RequestParam(value = "limit", defaultValue = "10") @Parameter(description = "Maximum number of results (1–100, default 10)") int limit) {
 
         log.debug("REST request to search exercises with query: '{}', courseId: {}, limit: {}", query, courseId, limit);
 

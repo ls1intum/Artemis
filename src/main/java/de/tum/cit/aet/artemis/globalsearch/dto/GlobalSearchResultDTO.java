@@ -5,13 +5,19 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
 /**
  * Unified DTO for global search results across all entity types.
  * This DTO provides a consistent structure for search results regardless of the entity type
  * (exercises, pages, features, courses, etc.), making it easy to render in a unified search UI.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record GlobalSearchResultDTO(String id, String type, String title, String description, String badge, Map<String, Object> metadata) {
+@Schema(description = "Unified search result representing an entity found via global or exercise search")
+public record GlobalSearchResultDTO(@Schema(description = "Unique identifier of the entity") String id, @Schema(description = "Entity type, e.g. 'exercise'") String type,
+        @Schema(description = "Display title of the entity") String title, @Schema(description = "Short description or problem statement excerpt") String description,
+        @Schema(description = "Human-readable badge label, e.g. 'Programming', 'Quiz'") String badge,
+        @Schema(description = "Additional type-specific metadata such as courseId, dueDate, or points") Map<String, Object> metadata) {
 
     /**
      * Creates a search result DTO from exercise Weaviate properties.
