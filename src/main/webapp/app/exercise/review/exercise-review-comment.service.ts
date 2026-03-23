@@ -511,10 +511,7 @@ export class ExerciseReviewCommentService implements OnDestroy {
      * @param timestamp The timestamp string to parse.
      * @returns Milliseconds since epoch, or undefined if parsing fails.
      */
-    private toTimestamp(timestamp?: string): number | undefined {
-        if (!timestamp) {
-            return undefined;
-        }
+    private toTimestamp(timestamp: string): number | undefined {
         const parsed = Date.parse(timestamp);
         return Number.isNaN(parsed) ? undefined : parsed;
     }

@@ -110,11 +110,8 @@ public class HyperionProblemStatementResource {
         ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId, skipThreadContext);
         if (!skipThreadContext) {
             try {
-                exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+                List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
                 for (CommentThread thread : createdThreads) {
-                    if (thread.getId() == null) {
-                        continue;
-                    }
                     CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
                     exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
                 }

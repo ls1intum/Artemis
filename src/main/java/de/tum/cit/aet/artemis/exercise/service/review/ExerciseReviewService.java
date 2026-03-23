@@ -146,6 +146,7 @@ public class ExerciseReviewService {
      * For each consistency issue, all related locations with existing repository files are persisted as threads.
      * A thread group is created only when an issue has multiple persisted locations.
      * Invalid issues are ignored to keep consistency-check processing resilient.
+     * The returned list contains only persisted threads with non-null ids so callers can safely treat them as created entities.
      *
      * @param exerciseId the programming exercise id that owns the review comments
      * @param issues     the newly detected consistency issues to persist as review comments
@@ -215,7 +216,11 @@ public class ExerciseReviewService {
             // Grouped threads are persisted via CommentThreadGroup save with cascade.
             commentThreadRepository.saveAll(threadsToPersist);
         }
-        return List.copyOf(createdThreads);
+        List<CommentThread> persistedThreads = createdThreads.stream().filter(thread -> thread.getId() != null).toList();
+        if (persistedThreads.size() != createdThreads.size()) {
+            log.warn("Skipping {} consistency-check threads without ids after persistence for exercise {}", createdThreads.size() - persistedThreads.size(), exerciseId);
+        }
+        return persistedThreads;
     }
 
     /**
@@ -344,7 +349,7 @@ public class ExerciseReviewService {
         }
 
         commentThreadGroupRepository.delete(group);
-        return threadIds;
+        return List.copyOf(threadIds);
     }
 
     /**
