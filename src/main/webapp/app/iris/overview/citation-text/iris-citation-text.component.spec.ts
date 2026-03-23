@@ -47,7 +47,7 @@ describe('IrisCitationTextComponent', () => {
         }) as DOMRect;
 
     const setupTooltip = () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '' }];
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'L', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
         const el = render('[cite:L:7::::Key:Summary]', citationInfo);
         const citation = el.querySelector('.iris-citation--has-summary') as HTMLElement;
         const summary = citation.querySelector('.iris-citation__summary') as HTMLElement;
@@ -85,7 +85,7 @@ describe('IrisCitationTextComponent', () => {
     });
 
     it('renders single citation with summary and lecture info', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'My Lecture', lectureUnitTitle: 'My Unit' }];
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'My Lecture', lectureUnitTitle: 'My Unit', lectureId: 1, courseId: 1 }];
         const el = render('Hello [cite:L:7::::Keyword:Summary] world', citationInfo);
 
         expect(el.querySelector('.iris-citation')).toBeTruthy();
@@ -94,11 +94,11 @@ describe('IrisCitationTextComponent', () => {
         expect(el.querySelector('.iris-citation__summary-row--lecture .iris-citation__summary-value')?.textContent?.trim()).toBe('My Lecture');
     });
 
-    it('uses keyword as summary title when lectureUnitTitle is empty', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'Lecture', lectureUnitTitle: '' }];
+    it('hides unit row when lectureUnitTitle is empty but still shows lecture', () => {
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: 'Lecture', lectureUnitTitle: '', lectureId: 1, courseId: 1 }];
         const el = render('[cite:L:7::::MyKeyword:Summary]', citationInfo);
 
-        expect(el.querySelector('.iris-citation__summary-row--unit .iris-citation__summary-value')?.textContent?.trim()).toBe('MyKeyword');
+        expect(el.querySelector('.iris-citation__summary-row--unit')).toBeFalsy();
         expect(el.querySelector('.iris-citation__summary-row--lecture .iris-citation__summary-value')?.textContent?.trim()).toBe('Lecture');
     });
 
@@ -112,8 +112,8 @@ describe('IrisCitationTextComponent', () => {
 
     it('renders group without summary section', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
-            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
         ];
         const el = render('[cite:L:1:::::] [cite:L:2:::::]', citationInfo);
 
@@ -124,8 +124,8 @@ describe('IrisCitationTextComponent', () => {
 
     it('does not render navigation controls when group has only one summary', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
-            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
         ];
         const el = render('[cite:L:1::::One:Summary] [cite:L:2:::::]', citationInfo);
 
@@ -136,8 +136,8 @@ describe('IrisCitationTextComponent', () => {
 
     it('keeps citation bubble text unchanged when navigating grouped summaries', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '' },
-            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '' },
+            { entityId: 1, lectureTitle: 'L1', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
+            { entityId: 2, lectureTitle: 'L2', lectureUnitTitle: '', lectureId: 1, courseId: 1 },
         ];
         const el = render('[cite:L:1:5:::FirstKeyword:S1] [cite:F:2::::SecondKeyword:S2]', citationInfo);
 
@@ -322,8 +322,8 @@ describe('Iris citation util', () => {
 
     it('replaces citations with custom renderers', () => {
         const citationInfo: IrisCitationMetaDTO[] = [
-            { entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1' },
-            { entityId: 7, lectureTitle: 'Lecture 7', lectureUnitTitle: 'Unit 7' },
+            { entityId: 1, lectureTitle: 'Lecture 1', lectureUnitTitle: 'Unit 1', lectureId: 1, courseId: 1 },
+            { entityId: 7, lectureTitle: 'Lecture 7', lectureUnitTitle: 'Unit 7', lectureId: 1, courseId: 1 },
         ];
         const renderSingle = vi.fn().mockReturnValue('<single />');
         const renderGroup = vi.fn().mockReturnValue('<group />');

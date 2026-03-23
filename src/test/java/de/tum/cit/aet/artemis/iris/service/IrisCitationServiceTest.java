@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.dto.IrisCitationMetaDTO;
@@ -32,6 +33,12 @@ class IrisCitationServiceTest {
     private static final long LECTURE_UNIT_ID = 42L;
 
     private static final long SECOND_LECTURE_UNIT_ID = 7L;
+
+    private static final long LECTURE_ID = 1L;
+
+    private static final long SECOND_LECTURE_ID = 2L;
+
+    private static final long COURSE_ID = 1L;
 
     @Mock
     private LectureUnitRepositoryApi lectureUnitRepositoryApi;
@@ -68,8 +75,8 @@ class IrisCitationServiceTest {
 
     @Test
     void resolveCitationInfo_resolvesLectureUnitsInOrderAndDeduplicates() {
-        var firstUnit = lectureUnit(LECTURE_UNIT_ID, "Intro Lecture", "Basics");
-        var secondUnit = lectureUnit(SECOND_LECTURE_UNIT_ID, "Advanced Lecture", "Deep Dive");
+        var firstUnit = lectureUnit(LECTURE_UNIT_ID, LECTURE_ID, COURSE_ID, "Intro Lecture", "Basics");
+        var secondUnit = lectureUnit(SECOND_LECTURE_UNIT_ID, SECOND_LECTURE_ID, COURSE_ID, "Advanced Lecture", "Deep Dive");
 
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(firstUnit, secondUnit));
 
@@ -77,14 +84,15 @@ class IrisCitationServiceTest {
 
         var resolved = citationService.resolveCitationInfo(text);
 
-        assertThat(resolved).extracting(IrisCitationMetaDTO::entityId, IrisCitationMetaDTO::lectureTitle, IrisCitationMetaDTO::lectureUnitTitle)
-                .containsExactly(tuple(LECTURE_UNIT_ID, "Intro Lecture", "Basics"), tuple(SECOND_LECTURE_UNIT_ID, "Advanced Lecture", "Deep Dive"));
+        assertThat(resolved).extracting(IrisCitationMetaDTO::entityId, IrisCitationMetaDTO::lectureTitle, IrisCitationMetaDTO::lectureUnitTitle, IrisCitationMetaDTO::lectureId,
+                IrisCitationMetaDTO::courseId).containsExactly(tuple(LECTURE_UNIT_ID, "Intro Lecture", "Basics", LECTURE_ID, COURSE_ID),
+                        tuple(SECOND_LECTURE_UNIT_ID, "Advanced Lecture", "Deep Dive", SECOND_LECTURE_ID, COURSE_ID));
         verify(lectureUnitRepositoryApi).findAllByIdsWithLecture(anyCollection());
     }
 
     @Test
     void resolveCitationInfo_skipsWhenLectureTitleMissing() {
-        var unit = lectureUnit(LECTURE_UNIT_ID, "  ", "Unit Title");
+        var unit = lectureUnit(LECTURE_UNIT_ID, LECTURE_ID, COURSE_ID, "  ", "Unit Title");
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
         assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isEmpty();
@@ -93,7 +101,7 @@ class IrisCitationServiceTest {
 
     @Test
     void resolveCitationInfo_skipsWhenLectureUnitTitleMissing() {
-        var unit = lectureUnit(LECTURE_UNIT_ID, "Lecture Title", "   ");
+        var unit = lectureUnit(LECTURE_UNIT_ID, LECTURE_ID, COURSE_ID, "Lecture Title", "   ");
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
         assertThat(citationService.resolveCitationInfo("[cite:L:42:::::]")).isEmpty();
@@ -110,7 +118,7 @@ class IrisCitationServiceTest {
 
     @Test
     void resolveCitationInfoFromMessages_aggregatesMessageContents() {
-        var unit = lectureUnit(LECTURE_UNIT_ID, "Lecture Title", "Unit Title");
+        var unit = lectureUnit(LECTURE_UNIT_ID, LECTURE_ID, COURSE_ID, "Lecture Title", "Unit Title");
         when(lectureUnitRepositoryApi.findAllByIdsWithLecture(anyCollection())).thenReturn(List.of(unit));
 
         var messageWithCitation = new IrisMessage();
@@ -124,7 +132,7 @@ class IrisCitationServiceTest {
 
         var resolved = citationService.resolveCitationInfoFromMessages(Arrays.asList(messageWithCitation, null, blankMessage, nullContentMessage));
 
-        assertThat(resolved).containsExactly(new IrisCitationMetaDTO(LECTURE_UNIT_ID, "Lecture Title", "Unit Title"));
+        assertThat(resolved).containsExactly(new IrisCitationMetaDTO(LECTURE_UNIT_ID, "Lecture Title", "Unit Title", LECTURE_ID, COURSE_ID));
     }
 
     @Test
@@ -134,9 +142,14 @@ class IrisCitationServiceTest {
         assertThat(serviceWithoutRepository.resolveCitationInfo("[cite:L:1:::::]")).isEmpty();
     }
 
-    private static LectureUnit lectureUnit(long id, String lectureTitle, String unitTitle) {
+    private static LectureUnit lectureUnit(long id, long lectureId, long courseId, String lectureTitle, String unitTitle) {
+        var course = new Course();
+        course.setId(courseId);
+
         var lecture = new Lecture();
+        lecture.setId(lectureId);
         lecture.setTitle(lectureTitle);
+        lecture.setCourse(course);
 
         var unit = new TextUnit();
         unit.setId(id);

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, EventEmitter, Input, Output, inject, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, inject, input, output } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import dayjs from 'dayjs/esm';
 import { PostComponent } from '../post/post.component';
@@ -14,15 +14,15 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
     imports: [PostComponent],
 })
 export class PostingThreadComponent {
-    @Input() lastReadDate?: dayjs.Dayjs;
-    @Input() readOnlyMode = false;
-    @Input() post: Post;
-    @Input() showAnswers: boolean;
-    @Input() isCommunicationPage: boolean;
-    @Input() showChannelReference?: boolean;
-    @Input() hasChannelModerationRights = false;
-    @Output() openThread = new EventEmitter<Post>();
-    @Input() isConsecutive: boolean | undefined = false;
+    readonly lastReadDate = input<dayjs.Dayjs>();
+    readonly readOnlyMode = input(false);
+    readonly post = input.required<Post>();
+    readonly showAnswers = input.required<boolean>();
+    readonly isCommunicationPage = input<boolean | undefined>();
+    readonly showChannelReference = input<boolean>();
+    readonly hasChannelModerationRights = input(false);
+    readonly openThread = output<Post>();
+    readonly isConsecutive = input<boolean | undefined>(false);
     searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     forwardedPosts = input<(Post | undefined)[]>([]);
     forwardedAnswerPosts = input<(AnswerPost | undefined)[]>([]);
