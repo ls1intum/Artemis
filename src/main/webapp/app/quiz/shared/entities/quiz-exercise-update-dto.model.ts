@@ -5,11 +5,26 @@ import dayjs from 'dayjs/esm';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
 import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
 
+/**
+ * DTO matching the server-side CompetencyLinkDTO (lecture module): { competency: { id }, weight }
+ */
+interface CompetencyLinkUpdateDTO {
+    competency: { id: number };
+    weight: number;
+}
+
+function toCompetencyLinkUpdateDTO(link: CompetencyExerciseLink): CompetencyLinkUpdateDTO {
+    return {
+        competency: { id: link.competency!.id! },
+        weight: link.weight,
+    };
+}
+
 export interface QuizExerciseUpdateDTO {
     title?: string;
     channelName?: string;
     categories?: ExerciseCategory[];
-    competencyLinks?: CompetencyExerciseLinkUpdateDTO[];
+    competencyLinks?: CompetencyLinkUpdateDTO[];
     difficulty?: DifficultyLevel;
     duration?: number;
     randomizeQuestionOrder?: boolean;
@@ -22,24 +37,12 @@ export interface QuizExerciseUpdateDTO {
     quizQuestions?: QuizQuestion[];
 }
 
-interface CompetencyExerciseLinkUpdateDTO {
-    competencyId?: number;
-    weight?: number;
-}
-
-function toCompetencyExerciseLinkUpdateDTO(link: CompetencyExerciseLink): CompetencyExerciseLinkUpdateDTO {
-    return {
-        competencyId: link.competency?.id,
-        weight: link.weight,
-    };
-}
-
 export function toQuizExerciseUpdateDTO(quizExercise: QuizExercise): QuizExerciseUpdateDTO {
     return {
         title: quizExercise.title,
         channelName: quizExercise.channelName,
         categories: quizExercise.categories,
-        competencyLinks: quizExercise.competencyLinks?.map(toCompetencyExerciseLinkUpdateDTO) || [],
+        competencyLinks: quizExercise.competencyLinks?.map(toCompetencyLinkUpdateDTO) || [],
         difficulty: quizExercise.difficulty,
         duration: quizExercise.duration,
         randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,
