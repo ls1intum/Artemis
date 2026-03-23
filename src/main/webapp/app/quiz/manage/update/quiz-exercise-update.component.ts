@@ -592,7 +592,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (this.isImport) {
             this.previousState();
         } else if (isCreate) {
-            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route });
+            this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, replaceUrl: true });
         }
         this.calendarService.reloadEvents();
     }
