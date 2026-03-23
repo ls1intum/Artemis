@@ -140,7 +140,8 @@
                 "helpOffer": "How can I help you today?"
             },
             "citation": {
-                "inLecture": "in"
+                "unitLabel": "Unit:",
+                "lectureLabel": "Lecture:"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
