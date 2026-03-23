@@ -23,6 +23,7 @@ import {
     ConversationDetailDialogComponent,
     ConversationDetailTabs,
 } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 @Component({
     selector: 'jhi-conversation-options',
@@ -119,9 +120,10 @@ export class ConversationOptionsComponent implements OnInit, OnDestroy {
     openConversationDetailDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.conversation;
-        modalRef.componentInstance.selectedTab = ConversationDetailTabs.SETTINGS;
+        const componentRef = getModalContentComponentRef<ConversationDetailDialogComponent>(modalRef);
+        componentRef.setInput('course', this.course);
+        componentRef.setInput('activeConversation', this.conversation);
+        componentRef.setInput('selectedTab', ConversationDetailTabs.SETTINGS);
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(

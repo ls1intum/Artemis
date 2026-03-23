@@ -55,6 +55,7 @@ import { QuizAiGenerationModalComponent } from 'app/quiz/manage/update/quiz-ai-g
 import { GeneratedQuestion, GeneratedQuestionType } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -498,8 +499,9 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
                 confirmButtonKey: 'artemisApp.quizWarning.confirmButton',
             };
             const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, this.defaultSecondLayerDialogOptions);
-            modalRef.componentInstance.translationKeys = keys;
-            modalRef.componentInstance.canBeUndone = true;
+            const componentRef = getModalContentComponentRef<GenericConfirmationDialogComponent>(modalRef);
+            componentRef.setInput('translationKeys', keys);
+            componentRef.setInput('canBeUndone', true);
             modalRef.componentInstance.initialize();
             modalRef.result.then(
                 () => {

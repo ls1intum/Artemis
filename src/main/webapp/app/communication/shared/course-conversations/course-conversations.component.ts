@@ -64,6 +64,8 @@ import { AccordionGroups, ChannelTypeIcons, CollapseState, SidebarCardElement, S
 import { EMPTY, Observable, Subject, Subscription, firstValueFrom, from } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { ConversationSelectionState } from 'app/communication/shared/course-conversations/course-conversation-selection.state';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
+import { ConversationDetailDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 
 const DEFAULT_CHANNEL_GROUPS: AccordionGroups = {
     favoriteChannels: { entityData: [] },
@@ -582,7 +584,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openCreateGroupChatDialog() {
         const modalRef: NgbModalRef = this.modalService.open(GroupChatCreateDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
+        const componentRef = getModalContentComponentRef<ConversationDetailDialogComponent>(modalRef);
+        componentRef.setInput('course', this.course());
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -600,7 +603,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     openCreateOneToOneChatDialog() {
         const modalRef: NgbModalRef = this.modalService.open(OneToOneChatCreateDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
+        const componentRef = getModalContentComponentRef<OneToOneChatCreateDialogComponent>(modalRef);
+        componentRef.setInput('course', this.course());
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -624,7 +628,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
      */
     openCreateChannelDialog() {
         const modalRef: NgbModalRef = this.modalService.open(ChannelsCreateDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
+        const componentRef = getModalContentComponentRef<ChannelsCreateDialogComponent>(modalRef);
+        componentRef.setInput('course', this.course());
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -652,9 +657,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     openChannelOverviewDialog() {
         const subType = undefined;
         const modalRef: NgbModalRef = this.modalService.open(ChannelsOverviewDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course();
-        modalRef.componentInstance.createChannelFn = subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined;
-        modalRef.componentInstance.channelSubType = subType;
+        const componentRef = getModalContentComponentRef<ChannelsCreateDialogComponent>(modalRef);
+        componentRef.setInput('course', this.course());
+        componentRef.setInput('createChannelFn', subType === ChannelSubType.GENERAL ? this.metisConversationService.createChannel : undefined);
+        componentRef.setInput('channelSubType', subType);
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(

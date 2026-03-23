@@ -259,10 +259,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     ) {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
         const componentRef = getModalContentComponentRef<GenericConfirmationDialogComponent>(modalRef);
-        componentRef?.setInput('translationParameters', translationParams);
-        componentRef?.setInput('translationKeys', translationKeys);
-        componentRef?.setInput('canBeUndone', true);
-        componentRef?.setInput('isDangerousAction', true);
+        componentRef.setInput('translationParameters', translationParams);
+        componentRef.setInput('translationKeys', translationKeys);
+        componentRef.setInput('canBeUndone', true);
+        componentRef.setInput('isDangerousAction', true);
         modalRef.componentInstance.initialize();
 
         from(modalRef.result)

@@ -29,6 +29,7 @@ import {
 } from 'app/communication/course-conversations-components/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -131,8 +132,9 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
+        const componentRef = getModalContentComponentRef<ConversationAddUsersDialogComponent>(modalRef);
+        componentRef.setInput('course', this.course);
+        componentRef.setInput('activeConversation', this.activeConversation);
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(
@@ -154,13 +156,15 @@ export class ConversationHeaderComponent implements OnInit, OnChanges, OnDestroy
     openConversationDetailDialog(event: MouseEvent, tab: ConversationDetailTabs) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationDetailDialogComponent, defaultFirstLayerDialogOptions);
-        modalRef.componentInstance.course = this.course;
-        modalRef.componentInstance.activeConversation = this.activeConversation;
-        modalRef.componentInstance.selectedTab = tab;
+        const componentRef = getModalContentComponentRef<ConversationDetailDialogComponent>(modalRef);
+        componentRef?.setInput('course', this.course);
+        componentRef?.setInput('activeConversation', this.activeConversation);
+        componentRef?.setInput('selectedTab', tab);
+
         if (this.getAsOneToOneChat(this.activeConversation)) {
-            modalRef.componentInstance.selectedTab = ConversationDetailTabs.INFO;
+            componentRef?.setInput('selectedTab', ConversationDetailTabs.INFO);
         }
-        modalRef.componentInstance.initialize();
+        modalRef.componentInstance?.initialize();
 
         // If user clicks another username inside modal → open one-to-one chat
         const userNameClicked = modalRef.componentInstance.userNameClicked;

@@ -161,14 +161,14 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     ) {
         const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
         const componentRef = getModalContentComponentRef<GenericUpdateTextPropertyDialogComponent>(modalRef);
-        componentRef?.setInput('propertyName', propertyName);
-        componentRef?.setInput('maxPropertyLength', maxLength);
-        componentRef?.setInput('translationKeys', translationKeys);
-        componentRef?.setInput('isRequired', isRequired);
-        componentRef?.setInput('regexPattern', regexPattern);
+        componentRef.setInput('propertyName', propertyName);
+        componentRef.setInput('maxPropertyLength', maxLength);
+        componentRef.setInput('translationKeys', translationKeys);
+        componentRef.setInput('isRequired', isRequired);
+        componentRef.setInput('regexPattern', regexPattern);
         const property = get(channelOrGroupChat, propertyName);
         if (property && typeof property === 'string' && property.length > 0) {
-            componentRef?.setInput('initialValue', property);
+            componentRef.setInput('initialValue', property);
         }
         modalRef.componentInstance.initialize();
         from(modalRef.result)
