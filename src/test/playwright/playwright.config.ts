@@ -48,6 +48,10 @@ export default defineConfig({
     ],
     globalSetup: require.resolve('./init/global-setup.ts'),
 
+    /* Increase default expect timeout from 5s to 15s for CI environments under parallel load */
+    expect: {
+        timeout: parseNumber(process.env.EXPECT_TIMEOUT_MS) ?? 15000,
+    },
     /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
     use: {
         /* Base URL to use in actions like `await page.goto('/')`. */

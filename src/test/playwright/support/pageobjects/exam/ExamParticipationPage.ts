@@ -60,7 +60,8 @@ export class ExamParticipationPage extends ExamParticipationActions {
     async makeTextExerciseSubmission(exerciseID: number, textFixture: string) {
         const content = await Fixtures.get(textFixture);
         await this.textExerciseEditor.typeSubmission(exerciseID, content!);
-        await this.page.waitForTimeout(300);
+        // Wait for the text to be processed by Angular change detection
+        await this.page.waitForTimeout(1000);
     }
 
     private async makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, practiceMode = false, skipBuildResultCheck = false) {
@@ -116,10 +117,10 @@ export class ExamParticipationPage extends ExamParticipationActions {
         expect(response.status()).toBe(200);
     }
 
-    async checkExerciseScore(exerciseID: number, expectedResult: string) {
+    async checkExerciseScore(exerciseID: number, expectedResult: string, timeout: number = BUILD_RESULT_TIMEOUT) {
         // In exam mode, page.reload() navigates away from the active exercise tab,
         // so we rely on WebSocket to push build results and use Playwright's auto-retry.
         const resultScore = this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID);
-        await expect(resultScore).toContainText(expectedResult, { timeout: BUILD_RESULT_TIMEOUT });
+        await expect(resultScore).toContainText(expectedResult, { timeout });
     }
 }

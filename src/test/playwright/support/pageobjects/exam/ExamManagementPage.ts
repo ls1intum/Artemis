@@ -72,7 +72,7 @@ export class ExamManagementPage {
      */
     async openAssessmentDashboard(courseID: number, examID: number, timeout = EXAM_DASHBOARD_TIMEOUT) {
         await this.page.goto(`/course-management/${courseID}/exams/${examID}/assessment-dashboard`);
-        await this.page.waitForLoadState('domcontentloaded');
+        await this.page.waitForLoadState('networkidle');
     }
 
     /**

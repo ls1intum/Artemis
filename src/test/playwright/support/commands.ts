@@ -42,6 +42,7 @@ export class Commands {
 
         if (url) {
             await page.goto(url);
+            await page.waitForLoadState('networkidle');
         }
     };
 
@@ -79,11 +80,13 @@ export class Commands {
 
     static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string, interval = 5000, timeout = 60000) => {
         const startTime = Date.now();
+        let lastSeenText: string | null = null;
 
         while (Date.now() - startTime < timeout) {
             try {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 const text = await locator.textContent();
+                lastSeenText = text;
                 if (text?.includes(expectedText)) {
                     return;
                 }
@@ -102,7 +105,7 @@ export class Commands {
             }
         }
 
-        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()})`);
+        throw new Error(`Timed out waiting for text "${expectedText}" in locator "${locator}" (URL: ${page.url()}). Last seen text: "${lastSeenText}"`);
     };
 
     /**
