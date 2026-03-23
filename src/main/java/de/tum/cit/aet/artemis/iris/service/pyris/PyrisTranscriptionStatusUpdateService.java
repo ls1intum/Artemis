@@ -70,6 +70,9 @@ public class PyrisTranscriptionStatusUpdateService {
             return;
         }
 
+        // Clear the queued flag on first callback so the UI shows "Transcribing" instead of "Awaiting Processing"
+        processingStateCallbackApi.ifPresent(api -> api.acknowledgeTranscriptionJob(job.lectureUnitId()));
+
         var isDone = statusUpdate.stages().stream().map(PyrisStageDTO::state).allMatch(PyrisStageState::isTerminal);
 
         if (isDone) {
@@ -103,7 +106,7 @@ public class PyrisTranscriptionStatusUpdateService {
                     List<LectureTranscriptionSegment> segments = result.segments().stream()
                             .map(seg -> new LectureTranscriptionSegment(seg.startTime(), seg.endTime(), seg.text(), seg.slideNumber())).toList();
                     var course = transcription.getLectureUnit().getLecture().getCourse();
-                    transcription.setLanguage(course.getLanguage() != null ? course.getLanguage().getShortName() : result.language());
+                    transcription.setLanguage(course.getLanguage() != null ? course.getLanguage().getShortName() : "en");
                     transcription.setSegments(segments);
                     transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
                 }
