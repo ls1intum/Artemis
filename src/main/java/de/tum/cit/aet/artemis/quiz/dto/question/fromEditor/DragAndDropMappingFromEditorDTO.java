@@ -28,9 +28,14 @@ public record DragAndDropMappingFromEditorDTO(Long id, Long dragItemTempId, Long
      * @return the corresponding DTO
      */
     public static DragAndDropMappingFromEditorDTO of(DragAndDropMapping mapping) {
+        DragItem dragItem = mapping.getDragItem();
+        DropLocation dropLocation = mapping.getDropLocation();
+        if (dragItem == null || dropLocation == null) {
+            throw new IllegalArgumentException("DragAndDropMapping must have both a dragItem and a dropLocation, but mapping id=" + mapping.getId() + " is missing one.");
+        }
         // Use real ID as fallback for tempID when dealing with persisted entities
-        Long dragItemEffectiveId = mapping.getDragItem().getTempID() != null ? mapping.getDragItem().getTempID() : mapping.getDragItem().getId();
-        Long dropLocationEffectiveId = mapping.getDropLocation().getTempID() != null ? mapping.getDropLocation().getTempID() : mapping.getDropLocation().getId();
+        Long dragItemEffectiveId = dragItem.getTempID() != null ? dragItem.getTempID() : dragItem.getId();
+        Long dropLocationEffectiveId = dropLocation.getTempID() != null ? dropLocation.getTempID() : dropLocation.getId();
         return new DragAndDropMappingFromEditorDTO(mapping.getId(), dragItemEffectiveId, dropLocationEffectiveId);
     }
 
