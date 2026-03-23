@@ -33,6 +33,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.cit.aet.artemis.core.exception.RateLimitExceededException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCAuthException;
 import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCForbiddenException;
 import de.tum.cit.aet.artemis.core.service.TempFileUtilService;
@@ -693,5 +694,105 @@ class LocalVCIntegrationTest extends AbstractProgrammingIntegrationLocalCILocalV
         RemoteRefUpdate remoteRefUpdate = pushResult.getRemoteUpdates().iterator().next();
         assertThat(remoteRefUpdate.getStatus()).isEqualTo(RemoteRefUpdate.Status.REJECTED_OTHER_REASON);
         assertThat(remoteRefUpdate.getMessage()).isEqualTo("File 'large-file.txt' exceeds 10MB size limit (11.00 MB)");
+    }
+
+    @Test
+    void testFetch_expiredUserVcsAccessToken_isRejected() throws InvalidNameException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        // Set a VCS access token with an expiry date in the past
+        String expiredToken = "vcpat-expired-token-that-is-exactly-50chars-long12";
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, expiredToken, ZonedDateTime.now().minusDays(1));
+
+        // Expired token fails user VCS token check, then falls through to participation token check
+        // (no match), then to LDAP auth which is mocked to reject
+        setupLdapToRejectAuth(student1Login);
+
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, expiredToken, projectKey1, assignmentRepositorySlug,
+                NOT_AUTHORIZED);
+    }
+
+    @Test
+    void testFetch_userVcsAccessTokenWithNullExpiry_isRejected() throws InvalidNameException {
+        localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+        // Set a VCS access token with null expiry date
+        String token = "vcpat-null-expiry-token-exactly-50chars-long-here1";
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, null);
+
+        // Null expiry date fails user VCS token check, then falls through to participation token check
+        // (no match), then to LDAP auth which is mocked to reject
+        setupLdapToRejectAuth(student1Login);
+
+        localVCLocalCITestService.testFetchReturnsError(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug, NOT_AUTHORIZED);
+    }
+
+    @Test
+    void testAuthHeader_basicWithoutPayload_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // "Basic" without Base64 payload
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid authorization header format");
+    }
+
+    @Test
+    void testAuthHeader_nonBasicScheme_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // Bearer scheme instead of Basic
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer sometoken");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid authorization header format");
+    }
+
+    @Test
+    void testAuthHeader_base64WithoutColon_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // Base64-encoded string without colon separator
+        String encoded = Base64.getEncoder().encodeToString("usernameonly".getBytes());
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic " + encoded);
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Missing colon");
+    }
+
+    @Test
+    void testAuthHeader_invalidBase64_isRejected() {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setRequestURI("/git/" + projectKey1 + "/" + templateRepositorySlug + ".git/git-upload-pack");
+        request.setRemoteAddr("127.0.0.1");
+        // Invalid Base64 string
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Basic !!!not-base64!!!");
+
+        assertThatExceptionOfType(LocalVCAuthException.class).isThrownBy(() -> localVCServletService.authenticateAndAuthorizeGitRequest(request, RepositoryActionType.READ))
+                .withMessageContaining("Invalid Base64");
+    }
+
+    @Test
+    void testGetHttpStatusForException_rateLimitExceeded() {
+        int status = localVCServletService.getHttpStatusForException(new RateLimitExceededException(60), "/some-repo");
+        assertThat(status).isEqualTo(429);
+    }
+
+    @Test
+    void testGetHttpStatusForException_unknownException() {
+        int status = localVCServletService.getHttpStatusForException(new RuntimeException("unexpected"), "/some-repo");
+        assertThat(status).isEqualTo(500);
+    }
+
+    private void setupLdapToRejectAuth(String login) throws InvalidNameException {
+        var ldapUser = new LdapUserDto().login(login);
+        String cn = login.replace(TEST_PREFIX, "");
+        ldapUser.setUid(new LdapName("cn=" + cn + ",ou=test,o=lab"));
+        doReturn(Optional.of(ldapUser)).when(ldapUserService).findByLogin(login);
+        doReturn(false).when(ldapTemplate).compare(anyString(), anyString(), any());
     }
 }
