@@ -1,30 +1,29 @@
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { getElement } from 'test/helpers/utils/general-test.utils';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 describe('PostingButtonComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: PostingButtonComponent;
     let fixture: ComponentFixture<PostingButtonComponent>;
     let debugElement: DebugElement;
 
-    beforeEach(() => {
-        return TestBed.configureTestingModule({
-            imports: [PostingButtonComponent, FaIconComponent],
-        })
-            .compileComponents()
-            .then(() => {
-                fixture = TestBed.createComponent(PostingButtonComponent);
-                component = fixture.componentInstance;
-                debugElement = fixture.debugElement;
-            });
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [PostingButtonComponent],
+        }).compileComponents();
+        fixture = TestBed.createComponent(PostingButtonComponent);
+        component = fixture.componentInstance;
+        debugElement = fixture.debugElement;
     });
 
     it('should have icon shown if property set', () => {
-        component.buttonIcon = faPlus;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('buttonIcon', faPlus);
+        fixture.detectChanges();
         const button = getElement(debugElement, 'fa-icon');
         expect(button).not.toBeNull();
     });
@@ -36,16 +35,16 @@ describe('PostingButtonComponent', () => {
     });
 
     it('should show spinner if loading', () => {
-        component.buttonLoading = true;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('buttonLoading', true);
+        fixture.detectChanges();
         const button = getElement(debugElement, '.posting-btn-loading-icon');
-        expect(button.hasAttribute('hidden')).toBeFalse();
+        expect(button.hasAttribute('hidden')).toBe(false);
     });
 
     it('should not show spinner if not loading', () => {
-        component.buttonLoading = false;
-        fixture.changeDetectorRef.detectChanges();
+        fixture.componentRef.setInput('buttonLoading', false);
+        fixture.detectChanges();
         const button = getElement(debugElement, '.posting-btn-loading-icon');
-        expect(button.hasAttribute('hidden')).toBeTrue();
+        expect(button.hasAttribute('hidden')).toBe(true);
     });
 });

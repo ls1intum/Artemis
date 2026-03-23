@@ -1,13 +1,15 @@
-import { ComponentFixture, TestBed, fakeAsync, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ChannelFormComponent, ChannelFormData } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 describe('ChannelFormComponent', () => {
+    setupTestBed({ zoneless: true });
     let component: ChannelFormComponent;
     let fixture: ComponentFixture<ChannelFormComponent>;
     const validName = 'group-1';
@@ -16,57 +18,58 @@ describe('ChannelFormComponent', () => {
     const validIsAnnouncementChannel = false;
     const validIsCourseWideChannel = false;
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
-            declarations: [ChannelFormComponent, MockComponent(ChannelIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(NgbActiveModal)],
-        }).compileComponents();
-    }));
-
     beforeEach(() => {
-        fixture = TestBed.createComponent(ChannelFormComponent);
-        component = fixture.componentInstance;
-        fixture.detectChanges();
+        return TestBed.configureTestingModule({
+            imports: [ChannelFormComponent],
+            providers: [MockProvider(NgbActiveModal)],
+        })
+            .overrideComponent(ChannelFormComponent, {
+                remove: { imports: [ChannelIconComponent, ArtemisTranslatePipe, TranslateDirective] },
+                add: { imports: [MockComponent(ChannelIconComponent), MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)] },
+            })
+            .compileComponents()
+            .then(() => {
+                fixture = TestBed.createComponent(ChannelFormComponent);
+                component = fixture.componentInstance;
+                fixture.detectChanges();
+            });
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
+    afterEach(() => vi.restoreAllMocks());
 
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
-    it('should block submit when channel name is missing', fakeAsync(() => {
+    it('should block submit when channel name is missing', async () => {
         setFormValid();
         setName(undefined);
-        checkFormIsInvalid();
+        await checkFormIsInvalid();
 
         setFormValid();
         setName('');
-        checkFormIsInvalid();
-    }));
+        await checkFormIsInvalid();
+    });
 
-    it('should block submit when channel name pattern is invalid', fakeAsync(() => {
+    it('should block submit when channel name pattern is invalid', async () => {
         setFormValid();
         setName('has space');
-        checkFormIsInvalid();
+        await checkFormIsInvalid();
 
         setFormValid();
         setName('has_underscore');
-        checkFormIsInvalid();
+        await checkFormIsInvalid();
 
         setFormValid();
         setName('hasUpperCase');
-        checkFormIsInvalid();
+        await checkFormIsInvalid();
 
         setFormValid();
         setName('long-channel-with-31-characters');
-        checkFormIsInvalid();
-    }));
+        await checkFormIsInvalid();
+    });
 
-    it('should not block submit when description is missing', fakeAsync(() => {
+    it('should not block submit when description is missing', async () => {
         setFormValid();
         setDescription(undefined);
 
@@ -78,20 +81,20 @@ describe('ChannelFormComponent', () => {
             isCourseWideChannel: validIsCourseWideChannel,
         };
 
-        clickSubmitButton(true, expectChannelData);
-    }));
+        await clickSubmitButton(true, expectChannelData);
+    });
 
-    it('should block submit when description is too long', fakeAsync(() => {
+    it('should block submit when description is too long', async () => {
         setFormValid();
         setDescription('a'.repeat(256));
-        checkFormIsInvalid();
-    }));
+        await checkFormIsInvalid();
+    });
 
-    it('should submit valid form', fakeAsync(() => {
+    it('should submit valid form', async () => {
         setValidFormValues();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
 
         const expectChannelData: ChannelFormData = {
             name: validName,
@@ -101,14 +104,14 @@ describe('ChannelFormComponent', () => {
             isCourseWideChannel: validIsCourseWideChannel,
         };
 
-        clickSubmitButton(true, expectChannelData);
-    }));
+        await clickSubmitButton(true, expectChannelData);
+    });
 
-    it('should emit channel type change event when channel type is changed', fakeAsync(() => {
-        const channelTypeChangeSpy = jest.spyOn(component.channelTypeChanged, 'emit');
+    it('should emit channel type change event when channel type is changed', () => {
+        const channelTypeChangeSpy = vi.spyOn(component.channelTypeChanged, 'emit');
         component.channelTypeChanged.emit('PRIVATE');
         expect(channelTypeChangeSpy).toHaveBeenCalledWith('PRIVATE');
-    }));
+    });
 
     function setDescription(description?: string) {
         component!.descriptionControl!.setValue(description);
@@ -126,21 +129,21 @@ describe('ChannelFormComponent', () => {
         }
     };
 
-    function checkFormIsInvalid() {
+    async function checkFormIsInvalid() {
         fixture.changeDetectorRef.detectChanges();
-        expect(component.form.invalid).toBeTrue();
-        expect(component.isSubmitPossible).toBeFalse();
-        clickSubmitButton(false);
+        expect(component.form.invalid).toBe(true);
+        expect(component.isSubmitPossible).toBe(false);
+        await clickSubmitButton(false);
     }
     function setFormValid() {
         setValidFormValues();
         fixture.changeDetectorRef.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
+        expect(component.form.valid).toBe(true);
+        expect(component.isSubmitPossible).toBe(true);
     }
     const clickSubmitButton = (expectSubmitEvent: boolean, expectedFormData?: ChannelFormData) => {
-        const submitFormSpy = jest.spyOn(component, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
+        const submitFormSpy = vi.spyOn(component, 'submitForm');
+        const submitFormEventSpy = vi.spyOn(component.formSubmitted, 'emit');
 
         const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();

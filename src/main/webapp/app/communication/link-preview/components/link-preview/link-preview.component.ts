@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, inject } from '@angular/core';
+import { Component, computed, inject, input } from '@angular/core';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/communication/service/metis.service';
@@ -14,24 +14,23 @@ import { urlRegex } from 'app/communication/link-preview/services/linkify.servic
     styleUrls: ['./link-preview.component.scss'],
     imports: [ConfirmIconComponent, NgClass, ArtemisTranslatePipe],
 })
-export class LinkPreviewComponent implements OnInit {
+export class LinkPreviewComponent {
     private metisService = inject(MetisService);
 
-    @Input() linkPreview: LinkPreview;
-    @Input() posting?: Posting;
-    @Input() showLoadingsProgress: boolean;
-    @Input() loaded: boolean;
-    @Input() hasError: boolean;
-    @Input() isReply?: boolean;
-    @Input() multiple?: boolean;
+    linkPreview = input<LinkPreview>();
+    posting = input<Posting>();
+    showLoadingsProgress = input(false);
+    loaded = input(false);
+    hasError = input(false);
+    isReply = input(false);
+    multiple = input(false);
 
-    isAuthorOfOriginalPost: boolean;
+    readonly isAuthorOfOriginalPost = computed(() => {
+        const posting = this.posting();
+        return posting ? this.metisService.metisUserIsAuthorOfPosting(posting) : false;
+    });
 
     faTimes = faTimes;
-
-    ngOnInit() {
-        this.isAuthorOfOriginalPost = this.metisService.metisUserIsAuthorOfPosting(this.posting!);
-    }
 
     /**
      * Removes the link preview from the list of link previews
@@ -40,11 +39,12 @@ export class LinkPreviewComponent implements OnInit {
      */
     removeLinkPreview(linkPreview: LinkPreview) {
         const urlToSearchFor = linkPreview.url;
+        const posting = this.posting();
 
-        if (this.posting) {
+        if (posting) {
             // Find all URL matches in the text (in the content of the post)
             let match;
-            let modifiedContent = this.posting.content!;
+            let modifiedContent = posting.content!;
             while ((match = urlRegex.exec(modifiedContent)) !== null) {
                 const url = match[0];
                 const start = match.index;
@@ -56,14 +56,14 @@ export class LinkPreviewComponent implements OnInit {
                 }
             }
 
-            this.posting.content = modifiedContent;
+            posting.content = modifiedContent;
 
-            if (this.isReply) {
-                this.metisService.updateAnswerPost(this.posting).subscribe({
+            if (this.isReply()) {
+                this.metisService.updateAnswerPost(posting).subscribe({
                     next: () => {},
                 });
             } else {
-                this.metisService.updatePost(this.posting).subscribe({
+                this.metisService.updatePost(posting).subscribe({
                     next: () => {},
                 });
             }

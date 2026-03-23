@@ -1,4 +1,4 @@
-import { Component, HostBinding, OnDestroy, OnInit, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, input, output } from '@angular/core';
 import { faEllipsis, faUser, faUserCheck, faUserGear, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
 import { User } from 'app/core/user/user.model';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
@@ -31,6 +31,9 @@ import { addPublicFilePrefix } from 'app/app.constants';
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
+    host: {
+        '[class.active]': 'isCurrentUser',
+    },
     imports: [
         ProfilePictureComponent,
         FaIconComponent,
@@ -57,8 +60,6 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
     readonly onUserNameClicked = output<number>();
 
     idOfLoggedInUser: number;
-
-    @HostBinding('class.active')
     isCurrentUser = false;
 
     isCreator = false;
@@ -256,10 +257,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         confirmedCallback: () => Observable<HttpResponse<void>>,
     ) {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = translationParams;
-        modalRef.componentInstance.translationKeys = translationKeys;
-        modalRef.componentInstance.canBeUndone = true;
-        modalRef.componentInstance.isDangerousAction = true;
+        modalRef.componentRef?.setInput('translationParameters', translationParams);
+        modalRef.componentRef?.setInput('translationKeys', translationKeys);
+        modalRef.componentRef?.setInput('canBeUndone', true);
+        modalRef.componentRef?.setInput('isDangerousAction', true);
         modalRef.componentInstance.initialize();
 
         from(modalRef.result)

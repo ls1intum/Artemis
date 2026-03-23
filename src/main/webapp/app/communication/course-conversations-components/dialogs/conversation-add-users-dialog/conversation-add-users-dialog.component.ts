@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, inject } from '@angular/core';
+import { Component, OnDestroy, inject, input } from '@angular/core';
 import { AlertService } from 'app/shared/service/alert.service';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
@@ -32,8 +32,8 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     private ngUnsubscribe = new Subject<void>();
 
-    @Input() course: Course;
-    @Input() activeConversation: ConversationDTO;
+    course = input.required<Course>();
+    activeConversation = input.required<ConversationDTO>();
 
     isInitialized = false;
     maxSelectable: number | undefined;
@@ -42,8 +42,9 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
     initialize() {
         super.initialize(['course', 'activeConversation']);
         if (this.isInitialized) {
-            if (isGroupChatDTO(this.activeConversation)) {
-                this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (this.activeConversation?.numberOfMembers ?? 0);
+            const activeConversation = this.activeConversation();
+            if (isGroupChatDTO(activeConversation)) {
+                this.maxSelectable = MAX_GROUP_CHAT_PARTICIPANTS - (activeConversation.numberOfMembers ?? 0);
             }
         }
     }
@@ -62,12 +63,14 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
+        const course = this.course();
+        const activeConversation = this.activeConversation();
 
         this.isLoading = true;
 
-        if (isChannelDTO(this.activeConversation)) {
+        if (isChannelDTO(activeConversation)) {
             this.channelService
-                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
+                .registerUsersToChannel(course.id!, activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
                     finalize(() => this.close()),
                     takeUntil(this.ngUnsubscribe),
@@ -81,9 +84,9 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
                         this.isLoading = false;
                     },
                 });
-        } else if (isGroupChatDTO(this.activeConversation)) {
+        } else if (isGroupChatDTO(activeConversation)) {
             this.groupChatService
-                .addUsersToGroupChat(this.course.id!, this.activeConversation.id!, userLogins)
+                .addUsersToGroupChat(course.id!, activeConversation.id!, userLogins)
                 .pipe(
                     finalize(() => this.close()),
                     takeUntil(this.ngUnsubscribe),

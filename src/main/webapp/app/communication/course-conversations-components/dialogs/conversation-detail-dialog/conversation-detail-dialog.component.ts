@@ -1,4 +1,4 @@
-import { Component, Input, inject, output } from '@angular/core';
+import { Component, computed, inject, input, model, output } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -41,29 +41,24 @@ export enum ConversationDetailTabs {
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);
 
-    @Input() public activeConversation: ConversationDTO;
-    @Input() course: Course;
-    @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
+    activeConversation = input.required<ConversationDTO>();
+    course = input.required<Course>();
+    selectedTab = model(ConversationDetailTabs.MEMBERS);
 
     isInitialized = false;
-    isOneToOneChat = false;
-    otherUser?: ConversationUserDTO;
     readonly faPeopleGroup = faPeopleGroup;
     readonly userNameClicked = output<number>();
 
     initialize() {
-        super.initialize(['course', 'activeConversation', 'selectedTab']);
-        if (this.activeConversation) {
-            const conversation = getAsOneToOneChatDTO(this.activeConversation);
-            if (conversation) {
-                this.isOneToOneChat = true;
-                this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
-            }
-        }
+        super.initialize(['course', 'activeConversation']);
     }
 
     getAsChannel = getAsChannelDTO;
     getAsGroupChat = getAsGroupChatDTO;
+
+    readonly isOneToOneChat = computed(() => !!getAsOneToOneChatDTO(this.activeConversation()));
+
+    readonly otherUser = computed<ConversationUserDTO | undefined>(() => getAsOneToOneChatDTO(this.activeConversation())?.members?.find((user) => !user.isRequestingUser));
 
     changesWerePerformed = false;
 

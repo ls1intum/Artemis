@@ -8,7 +8,19 @@ export abstract class AbstractDialogComponent {
     isInitialized = false;
 
     initialize(requiredInputs?: string[]) {
-        const allInputsSet = (requiredInputs ?? []).every((input) => this[input as keyof this] !== undefined);
+        const allInputsSet = (requiredInputs ?? []).every((input) => {
+            const value = this[input as keyof this];
+
+            if (typeof value === 'function') {
+                try {
+                    return value() !== undefined;
+                } catch {
+                    return false;
+                }
+            }
+
+            return value !== undefined;
+        });
         if (!allInputsSet) {
             captureException('Error: Dialog not fully configured');
         } else {

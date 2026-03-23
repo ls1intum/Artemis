@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -22,19 +24,23 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
-import { AddUsersFormData } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
+import {
+    AddUsersFormData,
+    ConversationAddUsersFormComponent,
+} from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/add-users-form/conversation-add-users-form.component';
 
 const examples: ConversationDTO[] = [generateExampleGroupChatDTO({} as GroupChatDTO), generateExampleChannelDTO({} as ChannelDTO)];
 
 examples.forEach((activeConversation) => {
     describe('ConversationAddUsersDialogComponent with ' + activeConversation.type, () => {
+        setupTestBed({ zoneless: true });
         let component: ConversationAddUsersDialogComponent;
         let fixture: ComponentFixture<ConversationAddUsersDialogComponent>;
         const course = { id: 1 } as Course;
 
-        beforeEach(waitForAsync(() => {
-            TestBed.configureTestingModule({
-                declarations: [ConversationAddUsersDialogComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent)],
+        beforeEach(async () => {
+            await TestBed.configureTestingModule({
+                imports: [ConversationAddUsersDialogComponent],
                 providers: [
                     MockProvider(AlertService),
                     MockProvider(NgbActiveModal),
@@ -46,23 +52,22 @@ examples.forEach((activeConversation) => {
                     provideHttpClient(),
                     provideHttpClientTesting(),
                 ],
-            }).compileComponents();
-        }));
-
-        beforeEach(() => {
+            })
+                .overrideComponent(ConversationAddUsersDialogComponent, {
+                    remove: { imports: [ChannelIconComponent, ConversationAddUsersFormComponent, ArtemisTranslatePipe] },
+                    add: { imports: [MockComponent(ChannelIconComponent), MockComponent(ConversationAddUsersFormComponent), MockPipe(ArtemisTranslatePipe)] },
+                })
+                .compileComponents();
             fixture = TestBed.createComponent(ConversationAddUsersDialogComponent);
             component = fixture.componentInstance;
-            fixture.detectChanges();
             initializeDialog(component, fixture, { course, activeConversation });
         });
 
-        afterEach(() => {
-            jest.restoreAllMocks();
-        });
+        afterEach(() => vi.restoreAllMocks());
 
         it('should create', () => {
             expect(component).toBeTruthy();
-            expect(component.isInitialized).toBeTrue();
+            expect(component.isInitialized).toBe(true);
         });
 
         it('should call the correct service depending on conversation type when form is submitted', () => {
@@ -78,8 +83,8 @@ examples.forEach((activeConversation) => {
             if (isChannelDTO(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const activeModal = TestBed.inject(NgbActiveModal);
-                jest.spyOn(activeModal, 'close');
-                jest.spyOn(channelService, 'registerUsersToChannel').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
+                vi.spyOn(activeModal, 'close');
+                vi.spyOn(channelService, 'registerUsersToChannel').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
                 form.formSubmitted.emit(addUsersFormData);
                 expect(channelService.registerUsersToChannel).toHaveBeenCalledOnce();
                 expect(channelService.registerUsersToChannel).toHaveBeenCalledWith(
@@ -96,8 +101,8 @@ examples.forEach((activeConversation) => {
             if (isGroupChatDTO(activeConversation)) {
                 const groupChatService = TestBed.inject(GroupChatService);
                 const activeModal = TestBed.inject(NgbActiveModal);
-                jest.spyOn(activeModal, 'close');
-                jest.spyOn(groupChatService, 'addUsersToGroupChat').mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
+                vi.spyOn(activeModal, 'close');
+                vi.spyOn(groupChatService, 'addUsersToGroupChat').mockReturnValue(of(new HttpResponse<void>({ status: 200 })));
                 form.formSubmitted.emit(addUsersFormData);
                 expect(groupChatService.addUsersToGroupChat).toHaveBeenCalledOnce();
                 expect(groupChatService.addUsersToGroupChat).toHaveBeenCalledWith(

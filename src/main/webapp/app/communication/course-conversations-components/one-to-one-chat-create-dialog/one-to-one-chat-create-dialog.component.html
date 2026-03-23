@@ -8,11 +8,11 @@
         </div>
         <div class="modal-body">
             <jhi-course-users-selector
-                [ngModel]="selectedUsers"
-                (ngModelChange)="onSelectedUsersChange($event)"
+                [selectedUsers]="selectedUsers"
+                (selectedUsersChange)="onSelectedUsersChange($event)"
                 [multiSelect]="false"
                 [showUserList]="false"
-                [courseId]="course.id!"
+                [courseId]="course().id!"
                 [label]="'artemisApp.dialogs.createOneToOneChat.userSelectorLabel' | artemisTranslate"
             />
         </div>

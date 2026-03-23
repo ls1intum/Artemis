@@ -165,9 +165,9 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
 
     private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentInstance.translationParameters = { channelName: channel.name };
-        modalRef.componentInstance.translationKeys = keys;
-        modalRef.componentInstance.canBeUndone = true;
+        modalRef.componentRef?.setInput('translationParameters', { channelName: channel.name });
+        modalRef.componentRef?.setInput('translationKeys', keys);
+        modalRef.componentRef?.setInput('canBeUndone', true);
         modalRef.componentInstance.initialize();
         return modalRef;
     }
