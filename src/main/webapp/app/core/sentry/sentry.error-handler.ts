@@ -5,7 +5,7 @@ import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
-@Injectable({ providedIn: 'root' })
+@Injectable({providedIn: 'root'})
 export class SentryErrorHandler extends ErrorHandler {
     private environment: string;
     private localStorageService = inject(LocalStorageService);
@@ -42,7 +42,7 @@ export class SentryErrorHandler extends ErrorHandler {
             integrations: integrations,
             sendDefaultPii: false,
             tracesSampler: (samplingContext) => {
-                const { name, inheritOrSampleWith } = samplingContext;
+                const {name, inheritOrSampleWith} = samplingContext;
 
                 // Drop /api/public/time transactions entirely
                 if (/^\/api\/public\/time(?:\?|$)/.test(name)) {
@@ -56,20 +56,59 @@ export class SentryErrorHandler extends ErrorHandler {
                 return inheritOrSampleWith(defaultSampleRate);
             },
             beforeSend: (event) => {
-                if (event.user) {
-                    delete event.user;
-                }
-                return event;
+                return this.scrubSentryPayload(event)
             },
-            beforeSendTransaction: (trans) => {
-                if (trans.user) {
-                    delete trans.user;
-                }
-                return trans;
+            beforeSendTransaction: (t) => {
+                return this.scrubSentryPayload(t);
             },
+            beforeSendBreadcrumb: (crumb) => {
+                if (crumb.message) {
+                    crumb.message = this.scrubStringMessage(crumb.message);
+                }
+                return crumb;
+            }
         });
 
         this.reportIfPasskeyIsNotSupported();
+    }
+
+    // any type used here since we want to handle both transactions and errors
+    private scrubSentryPayload(trans: any): any {
+        if (trans.user) {
+            delete trans.user;
+        }
+
+        if (trans.message) {
+            trans.message = this.scrubStringMessage(trans.message);
+        }
+
+        if (trans.exception && trans.exception.values) {
+            for (const ex of trans.exception.values) {
+                if (ex.value) {
+                    ex.value = this.scrubStringMessage(ex.value);
+                }
+            }
+        }
+
+        return trans;
+
+    }
+
+    private scrubStringMessage(message: string): string {
+        const piiPatterns = [/user=\\S+/g, /User{[^}]*}/g, /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}/g];
+        for (const pattern of piiPatterns) {
+            message = message.replace(pattern, '');
+        }
+        return message;
+    }
+
+    private scrubUrl(url: string): string {
+        var scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([a-z0-9]+)-[^/]+\.git/g, "/git/$1/$2.git");
+
+        if (unscrubbed.includes("-tests.git") || unscrubbed.includes("-exercise.git") || unscrubbed.includes("-solution.git")) {
+            return unscrubbed;
+        }
+        return scrubbed;
     }
 
     /**
