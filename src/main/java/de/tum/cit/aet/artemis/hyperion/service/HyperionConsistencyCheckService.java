@@ -330,7 +330,8 @@ public class HyperionConsistencyCheckService {
                     .user(renderedPrompt).call().responseEntity(StructuredOutputSchema.UnifiedConsistencyIssues.class);
 
             usageCollector.add(buildRequestFromResponse(verificationResponse.getResponse(), CONSISTENCY_PIPELINE_ID));
-            return toGenericConsistencyIssue(verificationResponse.entity());
+            var entity = verificationResponse.entity();
+            return (entity == null || entity.issues == null) ? List.of() : entity.issues;
         }
         catch (RuntimeException e) {
             child.error(e);
@@ -392,21 +393,6 @@ public class HyperionConsistencyCheckService {
                 .toList();
     }
 
-    /**
-     * Normalize unified issue structured output schema (used by the verifier) to internal issue representations.
-     *
-     * @param unifiedIssues parsed unified model output
-     * @return immutable list of issues
-     */
-    private List<ConsistencyIssue> toGenericConsistencyIssue(StructuredOutputSchema.UnifiedConsistencyIssues unifiedIssues) {
-        if (unifiedIssues == null || unifiedIssues.issues == null) {
-            return List.of();
-        }
-        return unifiedIssues.issues.stream().map(issue -> new ConsistencyIssue(issue.severity(),
-                issue.category() != null ? ConsistencyIssueCategory.valueOf(issue.category().name()) : null, issue.description(), issue.suggestedFix(), issue.relatedLocations()))
-                .toList();
-    }
-
     // Unified consistency issue used internally after parsing
     private record ConsistencyIssue(String severity, ConsistencyIssueCategory category, String description, String suggestedFix,
             List<StructuredOutputSchema.ArtifactLocation> relatedLocations) {
@@ -445,15 +431,7 @@ public class HyperionConsistencyCheckService {
         /** Unified schema covering all 6 categories — used exclusively by the verifier. */
         private static class UnifiedConsistencyIssues {
 
-            public List<UnifiedConsistencyIssue> issues = List.of();
-        }
-
-        private enum UnifiedConsistencyIssueCategory {
-            METHOD_RETURN_TYPE_MISMATCH, METHOD_PARAMETER_MISMATCH, CONSTRUCTOR_PARAMETER_MISMATCH, ATTRIBUTE_TYPE_MISMATCH, VISIBILITY_MISMATCH, IDENTIFIER_NAMING_INCONSISTENCY
-        }
-
-        private record UnifiedConsistencyIssue(String severity, UnifiedConsistencyIssueCategory category, String description, String suggestedFix,
-                List<ArtifactLocation> relatedLocations) {
+            public List<ConsistencyIssue> issues = List.of();
         }
 
         private record ArtifactLocation(ArtifactType type, String filePath, Integer startLine, Integer endLine) {
