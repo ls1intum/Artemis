@@ -101,6 +101,16 @@ public class SubmissionResource {
 
     /**
      * DELETE /submissions/:submissionId : delete the "id" submission.
+     * <p>
+     * This endpoint loads the submission with results and assessors but WITHOUT eager feedbacks
+     * ({@code findWithEagerResultsAndAssessorById}). As a consequence, {@link ResultService#deleteResult}
+     * will take the JPQL bulk-delete path (Path 2) for each result, which bypasses the {@code @PreRemove}
+     * callback in {@link ResultListener} that normally schedules participant score recalculation.
+     * <p>
+     * To compensate, we explicitly call {@code sendParticipantScoreSchedule()} for each result BEFORE
+     * deletion. This ensures participant scores are correctly recalculated even though the JPA lifecycle
+     * callback is skipped. See {@link ResultService#deleteResult} for the full explanation of the two
+     * deletion paths.
      *
      * @param submissionId the id of the submission to delete
      * @return the ResponseEntity with status 200 (OK)
@@ -118,9 +128,10 @@ public class SubmissionResource {
         }
 
         checkAccessPermissionAtInstructor(submission.get());
-        // Schedule participant score recalculation before deleting results, because
-        // deleteResult may use a JPQL bulk delete that bypasses the @PreRemove callback
-        // in ResultListener when the result's feedbacks collection is not initialized.
+        // Explicitly schedule participant score recalculation BEFORE deleting results.
+        // This is necessary because deleteResult may use the JPQL bulk-delete path (Path 2)
+        // which skips the @PreRemove callback in ResultListener. Without this, participant
+        // scores would not be recalculated after result deletion.
         if (submission.get().getParticipation() instanceof StudentParticipation participation && participation.getParticipant() != null) {
             for (Result result : submission.get().getResults()) {
                 instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());

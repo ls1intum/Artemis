@@ -192,46 +192,105 @@ public class ResultService {
     }
 
     /**
-     * Deletes result with corresponding complaint and complaint response
+     * Deletes a result and all its dependent data (feedbacks, long feedback texts, complaints, ratings, assessment notes).
+     * <p>
+     * <b>IMPORTANT — Two deletion paths exist due to a Hibernate constraint:</b>
+     * <p>
+     * The {@link Result} entity has {@code @OneToMany(cascade = ALL, orphanRemoval = true)} relationships to
+     * {@link Feedback} and {@link de.tum.cit.aet.artemis.assessment.domain.AssessmentNote AssessmentNote}.
+     * When {@link #deleteResultReferences} bulk-deletes these child rows via JPQL, Hibernate's in-memory state
+     * becomes inconsistent with the database. What happens next depends on whether the {@code feedbacks} collection
+     * was eagerly loaded (initialized) or is still a lazy proxy:
+     * <p>
+     * <b>Path 1 — Feedbacks initialized (e.g. loaded via {@code findByIdWithEagerFeedbacksElseThrow}):</b>
+     * We clear the in-memory list via {@code result.setFeedbacks(List.of())} so Hibernate sees an empty collection
+     * and does not attempt to cascade-delete the already-removed rows. Then {@code resultRepository.delete(result)}
+     * works normally, firing all JPA lifecycle callbacks (including {@code @PreRemove} in {@link ResultListener}
+     * which schedules async participant score recalculation).
+     * <p>
+     * <b>Path 2 — Feedbacks NOT initialized (lazy proxy, e.g. loaded via {@code findByIdWithResultsElseThrow}):</b>
+     * Calling {@code setFeedbacks()}, {@code getFeedbacks().clear()}, or {@code resultRepository.delete(result)}
+     * would trigger Hibernate to lazy-load the feedbacks collection. Since those rows were already bulk-deleted,
+     * Hibernate throws {@code EntityNotFoundException}. To avoid this, we use JPQL bulk deletes for the remaining
+     * child entities (assessment notes) and the result itself, completely bypassing Hibernate's cascade logic.
+     * <p>
+     * <b>Consequence of Path 2 — {@code @PreRemove} callback is skipped:</b>
+     * JPQL bulk deletes do not fire JPA entity lifecycle callbacks. The {@code @PreRemove} callback in
+     * {@link ResultListener#removeResult} schedules an async participant score recalculation via
+     * {@code InstanceMessageSendService.sendParticipantScoreSchedule()}. When Path 2 is taken, this callback
+     * does not execute. This is handled as follows:
+     * <ul>
+     * <li><b>Callers that delete individual results</b> (e.g. {@link
+     * de.tum.cit.aet.artemis.exercise.web.SubmissionResource#deleteSubmission SubmissionResource.deleteSubmission})
+     * must explicitly call {@code sendParticipantScoreSchedule()} BEFORE calling this method to ensure
+     * participant scores are recalculated. See {@code SubmissionResource.deleteSubmission} for the reference
+     * implementation.</li>
+     * <li><b>{@link AssessmentService#cancelAssessmentOfSubmission}</b> deletes a non-submitted draft assessment
+     * whose result was never referenced by participant scores, so no scheduling is needed.</li>
+     * <li><b>Bulk deletion callers</b> (e.g. {@link
+     * de.tum.cit.aet.artemis.exercise.service.ParticipationDeletionService ParticipationDeletionService})
+     * pass {@code shouldClearParticipantScore = false} because participant scores are already deleted by the
+     * caller as part of the larger deletion (participation, exercise, or course). No scheduling is needed.</li>
+     * </ul>
+     * <p>
+     * <b>DO NOT CHANGE</b> the two-path structure or the deletion order without carefully considering:
+     * (1) Hibernate lazy-loading behavior for uninitialized collections,
+     * (2) FK constraints between {@code long_feedback_text -> feedback -> result} and {@code assessment_note -> result},
+     * (3) the {@code @PreRemove} lifecycle callback in {@link ResultListener} and which callers compensate for its absence.
      *
      * @param result                      the result to delete
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
-     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
-     *                                        should be false
+     * @param shouldClearParticipantScore true when deleting a single result (synchronously clears stale participant score
+     *                                        references via {@code clearAllByResultId}); false during bulk deletion when
+     *                                        participant scores are already handled by the caller
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
+        // Step 1: Bulk-delete all child entities that have FK constraints pointing to the result.
+        // This uses JPQL DELETE statements which bypass Hibernate's cascade logic but correctly
+        // remove the rows from the database. Order matters: long_feedback_text before feedback.
         deleteResultReferences(result.getId(), shouldClearParticipantScore);
+
+        // Step 2: Delete the result itself. The strategy depends on the feedbacks collection state.
         if (Hibernate.isInitialized(result.getFeedbacks())) {
-            // Feedbacks are already loaded: clear the in-memory list so Hibernate does not
-            // attempt to cascade-delete the already bulk-deleted rows via orphanRemoval.
+            // Path 1: Feedbacks were eagerly loaded. Clear the in-memory list so Hibernate's
+            // orphanRemoval does not try to re-delete the already bulk-deleted feedback rows.
+            // resultRepository.delete() fires @PreRemove in ResultListener (participant score scheduling).
             result.setFeedbacks(List.of());
             resultRepository.delete(result);
         }
         else {
-            // Feedbacks are a lazy-uninitialized proxy. Calling setFeedbacks() or delete()
-            // would trigger lazy loading, which fails because the rows were already
-            // bulk-deleted above. Use JPQL bulk deletes to bypass Hibernate's cascade logic.
-            // Note: this path skips the @PreRemove callback in ResultListener that schedules
-            // async participant score recalculation. This is acceptable because:
-            // - When shouldClearParticipantScore=true (single result deletion), stale score
-            // references are already cleared synchronously by clearAllByResultId above,
-            // and the score will be recalculated when the next result is saved.
-            // - When shouldClearParticipantScore=false (bulk deletion), participant scores
-            // are already handled by the caller (e.g. participation/exercise deletion).
+            // Path 2: Feedbacks are an uninitialized lazy proxy. We MUST NOT touch the feedbacks
+            // collection or call resultRepository.delete(result), as either would trigger lazy
+            // loading of the already-deleted rows, causing EntityNotFoundException.
+            // Instead, use JPQL bulk deletes which bypass Hibernate entirely.
+            // NOTE: This skips @PreRemove in ResultListener — callers that delete individual results
+            // must handle participant score scheduling themselves (see Javadoc above).
             resultRepository.deleteAllAssessmentNotesByResultId(result.getId());
             resultRepository.deleteResultById(result.getId());
         }
     }
 
     /**
-     * NOTE: this method DOES NOT delete the result itself (e.g. because this will be done automatically when the submission is deleted)
-     * Deletes result with corresponding complaint and complaint response
+     * Bulk-deletes all entities that reference the given result via foreign keys, using JPQL DELETE statements.
+     * <p>
+     * <b>NOTE:</b> This method does NOT delete the result itself. The result must be deleted separately by the caller,
+     * either via JPA {@code resultRepository.delete(result)} or via JPQL {@code resultRepository.deleteResultById(id)}.
+     * See {@link #deleteResult} for the full deletion flow.
+     * <p>
+     * <b>NOTE:</b> This method does NOT delete {@code assessment_note} rows. Assessment notes are handled in
+     * {@link #deleteResult} via {@code resultRepository.deleteAllAssessmentNotesByResultId()} on the JPQL path,
+     * or via JPA cascade on the standard path.
+     * <p>
+     * The deletion order is important to respect FK constraints:
+     * {@code complaint_response -> complaint}, {@code long_feedback_text -> feedback -> result}.
+     * <p>
+     * Also used standalone by {@link AssessmentService#deleteAssessment} where the result is deleted implicitly
+     * via JPA orphan removal when it is removed from the submission's results list.
      *
      * @param resultId                    the id of the result for which all references should be deleted
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
-     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
-     *                                        should be false
+     * @param shouldClearParticipantScore true when deleting a single result (synchronously nullifies stale references
+     *                                        in the participant_score table); false during bulk deletion when participant
+     *                                        scores are already handled by the caller
      */
     public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
         log.debug("Delete result references {}", resultId);
@@ -241,6 +300,7 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
+        // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
     }

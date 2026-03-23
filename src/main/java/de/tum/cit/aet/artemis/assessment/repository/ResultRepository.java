@@ -51,8 +51,16 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
-     * Deletes all assessment notes associated with a result using a JPQL bulk delete.
-     * Must be called before {@link #deleteResultById} to avoid FK constraint violations.
+     * Deletes all assessment notes associated with a result using a native SQL bulk delete.
+     * <p>
+     * This is used exclusively by {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult
+     * ResultService.deleteResult} Path 2 (JPQL bulk-delete path) when feedbacks are not eagerly loaded.
+     * A native query is necessary because {@code AssessmentNote} does not have a {@code result} field
+     * (the relationship is unidirectional from {@code Result} via {@code @JoinColumn}), so JPQL cannot
+     * express {@code WHERE result_id = :resultId} directly.
+     * <p>
+     * Must be called BEFORE {@link #deleteResultById} to avoid FK constraint violations
+     * ({@code assessment_note.result_id} references {@code result.id}).
      *
      * @param resultId the id of the result whose assessment notes should be deleted
      */
@@ -62,9 +70,24 @@ public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
     void deleteAllAssessmentNotesByResultId(@Param("resultId") long resultId);
 
     /**
-     * Deletes a result by its id using a JPQL bulk delete, bypassing Hibernate's cascade
-     * and lifecycle callbacks. All child entities (feedbacks, assessment notes, etc.) must
-     * be deleted before calling this method.
+     * Deletes a result by its id using a JPQL bulk delete, completely bypassing Hibernate's cascade logic
+     * and JPA lifecycle callbacks ({@code @PreRemove}, {@code @PostRemove}).
+     * <p>
+     * This is used exclusively by {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult
+     * ResultService.deleteResult} Path 2 when the result's feedbacks collection is an uninitialized lazy proxy.
+     * <p>
+     * <b>Prerequisites — all child entities must be deleted before calling this method:</b>
+     * <ul>
+     * <li>{@code long_feedback_text} and {@code feedback} rows — deleted by
+     * {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResultReferences
+     * ResultService.deleteResultReferences}</li>
+     * <li>{@code assessment_note} rows — deleted by {@link #deleteAllAssessmentNotesByResultId}</li>
+     * <li>{@code complaint}, {@code complaint_response}, {@code rating} rows — deleted by
+     * {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResultReferences
+     * ResultService.deleteResultReferences}</li>
+     * </ul>
+     * <b>WARNING:</b> Because this bypasses {@code @PreRemove}, the caller must ensure participant score
+     * recalculation is handled separately. See {@code ResultService.deleteResult} Javadoc for details.
      *
      * @param resultId the id of the result to delete
      */
