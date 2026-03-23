@@ -3,6 +3,7 @@ import { ExerciseTitleChannelNameComponent } from 'app/exercise/exercise-title-c
 import { IncludedInOverallScorePickerComponent } from 'app/exercise/included-in-overall-score-picker/included-in-overall-score-picker.component';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
 import { QuizBatch, QuizExercise, QuizMode, resetQuizForExam, resetQuizForImport } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -98,6 +99,7 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
     private navigationUtilService = inject(ArtemisNavigationUtilService);
     private modalService = inject(NgbModal);
     private calendarService = inject(CalendarService);
+    private location = inject(Location);
     private profileService = inject(ProfileService);
 
     readonly quizQuestionListEditComponent = viewChild.required<QuizQuestionListEditComponent>('quizQuestionsEdit');
@@ -584,13 +586,14 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         if (this.isImport) {
             this.previousState();
         } else if (isCreate) {
-            // After creation, fetch the full quiz from the server to get properly typed entities
-            // (the POST response returns a DTO that doesn't map cleanly to QuizExercise).
-            // Then navigate to the edit URL so the browser history is correct.
+            // After creation, update the browser URL to the edit path (without triggering navigation)
+            // and re-fetch the quiz from the server to get properly structured entity data.
+            const editUrl = this.router.url.replace('/new', `/${quizExercise.id}/edit`);
+            this.location.replaceState(editUrl);
             this.quizExerciseService.find(quizExercise.id!).subscribe((response) => {
                 this.quizExercise = response.body!;
                 this.init();
-                this.router.navigate(['..', quizExercise.id, 'edit'], { relativeTo: this.route, replaceUrl: true });
+                this.changeDetector.detectChanges();
                 this.calendarService.reloadEvents();
             });
             return;
