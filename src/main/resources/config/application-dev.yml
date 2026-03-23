@@ -159,6 +159,7 @@ artemis:
         # api-key: yourApiKey                                         # API key (use any non-empty value for Ollama)
         # Weaviate server authentication (optional). When set, the client authenticates using API key auth.
         # The Weaviate server must have API key authentication enabled (see docker/weaviate/*.env).
+        # auth-admin-user: admin@example.com                          # Admin username matching AUTHENTICATION_APIKEY_USERS in the Weaviate server config
         # auth-api-key: admin-key                                     # API key matching AUTHENTICATION_APIKEY_ALLOWED_KEYS in the Weaviate server config
 
 # Needs to be provided so Sentry's LogbackAppender picks up a sensible configuration
