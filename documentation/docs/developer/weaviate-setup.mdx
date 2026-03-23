@@ -362,14 +362,13 @@ docker compose -f weaviate.yml down && docker compose -f weaviate.yml up -d
 
 #### Configuring the Artemis Client
 
-Add the `auth-admin-user` and `auth-api-key` properties to your Artemis configuration. The values must match `AUTHENTICATION_APIKEY_USERS` and `AUTHENTICATION_APIKEY_ALLOWED_KEYS` on the Weaviate server:
+Add the `auth-api-key` property to your Artemis configuration. The value must match one of the keys in `AUTHENTICATION_APIKEY_ALLOWED_KEYS`:
 
 ```yaml
 artemis:
     weaviate:
         enabled: true
-        auth-admin-user: admin@example.com  # Must match AUTHENTICATION_APIKEY_USERS on the Weaviate server
-        auth-api-key: admin-key             # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
+        auth-api-key: admin-key    # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
 ```
 
 #### Verifying Authentication
@@ -410,7 +409,6 @@ artemis:
         scheme: http                             # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_              # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
         vectorizer-module: text2vec-transformers # Vectorizer module: "none", "text2vec-transformers", or "text2vec-openai"
-        # auth-admin-user: admin@example.com    # Optional: admin username for Weaviate API key auth (see Authentication section)
         # auth-api-key: admin-key               # Optional: API key for Weaviate server authentication (see Authentication section)
 ```
 

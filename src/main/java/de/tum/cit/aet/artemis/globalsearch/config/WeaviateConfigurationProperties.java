@@ -23,13 +23,12 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param apiEmbeddingModel the embedding model name (e.g. "qwen3-embedding:8b"), required when using text2vec-openai
  * @param apiBaseUrl        the base URL for the OpenAI-compatible API (e.g. Ollama), required when using text2vec-openai
  * @param apiKey            the API key for the OpenAI-compatible API, required when using text2vec-openai (can be a dummy value for Ollama)
- * @param authAdminUser     the admin username for Weaviate API key authentication (optional; must match AUTHENTICATION_APIKEY_USERS on the server)
- * @param authApiKey        the API key for authenticating against the Weaviate server itself (optional; must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the server)
+ * @param authApiKey        the API key for authenticating against the Weaviate server itself (optional; when set, anonymous access should be disabled on the server)
  */
 @ConfigurationProperties(prefix = "artemis.weaviate")
 public record WeaviateConfigurationProperties(boolean enabled, String httpHost, @DefaultValue(DEFAULT_HTTP_PORT) int httpPort, @DefaultValue(DEFAULT_GRPC_PORT) int grpcPort,
         String scheme, @DefaultValue(DEFAULT_COLLECTION_PREFIX) String collectionPrefix, @DefaultValue("none") String vectorizerModule, String apiEmbeddingModel, String apiBaseUrl,
-        String apiKey, String authAdminUser, String authApiKey) {
+        String apiKey, String authApiKey) {
 
     public static final String DEFAULT_HTTP_PORT = "8001";
 
