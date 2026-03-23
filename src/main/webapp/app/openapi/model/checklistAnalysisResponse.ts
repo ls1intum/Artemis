@@ -7,7 +7,9 @@
  * https://openapi-generator.tech
  * Do not edit the class manually.
  */
+import { DifficultyAssessment } from './difficultyAssessment';
 import { BloomRadar } from './bloomRadar';
+import { InferredCompetency } from './inferredCompetency';
 import { QualityIssue } from './qualityIssue';
 
 
@@ -16,9 +18,17 @@ import { QualityIssue } from './qualityIssue';
  */
 export interface ChecklistAnalysisResponse { 
     /**
+     * Top inferred competencies from the standardized catalog
+     */
+    inferredCompetencies?: Array<InferredCompetency>;
+    /**
      * Bloom\'s taxonomy radar distribution
      */
     bloomRadar?: BloomRadar;
+    /**
+     * Difficulty assessment with delta indicator
+     */
+    difficultyAssessment?: DifficultyAssessment;
     /**
      * List of quality issues found in the problem statement
      */

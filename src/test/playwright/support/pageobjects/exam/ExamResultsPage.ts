@@ -60,6 +60,9 @@ export class ExamResultsPage {
                 case ProgrammingExerciseTaskStatus.FAILURE:
                     await expect(taskElement.locator('.stepwizard-step--failed')).toBeVisible();
                     break;
+                case ProgrammingExerciseTaskStatus.NOT_EXECUTED:
+                    await expect(taskElement.locator('.stepwizard-step--not-executed')).toBeVisible();
+                    break;
             }
         }
     }
@@ -89,9 +92,10 @@ export class ExamResultsPage {
     async checkModellingExerciseAssessment(exerciseId: number, element: string, feedback: string, points: number) {
         const exercise = getExercise(this.page, exerciseId);
         const componentFeedbacks = exercise.locator('#component-feedback-table');
-        const assessmentRow = componentFeedbacks.locator('tr', { hasText: element });
-        await expect(assessmentRow).toBeVisible();
-        await expect(assessmentRow.getByText(`Feedback: ${feedback}`)).toBeVisible();
+        // Wait for async assessment data load before checking rows
+        await expect(componentFeedbacks).toBeVisible({ timeout: 30000 });
+        const assessmentRow = componentFeedbacks.locator('tr', { hasText: element }).filter({ hasText: `Feedback: ${feedback}` });
+        await expect(assessmentRow).toBeVisible({ timeout: 10000 });
         await expect(assessmentRow.getByText(`${points}`)).toBeVisible();
     }
 }
@@ -100,4 +104,5 @@ export enum ProgrammingExerciseTaskStatus {
     PENDING = 'pending',
     SUCCESS = 'success',
     FAILURE = 'failure',
+    NOT_EXECUTED = 'not_executed',
 }

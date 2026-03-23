@@ -1,8 +1,14 @@
-<div class="modal-header">
-    <h4 class="modal-title" [jhiTranslate]="'cleanupService.operation.' + operation().name"></h4>
-    <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
-</div>
-<div class="modal-body">
+<p-dialog
+    [(visible)]="visible"
+    [modal]="true"
+    [closable]="true"
+    [closeOnEscape]="false"
+    [dismissableMask]="false"
+    [draggable]="false"
+    [appendTo]="'body'"
+    [style]="{ width: '50dvw' }"
+    [header]="'cleanupService.operation.' + operation().name | artemisTranslate"
+>
     @if (operation().name === 'deleteOrphans') {
         <p
             [jhiTranslate]="'cleanupService.execute.questionWithoutDates'"
@@ -41,8 +47,8 @@
             <p class="text-muted" jhiTranslate="cleanupService.modal.noEntriesToDelete"></p>
         }
     </div>
-</div>
-<div class="modal-footer">
-    <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
-    <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
-</div>
+    <ng-template #footer>
+        <button type="button" class="btn btn-secondary" (click)="close()" jhiTranslate="cleanupService.button.close"></button>
+        <button type="button" class="btn btn-danger" [disabled]="!hasEntriesToDelete()" (click)="executeCleanupOperation()" jhiTranslate="cleanupService.button.execute"></button>
+    </ng-template>
+</p-dialog>

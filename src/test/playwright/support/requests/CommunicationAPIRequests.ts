@@ -19,6 +19,14 @@ export class CommunicationAPIRequests {
     }
 
     /**
+     * Accepts the code of conduct for a course.
+     * @param course - The course to accept code of conduct for.
+     */
+    async acceptCodeOfConduct(course: Course) {
+        await this.page.request.patch(`api/communication/courses/${course.id}/code-of-conduct/agreement`);
+    }
+
+    /**
      * Creates a new course post.
      *
      * @param course - The course to which the post belongs.
@@ -75,7 +83,7 @@ export class CommunicationAPIRequests {
     async getCourseWideChannels(courseId: number): Promise<ChannelDTO[]> {
         const response = await this.page.request.get(`api/communication/courses/${courseId}/conversations`);
         const conversations: ConversationDTO[] = await response.json();
-        // @ts-ignore
+        // @ts-expect-error: filter narrows ConversationDTO to ChannelDTO but TS can't infer that
         return conversations.filter((conv: ConversationDTO) => getAsChannelDTO(conv)?.isCourseWide === true);
     }
 
@@ -112,6 +120,9 @@ export class CommunicationAPIRequests {
      */
     async createCourseMessageGroupChat(course: Course, users: Array<string>): Promise<GroupChat> {
         const response = await this.page.request.post(`api/communication/courses/${course.id}/group-chats`, { data: users });
+        if (!response.ok()) {
+            throw new Error(`createCourseMessageGroupChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 
@@ -129,12 +140,12 @@ export class CommunicationAPIRequests {
             content: message,
             conversation: {
                 id: targetId,
-                type,
             },
-            displayPriority: 'NONE',
-            visibleForStudents: true,
         };
         const response = await this.page.request.post(`api/communication/courses/${course.id}/messages`, { data });
+        if (!response.ok()) {
+            throw new Error(`createCourseMessage failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
         return response.json();
     }
 
