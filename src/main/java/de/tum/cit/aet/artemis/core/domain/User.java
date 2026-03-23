@@ -41,6 +41,7 @@ import org.springframework.security.web.webauthn.api.Bytes;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyProgress;
 import de.tum.cit.aet.artemis.atlas.domain.competency.LearningPath;
@@ -454,7 +455,7 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.internal = internal;
     }
 
-    @JsonIgnore
+    @JsonProperty("bot")
     public boolean isBot() {
         return IRIS_BOT_LOGIN.equals(this.login);
     }

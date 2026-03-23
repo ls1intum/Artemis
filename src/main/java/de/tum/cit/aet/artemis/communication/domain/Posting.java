@@ -35,7 +35,7 @@ public abstract class Posting extends DomainObject {
 
     @ManyToOne
     // Avoid to leak too much information, only the name + image (for display) and the id (for comparison) is needed)
-    @JsonIncludeProperties({ "id", "name", "imageUrl" })
+    @JsonIncludeProperties({ "id", "name", "imageUrl", "bot" })
     private User author;
 
     @CreatedDate
