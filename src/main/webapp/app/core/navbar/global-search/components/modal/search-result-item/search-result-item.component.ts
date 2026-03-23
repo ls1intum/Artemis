@@ -33,6 +33,14 @@ export class SearchResultItemComponent {
         return dayjs(dueDate).format('MMM D, HH:mm');
     });
 
+    protected formattedStartDate = computed(() => {
+        const startDate = this.result().metadata?.['startDate'];
+        if (!startDate) {
+            return '';
+        }
+        return dayjs(startDate).format('MMM D, HH:mm');
+    });
+
     protected onClick() {
         this.resultClick.emit(this.result());
     }

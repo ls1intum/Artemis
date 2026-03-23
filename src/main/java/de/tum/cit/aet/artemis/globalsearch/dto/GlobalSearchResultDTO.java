@@ -74,6 +74,44 @@ public record GlobalSearchResultDTO(String id, String type, String title, String
     }
 
     /**
+     * Creates a search result DTO from lecture Weaviate properties.
+     *
+     * @param properties the property map from Weaviate search results
+     * @return the unified search result DTO
+     */
+    public static GlobalSearchResultDTO fromLectureProperties(Map<String, Object> properties) {
+        String title = getString(properties, "title");
+        String description = getString(properties, "description");
+
+        Map<String, Object> metadata = new HashMap<>();
+
+        Long courseId = getLong(properties, "course_id");
+        if (courseId != null) {
+            metadata.put("courseId", courseId);
+        }
+
+        String courseName = getString(properties, "course_name");
+        if (courseName != null) {
+            metadata.put("courseName", courseName);
+        }
+
+        String startDate = getString(properties, "start_date");
+        if (startDate != null) {
+            metadata.put("startDate", startDate);
+        }
+
+        String endDate = getString(properties, "end_date");
+        if (endDate != null) {
+            metadata.put("endDate", endDate);
+        }
+
+        Long lectureId = getLong(properties, "lecture_id");
+        String id = lectureId != null ? lectureId.toString() : null;
+
+        return new GlobalSearchResultDTO(id, "lecture", title, description, "Lecture", metadata);
+    }
+
+    /**
      * Adds type-specific metadata based on exercise type.
      *
      * @param properties   the Weaviate properties

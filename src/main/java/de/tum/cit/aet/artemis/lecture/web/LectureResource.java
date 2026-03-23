@@ -18,6 +18,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -56,6 +57,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.Enfo
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInLecture.EnforceAtLeastStudentInLecture;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
+import de.tum.cit.aet.artemis.globalsearch.service.LectureWeaviateService;
 import de.tum.cit.aet.artemis.lecture.config.LectureEnabled;
 import de.tum.cit.aet.artemis.lecture.domain.Attachment;
 import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
@@ -103,9 +105,11 @@ public class LectureResource {
 
     private final ChannelRepository channelRepository;
 
+    private final LectureWeaviateService lectureWeaviateService;
+
     public LectureResource(LectureRepository lectureRepository, LectureService lectureService, LectureImportService lectureImportService, CourseRepository courseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, ChannelService channelService, ChannelRepository channelRepository,
-            SlideRepository slideRepository) {
+            SlideRepository slideRepository, ObjectProvider<LectureWeaviateService> lectureWeaviateServiceProvider) {
         this.lectureRepository = lectureRepository;
         this.lectureService = lectureService;
         this.lectureImportService = lectureImportService;
@@ -115,6 +119,7 @@ public class LectureResource {
         this.channelService = channelService;
         this.channelRepository = channelRepository;
         this.slideRepository = slideRepository;
+        this.lectureWeaviateService = lectureWeaviateServiceProvider.getIfAvailable();
     }
 
     /**
@@ -140,6 +145,7 @@ public class LectureResource {
 
         Lecture savedLecture = lectureRepository.save(newLecture);
         String channelName = channelService.createLectureChannel(savedLecture, Optional.ofNullable(newLectureDto.channelName()));
+        indexLectureInWeaviate(savedLecture);
         SimpleLectureDTO savedLectureDTO = SimpleLectureDTO.from(savedLecture, course, channelName);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(savedLectureDTO);
     }
@@ -186,6 +192,7 @@ public class LectureResource {
         List<Lecture> newLectures = lectureDTOs.stream().map(lectureDTO -> createLectureUsing(lectureDTO, course)).toList();
         List<Lecture> savedLectures = lectureRepository.saveAll(newLectures);
         channelService.createChannelsForLectures(savedLectures, course, user);
+        savedLectures.forEach(this::indexLectureInWeaviate);
 
         lectureService.correctDefaultLectureAndChannelNames(courseId);
 
@@ -224,6 +231,7 @@ public class LectureResource {
 
         channelService.updateLectureChannel(originalLecture, updatedLectureDto.channelName());
         Lecture result = lectureRepository.save(originalLecture);
+        indexLectureInWeaviate(result);
 
         SimpleLectureDTO resultDTO = SimpleLectureDTO.from(result, course, updatedLectureDto.channelName());
         return ResponseEntity.ok().body(resultDTO);
@@ -417,6 +425,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var savedLecture = lectureImportService.importLecture(sourceLecture, destinationCourse, true);
+        indexLectureInWeaviate(savedLecture);
 
         final var lectureDTO = SimpleLectureDTO.from(savedLecture, destinationCourse, null /* channel name not needed in client */);
         return ResponseEntity.created(new URI("/api/lecture/lectures/" + savedLecture.getId())).body(lectureDTO);
@@ -468,6 +477,19 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         log.debug("REST request to delete Lecture : {}", lectureId);
         lectureService.delete(lecture, true);
+        deleteLectureFromWeaviate(lectureId);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, lectureId.toString())).build();
+    }
+
+    private void indexLectureInWeaviate(Lecture lecture) {
+        if (lectureWeaviateService != null) {
+            lectureWeaviateService.upsertLectureAsync(lecture);
+        }
+    }
+
+    private void deleteLectureFromWeaviate(long lectureId) {
+        if (lectureWeaviateService != null) {
+            lectureWeaviateService.deleteLectureAsync(lectureId);
+        }
     }
 }

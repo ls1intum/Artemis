@@ -115,7 +115,8 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             description: 'global.search.entities.lecturesDescription',
             icon: faBook,
             type: 'page',
-            enabled: false,
+            enabled: true,
+            filterTag: 'lecture',
         },
         {
             id: 'communication',
@@ -187,6 +188,9 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             if (badge === 'Quiz') return this.faCheckDouble;
             return this.faQuestion;
         }
+        if (type === 'lecture') {
+            return faBook;
+        }
         return this.faQuestion;
     }
 
@@ -195,6 +199,11 @@ export class GlobalSearchNavigationViewComponent extends SearchResultView {
             const courseId = result.metadata['courseId'];
             if (courseId) {
                 this.router.navigate(['/courses', courseId, 'exercises', result.id]);
+            }
+        } else if (result.type === 'lecture' && result.id) {
+            const courseId = result.metadata['courseId'];
+            if (courseId) {
+                this.router.navigate(['/courses', courseId, 'lectures', result.id]);
             }
         }
         this.overlay.close();

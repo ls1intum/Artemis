@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,8 +26,10 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.LectureSchema;
 import de.tum.cit.aet.artemis.globalsearch.dto.GlobalSearchResultDTO;
 import de.tum.cit.aet.artemis.globalsearch.service.ExerciseWeaviateService;
+import de.tum.cit.aet.artemis.globalsearch.service.LectureWeaviateService;
 import io.weaviate.client6.v1.api.collections.query.Filter;
 
 /**
@@ -40,7 +43,11 @@ public class ExerciseWeaviateResource {
 
     private static final Logger log = LoggerFactory.getLogger(ExerciseWeaviateResource.class);
 
+    private static final Set<String> VALID_TYPES = Set.of("exercise", "lecture");
+
     private final ExerciseWeaviateService exerciseWeaviateService;
+
+    private final LectureWeaviateService lectureWeaviateService;
 
     private final CourseRepository courseRepository;
 
@@ -48,9 +55,10 @@ public class ExerciseWeaviateResource {
 
     private final AuthorizationCheckService authCheckService;
 
-    public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService) {
+    public ExerciseWeaviateResource(ExerciseWeaviateService exerciseWeaviateService, LectureWeaviateService lectureWeaviateService, CourseRepository courseRepository,
+            UserRepository userRepository, AuthorizationCheckService authCheckService) {
         this.exerciseWeaviateService = exerciseWeaviateService;
+        this.lectureWeaviateService = lectureWeaviateService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authCheckService = authCheckService;
@@ -88,7 +96,7 @@ public class ExerciseWeaviateResource {
             normalizedType = null;
         }
 
-        if (normalizedType != null && !"exercise".equals(normalizedType)) {
+        if (normalizedType != null && !VALID_TYPES.contains(normalizedType)) {
             return ResponseEntity.badRequest().build();
         }
 
@@ -100,17 +108,41 @@ public class ExerciseWeaviateResource {
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
-        Filter filter = filterResult.filter();
 
-        List<Map<String, Object>> searchResults;
-        if (isEmptyQuery) {
-            searchResults = exerciseWeaviateService.fetchExercisesWithFilter(filter, effectiveLimit);
-        }
-        else {
-            searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
+        boolean searchExercises = normalizedType == null || "exercise".equals(normalizedType);
+        boolean searchLectures = normalizedType == null || "lecture".equals(normalizedType);
+
+        List<GlobalSearchResultDTO> resultDTOs = new ArrayList<>();
+
+        if (searchExercises) {
+            Filter exerciseFilter = filterResult.exerciseFilter();
+            List<Map<String, Object>> exerciseResults;
+            if (isEmptyQuery) {
+                exerciseResults = exerciseWeaviateService.fetchExercisesWithFilter(exerciseFilter, effectiveLimit);
+            }
+            else {
+                exerciseResults = exerciseWeaviateService.searchExercisesWithFilter(query, exerciseFilter, effectiveLimit);
+            }
+            resultDTOs.addAll(exerciseResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList());
         }
 
-        var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
+        if (searchLectures) {
+            Filter lectureFilter = filterResult.lectureFilter();
+            List<Map<String, Object>> lectureResults;
+            if (isEmptyQuery) {
+                lectureResults = lectureWeaviateService.fetchLecturesWithFilter(lectureFilter, effectiveLimit);
+            }
+            else {
+                lectureResults = lectureWeaviateService.searchLecturesWithFilter(query, lectureFilter, effectiveLimit);
+            }
+            resultDTOs.addAll(lectureResults.stream().map(GlobalSearchResultDTO::fromLectureProperties).toList());
+        }
+
+        // Truncate combined results to the effective limit
+        if (resultDTOs.size() > effectiveLimit) {
+            resultDTOs = resultDTOs.subList(0, effectiveLimit);
+        }
+
         return ResponseEntity.ok(resultDTOs);
     }
 
@@ -139,7 +171,7 @@ public class ExerciseWeaviateResource {
         if (!filterResult.hasAccess()) {
             return ResponseEntity.ok(List.of());
         }
-        Filter filter = filterResult.filter();
+        Filter filter = filterResult.exerciseFilter();
 
         var searchResults = exerciseWeaviateService.searchExercisesWithFilter(query, filter, effectiveLimit);
         var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromExerciseProperties).toList();
@@ -147,12 +179,45 @@ public class ExerciseWeaviateResource {
     }
 
     /**
-     * Result of building a user-specific Weaviate filter.
+     * GET /lectures/search?q=:query&courseId=:courseId&limit=:limit : perform semantic search on lectures.
      *
-     * @param filter    the Weaviate filter to apply ({@code null} means no filter, i.e. admin access)
-     * @param hasAccess whether the user has access to any courses; if {@code false}, callers should return an empty result
+     * @param query    the search query
+     * @param courseId optional course ID to filter by
+     * @param limit    maximum number of results (default: 10, max: 100)
+     * @return the ResponseEntity with status 200 (OK) and the list of lecture search results in body
      */
-    private record FilterResult(Filter filter, boolean hasAccess) {
+    @GetMapping("lectures/search")
+    @EnforceAtLeastStudent
+    public ResponseEntity<List<GlobalSearchResultDTO>> searchLectures(@RequestParam("q") String query, @RequestParam(value = "courseId", required = false) Long courseId,
+            @RequestParam(value = "limit", defaultValue = "10") int limit) {
+
+        log.debug("REST request to search lectures with query: '{}', courseId: {}, limit: {}", query, courseId, limit);
+
+        if (query.trim().isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        int effectiveLimit = Math.min(Math.max(limit, 1), 100);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        FilterResult filterResult = buildFilterForUser(user, courseId);
+        if (!filterResult.hasAccess()) {
+            return ResponseEntity.ok(List.of());
+        }
+        Filter filter = filterResult.lectureFilter();
+
+        var searchResults = lectureWeaviateService.searchLecturesWithFilter(query, filter, effectiveLimit);
+        var resultDTOs = searchResults.stream().map(GlobalSearchResultDTO::fromLectureProperties).toList();
+        return ResponseEntity.ok(resultDTOs);
+    }
+
+    /**
+     * Result of building user-specific Weaviate filters for exercises and lectures.
+     *
+     * @param exerciseFilter the Weaviate filter for exercises ({@code null} means no filter, i.e. admin access)
+     * @param lectureFilter  the Weaviate filter for lectures ({@code null} means no filter, i.e. admin access)
+     * @param hasAccess      whether the user has access to any courses; if {@code false}, callers should return an empty result
+     */
+    private record FilterResult(Filter exerciseFilter, Filter lectureFilter, boolean hasAccess) {
     }
 
     /**
@@ -173,26 +238,30 @@ public class ExerciseWeaviateResource {
         if (courseId != null) {
             Course course = courseRepository.findByIdElseThrow(courseId);
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-            return new FilterResult(buildFilterForSingleCourse(user, course), true);
+            Filter exerciseFilter = buildExerciseFilterForSingleCourse(user, course);
+            Filter lectureFilter = buildLectureCourseFilter(List.of(course));
+            return new FilterResult(exerciseFilter, lectureFilter, true);
         }
 
         if (authCheckService.isAdmin(user)) {
-            return new FilterResult(null, true);
+            return new FilterResult(null, null, true);
         }
 
         List<Course> accessibleCourses = courseRepository.findAllAccessibleCoursesForUser(user.getGroups(), false);
         if (accessibleCourses.isEmpty()) {
-            return new FilterResult(null, false);
+            return new FilterResult(null, null, false);
         }
-        return new FilterResult(buildFilterForMultipleCourses(user, accessibleCourses), true);
+        Filter exerciseFilter = buildExerciseFilterForMultipleCourses(user, accessibleCourses);
+        Filter lectureFilter = buildLectureCourseFilter(accessibleCourses);
+        return new FilterResult(exerciseFilter, lectureFilter, true);
     }
 
-    // -- Filter building helpers --
+    // -- Exercise filter building helpers --
 
     /**
      * Builds a combined Weaviate filter for a single course, incorporating course ID and role-based access control.
      */
-    private Filter buildFilterForSingleCourse(User user, Course course) {
+    private Filter buildExerciseFilterForSingleCourse(User user, Course course) {
         Filter courseFilter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(course.getId());
         Filter accessFilter = buildAccessFilterForRole(getUserRoleInCourse(user, course));
         return accessFilter != null ? Filter.and(courseFilter, accessFilter) : courseFilter;
@@ -210,7 +279,7 @@ public class ExerciseWeaviateResource {
      * Each group gets a filter of: (course_id IN group_ids) AND (role-based access filter).
      * All groups are OR-ed together.
      */
-    private Filter buildFilterForMultipleCourses(User user, List<Course> courses) {
+    private Filter buildExerciseFilterForMultipleCourses(User user, List<Course> courses) {
         List<Long> editorCourseIds = new ArrayList<>();
         List<Long> taCourseIds = new ArrayList<>();
         List<Long> studentCourseIds = new ArrayList<>();
@@ -227,15 +296,15 @@ public class ExerciseWeaviateResource {
         List<Filter> groupFilters = new ArrayList<>();
 
         if (!editorCourseIds.isEmpty()) {
-            groupFilters.add(buildCourseIdOrFilter(editorCourseIds));
+            groupFilters.add(buildExerciseCourseIdOrFilter(editorCourseIds));
         }
         if (!taCourseIds.isEmpty()) {
-            Filter courseFilter = buildCourseIdOrFilter(taCourseIds);
+            Filter courseFilter = buildExerciseCourseIdOrFilter(taCourseIds);
             Filter accessFilter = buildAccessFilterForRole(Role.TEACHING_ASSISTANT);
             groupFilters.add(accessFilter != null ? Filter.and(courseFilter, accessFilter) : courseFilter);
         }
         if (!studentCourseIds.isEmpty()) {
-            Filter courseFilter = buildCourseIdOrFilter(studentCourseIds);
+            Filter courseFilter = buildExerciseCourseIdOrFilter(studentCourseIds);
             Filter accessFilter = buildAccessFilterForRole(Role.STUDENT);
             groupFilters.add(accessFilter != null ? Filter.and(courseFilter, accessFilter) : courseFilter);
         }
@@ -250,12 +319,39 @@ public class ExerciseWeaviateResource {
     }
 
     /**
-     * Builds a Weaviate OR filter for a list of course IDs: (course_id = id1 OR course_id = id2 OR ...).
+     * Builds a Weaviate OR filter for a list of course IDs using exercise schema: (course_id = id1 OR course_id = id2 OR ...).
      */
-    private static Filter buildCourseIdOrFilter(List<Long> courseIds) {
-        Filter filter = Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIds.getFirst());
+    private static Filter buildExerciseCourseIdOrFilter(List<Long> courseIds) {
+        return buildCourseIdOrFilter(courseIds, ExerciseSchema.Properties.COURSE_ID);
+    }
+
+    // -- Lecture filter building helpers --
+
+    /**
+     * Builds a Weaviate course filter for lectures.
+     * Lectures are visible to all course members (visibleDate is deprecated), so only a course_id filter is needed.
+     *
+     * @param courses the courses the user has access to
+     * @return the course filter, or null if no filtering needed
+     */
+    private static Filter buildLectureCourseFilter(List<Course> courses) {
+        List<Long> courseIds = courses.stream().map(Course::getId).toList();
+        return buildCourseIdOrFilter(courseIds, LectureSchema.Properties.COURSE_ID);
+    }
+
+    // -- Shared filter building helpers --
+
+    /**
+     * Builds a Weaviate OR filter for a list of course IDs: (course_id = id1 OR course_id = id2 OR ...).
+     *
+     * @param courseIds        the course IDs
+     * @param courseIdProperty the property name to filter on
+     * @return the OR filter
+     */
+    private static Filter buildCourseIdOrFilter(List<Long> courseIds, String courseIdProperty) {
+        Filter filter = Filter.property(courseIdProperty).eq(courseIds.getFirst());
         for (int i = 1; i < courseIds.size(); i++) {
-            filter = Filter.or(filter, Filter.property(ExerciseSchema.Properties.COURSE_ID).eq(courseIds.get(i)));
+            filter = Filter.or(filter, Filter.property(courseIdProperty).eq(courseIds.get(i)));
         }
         return filter;
     }

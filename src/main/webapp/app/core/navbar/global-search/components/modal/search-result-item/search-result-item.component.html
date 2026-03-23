@@ -15,7 +15,14 @@
             </div>
 
             <!-- Metadata Row -->
-            @if (result().metadata && (result().metadata['courseName'] || result().metadata['dueDate'] || result().metadata['points'] || result().metadata['difficulty'])) {
+            @if (
+                result().metadata &&
+                (result().metadata['courseName'] ||
+                    result().metadata['dueDate'] ||
+                    result().metadata['startDate'] ||
+                    result().metadata['points'] ||
+                    result().metadata['difficulty'])
+            ) {
                 <div class="result-metadata d-flex align-items-center gap-2 mb-2 text-secondary small">
                     @if (result().metadata['courseName']) {
                         <span class="d-flex align-items-center gap-1">
@@ -23,7 +30,10 @@
                             <span>{{ result().metadata['courseName'] }}</span>
                         </span>
                     }
-                    @if (result().metadata['courseName'] && (result().metadata['dueDate'] || result().metadata['points'] || result().metadata['difficulty'])) {
+                    @if (
+                        result().metadata['courseName'] &&
+                        (result().metadata['dueDate'] || result().metadata['startDate'] || result().metadata['points'] || result().metadata['difficulty'])
+                    ) {
                         <span>•</span>
                     }
                     @if (result().metadata['dueDate']) {
@@ -32,7 +42,13 @@
                             <span>{{ 'global.search.results.due' | artemisTranslate: { date: formattedDueDate() } }}</span>
                         </span>
                     }
-                    @if (result().metadata['dueDate'] && result().metadata['points']) {
+                    @if (result().metadata['startDate'] && !result().metadata['dueDate']) {
+                        <span class="d-flex align-items-center gap-1">
+                            <fa-icon [icon]="faCalendarAlt" size="sm" aria-hidden="true" />
+                            <span>{{ formattedStartDate() }}</span>
+                        </span>
+                    }
+                    @if ((result().metadata['dueDate'] || result().metadata['startDate']) && result().metadata['points']) {
                         <span>•</span>
                     }
                     @if (result().metadata['points']) {
@@ -44,7 +60,7 @@
                             >
                         </span>
                     }
-                    @if (result().metadata['difficulty'] && (result().metadata['dueDate'] || result().metadata['points'])) {
+                    @if (result().metadata['difficulty'] && (result().metadata['dueDate'] || result().metadata['startDate'] || result().metadata['points'])) {
                         <span>•</span>
                     }
                     @if (result().metadata['difficulty']) {

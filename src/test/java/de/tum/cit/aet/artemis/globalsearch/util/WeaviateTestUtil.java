@@ -16,7 +16,9 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.ExerciseSchema;
+import de.tum.cit.aet.artemis.globalsearch.config.schema.entityschemas.LectureSchema;
 import de.tum.cit.aet.artemis.globalsearch.service.WeaviateService;
+import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
@@ -245,6 +247,66 @@ public final class WeaviateTestUtil {
 
         // Compare first 19 chars (YYYY-MM-DDTHH:MM:SS) to avoid millisecond precision differences
         assertThat(actualUTC).as("Property %s should match expected date", propertyName).startsWith(expectedUTC.substring(0, 19));
+    }
+
+    // -- Lecture utilities --
+
+    /**
+     * Queries Weaviate for the lecture with the given ID and returns its properties,
+     * or {@code null} if no lecture was found.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureId       the ID of the lecture to look up
+     * @return the lecture properties map, or {@code null} if not found or Docker unavailable
+     */
+    public static Map<String, Object> queryLectureProperties(WeaviateService weaviateService, long lectureId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return null;
+        }
+        var collection = weaviateService.getCollection(LectureSchema.COLLECTION_NAME);
+        var response = collection.query.fetchObjects(query -> query.filters(Filter.property(LectureSchema.Properties.LECTURE_ID).eq(lectureId)).limit(1));
+        if (response.objects().isEmpty()) {
+            return null;
+        }
+        return response.objects().getFirst().properties();
+    }
+
+    /**
+     * Asserts that the lecture exists in Weaviate and its core properties match the given lecture.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lecture         the lecture whose metadata should be verified in Weaviate
+     */
+    public static void assertLectureExistsInWeaviate(WeaviateService weaviateService, Lecture lecture) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryLectureProperties(weaviateService, lecture.getId());
+            assertThat(properties).as("Lecture %d should exist in Weaviate", lecture.getId()).isNotNull();
+
+            assertThat(properties.get(LectureSchema.Properties.TITLE)).isEqualTo(lecture.getTitle());
+            assertThat(((Number) properties.get(LectureSchema.Properties.LECTURE_ID)).longValue()).isEqualTo(lecture.getId());
+
+            Course course = lecture.getCourse();
+            assertThat(((Number) properties.get(LectureSchema.Properties.COURSE_ID)).longValue()).isEqualTo(course.getId());
+        });
+    }
+
+    /**
+     * Asserts that no lecture with the given ID exists in Weaviate.
+     *
+     * @param weaviateService the Weaviate service to query (may be {@code null} if Docker is unavailable)
+     * @param lectureId       the ID of the lecture that should not exist
+     */
+    public static void assertLectureNotInWeaviate(WeaviateService weaviateService, long lectureId) throws Exception {
+        if (shouldSkipWeaviateAssertions(weaviateService)) {
+            return;
+        }
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
+            var properties = queryLectureProperties(weaviateService, lectureId);
+            assertThat(properties).as("Lecture %d should not exist in Weaviate", lectureId).isNull();
+        });
     }
 
     /**
