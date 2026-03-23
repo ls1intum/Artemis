@@ -57,13 +57,13 @@ export class SentryErrorHandler extends ErrorHandler {
             },
             beforeSend: (event) => {
                 if (event.user) {
-                  delete event.user;
+                    delete event.user;
                 }
                 return event;
             },
             beforeSendTransaction: (trans) => {
                 if (trans.user) {
-                  delete trans.user;
+                    delete trans.user;
                 }
                 return trans;
             },

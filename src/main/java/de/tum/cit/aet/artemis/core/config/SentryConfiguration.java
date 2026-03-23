@@ -3,17 +3,10 @@ package de.tum.cit.aet.artemis.core.config;
 import java.util.List;
 import java.util.Optional;
 
-import io.sentry.Breadcrumb;
-import io.sentry.Hint;
-import io.sentry.SamplingContext;
-import io.sentry.SentryBaseEvent;
-import io.sentry.SentryEvent;
-import io.sentry.protocol.Request;
-import io.sentry.protocol.SentryTransaction;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
-
 import jakarta.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,12 +14,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 
+import io.sentry.Breadcrumb;
+import io.sentry.Hint;
+import io.sentry.SamplingContext;
 import io.sentry.Sentry;
+import io.sentry.SentryBaseEvent;
+import io.sentry.SentryEvent;
+import io.sentry.protocol.Request;
+import io.sentry.protocol.SentryTransaction;
 import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
 @Lazy
-@Profile({JHipsterConstants.SPRING_PROFILE_PRODUCTION})
+@Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);
@@ -73,7 +73,8 @@ public class SentryConfiguration {
                 options.setBeforeSendTransaction((e, _) -> (SentryTransaction) (scrubData(e)));
                 options.setBeforeBreadcrumb(this::scrubBreadcrumb);
             });
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             log.error("Sentry configuration was not successful due to exception!", ex);
         }
 
@@ -191,10 +192,12 @@ public class SentryConfiguration {
         if (isTestServer.isPresent()) {
             if (isTestServer.get()) {
                 return "test";
-            } else {
+            }
+            else {
                 return "prod";
             }
-        } else {
+        }
+        else {
             return "local";
         }
     }
