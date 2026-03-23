@@ -3,6 +3,7 @@
 ######################
 # Project Specific
 ######################
+.github/act-events/
 /build/www/**
 /src/test/javascript/coverage/
 /src/test/javascript/PhantomJS*/
@@ -254,3 +255,4 @@ deferredEagerBeanInstantiationViolations.dot
 ######################
 /src/test/playwright/monocart-report
 /venv/
+/src/test/playwright/test-exercise-repos

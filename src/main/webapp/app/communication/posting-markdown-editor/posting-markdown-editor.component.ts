@@ -4,11 +4,7 @@ import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
-    EventEmitter,
-    Input,
     OnInit,
-    Output,
-    ViewChild,
     ViewContainerRef,
     ViewEncapsulation,
     computed,
@@ -16,6 +12,7 @@ import {
     inject,
     input,
     output,
+    viewChild,
 } from '@angular/core';
 import monaco from 'monaco-editor';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -74,12 +71,12 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     viewContainerRef = inject(ViewContainerRef);
     private positionBuilder = inject(OverlayPositionBuilder);
 
-    @ViewChild(MarkdownEditorMonacoComponent, { static: true }) markdownEditor: MarkdownEditorMonacoComponent;
+    readonly markdownEditor = viewChild.required(MarkdownEditorMonacoComponent);
 
-    @Input() maxContentLength: number;
-    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.INLINE;
-    @Input() isInputLengthDisplayed = true;
-    @Input() suppressNewlineOnEnter = true;
+    readonly maxContentLength = input<number>();
+    readonly editorHeight = input<MarkdownEditorHeight>(MarkdownEditorHeight.INLINE);
+    readonly isInputLengthDisplayed = input(true);
+    readonly suppressNewlineOnEnter = input(true);
 
     showCloseButton = input<boolean>(false);
     closeEditor = output<void>();
@@ -94,7 +91,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
      * In this case, file uploads have to rely on the parent post to determine the course.
      */
     readonly activeConversation = input<ConversationDTO>();
-    @Output() valueChange = new EventEmitter();
+    readonly valueChange = output();
     lectureAttachmentReferenceAction: LectureAttachmentReferenceAction;
     defaultActions: TextEditorAction[];
     content?: string;
@@ -136,9 +133,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
     }
 
     ngAfterViewInit(): void {
-        this.markdownEditor.enableTextFieldMode();
+        this.markdownEditor().enableTextFieldMode();
 
-        const editor = this.markdownEditor.monacoEditor;
+        const editor = this.markdownEditor().monacoEditor;
         if (editor) {
             editor.onDidChangeModelContent((event: monaco.editor.IModelContentChangedEvent) => {
                 const position = editor.getPosition();
@@ -168,9 +165,9 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
         const lineContent = model.getLineContent(lineNumber).trimStart();
 
         if (lineContent.startsWith('- ')) {
-            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof BulletedListAction)!);
+            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof BulletedListAction)!);
         } else if (/^\d+\. /.test(lineContent)) {
-            this.markdownEditor.handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
+            this.markdownEditor().handleActionClick(new MouseEvent('click'), this.defaultActions.find((action) => action instanceof OrderedListAction)!);
         }
     }
 
@@ -228,7 +225,7 @@ export class PostingMarkdownEditorComponent implements OnInit, ControlValueAcces
 
     onKeyDown(event: KeyboardEvent) {
         // Prevent a newline from being added to the text when pressing enter
-        if (this.suppressNewlineOnEnter && event.key === 'Enter' && !event.shiftKey) {
+        if (this.suppressNewlineOnEnter() && event.key === 'Enter' && !event.shiftKey) {
             event.preventDefault();
         }
     }

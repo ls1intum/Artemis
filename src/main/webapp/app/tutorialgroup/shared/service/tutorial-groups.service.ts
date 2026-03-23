@@ -1,6 +1,11 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { RawTutorialGroupDetailGroupDTO, TutorialGroup, TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import {
+    RawTutorialGroupDetailGroupDTO,
+    TutorialGroup,
+    TutorialGroupDetailGroupDTO,
+    TutorialGroupRegisteredStudentDTO,
+} from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
 import { map } from 'rxjs/operators';
@@ -86,8 +91,29 @@ export class TutorialGroupsService {
         return this.tutorialGroupApiService.registerStudent(courseId, tutorialGroupId, login, 'response');
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
+    importRegistrations(courseId: number, tutorialGroupId: number, studentDtos: Student[]): Observable<HttpResponse<Array<Student>>> {
         return this.tutorialGroupApiService.registerMultipleStudentsToTutorialGroup(courseId, tutorialGroupId, studentDtos, 'response');
+    }
+
+    registerMultipleStudentsViaLogin(courseId: number, tutorialGroupId: number, logins: string[]): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-via-login`, logins, { observe: 'response' });
+    }
+
+    getUnregisteredStudentDTOs(
+        courseId: number,
+        tutorialGroupId: number,
+        loginOrName: string,
+        pageIndex: number,
+        pageSize: number,
+    ): Observable<TutorialGroupRegisteredStudentDTO[]> {
+        const params = new HttpParams().set('loginOrName', loginOrName).set('pageIndex', pageIndex).set('pageSize', pageSize);
+        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/unregistered-students`, {
+            params,
+        });
+    }
+
+    getRegisteredStudentDTOs(courseId: number, tutorialGroupId: number): Observable<TutorialGroupRegisteredStudentDTO[]> {
+        return this.httpClient.get<TutorialGroupRegisteredStudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/registered-students`);
     }
 
     import(courseId: number, tutorialGroups: TutorialGroupRegistrationImport[]): Observable<HttpResponse<Array<TutorialGroupRegistrationImport>>> {
