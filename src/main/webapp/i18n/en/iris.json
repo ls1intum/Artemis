@@ -139,8 +139,15 @@
             "chat": {
                 "helpOffer": "How can I help you today?"
             },
+            "mcq": {
+                "submit": "Submit Answer",
+                "correct": "Correct!",
+                "incorrect": "Incorrect.",
+                "explanation": "Explanation:"
+            },
             "citation": {
-                "inLecture": "in"
+                "unitLabel": "Unit:",
+                "lectureLabel": "Lecture:"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
