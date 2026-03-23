@@ -192,9 +192,9 @@ export class CourseMessagesPage {
         const nameInput = this.page.locator('#name-input');
         await nameInput.waitFor({ state: 'visible', timeout: 5000 });
         await nameInput.clear();
-        await nameInput.fill(newName);
-        // Wait for auto-save debounce (1s) + server response
+        // Register response listener before triggering the auto-save to avoid race conditions
         const responsePromise = this.page.waitForResponse((resp) => resp.url().includes('/channels/') && resp.request().method() === 'PUT');
+        await nameInput.fill(newName);
         await responsePromise;
         await this.closeEditPanel();
     }
