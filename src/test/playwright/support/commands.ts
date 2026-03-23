@@ -189,6 +189,9 @@ export class Commands {
         interval: number = POLLING_INTERVAL,
         timeout: number = BUILD_FINISH_TIMEOUT,
     ) => {
+        if (participationId == null || isNaN(participationId)) {
+            throw new Error(`[waitForParticipationBuildToFinish] Invalid participationId: ${participationId}. Cannot poll for build result.`);
+        }
         const startTime = Date.now();
 
         const countResults = (participation: StudentParticipation): number => {
@@ -236,3 +239,4 @@ export class Commands {
         await page.keyboard.press('Control+m');
     };
 }
+
