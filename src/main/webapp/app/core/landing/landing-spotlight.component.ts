@@ -108,9 +108,10 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             border-radius: 16px;
         }
 
-        .spotlight-image {
+        .spotlight-media {
             width: 100%;
             height: 100%;
+            max-height: 540px;
             object-fit: cover;
             border-radius: 16px;
             background: var(--iris-secondary-background);
@@ -162,7 +163,13 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                 </div>
             </div>
             <div class="spotlight-right">
-                <img class="spotlight-image" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey" />
+                @if (currentStep().videoSrc; as videoSrc) {
+                    <video class="spotlight-media" autoplay muted playsinline preload="metadata" [attr.poster]="currentStep().imageSrc" (ended)="onVideoEnded()">
+                        <source [src]="videoSrc" [attr.type]="videoSrc.endsWith('.webm') ? 'video/webm' : 'video/quicktime'" />
+                    </video>
+                } @else {
+                    <img class="spotlight-media" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey" />
+                }
             </div>
         </section>
     `,
@@ -170,6 +177,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
 export class LandingSpotlightComponent implements OnInit {
     protected readonly faChevronLeft = faChevronLeft;
     protected readonly faChevronRight = faChevronRight;
+    private static readonly imageStepDurationMs = 5000;
 
     private destroyRef = inject(DestroyRef);
 
@@ -177,43 +185,55 @@ export class LandingSpotlightComponent implements OnInit {
     activeIndex = signal(0);
     currentStep = computed(() => this.steps[this.activeIndex()]);
 
-    private intervalId: ReturnType<typeof setInterval> | undefined;
+    private autoAdvanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     ngOnInit(): void {
-        this.startAutoAdvance();
-        this.destroyRef.onDestroy(() => this.stopAutoAdvance());
+        this.scheduleAutoAdvance();
+        this.destroyRef.onDestroy(() => this.clearAutoAdvanceTimeout());
     }
 
     next(): void {
-        this.activeIndex.update((i) => (i + 1) % this.steps.length);
-        this.resetAutoAdvance();
+        this.advanceTo(this.activeIndex() + 1);
     }
 
     prev(): void {
-        this.activeIndex.update((i) => (i - 1 + this.steps.length) % this.steps.length);
-        this.resetAutoAdvance();
+        this.advanceTo(this.activeIndex() - 1);
     }
 
     goTo(index: number): void {
-        this.activeIndex.set(index);
-        this.resetAutoAdvance();
+        this.advanceTo(index);
     }
 
-    private startAutoAdvance(): void {
-        this.intervalId = setInterval(() => {
-            this.activeIndex.update((i) => (i + 1) % this.steps.length);
-        }, 5000);
-    }
-
-    private stopAutoAdvance(): void {
-        if (this.intervalId) {
-            clearInterval(this.intervalId);
-            this.intervalId = undefined;
+    onVideoEnded(): void {
+        if (!this.currentStep().videoSrc) {
+            return;
         }
+
+        this.advanceTo(this.activeIndex() + 1);
     }
 
-    private resetAutoAdvance(): void {
-        this.stopAutoAdvance();
-        this.startAutoAdvance();
+    private advanceTo(index: number): void {
+        const normalizedIndex = ((index % this.steps.length) + this.steps.length) % this.steps.length;
+        this.activeIndex.set(normalizedIndex);
+        this.scheduleAutoAdvance();
+    }
+
+    private scheduleAutoAdvance(): void {
+        this.clearAutoAdvanceTimeout();
+
+        if (this.currentStep().videoSrc) {
+            return;
+        }
+
+        this.autoAdvanceTimeoutId = setTimeout(() => this.advanceTo(this.activeIndex() + 1), LandingSpotlightComponent.imageStepDurationMs);
+    }
+
+    private clearAutoAdvanceTimeout(): void {
+        if (!this.autoAdvanceTimeoutId) {
+            return;
+        }
+
+        clearTimeout(this.autoAdvanceTimeoutId);
+        this.autoAdvanceTimeoutId = undefined;
     }
 }

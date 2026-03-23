@@ -186,7 +186,6 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
             justify-content: space-between;
             padding: 24px 160px;
             width: 100%;
-            border-top: 1px solid var(--gray-300);
         }
 
         .bottom-links {

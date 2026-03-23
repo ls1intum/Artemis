@@ -2,6 +2,7 @@ export interface SpotlightStep {
     titleKey: string;
     descriptionKey: string;
     imageSrc: string;
+    videoSrc?: string;
 }
 
 export interface FeatureCard {
@@ -41,6 +42,7 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
         titleKey: 'landing.spotlight.steps.tutor.title',
         descriptionKey: 'landing.spotlight.steps.tutor.description',
         imageSrc: 'content/images/landing/iris-logo.png',
+        videoSrc: 'content/images/landing/demo-videos/iris-demo.webm',
     },
     {
         titleKey: 'landing.spotlight.steps.faq.title',
@@ -51,6 +53,7 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
         titleKey: 'landing.spotlight.steps.insights.title',
         descriptionKey: 'landing.spotlight.steps.insights.description',
         imageSrc: 'content/images/landing/iris-logo.png',
+        videoSrc: 'content/images/landing/demo-videos/adaptive-learning.webm',
     },
 ];
 
