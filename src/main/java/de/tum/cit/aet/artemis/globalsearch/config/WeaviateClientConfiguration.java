@@ -47,6 +47,7 @@ public class WeaviateClientConfiguration {
     public WeaviateClient weaviateClient() {
         try {
             WeaviateClient client;
+            boolean usesOpenAiVectorizer = WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateProperties.vectorizerModule());
             boolean hasApiKey = StringUtils.hasText(weaviateProperties.apiKey());
             boolean hasAuthApiKey = StringUtils.hasText(weaviateProperties.authApiKey());
             if (weaviateProperties.secure()) {
@@ -72,7 +73,7 @@ public class WeaviateClientConfiguration {
                     if (hasAuthApiKey) {
                         config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
                     }
-                    if (hasApiKey) {
+                    if (hasApiKey && usesOpenAiVectorizer) {
                         config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
                     }
                     return config;
