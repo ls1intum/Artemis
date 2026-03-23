@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked } from '@angular/core';
+import { Component, computed, effect, inject, input, output, signal, untracked, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -78,6 +78,8 @@ interface InstructorActionItem {
     providers: [ExternalCloningService],
 })
 export class ExerciseHeaderActionsComponent {
+    private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
+
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
     protected readonly faEye = faEye;
@@ -183,6 +185,16 @@ export class ExerciseHeaderActionsComponent {
                 this._isTeamAvailable.set(!!(exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId));
                 this.initializeExerciseSpecificState(exercise);
             });
+        });
+
+        // Automatically make the rightmost action button primary, all others secondary
+        effect(() => {
+            const buttons = this.actionButtons();
+            const nonOutlined = buttons.filter((b) => !b.outlined());
+            nonOutlined.forEach((b) => b.overrideSecondary.set(true));
+            if (nonOutlined.length > 0) {
+                nonOutlined[nonOutlined.length - 1].overrideSecondary.set(false);
+            }
         });
     }
 

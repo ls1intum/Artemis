@@ -74,7 +74,6 @@
                                 icon: faEye,
                                 label: 'artemisApp.exerciseActions.viewSubmissions',
                                 quizMode: 'live',
-                                outlined: true,
                             },
                         }"
                     />
@@ -87,7 +86,6 @@
                                 icon: faEye,
                                 label: 'artemisApp.exerciseActions.viewResults',
                                 quizMode: 'live',
-                                outlined: true,
                             },
                         }"
                     />
@@ -157,9 +155,6 @@
                             [repositoryUri]="''"
                         />
                     }
-                    @if (exercise().allowFeedbackRequests && gradedParticipation() && exercise().type === ExerciseType.PROGRAMMING) {
-                        <jhi-request-feedback-button [exercise]="exercise()" [smallButtons]="smallButtons()" />
-                    }
                 }
                 @if (
                     (gradedParticipation()?.initializationState === InitializationState.INACTIVE || gradedParticipation()?.initializationState === InitializationState.FINISHED) &&
@@ -227,30 +222,22 @@
                         ></button>
                     }
                 </span>
-                @if (allowEditing) {
-                    <button
-                        [id]="'open-exercise-' + exercise().id"
-                        class="open-exercise"
-                        jhi-exercise-action-button
-                        [buttonIcon]="faFolderOpen"
-                        [buttonLabel]="
-                            'artemisApp.exerciseActions.' +
-                                (gradedParticipation()?.initializationState === InitializationState.INITIALIZED || (beforeDueDate() && !hasRatedGradedResult())
-                                    ? editorLabel()
-                                    : hasRatedGradedResult()
-                                      ? 'viewResults'
-                                      : 'viewSubmissions') | artemisTranslate
-                        "
-                        [outlined]="(!beforeDueDate() || hasRatedGradedResult()) && gradedParticipation()?.initializationState === InitializationState.FINISHED"
-                        [buttonLoading]="isLoading()"
-                        [smallButton]="smallButtons()"
-                        [hideLabelMobile]="false"
-                        [routerLink]="['/courses', courseId(), 'exercises', exercise().type + '-exercises', exercise().id, 'participate', gradedParticipation()!.id]"
-                    ></button>
-                }
             </div>
         }
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS END -->
+    }
+    @if (
+        exercise().allowFeedbackRequests &&
+        gradedParticipation() &&
+        (exercise().type === ExerciseType.PROGRAMMING || ((exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) && athenaEnabled && beforeDueDate()))
+    ) {
+        <jhi-request-feedback-button
+            [exercise]="exercise()"
+            [smallButtons]="smallButtons()"
+            [isGeneratingFeedback]="isGeneratingFeedback()"
+            (generatingFeedback)="generatingFeedback.emit()"
+            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
+        />
     }
 </div>
 
