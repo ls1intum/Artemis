@@ -458,6 +458,19 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             });
     }
 
+    onNewParticipation(participation: StudentParticipation) {
+        const current = this._studentParticipations();
+        if (current.some((p) => p.id === participation.id)) {
+            this._studentParticipations.set(current.map((p) => (p.id === participation.id ? participation : p)));
+        } else {
+            this._studentParticipations.set([...current, participation]);
+        }
+        this.sortResults();
+        if (participation.testRun) {
+            this.participationMode.set('practice');
+        }
+    }
+
     exerciseRatedBadge(result: Result): string {
         return result.rated ? 'bg-success' : 'bg-info';
     }

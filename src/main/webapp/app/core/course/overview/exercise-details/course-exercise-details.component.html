@@ -48,7 +48,7 @@
                         </div>
                     </div>
                 }
-                <jhi-exercise-details-student-actions class="col" [courseId]="courseId" [exercise]="exercise" />
+                <jhi-exercise-details-student-actions class="col" [courseId]="courseId" [exercise]="exercise" (newParticipation)="onNewParticipation($event)" />
                 @if (plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
                     <a class="col-auto btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo()!.id]">
                         @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
