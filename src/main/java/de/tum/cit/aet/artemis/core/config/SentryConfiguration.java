@@ -97,7 +97,7 @@ public class SentryConfiguration {
             // We're not interested in HEAD requests, so we just drop them (113 transactions per minute)
             return 0.0;
         }
-        if (url.equals("/time")) {
+        if (url.equals("/api/public/time")) {
             // Defensive: /time is normally handled by PublicTimeValve before reaching Spring,
             // but we keep this filter in case the valve is removed or bypassed.
             return 0.0;
