@@ -1,6 +1,7 @@
 import { Component, inject, model } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExerciseService } from '../service/quiz-exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExerciseComponent } from 'app/exercise/exercise.component';
@@ -20,6 +21,7 @@ import { QuizExerciseLifecycleButtonsComponent } from '../lifecyle-buttons/quiz-
 import { QuizExerciseManageButtonsComponent } from '../manage-buttons/quiz-exercise-manage-buttons.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/exercise-categories.component';
 
 @Component({
@@ -37,6 +39,7 @@ import { ExerciseCategoriesComponent } from 'app/exercise/exercise-categories/ex
         QuizExerciseManageButtonsComponent,
         DeleteButtonDirective,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
     ],
 })
 export class QuizExerciseComponent extends ExerciseComponent {
@@ -67,6 +70,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                 const quizExercises = res.body!;
                 // reconnect exercise with course
                 quizExercises.forEach((exercise) => {
+                    exercise.type = ExerciseType.QUIZ;
                     exercise.course = this.course;
                     exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(exercise.course);
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
@@ -135,6 +139,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     handleNewQuizExercise(newQuizExercise: QuizExercise) {
         const index = this.quizExercises().findIndex((quizExercise) => quizExercise.id === newQuizExercise.id);
+        newQuizExercise.type = ExerciseType.QUIZ;
         newQuizExercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(newQuizExercise.course);
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
