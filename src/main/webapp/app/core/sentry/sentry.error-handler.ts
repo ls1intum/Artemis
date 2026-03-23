@@ -5,7 +5,7 @@ import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 
-@Injectable({providedIn: 'root'})
+@Injectable({ providedIn: 'root' })
 export class SentryErrorHandler extends ErrorHandler {
     private environment: string;
     private localStorageService = inject(LocalStorageService);
@@ -42,7 +42,7 @@ export class SentryErrorHandler extends ErrorHandler {
             integrations: integrations,
             sendDefaultPii: false,
             tracesSampler: (samplingContext) => {
-                const {name, inheritOrSampleWith} = samplingContext;
+                const { name, inheritOrSampleWith } = samplingContext;
 
                 // Drop /api/public/time transactions entirely
                 if (/^\/api\/public\/time(?:\?|$)/.test(name)) {
@@ -56,7 +56,7 @@ export class SentryErrorHandler extends ErrorHandler {
                 return inheritOrSampleWith(defaultSampleRate);
             },
             beforeSend: (event) => {
-                return this.scrubSentryPayload(event)
+                return this.scrubSentryPayload(event);
             },
             beforeSendTransaction: (t) => {
                 return this.scrubSentryPayload(t);
@@ -66,7 +66,7 @@ export class SentryErrorHandler extends ErrorHandler {
                     crumb.message = this.scrubStringMessage(crumb.message);
                 }
                 return crumb;
-            }
+            },
         });
 
         this.reportIfPasskeyIsNotSupported();
@@ -95,7 +95,6 @@ export class SentryErrorHandler extends ErrorHandler {
         }
 
         return trans;
-
     }
 
     private scrubStringMessage(message: string): string {
@@ -107,9 +106,9 @@ export class SentryErrorHandler extends ErrorHandler {
     }
 
     private scrubUrl(url: string): string {
-        var scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([a-z0-9]+)-[^/]+\.git/g, "/git/$1/$2.git");
+        const scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([a-z0-9]+)-[^/]+\.git/g, '/git/$1/$2.git');
 
-        if (url.includes("-tests.git") || url.includes("-exercise.git") || url.includes("-solution.git")) {
+        if (url.includes('-tests.git') || url.includes('-exercise.git') || url.includes('-solution.git')) {
             return url;
         }
         return scrubbed;
