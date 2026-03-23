@@ -112,10 +112,9 @@ If you have access to a remote GPU server running Ollama, you only need to start
   Use `http://host.docker.internal:11434` as the `api-base-url` in your Artemis configuration (no `/v1` suffix — Weaviate appends it automatically).
 </Callout>
 
-<Callout variant={CalloutVariant.danger}>
-  In the current version we do not support authenticated access to Weaviate (see `docker/weaviate/embeddings.env`).
-  This means that if you enable the embedding model, anyone with access to your machine could potentially query Weaviate and generate embeddings.
-  For local development this is usually not a concern, but be cautious when running this setup on shared or public machines.
+<Callout variant={CalloutVariant.info}>
+  By default, anonymous access is enabled for development convenience. For shared or production environments,
+  enable API key authentication — see [Authentication](#authentication) for setup instructions.
 </Callout>
 
 <Callout variant={CalloutVariant.warning}>
@@ -259,10 +258,17 @@ QUERY_DEFAULTS_LIMIT=25
 AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=true
 PERSISTENCE_DATA_PATH=/var/lib/weaviate
 DEFAULT_VECTORIZER_MODULE=none
-ENABLE_MODULES=
+#ENABLE_MODULES=
 CLUSTER_HOSTNAME=artemis
 LIMIT_RESOURCES=true
 DISK_USE_WARNING_PERCENTAGE=80
+# To enable API key authentication, uncomment the following lines and set AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false above.
+# See https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
 #### Embeddings Configuration (`docker/weaviate/embeddings.env`)
@@ -279,6 +285,13 @@ TRANSFORMERS_INFERENCE_API=http://t2v-transformers:8080
 CLUSTER_HOSTNAME=artemis
 LIMIT_RESOURCES=true
 DISK_USE_WARNING_PERCENTAGE=80
+# To enable API key authentication, uncomment the following lines and set AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false above.
+# See https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
 #### OpenAI-Compatible API Configuration (`docker/weaviate/openai.env`)
@@ -294,6 +307,13 @@ ENABLE_MODULES=text2vec-openai
 CLUSTER_HOSTNAME=artemis
 LIMIT_RESOURCES=true
 DISK_USE_WARNING_PERCENTAGE=80
+# To enable API key authentication, uncomment the following lines and set AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false above.
+# See https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication
+#AUTHENTICATION_APIKEY_ENABLED=true
+#AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+#AUTHENTICATION_APIKEY_USERS=admin@example.com
+#AUTHORIZATION_ADMINLIST_ENABLED=true
+#AUTHORIZATION_ADMINLIST_USERS=admin@example.com
 ```
 
 ### Configuration Options
@@ -301,7 +321,12 @@ DISK_USE_WARNING_PERCENTAGE=80
 | Variable                                  | Default                                           | Description                                                                       |
 |-------------------------------------------|---------------------------------------------------|-----------------------------------------------------------------------------------|
 | `QUERY_DEFAULTS_LIMIT`                    | 25                                                | Default limit for query results                                                   |
-| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                                              | Allow anonymous access (development only - we do not support an auth version yet) |
+| `AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED` | true                                              | Allow anonymous access (set to `false` when using API key auth)                   |
+| `AUTHENTICATION_APIKEY_ENABLED`           | (not set)                                         | Enable API key authentication (see [Authentication](#authentication))             |
+| `AUTHENTICATION_APIKEY_ALLOWED_KEYS`      | (not set)                                         | Comma-separated list of allowed API keys                                          |
+| `AUTHENTICATION_APIKEY_USERS`             | (not set)                                         | Comma-separated list of user identities mapped to API keys (by position)          |
+| `AUTHORIZATION_ADMINLIST_ENABLED`         | (not set)                                         | Enable admin list authorization                                                   |
+| `AUTHORIZATION_ADMINLIST_USERS`           | (not set)                                         | Comma-separated list of admin users                                               |
 | `PERSISTENCE_DATA_PATH`                   | /var/lib/weaviate                                 | Path for data persistence inside container                                        |
 | `DEFAULT_VECTORIZER_MODULE`               | none / text2vec-transformers / text2vec-openai    | Default vectorizer module                                                         |
 | `ENABLE_MODULES`                          | (empty) / text2vec-transformers / text2vec-openai | Modules to enable                                                                 |
@@ -310,12 +335,62 @@ DISK_USE_WARNING_PERCENTAGE=80
 | `LIMIT_RESOURCES`                         | true                                              | Enable resource limiting                                                          |
 | `DISK_USE_WARNING_PERCENTAGE`             | 80                                                | Warn when disk usage exceeds this percentage                                      |
 
+### Authentication
+
+By default, anonymous access is enabled for local development. For shared or production environments, you can enable API key authentication to secure your Weaviate instance.
+
+#### Enabling API Key Authentication on the Weaviate Server
+
+Edit your Weaviate environment file (e.g. `docker/weaviate/default.env`) and uncomment the authentication lines:
+
+```bash
+AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED=false
+AUTHENTICATION_APIKEY_ENABLED=true
+AUTHENTICATION_APIKEY_ALLOWED_KEYS=admin-key
+AUTHENTICATION_APIKEY_USERS=admin@example.com
+AUTHORIZATION_ADMINLIST_ENABLED=true
+AUTHORIZATION_ADMINLIST_USERS=admin@example.com
+```
+
+Replace `admin-key` with a secure key and `admin@example.com` with your admin username. Multiple keys/users can be provided as comma-separated values (keys and users are mapped by position).
+
+After changing authentication settings, restart Weaviate:
+
+```bash
+docker compose -f weaviate.yml down && docker compose -f weaviate.yml up -d
+```
+
+#### Configuring the Artemis Client
+
+Add the `auth-api-key` property to your Artemis configuration. The value must match one of the keys in `AUTHENTICATION_APIKEY_ALLOWED_KEYS`:
+
+```yaml
+artemis:
+    weaviate:
+        enabled: true
+        auth-api-key: admin-key    # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
+```
+
+#### Verifying Authentication
+
+You can verify that API key authentication is working correctly:
+
+```bash
+# This should fail with 401 Unauthorized:
+curl -v http://localhost:8001/v1/.well-known/ready
+
+# This should succeed:
+curl -v -H "Authorization: Bearer admin-key" http://localhost:8001/v1/.well-known/ready
+```
+
+See the [Weaviate authentication documentation](https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication) for more details.
+
 ### Data Persistence
 
 Weaviate data is persisted in the named Docker volume `artemis-weaviate`.
 
 <Callout variant={CalloutVariant.warning}>
-    <p>Anonymous access is enabled by default for development convenience. For production deployments, configure proper authentication.</p>
+    <p>Anonymous access is enabled by default for development convenience. For production deployments, configure API key authentication — see <a href="#authentication">Authentication</a>.</p>
 </Callout>
 
 ---
@@ -334,6 +409,7 @@ artemis:
         scheme: http                             # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_              # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
         vectorizer-module: text2vec-transformers # Vectorizer module: "none", "text2vec-transformers", or "text2vec-openai"
+        # auth-api-key: admin-key               # Optional: API key for Weaviate server authentication (see Authentication section)
 ```
 
 #### Additional Properties for `text2vec-openai`

@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.util.StringUtils;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateConnectionException;
+import io.weaviate.client6.v1.api.Authentication;
 import io.weaviate.client6.v1.api.WeaviateClient;
 
 /**
@@ -35,6 +36,9 @@ public class WeaviateClientConfiguration {
      * <p>
      * When using the text2vec-openai vectorizer, the API key is passed as a request header
      * so that Weaviate can forward it to the OpenAI-compatible API (e.g. Ollama).
+     * <p>
+     * When {@code auth-api-key} is configured, the client authenticates against the Weaviate
+     * server using API key authentication (see <a href="https://docs.weaviate.io/deploy/configuration/authentication#api-key-authentication">Weaviate docs</a>).
      *
      * @return the configured WeaviateClient instance
      * @throws WeaviateConnectionException if the connection to Weaviate fails
@@ -44,6 +48,7 @@ public class WeaviateClientConfiguration {
         try {
             WeaviateClient client;
             boolean hasApiKey = StringUtils.hasText(weaviateProperties.apiKey());
+            boolean hasAuthApiKey = StringUtils.hasText(weaviateProperties.authApiKey());
             if (weaviateProperties.secure()) {
                 // Custom connection for HTTPS/secure connections.
                 // IMPORTANT: scheme() must be called first because it auto-sets both ports (443 for https, 80 for http).
@@ -51,6 +56,9 @@ public class WeaviateClientConfiguration {
                 client = WeaviateClient.connectToCustom(config -> {
                     config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost()).httpPort(weaviateProperties.httpPort())
                             .grpcHost(weaviateProperties.httpHost()).grpcPort(weaviateProperties.grpcPort());
+                    if (hasAuthApiKey) {
+                        config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
+                    }
                     if (hasApiKey) {
                         config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
                     }
@@ -61,11 +69,17 @@ public class WeaviateClientConfiguration {
                 // Local connection for non-secure connections
                 client = WeaviateClient.connectToLocal(config -> {
                     config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort());
+                    if (hasAuthApiKey) {
+                        config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
+                    }
                     if (hasApiKey) {
                         config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
                     }
                     return config;
                 });
+            }
+            if (hasAuthApiKey) {
+                log.debug("Configured Weaviate client with API key authentication");
             }
             if (hasApiKey) {
                 log.debug("Configured Weaviate client with X-OpenAI-Api-Key header for OpenAI-compatible vectorizer");
