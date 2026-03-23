@@ -35,6 +35,7 @@ import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAnalysisResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackPageableDTO;
+import de.tum.cit.aet.artemis.assessment.repository.AssessmentNoteRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintResponseRepository;
 import de.tum.cit.aet.artemis.assessment.repository.FeedbackRepository;
@@ -86,6 +87,8 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
+    private final AssessmentNoteRepository assessmentNoteRepository;
+
     private final Optional<LtiApi> ltiApi;
 
     private final ResultWebsocketService resultWebsocketService;
@@ -124,14 +127,19 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, Optional<LtiApi> ltiApi, ResultWebsocketService resultWebsocketService,
-            ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository, FeedbackRepository feedbackRepository,
-            LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository, ParticipantScoreRepository participantScoreRepository,
-            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService, Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository,
-            BuildLogEntryService buildLogEntryService, StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService) {
+    private final Optional<ParticipantScoreScheduleService> participantScoreScheduleService;
+
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, AssessmentNoteRepository assessmentNoteRepository, Optional<LtiApi> ltiApi,
+            ResultWebsocketService resultWebsocketService, ComplaintResponseRepository complaintResponseRepository, RatingRepository ratingRepository,
+            FeedbackRepository feedbackRepository, LongFeedbackTextRepository longFeedbackTextRepository, ComplaintRepository complaintRepository,
+            ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
+            Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
+            StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
+            Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
+        this.assessmentNoteRepository = assessmentNoteRepository;
         this.ltiApi = ltiApi;
         this.resultWebsocketService = resultWebsocketService;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -149,6 +157,7 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
+        this.participantScoreScheduleService = participantScoreScheduleService;
     }
 
     /**
@@ -192,12 +201,17 @@ public class ResultService {
     }
 
     /**
-     * Deletes result with corresponding complaint and complaint response
+     * Deletes a result and all its dependent data (feedbacks, long feedback texts, complaints, ratings, assessment notes).
+     * <p>
+     * Non-cascaded FK references (complaints, complaint responses, ratings, participant scores) are bulk-deleted first.
+     * Feedbacks and long feedback texts are NOT bulk-deleted — Hibernate cascade from Result handles their removal.
+     * Bulk-deleting them would make the L2 cache stale, causing Hibernate 6.6+ to fail when initializing the
+     * feedbacks PersistentList during entity merge/remove.
      *
      * @param result                      the result to delete
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
-     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
-     *                                        should be false
+     * @param shouldClearParticipantScore true when deleting a single result (synchronously clears stale participant score
+     *                                        references via {@code clearAllByResultId}); false during bulk deletion when
+     *                                        participant scores are already handled by the caller
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
@@ -217,13 +231,26 @@ public class ResultService {
     }
 
     /**
-     * NOTE: this method DOES NOT delete the result itself (e.g. because this will be done automatically when the submission is deleted)
-     * Deletes result with corresponding complaint and complaint response
+     * Bulk-deletes all entities that reference the given result via foreign keys, using JPQL DELETE statements.
+     * <p>
+     * <b>NOTE:</b> This method does NOT delete the result itself. The result must be deleted separately by the caller,
+     * either via JPA {@code resultRepository.delete(result)} or via JPQL {@code resultRepository.deleteResultById(id)}.
+     * See {@link #deleteResult} for the full deletion flow.
+     * <p>
+     * <b>NOTE:</b> This method does NOT delete {@code assessment_note} rows. Assessment notes are handled in
+     * {@link #deleteResult} via {@code assessmentNoteRepository.deleteByResultId()} on the JPQL path,
+     * or via JPA cascade on the standard path.
+     * <p>
+     * The deletion order is important to respect FK constraints:
+     * {@code complaint_response -> complaint}, {@code long_feedback_text -> feedback -> result}.
+     * <p>
+     * Also used standalone by {@link AssessmentService#deleteAssessment} where the result is deleted implicitly
+     * via JPA orphan removal when it is removed from the submission's results list.
      *
      * @param resultId                    the id of the result for which all references should be deleted
-     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole
-     *                                        participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value
-     *                                        should be false
+     * @param shouldClearParticipantScore true when deleting a single result (synchronously nullifies stale references
+     *                                        in the participant_score table); false during bulk deletion when participant
+     *                                        scores are already handled by the caller
      */
     public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
         log.debug("Delete result references {}", resultId);
@@ -233,6 +260,7 @@ public class ResultService {
         if (shouldClearParticipantScore) {
             participantScoreRepository.clearAllByResultId(resultId);
         }
+        // Order matters: long_feedback_text has a FK to feedback, so delete it first.
         longFeedbackTextRepository.deleteByFeedbackResultId(resultId);
         feedbackRepository.deleteByResult_Id(resultId);
     }
