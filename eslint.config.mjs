@@ -155,6 +155,7 @@ export default tseslint.config(
             ],
             'localRules/require-signal-reference-ngb-modal-input': 'error',
             'localRules/enforce-signal-apis-in-migrated-modules': 'error',
+            'localRules/enforce-cleanup-on-destroy': 'warn',
         },
     },
     {

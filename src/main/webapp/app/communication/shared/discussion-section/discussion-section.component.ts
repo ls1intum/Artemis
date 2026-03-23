@@ -151,6 +151,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
     ngOnDestroy(): void {
         super.onDestroy();
         this.postCreateEditModal()?.close();
+        this.interactable?.unset();
     }
 
     /**
@@ -217,11 +218,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
+    private interactable: ReturnType<typeof interact> | undefined;
+
     /**
      * makes discussion section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        interact('.expanded-discussion')
+        this.interactable = interact('.expanded-discussion')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
