@@ -31,6 +31,7 @@ import { MetisConversationService } from '../service/metis-conversation.service'
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { map } from 'rxjs';
 import { ForwardMessageDialogComponent } from 'app/communication/course-conversations-components/forward-message-dialog/forward-message-dialog.component';
+import { defaultFirstLayerDialogOptions } from 'app/communication/course-conversations-components/other/conversation.util';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { firstValueFrom } from 'rxjs';
 import { CourseSidebarService } from 'app/core/course/overview/services/course-sidebar.service';
@@ -551,11 +552,8 @@ export class PostingReactionsBarComponent<T extends Posting> implements OnInit {
 
                     // Open the forward message dialog using PrimeNG DialogService
                     const ref = this.dialogService.open(ForwardMessageDialogComponent, {
-                        header: '',
-                        width: '50vw',
-                        modal: true,
+                        ...defaultFirstLayerDialogOptions,
                         closable: false,
-                        showHeader: false,
                         data: {
                             users: [],
                             channels: this.channels,

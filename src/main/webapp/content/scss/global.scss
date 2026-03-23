@@ -1274,13 +1274,15 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
-:root[data-bs-theme='dark'] {
+:root[prime-ng-use-dark-theme='true'] {
     .p-dialog.communication-dialog,
     .p-dialog.second-layer-modal-bg {
         background: var(--p-surface-900) !important;
+        color: var(--bs-body-color) !important;
 
         .p-dialog-content {
             background: var(--p-surface-900) !important;
+            color: var(--bs-body-color) !important;
         }
     }
 }
