@@ -140,7 +140,8 @@
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
             "citation": {
-                "inLecture": "in"
+                "unitLabel": "Einheit:",
+                "lectureLabel": "Vorlesung:"
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
