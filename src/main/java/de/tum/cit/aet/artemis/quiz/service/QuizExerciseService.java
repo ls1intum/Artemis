@@ -59,6 +59,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -137,12 +138,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi) {
+            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -158,6 +161,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -1136,7 +1140,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
-        exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
+        competencyExerciseLinkService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
     /**
@@ -1326,7 +1330,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
         // Restore competency links with proper exercise reference and save again
         if (competencyLinks != null && !competencyLinks.isEmpty()) {
-            exerciseService.updateCompetencyLinks(() -> competencyLinks, savedExercise);
+            competencyExerciseLinkService.updateCompetencyLinks(() -> competencyLinks, savedExercise);
             savedExercise = save(savedExercise);
         }
 

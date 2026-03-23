@@ -64,6 +64,7 @@ import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -133,13 +134,15 @@ public class FileUploadExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
             ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, ChannelRepository channelRepository, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
-            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi) {
+            Optional<AtlasMLApi> atlasMLApi, Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -160,6 +163,7 @@ public class FileUploadExerciseResource {
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
         this.competencyApi = competencyApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -189,10 +193,10 @@ public class FileUploadExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(fileUploadExercise, ENTITY_NAME);
 
-        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(fileUploadExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(fileUploadExercise);
         FileUploadExercise savedExercise = fileUploadExerciseRepository.save(fileUploadExercise);
         if (!competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = fileUploadExerciseRepository.save(savedExercise);
         }
         final FileUploadExercise result = savedExercise;
@@ -784,7 +788,7 @@ public class FileUploadExerciseResource {
         exercise.setFilePattern(updateFileUploadExerciseDTO.filePattern());
 
         updateGradingCriteria(updateFileUploadExerciseDTO, exercise);
-        exerciseService.updateCompetencyLinks(updateFileUploadExerciseDTO, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(updateFileUploadExerciseDTO, exercise);
 
         return exercise;
     }

@@ -36,6 +36,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -100,6 +101,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ParticipationRepository participationRepository;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
@@ -107,7 +110,8 @@ public class ProgrammingExerciseCreationUpdateService {
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService) {
+            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService,
+            CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -126,6 +130,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
         this.gitService = gitService;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -184,7 +189,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.getBuildConfig().setId(null);
 
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
-        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(programmingExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
@@ -229,7 +234,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
         // Restore competency links with proper exercise reference before final save
-        exerciseService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
+        competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }

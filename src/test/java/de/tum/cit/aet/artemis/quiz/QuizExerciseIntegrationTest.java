@@ -1619,19 +1619,19 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
         AtomicReference<Set<Long>> originalCompetencyIds = new AtomicReference<>();
         AtomicReference<Set<Long>> updatedCompetencyIds = new AtomicReference<>();
         doAnswer(invocation -> {
-            LearningObject originalLearningObject = invocation.getArgument(0);
             @SuppressWarnings("unchecked")
-            Optional<LearningObject> updatedLearningObject = invocation.getArgument(1);
+            Set<Long> capturedOriginalIds = invocation.getArgument(0);
+            LearningObject updatedLearningObject = invocation.getArgument(1);
 
-            originalCompetencyIds.set(originalLearningObject.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
-            updatedCompetencyIds.set(updatedLearningObject.orElseThrow().getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
+            originalCompetencyIds.set(capturedOriginalIds);
+            updatedCompetencyIds.set(updatedLearningObject.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet()));
             return null;
-        }).when(competencyProgressApi).updateProgressForUpdatedLearningObjectAsync(any(), any());
+        }).when(competencyProgressApi).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(any(), any());
 
         quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(replacementCompetency, quizExercise, 0.5)));
         updateQuizExerciseWithFiles(quizExercise, List.of(), OK);
 
-        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsync(any(), any());
+        verify(competencyProgressApi, timeout(1000).times(1)).updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(any(), any());
         assertThat(originalCompetencyIds.get()).containsExactly(originalCompetency.getId());
         assertThat(updatedCompetencyIds.get()).containsExactly(replacementCompetency.getId());
     }

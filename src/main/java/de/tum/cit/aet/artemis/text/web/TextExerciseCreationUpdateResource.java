@@ -43,6 +43,7 @@ import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -95,11 +96,13 @@ public class TextExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
+            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -115,6 +118,7 @@ public class TextExerciseCreationUpdateResource {
         this.competencyApi = competencyApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -153,10 +157,10 @@ public class TextExerciseCreationUpdateResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(textExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(textExercise);
         TextExercise savedExercise = textExerciseRepository.save(textExercise);
         if (!competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = textExerciseRepository.save(savedExercise);
         }
         final TextExercise result = savedExercise;
@@ -376,7 +380,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setExampleSolution(dto.exampleSolution());
 
         updateGradingCriteria(dto, exercise);
-        exerciseService.updateCompetencyLinks(dto, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
 
         return exercise;
     }

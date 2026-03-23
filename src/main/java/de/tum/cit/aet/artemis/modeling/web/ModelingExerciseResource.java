@@ -60,6 +60,7 @@ import de.tum.cit.aet.artemis.core.util.ResponseUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.SubmissionExportOptionsDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseDeletionService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
@@ -129,13 +130,15 @@ public class ModelingExerciseResource {
 
     private final Optional<CompetencyApi> competencyApi;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, ModelingExerciseImportService modelingExerciseImportService,
             SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService, GroupNotificationScheduleService groupNotificationScheduleService,
             GradingCriterionRepository gradingCriterionRepository, ChannelService channelService, ChannelRepository channelRepository,
             ExerciseVersionService exerciseVersionService, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi,
-            Optional<CompetencyApi> competencyApi) {
+            Optional<CompetencyApi> competencyApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -156,6 +159,7 @@ public class ModelingExerciseResource {
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     // TODO: most of these calls should be done in the context of a course
@@ -192,10 +196,10 @@ public class ModelingExerciseResource {
         // Validate plagiarism detection config
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(modelingExercise, ENTITY_NAME);
 
-        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(modelingExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(modelingExercise);
         ModelingExercise savedExercise = modelingExerciseRepository.save(modelingExercise);
         if (!competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = modelingExerciseRepository.save(savedExercise);
         }
         final ModelingExercise result = savedExercise;
@@ -632,7 +636,7 @@ public class ModelingExerciseResource {
         exercise.setExampleSolutionExplanation(updateModelingExerciseDTO.exampleSolutionExplanation());
 
         updateGradingCriteria(updateModelingExerciseDTO, exercise);
-        exerciseService.updateCompetencyLinks(updateModelingExerciseDTO, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(updateModelingExerciseDTO, exercise);
 
         return exercise;
     }

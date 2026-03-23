@@ -39,6 +39,7 @@ import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -96,11 +97,13 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ParticipationRepository participationRepository;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository) {
+            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -115,6 +118,7 @@ public class ProgrammingExerciseUpdateResource {
         this.slideApi = slideApi;
         this.exerciseVersionService = exerciseVersionService;
         this.participationRepository = participationRepository;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -388,7 +392,7 @@ public class ProgrammingExerciseUpdateResource {
         updateGradingCriteria(dto, exercise);
 
         // Update competency links using the proper mechanism
-        exerciseService.updateCompetencyLinks(dto, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
 
         return exercise;
     }
