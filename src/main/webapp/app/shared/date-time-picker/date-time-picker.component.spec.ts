@@ -59,6 +59,13 @@ describe('FormDateTimePickerComponent', () => {
             });
     });
 
+    afterEach(() => {
+        jest.clearAllTimers();
+        jest.useRealTimers();
+        fixture?.destroy();
+        document.querySelectorAll('.owl-dt-container-buttons').forEach((el) => el.remove());
+    });
+
     it('should emit if a value is changed', () => {
         const emitStub = jest.spyOn(component.valueChange, 'emit').mockImplementation();
 
