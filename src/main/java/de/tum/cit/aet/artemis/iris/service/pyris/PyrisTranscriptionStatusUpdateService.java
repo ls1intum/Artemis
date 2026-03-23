@@ -102,7 +102,8 @@ public class PyrisTranscriptionStatusUpdateService {
                     PyrisTranscriptionResultDTO result = objectMapper.readValue(resultJson, PyrisTranscriptionResultDTO.class);
                     List<LectureTranscriptionSegment> segments = result.segments().stream()
                             .map(seg -> new LectureTranscriptionSegment(seg.startTime(), seg.endTime(), seg.text(), seg.slideNumber())).toList();
-                    transcription.setLanguage(result.language());
+                    var course = transcription.getLectureUnit().getLecture().getCourse();
+                    transcription.setLanguage(course.getLanguage() != null ? course.getLanguage().getShortName() : result.language());
                     transcription.setSegments(segments);
                     transcription.setTranscriptionStatus(TranscriptionStatus.COMPLETED);
                 }
