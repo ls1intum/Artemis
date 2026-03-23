@@ -1,9 +1,9 @@
 import { Component, computed, effect, inject, input, viewChild } from '@angular/core';
-import { ActivatedRoute, ChildrenOutletContexts, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { faAlignLeft, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faAlignLeft, faAngleDown, faAngleUp, faCircleInfo, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { DiscussionFeedComponent } from 'app/communication/shared/discussion-section/discussion-feed.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
@@ -18,12 +18,28 @@ import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iri
 import { IrisBaseChatbotComponent } from 'app/iris/overview/base-chatbot/iris-base-chatbot.component';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
+import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
+import { RatingComponent } from 'app/exercise/rating/rating.component';
+import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
+import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
+import { LtiInitializerComponent } from 'app/core/course/overview/exercise-details/lti-initializer/lti-initializer.component';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
     templateUrl: './exercise-split-panel.component.html',
     imports: [
         RouterOutlet,
+        RouterLink,
         ResizablePanelsComponent,
         PanelDirective,
         ProblemStatementComponent,
@@ -32,6 +48,17 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         IrisBaseChatbotComponent,
         IrisLogoComponent,
         TranslateDirective,
+        ResetRepoButtonComponent,
+        ComplaintsStudentViewComponent,
+        RatingComponent,
+        ModelingEditorComponent,
+        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
+        CompetencyContributionComponent,
+        LtiInitializerComponent,
+        FaIconComponent,
+        NgbTooltip,
+        TranslateDirective,
+        ArtemisTranslatePipe,
     ],
 })
 export class ExerciseSplitPanelComponent {
@@ -44,12 +71,26 @@ export class ExerciseSplitPanelComponent {
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faAlignLeft = faAlignLeft;
+    protected readonly faCircleInfo = faCircleInfo;
+    protected readonly faAngleDown = faAngleDown;
+    protected readonly faAngleUp = faAngleUp;
     protected readonly getIcon = getIcon;
     protected readonly ExerciseType = ExerciseType;
+    protected readonly AssessmentType = AssessmentType;
+    protected readonly PlagiarismVerdict = PlagiarismVerdict;
 
     readonly exercise = input.required<Exercise>();
     readonly studentParticipation = input<StudentParticipation>();
     readonly irisEnabled = input<boolean>(false);
+    readonly courseId = input.required<number>();
+    readonly gradedStudentParticipation = input<StudentParticipation>();
+    readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
+    readonly latestRatedResult = input<Result>();
+    readonly resultWithComplaint = input<Result>();
+    readonly allowComplaintsForAutomaticAssessments = input<boolean>(false);
+    readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
+    readonly exampleSolutionCollapsed = input<boolean>(true);
+    readonly onChangeExampleSolution = input<(() => void) | undefined>(undefined);
 
     private readonly quizParticipation = viewChild(QuizParticipationComponent);
 
@@ -95,6 +136,27 @@ export class ExerciseSplitPanelComponent {
     readonly usesRouterOutlet = computed(() => {
         const type = this.exercise().type;
         return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || this.showCodeEditor();
+    });
+
+    readonly showComplaintView = computed(() => {
+        const exercise = this.exercise();
+        const result = this.latestRatedResult();
+        return (
+            exercise.type === ExerciseType.PROGRAMMING &&
+            !!this.gradedStudentParticipation() &&
+            !!result &&
+            (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC || this.allowComplaintsForAutomaticAssessments())
+        );
+    });
+
+    readonly showRating = computed(() => {
+        const result = this.latestRatedResult();
+        return (
+            this.exercise().type === ExerciseType.PROGRAMMING &&
+            !!this.gradedStudentParticipation() &&
+            !!result &&
+            (result.assessmentType === AssessmentType.MANUAL || result.assessmentType === AssessmentType.SEMI_AUTOMATIC)
+        );
     });
 
     constructor() {

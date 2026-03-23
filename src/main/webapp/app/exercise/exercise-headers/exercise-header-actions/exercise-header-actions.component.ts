@@ -34,6 +34,8 @@ import { ParticipationService } from 'app/exercise/participation/participation.s
 import dayjs from 'dayjs/esm';
 import { PROFILE_ATHENA } from 'app/app.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
+import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerdict';
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { NgTemplateOutlet } from '@angular/common';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
@@ -91,6 +93,7 @@ export class ExerciseHeaderActionsComponent {
     protected readonly ExerciseType = ExerciseType;
     protected readonly InitializationState = InitializationState;
     protected readonly ButtonType = ButtonType;
+    protected readonly PlagiarismVerdict = PlagiarismVerdict;
 
     private readonly quizExerciseService = inject(QuizExerciseService);
     private readonly alertService = inject(AlertService);
@@ -104,6 +107,7 @@ export class ExerciseHeaderActionsComponent {
     readonly examMode = input<boolean>(false);
     readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
+    readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
 
     readonly generatingFeedback = output<void>();
 
