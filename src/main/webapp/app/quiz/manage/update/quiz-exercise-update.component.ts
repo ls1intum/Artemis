@@ -584,26 +584,27 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         this.quizQuestionListEditComponent().fileMap.clear();
 
         if (this.isImport) {
+            this.calendarService.reloadEvents();
             this.previousState();
-        } else if (isCreate) {
-            // After creation, update the browser URL to the edit path (without triggering navigation)
-            // and re-fetch the quiz from the server to get properly structured entity data.
+            return;
+        }
+
+        // The DTO response serializes mapping items as separate object copies from the
+        // question's item arrays. Reconcile so mapping.dragItem IS the same reference as
+        // dragItems[i], enabling identity-based matching in the edit components.
+        this.reconcileMappingReferences(quizExercise);
+        this.prepareEntity(quizExercise);
+        this.quizExercise = quizExercise;
+        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
+        this.exerciseService.validateDate(this.quizExercise);
+        this.savedEntity = cloneDeep(this.quizExercise);
+        this.changeDetector.detectChanges();
+
+        if (isCreate) {
+            // Update the browser URL from /new to /<id>/edit without Angular navigation.
+            // The component stays alive with the POST response data which includes all entity data.
             const editUrl = this.router.url.replace('/new', `/${quizExercise.id}/edit`);
             this.location.replaceState(editUrl);
-            this.quizExerciseService.find(quizExercise.id!).subscribe((response) => {
-                this.quizExercise = response.body!;
-                this.init();
-                this.changeDetector.detectChanges();
-                this.calendarService.reloadEvents();
-            });
-            return;
-        } else {
-            this.prepareEntity(quizExercise);
-            this.quizExercise = quizExercise;
-            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
-            this.exerciseService.validateDate(this.quizExercise);
-            this.savedEntity = cloneDeep(this.quizExercise);
-            this.changeDetector.detectChanges();
         }
         this.calendarService.reloadEvents();
     }
@@ -633,6 +634,33 @@ export class QuizExerciseUpdateComponent extends QuizExerciseValidationDirective
         for (const question of quizExercise.quizQuestions ?? []) {
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 this.shortAnswerQuestionUtil.prepareShortAnswerQuestion(question as ShortAnswerQuestion);
+            }
+        }
+    }
+
+    /**
+     * Reconciles mapping references in DnD and SA questions so that mapping.dragItem / mapping.dropLocation /
+     * mapping.solution / mapping.spot point to the SAME object instances as the question's item arrays.
+     * This is needed because DTO responses serialize mappings with separate copies of the referenced items.
+     */
+    private reconcileMappingReferences(quizExercise: QuizExercise): void {
+        for (const question of quizExercise.quizQuestions ?? []) {
+            if (question.type === QuizQuestionType.DRAG_AND_DROP) {
+                const dnd = question as DragAndDropQuestion;
+                const dragItemById = new Map((dnd.dragItems ?? []).filter((di) => di.id).map((di) => [di.id!, di]));
+                const dropLocationById = new Map((dnd.dropLocations ?? []).filter((dl) => dl.id).map((dl) => [dl.id!, dl]));
+                for (const mapping of dnd.correctMappings ?? []) {
+                    if (mapping.dragItem?.id) mapping.dragItem = dragItemById.get(mapping.dragItem.id) ?? mapping.dragItem;
+                    if (mapping.dropLocation?.id) mapping.dropLocation = dropLocationById.get(mapping.dropLocation.id) ?? mapping.dropLocation;
+                }
+            } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                const sa = question as ShortAnswerQuestion;
+                const solutionById = new Map((sa.solutions ?? []).filter((s) => s.id).map((s) => [s.id!, s]));
+                const spotById = new Map((sa.spots ?? []).filter((s) => s.id).map((s) => [s.id!, s]));
+                for (const mapping of sa.correctMappings ?? []) {
+                    if (mapping.solution?.id) mapping.solution = solutionById.get(mapping.solution.id) ?? mapping.solution;
+                    if (mapping.spot?.id) mapping.spot = spotById.get(mapping.spot.id) ?? mapping.spot;
+                }
             }
         }
     }

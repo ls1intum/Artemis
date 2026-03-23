@@ -1174,13 +1174,8 @@ describe('QuizExerciseUpdateComponent', () => {
 
             it('should call create if valid and quiz exercise no id', () => {
                 comp.quizExercise.id = undefined;
-                // Mock the response to include an ID (as the server would after creation)
-                const createdQuiz = { ...quizExercise, id: 42 } as QuizExercise;
-                quizExerciseServiceCreateStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: createdQuiz })));
-                // Mock find() which is called after creation to re-fetch the full quiz
-                vi.spyOn(quizExerciseService, 'find').mockReturnValue(of(new HttpResponse<QuizExercise>({ body: createdQuiz })));
                 saveQuizWithPendingChangesCache();
-                expect(exerciseSanitizeSpy).toHaveBeenCalledOnce();
+                expect(exerciseSanitizeSpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
                 expect(refreshSpy).toHaveBeenCalled();
