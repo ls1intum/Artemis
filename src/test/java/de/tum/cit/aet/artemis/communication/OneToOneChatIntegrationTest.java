@@ -38,7 +38,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @AfterEach
     void tearDown() {
-        conversationMessageRepository.deleteAll();
+        // Use course-scoped cascade deletion instead of global deleteAll() to avoid
+        // Hibernate 6.6 TransientObjectException with bidirectional @OneToOne relationships
         conversationRepository.deleteAllByCourseId(exampleCourseId);
     }
 

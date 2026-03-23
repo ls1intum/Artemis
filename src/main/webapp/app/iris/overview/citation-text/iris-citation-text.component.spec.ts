@@ -103,7 +103,7 @@ describe('IrisCitationTextComponent', () => {
     });
 
     it('hides lecture metadata when no unit or lecture title is available', () => {
-        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: '', lectureUnitTitle: '' }];
+        const citationInfo: IrisCitationMetaDTO[] = [{ entityId: 7, lectureTitle: '', lectureUnitTitle: '', lectureId: 0, courseId: 0 }];
         const el = render('[cite:L:7:::::Summary]', citationInfo);
 
         expect(el.querySelector('.iris-citation__summary-divider')).toBeFalsy();
