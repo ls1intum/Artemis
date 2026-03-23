@@ -338,8 +338,12 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return recalculationNecessary;
     }
 
-    private static boolean applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
+    /**
+     * @return a map from DTO tempID to the newly created ShortAnswerSolution entities (for mapping resolution)
+     */
+    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
         boolean recalculationNecessary = false;
+        Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
         Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream()
                 .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
@@ -366,14 +370,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
             if (solutionDTO.tempID() != null) {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
-                newSolution.setTempID(solutionDTO.tempID());
                 newSolution.setText(solutionDTO.text());
                 newSolution.setInvalid(solutionDTO.invalid());
                 originalSolution.add(newSolution);
+                tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
                 recalculationNecessary = true;
             }
         }
-        return recalculationNecessary;
+        return new ApplyResult(recalculationNecessary, tempIdToNewSolution);
+    }
+
+    private record ApplyResult(boolean recalculationNecessary, Map<Long, ShortAnswerSolution> tempIdToNewSolution) {
     }
 
     private static boolean applyShortAnswerSpotsFromDTOs(List<ShortAnswerSpotReEvaluateDTO> spotDTOs, List<ShortAnswerSpot> originalSpots) {
@@ -398,7 +405,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     private static boolean addNewShortAnswerMappingFromDTO(ShortAnswerQuestion originalQuestion, ShortAnswerMappingReEvaluateDTO mappingDTO,
-            Set<ShortAnswerMapping> existingMappings) {
+            Set<ShortAnswerMapping> existingMappings, Map<Long, ShortAnswerSolution> tempIdToNewSolution) {
         if (mappingDTO.solutionId() == null && mappingDTO.solutionTempID() == null) {
             throw new BadRequestException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID");
         }
@@ -407,8 +414,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         boolean mappingExists;
         if (mappingDTO.solutionTempID() != null) {
-            mappingExists = existingMappings.stream()
-                    .anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && Objects.equals(mapping.getSolution().getTempID(), mappingDTO.solutionTempID()));
+            // For new solutions (identified by tempID), check if a mapping to this new solution already exists
+            ShortAnswerSolution newSolution = tempIdToNewSolution.get(mappingDTO.solutionTempID());
+            mappingExists = newSolution != null
+                    && existingMappings.stream().anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && mapping.getSolution() == newSolution);
         }
         else {
             mappingExists = existingMappings.stream()
@@ -421,8 +430,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 .orElseThrow(() -> new BadRequestException("The short answer spot with id " + mappingDTO.spotId() + " does not exist"));
         ShortAnswerSolution solution;
         if (mappingDTO.solutionTempID() != null) {
-            solution = originalQuestion.getSolutions().stream().filter(item -> Objects.equals(item.getTempID(), mappingDTO.solutionTempID())).findFirst()
-                    .orElseThrow(() -> new BadRequestException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist"));
+            // Look up the new solution from the tempID map (built during applyShortAnswerSolutionsFromDTOs)
+            solution = tempIdToNewSolution.get(mappingDTO.solutionTempID());
+            if (solution == null) {
+                throw new BadRequestException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist");
+            }
         }
         else {
             solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst()
@@ -435,7 +447,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return true;
     }
 
-    private static boolean applyShortAnswerMappingFromDTOs(ShortAnswerQuestionReEvaluateDTO saDTO, ShortAnswerQuestion originalQuestion) {
+    private static boolean applyShortAnswerMappingFromDTOs(ShortAnswerQuestionReEvaluateDTO saDTO, ShortAnswerQuestion originalQuestion,
+            Map<Long, ShortAnswerSolution> tempIdToNewSolution) {
         boolean recalculationNecessary = false;
         List<ShortAnswerMapping> mappingsToRemove = new ArrayList<>();
         for (ShortAnswerMapping originalMapping : originalQuestion.getCorrectMappings()) {
@@ -449,7 +462,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
         Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
         for (var mappingDTO : saDTO.correctMappings()) {
-            if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings)) {
+            if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings, tempIdToNewSolution)) {
                 recalculationNecessary = true;
             }
         }
@@ -479,8 +492,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         recalculationNecessary = applyShortAnswerSpotsFromDTOs(shortAnswerQuestionDTO.spots(), originalQuestion.getSpots()) || recalculationNecessary;
-        recalculationNecessary = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions()) || recalculationNecessary;
-        recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion) || recalculationNecessary;
+        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions());
+        recalculationNecessary = solutionResult.recalculationNecessary() || recalculationNecessary;
+        recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion, solutionResult.tempIdToNewSolution()) || recalculationNecessary;
 
         return recalculationNecessary;
     }
