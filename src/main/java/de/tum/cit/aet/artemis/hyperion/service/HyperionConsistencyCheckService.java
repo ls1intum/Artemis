@@ -316,7 +316,7 @@ public class HyperionConsistencyCheckService {
      * @param input          prompt variables (rendered_context, detected_issues_json)
      * @param parentObs      parent observation for tracing
      * @param usageCollector list to collect LLM request data
-     * @return verified list of issues, or {@code null} if the call failed
+     * @return verified immutable list of issues, or {@code null} if the call failed
      */
     private List<ConsistencyIssue> runVerificationCheck(Map<String, String> input, Observation parentObs, List<LLMRequest> usageCollector) {
         var child = Observation.createNotStarted("hyperion.consistency.verification", observationRegistry).contextualName("verification check")
