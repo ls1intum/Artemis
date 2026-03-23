@@ -37,24 +37,9 @@ import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { ExerciseDetailsStudentActionsComponent } from './student-actions/exercise-details-student-actions.component';
-import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
-import { ProblemStatementComponent } from './problem-statement/problem-statement.component';
-import { ModelingEditorComponent } from 'app/modeling/shared/modeling-editor/modeling-editor.component';
-import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/programming/shared/actions/example-solution-repo-download/programming-exercise-example-solution-repo-download.component';
-import { ExerciseInfoComponent } from 'app/exercise/exercise-info/exercise-info.component';
-import { ComplaintsStudentViewComponent } from 'app/assessment/overview/complaints-for-students/complaints-student-view.component';
-import { RatingComponent } from 'app/exercise/rating/rating.component';
-import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
-import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
-import { LtiInitializerComponent } from './lti-initializer/lti-initializer.component';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ResetRepoButtonComponent } from 'app/core/course/overview/exercise-details/reset-repo-button/reset-repo-button.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
-import { CompetencyContributionComponent } from 'app/atlas/shared/competency-contribution/competency-contribution.component';
 import { ExerciseSplitPanelComponent } from './exercise-split-panel/exercise-split-panel.component';
 import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 
@@ -68,32 +53,7 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
-    imports: [
-        FaIconComponent,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
-        NgbDropdownItem,
-        RouterLink,
-        TranslateDirective,
-        ExerciseDetailsStudentActionsComponent,
-        ExerciseHeadersInformationComponent,
-        ExerciseHeaderComponent,
-        ProblemStatementComponent,
-        ResetRepoButtonComponent,
-        ModelingEditorComponent,
-        ProgrammingExerciseExampleSolutionRepoDownloadComponent,
-        NgbTooltip,
-        ExerciseInfoComponent,
-        ComplaintsStudentViewComponent,
-        RatingComponent,
-        IrisExerciseChatbotButtonComponent,
-        DiscussionSectionComponent,
-        LtiInitializerComponent,
-        ArtemisTranslatePipe,
-        CompetencyContributionComponent,
-        ExerciseSplitPanelComponent,
-    ],
+    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, ExerciseHeaderComponent, NgbTooltip, ExerciseSplitPanelComponent],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);

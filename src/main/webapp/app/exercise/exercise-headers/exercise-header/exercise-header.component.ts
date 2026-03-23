@@ -6,6 +6,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ExerciseHeadersInformationComponent } from 'app/exercise/exercise-headers/exercise-headers-information/exercise-headers-information.component';
 import { ExerciseHeaderActionsComponent } from 'app/exercise/exercise-headers/exercise-header-actions/exercise-header-actions.component';
 import { ParticipationMode, ParticipationModeToggleComponent } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
+import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 
 @Component({
     selector: 'jhi-exercise-header',
@@ -19,6 +20,7 @@ export class ExerciseHeaderComponent {
     readonly practiceParticipation = input<StudentParticipation>();
     readonly submissionPolicy = input<SubmissionPolicy>();
     readonly onSubmitExercise = input<() => void>();
+    readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = model<ParticipationMode>('graded');
 
     readonly exerciseIcon = computed(() => {

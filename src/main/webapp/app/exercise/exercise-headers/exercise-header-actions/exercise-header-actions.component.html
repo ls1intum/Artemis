@@ -1,4 +1,14 @@
 <div class="d-flex flex-wrap align-items-center gap-1 flex-shrink-0">
+    @if (plagiarismCaseInfo() && plagiarismCaseInfo()!.verdict !== PlagiarismVerdict.NO_PLAGIARISM) {
+        <a class="btn btn-danger btn-sm" [routerLink]="['/courses', courseId(), 'plagiarism-cases', plagiarismCaseInfo()!.id]">
+            @if (!plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase"></span>
+            }
+            @if (plagiarismCaseInfo()?.createdByContinuousPlagiarismControl) {
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCaseSignificantSimilarity"></span>
+            }
+        </a>
+    }
     @if (exercise().isAtLeastTutor) {
         <div ngbDropdown class="d-inline">
             <button id="instructor-actions-dropdown" class="btn btn-secondary" ngbDropdownToggle>

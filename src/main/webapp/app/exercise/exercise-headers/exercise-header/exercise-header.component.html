@@ -9,7 +9,13 @@
             }
             <jhi-participation-mode-toggle [mode]="participationMode()" (modeChange)="participationMode.set($event)" [hasPractice]="hasPractice()" />
         </div>
-        <jhi-exercise-header-actions class="w-auto" [courseId]="courseId()" [exercise]="exercise()" [onSubmitExercise]="onSubmitExercise()" />
+        <jhi-exercise-header-actions
+            class="w-auto"
+            [courseId]="courseId()"
+            [exercise]="exercise()"
+            [onSubmitExercise]="onSubmitExercise()"
+            [plagiarismCaseInfo]="plagiarismCaseInfo()"
+        />
     </div>
 
     <hr class="my-2" />
