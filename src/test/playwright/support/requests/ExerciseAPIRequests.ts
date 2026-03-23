@@ -152,6 +152,12 @@ export class ExerciseAPIRequests {
         return response.json();
     }
 
+    async deleteProgrammingExercise(exerciseId: number) {
+        await this.page.request.delete(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}`, {
+            params: { deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: true },
+        });
+    }
+
     /**
      * Retrieves the test cases for passed exercise and adjusts their visibility according.
      * <br>
@@ -170,15 +176,11 @@ export class ExerciseAPIRequests {
         const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${programmingExercise.id}/test-cases`);
         const testCases = (await response.json()) as unknown as ProgrammingExerciseTestCase[];
 
-        if (retryNumber > 0) {
-            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
-        }
-
-        await this.page.waitForTimeout(RETRY_DELAY);
-
         if (testCases.length > 0) {
             await this.updateProgrammingExerciseTestCaseVisibility(programmingExercise.id!, testCases, newVisibility);
         } else {
+            console.log(`Could not find test cases yet, retrying... (${retryNumber} / ${MAX_RETRIES})`);
+            await this.page.waitForTimeout(RETRY_DELAY);
             await this.changeProgrammingExerciseTestVisibility(programmingExercise, newVisibility, retryNumber + 1);
         }
     }
@@ -316,6 +318,24 @@ export class ExerciseAPIRequests {
     }
 
     /**
+     * Updates the assessment due date of a file upload exercise to be in the past,
+     * enabling complaints to be filed.
+     */
+    async updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = dayjs()) {
+        const newAssessmentDueDate = dayjsToString(due.subtract(1, 'minute'));
+        const newDueDate = dayjsToString(due.subtract(2, 'minutes'));
+        const newReleaseDate = dayjsToString(due.subtract(2, 'hours'));
+
+        const updateDto = {
+            ...exercise,
+            releaseDate: newReleaseDate,
+            dueDate: newDueDate,
+            assessmentDueDate: newAssessmentDueDate,
+        };
+        return this.page.request.put(UPLOAD_EXERCISE_BASE, { data: updateDto });
+    }
+
+    /**
      * Makes a file upload exercise submission for the specified exercise ID with the given file.
      *
      * @param exerciseId - The ID of the file upload exercise for which the submission is made.
@@ -355,7 +375,7 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
             newModelingExercise = Object.assign({}, templateCopy, body);
@@ -517,7 +537,7 @@ export class ExerciseAPIRequests {
         let url: string;
         let newQuizExercise: any;
         let quizBatches: any[] = [];
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
             const dates = {
                 releaseDate: dayjsToString(releaseDate),
@@ -715,6 +735,70 @@ export class ExerciseAPIRequests {
                 throw new Error(`Exercise type '${type}' is not supported yet!`);
         }
         return await this.page.request.put(url, { data: exercise });
+    }
+
+    /**
+     * Configures all SCA categories for a programming exercise to be GRADED via API.
+     * This is faster than configuring through the UI.
+     */
+    async configureScaCategoriesViaApi(exerciseId: number) {
+        const MAX_SCA_RETRIES = 20;
+        const SCA_RETRY_DELAY = 3000;
+
+        for (let attempt = 0; attempt < MAX_SCA_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`);
+            const categories = await response.json();
+
+            if (categories.length > 0) {
+                const updatedCategories = categories.map((cat: any) => ({
+                    ...cat,
+                    state: 'GRADED',
+                }));
+                await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/static-code-analysis-categories`, { data: updatedCategories });
+                return;
+            }
+
+            await this.page.waitForTimeout(SCA_RETRY_DELAY);
+        }
+        throw new Error(`SCA categories not found after ${MAX_SCA_RETRIES} retries`);
+    }
+
+    /**
+     * Waits for the solution build to complete by polling test cases.
+     * Test cases are populated after the solution build finishes.
+     * This is necessary to avoid a race condition where the student build
+     * completes before the solution build, resulting in score=0.
+     */
+    async waitForSolutionBuild(exerciseId: number) {
+        const MAX_RETRIES = 20;
+        const RETRY_DELAY = 3000;
+
+        for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+            const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+            const testCases = await response.json();
+
+            if (Array.isArray(testCases) && testCases.length > 0) {
+                return;
+            }
+
+            await this.page.waitForTimeout(RETRY_DELAY);
+        }
+        throw new Error(`Test cases not found after ${MAX_RETRIES} retries — solution build may not have completed`);
+    }
+
+    /**
+     * Sets the weight of specific test cases to 0 so they don't affect scoring.
+     * Useful for tests that fail on certain architectures (e.g., LeakSanitizer on ARM64).
+     */
+    async deactivateTestCases(exerciseId: number, testCaseNames: string[]) {
+        const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
+        const testCases = await response.json();
+        const updates = testCases
+            .filter((tc: any) => testCaseNames.includes(tc.testName))
+            .map((tc: any) => ({ id: tc.id, weight: 0, bonusMultiplier: tc.bonusMultiplier, bonusPoints: tc.bonusPoints, visibility: tc.visibility }));
+        if (updates.length > 0) {
+            await this.page.request.patch(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/update-test-cases`, { data: updates });
+        }
     }
 
     /**

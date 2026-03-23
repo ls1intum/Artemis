@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -83,22 +84,27 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check the consistency of a programming exercise.
+     * POST programming-exercises/{exerciseId}/consistency-check: Check the consistency of a programming exercise.
      * Returns a JSON body with the issues (can be empty list).
      *
-     * @param exerciseId the id of the programming exercise to check
+     * @param exerciseId        the id of the programming exercise to check
+     * @param skipThreadContext if {@code true}, skips injecting existing review-thread context into the AI prompts
+     *                              and skips creating new review-comment threads after the check (default: {@code false})
      * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
-    @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
+    @PostMapping("programming-exercises/{exerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId) {
+    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("exerciseId") long exerciseId,
+            @RequestParam(required = false, defaultValue = "false") boolean skipThreadContext) {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
-        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId);
-        try {
-            exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
-        }
-        catch (RuntimeException ex) {
-            log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId, skipThreadContext);
+        if (!skipThreadContext) {
+            try {
+                exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+            }
+            catch (RuntimeException ex) {
+                log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+            }
         }
         return ResponseEntity.ok(response);
     }
@@ -137,7 +143,8 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for quality issues.
+     * POST courses/{courseId}/checklist-analysis: Analyze the problem statement for checklist (learning goals, difficulty, quality).
+     * The three LLM calls (competency, difficulty, quality) run concurrently inside the service.
      * Blocking on the CompletableFuture here is acceptable because Artemis runs on virtual threads.
      *
      * @param courseId the id of the course
@@ -155,12 +162,11 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist.
-     * Currently only the QUALITY section is supported.
+     * POST courses/{courseId}/checklist-analysis/sections/{section}: Analyze a single section of the checklist (competencies, difficulty, or quality).
      * Blocking here is acceptable because Artemis runs on virtual threads.
      *
      * @param courseId the id of the course
-     * @param section  the section to analyze (currently only QUALITY)
+     * @param section  the section to analyze (COMPETENCIES, DIFFICULTY, or QUALITY)
      * @param request  the request containing problem statement and metadata
      * @return the analysis response with only the requested section populated
      */
@@ -171,7 +177,7 @@ public class HyperionProblemStatementResource {
         log.debug("REST request to Hyperion checklist section analysis [{}] for course [{}]", section, courseId);
         courseRepository.findByIdElseThrow(courseId);
         validateExerciseBelongsToCourse(request.exerciseId(), courseId);
-        var result = checklistService.analyzeSection(request, courseId, section).join();
+        var result = checklistService.analyzeSection(request, section, courseId).join();
         return ResponseEntity.ok(result);
     }
 
@@ -203,7 +209,7 @@ public class HyperionProblemStatementResource {
     public ResponseEntity<ChecklistActionResponseDTO> applyChecklistAction(@PathVariable long courseId, @Valid @RequestBody ChecklistActionRequestDTO request) {
         log.debug("REST request to Hyperion checklist action [{}] for course [{}]", request.actionType(), courseId);
         courseRepository.findByIdElseThrow(courseId);
-        var actionResult = checklistService.applyChecklistAction(request).join();
+        var actionResult = checklistService.applyChecklistAction(request, courseId).join();
         return ResponseEntity.ok(actionResult);
     }
 
