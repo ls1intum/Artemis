@@ -182,6 +182,12 @@ public class ProgrammingExerciseUpdateResource {
         final String originalBranch = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getBranch() : null;
         final String originalFeedbackSuggestionModule = programmingExerciseBeforeUpdate.getFeedbackSuggestionModule();
         final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
+        final ZonedDateTime originalReleaseDate = programmingExerciseBeforeUpdate.getReleaseDate();
+        final ZonedDateTime originalAssessmentDueDate = programmingExerciseBeforeUpdate.getAssessmentDueDate();
+        final String originalProblemStatement = programmingExerciseBeforeUpdate.getProblemStatement();
+        final String originalBuildPlanConfiguration = programmingExerciseBeforeUpdate.getBuildConfig() != null
+                ? programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration()
+                : null;
         final Double originalMaxPoints = programmingExerciseBeforeUpdate.getMaxPoints();
         final Double originalBonusPoints = programmingExerciseBeforeUpdate.getBonusPoints();
         // Save auxiliary repos before update() overwrites them on the same entity (L1 cache)
@@ -292,8 +298,8 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExerciseBeforeUpdate,
-                updatedProgrammingExercise, notificationText, originalCompetencyIds);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(updatedProgrammingExercise, notificationText,
+                originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
@@ -495,14 +501,11 @@ public class ProgrammingExerciseUpdateResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         // Capture original values BEFORE update() mutates the entity via L1 cache.
-        // updateProgrammingExercise() loads the same L1-cached entity, so it would see
-        // already-mutated "originals" and skip participant score / due date updates.
         final Double originalMaxPoints = programmingExercise.getMaxPoints();
         final Double originalBonusPoints = programmingExercise.getBonusPoints();
         final ZonedDateTime originalDueDate = programmingExercise.getDueDate();
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
-        // Compare with TextExerciseCreationUpdateResource.reEvaluateAndUpdateTextExercise.
         update(updateDTO, programmingExercise);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);

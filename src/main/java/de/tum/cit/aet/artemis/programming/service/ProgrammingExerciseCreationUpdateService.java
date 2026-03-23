@@ -302,20 +302,24 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise      the changed programming exercise with its new values
-     * @param notificationText                optional text about the changes for a notification
-     * @param originalCompetencyIds           the IDs of competencies originally linked to the exercise before the update
-     * @return the updates programming exercise from the database
+     * @param updatedProgrammingExercise     the changed programming exercise with its new values
+     * @param notificationText               optional text about the changes for a notification
+     * @param originalCompetencyIds          the IDs of competencies originally linked to the exercise before the update
+     * @param originalBuildPlanConfiguration the build plan configuration before the update (for change detection)
+     * @param originalReleaseDate            the release date before the update (for notification change detection)
+     * @param originalAssessmentDueDate      the assessment due date before the update (for notification change detection)
+     * @param originalProblemStatement       the problem statement before the update (for notification change detection)
+     * @return the updated programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText, Set<Long> originalCompetencyIds) throws JsonProcessingException {
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
+            @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
+            @Nullable String originalProblemStatement) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        programmingExerciseBuildPlanService.updateBuildPlanForExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
-        channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
@@ -326,17 +330,14 @@ public class ProgrammingExerciseCreationUpdateService {
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
-        // Note: individual due date removal is handled in ProgrammingExerciseUpdateResource
-        // using the saved originalDueDate (programmingExerciseBeforeUpdate is the same
-        // Hibernate L1 cache entity as updatedProgrammingExercise, so getDueDate() returns
-        // the already-mutated value)
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        if (programmingExerciseBeforeUpdate.isCourseExercise()) {
+        if (updatedProgrammingExercise.isCourseExercise()) {
             programmingExerciseCreationScheduleService.scheduleOperations(updatedProgrammingExercise.getId());
         }
 
-        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+        // Use scalar-based overload since the "before" entity is the same L1-cached object
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, originalProblemStatement, updatedProgrammingExercise, notificationText);
 
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(originalCompetencyIds, savedProgrammingExercise);
 

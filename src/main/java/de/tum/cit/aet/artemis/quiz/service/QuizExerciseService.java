@@ -345,7 +345,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         boolean recalculationNecessary = false;
         Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
-        Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream()
+        // Only map existing solutions (id != null); new solutions have id=null and are handled separately below
+        Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream().filter(dto -> dto.id() != null)
                 .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
         for (ShortAnswerSolution originalSolutionItem : originalSolution) {
             ShortAnswerSolutionReEvaluateDTO solutionDTOItem = solutionReEvaluateDTOMap.get(originalSolutionItem.getId());
@@ -453,7 +454,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         List<ShortAnswerMapping> mappingsToRemove = new ArrayList<>();
         for (ShortAnswerMapping originalMapping : originalQuestion.getCorrectMappings()) {
             boolean mappingExistsInDTO = saDTO.correctMappings().stream()
-                    .anyMatch(dto -> dto.spotId().equals(originalMapping.getSpot().getId()) && dto.solutionId().equals(originalMapping.getSolution().getId()));
+                    .anyMatch(dto -> dto.spotId().equals(originalMapping.getSpot().getId()) && Objects.equals(dto.solutionId(), originalMapping.getSolution().getId()));
             if (!mappingExistsInDTO) {
                 mappingsToRemove.add(originalMapping);
                 recalculationNecessary = true;
