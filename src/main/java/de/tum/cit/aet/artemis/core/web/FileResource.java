@@ -397,7 +397,9 @@ public class FileResource {
             return ResponseEntity.notFound().build();
         }
         var cacheControl = CacheControl.maxAge(Duration.ofDays(DAYS_TO_CACHE)).cachePublic();
-        return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).cacheControl(cacheControl).body(resource.getInputStream().readAllBytes());
+        try (var is = resource.getInputStream()) {
+            return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).cacheControl(cacheControl).body(is.readAllBytes());
+        }
     }
 
     /**

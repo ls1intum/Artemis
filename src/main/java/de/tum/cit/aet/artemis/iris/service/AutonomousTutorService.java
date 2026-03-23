@@ -28,7 +28,6 @@ import de.tum.cit.aet.artemis.communication.service.CourseNotificationService;
 import de.tum.cit.aet.artemis.communication.service.WebsocketMessagingService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggleService;
@@ -58,8 +57,6 @@ public class AutonomousTutorService {
 
     private final ConversationParticipantRepository conversationParticipantRepository;
 
-    private final CourseRepository courseRepository;
-
     private final FeatureToggleService featureToggleService;
 
     private final WebsocketMessagingService websocketMessagingService;
@@ -68,15 +65,13 @@ public class AutonomousTutorService {
 
     private final UserRepository userRepository;
 
-    @SuppressWarnings("PMD.ExcessiveParameterList")
     public AutonomousTutorService(IrisBotUserService irisBotUserService, ConversationMessageRepository conversationMessageRepository, AnswerPostRepository answerPostRepository,
-            ConversationParticipantRepository conversationParticipantRepository, CourseRepository courseRepository, FeatureToggleService featureToggleService,
-            WebsocketMessagingService websocketMessagingService, CourseNotificationService courseNotificationService, UserRepository userRepository) {
+            ConversationParticipantRepository conversationParticipantRepository, FeatureToggleService featureToggleService, WebsocketMessagingService websocketMessagingService,
+            CourseNotificationService courseNotificationService, UserRepository userRepository) {
         this.irisBotUserService = irisBotUserService;
         this.conversationMessageRepository = conversationMessageRepository;
         this.answerPostRepository = answerPostRepository;
         this.conversationParticipantRepository = conversationParticipantRepository;
-        this.courseRepository = courseRepository;
         this.featureToggleService = featureToggleService;
         this.websocketMessagingService = websocketMessagingService;
         this.courseNotificationService = courseNotificationService;
@@ -102,9 +97,13 @@ public class AutonomousTutorService {
         }
 
         Post originalPost = conversationMessageRepository.findMessagePostByIdElseThrow(job.postId());
-        Course course = courseRepository.findByIdElseThrow(job.courseId());
         User botUser = irisBotUserService.getIrisBotUser();
         Conversation conversation = originalPost.getConversation();
+        Course course = conversation.getCourse();
+        if (!Objects.equals(course.getId(), job.courseId())) {
+            log.warn("Skipping autonomous tutor job {} because post {} belongs to course {}, not {}", job.jobId(), job.postId(), course.getId(), job.courseId());
+            return;
+        }
 
         ensureBotIsParticipant(botUser, conversation);
 

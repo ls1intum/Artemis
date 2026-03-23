@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.iris.service.pyris.dto.autonomoustutor;
 
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -19,6 +20,11 @@ import de.tum.cit.aet.artemis.iris.service.pyris.dto.status.PyrisStageDTO;
  * @param tokens             tokens used for generating the response
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record PyrisAutonomousTutorPipelineStatusUpdateDTO(@Nullable String result, boolean shouldPostDirectly, @Nullable Double confidence, List<PyrisStageDTO> stages,
-        List<LLMRequest> tokens) {
+public record PyrisAutonomousTutorPipelineStatusUpdateDTO(@Nullable String result, boolean shouldPostDirectly, @Nullable Double confidence, @NonNull List<PyrisStageDTO> stages,
+        @NonNull List<LLMRequest> tokens) {
+
+    public PyrisAutonomousTutorPipelineStatusUpdateDTO {
+        stages = stages != null ? stages : List.of();
+        tokens = tokens != null ? tokens : List.of();
+    }
 }

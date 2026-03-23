@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepository;
@@ -89,6 +90,10 @@ public class IrisBotUserService {
         }
         catch (Exception e) {
             log.error("Failed to ensure Iris bot user exists", e);
+            throw new IllegalStateException("Failed to ensure Iris bot user exists", e);
+        }
+        finally {
+            SecurityContextHolder.clearContext();
         }
     }
 
