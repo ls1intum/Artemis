@@ -375,7 +375,7 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
             newModelingExercise = Object.assign({}, templateCopy, body);
@@ -537,7 +537,7 @@ export class ExerciseAPIRequests {
         let url: string;
         let newQuizExercise: any;
         let quizBatches: any[] = [];
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
             const dates = {
                 releaseDate: dayjsToString(releaseDate),
