@@ -52,6 +52,7 @@ const esModules = [
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
+    'ngx-extended-pdf-viewer',
     'ngx-infinite-scroll',
     'primeng',
     'rxjs/operators',
