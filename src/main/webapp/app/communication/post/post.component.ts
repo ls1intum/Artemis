@@ -5,6 +5,7 @@ import {
     Component,
     HostListener,
     OnChanges,
+    OnDestroy,
     OnInit,
     Renderer2,
     effect,
@@ -71,7 +72,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
         ForwardedMessageComponent,
     ],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked, OnDestroy {
     metisService = inject(MetisService);
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
@@ -248,6 +249,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     onClickOutside() {
         this.showDropdown = false;
         this.enableBodyScroll();
+    }
+
+    override ngOnDestroy() {
+        super.ngOnDestroy();
+        // Clear static reference to prevent memory leaks when component is destroyed
+        if (PostComponent.activeDropdownPost === this) {
+            PostComponent.activeDropdownPost = undefined;
+        }
+        // Restore scroll in case the component is destroyed while the dropdown is open
+        if (this.showDropdown) {
+            this.enableBodyScroll();
+        }
     }
 
     /**
