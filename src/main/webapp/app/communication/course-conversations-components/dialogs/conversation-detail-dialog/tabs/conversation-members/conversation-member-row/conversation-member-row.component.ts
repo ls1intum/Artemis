@@ -26,6 +26,7 @@ import { ChannelService } from 'app/communication/conversations/service/channel.
 import { GroupChatService } from 'app/communication/conversations/service/group-chat.service';
 import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/communication/conversations/conversation-permissions.utils';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 @Component({
     selector: '[jhi-conversation-member-row]',
@@ -257,10 +258,11 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         confirmedCallback: () => Observable<HttpResponse<void>>,
     ) {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentRef?.setInput('translationParameters', translationParams);
-        modalRef.componentRef?.setInput('translationKeys', translationKeys);
-        modalRef.componentRef?.setInput('canBeUndone', true);
-        modalRef.componentRef?.setInput('isDangerousAction', true);
+        const componentRef = getModalContentComponentRef<GenericConfirmationDialogComponent>(modalRef);
+        componentRef?.setInput('translationParameters', translationParams);
+        componentRef?.setInput('translationKeys', translationKeys);
+        componentRef?.setInput('canBeUndone', true);
+        componentRef?.setInput('isDangerousAction', true);
         modalRef.componentInstance.initialize();
 
         from(modalRef.result)

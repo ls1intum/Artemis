@@ -31,6 +31,7 @@ import { faVolumeXmark } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationSettingService } from 'app/communication/course-notification/course-notification-setting.service';
 import { CourseNotificationSettingInfo } from 'app/communication/shared/entities/course-notification/course-notification-setting-info';
 import { RouterLink } from '@angular/router';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 @Component({
     selector: 'jhi-conversation-info',
@@ -159,14 +160,15 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         translationKeys: GenericUpdateTextPropertyTranslationKeys,
     ) {
         const modalRef: NgbModalRef = this.modalService.open(GenericUpdateTextPropertyDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentRef?.setInput('propertyName', propertyName);
-        modalRef.componentRef?.setInput('maxPropertyLength', maxLength);
-        modalRef.componentRef?.setInput('translationKeys', translationKeys);
-        modalRef.componentRef?.setInput('isRequired', isRequired);
-        modalRef.componentRef?.setInput('regexPattern', regexPattern);
+        const componentRef = getModalContentComponentRef<GenericUpdateTextPropertyDialogComponent>(modalRef);
+        componentRef?.setInput('propertyName', propertyName);
+        componentRef?.setInput('maxPropertyLength', maxLength);
+        componentRef?.setInput('translationKeys', translationKeys);
+        componentRef?.setInput('isRequired', isRequired);
+        componentRef?.setInput('regexPattern', regexPattern);
         const property = get(channelOrGroupChat, propertyName);
         if (property && typeof property === 'string' && property.length > 0) {
-            modalRef.componentRef?.setInput('initialValue', property);
+            componentRef?.setInput('initialValue', property);
         }
         modalRef.componentInstance.initialize();
         from(modalRef.result)

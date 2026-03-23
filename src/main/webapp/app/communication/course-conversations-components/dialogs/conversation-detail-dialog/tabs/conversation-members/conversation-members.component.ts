@@ -20,6 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { canAddUsersToConversation } from 'app/communication/conversations/conversation-permissions.utils';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/communication/conversations/service/conversation.service';
 import { ConversationAddUsersDialogComponent } from 'app/communication/course-conversations-components/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 interface SearchQuery {
     searchTerm: string;
@@ -79,8 +80,9 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     openAddUsersDialog(event: MouseEvent) {
         event.stopPropagation();
         const modalRef: NgbModalRef = this.modalService.open(ConversationAddUsersDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentRef?.setInput('course', this.course());
-        modalRef.componentRef?.setInput('activeConversation', this.activeConversation());
+        const componentRef = getModalContentComponentRef<ConversationAddUsersDialogComponent>(modalRef);
+        componentRef?.setInput('course', this.course());
+        componentRef?.setInput('activeConversation', this.activeConversation());
         modalRef.componentInstance.initialize();
         from(modalRef.result)
             .pipe(

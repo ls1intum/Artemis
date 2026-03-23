@@ -23,6 +23,7 @@ import {
     canDeleteChannel,
     canLeaveConversation,
 } from 'app/communication/conversations/conversation-permissions.utils';
+import { getModalContentComponentRef } from 'app/communication/course-conversations-components/other/modal.util';
 
 @Component({
     selector: 'jhi-conversation-settings',
@@ -165,9 +166,10 @@ export class ConversationSettingsComponent implements OnInit, OnDestroy {
 
     private createModal(channel: ChannelDTO, keys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string }): NgbModalRef {
         const modalRef: NgbModalRef = this.modalService.open(GenericConfirmationDialogComponent, defaultSecondLayerDialogOptions);
-        modalRef.componentRef?.setInput('translationParameters', { channelName: channel.name });
-        modalRef.componentRef?.setInput('translationKeys', keys);
-        modalRef.componentRef?.setInput('canBeUndone', true);
+        const componentRef = getModalContentComponentRef<GenericConfirmationDialogComponent>(modalRef);
+        componentRef?.setInput('translationParameters', { channelName: channel.name });
+        componentRef?.setInput('translationKeys', keys);
+        componentRef?.setInput('canBeUndone', true);
         modalRef.componentInstance.initialize();
         return modalRef;
     }
