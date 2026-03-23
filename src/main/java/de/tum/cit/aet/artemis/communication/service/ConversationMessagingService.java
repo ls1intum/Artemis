@@ -15,7 +15,6 @@ import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -58,7 +57,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
-import de.tum.cit.aet.artemis.iris.service.AutonomousTutorForwardingService;
+import de.tum.cit.aet.artemis.iris.api.AutonomousTutorApi;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -79,14 +78,13 @@ public class ConversationMessagingService extends PostingService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
-    @Autowired(required = false)
-    private AutonomousTutorForwardingService autonomousTutorForwardingService;
+    private final Optional<AutonomousTutorApi> autonomousTutorApi;
 
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, ConversationMessageRepository conversationMessageRepository,
             AuthorizationCheckService authorizationCheckService, WebsocketMessagingService websocketMessagingService, UserRepository userRepository,
             ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService,
             SavedPostRepository savedPostRepository, CourseNotificationService courseNotificationService, PostRepository postRepository,
-            SingleUserNotificationService singleUserNotificationService) {
+            SingleUserNotificationService singleUserNotificationService, Optional<AutonomousTutorApi> autonomousTutorApi) {
         super(courseRepository, userRepository, exerciseRepository, authorizationCheckService, websocketMessagingService, conversationParticipantRepository, savedPostRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
@@ -94,6 +92,7 @@ public class ConversationMessagingService extends PostingService {
         this.courseNotificationService = courseNotificationService;
         this.postRepository = postRepository;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.autonomousTutorApi = autonomousTutorApi;
     }
 
     /**
@@ -160,9 +159,7 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = createdConversationMessage.completeConversation();
         Course course = conversation.getCourse();
 
-        if (autonomousTutorForwardingService != null) {
-            autonomousTutorForwardingService.onNewMessage(createdMessage, conversation, course);
-        }
+        autonomousTutorApi.ifPresent(api -> api.onNewMessage(createdMessage, conversation, course));
 
         // Websocket notification 1: this notifies everyone including the author that there is a new message
         Set<ConversationNotificationRecipientSummary> recipientSummaries;
