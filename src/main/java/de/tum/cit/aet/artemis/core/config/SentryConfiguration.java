@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.core.config;
 import java.util.List;
 import java.util.Optional;
 
+import io.sentry.protocol.SentryException;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
@@ -125,10 +126,10 @@ public class SentryConfiguration {
     private String scrubStringMessage(@NotNull String unscrubbed) {
         // Scrub user data from string
         // Patterns:
-        // - user=barney_young => user=[^\b]+?\b
+        // - user=barney_young => user=\S+
         // - User{...} => User{[^}]*}
         // - emails => [A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}
-        List<String> piiPatterns = List.of("user=[^\b]+?\\b", "User{[^}]*}", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
+        List<String> piiPatterns = List.of("user=\\S+", "User{[^}]*}", "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
         for (String pattern : piiPatterns) {
             unscrubbed = unscrubbed.replaceAll(pattern, "");
         }
@@ -140,7 +141,7 @@ public class SentryConfiguration {
         // To ensure we're not accidentally transmitting them,
         // we use a heuristic to filter out this part of the URL.
         // We assume the part between the last dash and .git to contain a username.
-        String scrubbed = unscrubbed.replaceAll("\\/git\\/([A-Z0-9]+)\\/([a-z0-9]+)(-[^.]+)\\.git", "/git/$1/$2.git");
+        String scrubbed = unscrubbed.replaceAll("\\/git\\/([A-Z0-9]+)\\/([a-z0-9]+)-[^/]+\\.git", "/git/$1/$2.git");
         // False positives: tests, exercise & solution repositories
         if (unscrubbed.contains("-tests.git") || unscrubbed.contains("-exercise.git") || unscrubbed.contains("-solution.git")) {
             return unscrubbed;
@@ -165,6 +166,14 @@ public class SentryConfiguration {
                 String message = errorEvent.getMessage().getMessage();
                 if (errorEvent.getMessage().getMessage() != null) {
                     errorEvent.getMessage().setMessage(scrubStringMessage(message));
+                }
+            }
+            if (errorEvent.getExceptions() != null) {
+                for (SentryException ex : errorEvent.getExceptions()) {
+                    String value = ex.getValue();
+                    if (value != null) {
+                        ex.setValue(scrubStringMessage(value));
+                    }
                 }
             }
         }
