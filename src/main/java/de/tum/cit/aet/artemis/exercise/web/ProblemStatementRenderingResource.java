@@ -81,12 +81,14 @@ public class ProblemStatementRenderingResource {
      *
      * @param exerciseId    the id of the exercise
      * @param selfContained if true, PlantUML diagrams are inlined as SVG (default: false)
+     * @param interactive   if true and selfContained is true, includes vanilla JS for task feedback popups (default: true)
      * @return the rendered problem statement DTO
      */
     @GetMapping(value = "exercises/{exerciseId}/problem-statement/rendered", produces = MediaType.APPLICATION_JSON_VALUE)
     @EnforceAtLeastStudent
     @AllowedTools(ToolTokenType.SCORPIO)
-    public ResponseEntity<RenderedProblemStatementDTO> getRenderedProblemStatement(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean selfContained) {
+    public ResponseEntity<RenderedProblemStatementDTO> getRenderedProblemStatement(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean selfContained,
+            @RequestParam(defaultValue = "true") boolean interactive) {
 
         log.debug("REST request to get rendered problem statement for Exercise : {}", exerciseId);
 
@@ -120,7 +122,7 @@ public class ProblemStatementRenderingResource {
         var testResults = fetchTestResults(exercise, user);
         String langKey = user.getLangKey();
         Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
-        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, testResults, locale);
+        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, interactive, testResults, locale);
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePrivate()).body(result);
     }

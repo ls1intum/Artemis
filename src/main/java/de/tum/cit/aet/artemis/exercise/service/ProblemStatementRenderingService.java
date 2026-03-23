@@ -64,6 +64,18 @@ public class ProblemStatementRenderingService {
 
     private static final @Nullable String SELF_CONTAINED_CSS = loadSelfContainedCss();
 
+    private static final @Nullable String INTERACTIVE_JS = loadInteractiveJs();
+
+    /**
+     * CSS overrides to remove click affordances when interactive mode is disabled.
+     */
+    private static final String NON_INTERACTIVE_CSS_OVERRIDES = """
+            <style>
+            .artemis-task{cursor:default}
+            .artemis-task-stats{text-decoration:none}
+            </style>
+            """.strip();
+
     // @formatter:off
     private static final String EMBEDDED_CSS = """
             <style>
@@ -149,19 +161,20 @@ public class ProblemStatementRenderingService {
      *
      * @param exercise      the exercise whose problem statement should be rendered
      * @param selfContained if true, PlantUML diagrams are inlined as SVG; otherwise URLs are provided
+     * @param interactive   if true and selfContained is true, includes vanilla JS for task feedback popups
      * @param testResults   map of testCaseId → passed (true/false), or null if no results available
      * @param locale        the locale for i18n of user-visible text
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
+    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, boolean interactive, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
         String problemStatement = exercise.getProblemStatement();
         boolean useGraalJs = useMarkdownIt && markdownItRenderingService.isAvailable();
         String diagramMode = selfContained ? "inline" : "url";
 
         if (problemStatement == null || problemStatement.isBlank()) {
             String rendererVersion = useGraalJs ? GRAALJS_VERSION : COMMONMARK_VERSION;
-            return new RenderedProblemStatementDTO("", computeHash(""), rendererVersion, new AssetRequirementsDTO("absent", "absent", diagramMode, List.of()), List.of(),
-                    List.of());
+            return new RenderedProblemStatementDTO("", computeHash(""), rendererVersion, new AssetRequirementsDTO("absent", "absent", diagramMode, List.of()), List.of(), List.of(),
+                    null);
         }
 
         String processedMarkdown = problemStatement;
@@ -223,10 +236,19 @@ public class ProblemStatementRenderingService {
             assets = new AssetRequirementsDTO(assets.katex(), assets.highlighting(), assets.diagramMode(), List.of());
         }
 
-        // Step 9: Compute content hash and build DTO
-        String contentHash = computeHash(html);
+        // Step 9: Determine interactive script (only for selfContained + interactive + JS loaded)
+        // If JS resource failed to load, treat as non-interactive to avoid broken click affordances
+        String interactiveScript = (selfContained && interactive && INTERACTIVE_JS != null) ? INTERACTIVE_JS : null;
 
-        return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams);
+        // Step 10: When selfContained but not effectively interactive, override CSS to remove click affordances
+        if (selfContained && interactiveScript == null) {
+            html = NON_INTERACTIVE_CSS_OVERRIDES + html;
+        }
+
+        // Step 11: Compute content hash (includes interactiveScript so ETag covers the full response)
+        String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
+
+        return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams, interactiveScript);
     }
 
     private String renderWithGraalJs(String markdown) {
@@ -278,6 +300,9 @@ public class ProblemStatementRenderingService {
                     // that max-width:100% + height:auto can scale the diagram proportionally.
                     inlineSvg = inlineSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
                     inlineSvg = inlineSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
+                    // PlantUML sets background:#FFFFFF on the SVG, making it opaque. Remove it so
+                    // the diagram adapts to whatever background the consumer provides (e.g. dark mode).
+                    inlineSvg = inlineSvg.replace("background:#FFFFFF;", "");
                 }
                 catch (IOException e) {
                     log.error("Failed to generate inline SVG for diagram {} in exercise {}", diagramId, exerciseId, e);
@@ -597,5 +622,15 @@ public class ProblemStatementRenderingService {
         }
         sb.append("</style>\n");
         return sb.toString();
+    }
+
+    private static @Nullable String loadInteractiveJs() {
+        try (InputStream is = new ClassPathResource("problem-statement-js/interactive.js").getInputStream()) {
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        }
+        catch (IOException e) {
+            log.warn("Could not load interactive JS resource for problem statement rendering");
+            return null;
+        }
     }
 }

@@ -52,6 +52,10 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         return renderUrl(exerciseId) + "?selfContained=" + selfContained;
     }
 
+    private String renderUrl(long exerciseId, boolean selfContained, boolean interactive) {
+        return renderUrl(exerciseId) + "?selfContained=" + selfContained + "&interactive=" + interactive;
+    }
+
     private TextExercise createCourseExerciseWithProblemStatement(String problemStatement) {
         Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
         TextExercise exercise = ExerciseUtilService.getFirstExerciseWithType(course, TextExercise.class);
@@ -490,6 +494,62 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturn404WhenExerciseDoesNotExist() throws Exception {
         request.get(renderUrl(999999L), HttpStatus.NOT_FOUND, RenderedProblemStatementDTO.class);
+    }
+
+    // --- Interactive script tests ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldIncludeInteractiveScriptWhenSelfContained() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("# Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.interactiveScript()).isNotNull();
+        assertThat(result.interactiveScript()).contains("artemis-feedback-popup");
+        assertThat(result.interactiveScript()).contains("DOMContentLoaded");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldExcludeInteractiveScriptWhenInteractiveFalse() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("# Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true, false), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.interactiveScript()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldExcludeInteractiveScriptWhenNotSelfContained() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("# Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), false), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.interactiveScript()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRemoveClickAffordanceWhenNonInteractive() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("# Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true, false), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).contains("cursor:default");
+        assertThat(result.html()).contains("text-decoration:none");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldKeepClickAffordanceWhenInteractive() throws Exception {
+        TextExercise exercise = createCourseExerciseWithProblemStatement("# Hello");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true, true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).doesNotContain("cursor:default");
+        assertThat(result.html()).contains("cursor:pointer");
     }
 
     @Test
