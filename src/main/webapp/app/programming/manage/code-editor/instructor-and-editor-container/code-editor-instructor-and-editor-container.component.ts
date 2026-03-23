@@ -425,14 +425,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.isGeneratingCode()) {
             return;
         }
-        if (this.selectedRepository !== RepositoryType.TEMPLATE && this.selectedRepository !== RepositoryType.SOLUTION && this.selectedRepository !== RepositoryType.TESTS) {
-            return;
-        }
-        const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
-        if (!repositoryType) {
-            return;
-        }
-        const request = this.createCodeGenerationRequest(repositoryType, true);
+        const request = this.createCheckOnlyCodeGenerationRequest();
         const requestId = this.restoreRequestId;
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({
             next: (res) => {
@@ -440,6 +433,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                     return;
                 }
                 if (res?.jobId) {
+                    const repositoryType = res.repositoryType ? this.mapRepositoryTypeToCodeGenerationRequest(res.repositoryType) : undefined;
+                    if (!repositoryType) {
+                        this.clearJobSubscription(true);
+                        return;
+                    }
                     this.initializeCodeGenerationRunStatuses([repositoryType]);
                     this.activeCodeGenerationRepository = repositoryType;
                     this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, state: 'running' }));

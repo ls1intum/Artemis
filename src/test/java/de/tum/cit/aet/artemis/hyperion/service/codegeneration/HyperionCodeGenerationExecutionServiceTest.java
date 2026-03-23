@@ -233,7 +233,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
 
         assertThat(result).isEqualTo(buildResult);
-        verify(publisher).done(true, 2, "Solution files were generated and committed to the solution repository, but the latest build did not pass.");
+        verify(publisher).done(true, 2, "Solution files were generated and committed to the solution repository, but the build failed.");
     }
 
     @Test
@@ -263,7 +263,8 @@ class HyperionCodeGenerationExecutionServiceTest {
         Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
 
         assertThat(result).isNull();
-        verify(publisher).done(true, 2, "Solution files were generated and committed to the solution repository, but the build failed.");
+        verify(publisher).done(true, 2,
+                "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
     }
 
     @Test
@@ -322,6 +323,15 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isEqualTo(
                 "1. [HIGH] METHOD_RETURN_TYPE_MISMATCH: desc\n   Suggested fix: fix\n   Locations: PROBLEM_STATEMENT:problem_statement.md:1-2; TEMPLATE_REPOSITORY:src/Main.java:5-7");
+    }
+
+    @Test
+    void buildConsistencyIssuesPrompt_withRuntimeException_returnsUnavailableMarker() {
+        when(consistencyCheckService.checkConsistency(exercise.getId())).thenThrow(new RuntimeException("consistency service unavailable"));
+
+        String result = ReflectionTestUtils.invokeMethod(service, "buildConsistencyIssuesPrompt", exercise);
+
+        assertThat(result).isEqualTo("Unavailable (consistency check failed)");
     }
 
     @Test
@@ -448,14 +458,54 @@ class HyperionCodeGenerationExecutionServiceTest {
     }
 
     @Test
-    void waitForBuildResult_withNoParticipation_returnsNull() {
+    void waitForBuildResult_withNoParticipation_returnsParticipationNotFoundOutcome() {
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
         when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
 
-        Result resultSolution = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
-        Result resultTemplate = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
+        Object resultSolution = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+        Object resultTemplate = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.TEMPLATE);
 
-        assertThat(resultSolution).isNull();
-        assertThat(resultTemplate).isNull();
+        assertThat(resultSolution).hasFieldOrPropertyWithValue("result", null);
+        assertThat(ReflectionTestUtils.getField(resultSolution, "state")).hasToString("PARTICIPATION_NOT_FOUND");
+        assertThat(resultTemplate).hasFieldOrPropertyWithValue("result", null);
+        assertThat(ReflectionTestUtils.getField(resultTemplate, "state")).hasToString("PARTICIPATION_NOT_FOUND");
+    }
+
+    @Test
+    void waitForBuildResult_withSuccessfulResult_returnsSuccessOutcome() {
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(99L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.isSuccessful()).thenReturn(true);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("SUCCESS");
+    }
+
+    @Test
+    void waitForBuildResult_withFailedResult_returnsFailedOutcome() {
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(100L);
+        ProgrammingSubmission submission = mock(ProgrammingSubmission.class);
+        Result buildResult = mock(Result.class);
+
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.empty());
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(100L, "commit-hash")).thenReturn(submission);
+        when(resultRepository.findLatestResultWithFeedbacksAndTestcasesForSubmission(submission.getId())).thenReturn(Optional.of(buildResult));
+        when(buildResult.isSuccessful()).thenReturn(false);
+
+        Object outcome = ReflectionTestUtils.invokeMethod(service, "waitForBuildResult", exercise, "commit-hash", RepositoryType.SOLUTION);
+
+        assertThat(ReflectionTestUtils.getField(outcome, "result")).isEqualTo(buildResult);
+        assertThat(ReflectionTestUtils.getField(outcome, "state")).hasToString("FAILED");
     }
 }

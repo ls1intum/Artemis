@@ -72,6 +72,13 @@ public class HyperionCodeGenerationExecutionService {
     private record RepositorySetupResult(Repository repository, String originalCommitHash, boolean success) {
     }
 
+    private enum BuildResultState {
+        SUCCESS, FAILED, TIMED_OUT, PARTICIPATION_NOT_FOUND,
+    }
+
+    private record BuildResultOutcome(Result result, BuildResultState state) {
+    }
+
     private final String defaultBranch;
 
     private final GitService gitService;
@@ -301,6 +308,7 @@ public class HyperionCodeGenerationExecutionService {
         LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
         String lastBuildLogs = null;
         Result result = null;
+        BuildResultOutcome buildResultOutcome = new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
         String lastCommitHash = null;
         int attemptsUsed = 0;
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
@@ -329,7 +337,8 @@ public class HyperionCodeGenerationExecutionService {
                     String newCommitHash = commitAndGetHash(setupResult.repository(), user, repositoryUri, exercise, repositoryType);
                     lastCommitHash = newCommitHash;
                     generatedFilesCommitted = true;
-                    result = waitForBuildResult(exercise, newCommitHash, repositoryType);
+                    buildResultOutcome = waitForBuildResult(exercise, newCommitHash, repositoryType);
+                    result = buildResultOutcome.result();
                 }
 
                 publisher.progress(i + 1);
@@ -368,13 +377,13 @@ public class HyperionCodeGenerationExecutionService {
 
         boolean success = generatedFilesCommitted;
         int reportedAttempts = attemptsUsed == 0 ? MAX_ITERATIONS : attemptsUsed;
-        String completionMessage = buildCompletionMessage(repositoryType, generatedFilesCommitted, result);
+        String completionMessage = buildCompletionMessage(repositoryType, generatedFilesCommitted, buildResultOutcome);
         publisher.done(success, reportedAttempts, completionMessage);
 
         return result;
     }
 
-    private String buildCompletionMessage(RepositoryType repositoryType, boolean generatedFilesCommitted, Result result) {
+    private String buildCompletionMessage(RepositoryType repositoryType, boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
         if (!generatedFilesCommitted) {
             return switch (repositoryType) {
                 case TEMPLATE -> "Template generation did not produce any committed files.";
@@ -384,24 +393,33 @@ public class HyperionCodeGenerationExecutionService {
             };
         }
 
-        if (result == null) {
-            return switch (repositoryType) {
+        return switch (buildResultOutcome.state()) {
+            case SUCCESS -> switch (repositoryType) {
+                case TEMPLATE -> "Template files were generated and committed to the template repository.";
+                case SOLUTION -> "Solution files were generated and committed to the solution repository.";
+                case TESTS -> "Test files were generated and committed to the test repository.";
+                default -> "Files were generated and committed.";
+            };
+            case FAILED -> switch (repositoryType) {
                 case TEMPLATE -> "Template files were generated and committed to the template repository, but the build failed.";
                 case SOLUTION -> "Solution files were generated and committed to the solution repository, but the build failed.";
                 case TESTS -> "Test files were generated and committed to the test repository, but the build failed.";
                 default -> "Files were generated and committed, but the build failed.";
             };
-        }
-
-        boolean buildSuccessful = result.isSuccessful();
-        return switch (repositoryType) {
-            case TEMPLATE -> buildSuccessful ? "Template files were generated and committed to the template repository."
-                    : "Template files were generated and committed to the template repository, but the latest build did not pass.";
-            case SOLUTION -> buildSuccessful ? "Solution files were generated and committed to the solution repository."
-                    : "Solution files were generated and committed to the solution repository, but the latest build did not pass.";
-            case TESTS -> buildSuccessful ? "Test files were generated and committed to the test repository."
-                    : "Test files were generated and committed to the test repository, but the latest build did not pass.";
-            default -> buildSuccessful ? "Files were generated and committed." : "Files were generated and committed, but the latest build did not pass.";
+            case TIMED_OUT -> switch (repositoryType) {
+                case TEMPLATE -> "Template files were generated and committed to the template repository, but the build result is not available yet because polling timed out.";
+                case SOLUTION -> "Solution files were generated and committed to the solution repository, but the build result is not available yet because polling timed out.";
+                case TESTS -> "Test files were generated and committed to the test repository, but the build result is not available yet because polling timed out.";
+                default -> "Files were generated and committed, but the build result is not available yet because polling timed out.";
+            };
+            case PARTICIPATION_NOT_FOUND -> switch (repositoryType) {
+                case TEMPLATE ->
+                    "Template files were generated and committed to the template repository, but Hyperion could not resolve the participation needed to read the build result.";
+                case SOLUTION ->
+                    "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.";
+                case TESTS -> "Test files were generated and committed to the test repository, but Hyperion could not resolve the participation needed to read the build result.";
+                default -> "Files were generated and committed, but Hyperion could not resolve the participation needed to read the build result.";
+            };
         };
     }
 
@@ -504,7 +522,7 @@ public class HyperionCodeGenerationExecutionService {
      * @return the build result if found within timeout, null if timed out
      * @throws InterruptedException if the waiting thread is interrupted
      */
-    private Result waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType) throws InterruptedException {
+    private BuildResultOutcome waitForBuildResult(ProgrammingExercise exercise, String commitHash, RepositoryType repositoryType) throws InterruptedException {
         long startTime = System.currentTimeMillis();
         TemplateProgrammingExerciseParticipation templateParticipation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())
                 .orElse(null);
@@ -518,7 +536,7 @@ public class HyperionCodeGenerationExecutionService {
         };
         if (participation == null) {
             log.warn("Could not find participation for repoType {} in exercise {}", repositoryType, exercise.getId());
-            return null;
+            return new BuildResultOutcome(null, BuildResultState.PARTICIPATION_NOT_FOUND);
         }
 
         int pollCount = 0;
@@ -532,7 +550,7 @@ public class HyperionCodeGenerationExecutionService {
 
                     if (result.isPresent()) {
                         log.debug("Found build result for commit {} after {} polls ({}ms)", commitHash, pollCount, System.currentTimeMillis() - startTime);
-                        return result.get();
+                        return new BuildResultOutcome(result.get(), result.get().isSuccessful() ? BuildResultState.SUCCESS : BuildResultState.FAILED);
                     }
                 }
 
@@ -550,6 +568,6 @@ public class HyperionCodeGenerationExecutionService {
             }
         }
         log.warn("Timed out waiting for build result for commit {} in exercise {} after {} polls ({}ms)", commitHash, exercise.getId(), pollCount, TIMEOUT);
-        return null; // Timeout
+        return new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
     }
 }
