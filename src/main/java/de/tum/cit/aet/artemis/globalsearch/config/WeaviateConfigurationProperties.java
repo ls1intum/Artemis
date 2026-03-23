@@ -20,7 +20,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
  * @param collectionPrefix  prefix prepended to all Weaviate collection names to avoid naming conflicts (e.g. with Pyris collections)
  * @param vectorizerModule  the vectorizer module to use: "none" for self-provided vectors, "text2vec-transformers" for automatic embeddings, "text2vec-openai" for
  *                              OpenAI-compatible APIs (e.g. Ollama)
- * @param apiEmbeddingModel the embedding model name (e.g. "qwen3-embedding:8b"), required when using text2vec-openai
+ * @param apiEmbeddingModel the embedding model name (e.g. "qwen3-embedding:8b"), optional when using text2vec-openai; if omitted, the server's default model is used
  * @param apiBaseUrl        the base URL for the OpenAI-compatible API (e.g. Ollama), required when using text2vec-openai
  * @param apiKey            the API key for the OpenAI-compatible API, required when using text2vec-openai (can be a dummy value for Ollama)
  * @param authApiKey        the API key for authenticating against the Weaviate server itself (optional; when set, anonymous access should be disabled on the server)
