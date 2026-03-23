@@ -1,4 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -13,8 +15,12 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
 import { ForwardedMessageComponent } from 'app/communication/forwarded-message/forwarded-message.component';
+import { MetisService } from 'app/communication/service/metis.service';
+import { MockMetisService } from 'test/helpers/mocks/service/mock-metis-service.service';
 
 describe('ForwardedMessageComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ForwardedMessageComponent;
     let fixture: ComponentFixture<ForwardedMessageComponent>;
 
@@ -30,6 +36,15 @@ describe('ForwardedMessageComponent', () => {
         post: mockPost,
     } as AnswerPost;
 
+    beforeEach(() => {
+        vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [
@@ -40,8 +55,14 @@ describe('ForwardedMessageComponent', () => {
                 MockComponent(ProfilePictureComponent),
                 MockComponent(PostingContentComponent),
             ],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: MetisService, useClass: MockMetisService },
+            ],
+        }).overrideComponent(ForwardedMessageComponent, {
+            remove: { imports: [ProfilePictureComponent, PostingContentComponent, ArtemisTranslatePipe, ArtemisDatePipe] },
+            add: { imports: [MockComponent(ProfilePictureComponent), MockComponent(PostingContentComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)] },
+        });
 
         fixture = TestBed.createComponent(ForwardedMessageComponent);
         component = fixture.componentInstance;
@@ -55,8 +76,8 @@ describe('ForwardedMessageComponent', () => {
     });
 
     it('should call updateSourceName and update todayFlag when originalPostDetails changes', async () => {
-        jest.spyOn(component, 'updateSourceName');
-        jest.spyOn(component, 'getTodayFlag');
+        vi.spyOn(component, 'updateSourceName');
+        vi.spyOn(component, 'getTodayFlag');
 
         fixture.componentRef.setInput('originalPostDetails', mockPost);
         fixture.detectChanges();
@@ -65,7 +86,7 @@ describe('ForwardedMessageComponent', () => {
 
         expect(component.updateSourceName).toHaveBeenCalled();
         expect(component.getTodayFlag).toHaveBeenCalled();
-        expect(component.postingIsOfToday).toBeFalse();
+        expect(component.postingIsOfToday).toBe(false);
     });
 
     it('should set sourceName correctly for a channel post', () => {
@@ -99,14 +120,14 @@ describe('ForwardedMessageComponent', () => {
     it('should set todayFlag to "artemisApp.metis.today" if post is created today', () => {
         fixture.componentRef.setInput('originalPostDetails', mockAnswerPost);
         fixture.detectChanges();
-        expect(component.postingIsOfToday).toBeTrue();
+        expect(component.postingIsOfToday).toBe(true);
         expect(component.todayFlag).toBe('artemisApp.metis.today');
     });
 
     it('should set todayFlag to undefined if post is not created today', () => {
         fixture.componentRef.setInput('originalPostDetails', mockPost);
         fixture.detectChanges();
-        expect(component.postingIsOfToday).toBeFalse();
+        expect(component.postingIsOfToday).toBe(false);
         expect(component.todayFlag).toBeUndefined();
     });
 
@@ -177,7 +198,7 @@ describe('ForwardedMessageComponent', () => {
     });
 
     it('should emit onNavigateToPost event when onTriggerNavigateToPost is called', () => {
-        const spy = jest.spyOn(component.onNavigateToPost, 'emit');
+        const spy = vi.spyOn(component.onNavigateToPost, 'emit');
         fixture.componentRef.setInput('originalPostDetails', mockPost);
         component.onTriggerNavigateToPost();
 
@@ -233,11 +254,11 @@ describe('ForwardedMessageComponent', () => {
     });
 
     it('should toggle showFullForwardedMessage when toggleShowFullForwardedMessage is called', () => {
-        expect(component.showFullForwardedMessage).toBeFalse();
+        expect(component.showFullForwardedMessage).toBe(false);
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBeTrue();
+        expect(component.showFullForwardedMessage).toBe(true);
         component.toggleShowFullForwardedMessage();
-        expect(component.showFullForwardedMessage).toBeFalse();
+        expect(component.showFullForwardedMessage).toBe(false);
     });
 
     it('should set isContentLong to true if content overflows', () => {
@@ -253,7 +274,7 @@ describe('ForwardedMessageComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBeTrue();
+        expect(component.isContentLong).toBe(true);
     });
 
     it('should set isContentLong to false if content does not overflow', () => {
@@ -269,13 +290,13 @@ describe('ForwardedMessageComponent', () => {
 
         component.checkIfContentOverflows();
 
-        expect(component.isContentLong).toBeFalse();
+        expect(component.isContentLong).toBe(false);
     });
 
-    it('should call checkIfContentOverflows in ngAfterViewInit', fakeAsync(() => {
-        const spy = jest.spyOn(component, 'checkIfContentOverflows');
+    it('should call checkIfContentOverflows in ngAfterViewInit', () => {
+        const spy = vi.spyOn(component, 'checkIfContentOverflows');
         component.ngAfterViewInit();
-        tick();
+        vi.advanceTimersByTime(0);
         expect(spy).toHaveBeenCalled();
-    }));
+    });
 });

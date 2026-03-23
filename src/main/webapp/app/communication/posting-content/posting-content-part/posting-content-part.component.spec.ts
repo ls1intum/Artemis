@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,17 +17,23 @@ import { FileService } from 'app/shared/service/file.service';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('PostingContentPartComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: PostingContentPartComponent;
     let fixture: ComponentFixture<PostingContentPartComponent>;
     let debugElement: DebugElement;
     let router: Router;
     let fileService: FileService;
-    let openAttachmentSpy: jest.SpyInstance;
-    let navigateByUrlSpy: jest.SpyInstance;
+    let openAttachmentSpy: ReturnType<typeof vi.spyOn>;
+    let navigateByUrlSpy: ReturnType<typeof vi.spyOn>;
     let accountService: AccountService;
 
     let contentBeforeReference: string;
     let contentAfterReference: string;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -46,15 +54,15 @@ describe('PostingContentPartComponent', () => {
                 },
                 { provide: AccountService, useClass: MockAccountService },
             ],
-        }).compileComponents();
+        });
         fixture = TestBed.createComponent(PostingContentPartComponent);
         component = fixture.componentInstance;
         debugElement = fixture.debugElement;
         router = TestBed.inject(Router);
         fileService = TestBed.inject(FileService);
         accountService = TestBed.inject(AccountService);
-        navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-        openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
+        navigateByUrlSpy = vi.spyOn(router, 'navigateByUrl');
+        openAttachmentSpy = vi.spyOn(fileService, 'downloadFile');
         contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
         contentAfterReference = 'in my content,\n\n does it *actually* work?';
     });
@@ -93,23 +101,19 @@ describe('PostingContentPartComponent', () => {
             fixture.detectChanges();
             const markdownRenderedTexts = getElements(debugElement, '.markdown-preview');
             expect(markdownRenderedTexts).toHaveLength(2);
-            // check that the paragraph right before the reference and the paragraph right after have the class `inline-paragraph`
-            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p><strong>Be aware</strong></p>');
-            expect(markdownRenderedTexts![0].innerHTML).toInclude('<p class="inline-paragraph">I want to reference the following Post</p>'); // last paragraph before reference
-            expect(markdownRenderedTexts![1].innerHTML).toInclude('<p class="inline-paragraph">in my content,</p>'); // first paragraph after reference
-            expect(markdownRenderedTexts![1].innerHTML).toInclude('<p>does it <em>actually</em> work?</p>');
+            expect(markdownRenderedTexts![0].innerHTML).toContain('<p><strong>Be aware</strong></p>');
+            expect(markdownRenderedTexts![0].innerHTML).toContain('<p class="inline-paragraph">I want to reference the following Post</p>');
+            expect(markdownRenderedTexts![1].innerHTML).toContain('<p class="inline-paragraph">in my content,</p>');
+            expect(markdownRenderedTexts![1].innerHTML).toContain('<p>does it <em>actually</em> work?</p>');
 
-            // should display post number to user
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+            expect(referenceLink.innerHTML).toContain(referenceStr);
 
-            // should display relevant icon for post
             const icon = getElement(debugElement, 'fa-icon');
             expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude('fa fa-message');
+            expect(icon.innerHTML).toContain('fa fa-message');
 
-            // on click should navigate to referenced post within current tab
             referenceLink.click();
             expect(navigateByUrlSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).not.toHaveBeenCalled();
@@ -133,17 +137,14 @@ describe('PostingContentPartComponent', () => {
             } as PostingContentPart);
             fixture.detectChanges();
 
-            // should display artifact name to user
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+            expect(referenceLink.innerHTML).toContain(referenceStr);
 
-            // should display relevant icon for artifact according to its type
             const icon = getElement(debugElement, 'fa-icon');
             expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude(faIcon);
+            expect(icon.innerHTML).toContain(faIcon);
 
-            // on click should navigate to referenced artifact within current tab
             referenceLink.click();
             expect(navigateByUrlSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).not.toHaveBeenCalled();
@@ -161,17 +162,14 @@ describe('PostingContentPartComponent', () => {
             } as PostingContentPart);
             fixture.detectChanges();
 
-            // should display file name to user
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+            expect(referenceLink.innerHTML).toContain(referenceStr);
 
-            // should display relevant icon for attachment
             const icon = getElement(debugElement, 'fa-icon');
             expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude('fa fa-file');
+            expect(icon.innerHTML).toContain('fa fa-file');
 
-            // on click should open referenced attachment within new tab
             referenceLink.click();
             expect(openAttachmentSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
@@ -189,12 +187,10 @@ describe('PostingContentPartComponent', () => {
             } as PostingContentPart);
             fixture.detectChanges();
 
-            // should display attachment video unit file name to user
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+            expect(referenceLink.innerHTML).toContain(referenceStr);
 
-            // on click should open referenced attachment video unit within new tab
             referenceLink.click();
             expect(openAttachmentSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
@@ -210,16 +206,14 @@ describe('PostingContentPartComponent', () => {
             } as PostingContentPart);
             fixture.detectChanges();
 
-            // should display attachment video unit slide name and link to user
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude(referenceStr);
+            expect(referenceLink.innerHTML).toContain(referenceStr);
 
-            component.enlargeImage = jest.fn();
+            component.enlargeImage = vi.fn();
 
-            const enlargeImageSpy = jest.spyOn(component, 'enlargeImage');
+            const enlargeImageSpy = vi.spyOn(component, 'enlargeImage');
 
-            // on click should open referenced attachment video unit slide
             referenceLink.click();
             expect(enlargeImageSpy).toHaveBeenCalledOnce();
             expect(enlargeImageSpy).toHaveBeenCalledWith(imageURL);
@@ -227,7 +221,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should trigger userReferenceClicked event for different user logins', () => {
             accountService.userIdentity.set({ login: 'user1' } as User);
-            const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
+            const outputEmitter = vi.spyOn(component.userReferenceClicked, 'emit');
 
             component.onClickUserReference('user2');
 
@@ -236,7 +230,7 @@ describe('PostingContentPartComponent', () => {
 
         it('should not trigger userReferenceClicked event for same user logins', () => {
             accountService.userIdentity.set({ login: 'user1' } as User);
-            const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
+            const outputEmitter = vi.spyOn(component.userReferenceClicked, 'emit');
 
             component.onClickUserReference('user1');
 
@@ -244,7 +238,7 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should not trigger userReferenceClicked event if login is undefined', () => {
-            const outputEmitter = jest.spyOn(component.userReferenceClicked, 'emit');
+            const outputEmitter = vi.spyOn(component.userReferenceClicked, 'emit');
 
             component.onClickUserReference(undefined);
 
@@ -252,7 +246,7 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should trigger channelReferencedClicked event if channel id is number', () => {
-            const outputEmitter = jest.spyOn(component.channelReferenceClicked, 'emit');
+            const outputEmitter = vi.spyOn(component.channelReferenceClicked, 'emit');
 
             component.onClickChannelReference(1);
 
@@ -260,7 +254,7 @@ describe('PostingContentPartComponent', () => {
         });
 
         it('should not trigger channelReferencedClicked event if channel id is undefined', () => {
-            const outputEmitter = jest.spyOn(component.channelReferenceClicked, 'emit');
+            const outputEmitter = vi.spyOn(component.channelReferenceClicked, 'emit');
 
             component.onClickChannelReference(undefined);
 
@@ -377,11 +371,11 @@ describe('PostingContentPartComponent', () => {
 
             const referenceLink = getElement(debugElement, '.reference');
             expect(referenceLink).not.toBeNull();
-            expect(referenceLink.innerHTML).toInclude('#123');
+            expect(referenceLink.innerHTML).toContain('#123');
 
             const icon = getElement(debugElement, 'fa-icon');
             expect(icon).not.toBeNull();
-            expect(icon.innerHTML).toInclude('fa fa-message');
+            expect(icon.innerHTML).toContain('fa fa-message');
         });
     });
 

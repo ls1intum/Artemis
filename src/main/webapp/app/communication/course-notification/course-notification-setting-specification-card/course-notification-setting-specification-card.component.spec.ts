@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseNotificationSettingSpecificationCardComponent } from 'app/communication/course-notification/course-notification-setting-specification-card/course-notification-setting-specification-card.component';
 import { CourseNotificationSettingSpecification } from 'app/communication/shared/entities/course-notification/course-notification-setting-specification';
@@ -9,8 +11,11 @@ import { CourseNotificationComponent } from 'app/communication/course-notificati
 import { MockDirective } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseNotificationChannelSetting } from 'app/communication/shared/entities/course-notification/course-notification-channel-setting';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('CourseNotificationSettingSpecificationCardComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseNotificationSettingSpecificationCardComponent;
     let fixture: ComponentFixture<CourseNotificationSettingSpecificationCardComponent>;
 
@@ -22,11 +27,19 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
 
     const testSpecification = new CourseNotificationSettingSpecification('newPostNotification', 1, testChannelSetting);
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [CourseNotificationSettingSpecificationCardComponent, FormsModule, MockDirective(TranslateDirective), MockComponent(CourseNotificationComponent)],
-        }).compileComponents();
-
+            providers: [{ provide: TranslateService, useValue: { instant: vi.fn((key: string) => key), get: vi.fn() } }],
+        });
+        TestBed.overrideComponent(CourseNotificationSettingSpecificationCardComponent, {
+            remove: { imports: [TranslateDirective, CourseNotificationComponent] },
+            add: { imports: [MockDirective(TranslateDirective), MockComponent(CourseNotificationComponent)] },
+        });
         fixture = TestBed.createComponent(CourseNotificationSettingSpecificationCardComponent);
         component = fixture.componentInstance;
 
@@ -53,17 +66,19 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
         const notificationComponent = fixture.debugElement.query(By.directive(CourseNotificationComponent));
         expect(notificationComponent).not.toBeNull();
 
-        expect(notificationComponent.componentInstance.courseNotification).toBe(component['mockNotification']);
+        const courseNotification = notificationComponent.componentInstance.courseNotification;
+        const value = typeof courseNotification === 'function' ? courseNotification() : courseNotification;
+        expect(value).toBe(component['mockNotification']);
     });
 
     it('should disable channels based on CourseNotificationService.DISABLE_NOTIFICATION_CHANNEL_TYPES', () => {
         fixture.detectChanges();
 
-        expect(component['isDisabled'](CourseNotificationChannel.EMAIL, 'newPostNotification')).toBeTrue();
-        expect(component['isDisabled'](CourseNotificationChannel.PUSH, 'newPostNotification')).toBeFalse();
-        expect(component['isDisabled'](CourseNotificationChannel.WEBAPP, 'newPostNotification')).toBeFalse();
+        expect(component['isDisabled'](CourseNotificationChannel.EMAIL, 'newPostNotification')).toBe(true);
+        expect(component['isDisabled'](CourseNotificationChannel.PUSH, 'newPostNotification')).toBe(false);
+        expect(component['isDisabled'](CourseNotificationChannel.WEBAPP, 'newPostNotification')).toBe(false);
 
-        const isDisabledSpy = jest.spyOn(component as any, 'isDisabled');
+        const isDisabledSpy = vi.spyOn(component as any, 'isDisabled');
 
         fixture.detectChanges();
 
@@ -75,7 +90,7 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
     it('should create a new specification when optionChanged is called', () => {
         component['channels'][CourseNotificationChannel.PUSH] = false;
 
-        const emitSpy = jest.spyOn(component.onOptionChanged, 'emit');
+        const emitSpy = vi.spyOn(component.onOptionChanged, 'emit');
 
         component['optionChanged']();
 
@@ -86,6 +101,6 @@ describe('CourseNotificationSettingSpecificationCardComponent', () => {
         expect(emittedSpec.typeId).toBe(component['typeId']);
         expect(emittedSpec.identifier).toBe(component['titleLangKey']);
         expect(emittedSpec.channelSetting).toEqual(component['channels']);
-        expect(emittedSpec.channelSetting[CourseNotificationChannel.PUSH]).toBeFalse();
+        expect(emittedSpec.channelSetting[CourseNotificationChannel.PUSH]).toBe(false);
     });
 });

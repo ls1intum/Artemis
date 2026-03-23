@@ -1,6 +1,5 @@
-import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
+import { Directive, Input, OnChanges, OnInit, inject, output } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { MetisService } from 'app/communication/service/metis.service';
 import { PostingEditType } from 'app/communication/metis.util';
@@ -13,14 +12,12 @@ const MAX_CONTENT_LENGTH = 5000;
 @Directive()
 export abstract class PostingCreateEditDirective<T extends Posting> implements OnInit, OnChanges {
     protected metisService = inject(MetisService);
-    protected modalService = inject(NgbModal);
     protected formBuilder = inject(FormBuilder);
 
     @Input() posting: T;
-    @Output() onCreate: EventEmitter<T> = new EventEmitter<T>();
-    @Output() isModalOpen = new EventEmitter<void>();
+    readonly onCreate = output<T>();
+    readonly isModalOpen = output<void>();
 
-    modalRef?: NgbModalRef;
     isLoading = false;
     maxContentLength = MAX_CONTENT_LENGTH;
     editorHeight = MarkdownEditorHeight.INLINE;
@@ -30,20 +27,23 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
     readonly EditType = PostingEditType;
 
     get editType(): PostingEditType {
-        return this.posting.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
+        return this.posting?.id ? PostingEditType.UPDATE : PostingEditType.CREATE;
     }
 
     /**
      * on initialization: sets the content, and the modal title (edit or create)
      */
     ngOnInit(): void {
-        this.content = this.posting.content ?? '';
+        this.content = this.posting?.content ?? '';
     }
 
     /**
      * on changes: sets the content, and the modal title (edit or create), resets the form
      */
     ngOnChanges() {
+        if (!this.posting) {
+            return;
+        }
         this.content = this.posting?.content ?? '';
         this.resetFormGroup();
     }
