@@ -229,7 +229,11 @@ public class WeaviateService {
             }
 
             // Weaviate stores the default vector under the key "default"
-            VectorConfig existingVector = vectors.values().iterator().next();
+            VectorConfig existingVector = vectors.get("default");
+            if (existingVector == null) {
+                log.warn("Collection '{}' has no 'default' vector key; found keys: {}. Skipping configuration drift check.", collectionName, vectors.keySet());
+                return;
+            }
             VectorConfig.Kind existingKind = existingVector._kind();
 
             // Determine the expected kind from the configured vectorizer module
