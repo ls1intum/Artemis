@@ -251,13 +251,18 @@ public class ProblemStatementRenderingService {
             // Resolve or clean Artemis-specific testsColor()/testid markup for PlantUML rendering
             String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
 
-            // Build SVG URL with cleaned source (request dark theme for proper background)
-            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8) + "&useDarkTheme=true";
+            // Build SVG URL with cleaned source (light theme: server can't know client's theme)
+            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8);
 
             String inlineSvg = null;
             if (selfContained) {
                 try {
-                    inlineSvg = plantUmlService.generateSvg(cleanedSource, true);
+                    inlineSvg = plantUmlService.generateSvg(cleanedSource, false);
+                    // PlantUML generates SVGs with preserveAspectRatio="none" and inline style with
+                    // fixed pixel dimensions, which prevents CSS-based responsive scaling. Fix both so
+                    // that max-width:100% + height:auto can scale the diagram proportionally.
+                    inlineSvg = inlineSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
+                    inlineSvg = inlineSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
                 }
                 catch (IOException e) {
                     log.error("Failed to generate inline SVG for diagram {} in exercise {}", diagramId, exerciseId, e);
