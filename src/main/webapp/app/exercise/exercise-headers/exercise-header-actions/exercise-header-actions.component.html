@@ -29,7 +29,10 @@
             </div>
         </div>
     }
-    @if (onSubmitExercise()) {
+    @if (
+        onSubmitExercise() &&
+        (exercise().type !== ExerciseType.QUIZ || (gradedParticipation()?.initializationState === InitializationState.INITIALIZED && !numberOfGradedParticipationResults()))
+    ) {
         <button
             jhi-exercise-action-button
             [buttonIcon]="faPaperPlane"
@@ -48,7 +51,7 @@
                         [ngTemplateOutletContext]="{ $implicit: { icon: faRedo, label: 'artemisApp.exerciseActions.practice', quizMode: 'practice', hideLabelMobile: false } }"
                     />
                 }
-                @if (quizNotStarted() || gradedParticipation()?.initializationState === InitializationState.INITIALIZED) {
+                @if (quizNotStarted() && gradedParticipation()?.initializationState !== InitializationState.INITIALIZED) {
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{
@@ -83,18 +86,6 @@
                             $implicit: {
                                 icon: faEye,
                                 label: 'artemisApp.exerciseActions.viewSubmissions',
-                                quizMode: 'live',
-                            },
-                        }"
-                    />
-                }
-                @if (numberOfGradedParticipationResults()) {
-                    <ng-container
-                        [ngTemplateOutlet]="quizActionButton"
-                        [ngTemplateOutletContext]="{
-                            $implicit: {
-                                icon: faEye,
-                                label: 'artemisApp.exerciseActions.viewResults',
                                 quizMode: 'live',
                             },
                         }"
@@ -144,16 +135,6 @@
                     />
                 }
                 @if (shouldDisplayIDEButtons()) {
-                    @if (!examMode() && programmingExercise()?.allowOnlineEditor) {
-                        <jhi-open-code-editor-button
-                            [loading]="isLoading()"
-                            [smallButtons]="smallButtons()"
-                            [participations]="studentParticipations()"
-                            [courseAndExerciseNavigationUrlSegment]="['/courses', courseId(), 'exercises', 'programming-exercises', exercise().id, 'code-editor']"
-                            [exercise]="exercise()"
-                            [hideLabelMobile]="true"
-                        />
-                    }
                     @if (programmingExercise()?.allowOfflineIde) {
                         <jhi-code-button
                             [loading]="isLoading()"
