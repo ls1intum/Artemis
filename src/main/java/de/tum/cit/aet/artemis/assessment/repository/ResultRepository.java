@@ -51,17 +51,16 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
 
     /**
-     * Deletes a result directly via JPQL, bypassing the entity lifecycle.
-     * This avoids Hibernate 6.6 merge issues when child entities (feedbacks) have
-     * already been bulk-deleted and the L2 cache holds stale references.
-     * All child references must be deleted before calling this method.
+     * Deletes a result via JPQL bulk delete, bypassing Hibernate cascade and JPA lifecycle callbacks.
+     * All child entities must be deleted first.
+     * See {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult ResultService.deleteResult} Path 2 for full details.
      *
      * @param resultId the id of the result to delete
      */
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     @Query("DELETE FROM Result r WHERE r.id = :resultId")
-    void deleteByResultId(@Param("resultId") long resultId);
+    void deleteResultById(@Param("resultId") long resultId);
 
     /**
      * Count the number of results for a course by its exercise IDs.
