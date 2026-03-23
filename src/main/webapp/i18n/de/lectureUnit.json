@@ -217,6 +217,14 @@
                 "noResults": "Keine Ergebnisse",
                 "noMatchingTranscript": "Kein passendes Transkript gefunden",
                 "loading": "Lädt..."
+            },
+            "pdfViewer": {
+                "loadingPdf": "PDF wird geladen...",
+                "loadFailed": "PDF konnte nicht geladen werden",
+                "loadFailedDetail": "Das PDF-Dokument konnte nicht geladen werden. Bitte versuche es erneut.",
+                "zoomOut": "Verkleinern",
+                "zoomIn": "Vergrößern",
+                "resetZoom": "Zoom zurücksetzen"
             }
         },
         "exerciseUnit": {

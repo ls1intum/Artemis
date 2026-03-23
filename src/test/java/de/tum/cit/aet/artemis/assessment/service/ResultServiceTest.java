@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,9 +25,11 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.user.util.UserUtilService;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
+import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
@@ -54,6 +57,9 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
 
     @Autowired
     private LongFeedbackTextRepository longFeedbackTextRepository;
+
+    @Autowired
+    private SubmissionTestRepository submissionTestRepository;
 
     @Autowired
     private ProgrammingExerciseStudentParticipationTestRepository participationRepository;
@@ -319,5 +325,68 @@ class ResultServiceTest extends AbstractSpringIntegrationIndependentTest {
         resultService.deleteResult(result, true);
 
         assertThat(resultRepository.findById(result.getId())).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteResultWithUninitializedFeedbacks_shouldNotThrowEntityNotFoundException() {
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
+        result = participationUtilService.addVariousVisibilityFeedbackToResult(result);
+
+        long resultId = result.getId();
+        long submissionId = result.getSubmission().getId();
+        assertThat(result.getFeedbacks()).isNotEmpty();
+        assertThat(feedbackRepository.findByResult(result)).isNotEmpty();
+
+        // Reload the submission WITHOUT eager feedbacks (only results + assessor),
+        // simulating the exact query used by cancelAssessment in AssessmentResource.
+        Submission reloadedSubmission = submissionTestRepository.findByIdWithResultsElseThrow(submissionId);
+        Result resultWithLazyFeedbacks = reloadedSubmission.getLatestResult();
+
+        // Verify that feedbacks are NOT initialized (lazy proxy)
+        assertThat(Hibernate.isInitialized(resultWithLazyFeedbacks.getFeedbacks())).isFalse();
+
+        // This must not throw EntityNotFoundException for already bulk-deleted feedbacks
+        resultService.deleteResult(resultWithLazyFeedbacks, true);
+
+        assertThat(resultRepository.findById(resultId)).isEmpty();
+        assertThat(feedbackRepository.findByResult(result)).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testDeleteResultWithUninitializedFeedbacksAndLongFeedbackText_shouldNotViolateForeignKeyConstraint() {
+        Result result = participationUtilService.addResultToSubmission(null, null, programmingExerciseStudentParticipation.findLatestSubmission().orElseThrow());
+
+        // Create feedback with long feedback text (FK: long_feedback_text -> feedback -> result)
+        Feedback feedback = new Feedback();
+        feedback.setDetailText("short text");
+        feedback.setHasLongFeedbackText(true);
+        feedback = feedbackRepository.save(feedback);
+
+        LongFeedbackText longFeedbackText = new LongFeedbackText();
+        longFeedbackText.setFeedback(feedback);
+        longFeedbackText.setText("This is a very long feedback text that exceeds the normal limit");
+        longFeedbackTextRepository.save(longFeedbackText);
+
+        feedback.setLongFeedbackText(Set.of(longFeedbackText));
+        result.addFeedback(feedback);
+        result = resultRepository.save(result);
+
+        long resultId = result.getId();
+        long submissionId = result.getSubmission().getId();
+        assertThat(result.getFeedbacks()).hasSize(1);
+        assertThat(longFeedbackTextRepository.findByFeedbackId(feedback.getId())).isPresent();
+
+        // Reload WITHOUT eager feedbacks to get uninitialized proxy (like cancelAssessment does)
+        Submission reloadedSubmission = submissionTestRepository.findByIdWithResultsElseThrow(submissionId);
+        Result resultWithLazyFeedbacks = reloadedSubmission.getLatestResult();
+        assertThat(Hibernate.isInitialized(resultWithLazyFeedbacks.getFeedbacks())).isFalse();
+
+        // This must delete long_feedback_text -> feedback -> result without FK violations
+        // and without EntityNotFoundException for uninitialized feedbacks
+        resultService.deleteResult(resultWithLazyFeedbacks, true);
+
+        assertThat(resultRepository.findById(resultId)).isEmpty();
     }
 }
