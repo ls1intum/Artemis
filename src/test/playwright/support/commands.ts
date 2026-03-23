@@ -239,4 +239,3 @@ export class Commands {
         await page.keyboard.press('Control+m');
     };
 }
-

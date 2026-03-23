@@ -133,9 +133,7 @@ export class ProgrammingExerciseOverviewPage {
      */
     static verifyResultScore(participation: StudentParticipation, expectedResult: string) {
         const submissions = participation.submissions ?? [];
-        const latestResult = submissions
-            .flatMap((s) => s.results ?? [])
-            .sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
+        const latestResult = submissions.flatMap((s) => s.results ?? []).sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
         if (!latestResult) {
             throw new Error(`No result found in participation ${participation.id}`);
         }
@@ -152,7 +150,6 @@ export class ProgrammingExerciseOverviewPage {
         }
         console.log(`[verifyResultScore] Score verified: ${score}% (expected pattern: "${expectedResult}") for participation ${participation.id}`);
     }
-
 }
 
 export enum GitCloneMethod {
@@ -160,4 +157,3 @@ export enum GitCloneMethod {
     httpsWithToken = 'https with token',
     ssh = 'ssh',
 }
-

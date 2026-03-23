@@ -76,7 +76,9 @@ export class ExamParticipationPage extends ExamParticipationActions {
             await this.programmingExerciseEditor.submit(exerciseID);
         }
         if (!skipBuildResultCheck) {
-            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({ timeout: BUILD_RESULT_TIMEOUT * 2 });
+            await expect(this.programmingExerciseEditor.getResultScoreFromExercise(exerciseID).getByText(submission.expectedResult)).toBeVisible({
+                timeout: BUILD_RESULT_TIMEOUT * 2,
+            });
         }
     }
 
@@ -124,4 +126,3 @@ export class ExamParticipationPage extends ExamParticipationActions {
         await expect(resultScore).toContainText(expectedResult, { timeout });
     }
 }
-

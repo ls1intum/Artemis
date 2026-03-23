@@ -170,7 +170,9 @@ test.describe('Exam participation', () => {
             await textExerciseEditor.clearSubmission(textExercise.id!);
             // Wait for the clear to take effect before typing new text
             await page.locator(`#exercise-${textExercise.id} #text-editor`).waitFor({ state: 'visible' });
-            await expect(page.locator(`#exercise-${textExercise.id} #text-editor`)).toHaveValue('', { timeout: 5000 }).catch(() => {});
+            await expect(page.locator(`#exercise-${textExercise.id} #text-editor`))
+                .toHaveValue('', { timeout: 5000 })
+                .catch(() => {});
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
@@ -326,10 +328,11 @@ test.describe('Exam participation', () => {
                 await examParticipation.startParticipation(studentTwo, course, exam);
                 // Intercept the participation ID when navigating to the exercise.
                 // The exam loads participation data via API — capture it.
-                const participationPromise = page.waitForResponse(
-                    (resp) => resp.url().includes('/participations') && resp.url().includes(`${programmingExercise.id}`) && resp.status() === 200,
-                    { timeout: 30000 },
-                ).catch(() => null);
+                const participationPromise = page
+                    .waitForResponse((resp) => resp.url().includes('/participations') && resp.url().includes(`${programmingExercise.id}`) && resp.status() === 200, {
+                        timeout: 30000,
+                    })
+                    .catch(() => null);
                 await examNavigation.openOrSaveExerciseByTitle(programmingExercise.exerciseGroup!.title!);
                 const participationResponse = await participationPromise;
                 let participationId: number | undefined;
@@ -337,7 +340,9 @@ test.describe('Exam participation', () => {
                     try {
                         const data = await participationResponse.json();
                         participationId = data.id ?? data[0]?.id;
-                    } catch { /* response might not be JSON */ }
+                    } catch {
+                        /* response might not be JSON */
+                    }
                 }
                 await GitExerciseParticipation.makeSubmission(programmingExerciseOverview, studentTwo, cAllSuccessfulSubmission, 'Solution', cloneMethod);
                 // Wait for build via API (student-accessible endpoint) before checking UI.
