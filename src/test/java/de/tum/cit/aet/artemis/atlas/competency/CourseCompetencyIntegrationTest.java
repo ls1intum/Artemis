@@ -7,6 +7,7 @@ import static org.awaitility.Awaitility.await;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -271,7 +272,8 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
             createTextExerciseParticipationSubmissionAndResult(teamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
 
-            await().until(() -> participantScoreScheduleService.isIdle());
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(30, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
             CourseCompetencyProgressDTO courseCompetencyProgress = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/course-progress", HttpStatus.OK,
@@ -293,7 +295,8 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
 
             createTextExerciseParticipationSubmissionAndResult(textExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
 
-            await().until(() -> participantScoreScheduleService.isIdle());
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(30, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
             CourseCompetencyProgressDTO courseCompetencyProgress = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/course-progress", HttpStatus.OK,
@@ -322,7 +325,8 @@ class CourseCompetencyIntegrationTest extends AbstractCompetencyPrerequisiteInte
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 90, true);
             createTextExerciseParticipationSubmissionAndResult(textExercise, student1, 10.0, 0.0, 85, false);
 
-            await().until(() -> participantScoreScheduleService.isIdle());
+            participantScoreScheduleService.executeScheduledTasks();
+            await().atMost(30, TimeUnit.SECONDS).until(() -> participantScoreScheduleService.isIdle());
 
             CompetencyProgress studentCompetencyProgress1 = request.get(
                     "/api/atlas/courses/" + course.getId() + "/course-competencies/" + courseCompetency.getId() + "/student-progress?refresh=true", HttpStatus.OK,
