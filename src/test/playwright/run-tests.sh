@@ -77,16 +77,12 @@ else
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
 fi
 
-# Merge reports
-echo "--- Merging test reports ---"
-if [ -f ./test-reports/results-parallel.xml ] && [ -f ./test-reports/results-sequential.xml ]; then
-    npm run merge-junit-reports || true
-elif [ -f ./test-reports/results-parallel.xml ]; then
-    cp ./test-reports/results-parallel.xml ./test-reports/results.xml
-elif [ -f ./test-reports/results-sequential.xml ]; then
-    cp ./test-reports/results-sequential.xml ./test-reports/results.xml
-else
-    echo 'Warning: No JUnit report files found to merge'
+# Remove any stale results.xml (e.g. from playwright:setup init test) before
+# moving the real report into place, so CI never consumes an outdated report.
+echo "--- Finalizing test reports ---"
+rm -f ./test-reports/results.xml
+if [ -f ./test-reports/results-parallel.xml ]; then
+    mv ./test-reports/results-parallel.xml ./test-reports/results.xml
 fi
 npm run merge-coverage-reports || true
 

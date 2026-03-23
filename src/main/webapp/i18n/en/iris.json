@@ -146,7 +146,8 @@
                 "explanation": "Explanation:"
             },
             "citation": {
-                "inLecture": "in"
+                "unitLabel": "Unit:",
+                "lectureLabel": "Lecture:"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
