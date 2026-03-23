@@ -19,9 +19,11 @@ import java.util.Set;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.ExampleSubmission;
@@ -47,6 +49,18 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 @Lazy
 @Repository
 public interface ResultRepository extends ArtemisJpaRepository<Result, Long> {
+
+    /**
+     * Deletes a result via JPQL bulk delete, bypassing Hibernate cascade and JPA lifecycle callbacks.
+     * All child entities must be deleted first.
+     * See {@link de.tum.cit.aet.artemis.assessment.service.ResultService#deleteResult ResultService.deleteResult} Path 2 for full details.
+     *
+     * @param resultId the id of the result to delete
+     */
+    @Modifying
+    @Transactional // ok because of delete
+    @Query("DELETE FROM Result r WHERE r.id = :resultId")
+    void deleteResultById(@Param("resultId") long resultId);
 
     /**
      * Count the number of results for a course by its exercise IDs.
