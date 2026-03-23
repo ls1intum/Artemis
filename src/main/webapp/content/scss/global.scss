@@ -1244,6 +1244,57 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     }
 }
 
+// Communication dialogs (PrimeNG DynamicDialog styling)
+// Uses var(--p-surface-0) for white in light mode, var(--p-surface-900) for dark mode
+// (Artemis body-bg is grey, but dialogs should have a white/dark surface)
+.p-dialog.communication-dialog,
+.p-dialog.second-layer-modal-bg {
+    background: var(--p-surface-0) !important;
+    color: var(--bs-body-color) !important;
+    border-radius: var(--bs-border-radius-lg);
+    overflow: hidden;
+
+    .p-dialog-content {
+        background: var(--p-surface-0) !important;
+        color: var(--bs-body-color) !important;
+        padding: 0;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--bs-border-color);
+    }
+
+    .modal-body {
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        border-top: 1px solid var(--bs-border-color);
+    }
+}
+
+:root[prime-ng-use-dark-theme='true'] {
+    .p-dialog.communication-dialog,
+    .p-dialog.second-layer-modal-bg {
+        background: var(--p-surface-900) !important;
+        color: var(--bs-body-color) !important;
+
+        .p-dialog-content {
+            background: var(--p-surface-900) !important;
+            color: var(--bs-body-color) !important;
+        }
+    }
+}
+
 // Tooltip for chat-history related-entity icons (portaled to <body>).
 .chat-history-entity-tooltip .p-tooltip-text {
     font-size: 12px;
