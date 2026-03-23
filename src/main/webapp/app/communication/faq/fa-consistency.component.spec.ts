@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FaqConsistencyComponent } from 'app/communication/faq/faq-consistency.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -6,14 +8,20 @@ import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.
 import { TranslateService } from '@ngx-translate/core';
 
 describe('FaqConsistencyComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: FaqConsistencyComponent;
     let fixture: ComponentFixture<FaqConsistencyComponent>;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [FaqConsistencyComponent, TranslateDirective, FontAwesomeModule],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
-        }).compileComponents();
+        });
 
         fixture = TestBed.createComponent(FaqConsistencyComponent);
         component = fixture.componentInstance;
@@ -59,7 +67,7 @@ describe('FaqConsistencyComponent', () => {
     });
 
     it('should emit when dismissConsistencyCheck is called', () => {
-        const spy = jest.fn();
+        const spy = vi.fn();
         component.closeConsistencyWidget.subscribe(spy);
 
         component.dismissConsistencyCheck();

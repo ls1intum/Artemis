@@ -32,9 +32,9 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
@@ -1239,6 +1239,75 @@ describe('IrisBaseChatbotComponent', () => {
 
             const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
             expect(suggestionButtons).toHaveLength(0);
+        });
+    });
+
+    describe('MCQ content rendering', () => {
+        it('should identify MCQ content using isMcqContent helper', () => {
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'Q?',
+                options: [
+                    { text: 'A', correct: false },
+                    { text: 'B', correct: true },
+                ],
+                explanation: 'E',
+            });
+            const textContent = new IrisTextMessageContent('hello');
+
+            expect(isMcqContent(mcqContent)).toBe(true);
+            expect(isMcqContent(textContent)).toBe(false);
+        });
+
+        it('should extract MCQ data using getMcqData helper', () => {
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'Q?',
+                options: [
+                    { text: 'A', correct: false },
+                    { text: 'B', correct: true },
+                ],
+                explanation: 'E',
+            });
+            const textContent = new IrisTextMessageContent('hello');
+
+            const data = getMcqData(mcqContent);
+            expect(data).toBeDefined();
+            expect(data?.question).toBe('Q?');
+            expect(data?.options).toHaveLength(2);
+
+            expect(getMcqData(textContent)).toBeUndefined();
+        });
+
+        it('should render MCQ component for MCQ messages', () => {
+            const mcqContent = new IrisJsonMessageContent({
+                type: 'mcq',
+                question: 'What is 1+1?',
+                options: [
+                    { text: '2', correct: true },
+                    { text: '3', correct: false },
+                ],
+                explanation: 'Math',
+            });
+            const mcqMessage = {
+                sender: IrisSender.LLM,
+                id: 20,
+                content: [mcqContent],
+                sentAt: dayjs(),
+            } as IrisAssistantMessage;
+
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mcqMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const mcqElement = fixture.nativeElement.querySelector('jhi-iris-mcq-question');
+            expect(mcqElement).toBeTruthy();
+
+            const textBubble = fixture.nativeElement.querySelector('.bubble-left');
+            expect(textBubble).toBeFalsy();
         });
     });
 
