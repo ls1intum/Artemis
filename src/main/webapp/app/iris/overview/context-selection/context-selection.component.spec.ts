@@ -28,14 +28,12 @@ describe('ContextSelectionComponent', () => {
         const chatModeSubject = new BehaviorSubject<ChatServiceMode | undefined>(undefined);
         const entityIdSubject = new BehaviorSubject<number | undefined>(undefined);
         return {
+            getCourseId: vi.fn().mockReturnValue(undefined),
             switchTo: vi.fn((mode: ChatServiceMode, id: number) => {
                 chatModeSubject.next(mode);
                 entityIdSubject.next(id);
             }),
-            createNewChat: vi.fn((mode: ChatServiceMode, id: number) => {
-                chatModeSubject.next(mode);
-                entityIdSubject.next(id);
-            }),
+            switchToNewSession: vi.fn(),
             currentChatMode: () => chatModeSubject.asObservable(),
             currentRelatedEntityId: () => entityIdSubject.asObservable(),
             chatModeSubject,
@@ -106,10 +104,6 @@ describe('ContextSelectionComponent', () => {
             expect(component.courseName()).toBe('');
         });
 
-        it('should start with isLoading false', () => {
-            expect(component.isLoading()).toBe(false);
-        });
-
         it('should have no groups when no courseId is set', () => {
             expect(component.allGroups()).toEqual([]);
         });
@@ -121,7 +115,7 @@ describe('ContextSelectionComponent', () => {
 
     describe('Data loading from cache', () => {
         beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+            component.courseId.set(1);
             await fixture.whenStable();
         });
 
@@ -133,10 +127,6 @@ describe('ContextSelectionComponent', () => {
 
         it('should set courseName from cache', () => {
             expect(component.courseName()).toBe('Test Course');
-        });
-
-        it('should set isLoading to false after loading', () => {
-            expect(component.isLoading()).toBe(false);
         });
     });
 
@@ -153,7 +143,7 @@ describe('ContextSelectionComponent', () => {
                 }),
             );
 
-            fixture.componentRef.setInput('courseId', 2);
+            component.courseId.set(2);
             await fixture.whenStable();
         });
 
@@ -170,7 +160,7 @@ describe('ContextSelectionComponent', () => {
 
     describe('supportedExercises', () => {
         beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+            component.courseId.set(1);
             await fixture.whenStable();
         });
 
@@ -182,7 +172,7 @@ describe('ContextSelectionComponent', () => {
 
     describe('allGroups computed', () => {
         beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+            component.courseId.set(1);
             await fixture.whenStable();
         });
 
@@ -216,7 +206,7 @@ describe('ContextSelectionComponent', () => {
 
     describe('selectedValue computed', () => {
         beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+            component.courseId.set(1);
             await fixture.whenStable();
         });
 
@@ -250,39 +240,39 @@ describe('ContextSelectionComponent', () => {
 
     describe('onSelectionChange', () => {
         beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+            component.courseId.set(1);
             await fixture.whenStable();
         });
 
-        it('should call chatService.createNewChat with COURSE mode', () => {
+        it('should call chatService.switchToNewSession with COURSE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.COURSE}:1`);
 
-            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1);
+            expect(chatServiceMock.switchToNewSession).toHaveBeenCalledWith(ChatServiceMode.COURSE, 1, 'Test Course');
         });
 
-        it('should call chatService.createNewChat with LECTURE mode', () => {
+        it('should call chatService.switchToNewSession with LECTURE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.LECTURE}:1`);
 
-            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1);
+            expect(chatServiceMock.switchToNewSession).toHaveBeenCalledWith(ChatServiceMode.LECTURE, 1, 'Introduction to Programming');
         });
 
-        it('should call chatService.createNewChat with PROGRAMMING_EXERCISE mode', () => {
+        it('should call chatService.switchToNewSession with PROGRAMMING_EXERCISE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.PROGRAMMING_EXERCISE}:1`);
 
-            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, 1);
+            expect(chatServiceMock.switchToNewSession).toHaveBeenCalledWith(ChatServiceMode.PROGRAMMING_EXERCISE, 1, 'Hello World');
         });
 
-        it('should call chatService.createNewChat with TEXT_EXERCISE mode', () => {
+        it('should call chatService.switchToNewSession with TEXT_EXERCISE mode', () => {
             component.onSelectionChange(`${ChatServiceMode.TEXT_EXERCISE}:2`);
 
-            expect(chatServiceMock.createNewChat).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 2);
+            expect(chatServiceMock.switchToNewSession).toHaveBeenCalledWith(ChatServiceMode.TEXT_EXERCISE, 2, 'Essay Writing');
         });
 
-        it('should not call createNewChat for unknown value', () => {
-            chatServiceMock.createNewChat.mockClear();
+        it('should not call switchToNewSession for unknown value', () => {
+            chatServiceMock.switchToNewSession.mockClear();
             component.onSelectionChange('UNKNOWN:999');
 
-            expect(chatServiceMock.createNewChat).not.toHaveBeenCalled();
+            expect(chatServiceMock.switchToNewSession).not.toHaveBeenCalled();
         });
     });
 
@@ -303,7 +293,7 @@ describe('ContextSelectionComponent', () => {
                 }),
             );
 
-            fixture.componentRef.setInput('courseId', 5);
+            component.courseId.set(5);
             await fixture.whenStable();
 
             expect(courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies).toHaveBeenCalledWith(5);
@@ -318,19 +308,18 @@ describe('ContextSelectionComponent', () => {
             courseStorageServiceMock.getCourse.mockReturnValue(undefined);
             courseManagementServiceMock.findWithExercisesAndLecturesAndCompetencies.mockReturnValue(throwError(() => new Error('Server error')));
 
-            fixture.componentRef.setInput('courseId', 3);
+            component.courseId.set(3);
             await fixture.whenStable();
 
             expect(component.courseName()).toBe('');
             expect(component.lectures()).toEqual([]);
             expect(component.exercises()).toEqual([]);
-            expect(component.isLoading()).toBe(false);
         });
     });
 
     describe('Reactive selection via chat service mode', () => {
         beforeEach(async () => {
-            fixture.componentRef.setInput('courseId', 1);
+            component.courseId.set(1);
             await fixture.whenStable();
         });
 
@@ -371,7 +360,7 @@ describe('ContextSelectionComponent', () => {
             chatServiceMock.entityIdSubject.next(3);
 
             const freshFixture = TestBed.createComponent(ContextSelectionComponent);
-            freshFixture.componentRef.setInput('courseId', 99);
+            freshFixture.componentInstance.courseId.set(99);
             await freshFixture.whenStable();
 
             // Mode is set but no groups yet

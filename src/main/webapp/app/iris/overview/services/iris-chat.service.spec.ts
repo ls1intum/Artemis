@@ -167,6 +167,30 @@ describe('IrisChatService', () => {
         expect(messages).toHaveLength(mockConversationWithNoMessages.messages!.length);
     });
 
+    describe('switchToNewSession', () => {
+        it('should create a new session and subscribe to websocket', async () => {
+            const createSessionStub = vi.spyOn(httpService, 'createSession').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
+            vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));
+            const wsStub = vi.spyOn(wsMock, 'subscribeToSession').mockReturnValue(of());
+
+            service.switchToNewSession(ChatServiceMode.COURSE, id);
+            await waitForSessionId();
+
+            expect(createSessionStub).toHaveBeenCalledWith('course-chat/' + id);
+            expect(wsStub).toHaveBeenCalledWith(id);
+        });
+
+        it('should do nothing when id is undefined (sessionCreationIdentifier is undefined)', () => {
+            const createSessionStub = vi.spyOn(httpService, 'createSession');
+            const wsStub = vi.spyOn(wsMock, 'subscribeToSession');
+
+            service.switchToNewSession(ChatServiceMode.COURSE, undefined);
+
+            expect(createSessionStub).not.toHaveBeenCalled();
+            expect(wsStub).not.toHaveBeenCalled();
+        });
+    });
+
     it('should rate a message', async () => {
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponseWithId(id)));
         vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([]));

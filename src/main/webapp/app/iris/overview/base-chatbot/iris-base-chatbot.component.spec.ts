@@ -32,7 +32,7 @@ import {
 } from 'test/helpers/sample/iris-sample-data';
 import { By } from '@angular/platform-browser';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
-import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
+import { IrisAssistantMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { IrisMessageResponseDTO } from 'app/iris/shared/entities/iris-message-response-dto.model';
 import { IrisJsonMessageContent, IrisMessageContentType, IrisTextMessageContent, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
 import dayjs from 'dayjs/esm';
@@ -48,6 +48,7 @@ import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service'
 import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
 import { AlertService } from 'app/shared/service/alert.service';
+import { ContextSelectionComponent } from 'app/iris/overview/context-selection/context-selection.component';
 
 describe('IrisBaseChatbotComponent', () => {
     setupTestBed({ zoneless: true });
@@ -85,6 +86,7 @@ describe('IrisBaseChatbotComponent', () => {
                 MockComponent(ChatStatusBarComponent),
                 MockComponent(IrisLogoComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(ContextSelectionComponent),
             ],
             providers: [
                 LocalStorageService,
@@ -780,10 +782,32 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.isChatHistoryOpen()).toBe(false);
     });
 
-    it('should call chatService.clearChat when openNewSession is executed', () => {
+    it('should call chatService.clearChat when openNewSession is executed (widget mode)', () => {
         const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
         component.openNewSession();
         expect(clearChatSpy).toHaveBeenCalledOnce();
+    });
+
+    describe('openNewSession in dashboard mode (isChatHistoryAvailable=true)', () => {
+        it('should call switchToNewSession with COURSE mode when courseId is defined', () => {
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            vi.spyOn(chatService, 'getCourseId').mockReturnValue(456);
+            const switchSpy = vi.spyOn(chatService, 'switchToNewSession').mockReturnValue();
+
+            component.openNewSession();
+
+            expect(switchSpy).toHaveBeenCalledWith(ChatServiceMode.COURSE, 456);
+        });
+
+        it('should fall back to clearChat when courseId is undefined', () => {
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            vi.spyOn(chatService, 'getCourseId').mockReturnValue(undefined);
+            const clearChatSpy = vi.spyOn(chatService, 'clearChat').mockReturnValue();
+
+            component.openNewSession();
+
+            expect(clearChatSpy).toHaveBeenCalledOnce();
+        });
     });
 
     describe('search/filtering in chat history', () => {
