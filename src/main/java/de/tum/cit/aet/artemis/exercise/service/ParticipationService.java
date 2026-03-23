@@ -36,6 +36,8 @@ import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
+import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
+import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.build.BuildPlanType;
@@ -47,6 +49,7 @@ import de.tum.cit.aet.artemis.programming.service.ci.ContinuousIntegrationServic
 import de.tum.cit.aet.artemis.programming.service.localvc.LocalVCRepositoryUri;
 import de.tum.cit.aet.artemis.programming.service.vcs.VersionControlService;
 import de.tum.cit.aet.artemis.quiz.domain.QuizExercise;
+import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
  * Service Implementation for managing Participation.
@@ -287,8 +290,8 @@ public class ParticipationService {
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
             boolean useGradedParticipation) {
-        if (!(exercise instanceof ProgrammingExercise || exercise instanceof QuizExercise)) {
-            throw new IllegalStateException("Only programming and quiz exercises support the practice mode at the moment");
+        if (exercise instanceof FileUploadExercise) {
+            throw new IllegalStateException("File upload exercises do not support practice mode.");
         }
         optionalGradedStudentParticipation.ifPresent(participation -> {
             participation.setInitializationState(InitializationState.FINISHED);
@@ -331,6 +334,11 @@ public class ParticipationService {
             participation.setAttempt(1);
             if (participation.getInitializationDate() == null) {
                 participation.setInitializationDate(ZonedDateTime.now());
+            }
+
+            boolean isTextOrModelingExercise = exercise instanceof TextExercise || exercise instanceof ModelingExercise;
+            if (isTextOrModelingExercise && !submissionRepository.existsByParticipationId(participation.getId())) {
+                submissionRepository.initializeSubmission(participation, exercise, null);
             }
         }
 
