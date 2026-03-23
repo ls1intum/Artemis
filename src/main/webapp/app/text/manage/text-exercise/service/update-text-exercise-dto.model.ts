@@ -63,7 +63,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
     const bonusPoints = textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (textExercise.bonusPoints ?? 0);
 
     // Convert competency links to DTOs (just competency ID and weight)
-    const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = textExercise.competencyLinks?.map((link) => ({
+    const competencyLinkDTOs: CompetencyLinkDTO[] = (textExercise.competencyLinks ?? []).map((link) => ({
         competency: { id: link.competency!.id! },
         weight: link.weight,
     }));
