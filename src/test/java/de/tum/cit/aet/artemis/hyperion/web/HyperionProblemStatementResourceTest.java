@@ -220,6 +220,20 @@ class HyperionProblemStatementResourceTest extends AbstractSpringIntegrationLoca
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = { "USER", "INSTRUCTOR" })
+    void shouldNotPersistConsistencyThreadsWhenSkipThreadContextIsTrue() throws Exception {
+        long exerciseId = persistedExerciseId;
+        mockConsistencyWithIssue();
+        userUtilService.changeUser(TEST_PREFIX + "instructor1");
+
+        request.performMvcRequest(post("/api/hyperion/programming-exercises/{exerciseId}/consistency-check", exerciseId).param("skipThreadContext", "true"))
+                .andExpect(status().isOk());
+
+        var threads = commentThreadRepository.findWithCommentsByExerciseId(exerciseId);
+        assertThat(threads).isEmpty();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = { "USER", "TA" })
     void shouldReturnForbiddenForConsistencyCheckTutor() throws Exception {
         long exerciseId = persistedExerciseId;

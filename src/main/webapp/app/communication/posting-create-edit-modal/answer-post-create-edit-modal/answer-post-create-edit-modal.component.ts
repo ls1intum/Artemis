@@ -23,7 +23,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      */
     open(): void {
         this.close();
-        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor);
+        this.createEditAnswerPostContainerRef()?.createEmbeddedView(this.postingEditor()!);
         this.isInputOpen = true;
     }
 

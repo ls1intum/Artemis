@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -93,29 +94,34 @@ public class HyperionProblemStatementResource {
     }
 
     /**
-     * POST programming-exercises/{programmingExerciseId}/consistency-check: Check the consistency of a programming exercise.
+     * POST programming-exercises/{exerciseId}/consistency-check: Check the consistency of a programming exercise.
      * Returns a JSON body with the issues (can be empty list).
      *
-     * @param exerciseId the id of the programming exercise to check
+     * @param exerciseId        the id of the programming exercise to check
+     * @param skipThreadContext if {@code true}, skips injecting existing review-thread context into the AI prompts
+     *                              and skips creating new review-comment threads after the check (default: {@code false})
      * @return the ResponseEntity with status 200 (OK) and the consistency check result or an error status
      */
-    @PostMapping("programming-exercises/{programmingExerciseId}/consistency-check")
+    @PostMapping("programming-exercises/{exerciseId}/consistency-check")
     @EnforceAtLeastEditorInExercise
-    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("programmingExerciseId") long exerciseId) {
+    public ResponseEntity<ConsistencyCheckResponseDTO> checkExerciseConsistency(@PathVariable("exerciseId") long exerciseId,
+            @RequestParam(required = false, defaultValue = "false") boolean skipThreadContext) {
         log.debug("REST request to Hyperion consistency check for programming exercise [{}]", exerciseId);
-        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId);
-        try {
-            List<CommentThread> createdThreads = exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
-            for (CommentThread thread : createdThreads) {
-                if (thread.getId() == null) {
-                    continue;
+        ConsistencyCheckResponseDTO response = consistencyCheckService.checkConsistency(exerciseId, skipThreadContext);
+        if (!skipThreadContext) {
+            try {
+                exerciseReviewService.createConsistencyCheckThreads(exerciseId, response.issues());
+                for (CommentThread thread : createdThreads) {
+                    if (thread.getId() == null) {
+                        continue;
+                    }
+                    CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
+                    exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
                 }
-                CommentThreadDTO createdThread = new CommentThreadDTO(thread, CommentDTO.fromThread(thread));
-                exerciseEditorSyncService.broadcastReviewThreadUpdate(exerciseId, ReviewThreadSyncDTO.threadCreated(createdThread));
             }
-        }
-        catch (RuntimeException ex) {
-            log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+            catch (RuntimeException ex) {
+                log.warn("Consistency check succeeded for exercise {}, but persisting review-comment threads failed", exerciseId, ex);
+            }
         }
         return ResponseEntity.ok(response);
     }

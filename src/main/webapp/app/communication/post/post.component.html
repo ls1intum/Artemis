@@ -1,6 +1,6 @@
 <div
     class="post hover-container"
-    [ngClass]="{ 'mx-0': !isThreadSidebar, 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+    [ngClass]="{ 'mx-0': !isThreadSidebar(), 'pinned-message': isPinned(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
 >
     @if (posting.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
@@ -22,7 +22,7 @@
                 [readOnlyMode]="readOnlyMode()"
                 [posting]="posting"
                 [isDeleted]="isDeleted"
-                [isCommunicationPage]="isCommunicationPage"
+                [isCommunicationPage]="isCommunicationPage()"
                 (isModalOpen)="setDisplayInlineInput(true)"
                 (onUserNameClicked)="onUserNameClicked()"
                 [lastReadDate]="lastReadDate()"
@@ -42,7 +42,7 @@
                 }
                 <!-- in the course all-messages as well as in the preview mode during similarity check, the context (lecture, exercise, course-wide topic) is shown -->
                 <!-- not shown in course messages page -->
-                @if (showChannelReference && (pageType === PageType.OVERVIEW || previewMode()) && contextInformation.displayName !== '') {
+                @if (showChannelReference() && (pageType === PageType.OVERVIEW || previewMode()) && contextInformation.displayName !== '') {
                     <span>
                         @if (contextInformation.routerLinkComponents) {
                             <a
@@ -75,7 +75,7 @@
                     [class.force-hover]="showDropdown"
                     (contextmenu)="onRightClick($event)"
                 >
-                    <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar }">
+                    <div class="message-content" [ngClass]="{ 'mx-0': !isThreadSidebar() }">
                         <jhi-posting-content
                             [previewMode]="previewMode()"
                             [content]="posting.content"
@@ -107,8 +107,8 @@
                                     [posting]="posting"
                                     [(showAnswers)]="showAnswers"
                                     [sortedAnswerPosts]="sortedAnswerPosts"
-                                    [isCommunicationPage]="isCommunicationPage"
-                                    [isThreadSidebar]="isThreadSidebar"
+                                    [isCommunicationPage]="isCommunicationPage()"
+                                    [isThreadSidebar]="isThreadSidebar()"
                                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                                     (openThread)="openThread.emit()"
                                     (isModalOpen)="setDisplayInlineInput(true)"
@@ -148,8 +148,8 @@
                     [(showAnswers)]="showAnswers"
                     [showSearchResultInAnswersHint]="showSearchResultInAnswersHint"
                     [sortedAnswerPosts]="sortedAnswerPosts"
-                    [isCommunicationPage]="isCommunicationPage"
-                    [isThreadSidebar]="isThreadSidebar"
+                    [isCommunicationPage]="isCommunicationPage()"
+                    [isThreadSidebar]="isThreadSidebar()"
                     (openPostingCreateEditModal)="openCreateAnswerPostModal()"
                     (closePostingCreateEditModal)="closeCreateAnswerPostModal()"
                     (openThread)="openThread.emit()"
@@ -169,14 +169,14 @@
     [previewMode]="previewMode() || pageType === PageType.PLAGIARISM_CASE_STUDENT"
     [posting]="posting"
     [showAnswers]="showAnswers()"
-    [isCommunicationPage]="isCommunicationPage"
-    [isThreadSidebar]="isThreadSidebar"
+    [isCommunicationPage]="isCommunicationPage() ?? false"
+    [isThreadSidebar]="isThreadSidebar() ?? false"
     [sortedAnswerPosts]="sortedAnswerPosts"
     (openThread)="openThread.emit()"
     [lastReadDate]="lastReadDate()"
     (userReferenceClicked)="onUserReferenceClicked($event)"
     (channelReferenceClicked)="onChannelReferenceClicked($event)"
-    [hasChannelModerationRights]="hasChannelModerationRights"
+    [hasChannelModerationRights]="hasChannelModerationRights()"
 />
 
 <!-- Right-Click Dropdown -->
@@ -204,7 +204,7 @@
                 <span jhiTranslate="artemisApp.metis.post.deleteMessage"></span>
             </button>
         }
-        <button class="dropdown-item d-flex" (click)="isCommunicationPage ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
+        <button class="dropdown-item d-flex" (click)="isCommunicationPage() ? openThread.emit() : reactionsBarComponent()?.openAnswerView()">
             <fa-icon [icon]="faComments" class="item-icon" />
             <span jhiTranslate="artemisApp.metis.post.replyMessage"></span>
         </button>

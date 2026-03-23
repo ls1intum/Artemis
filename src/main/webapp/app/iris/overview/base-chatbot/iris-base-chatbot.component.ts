@@ -6,7 +6,6 @@ import {
     faCompress,
     faCopy,
     faExpand,
-    faLink,
     faMagnifyingGlass,
     faPaperPlane,
     faPenToSquare,
@@ -14,10 +13,7 @@ import {
     faThumbsUp,
     faXmark,
 } from '@fortawesome/free-solid-svg-icons';
-import { AlertService } from 'app/shared/service/alert.service';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { ConfirmationService } from 'primeng/api';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { TooltipModule } from 'primeng/tooltip';
 import { AfterViewInit, ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
@@ -29,13 +25,14 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageContent, IrisMessageContentType, IrisTextMessageContent, McqData, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { AccountService } from 'app/core/auth/account.service';
-import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { IrisCitationTextComponent } from 'app/iris/overview/citation-text/iris-citation-text.component';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FormsModule } from '@angular/forms';
@@ -43,24 +40,18 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { AsPipe } from 'app/shared/pipes/as.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ChatHistoryItemComponent } from './chat-history-item/chat-history-item.component';
-import { NgClass, formatDate } from '@angular/common';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { SearchFilterComponent } from 'app/shared/search-filter/search-filter.component';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { ChatStatusBarComponent } from 'app/iris/overview/base-chatbot/chat-status-bar/chat-status-bar.component';
 import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/about-iris-modal.component';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ConfirmationService } from 'primeng/api';
+import { AlertService } from 'app/shared/service/alert.service';
+import { formatDate } from '@angular/common';
 import { IrisChatMemoriesIndicatorComponent } from 'app/iris/overview/base-chatbot/memories-indicator/iris-chat-memories-indicator.component';
 import { MemirisMemory } from 'app/iris/shared/entities/memiris.model';
-
-// Session history time bucket boundaries (in days ago)
-const YESTERDAY_OFFSET = 1;
-const LAST_7_DAYS_START = 2;
-const LAST_7_DAYS_END = 6;
-const LAST_30_DAYS_START = 7;
-const LAST_30_DAYS_END = 29;
-const OLDER_SESSIONS_START = 30;
-
 // Interval (in ms) to check if the date has changed for session bucket recalculation
 const DAY_CHANGE_CHECK_INTERVAL_MS = 60000;
 
@@ -70,16 +61,15 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
 @Component({
     selector: 'jhi-iris-base-chatbot',
     templateUrl: './iris-base-chatbot.component.html',
-    styleUrls: ['./iris-base-chatbot.component.scss'],
+    styleUrl: './iris-base-chatbot.component.scss',
     host: {
         '[class.layout-client]': "layout() === 'client'",
         '[class.layout-widget]': "layout() === 'widget'",
     },
     imports: [
         IrisLogoComponent,
-        RouterLink,
         FaIconComponent,
-        NgbTooltip,
+        TooltipModule,
         TranslateDirective,
         ChatStatusBarComponent,
         FormsModule,
@@ -88,9 +78,9 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         AsPipe,
         HtmlForMarkdownPipe,
         ChatHistoryItemComponent,
-        NgClass,
         SearchFilterComponent,
         IrisCitationTextComponent,
+        IrisMcqQuestionComponent,
         IrisChatMemoriesIndicatorComponent,
         ConfirmDialogModule,
     ],
@@ -105,10 +95,8 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private readonly alertService = inject(AlertService);
     private readonly confirmationService = inject(ConfirmationService);
 
-    // Known "new chat" titles from all languages (server-side: messages*.properties, client-side: iris.json).
-    // Must match the values in src/main/resources/i18n/messages*.properties (iris.chat.session.newChatTitle)
-    // and src/main/webapp/i18n/*/iris.json (artemisApp.iris.chatHistory.newChat).
     private static readonly NEW_CHAT_TITLES = new Set(['new chat', 'neuer chat']);
+
     protected statusService = inject(IrisStatusService);
     protected chatService = inject(IrisChatService);
     protected route = inject(ActivatedRoute);
@@ -126,7 +114,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly faThumbsUp = faThumbsUp;
     protected readonly faThumbsDown = faThumbsDown;
     protected readonly faPenToSquare = faPenToSquare;
-    protected readonly faLink = faLink;
+
     protected readonly faMagnifyingGlass = faMagnifyingGlass;
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faCopy = faCopy;
@@ -141,12 +129,11 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
 
-    // Observable-derived signals (using toSignal for reactive state)
-    private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
-    private readonly currentChatMode = toSignal(this.chatService.currentChatMode(), { initialValue: undefined });
-    readonly relatedEntityRoute = computed<string | undefined>(() => this.computeRelatedEntityRoute(this.currentChatMode(), this.currentRelatedEntityId()));
-    readonly relatedEntityLinkButtonLabel = computed<string | undefined>(() => this.computeRelatedEntityLinkButtonLabel(this.currentChatMode()));
+    // MCQ helpers
+    protected readonly isMcqContent = isMcqContent;
+    protected readonly getMcqData = (content: IrisMessageContent): McqData | undefined => getMcqData(content);
 
+    // Observable-derived signals (using toSignal for reactive state)
     readonly currentSessionId = toSignal(this.chatService.currentSessionId(), { initialValue: undefined });
     readonly chatSessions = toSignal(this.chatService.availableChatSessions(), { initialValue: [] as IrisSessionDTO[] });
     readonly stages = toSignal(this.chatService.currentStages(), { initialValue: [] as IrisStageDTO[] });
@@ -163,15 +150,34 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // Computed state
     readonly hasActiveStage = computed(() => this.stages()?.some((stage) => [IrisStageStateDTO.IN_PROGRESS, IrisStageStateDTO.NOT_STARTED].includes(stage.state)) ?? false);
+    readonly isInputDisabled = computed(
+        () =>
+            this.isLoading() ||
+            !this.active() ||
+            !!(this.rateLimitInfo()?.rateLimit && this.rateLimitInfo()!.currentMessageCount === this.rateLimitInfo()!.rateLimit) ||
+            this.hasActiveStage(),
+    );
+    readonly isSendDisabled = computed(() => !this.newMessageTextContent().trim() || this.isInputDisabled());
+    readonly canShowSuggestions = computed(
+        () =>
+            !!this.suggestions()?.length &&
+            this.isAIEnabled() &&
+            this.active() &&
+            (!this.rateLimitInfo()?.rateLimit || this.rateLimitInfo()!.currentMessageCount !== this.rateLimitInfo()!.rateLimit) &&
+            !this.hasActiveStage(),
+    );
+    readonly sessionBuckets = computed(() => [
+        { labelKey: 'artemisApp.iris.chatHistory.today', sessions: this.todaySessions() },
+        { labelKey: 'artemisApp.iris.chatHistory.older', sessions: this.olderSessions() },
+    ]);
     readonly isEmptyState = computed(() => !this.messages()?.length && !this.isEmbeddedChat());
     readonly hasHeaderContent = computed(() => {
-        const hasRelatedEntity = !!this.relatedEntityRoute() && !!this.relatedEntityLinkButtonLabel() && this.isChatHistoryAvailable();
         const rateLimit = this.rateLimitInfo()?.rateLimit ?? 0;
         const hasRateLimitInfo = rateLimit > 0;
         const hasClearButton = !this.isChatHistoryAvailable() && this.messages().length >= 1;
         const hasSizeToggle = this.fullSize() !== undefined;
         const hasCloseButton = this.showCloseButton();
-        return hasRelatedEntity || hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton;
+        return hasRateLimitInfo || hasClearButton || hasSizeToggle || hasCloseButton;
     });
 
     // UI state signals
@@ -187,20 +193,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
         return sessions.filter((session) => (session.title ?? '').toLowerCase().includes(search));
     });
-    readonly newChatSessions = computed(() => {
-        const sessions = this.filteredSessions().filter((session) => this.isNewChatSession(session));
-        if (sessions.length === 0) {
-            return [];
-        }
-        const newestNewChat = sessions.reduce((latest, current) => (new Date(current.creationDate).getTime() > new Date(latest.creationDate).getTime() ? current : latest));
-        return [newestNewChat];
-    });
     readonly filteredNonNewSessions = computed(() => this.filteredSessions().filter((session) => !this.isNewChatSession(session)));
     readonly todaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 0, 0, false, this.dayTick()));
-    readonly yesterdaySessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), YESTERDAY_OFFSET, YESTERDAY_OFFSET, false, this.dayTick()));
-    readonly last7DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), LAST_7_DAYS_START, LAST_7_DAYS_END, false, this.dayTick()));
-    readonly last30DaysSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), LAST_30_DAYS_START, LAST_30_DAYS_END, false, this.dayTick()));
-    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), OLDER_SESSIONS_START, undefined, true, this.dayTick()));
+    readonly olderSessions = computed(() => this.filterSessionsBetween(this.filteredNonNewSessions(), 1, undefined, true, this.dayTick()));
 
     // Daily tick signal for reactive date-based session buckets
     readonly dayTick = signal(new Date().toDateString());
@@ -222,7 +217,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     private previousMessageCount = 0;
     private previousMessageIds = new Set<number>();
     private copyResetTimeoutId: ReturnType<typeof setTimeout> | undefined;
-    public ButtonType = ButtonType;
+    protected readonly ButtonType = ButtonType;
     readonly copiedMessageKey = signal<number | undefined>(undefined);
 
     showDeclineButton = input<boolean>(true);
@@ -237,7 +232,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
 
     // ViewChilds
     readonly messagesElement = viewChild<ElementRef>('messagesElement');
-    readonly scrollArrow = viewChild<ElementRef>('scrollArrow');
     readonly messageTextarea = viewChild<ElementRef<HTMLTextAreaElement>>('messageTextarea');
     readonly acceptButton = viewChild<ElementRef<HTMLButtonElement>>('acceptButton');
 
@@ -617,47 +611,22 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         textarea.style.height = 'auto'; // Reset the height to auto
         if (!textarea.value.trim()) {
             textarea.style.height = '';
-            this.adjustScrollButtonPosition(1);
             return;
         }
-        const bufferForSpaceBetweenLines = 4;
-        const lineHeight = parseInt(getComputedStyle(textarea).lineHeight, 10) + bufferForSpaceBetweenLines;
-        const maxHeight = 200;
+        const maxHeight = 164;
         const newHeight = Math.min(textarea.scrollHeight, maxHeight);
         textarea.style.height = `${newHeight}px`;
-
-        this.adjustScrollButtonPosition(newHeight / lineHeight);
     }
 
     /**
-     * Adjusts the position of the scroll button based on the number of rows in the message textarea.
-     * @param newRows - The new number of rows.
-     */
-    adjustScrollButtonPosition(newRows: number) {
-        const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
-        const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
-        const lineHeight = parseInt(window.getComputedStyle(textarea).lineHeight);
-        const rowHeight = lineHeight * newRows - lineHeight;
-        setTimeout(() => {
-            scrollArrow.style.bottom = `calc(11% + ${rowHeight}px)`;
-        }, 10);
-    }
-
-    /**
-     * Resets the textarea height and scroll button position.
+     * Resets the textarea height.
      */
     resetChatBodyHeight() {
         const textareaRef = this.messageTextarea();
-        const scrollArrowRef = this.scrollArrow();
-        if (!textareaRef || !scrollArrowRef) return;
+        if (!textareaRef) return;
         const textarea: HTMLTextAreaElement = textareaRef.nativeElement;
-        const scrollArrow: HTMLElement = scrollArrowRef.nativeElement;
         textarea.rows = 1;
         textarea.style.height = '';
-        scrollArrow.style.bottom = '';
     }
 
     checkChatScroll() {
@@ -682,7 +651,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     }
 
     onDeleteSession(session: IrisSessionDTO) {
-        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', 'en');
+        const title = session.title || formatDate(session.creationDate, 'dd.MM.yy HH:mm', this.translateService.getCurrentLang() || 'en');
         this.confirmationService.confirm({
             header: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionHeader'),
             message: this.translateService.instant('artemisApp.iris.chatHistory.deleteSessionQuestion', { title }),
@@ -749,14 +718,14 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         }
 
         const filtered = sessions.filter((session) => {
-            const sessionCreationDate = new Date(session.creationDate);
-            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && sessionCreationDate.getTime() >= rangeStartDate.getTime());
-            const isBeforeOrOnEndDate = sessionCreationDate.getTime() <= rangeEndDate.getTime();
+            const activityDate = new Date(session.lastActivityDate ?? session.creationDate);
+            const isAfterOrOnStartDate = ignoreOlderBoundary || (rangeStartDate && activityDate.getTime() >= rangeStartDate.getTime());
+            const isBeforeOrOnEndDate = activityDate.getTime() <= rangeEndDate.getTime();
             return isBeforeOrOnEndDate && (ignoreOlderBoundary || isAfterOrOnStartDate);
         });
 
-        // Sort by creation date descending (most recent first)
-        return filtered.sort((a, b) => new Date(b.creationDate).getTime() - new Date(a.creationDate).getTime());
+        // Sort by last activity date descending (most recent first)
+        return filtered.sort((a, b) => new Date(b.lastActivityDate ?? b.creationDate).getTime() - new Date(a.lastActivityDate ?? a.creationDate).getTime());
     }
 
     openNewSession() {
@@ -791,30 +760,5 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
      */
     getSessionsBetween(daysAgoNewer: number, daysAgoOlder?: number, ignoreOlderBoundary = false): IrisSessionDTO[] {
         return this.filterSessionsBetween(this.filteredNonNewSessions(), daysAgoNewer, daysAgoOlder, ignoreOlderBoundary, this.dayTick());
-    }
-
-    private computeRelatedEntityRoute(currentChatMode: ChatServiceMode | undefined, currentRelatedEntityId: number | undefined): string | undefined {
-        if (!currentChatMode || !currentRelatedEntityId) {
-            return undefined;
-        }
-        switch (currentChatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return `../exercises/${currentRelatedEntityId}`;
-            case ChatServiceMode.LECTURE:
-                return `../lectures/${currentRelatedEntityId}`;
-            default:
-                return undefined;
-        }
-    }
-
-    private computeRelatedEntityLinkButtonLabel(currentChatMode: ChatServiceMode | undefined): string | undefined {
-        switch (currentChatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return `artemisApp.exerciseChatbot.goToRelatedEntityButton.exerciseLabel`;
-            case ChatServiceMode.LECTURE:
-                return `artemisApp.exerciseChatbot.goToRelatedEntityButton.lectureLabel`;
-            default:
-                return undefined;
-        }
     }
 }
