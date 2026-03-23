@@ -139,6 +139,12 @@
             "chat": {
                 "helpOffer": "Wie kann ich Dir helfen?"
             },
+            "mcq": {
+                "submit": "Antwort abschicken",
+                "correct": "Richtig!",
+                "incorrect": "Falsch.",
+                "explanation": "Erklärung:"
+            },
             "contextSelection": {
                 "search": "Suchen...",
                 "placeholder": "Kontext auswählen...",
@@ -147,7 +153,8 @@
                 "exercisesGroup": "Aufgaben"
             },
             "citation": {
-                "inLecture": "in"
+                "unitLabel": "Einheit:",
+                "lectureLabel": "Vorlesung:"
             },
             "tutorSuggestion": {
                 "loading": "Lade Vorschläge...",
