@@ -3,7 +3,6 @@ import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import {
     Competency,
-    CompetencyJol,
     CompetencyLectureUnitLink,
     CompetencyProgress,
     ConfidenceReason,
@@ -15,14 +14,13 @@ import {
 } from 'app/atlas/shared/entities/competency.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { LectureUnit, LectureUnitType } from 'app/lecture/shared/entities/lecture-unit/lectureUnit.model';
 import { LectureUnitCompletionEvent } from 'app/lecture/overview/course-lectures/details/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/manage/lecture-units/services/lecture-unit.service';
 import { ExerciseUnit } from 'app/lecture/shared/entities/lecture-unit/exerciseUnit.model';
 import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
-import { Observable, Subscription, combineLatest, forkJoin } from 'rxjs';
-import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { Subscription, combineLatest } from 'rxjs';
 import { CourseStorageService } from 'app/core/course/manage/services/course-storage.service';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseCompetencyService } from 'app/atlas/shared/services/course-competency.service';
@@ -68,7 +66,6 @@ import { ScienceService } from 'app/shared/science/science.service';
     ],
 })
 export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
-    private featureToggleService = inject(FeatureToggleService);
     private courseStorageService = inject(CourseStorageService);
     private alertService = inject(AlertService);
     private activatedRoute = inject(ActivatedRoute);
@@ -82,10 +79,7 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     isLoading = false;
     competency: Competency;
     competencyProgress: CompetencyProgress;
-    judgementOfLearning: CompetencyJol | undefined;
-    promptForJolRating = false;
     showFireworks = false;
-    dashboardFeatureActive = false;
     paramsSubscription: Subscription;
 
     readonly LectureUnitType = LectureUnitType;
@@ -98,22 +92,18 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
         // example route looks like: /courses/1/competencies/10
         const courseIdParams$ = this.activatedRoute.parent?.parent?.params;
         const competencyIdParams$ = this.activatedRoute.params;
-        const dashboardFeatureToggleActive$ = this.featureToggleService.getFeatureToggleActive(FeatureToggle.StudentCourseAnalyticsDashboard);
 
         if (courseIdParams$) {
-            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$, dashboardFeatureToggleActive$]).subscribe(
-                ([courseIdParams, competencyIdParams, dashboardFeatureActive]) => {
-                    this.competencyId = Number(competencyIdParams.competencyId);
-                    this.courseId = Number(courseIdParams.courseId);
-                    this.dashboardFeatureActive = dashboardFeatureActive;
-                    this.course = this.courseStorageService.getCourse(this.courseId);
-                    if (this.competencyId && this.courseId) {
-                        this.loadData();
-                    }
+            this.paramsSubscription = combineLatest([courseIdParams$, competencyIdParams$]).subscribe(([courseIdParams, competencyIdParams]) => {
+                this.competencyId = Number(competencyIdParams.competencyId);
+                this.courseId = Number(courseIdParams.courseId);
+                this.course = this.courseStorageService.getCourse(this.courseId);
+                if (this.competencyId && this.courseId) {
+                    this.loadData();
+                }
 
-                    this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
-                },
-            );
+                this.scienceService.logEvent(ScienceEventType.COMPETENCY__OPEN, this.competencyId);
+            });
         }
     }
 
@@ -124,35 +114,10 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
     private loadData() {
         this.isLoading = true;
 
-        const observables = [this.courseCompetencyService.findById(this.competencyId!, this.courseId!)] as Observable<
-            HttpResponse<Competency | Competency[] | { current: CompetencyJol; prior?: CompetencyJol }>
-        >[];
-
-        if (this.judgementOfLearningEnabled) {
-            observables.push(this.courseCompetencyService.getAllForCourse(this.courseId!));
-            observables.push(this.courseCompetencyService.getJoL(this.courseId!, this.competencyId!));
-        }
-
-        forkJoin(observables).subscribe({
-            next: ([competencyResp, courseCompetenciesResp, judgementOfLearningResp]) => {
-                this.competency = competencyResp.body! as Competency;
+        this.courseCompetencyService.findById(this.competencyId!, this.courseId!).subscribe({
+            next: (competencyResp) => {
+                this.competency = competencyResp.body!;
                 this.competencyProgress = this.getUserProgress();
-
-                if (this.judgementOfLearningEnabled) {
-                    const competencies = courseCompetenciesResp.body! as Competency[];
-                    const progress = this.competency.userProgress?.first();
-                    this.promptForJolRating = CompetencyJol.shouldPromptForJol(this.competency, progress, competencies);
-                    const judgementOfLearning = (judgementOfLearningResp?.body ?? undefined) as { current: CompetencyJol; prior?: CompetencyJol } | undefined;
-                    if (
-                        !judgementOfLearning?.current ||
-                        judgementOfLearning.current.competencyProgress !== (progress?.progress ?? 0) ||
-                        judgementOfLearning.current.competencyConfidence !== (progress?.confidence ?? 1)
-                    ) {
-                        this.judgementOfLearning = undefined;
-                    } else {
-                        this.judgementOfLearning = judgementOfLearning?.current;
-                    }
-                }
 
                 this.handleExerciseLinks();
 
@@ -232,9 +197,5 @@ export class CourseCompetenciesDetailsComponent implements OnInit, OnDestroy {
 
     get softDueDatePassed(): boolean {
         return dayjs().isAfter(this.competency.softDueDate);
-    }
-
-    get judgementOfLearningEnabled() {
-        return (this.course?.studentCourseAnalyticsDashboardEnabled ?? false) && this.dashboardFeatureActive;
     }
 }
