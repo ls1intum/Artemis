@@ -37,9 +37,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
-import de.tum.cit.aet.artemis.exercise.dto.DiagramRenderInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
-import de.tum.cit.aet.artemis.exercise.dto.TaskRenderInfoDTO;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
 
 @Profile(PROFILE_CORE)
@@ -147,19 +145,17 @@ public class ProblemStatementRenderingService {
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, @Nullable ResultSummary resultSummary, Locale locale) {
 
         if (markdown == null || markdown.isBlank()) {
-            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, List.of(), List.of(), null);
+            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
         }
 
         String processedMarkdown = markdown;
 
         // Step 1: Extract PlantUML diagrams (max 10)
-        List<DiagramRenderInfoDTO> diagrams = new ArrayList<>();
         List<String> inlineSvgs = new ArrayList<>();
-        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, diagrams, inlineSvgs, testResults);
+        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults);
 
         // Step 2: Extract tasks
-        List<TaskRenderInfoDTO> tasks = new ArrayList<>();
-        processedMarkdown = extractTasks(processedMarkdown, tasks, testResults, locale);
+        processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
 
         // Step 3: CommonMark → HTML
         String html = renderWithCommonMark(processedMarkdown);
@@ -186,10 +182,10 @@ public class ProblemStatementRenderingService {
         String interactiveScript = INTERACTIVE_JS;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
-        return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, tasks, diagrams, interactiveScript);
+        return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -202,10 +198,7 @@ public class ProblemStatementRenderingService {
 
             String fullMatch = matcher.group(0);
             String diagramId = "uml-" + diagramIndex;
-            String sourceHash = computeHash(fullMatch);
-            List<Long> testIds = extractTestsColorIds(fullMatch);
             String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
-            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8);
 
             String inlineSvg = null;
             try {
@@ -221,11 +214,10 @@ public class ProblemStatementRenderingService {
             }
             inlineSvgs.add(inlineSvg);
 
-            String replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex
-                    + SVG_PLACEHOLDER_SUFFIX + "</div>";
+            String replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex + SVG_PLACEHOLDER_SUFFIX
+                    + "</div>";
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-            diagrams.add(new DiagramRenderInfoDTO(diagramId, "inline", svgUrl, inlineSvg, sourceHash, testIds));
             diagramIndex++;
         }
         matcher.appendTail(sb);
@@ -277,7 +269,7 @@ public class ProblemStatementRenderingService {
         return detail.passed() ? "green" : "red";
     }
 
-    private String extractTasks(String markdown, List<TaskRenderInfoDTO> tasks, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
+    private String extractTasks(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
         Matcher matcher = TASK_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
 
@@ -303,7 +295,6 @@ public class ProblemStatementRenderingService {
             String taskHtml = buildTaskHtml(taskName, testIds, testStatus, successCount, total, hasFeedback ? testResults : null, locale);
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(taskHtml));
-            tasks.add(new TaskRenderInfoDTO(taskName, testIds, testStatus, hasFeedback ? successCount : null, hasFeedback ? failCount : null));
         }
         matcher.appendTail(sb);
         return sb.toString();

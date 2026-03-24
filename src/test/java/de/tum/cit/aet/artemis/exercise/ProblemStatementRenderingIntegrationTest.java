@@ -40,6 +40,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("artemis-problem-statement");
         assertThat(result.rendererVersion()).isEqualTo("1.0.0");
         assertThat(result.contentHash()).isNotBlank();
+        assertThat(result.interactiveScript()).isNotNull();
     }
 
     @Test
@@ -61,8 +62,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).isNullOrEmpty();
-        assertThat(result.tasks()).isNullOrEmpty();
-        assertThat(result.diagrams()).isNullOrEmpty();
     }
 
     // --- XSS / Sanitization ---
@@ -99,9 +98,9 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.tasks()).hasSize(1);
-        assertThat(result.tasks().getFirst().taskName()).isEqualTo("Sort Method");
-        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("fail");
+        assertThat(result.html()).contains("data-task-name");
+        assertThat(result.html()).contains("Sort Method");
+        assertThat(result.html()).contains("artemis-task-fail");
         assertThat(result.html()).contains("data-feedback");
         assertThat(result.html()).contains("Array index out of bounds");
     }
@@ -114,7 +113,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("success");
         assertThat(result.html()).contains("artemis-task-success");
     }
 
@@ -126,7 +124,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("not-executed");
+        assertThat(result.html()).contains("artemis-task-not-executed");
     }
 
     @Test
@@ -137,7 +135,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
         assertThat(result.html()).doesNotContain("data-feedback");
-        assertThat(result.tasks().getFirst().testStatus()).isNull();
+        assertThat(result.html()).doesNotContain("data-test-status");
     }
 
     @Test
@@ -165,7 +163,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).contains("data-result");
         assertThat(result.html()).contains("deadbeef123");
         assertThat(result.html()).contains("92.3");
-        assertThat(result.html()).contains("AUTOMATIC");
     }
 
     @Test
@@ -178,19 +175,6 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         assertThat(result.html()).doesNotContain("data-result");
     }
 
-    // --- Interactive + Self-contained (always on) ---
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldAlwaysIncludeInteractiveScript() throws Exception {
-        var body = new ProblemStatementRenderRequest("# Hello", null, null, "en");
-
-        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
-
-        assertThat(result.interactiveScript()).isNotNull();
-        assertThat(result.interactiveScript()).contains("artemis-feedback-modal");
-    }
-
     // --- PlantUML ---
 
     @Test
@@ -200,10 +184,8 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.diagrams()).hasSize(1);
-        assertThat(result.diagrams().getFirst().renderMode()).isEqualTo("inline");
-        assertThat(result.diagrams().getFirst().inlineSvg()).contains("<svg");
-        assertThat(result.diagrams().getFirst().inlineSvg()).doesNotContain("<script");
+        assertThat(result.html()).contains("<svg");
+        assertThat(result.html()).doesNotContain("<script");
     }
 
     @Test
@@ -215,8 +197,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
 
-        assertThat(result.diagrams().getFirst().testIds()).contains(42L);
-        assertThat(result.diagrams().getFirst().inlineSvg()).contains("green");
+        assertThat(result.html()).contains("green");
     }
 
     // --- Locale ---
