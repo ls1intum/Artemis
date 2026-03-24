@@ -230,11 +230,10 @@ public class ConfigurationValidator {
             effectiveScheme = weaviateScheme;
         }
 
-        boolean isSupportedVectorizerConfigured = SupportedVectorizer.isSupported(weaviateVectorizerModule);
         if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
         }
-        else if (!isSupportedVectorizerConfigured) {
+        else if (!SupportedVectorizer.isSupported(weaviateVectorizerModule)) {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.toString(SupportedVectorizer.values()) + ")");
         }
 
