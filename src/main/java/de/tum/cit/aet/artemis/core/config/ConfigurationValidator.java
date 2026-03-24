@@ -230,17 +230,18 @@ public class ConfigurationValidator {
             effectiveScheme = weaviateScheme;
         }
 
+        boolean isSupportedVectorizerConfigured = VECTORIZER_NONE.equals(weaviateVectorizerModule) || VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)
+                || VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule);
         if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
         }
-        else if (!VECTORIZER_NONE.equals(weaviateVectorizerModule) && !VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)
-                && !VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule)) {
+        else if (isSupportedVectorizerConfigured) {
             invalidProperties.add(
                     "artemis.weaviate.vectorizer-module (must be '" + VECTORIZER_NONE + "', '" + VECTORIZER_TEXT2VEC_TRANSFORMERS + "', or '" + VECTORIZER_TEXT2VEC_OPENAI + "')");
         }
 
-        // Validate OpenAI-specific properties when text2vec-openai vectorizer is selected
-        if (VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule)) {
+        boolean shouldValidateOpenAPISpecificProperties = VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule);
+        if (shouldValidateOpenAPISpecificProperties) {
             if (!StringUtils.hasText(weaviateApiBaseUrl)) {
                 invalidProperties.add("artemis.weaviate.api-base-url (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
             }
@@ -248,7 +249,8 @@ public class ConfigurationValidator {
                 try {
                     URI uri = URI.create(weaviateApiBaseUrl);
                     String scheme = uri.getScheme();
-                    if (!uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme))) {
+                    boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
+                    if (isInvalidUrl) {
                         invalidProperties.add(
                                 "artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
                     }
