@@ -9,7 +9,7 @@ import dayjs from 'dayjs/esm';
 describe('UpdateTextExerciseDTO', () => {
     describe('toUpdateTextExerciseDTO', () => {
         beforeEach(() => {
-            vi.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore').mockImplementation(() => {});
+            vi.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore').mockImplementation((exercise) => exercise);
             vi.spyOn(ExerciseService, 'stringifyExerciseDTOCategories').mockReturnValue(['category1']);
         });
 

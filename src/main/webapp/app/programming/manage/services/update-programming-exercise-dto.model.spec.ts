@@ -7,7 +7,7 @@ import dayjs from 'dayjs/esm';
 describe('UpdateProgrammingExerciseDTO', () => {
     describe('toUpdateProgrammingExerciseDTO', () => {
         beforeEach(() => {
-            jest.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore').mockImplementation(() => {});
+            jest.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore').mockImplementation((exercise) => exercise);
             jest.spyOn(ExerciseService, 'stringifyExerciseDTOCategories').mockReturnValue(['cat1']);
         });
 
