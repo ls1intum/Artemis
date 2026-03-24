@@ -65,11 +65,11 @@ public class WeaviateService {
 
     private final String weaviateScheme;
 
-    private final String weaviateApiEmbeddingModel;
+    private final String weaviateOpenAiEmbeddingModel;
 
-    private final String weaviateApiBaseUrl;
+    private final String weaviateOpenAiBaseUrl;
 
-    private final String weaviateApiKey;
+    private final String weaviateGpuApiKey;
 
     private final boolean isTestProfile;
 
@@ -80,8 +80,8 @@ public class WeaviateService {
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme,
             @Value("${artemis.weaviate.collection-prefix:" + WeaviateConfigurationProperties.DEFAULT_COLLECTION_PREFIX + "}") String collectionPrefix,
             @Value("${artemis.weaviate.vectorizer-module:none}") String vectorizerModule,
-            @Value("${artemis.weaviate.api-embedding-model:#{null}}") String weaviateApiEmbeddingModel,
-            @Value("${artemis.weaviate.api-base-url:#{null}}") String weaviateApiBaseUrl, @Value("${artemis.weaviate.api-key:#{null}}") String weaviateApiKey) {
+            @Value("${artemis.weaviate.open-ai-embedding-model:#{null}}") String weaviateOpenAiEmbeddingModel,
+            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey) {
         this.client = client;
         this.weaviateEnabled = weaviateEnabled;
         this.weaviateHost = weaviateHost;
@@ -90,9 +90,9 @@ public class WeaviateService {
         this.weaviateScheme = weaviateScheme;
         this.collectionPrefix = collectionPrefix;
         this.vectorizerModule = vectorizerModule;
-        this.weaviateApiEmbeddingModel = weaviateApiEmbeddingModel;
-        this.weaviateApiBaseUrl = weaviateApiBaseUrl;
-        this.weaviateApiKey = weaviateApiKey;
+        this.weaviateOpenAiEmbeddingModel = weaviateOpenAiEmbeddingModel;
+        this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
+        this.weaviateGpuApiKey = weaviateGpuApiKey;
         this.isTestProfile = environment.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 
@@ -151,16 +151,16 @@ public class WeaviateService {
                 // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
                 if (SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(vectorizerModule)) {
                     collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
-                        if (StringUtils.hasText(weaviateApiBaseUrl)) {
-                            builder.baseUrl(weaviateApiBaseUrl);
+                        if (StringUtils.hasText(weaviateOpenAiBaseUrl)) {
+                            builder.baseUrl(weaviateOpenAiBaseUrl);
                         }
-                        if (StringUtils.hasText(weaviateApiEmbeddingModel)) {
-                            builder.model(weaviateApiEmbeddingModel);
+                        if (StringUtils.hasText(weaviateOpenAiEmbeddingModel)) {
+                            builder.model(weaviateOpenAiEmbeddingModel);
                         }
                         return builder;
                     }));
-                    log.info("Configured collection '{}' with text2vec-openai: baseUrl='{}', model='{}', apiKey configured={}", collectionName, weaviateApiBaseUrl,
-                            weaviateApiEmbeddingModel, StringUtils.hasText(weaviateApiKey));
+                    log.info("Configured collection '{}' with text2vec-openai: baseUrl='{}', model='{}', apiKey configured={}", collectionName, weaviateOpenAiBaseUrl,
+                            weaviateOpenAiEmbeddingModel, StringUtils.hasText(weaviateGpuApiKey));
                 }
                 else if (SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(vectorizerModule)) {
                     log.info("Configured collection '{}' with text2vec-transformers vectorizer", collectionName);
@@ -283,11 +283,11 @@ public class WeaviateService {
         boolean shouldCompareOpenAIProperties = existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI;
         if (shouldCompareOpenAIProperties) {
             Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
-            if (!Objects.equals(existingOpenAi.baseUrl(), weaviateApiBaseUrl)) {
-                mismatches.add("api-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), weaviateApiBaseUrl));
+            if (!Objects.equals(existingOpenAi.baseUrl(), weaviateOpenAiBaseUrl)) {
+                mismatches.add("open-ai-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), weaviateOpenAiBaseUrl));
             }
-            if (!Objects.equals(existingOpenAi.model(), weaviateApiEmbeddingModel)) {
-                mismatches.add("api-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), weaviateApiEmbeddingModel));
+            if (!Objects.equals(existingOpenAi.model(), weaviateOpenAiEmbeddingModel)) {
+                mismatches.add("open-ai-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), weaviateOpenAiEmbeddingModel));
             }
         }
 

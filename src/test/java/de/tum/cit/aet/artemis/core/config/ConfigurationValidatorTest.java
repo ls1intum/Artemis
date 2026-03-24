@@ -41,11 +41,11 @@ class ConfigurationValidatorTest {
     }
 
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme,
-            String vectorizerModule, String apiBaseUrl, String apiKey) {
+            String vectorizerModule, String openAiBaseUrl, String gpuApiKey) {
         Environment mockEnvironment = mock(Environment.class);
         when(mockEnvironment.getProperty(Constants.PASSKEY_ENABLED_PROPERTY_NAME, Boolean.class)).thenReturn(false);
         return new ConfigurationValidator(mockEnvironment, false, null, null, weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, vectorizerModule,
-                apiBaseUrl, apiKey);
+                openAiBaseUrl, gpuApiKey);
     }
 
     @Nested
@@ -208,7 +208,7 @@ class ConfigurationValidatorTest {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
                         SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), null, "dummy");
 
-                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.api-base-url");
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.open-ai-base-url");
             }
 
             @Test
@@ -216,7 +216,7 @@ class ConfigurationValidatorTest {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
                         SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), "http://localhost:11434", null);
 
-                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.api-key");
+                assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.gpu-api-key");
             }
         }
     }

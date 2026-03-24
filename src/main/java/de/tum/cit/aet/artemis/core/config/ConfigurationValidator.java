@@ -77,9 +77,9 @@ public class ConfigurationValidator {
 
     private final String weaviateVectorizerModule;
 
-    private final String weaviateApiBaseUrl;
+    private final String weaviateOpenAiBaseUrl;
 
-    private final String weaviateApiKey;
+    private final String weaviateGpuApiKey;
 
     public ConfigurationValidator(Environment environment,
             @Value("${" + Constants.PASSKEY_REQUIRE_FOR_ADMINISTRATOR_FEATURES_PROPERTY_NAME + ":false}") boolean isPasskeyRequiredForAdministratorFeatures,
@@ -89,7 +89,7 @@ public class ConfigurationValidator {
             @Value("${artemis.weaviate.http-port:" + WeaviateConfigurationProperties.DEFAULT_HTTP_PORT + "}") int weaviatePort,
             @Value("${artemis.weaviate.grpc-port:" + WeaviateConfigurationProperties.DEFAULT_GRPC_PORT + "}") int weaviateGrpcPort,
             @Value("${artemis.weaviate.scheme:#{null}}") String weaviateScheme, @Value("${artemis.weaviate.vectorizer-module:#{null}}") String weaviateVectorizerModule,
-            @Value("${artemis.weaviate.api-base-url:#{null}}") String weaviateApiBaseUrl, @Value("${artemis.weaviate.api-key:#{null}}") String weaviateApiKey) {
+            @Value("${artemis.weaviate.open-ai-base-url:#{null}}") String weaviateOpenAiBaseUrl, @Value("${artemis.weaviate.gpu-api-key:#{null}}") String weaviateGpuApiKey) {
         this.environment = environment;
         this.artemisConfigHelper = new ArtemisConfigHelper();
         this.isPasskeyRequiredForAdministratorFeatures = isPasskeyRequiredForAdministratorFeatures;
@@ -103,8 +103,8 @@ public class ConfigurationValidator {
         this.weaviateGrpcPort = weaviateGrpcPort;
         this.weaviateScheme = weaviateScheme;
         this.weaviateVectorizerModule = weaviateVectorizerModule;
-        this.weaviateApiBaseUrl = weaviateApiBaseUrl;
-        this.weaviateApiKey = weaviateApiKey;
+        this.weaviateOpenAiBaseUrl = weaviateOpenAiBaseUrl;
+        this.weaviateGpuApiKey = weaviateGpuApiKey;
     }
 
     /**
@@ -239,26 +239,27 @@ public class ConfigurationValidator {
 
         boolean shouldValidateOpenAPISpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
         if (shouldValidateOpenAPISpecificProperties) {
-            if (!StringUtils.hasText(weaviateApiBaseUrl)) {
-                invalidProperties.add("artemis.weaviate.api-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
+            if (!StringUtils.hasText(weaviateOpenAiBaseUrl)) {
+                invalidProperties.add("artemis.weaviate.open-ai-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
             }
             else {
                 try {
-                    URI uri = URI.create(weaviateApiBaseUrl);
+                    URI uri = URI.create(weaviateOpenAiBaseUrl);
                     String scheme = uri.getScheme();
                     boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
                     if (isInvalidUrl) {
-                        invalidProperties.add("artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
-                                + " vectorizer)");
+                        invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using "
+                                + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
                     }
                 }
                 catch (IllegalArgumentException e) {
-                    invalidProperties.add(
-                            "artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
+                    invalidProperties.add("artemis.weaviate.open-ai-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
+                            + " vectorizer)");
                 }
             }
-            if (!StringUtils.hasText(weaviateApiKey)) {
-                invalidProperties.add("artemis.weaviate.api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
+            if (!StringUtils.hasText(weaviateGpuApiKey)) {
+                invalidProperties
+                        .add("artemis.weaviate.gpu-api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
             }
         }
 
