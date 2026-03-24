@@ -57,7 +57,6 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
         LtiInitializerComponent,
         FaIconComponent,
         NgbTooltip,
-        TranslateDirective,
         ArtemisTranslatePipe,
     ],
 })
@@ -131,6 +130,23 @@ export class ExerciseSplitPanelComponent {
 
     readonly showProblemStatement = computed(() => {
         return this.exercise().type !== ExerciseType.QUIZ;
+    });
+
+    readonly editorLabelKey = computed(() => {
+        switch (this.exercise().type) {
+            case ExerciseType.PROGRAMMING:
+                return 'artemisApp.courseOverview.exerciseDetails.codeEditor';
+            case ExerciseType.TEXT:
+                return 'artemisApp.courseOverview.exerciseDetails.textEditor';
+            case ExerciseType.MODELING:
+                return 'artemisApp.courseOverview.exerciseDetails.modelingEditor';
+            case ExerciseType.FILE_UPLOAD:
+                return 'artemisApp.courseOverview.exerciseDetails.fileUploadEditor';
+            case ExerciseType.QUIZ:
+                return 'artemisApp.courseOverview.exerciseDetails.quizEditor';
+            default:
+                return 'artemisApp.courseOverview.exerciseDetails.codeEditor';
+        }
     });
 
     readonly usesRouterOutlet = computed(() => {

@@ -20,6 +20,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
 import { TabsModule } from 'primeng/tabs';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 
 @Directive({ selector: 'ng-template[jhiPanel]' })
 export class PanelDirective {
@@ -38,7 +39,7 @@ export class SplitPaneDirective {
     selector: 'jhi-resizable-panels',
     templateUrl: './resizable-panels.component.html',
     styleUrls: ['./resizable-panels.component.scss'],
-    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule],
+    imports: [FaIconComponent, NgTemplateOutlet, SplitPaneDirective, TabsModule, TranslateDirective],
 })
 export class ResizablePanelsComponent implements AfterViewInit, OnDestroy {
     private readonly ngZone = inject(NgZone);

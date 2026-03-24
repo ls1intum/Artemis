@@ -11,7 +11,7 @@
                             } @else if (leftPanel()!.icon()) {
                                 <fa-icon [icon]="leftPanel()!.icon()!" />
                             }
-                            <span>{{ leftPanel()!.label() }}</span>
+                            <span [jhiTranslate]="leftPanel()!.label()"></span>
                         </p-tab>
                     </p-tablist>
                 </p-tabs>
@@ -32,7 +32,7 @@
                                 } @else if (panel.icon()) {
                                     <fa-icon [icon]="panel.icon()!" />
                                 }
-                                <span>{{ panel.label() }}</span>
+                                <span [jhiTranslate]="panel.label()"></span>
                             </p-tab>
                         }
                     </p-tablist>
@@ -57,7 +57,7 @@
                         } @else if (panel.icon()) {
                             <fa-icon [icon]="panel.icon()!" />
                         }
-                        <span>{{ panel.label() }}</span>
+                        <span [jhiTranslate]="panel.label()"></span>
                     </p-tab>
                 }
             </p-tablist>

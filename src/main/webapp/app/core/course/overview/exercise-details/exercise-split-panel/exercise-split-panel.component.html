@@ -1,6 +1,6 @@
 <jhi-resizable-panels class="flex-fill h-100 overflow-hidden">
     @if (showEditorPanel()) {
-        <ng-template jhiPanel label="Editor" [icon]="getIcon(exercise().type)">
+        <ng-template jhiPanel [label]="editorLabelKey()" [icon]="getIcon(exercise().type)">
             @if (usesRouterOutlet()) {
                 <router-outlet />
             }
@@ -9,7 +9,7 @@
 
     <ng-template
         jhiPanel
-        [label]="exercise().type === ExerciseType.QUIZ ? 'Quiz info' : 'Problem statement'"
+        [label]="exercise().type === ExerciseType.QUIZ ? 'artemisApp.courseOverview.exerciseDetails.quizInfo' : 'artemisApp.courseOverview.exerciseDetails.problemStatement'"
         [icon]="exercise().type === ExerciseType.QUIZ ? faCircleInfo : faAlignLeft"
     >
         @if (showProblemStatement()) {
@@ -89,13 +89,13 @@
         <ng-template #irisLogoTpl>
             <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
         </ng-template>
-        <ng-template jhiPanel label="Iris" [iconTemplate]="irisLogoTpl">
+        <ng-template jhiPanel [label]="'artemisApp.courseOverview.exerciseDetails.iris'" [iconTemplate]="irisLogoTpl">
             <jhi-iris-base-chatbot class="h-100" [layout]="'embedded'" [isChatHistoryAvailable]="false" />
         </ng-template>
     }
 
     @if (showDiscussion()) {
-        <ng-template jhiPanel label="Chat" [icon]="faComment">
+        <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
             <jhi-discussion-feed [exercise]="exercise()" />
         </ng-template>
     }

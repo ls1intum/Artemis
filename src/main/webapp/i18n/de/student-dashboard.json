@@ -302,6 +302,13 @@
                 "bonus": "Bonus",
                 "of": " von ",
                 "problemStatement": "Problemstellung",
+                "codeEditor": "Code-Editor",
+                "textEditor": "Text-Editor",
+                "modelingEditor": "Modellierungs-Editor",
+                "fileUploadEditor": "Datei-Upload",
+                "quizEditor": "Quiz",
+                "quizInfo": "Quiz-Infos",
+                "iris": "Iris",
                 "noResults": "Du hast noch keine Ergebnisse",
                 "instructorActions": {
                     "title": "Aktionen für Lehrende",
