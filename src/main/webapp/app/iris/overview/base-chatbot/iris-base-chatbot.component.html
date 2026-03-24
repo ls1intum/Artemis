@@ -44,7 +44,7 @@
             @if (isChatHistoryOpen()) {
                 <div class="chat-history-container">
                     <div class="chat-history-top">
-                        <div class="px-2 mt-2 mb-2">
+                        <div class="px-2 mt-2 mb-3">
                             <jhi-search-filter class="w-100" (newSearchEvent)="setSearchValue($event)" />
                         </div>
 
@@ -56,19 +56,73 @@
                     </div>
 
                     <div class="chat-history-list">
-                        @for (bucket of sessionBuckets(); track bucket.labelKey) {
-                            @if (bucket.sessions.length > 0) {
-                                <div class="chat-history-label">
-                                    <p [jhiTranslate]="bucket.labelKey"></p>
-                                </div>
-                                @for (session of bucket.sessions; track session.id) {
-                                    <jhi-chat-history-item
-                                        [session]="session"
-                                        [active]="session.id === currentSessionId()"
-                                        (sessionClicked)="onSessionClick(session)"
-                                        (deleteSession)="onDeleteSession(session)"
-                                    />
-                                }
+                        @if (todaySessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.today"></p>
+                            </div>
+                            @for (session of todaySessions(); track session.id) {
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
+                            }
+                        }
+
+                        @if (yesterdaySessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.yesterday"></p>
+                            </div>
+                            @for (session of yesterdaySessions(); track session.id) {
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
+                            }
+                        }
+
+                        @if (last7DaysSessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.last7Days"></p>
+                            </div>
+                            @for (session of last7DaysSessions(); track session.id) {
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
+                            }
+                        }
+
+                        @if (last30DaysSessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.last30Days"></p>
+                            </div>
+                            @for (session of last30DaysSessions(); track session.id) {
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
+                            }
+                        }
+
+                        @if (olderSessions().length > 0) {
+                            <div class="chat-history-label">
+                                <p jhiTranslate="artemisApp.iris.chatHistory.older"></p>
+                            </div>
+                            @for (session of olderSessions(); track session.id) {
+                                <jhi-chat-history-item
+                                    [session]="session"
+                                    [active]="session.id === currentSessionId()"
+                                    (sessionClicked)="onSessionClick(session)"
+                                    (deleteSession)="onDeleteSession($event)"
+                                />
                             }
                         }
                     </div>
@@ -96,7 +150,34 @@
         <!-- client -->
         @if (!isEmbeddedChat()) {
             <div class="chat-header" [class.has-content]="hasHeaderContent()">
+                @if (layout() === 'widget' && showWidgetHeader()) {
+                    <button
+                        class="session-title-trigger"
+                        (click)="toggleSessionMenu($event)"
+                        [attr.aria-expanded]="sessionMenuOpen()"
+                        aria-haspopup="menu"
+                        [attr.aria-label]="'artemisApp.iris.chatHistory.switchSession' | artemisTranslate"
+                    >
+                        <span class="session-title-text">{{ currentSessionTitle() }}</span>
+                        <fa-icon [icon]="faChevronDown" class="session-title-chevron" [class.rotated]="sessionMenuOpen()" />
+                    </button>
+                    @if (sessionMenuOpen()) {
+                        <div class="session-switcher-inline-menu" (click)="$event.stopPropagation()">
+                            <p-menu [model]="sessionMenuItems()" styleClass="session-switcher-menu" />
+                        </div>
+                    }
+                }
                 <div class="d-flex gap-2">
+                    @if (relatedEntityRoute() && relatedEntityLinkButtonLabel() && isChatHistoryAvailable()) {
+                        <div class="toolbox">
+                            <button [routerLink]="relatedEntityRoute()" [queryParamsHandling]="'preserve'" class="related-entity-button header-control">
+                                <div>
+                                    {{ relatedEntityLinkButtonLabel() | artemisTranslate }}
+                                </div>
+                                <fa-icon [icon]="faLink" />
+                            </button>
+                        </div>
+                    }
                     @if (rateLimitInfo()?.rateLimit; as rateLimit) {
                         @if (rateLimit > 0) {
                             <div class="toolbox">
@@ -284,6 +365,15 @@
                     </div>
                 </div>
             }
+            <button
+                type="button"
+                class="scroll-to-bottom"
+                [hidden]="isScrolledToBottom()"
+                (click)="scrollToBottom('smooth')"
+                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
+            >
+                <fa-icon [icon]="faArrowDown" />
+            </button>
             @if (error()) {
                 <div class="client-chat-error">
                     {{ error() | artemisTranslate: { hours: rateLimitInfo()?.rateLimitTimeframeHours } }}
@@ -320,15 +410,6 @@
                                 [icon]="faPaperPlane"
                                 [disabled]="isSendDisabled()"
                             />
-                            <button
-                                type="button"
-                                class="scroll-to-bottom"
-                                [hidden]="isScrolledToBottom()"
-                                (click)="scrollToBottom('smooth')"
-                                [attr.aria-label]="'artemisApp.exerciseChatbot.scrollToBottom' | artemisTranslate"
-                            >
-                                <fa-icon [icon]="faArrowDown" />
-                            </button>
                         </div>
                     </div>
                     @if (!isChatGptWrapper()) {

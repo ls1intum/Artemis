@@ -46,8 +46,8 @@ import { MockAccountService } from 'test/helpers/mocks/service/mock-account.serv
 import { User } from 'app/core/user/user.model';
 import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/dto/updateLLMSelectionDecision.dto';
 import { LLMSelectionModalService } from 'app/logos/llm-selection-popup.service';
-import { DialogService } from 'primeng/dynamicdialog';
 import { ConfirmationService } from 'primeng/api';
+import { DialogService } from 'primeng/dynamicdialog';
 import { AlertService } from 'app/shared/service/alert.service';
 
 describe('IrisBaseChatbotComponent', () => {
@@ -97,9 +97,8 @@ describe('IrisBaseChatbotComponent', () => {
                 { provide: UserService, useValue: mockUserService },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: LLMSelectionModalService, useValue: mockLLMModalService },
-                MockProvider(DialogService),
-                MockProvider(ConfirmationService),
                 MockProvider(AlertService),
+                MockProvider(DialogService),
                 MockProvider(ActivatedRoute),
                 MockProvider(IrisChatHttpService),
                 MockProvider(IrisWebsocketService),
@@ -196,44 +195,6 @@ describe('IrisBaseChatbotComponent', () => {
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
     });
 
-    it('should update lastActivityDate on the current session after sendMessage', async () => {
-        // given
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-
-        const oldDate = new Date('2025-01-01T00:00:00.000Z');
-        const mockSession: IrisSessionDTO = {
-            id: mockServerSessionHttpResponse.body!.id,
-            creationDate: oldDate,
-            lastActivityDate: oldDate,
-            chatMode: ChatServiceMode.COURSE,
-            entityId: 123,
-            entityName: 'Course 1',
-        };
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
-
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        vi.spyOn(httpService, 'createMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-        component.newMessageTextContent.set(content);
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
-
-        const beforeSend = new Date();
-
-        // when
-        component.onSend();
-        await fixture.whenStable();
-
-        // then
-        const sessions = chatService.chatSessions.getValue();
-        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
-        expect(updatedSession).toBeDefined();
-        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeSend.getTime());
-    });
-
     it('should resend message', async () => {
         // given
         vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
@@ -259,44 +220,6 @@ describe('IrisBaseChatbotComponent', () => {
         expect(component.messages()).toContainEqual(createdMessage);
         expect(stub).toHaveBeenCalledWith(createdMessage);
         expect(getChatSessionsSpy).toHaveBeenCalledOnce();
-    });
-
-    it('should update lastActivityDate on the current session after resendMessage', async () => {
-        // given
-        vi.spyOn(httpService, 'getCurrentSessionOrCreateIfNotExists').mockReturnValueOnce(of(mockServerSessionHttpResponse));
-        vi.spyOn(wsMock, 'subscribeToSession').mockReturnValueOnce(of());
-
-        const oldDate = new Date('2025-01-01T00:00:00.000Z');
-        const mockSession: IrisSessionDTO = {
-            id: mockServerSessionHttpResponse.body!.id,
-            creationDate: oldDate,
-            lastActivityDate: oldDate,
-            chatMode: ChatServiceMode.COURSE,
-            entityId: 123,
-            entityName: 'Course 1',
-        };
-        vi.spyOn(httpService, 'getChatSessions').mockReturnValue(of([mockSession]));
-
-        const content = 'Hello';
-        const createdMessage = mockUserMessageWithContent(content);
-        createdMessage.id = 2;
-        vi.spyOn(httpService, 'resendMessage').mockReturnValueOnce(of({ body: createdMessage } as HttpResponse<IrisMessageResponseDTO>));
-        vi.spyOn(component, 'scrollToBottom').mockImplementation(() => {});
-
-        chatService.switchTo(ChatServiceMode.COURSE, 123);
-        await fixture.whenStable();
-
-        const beforeResend = new Date();
-
-        // when
-        component.resendMessage(createdMessage);
-        await fixture.whenStable();
-
-        // then
-        const sessions = chatService.chatSessions.getValue();
-        const updatedSession = sessions.find((s) => s.id === mockServerSessionHttpResponse.body!.id);
-        expect(updatedSession).toBeDefined();
-        expect(updatedSession!.lastActivityDate!.getTime()).toBeGreaterThanOrEqual(beforeResend.getTime());
     });
 
     it('should rate message', async () => {
@@ -794,7 +717,6 @@ describe('IrisBaseChatbotComponent', () => {
             id: 1,
             title: 'Greeting and study support',
             creationDate: new Date('2025-10-06T10:00:00.000Z'),
-            lastActivityDate: new Date('2025-10-06T10:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -803,7 +725,6 @@ describe('IrisBaseChatbotComponent', () => {
             id: 2,
             title: 'Difference between strategy and bridge pattern',
             creationDate: new Date('2025-10-05T10:00:00.000Z'),
-            lastActivityDate: new Date('2025-10-05T10:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -811,7 +732,6 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionNoTitle: IrisSessionDTO = {
             id: 3,
             creationDate: new Date('2025-10-05T08:00:00.000Z'),
-            lastActivityDate: new Date('2025-10-05T08:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -869,7 +789,6 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionToday: IrisSessionDTO = {
             id: 1,
             creationDate: new Date('2025-06-23T10:00:00.000Z'),
-            lastActivityDate: new Date('2025-06-23T10:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -877,7 +796,6 @@ describe('IrisBaseChatbotComponent', () => {
         const sessionYesterday: IrisSessionDTO = {
             id: 2,
             creationDate: new Date('2025-06-22T12:00:00.000Z'),
-            lastActivityDate: new Date('2025-06-22T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -885,7 +803,6 @@ describe('IrisBaseChatbotComponent', () => {
         const session7DaysAgo: IrisSessionDTO = {
             id: 3,
             creationDate: new Date('2025-06-16T12:00:00.000Z'),
-            lastActivityDate: new Date('2025-06-16T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -893,7 +810,6 @@ describe('IrisBaseChatbotComponent', () => {
         const session8DaysAgo: IrisSessionDTO = {
             id: 4,
             creationDate: new Date('2025-06-15T12:00:00.000Z'),
-            lastActivityDate: new Date('2025-06-15T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -901,7 +817,6 @@ describe('IrisBaseChatbotComponent', () => {
         const session30DaysAgo: IrisSessionDTO = {
             id: 5,
             creationDate: new Date('2025-05-24T12:00:00.000Z'),
-            lastActivityDate: new Date('2025-05-24T12:00:00.000Z'),
             chatMode: ChatServiceMode.COURSE,
             entityId: 1,
             entityName: 'Course 1',
@@ -1041,8 +956,12 @@ describe('IrisBaseChatbotComponent', () => {
         });
     });
 
-    describe('Chat header visibility', () => {
-        it('should show chat header when chat history is available', async () => {
+    describe('Related entity button', () => {
+        it('should display correct related entity button when lecture session selected', async () => {
+            // Mock the service observables before component creation
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.LECTURE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(55));
+
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
@@ -1053,23 +972,29 @@ describe('IrisBaseChatbotComponent', () => {
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const chatHeader = fixture.nativeElement.querySelector('.chat-header');
-            expect(chatHeader).toBeTruthy();
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../lectures/55');
         });
 
-        it('should show chat header when chat history is not available', async () => {
+        it('should display correct related entity button when programming exercise session selected', async () => {
+            // Mock the service observables before component creation
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(99));
+
             fixture = TestBed.createComponent(IrisBaseChatbotComponent);
             component = fixture.componentInstance;
             fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
-            fixture.componentRef.setInput('isChatHistoryAvailable', false);
-            fixture.componentRef.setInput('fullSize', true);
-            fixture.componentRef.setInput('showCloseButton', true);
+            fixture.componentRef.setInput('isChatHistoryAvailable', true);
+            fixture.componentRef.setInput('fullSize', undefined);
+            fixture.componentRef.setInput('showCloseButton', false);
             fixture.componentRef.setInput('isChatGptWrapper', false);
             fixture.detectChanges();
             await fixture.whenStable();
 
-            const chatHeader = fixture.nativeElement.querySelector('.chat-header');
-            expect(chatHeader).not.toBeNull();
+            const relatedEntityButton = fixture.nativeElement.querySelector('.related-entity-button') as HTMLButtonElement;
+            expect(relatedEntityButton).not.toBeNull();
+            expect(component.relatedEntityRoute()).toBe('../exercises/99');
         });
     });
 
@@ -1241,6 +1166,236 @@ describe('IrisBaseChatbotComponent', () => {
 
             const suggestionButtons = fixture.nativeElement.querySelectorAll('.iris-suggestion-buttons');
             expect(suggestionButtons).toHaveLength(0);
+        });
+    });
+
+    describe('Session switcher (widget layout)', () => {
+        const mockDate = new Date('2025-10-06T12:00:00.000Z');
+        const exerciseSession1: IrisSessionDTO = {
+            id: 10,
+            title: 'Help with recursion',
+            creationDate: new Date('2025-10-06T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const exerciseSession2: IrisSessionDTO = {
+            id: 11,
+            title: 'Array sorting question',
+            creationDate: new Date('2025-10-05T09:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 42,
+            entityName: 'Exercise 1',
+        };
+        const otherEntitySession: IrisSessionDTO = {
+            id: 12,
+            title: 'Other exercise chat',
+            creationDate: new Date('2025-10-06T08:00:00.000Z'),
+            chatMode: ChatServiceMode.PROGRAMMING_EXERCISE,
+            entityId: 99,
+            entityName: 'Exercise 2',
+        };
+        const lectureSession: IrisSessionDTO = {
+            id: 13,
+            title: 'Lecture question',
+            creationDate: new Date('2025-10-06T07:00:00.000Z'),
+            chatMode: ChatServiceMode.LECTURE,
+            entityId: 42,
+            entityName: 'Lecture 1',
+        };
+
+        beforeAll(() => {
+            vi.useFakeTimers();
+            vi.setSystemTime(mockDate);
+        });
+
+        afterAll(() => {
+            vi.useRealTimers();
+        });
+
+        beforeEach(() => {
+            vi.spyOn(chatService, 'availableChatSessions').mockReturnValue(of([exerciseSession1, exerciseSession2, otherEntitySession, lectureSession]));
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(10));
+            vi.spyOn(chatService, 'currentMessages').mockReturnValue(of([mockClientMessage, mockServerMessage]));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+        });
+
+        it('should display current session title', () => {
+            expect(component.currentSessionTitle()).toBe('Help with recursion');
+        });
+
+        it('should display "New Chat" when current session id is undefined', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            // MockTranslateService returns the key as the translation
+            expect(component.currentSessionTitle()).toBe('artemisApp.iris.chatHistory.newChat');
+        });
+
+        it('should filter context sessions to matching chatMode and entityId', () => {
+            const contextSessions = component.contextSessions();
+            expect(contextSessions).toHaveLength(2);
+            expect(contextSessions.map((s) => s.id)).toEqual([10, 11]);
+        });
+
+        it('should render session title trigger in widget layout', () => {
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).not.toBeNull();
+        });
+
+        it('should not render session title trigger in client layout', () => {
+            fixture.componentRef.setInput('layout', 'client');
+            fixture.detectChanges();
+
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger).toBeNull();
+        });
+
+        it('should build menu items with group labels and context sessions on toggle', () => {
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            // "Today" group label + session1 + "Older" group label + session2
+            expect(component.sessionMenuItems()).toHaveLength(4);
+            expect(component.sessionMenuItems()[0].disabled).toBe(true); // "Today" group label
+            expect(component.sessionMenuItems()[1].label).toBe('Help with recursion');
+            expect(component.sessionMenuItems()[1].data?.isActive).toBe(true); // Current session
+            expect(component.sessionMenuItems()[2].disabled).toBe(true); // "Older" group label
+            expect(component.sessionMenuItems()[3].label).toBe('Array sorting question');
+            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
+        });
+
+        it('should still build grouped menu when current session id is undefined', () => {
+            vi.spyOn(chatService, 'currentSessionId').mockReturnValue(of(undefined));
+
+            fixture = TestBed.createComponent(IrisBaseChatbotComponent);
+            component = fixture.componentInstance;
+            fixture.componentRef.setInput('layout', 'widget');
+            vi.spyOn(chatService, 'currentChatMode').mockReturnValue(of(ChatServiceMode.PROGRAMMING_EXERCISE));
+            vi.spyOn(chatService, 'currentRelatedEntityId').mockReturnValue(of(42));
+            fixture.nativeElement.querySelector('.chat-body').scrollTo = vi.fn();
+            fixture.detectChanges();
+
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            // No session is active, but sessions are still grouped
+            expect(component.sessionMenuItems()[1].data?.isActive).toBe(false);
+            expect(component.sessionMenuItems()[3].data?.isActive).toBe(false);
+        });
+
+        it('should call onSessionClick when a today session menu item is clicked', () => {
+            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            component.sessionMenuItems()[1].command!({} as any);
+
+            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession1);
+        });
+
+        it('should call onSessionClick when an older session menu item is clicked', () => {
+            vi.spyOn(chatService, 'switchToSession').mockImplementation(() => {});
+            const onSessionClickSpy = vi.spyOn(component, 'onSessionClick');
+            const mockEvent = new MouseEvent('click');
+            component.toggleSessionMenu(mockEvent);
+
+            component.sessionMenuItems()[3].command!({} as any);
+
+            expect(onSessionClickSpy).toHaveBeenCalledWith(exerciseSession2);
+        });
+
+        it('should have hasHeaderContent true for widget layout', () => {
+            expect(component.hasHeaderContent()).toBe(true);
+        });
+
+        it('should have proper aria attributes on the trigger button', () => {
+            const trigger = fixture.nativeElement.querySelector('.session-title-trigger');
+            expect(trigger.getAttribute('aria-haspopup')).toBe('menu');
+            expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        });
+    });
+
+    describe('onDeleteSession', () => {
+        let confirmationService: ConfirmationService;
+        let alertService: AlertService;
+        const mockSession: IrisSessionDTO = {
+            id: 42,
+            title: 'Test session',
+            creationDate: new Date('2025-06-20T10:00:00.000Z'),
+            chatMode: ChatServiceMode.COURSE,
+            entityId: 1,
+            entityName: 'Course 1',
+        };
+
+        beforeEach(() => {
+            confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+            alertService = TestBed.inject(AlertService);
+        });
+
+        it('should show confirmation dialog with correct i18n keys', () => {
+            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
+
+            component.onDeleteSession(mockSession);
+
+            expect(confirmSpy).toHaveBeenCalledOnce();
+            const callArgs = confirmSpy.mock.calls[0][0];
+            expect(callArgs.header).toBe('artemisApp.iris.chatHistory.deleteSessionHeader');
+            expect(callArgs.message).toContain('artemisApp.iris.chatHistory.deleteSessionQuestion');
+            expect(callArgs.acceptLabel).toBe('entity.action.delete');
+            expect(callArgs.rejectLabel).toBe('entity.action.cancel');
+        });
+
+        it('should call chatService.deleteSession on accept', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                confirmation.accept!();
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+
+            component.onDeleteSession(mockSession);
+
+            expect(deleteSessionSpy).toHaveBeenCalledWith(42);
+        });
+
+        it('should show success alert after successful deletion', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                confirmation.accept!();
+                return confirmationService;
+            });
+            vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
+            const successSpy = vi.spyOn(alertService, 'success');
+
+            component.onDeleteSession(mockSession);
+
+            expect(successSpy).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionSuccess');
+        });
+
+        it('should not call deleteSession on rejection', () => {
+            vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation) => {
+                if (confirmation.reject) {
+                    confirmation.reject();
+                }
+                return confirmationService;
+            });
+            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
+
+            component.onDeleteSession(mockSession);
+
+            expect(deleteSessionSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -1452,69 +1607,6 @@ describe('IrisBaseChatbotComponent', () => {
             // Neither message type should have newlines modified — line breaks are handled by markdown-it's breaks: true option
             expect(llmContent.textContent).toBe(tableMarkdown);
             expect(userContent.textContent).toBe(userText);
-        });
-    });
-
-    describe('onDeleteSession', () => {
-        let confirmationService: ConfirmationService;
-
-        beforeEach(() => {
-            // The component declares ConfirmationService as a component-level provider,
-            // so we need to get the instance from the component's injector
-            confirmationService = fixture.debugElement.injector.get(ConfirmationService);
-        });
-
-        it('should show confirmation dialog with correct translation key', () => {
-            const confirmSpy = vi.spyOn(confirmationService, 'confirm');
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
-
-            component.onDeleteSession(session);
-
-            expect(confirmSpy).toHaveBeenCalledOnce();
-            const confirmArg = confirmSpy.mock.calls[0][0];
-            expect(confirmArg.header).toBe('artemisApp.iris.chatHistory.deleteSessionHeader');
-            expect(confirmArg.message).toBe('artemisApp.iris.chatHistory.deleteSessionQuestion');
-        });
-
-        it('should call chatService.deleteSession on confirm', () => {
-            vi.spyOn(confirmationService, 'confirm').mockImplementation((config) => {
-                config.accept!();
-                return confirmationService;
-            });
-            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
-
-            component.onDeleteSession(session);
-
-            expect(deleteSessionSpy).toHaveBeenCalledWith(42);
-        });
-
-        it('should show success alert on successful deletion', () => {
-            vi.spyOn(confirmationService, 'confirm').mockImplementation((config) => {
-                config.accept!();
-                return confirmationService;
-            });
-            vi.spyOn(chatService, 'deleteSession').mockReturnValue(of(undefined));
-            const alertService = fixture.debugElement.injector.get(AlertService);
-            const successSpy = vi.spyOn(alertService, 'success');
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
-
-            component.onDeleteSession(session);
-
-            expect(successSpy).toHaveBeenCalledWith('artemisApp.iris.chatHistory.deleteSessionSuccess');
-        });
-
-        it('should not call deleteSession when confirmation is rejected', () => {
-            vi.spyOn(confirmationService, 'confirm').mockImplementation(() => {
-                // User rejects — accept callback is not invoked
-                return confirmationService;
-            });
-            const deleteSessionSpy = vi.spyOn(chatService, 'deleteSession');
-            const session: IrisSessionDTO = { id: 42, title: 'My Chat', creationDate: new Date(), chatMode: ChatServiceMode.COURSE, entityId: 1, entityName: 'Test' };
-
-            component.onDeleteSession(session);
-
-            expect(deleteSessionSpy).not.toHaveBeenCalled();
         });
     });
 });
