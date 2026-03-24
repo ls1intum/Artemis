@@ -141,7 +141,7 @@ public class SentryConfiguration {
         // To ensure we're not accidentally transmitting them,
         // we use a heuristic to filter out this part of the URL.
         // We assume the part between the last dash and .git to contain a username.
-        String scrubbed = unscrubbed.replaceAll("\\/git\\/([A-Z0-9]+)\\/([a-z0-9]+)-[^/]+\\.git", "/git/$1/$2.git");
+        String scrubbed = unscrubbed.replaceAll("\\/git\\/([A-Z0-9]+)\\/([^/]+)-[^/]+\\.git", "/git/$1/$2.git");
         // False positives: tests, exercise & solution repositories
         if (unscrubbed.contains("-tests.git") || unscrubbed.contains("-exercise.git") || unscrubbed.contains("-solution.git")) {
             return unscrubbed;
