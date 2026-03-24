@@ -74,6 +74,7 @@ describe('UpdateProgrammingExerciseDTO', () => {
                 checkoutSolutionRepository: true,
                 timeoutSeconds: 300,
                 allowBranching: false,
+                branchRegex: '.*',
                 buildScript: '#!/bin/bash\necho test',
             };
 
