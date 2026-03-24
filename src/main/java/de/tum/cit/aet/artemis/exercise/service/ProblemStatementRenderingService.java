@@ -51,11 +51,6 @@ public class ProblemStatementRenderingService {
 
     private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
-    private static final List<String> SELF_CONTAINED_CSS_RESOURCES = List.of("problem-statement-css/katex.min.css", "problem-statement-css/hljs.min.css",
-            "problem-statement-css/github-colors-light.css", "problem-statement-css/github-base.css");
-
-    private static final @Nullable String SELF_CONTAINED_CSS = loadSelfContainedCss();
-
     private static final @Nullable String INTERACTIVE_JS = loadInteractiveJs();
 
     // Dangerous SVG constructs that PlantUML should never generate but we strip as defense-in-depth
@@ -172,11 +167,8 @@ public class ProblemStatementRenderingService {
         // Step 6: Strip testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Step 7: Prepend CSS (embedded + third-party)
+        // Step 7: Prepend embedded CSS
         html = EMBEDDED_CSS + html;
-        if (SELF_CONTAINED_CSS != null) {
-            html = SELF_CONTAINED_CSS + html;
-        }
 
         // Step 8: Content hash (covers HTML + JS)
         String interactiveScript = INTERACTIVE_JS;
@@ -452,21 +444,6 @@ public class ProblemStatementRenderingService {
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
         }
-    }
-
-    private static @Nullable String loadSelfContainedCss() {
-        StringBuilder sb = new StringBuilder("<style>\n");
-        for (String resource : SELF_CONTAINED_CSS_RESOURCES) {
-            try (InputStream is = new ClassPathResource(resource).getInputStream()) {
-                sb.append(new String(is.readAllBytes(), StandardCharsets.UTF_8)).append('\n');
-            }
-            catch (IOException e) {
-                log.warn("Could not load CSS resource for self-contained rendering: {}", resource);
-                return null;
-            }
-        }
-        sb.append("</style>\n");
-        return sb.toString();
     }
 
     private static @Nullable String loadInteractiveJs() {

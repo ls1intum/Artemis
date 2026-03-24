@@ -609,16 +609,6 @@ tasks.register("npmSetCacheDockerfile", NpmTask) {
     args = ["set", "cache", "/opt/artemis/.npm"]
 }
 
-// Copy third-party CSS needed for self-contained problem statement rendering
-tasks.register("copyProblemStatementCss", Copy) {
-    dependsOn npmInstall
-    into "build/resources/main/problem-statement-css"
-    from("node_modules/katex/dist/katex.min.css") { rename { "katex.min.css" } }
-    from("node_modules/highlight.js/styles/vs.min.css") { rename { "hljs.min.css" } }
-    from("node_modules/markdown-it-github-alerts/styles/github-colors-light.css")
-    from("node_modules/markdown-it-github-alerts/styles/github-base.css")
-}
-processResources.dependsOn copyProblemStatementCss
 
 // Command to execute the JavaDoc checkstyle verification ./gradlew checkstyleMain
 checkstyle {
