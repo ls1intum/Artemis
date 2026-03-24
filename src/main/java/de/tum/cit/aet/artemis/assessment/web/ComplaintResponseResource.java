@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 import de.tum.cit.aet.artemis.assessment.domain.Complaint;
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintAction;
+import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseDTO;
 import de.tum.cit.aet.artemis.assessment.dto.ComplaintResponseUpdateDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ComplaintRepository;
 import de.tum.cit.aet.artemis.assessment.service.ComplaintResponseService;
@@ -63,13 +64,13 @@ public class ComplaintResponseResource {
      */
     @PostMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
-    public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
+    public ResponseEntity<ComplaintResponseDTO> lockComplaint(@PathVariable long complaintId) {
         log.debug("REST request to create empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse savedComplaintResponse = complaintResponseService.createComplaintResponseRepresentingLock(complaint);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
         savedComplaintResponse.getComplaint().filterSensitiveInformation();
-        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.CREATED);
+        return new ResponseEntity<>(ComplaintResponseDTO.of(savedComplaintResponse), HttpStatus.CREATED);
     }
 
     /**
@@ -97,7 +98,7 @@ public class ComplaintResponseResource {
      */
     @PatchMapping("complaints/{complaintId}/response")
     @EnforceAtLeastTutor
-    public ResponseEntity<ComplaintResponse> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
+    public ResponseEntity<ComplaintResponseDTO> refreshLockOrResolveComplaint(@RequestBody ComplaintResponseUpdateDTO complaintResponseUpdate, @PathVariable long complaintId) {
         if (complaintResponseUpdate.action() == null) {
             throw new BadRequestAlertException("A complaint response action can not be null.", ENTITY_NAME, "complaintResponseUpdateActionIsNull");
         }
@@ -112,24 +113,24 @@ public class ComplaintResponseResource {
 
     /**
      * Refreshes the complaint response for a specified complaint ID.
-     *
+     * <p>
      * This method retrieves the complaint from the database based on the provided ID, checks access rights, and then refreshes the complaint response representing
      * the updated complaint. It removes sensitive information from the refreshed complaint response before returning it as a ResponseEntity with HTTP status OK.
      *
      * @param complaintId The ID of the complaint to refresh.
      * @return A ResponseEntity containing the refreshed ComplaintResponse representing the updated complaint with HTTP status OK.
      */
-    private ResponseEntity<ComplaintResponse> refreshLockOnComplaint(long complaintId) {
+    private ResponseEntity<ComplaintResponseDTO> refreshLockOnComplaint(long complaintId) {
         log.debug("REST request to refresh empty complaint response for complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse savedComplaintResponse = complaintResponseService.refreshComplaintResponseRepresentingLock(complaint);
         removeSensitiveInformation(savedComplaintResponse);
-        return new ResponseEntity<>(savedComplaintResponse, HttpStatus.OK);
+        return new ResponseEntity<>(ComplaintResponseDTO.of(savedComplaintResponse), HttpStatus.OK);
     }
 
     /**
      * Resolves the complaint response for a specified complaint ID with the provided update DTO.
-     *
+     * <p>
      * This method retrieves the complaint from the database based on the provided ID, checks access rights, and then resolves the complaint response using the provided
      * update DTO. It removes sensitive information from the resolved complaint response before returning it as a ResponseEntity with HTTP status OK.
      *
@@ -137,17 +138,17 @@ public class ComplaintResponseResource {
      * @param complaintId             The ID of the complaint to resolve.
      * @return A ResponseEntity containing the updated ComplaintResponse representing the resolved complaint with HTTP status OK.
      */
-    private ResponseEntity<ComplaintResponse> resolveComplaint(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
+    private ResponseEntity<ComplaintResponseDTO> resolveComplaint(ComplaintResponseUpdateDTO complaintResponseUpdate, long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
         Complaint complaint = getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponseUpdate, complaint.getComplaintResponse().getId());
         removeSensitiveInformation(updatedComplaintResponse);
-        return ResponseEntity.ok().body(updatedComplaintResponse);
+        return ResponseEntity.ok().body(ComplaintResponseDTO.of(updatedComplaintResponse));
     }
 
     /**
      * Removes sensitive information from the provided ComplaintResponse.
-     *
+     * <p>
      * This method removes sensitive information, such as student details, from the provided ComplaintResponse. This information is considered
      * unnecessary for the corresponding client use case.
      *

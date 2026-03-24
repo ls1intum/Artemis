@@ -6,9 +6,9 @@ import { ComplaintResponse } from 'app/assessment/shared/entities/complaint-resp
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
-import { ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 
-type EntityResponseType = HttpResponse<ComplaintResponse>;
+type EntityResponseType = HttpResponse<ComplaintResponseDTO>;
 
 @Injectable({ providedIn: 'root' })
 export class ComplaintResponseService {
@@ -35,9 +35,7 @@ export class ComplaintResponseService {
      */
     isComplaintResponseLockedByOtherUser(complaintResponse: ComplaintResponse): boolean {
         return (
-            !!complaintResponse.isCurrentlyLocked &&
-            complaintResponse.submittedTime === undefined &&
-            complaintResponse.reviewer?.login !== this.accountService.userIdentity()?.login
+            !!complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewerLogin !== this.accountService.userIdentity()?.login
         );
     }
 
@@ -47,9 +45,7 @@ export class ComplaintResponseService {
      */
     isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse): boolean {
         return (
-            !!complaintResponse.isCurrentlyLocked &&
-            complaintResponse.submittedTime === undefined &&
-            complaintResponse.reviewer?.login === this.accountService.userIdentity()?.login
+            !!complaintResponse.isCurrentlyLocked && complaintResponse.submittedTime === undefined && complaintResponse.reviewerLogin === this.accountService.userIdentity()?.login
         );
     }
 
@@ -59,19 +55,27 @@ export class ComplaintResponseService {
 
     createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
-            .post<ComplaintResponse>(`${this.resourceUrl}/${complaintId}/response`, {}, { observe: 'response' })
+            .post<ComplaintResponseDTO>(`${this.resourceUrl}/${complaintId}/response`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     refreshLockOrResolveComplaint(complaintResponseUpdate: ComplaintResponseUpdateDTO, complaintId: number | undefined): Observable<EntityResponseType> {
-        return this.http.patch<ComplaintResponse>(`${this.resourceUrl}/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
+        return this.http.patch<ComplaintResponseDTO>(`${this.resourceUrl}/${complaintId}/response`, complaintResponseUpdate, { observe: 'response' });
     }
 
     public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.convertComplaintResponseDatesFromServer(res.body);
+            this.convertComplaintResponseDTODatesFromServer(res.body);
         }
         return res;
+    }
+
+    public convertComplaintResponseDTODatesFromServer(complaintResponseDTO: ComplaintResponseDTO): ComplaintResponseDTO {
+        if (complaintResponseDTO) {
+            complaintResponseDTO.submittedTime = convertDateFromServer(complaintResponseDTO.submittedTime);
+            complaintResponseDTO.lockEndDate = convertDateFromServer(complaintResponseDTO.lockEndDate);
+        }
+        return complaintResponseDTO;
     }
 
     public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
@@ -79,6 +83,17 @@ export class ComplaintResponseService {
             complaintResponse.submittedTime = convertDateFromServer(complaintResponse.submittedTime);
             complaintResponse.lockEndDate = convertDateFromServer(complaintResponse.lockEndDate);
         }
+        return complaintResponse;
+    }
+
+    public convertComplaintResponseFromServer(dto: ComplaintResponseDTO): ComplaintResponse {
+        const complaintResponse = new ComplaintResponse();
+        complaintResponse.id = dto.id;
+        complaintResponse.responseText = dto.responseText;
+        complaintResponse.submittedTime = dto.submittedTime;
+        complaintResponse.isCurrentlyLocked = dto.isCurrentlyLocked;
+        complaintResponse.lockEndDate = dto.lockEndDate;
+        complaintResponse.reviewerLogin = dto.reviewerLogin;
         return complaintResponse;
     }
 }

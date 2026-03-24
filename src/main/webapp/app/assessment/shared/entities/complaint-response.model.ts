@@ -14,4 +14,5 @@ export class ComplaintResponse implements BaseEntity {
     public isCurrentlyLocked?: boolean;
     // transient property that will be calculated on the server
     public lockEndDate?: dayjs.Dayjs;
+    public reviewerLogin?: string;
 }

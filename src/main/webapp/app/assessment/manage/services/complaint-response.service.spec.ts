@@ -66,6 +66,7 @@ describe('ComplaintResponseService', () => {
         const reviewer = new User();
         reviewer.login = loginOfReviewer;
         lockedComplaintResponse.reviewer = reviewer;
+        lockedComplaintResponse.reviewerLogin = reviewer.login;
         return lockedComplaintResponse;
     }
 
