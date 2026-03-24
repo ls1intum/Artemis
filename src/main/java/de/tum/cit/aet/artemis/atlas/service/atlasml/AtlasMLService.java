@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasMLRestTemplateConfiguration;
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequestDTO;
+import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToExerciseRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyRelationsResponseDTO;
@@ -69,6 +70,8 @@ public class AtlasMLService {
     private static final String SUGGEST_RELATIONS_ENDPOINT = "/api/v1/competency/relations/suggest/%s";
 
     private static final String MAP_COMPETENCY_TO_COMPETENCY_ENDPOINT = "/api/v1/competency/map-competency-to-competency";
+
+    private static final String MAP_COMPETENCY_TO_EXERCISE_ENDPOINT = "/api/v1/competency/map-competency-to-exercise";
 
     public AtlasMLService(@Qualifier("atlasmlRestTemplate") RestTemplate atlasmlRestTemplate,
             @Qualifier("shortTimeoutAtlasmlRestTemplate") RestTemplate shortTimeoutAtlasmlRestTemplate, AtlasMLRestTemplateConfiguration config,
@@ -229,6 +232,49 @@ public class AtlasMLService {
         }
         catch (Exception e) {
             log.error("Unexpected error while mapping competency to competency", e);
+            return false;
+        }
+    }
+
+    /**
+     * Maps a competency to an exercise in AtlasML.
+     * Updates the exercise's competency list in the vector store so the exercise embedding
+     * reflects the newly linked competency.
+     *
+     * @param exerciseId   the exercise ID
+     * @param competencyId the competency ID to link
+     * @return true if successful, false otherwise
+     */
+    public boolean mapCompetencyToExercise(Long exerciseId, Long competencyId) {
+        if (!isAtlasMLFeatureEnabled("map competency to exercise operation")) {
+            return false;
+        }
+        try {
+            log.debug("Mapping competency {} to exercise {}", competencyId, exerciseId);
+
+            HttpHeaders headers = buildHeadersWithAuth();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+
+            MapCompetencyToExerciseRequestDTO requestBody = new MapCompetencyToExerciseRequestDTO(exerciseId, competencyId);
+            HttpEntity<MapCompetencyToExerciseRequestDTO> entity = new HttpEntity<>(requestBody, headers);
+
+            String url = config.getAtlasmlBaseUrl() + MAP_COMPETENCY_TO_EXERCISE_ENDPOINT;
+            ResponseEntity<Void> response = atlasmlRestTemplate.exchange(url, HttpMethod.POST, entity, Void.class);
+
+            boolean isSuccessful = response.getStatusCode().is2xxSuccessful();
+            log.debug("Map competency to exercise result: {}", isSuccessful);
+            return isSuccessful;
+        }
+        catch (HttpClientErrorException | HttpServerErrorException e) {
+            log.error("Failed to map competency to exercise with HTTP error: {}", e.getMessage());
+            return false;
+        }
+        catch (ResourceAccessException e) {
+            log.error("Failed to map competency to exercise due to connection issue: {}", e.getMessage());
+            return false;
+        }
+        catch (Exception e) {
+            log.error("Unexpected error while mapping competency to exercise", e);
             return false;
         }
     }
