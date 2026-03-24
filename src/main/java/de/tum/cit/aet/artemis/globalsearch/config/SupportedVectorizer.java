@@ -23,6 +23,8 @@ public enum SupportedVectorizer {
 
     /**
      * Returns the {@link VectorConfig.Kind} associated with this vectorizer.
+     *
+     * @return the vector config kind
      */
     public VectorConfig.Kind vectorConfigKind() {
         return vectorConfigKind;
@@ -30,6 +32,8 @@ public enum SupportedVectorizer {
 
     /**
      * Returns the configuration string value as expected by Weaviate (e.g. "none", "text2vec-transformers").
+     *
+     * @return the config value string
      */
     public String configValue() {
         return configValue;
