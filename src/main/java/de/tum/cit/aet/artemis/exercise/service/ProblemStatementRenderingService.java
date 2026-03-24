@@ -88,7 +88,7 @@ public class ProblemStatementRenderingService {
     /**
      * Holds feedback detail for a single test case.
      */
-    public record TestFeedbackDetail(Long testId, String testName, boolean passed, @Nullable String message, @Nullable Double credits) {
+    public record TestFeedbackDetail(long testId, String testName, boolean passed, @Nullable String message, @Nullable Double credits) {
     }
 
     /**
@@ -234,15 +234,6 @@ public class ProblemStatementRenderingService {
         return svg;
     }
 
-    private List<Long> extractTestsColorIds(String plantUmlSource) {
-        List<Long> testIds = new ArrayList<>();
-        Matcher matcher = TESTID_PATTERN.matcher(plantUmlSource);
-        while (matcher.find()) {
-            testIds.add(Long.parseLong(matcher.group(1)));
-        }
-        return testIds;
-    }
-
     private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
             String color = resolveTestColor(match.group(1), testResults);
@@ -286,7 +277,6 @@ public class ProblemStatementRenderingService {
             String testStatus = computeTaskTestStatus(testIds, testResults);
             int[] counts = countTestResults(testIds, testResults);
             int successCount = counts[0];
-            int failCount = counts[1];
             int total = testIds.size();
 
             boolean hasFeedback = testResults != null && !testIds.isEmpty();
