@@ -79,8 +79,8 @@ public class ProblemStatementRenderingService {
             .artemis-task-not-executed .artemis-task-stats{color:var(--secondary,#6c757d)}
             .markdown-alert{border-left:4px solid var(--info,#17a2b8);padding:8px 16px;margin:16px 0;border-radius:0 4px 4px 0}
             .markdown-alert-title{font-weight:600}
-            table.table{border-collapse:collapse;width:100%}
-            table.table th,table.table td{border:1px solid var(--border-color,#dee2e6);padding:8px}
+            .artemis-problem-statement table{border-collapse:collapse;width:100%}
+            .artemis-problem-statement table th,.artemis-problem-statement table td{border:1px solid var(--border-color,#dee2e6);padding:8px}
             </style>
             """;
     // @formatter:on
@@ -275,8 +275,7 @@ public class ProblemStatementRenderingService {
             }
 
             String testStatus = computeTaskTestStatus(testIds, testResults);
-            int[] counts = countTestResults(testIds, testResults);
-            int successCount = counts[0];
+            int successCount = countPassedTests(testIds, testResults);
             int total = testIds.size();
 
             boolean hasFeedback = testResults != null && !testIds.isEmpty();
@@ -379,22 +378,18 @@ public class ProblemStatementRenderingService {
         return "success";
     }
 
-    private static int[] countTestResults(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private static int countPassedTests(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         if (testResults == null) {
-            return new int[] { 0, 0 };
+            return 0;
         }
         int success = 0;
-        int fail = 0;
         for (Long testId : testIds) {
             TestFeedbackDetail detail = testResults.get(testId);
             if (detail != null && detail.passed()) {
                 success++;
             }
-            else if (detail != null && !detail.passed()) {
-                fail++;
-            }
         }
-        return new int[] { success, fail };
+        return success;
     }
 
     private String renderWithCommonMark(String markdown) {
