@@ -268,45 +268,52 @@ public abstract class AbstractIrisChatSessionService<S extends IrisChatSession> 
 
         // Case 2: scan for embedded MCQ JSON blocks
         Matcher matcher = MCQ_JSON_PATTERN.matcher(trimmed);
-        if (matcher.find()) {
-            List<IrisMessageContent> contents = new ArrayList<>();
-            int jsonStart = matcher.start();
+        List<IrisMessageContent> contents = new ArrayList<>();
+        int lastEnd = 0;
+        boolean foundMcq = false;
 
-            // Text before the JSON block
-            if (jsonStart > 0) {
-                String textBefore = trimmed.substring(0, jsonStart).strip();
-                if (!textBefore.isEmpty()) {
-                    contents.add(new IrisTextMessageContent(textBefore));
-                }
+        while (matcher.find()) {
+            int jsonStart = matcher.start();
+            String jsonCandidate = extractJsonObject(trimmed, jsonStart);
+            if (jsonCandidate == null) {
+                continue;
             }
 
-            // Extract the JSON block by finding the matching closing brace
-            String jsonCandidate = extractJsonObject(trimmed, jsonStart);
-            if (jsonCandidate != null) {
-                try {
-                    JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
-                    if (jsonNode.has("type") && MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
-                        if (!isValidMcqNode(jsonNode)) {
-                            return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
-                        }
-                        contents.add(new IrisJsonMessageContent(jsonNode));
+            try {
+                JsonNode jsonNode = objectMapper.readTree(jsonCandidate);
+                if (!jsonNode.has("type") || !MCQ_CONTENT_TYPES.contains(jsonNode.get("type").asText())) {
+                    continue;
+                }
+                if (!isValidMcqNode(jsonNode)) {
+                    return List.of(new IrisTextMessageContent(MALFORMED_MCQ_ERROR_MESSAGE));
+                }
 
-                        // Text after the JSON block
-                        int jsonEnd = jsonStart + jsonCandidate.length();
-                        if (jsonEnd < trimmed.length()) {
-                            String textAfter = trimmed.substring(jsonEnd).strip();
-                            if (!textAfter.isEmpty()) {
-                                contents.add(new IrisTextMessageContent(textAfter));
-                            }
-                        }
-
-                        return contents;
+                // Add text before this JSON block
+                if (jsonStart > lastEnd) {
+                    String textBefore = trimmed.substring(lastEnd, jsonStart).strip();
+                    if (!textBefore.isEmpty()) {
+                        contents.add(new IrisTextMessageContent(textBefore));
                     }
                 }
-                catch (JsonProcessingException e) {
-                    // Invalid JSON, fall through to plain text
+
+                contents.add(new IrisJsonMessageContent(jsonNode));
+                lastEnd = jsonStart + jsonCandidate.length();
+                foundMcq = true;
+            }
+            catch (JsonProcessingException e) {
+                // Invalid JSON, skip this match
+            }
+        }
+
+        if (foundMcq) {
+            // Add any remaining text after the last JSON block
+            if (lastEnd < trimmed.length()) {
+                String textAfter = trimmed.substring(lastEnd).strip();
+                if (!textAfter.isEmpty()) {
+                    contents.add(new IrisTextMessageContent(textAfter));
                 }
             }
+            return contents;
         }
 
         // Case 3: plain text
