@@ -11,10 +11,11 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DialogModule } from 'primeng/dialog';
 import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
 import { GlobalSearchNavigationViewComponent } from 'app/core/navbar/global-search/components/views/navigation-view/global-search-navigation-view.component';
-import { SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
+import { SEARCH_DEBOUNCE_MS, SearchResultView } from 'app/core/navbar/global-search/components/views/search-result-view.directive';
 import { GlobalSearchOptions, GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
 import { SearchInputComponent } from './search-input/search-input.component';
 import { SearchableEntity } from '../../models/searchable-entity.model';
+import { GlobalSearchLectureResultsComponent } from 'app/core/navbar/global-search/components/views/lecture-results/global-search-lecture-results.component';
 
 interface SearchState {
     query: string;
@@ -25,7 +26,7 @@ interface SearchState {
     selector: 'jhi-global-search-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, SearchInputComponent],
+    imports: [DialogModule, FaIconComponent, ArtemisTranslatePipe, GlobalSearchNavigationViewComponent, GlobalSearchLectureResultsComponent, SearchInputComponent],
     templateUrl: './global-search-modal.component.html',
     styleUrls: ['./global-search-modal.component.scss'],
 })
@@ -115,9 +116,9 @@ export class GlobalSearchModalComponent implements OnDestroy {
                         }
                     }
 
-                    // Network search — debounce 300ms, then fire HTTP request
+                    // Network search — debounce, then fire HTTP request
                     this.isLoading.set(true);
-                    return timer(300).pipe(
+                    return timer(SEARCH_DEBOUNCE_MS).pipe(
                         switchMap(() =>
                             this.searchService.search(searchQuery, options).pipe(
                                 tap((results) => {
