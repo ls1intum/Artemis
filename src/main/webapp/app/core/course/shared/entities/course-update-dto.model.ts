@@ -59,6 +59,10 @@ export interface CourseCreateDTO {
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
 }
 
+function valueOrDefault<T>(value: T | undefined, defaultValue: T): T {
+    return value ?? defaultValue;
+}
+
 /**
  * Extracts the common fields shared between create and update DTOs.
  */
@@ -77,27 +81,27 @@ function mapCommonCourseFields(course: Course): Omit<CourseCreateDTO, never> {
         enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
         enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
         unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
-        testCourse: course.testCourse ?? false,
+        testCourse: valueOrDefault(course.testCourse, false),
         onlineCourse: course.onlineCourse,
         language: course.language,
         defaultProgrammingLanguage: course.defaultProgrammingLanguage,
         maxComplaints: course.maxComplaints,
         maxTeamComplaints: course.maxTeamComplaints,
-        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
-        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
-        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
-        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
+        maxComplaintTimeDays: valueOrDefault(course.maxComplaintTimeDays, 7),
+        maxRequestMoreFeedbackTimeDays: valueOrDefault(course.maxRequestMoreFeedbackTimeDays, 7),
+        maxComplaintTextLimit: valueOrDefault(course.maxComplaintTextLimit, 2000),
+        maxComplaintResponseTextLimit: valueOrDefault(course.maxComplaintResponseTextLimit, 2000),
         color: course.color,
         enrollmentEnabled: course.enrollmentEnabled,
         enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
-        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
-        faqEnabled: course.faqEnabled ?? false,
-        learningPathsEnabled: course.learningPathsEnabled ?? false,
-        studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
+        unenrollmentEnabled: valueOrDefault(course.unenrollmentEnabled, false),
+        faqEnabled: valueOrDefault(course.faqEnabled, false),
+        learningPathsEnabled: valueOrDefault(course.learningPathsEnabled, false),
+        studentCourseAnalyticsDashboardEnabled: valueOrDefault(course.studentCourseAnalyticsDashboardEnabled, false),
         presentationScore: course.presentationScore,
         maxPoints: course.maxPoints,
         accuracyOfScores: course.accuracyOfScores,
-        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+        restrictedAthenaModulesAccess: valueOrDefault(course.restrictedAthenaModulesAccess, false),
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
     };
