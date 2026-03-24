@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -82,7 +83,7 @@ public record QuizExerciseCreateDTO(@NotEmpty String title, ZonedDateTime releas
         quizExercise.setQuizMode(quizMode);
         quizExercise.setDuration(duration);
         quizExercise.setQuizBatches(Optional.ofNullable(quizBatches).orElse(Set.of()).stream().map(QuizBatchCreationDTO::toDomainObject).collect(Collectors.toSet()));
-        quizExercise.setQuizQuestions(quizQuestions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList());
+        quizExercise.setQuizQuestions(new ArrayList<>(quizQuestions.stream().map(QuizQuestionCreateDTO::toDomainObject).toList()));
         quizExercise.setAllowedNumberOfAttempts(1);
         return quizExercise;
     }
