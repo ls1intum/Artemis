@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
-import java.util.function.Consumer;
+import java.util.Map;
+import java.util.function.Supplier;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -25,6 +26,9 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exerciseType, @Nullable String title, @Nullable String shortName, @Nullable Double maxPoints,
         @Nullable Double bonusPoints) {
 
+    private static final Map<ExerciseType, Supplier<Exercise>> EXERCISE_FACTORIES = Map.of(ExerciseType.MODELING, ModelingExercise::new, ExerciseType.TEXT, TextExercise::new,
+            ExerciseType.PROGRAMMING, ProgrammingExercise::new, ExerciseType.FILE_UPLOAD, FileUploadExercise::new, ExerciseType.QUIZ, QuizExercise::new);
+
     /**
      * Creates an ExerciseImportDTO from an existing Exercise entity.
      *
@@ -43,28 +47,13 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
      * @return a new Exercise entity with basic properties set
      */
     public Exercise toEntity() {
-        Exercise exercise = createExerciseByType(exerciseType);
+        Supplier<Exercise> factory = EXERCISE_FACTORIES.get(exerciseType);
+        Exercise exercise = factory.get();
         exercise.setId(id);
-        setIfNotNull(title, exercise::setTitle);
-        setIfNotNull(shortName, exercise::setShortName);
-        setIfNotNull(maxPoints, exercise::setMaxPoints);
-        setIfNotNull(bonusPoints, exercise::setBonusPoints);
+        exercise.setTitle(title);
+        exercise.setShortName(shortName);
+        exercise.setMaxPoints(maxPoints);
+        exercise.setBonusPoints(bonusPoints);
         return exercise;
-    }
-
-    private static <T> void setIfNotNull(T value, Consumer<T> setter) {
-        if (value != null) {
-            setter.accept(value);
-        }
-    }
-
-    private static Exercise createExerciseByType(ExerciseType type) {
-        return switch (type) {
-            case MODELING -> new ModelingExercise();
-            case TEXT -> new TextExercise();
-            case PROGRAMMING -> new ProgrammingExercise();
-            case FILE_UPLOAD -> new FileUploadExercise();
-            case QUIZ -> new QuizExercise();
-        };
     }
 }
