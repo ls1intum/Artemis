@@ -2248,8 +2248,15 @@ public class ProgrammingExerciseIntegrationTestService {
         programmingExerciseStudentParticipationRepository.save(studentParticipation);
 
         // Write files in one commit and push to origin to ensure the commit exists remotely
-        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo,
-                Map.of("README.md", "Initial commit", "A.java", "abc", "B.java", "cde", "C.java", "efg", "test.txt", "Initial commit"), "seed student files");
+        // @formatter:off
+        var commit = RepositoryExportTestUtil.writeFilesAndPush(repo, Map.ofEntries(
+            Map.entry("README.md", "Initial commit"),
+            Map.entry("test.txt", "Initial commit"),
+            Map.entry("A.java", "abc"),
+            Map.entry("B.java", "cde"),
+            Map.entry("C.java", "efg")
+        ), "seed student files");
+        // @formatter:on
 
         // Persist submission with commit hash
         var submission = new ProgrammingSubmission();
@@ -2257,17 +2264,21 @@ public class ProgrammingExerciseIntegrationTestService {
         submission.setCommitHash(commit.getId().getName());
         programmingExerciseUtilService.addProgrammingSubmission(programmingExercise, submission, studentLogin);
 
-        String filesWithContentsAsJson = """
-                {
-                  "test.txt" : "Initial commit",
-                  "C.java" : "efg",
-                  "B.java" : "cde",
-                  "A.java" : "abc",
-                  "README.md" : "Initial commit"
-                }""";
+        // @formatter:off
+        Map<String, String> expectedFiles = Map.ofEntries(
+            Map.entry("README.md", "Initial commit"),
+            Map.entry("test.txt", "Initial commit"),
+            Map.entry("A.java", "abc"),
+            Map.entry("B.java", "cde"),
+            Map.entry("C.java", "efg")
+        );
+        // @formatter:on
 
-        request.getWithFileContents("/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(),
-                HttpStatus.OK, filesWithContentsAsJson);
+        Map<String, String> actualFiles = request.get(
+                "/api/programming/programming-exercise-participations/" + studentParticipation.getId() + "/files-content/" + submission.getCommitHash(), HttpStatus.OK,
+                new TypeReference<>() {
+                });
+        assertThat(actualFiles).isEqualTo(expectedFiles);
     }
 
     void testRedirectGetParticipationRepositoryFilesWithContentAtCommitForbidden(String testPrefix) throws Exception {
