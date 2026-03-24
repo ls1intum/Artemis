@@ -90,7 +90,9 @@ test.describe('Programming Exercise Management', { tag: '@fast' }, () => {
             await navigationBar.openCourseManagement();
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.deleteProgrammingExercise(exercise);
-            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached({ timeout: 30000 });
+            // Deletion of a C programming exercise can take > 30s under CI parallel load
+            // (LocalCI must process pending builds and clean up repositories).
+            await expect(courseManagementExercises.getExercise(exercise.id!)).not.toBeAttached({ timeout: 90000 });
         });
     });
 
