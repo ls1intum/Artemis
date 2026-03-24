@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.core.config;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
@@ -207,6 +209,10 @@ public class SentryConfiguration {
             String url = request.getUrl();
             if (url != null) {
                 request.setUrl(scrubUrl(url));
+            }
+
+            if (request.getHeaders() != null) {
+                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().startsWith("X-Artemis-Client-")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
             }
         }
         event.setUser(null); // Make sure to never send user data

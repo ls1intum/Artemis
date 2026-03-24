@@ -82,6 +82,19 @@ export class SentryErrorHandler extends ErrorHandler {
             trans.message = this.scrubStringMessage(trans.message);
         }
 
+        if (trans.request) {
+            if (trans.request.cookies) {
+                delete trans.request.cookies;
+            }
+
+            if (trans.request.headers) {
+                for (let h of trans.request.headers.keys()) {
+                  if (h.startsWith("X-Artemis-Client-"))
+                    trans.request.headers.delete(h);
+                }
+            }
+        }
+
         if (trans.exception && trans.exception.values) {
             for (const ex of trans.exception.values) {
                 if (ex.value) {
