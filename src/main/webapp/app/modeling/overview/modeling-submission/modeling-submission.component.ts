@@ -37,7 +37,6 @@ import { SubmissionPatch } from 'app/exercise/shared/entities/submission/submiss
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { catchError, filter, skip, switchMap, tap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -64,7 +63,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         HeaderParticipationPageComponent,
         ButtonComponent,
         RouterLink,
-        RequestFeedbackButtonComponent,
         ResultHistoryComponent,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,

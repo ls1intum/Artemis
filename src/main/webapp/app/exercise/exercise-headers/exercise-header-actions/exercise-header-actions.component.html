@@ -234,21 +234,6 @@
         }
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS END -->
     }
-    @if (
-        exercise().allowFeedbackRequests &&
-        (gradedParticipation() || practiceParticipation()) &&
-        (exercise().type === ExerciseType.PROGRAMMING ||
-            ((exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) &&
-                athenaEnabled &&
-                (participationMode() === 'practice' ? !!practiceParticipation() : beforeDueDate())))
-    ) {
-        <jhi-request-feedback-button
-            [exercise]="exercise()"
-            [smallButtons]="smallButtons()"
-            [isGeneratingFeedback]="isGeneratingFeedback()"
-            (generatingFeedback)="generatingFeedback.emit()"
-        />
-    }
 </div>
 
 <ng-template #quizActionButton let-button>

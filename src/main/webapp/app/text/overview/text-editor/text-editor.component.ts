@@ -32,7 +32,6 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 import { faChevronDown, faCircleNotch, faEye, faTimeline } from '@fortawesome/free-solid-svg-icons';
 import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { ResultHistoryComponent } from 'app/exercise/result-history/result-history.component';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -57,7 +56,6 @@ import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-subm
         HeaderParticipationPageComponent,
         ButtonComponent,
         RouterLink,
-        RequestFeedbackButtonComponent,
         ResultHistoryComponent,
         ResizeableContainerComponent,
         TeamParticipateInfoBoxComponent,

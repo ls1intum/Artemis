@@ -23,17 +23,6 @@
                                 [routerLink]="['/courses', course?.id, 'exercises', 'modeling-exercises', modelingExercise?.id!, 'participate', participation?.id!]"
                             />
                         }
-                    } @else {
-                        @if (modelingExercise.allowFeedbackRequests && (!this.modelingExercise.dueDate || !hasExerciseDueDatePassed(this.modelingExercise, this.participation))) {
-                            <jhi-request-feedback-button
-                                [exercise]="modelingExercise"
-                                [pendingChanges]="isChanged"
-                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
-                                [isGeneratingFeedback]="isGeneratingFeedback"
-                                (generatingFeedback)="this.isGeneratingFeedback = true"
-                                [isSubmitted]="submission.submitted || false"
-                            />
-                        }
                     }
                 }
                 @if (!this.isFeedbackView) {

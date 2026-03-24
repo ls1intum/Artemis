@@ -23,17 +23,6 @@
                                 [routerLink]="['/courses', course?.id, 'exercises', 'text-exercises', textExercise?.id!, 'participate', participation?.id!]"
                             />
                         }
-                    } @else {
-                        @if (textExercise.allowFeedbackRequests && (!this.textExercise.dueDate || !hasExerciseDueDatePassed(this.textExercise, this.participation))) {
-                            <jhi-request-feedback-button
-                                [exercise]="textExercise"
-                                [pendingChanges]="submission.text !== answer"
-                                [hasAthenaResultForLatestSubmission]="hasAthenaResultForLatestSubmission"
-                                [isGeneratingFeedback]="isGeneratingFeedback"
-                                (generatingFeedback)="this.isGeneratingFeedback = true"
-                                [isSubmitted]="submission.submitted || false"
-                            />
-                        }
                     }
                     @if (!this.isReadOnlyWithShowResult) {
                         <jhi-exercise-submit-button
