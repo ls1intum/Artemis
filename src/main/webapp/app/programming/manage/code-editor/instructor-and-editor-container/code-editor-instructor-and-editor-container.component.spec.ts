@@ -517,6 +517,32 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(pullSpy).toHaveBeenCalledOnce();
         }));
 
+        it('should unsubscribe in-flight repository pulls during cleanup', fakeAsync(() => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+
+            const job$ = new Subject<any>();
+            const pull$ = new Subject<void>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            jest.spyOn(repoService, 'pull').mockReturnValue(pull$.asObservable());
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
+            tick(250);
+
+            const trackedPullSubscription = (comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
+            expect(trackedPullSubscription?.closed).toBeFalse();
+
+            (comp as any).clearCodeGenerationRepositoryPulls();
+
+            expect(trackedPullSubscription?.closed).toBeTrue();
+            expect((comp as any).codeGenerationPullSubscriptions.size).toBe(0);
+            expect((comp as any).repositoriesWithInFlightCodeGenerationPull.size).toBe(0);
+        }));
+
         it('should not pull the repository when file events belong to a non-selected repository', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             selectCodeGenerationRepositories(RepositoryType.TEMPLATE);

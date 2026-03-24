@@ -237,6 +237,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private restoreRequestId = 0;
     private slotReleasePollTimeoutHandle?: number;
     private codeGenerationPullTimeoutHandles = new Map<SupportedCodeGenerationRepositoryType, number>();
+    private codeGenerationPullSubscriptions = new Map<SupportedCodeGenerationRepositoryType, Subscription>();
     private repositoriesWithPendingCodeGenerationPull = new Set<SupportedCodeGenerationRepositoryType>();
     private repositoriesWithInFlightCodeGenerationPull = new Set<SupportedCodeGenerationRepositoryType>();
     private queuedCodeGenerationRepositories: SupportedCodeGenerationRepositoryType[] = [];
@@ -888,7 +889,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
         this.repositoriesWithPendingCodeGenerationPull.delete(repositoryType);
         this.repositoriesWithInFlightCodeGenerationPull.add(repositoryType);
-        this.repoService
+        this.codeGenerationPullSubscriptions.get(repositoryType)?.unsubscribe();
+        const pullSubscription = this.repoService
             .pull()
             .pipe(
                 take(1),
@@ -898,12 +900,14 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             )
             .subscribe({
                 complete: () => {
+                    this.codeGenerationPullSubscriptions.delete(repositoryType);
                     this.repositoriesWithInFlightCodeGenerationPull.delete(repositoryType);
                     if (this.repositoriesWithPendingCodeGenerationPull.has(repositoryType)) {
                         this.flushCodeGenerationRepositoryPull(repositoryType);
                     }
                 },
             });
+        this.codeGenerationPullSubscriptions.set(repositoryType, pullSubscription);
     }
 
     /**
@@ -912,6 +916,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     private clearCodeGenerationRepositoryPulls() {
         this.codeGenerationPullTimeoutHandles.forEach((timeoutHandle) => clearTimeout(timeoutHandle));
         this.codeGenerationPullTimeoutHandles.clear();
+        this.codeGenerationPullSubscriptions.forEach((subscription) => subscription.unsubscribe());
+        this.codeGenerationPullSubscriptions.clear();
         this.repositoriesWithPendingCodeGenerationPull.clear();
         this.repositoriesWithInFlightCodeGenerationPull.clear();
     }
