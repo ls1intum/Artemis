@@ -3,7 +3,7 @@ import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutle
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { faAlignLeft, faAngleDown, faAngleUp, faCircleInfo, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
+import { faAlignLeft, faAngleDown, faAngleUp, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
 import { DiscussionFeedComponent } from 'app/communication/shared/discussion-section/discussion-feed.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
@@ -70,7 +70,6 @@ export class ExerciseSplitPanelComponent {
     protected readonly faComment = faComment;
     protected readonly faGraduationCap = faGraduationCap;
     protected readonly faAlignLeft = faAlignLeft;
-    protected readonly faCircleInfo = faCircleInfo;
     protected readonly faAngleDown = faAngleDown;
     protected readonly faAngleUp = faAngleUp;
     protected readonly getIcon = getIcon;
@@ -126,10 +125,6 @@ export class ExerciseSplitPanelComponent {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
         return true;
-    });
-
-    readonly showProblemStatement = computed(() => {
-        return this.exercise().type !== ExerciseType.QUIZ;
     });
 
     readonly editorLabelKey = computed(() => {
