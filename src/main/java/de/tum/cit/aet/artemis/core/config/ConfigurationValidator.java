@@ -237,8 +237,8 @@ public class ConfigurationValidator {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.toString(SupportedVectorizer.values()) + ")");
         }
 
-        boolean shouldValidateOpenAPISpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
-        if (shouldValidateOpenAPISpecificProperties) {
+        boolean shouldValidateOpenAiSpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
+        if (shouldValidateOpenAiSpecificProperties) {
             if (!StringUtils.hasText(weaviateOpenAiBaseUrl)) {
                 invalidProperties.add("artemis.weaviate.open-ai-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
             }

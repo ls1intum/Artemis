@@ -280,8 +280,8 @@ public class WeaviateService {
             mismatches.add("vectorizer module: existing='%s', configured='%s'".formatted(existingKind.jsonValue(), vectorizerModule));
         }
 
-        boolean shouldCompareOpenAIProperties = existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI;
-        if (shouldCompareOpenAIProperties) {
+        boolean shouldCompareOpenAiProperties = existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI;
+        if (shouldCompareOpenAiProperties) {
             Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
             if (!Objects.equals(existingOpenAi.baseUrl(), weaviateOpenAiBaseUrl)) {
                 mismatches.add("open-ai-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), weaviateOpenAiBaseUrl));
