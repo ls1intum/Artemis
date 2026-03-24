@@ -1,13 +1,24 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { LinkPreviewService } from 'app/communication/link-preview/services/link-preview.service';
 
 describe('LinkPreviewService', () => {
+    setupTestBed({ zoneless: true });
+
     let service: LinkPreviewService;
     let httpMock: HttpTestingController;
 
+    afterEach(() => {
+        vi.useRealTimers();
+        vi.restoreAllMocks();
+        httpMock.verify();
+    });
+
     beforeEach(() => {
+        vi.useFakeTimers();
         TestBed.configureTestingModule({
             providers: [provideHttpClient(), provideHttpClientTesting(), LinkPreviewService],
         });
@@ -15,11 +26,7 @@ describe('LinkPreviewService', () => {
         httpMock = TestBed.inject(HttpTestingController);
     });
 
-    afterEach(() => {
-        httpMock.verify();
-    });
-
-    it('fetchLink should return link preview from HTTP response', fakeAsync(() => {
+    it('fetchLink should return link preview from HTTP response', () => {
         const mockUrl = 'https://example.com';
         const mockPreview = {
             title: 'Example Website',
@@ -37,10 +44,10 @@ describe('LinkPreviewService', () => {
         expect(req.request.body).toBeNull();
 
         req.flush(mockPreview);
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 
-    it('fetchLink should return cached link preview for the same URL', fakeAsync(() => {
+    it('fetchLink should return cached link preview for the same URL', () => {
         const mockUrl = 'https://example.com';
         const mockPreview = {
             title: 'Example Website',
@@ -56,7 +63,7 @@ describe('LinkPreviewService', () => {
 
         const req = httpMock.expectOne('api/communication/link-preview?url=https%253A%252F%252Fexample.com');
         req.flush(mockPreview);
-        tick();
+        vi.advanceTimersByTime(0);
 
         // Second request with the same URL
         service.fetchLink(mockUrl).subscribe((preview) => {
@@ -65,6 +72,6 @@ describe('LinkPreviewService', () => {
 
         // No HTTP request should be made since the preview is cached
         httpMock.expectNone('api/communication/link-preview');
-        tick();
-    }));
+        vi.advanceTimersByTime(0);
+    });
 });
