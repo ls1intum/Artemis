@@ -1,7 +1,7 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild, ViewContainerRef, inject, input, output } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewContainerRef, effect, inject, input, output, untracked, viewChild } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { MetisService } from 'app/communication/service/metis.service';
-import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { AnswerPostCreateEditModalComponent } from 'app/communication/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import dayjs from 'dayjs/esm';
@@ -21,11 +21,21 @@ interface PostGroup {
     templateUrl: './posting-footer.component.html',
     imports: [AnswerPostComponent, AnswerPostCreateEditModalComponent, ArtemisTranslatePipe, NgClass],
 })
-export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked, OnChanges {
+export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentChecked {
+    constructor() {
+        effect(() => {
+            // Track sortedAnswerPosts signal input (replaces ngOnChanges)
+            this.sortedAnswerPosts();
+            untracked(() => {
+                this.groupAnswerPosts();
+            });
+        });
+    }
+
     lastReadDate = input<dayjs.Dayjs | undefined>();
     readOnlyMode = input<boolean>(false);
     previewMode = input<boolean>(false);
-    modalRef = input<NgbModalRef | undefined>();
+    modalRef = input<DynamicDialogRef | undefined>();
     hasChannelModerationRights = input<boolean>(false);
     showAnswers = input<boolean>(false);
     isCommunicationPage = input<boolean>(false);
@@ -38,9 +48,9 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
     userReferenceClicked = output<string>();
     channelReferenceClicked = output<number>();
 
-    @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
-    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef!: ViewContainerRef;
-    @ViewChild('createAnswerPostModal') createAnswerPostModalComponent!: AnswerPostCreateEditModalComponent;
+    readonly answerPostCreateEditModal = viewChild(AnswerPostCreateEditModalComponent);
+    readonly containerRef = viewChild.required('createEditAnswerPostContainer', { read: ViewContainerRef });
+    readonly createAnswerPostModalComponent = viewChild.required<AnswerPostCreateEditModalComponent>('createAnswerPostModal');
 
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse = false;
@@ -57,15 +67,11 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
         this.groupAnswerPosts();
     }
 
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes['sortedAnswerPosts']) {
-            this.groupAnswerPosts();
-            this.changeDetector.detectChanges();
-        }
-    }
-
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef()?.clear();
+        const modal = this.answerPostCreateEditModal();
+        if (modal && typeof modal.createEditAnswerPostContainerRef === 'function') {
+            modal.createEditAnswerPostContainerRef()?.clear();
+        }
     }
 
     /**
@@ -148,14 +154,14 @@ export class PostingFooterComponent implements OnInit, OnDestroy, AfterContentCh
      * Open create answer modal
      */
     openCreateAnswerPostModal() {
-        this.createAnswerPostModalComponent?.open();
+        this.createAnswerPostModalComponent()?.open();
     }
 
     /**
      * Close create answer modal
      */
     closeCreateAnswerPostModal() {
-        this.createAnswerPostModalComponent?.close();
+        this.createAnswerPostModalComponent()?.close();
     }
 
     protected postsTrackByFn(_index: number, post: Post): number {
