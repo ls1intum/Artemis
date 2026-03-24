@@ -744,9 +744,9 @@ describe('MetisConversationService', () => {
                     const newEmptyChat = generateOneToOneChatDTO({ id: 99 });
                     newEmptyChat.lastMessageDate = undefined;
 
-                    jest.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newEmptyChat })));
+                    vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: newEmptyChat })));
                     // Server does NOT return the empty chat (simulating new server behavior)
-                    jest.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
+                    vi.spyOn(conversationService, 'getConversationsOfUser').mockReturnValue(of(new HttpResponse({ body: [groupChat, oneToOneChat, channel] })));
 
                     metisConversationService.createOneToOneChat('login').subscribe({
                         complete: () => {
