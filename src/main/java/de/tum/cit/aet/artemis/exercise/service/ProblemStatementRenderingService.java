@@ -138,9 +138,11 @@ public class ProblemStatementRenderingService {
      * @param testResults   client-provided test results, or null
      * @param resultSummary client-provided result summary (score, commit hash, etc.), or null
      * @param locale        the locale for i18n of user-visible text
+     * @param darkMode      if true, PlantUML diagrams use the Artemis dark theme
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, @Nullable ResultSummary resultSummary, Locale locale) {
+    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, @Nullable ResultSummary resultSummary, Locale locale,
+            boolean darkMode) {
 
         if (markdown == null || markdown.isBlank()) {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
@@ -150,7 +152,7 @@ public class ProblemStatementRenderingService {
 
         // Step 1: Extract PlantUML diagrams (max 10)
         List<String> inlineSvgs = new ArrayList<>();
-        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults);
+        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults, darkMode);
 
         // Step 2: Extract tasks
         processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
@@ -180,7 +182,7 @@ public class ProblemStatementRenderingService {
         return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, interactiveScript);
     }
 
-    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private String extractPlantUmlDiagrams(String markdown, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults, boolean darkMode) {
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
@@ -197,7 +199,7 @@ public class ProblemStatementRenderingService {
 
             String inlineSvg = null;
             try {
-                String rawSvg = plantUmlService.generateSvg(cleanedSource, false);
+                String rawSvg = plantUmlService.generateSvg(cleanedSource, darkMode);
                 rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
                 rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
                 rawSvg = rawSvg.replace("background:#FFFFFF;", "");
