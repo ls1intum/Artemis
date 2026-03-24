@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.net.URI;
 import java.time.ZonedDateTime;
+import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,12 +15,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 
+import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
+import de.tum.cit.aet.artemis.assessment.domain.Feedback;
+import de.tum.cit.aet.artemis.assessment.domain.FeedbackType;
+import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
+import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
+import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
+import de.tum.cit.aet.artemis.programming.util.ProgrammingExerciseUtilService;
 import de.tum.cit.aet.artemis.shared.base.AbstractSpringIntegrationIndependentTest;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 import de.tum.cit.aet.artemis.text.util.TextExerciseUtilService;
@@ -38,6 +48,15 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
     @Autowired
     private ExamTestRepository examRepository;
+
+    @Autowired
+    private ProgrammingExerciseUtilService programmingExerciseUtilService;
+
+    @Autowired
+    private ParticipationUtilService participationUtilService;
+
+    @Autowired
+    private SubmissionTestRepository submissionRepository;
 
     @BeforeEach
     void setUp() {
@@ -506,7 +525,7 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
         assertThat(result.interactiveScript()).isNotNull();
-        assertThat(result.interactiveScript()).contains("artemis-feedback-popup");
+        assertThat(result.interactiveScript()).contains("artemis-feedback-modal");
         assertThat(result.interactiveScript()).contains("DOMContentLoaded");
     }
 
@@ -578,5 +597,405 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
 
         assertThat(result.getResponse().getHeader("ETag")).isNotNull().isNotBlank();
         assertThat(result.getResponse().getHeader("Cache-Control")).contains("max-age=300").contains("private");
+    }
+
+    // --- Helper: ProgrammingExercise with Result/Feedback ---
+
+    private record ProgrammingExerciseWithTestCases(ProgrammingExercise exercise, List<de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseTestCase> testCases) {
+    }
+
+    private ProgrammingExerciseWithTestCases createProgrammingExerciseWithTestCases(String problemStatement) {
+        Course course = textExerciseUtilService.addCourseWithOneReleasedTextExercise();
+        ProgrammingExercise exercise = programmingExerciseUtilService.addProgrammingExerciseToCourse(course);
+        var testCases = programmingExerciseUtilService.addTestCasesToProgrammingExercise(exercise);
+        exercise.setProblemStatement(problemStatement);
+        exercise.setMaxPoints(10.0);
+        exercise.setBonusPoints(2.0);
+        exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
+        return new ProgrammingExerciseWithTestCases(exerciseRepository.save(exercise), testCases);
+    }
+
+    private Result addResultWithFeedback(ProgrammingExercise exercise, String studentLogin, String commitHash, List<Feedback> feedbacks) {
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, studentLogin);
+        var submission = new ProgrammingSubmission();
+        submission.setSubmitted(true);
+        submission.setCommitHash(commitHash);
+        submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
+        submission.setParticipation(participation);
+        submission = (ProgrammingSubmission) submissionRepository.save(submission);
+        var result = new Result().submission(submission).score(75.0).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusMinutes(4));
+        result.setExerciseId(exercise.getId());
+        submission.addResult(result);
+        result = resultRepository.save(result);
+        for (Feedback fb : feedbacks) {
+            fb.setResult(result);
+        }
+        result.setFeedbacks(feedbacks);
+        result = resultRepository.save(result);
+        submissionRepository.save(submission);
+        return result;
+    }
+
+    // --- #1: No participation → no feedback data ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderWithoutFeedbackWhenNoParticipation() throws Exception {
+        var exercise = createProgrammingExerciseWithTestCases("[task][Sort](<testid>1</testid>)").exercise();
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).contains("artemis-task");
+        assertThat(result.html()).doesNotContain("data-feedback");
+        assertThat(result.html()).doesNotContain("data-result");
+        assertThat(result.html()).doesNotContain("data-test-status");
+        assertThat(result.tasks().getFirst().testStatus()).isNull();
+    }
+
+    // --- #2: Participation exists but no result ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderWithoutFeedbackWhenParticipationButNoResult() throws Exception {
+        var exercise = createProgrammingExerciseWithTestCases("[task][Sort](<testid>1</testid>)").exercise();
+        participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).doesNotContain("data-feedback");
+        assertThat(result.html()).doesNotContain("data-result");
+        assertThat(result.tasks().getFirst().testStatus()).isNull();
+    }
+
+    // --- #3: End-to-end with real Result/Feedback ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEmbedFeedbackAndResultWhenResultExists() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("[task][My Task](<testid>1</testid>,<testid>2</testid>)");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        var tc2 = testCases.get(1);
+
+        // Use actual test case IDs in problem statement
+        exercise.setProblemStatement("[task][My Task](<testid>" + tc1.getId() + "</testid>,<testid>" + tc2.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1),
+                new Feedback().credits(0.0).positive(false).type(FeedbackType.AUTOMATIC).testCase(tc2).detailText("Assertion failed"));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "abc123def", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // data-feedback present with credits and message
+        assertThat(result.html()).contains("data-feedback");
+        assertThat(result.html()).contains("Assertion failed");
+        // data-result present with score and commit hash
+        assertThat(result.html()).contains("data-result");
+        assertThat(result.html()).contains("abc123def");
+        assertThat(result.html()).contains("75");
+        // Task status in DTO
+        assertThat(result.tasks()).hasSize(1);
+        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("fail");
+    }
+
+    // --- #4: Task status aggregation (success, fail, not-executed) ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowSuccessStatusWhenAllTestsPass() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task A](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "aaa", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("success");
+        assertThat(result.html()).contains("artemis-task-success");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowFailStatusWhenAnyTestFails() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.get(0);
+        var tc2 = testCases.get(1);
+        exercise.setProblemStatement("[task][Task B](<testid>" + tc1.getId() + "</testid>,<testid>" + tc2.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1),
+                new Feedback().credits(0.0).positive(false).type(FeedbackType.AUTOMATIC).testCase(tc2));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "bbb", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("fail");
+        assertThat(result.html()).contains("artemis-task-fail");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldShowNotExecutedWhenTestResultMissing() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        // Reference tc1 + a non-existent test case ID → not-executed
+        exercise.setProblemStatement("[task][Task C](<testid>" + tc1.getId() + "</testid>,<testid>999999</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "ccc", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("not-executed");
+        assertThat(result.html()).contains("artemis-task-not-executed");
+    }
+
+    // --- #5: Latest result used ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldUseLatestResultNotOlderOne() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+
+        // Old result: test fails
+        var oldSubmission = new ProgrammingSubmission();
+        oldSubmission.setSubmitted(true);
+        oldSubmission.setCommitHash("old111");
+        oldSubmission.setSubmissionDate(ZonedDateTime.now().minusHours(2));
+        oldSubmission.setParticipation(participation);
+        oldSubmission = (ProgrammingSubmission) submissionRepository.save(oldSubmission);
+        var oldResult = new Result().submission(oldSubmission).score(0.0).rated(true).assessmentType(AssessmentType.AUTOMATIC).completionDate(ZonedDateTime.now().minusHours(2));
+        oldResult.setExerciseId(exercise.getId());
+        oldSubmission.addResult(oldResult);
+        oldResult = resultRepository.save(oldResult);
+        var oldFb = new Feedback().credits(0.0).positive(false).type(FeedbackType.AUTOMATIC).testCase(tc1);
+        oldFb.setResult(oldResult);
+        oldResult.setFeedbacks(List.of(oldFb));
+        resultRepository.save(oldResult);
+        submissionRepository.save(oldSubmission);
+
+        // New result: test passes
+        var newSubmission = new ProgrammingSubmission();
+        newSubmission.setSubmitted(true);
+        newSubmission.setCommitHash("new222");
+        newSubmission.setSubmissionDate(ZonedDateTime.now().minusMinutes(5));
+        newSubmission.setParticipation(participation);
+        newSubmission = (ProgrammingSubmission) submissionRepository.save(newSubmission);
+        var newResult = new Result().submission(newSubmission).score(100.0).rated(true).assessmentType(AssessmentType.AUTOMATIC)
+                .completionDate(ZonedDateTime.now().minusMinutes(4));
+        newResult.setExerciseId(exercise.getId());
+        newSubmission.addResult(newResult);
+        newResult = resultRepository.save(newResult);
+        var newFb = new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1);
+        newFb.setResult(newResult);
+        newResult.setFeedbacks(List.of(newFb));
+        resultRepository.save(newResult);
+        submissionRepository.save(newSubmission);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // Should reflect the latest (passing) result, not the old (failing) one
+        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("success");
+    }
+
+    // --- #6: Feedback serialization edge cases ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldIgnoreFeedbackWithoutTestCase() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1),
+                // Feedback without test case (manual) → should be ignored in data-feedback
+                new Feedback().credits(2.0).positive(true).type(FeedbackType.MANUAL_UNREFERENCED).detailText("Manual comment"));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "fff", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.html()).contains("data-feedback");
+        // Manual feedback text should not appear in data-feedback (it has no test case)
+        assertThat(result.html()).doesNotContain("Manual comment");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEscapeHtmlInFeedbackMessage() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(0.0).positive(false).type(FeedbackType.AUTOMATIC).testCase(tc1).detailText("Expected <div>hello</div> but got \"error\""));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "ggg", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // HTML special chars must be escaped in the data-feedback attribute
+        assertThat(result.html()).doesNotContain("data-feedback=\"[{\"");
+        assertThat(result.html()).contains("&lt;div&gt;");
+        // Jackson escapes " as \", then escapeHtmlAttribute converts " to &quot;
+        // So the inner quotes appear as \&quot; in the attribute
+        assertThat(result.html()).contains("\\&quot;error\\&quot;");
+    }
+
+    // --- #7: ResultSummary fields ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEmbedResultSummaryWithAllFields() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "deadbeef12345", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // data-result JSON should contain all fields
+        assertThat(result.html()).contains("data-result");
+        assertThat(result.html()).contains("75"); // score
+        assertThat(result.html()).contains("10.0"); // maxPoints
+        assertThat(result.html()).contains("2.0"); // bonusPoints
+        assertThat(result.html()).contains("deadbeef12345"); // commitHash
+        assertThat(result.html()).contains("AUTOMATIC"); // assessmentType
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotEmbedResultDataForNonSelfContained() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "xyz", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), false), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // data-result is always embedded (it's part of the HTML, not interactive-only)
+        // but data-feedback should still be present since we have results
+        assertThat(result.html()).contains("data-feedback");
+    }
+
+    // --- #8: Locale handling ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderTaskStatsInGermanWhenLangKeyIsDE() throws Exception {
+        // Set user's language to German
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setLangKey("de");
+        userTestRepository.save(user);
+
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "loc", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // German stats text: "1 von 1 Tests bestanden" (or similar localized format)
+        assertThat(result.html()).contains("von");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldDefaultToEnglishWhenLangKeyIsNull() throws Exception {
+        var user = userUtilService.getUserByLogin(TEST_PREFIX + "student1");
+        user.setLangKey(null);
+        userTestRepository.save(user);
+
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("[task][Task](<testid>" + tc1.getId() + "</testid>)");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "loc2", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId()), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // English stats text: "1 of 1 tests passing" (or similar English format)
+        assertThat(result.html()).contains("of");
+    }
+
+    // --- #9: PlantUML testsColor resolution ---
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveTestsColorToGreenForPassedTest() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("@startuml\n!pragma layout smetana\nclass A\n<color:testsColor(<testid>" + tc1.getId() + "</testid>)>coloredText</color>\n@enduml");
+        exerciseRepository.save(exercise);
+
+        var feedbacks = List.of(new Feedback().credits(1.0).positive(true).type(FeedbackType.AUTOMATIC).testCase(tc1));
+        addResultWithFeedback(exercise, TEST_PREFIX + "student1", "puml1", feedbacks);
+
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        // Diagram should reference this test case
+        assertThat(result.diagrams()).hasSize(1);
+        assertThat(result.diagrams().getFirst().testIds()).contains(tc1.getId());
+        // The SVG should contain green color (test passed)
+        assertThat(result.diagrams().getFirst().inlineSvg()).contains("green").doesNotContain("grey");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldResolveTestsColorToGreyWithoutResults() throws Exception {
+        var setup = createProgrammingExerciseWithTestCases("placeholder");
+        var exercise = setup.exercise();
+        var testCases = setup.testCases();
+        var tc1 = testCases.getFirst();
+        exercise.setProblemStatement("@startuml\n!pragma layout smetana\nclass A\n<color:testsColor(<testid>" + tc1.getId() + "</testid>)>coloredText</color>\n@enduml");
+        exerciseRepository.save(exercise);
+
+        // No result/participation → grey fallback
+        RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
+
+        assertThat(result.diagrams().getFirst().inlineSvg()).contains("grey");
     }
 }

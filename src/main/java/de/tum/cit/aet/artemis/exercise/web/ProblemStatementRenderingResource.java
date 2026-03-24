@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
+import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -119,42 +120,62 @@ public class ProblemStatementRenderingResource {
             }
         }
 
-        var testResults = fetchTestResults(exercise, user);
+        var feedbackData = fetchFeedbackData(exercise, user);
         String langKey = user.getLangKey();
         Locale locale = langKey == null || langKey.isBlank() ? Locale.ENGLISH : Locale.forLanguageTag(langKey);
-        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, interactive, testResults, locale);
+        RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, interactive, feedbackData.testResults(), feedbackData.resultSummary(), locale);
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePrivate()).body(result);
     }
 
+    private record FeedbackData(@Nullable Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults,
+            ProblemStatementRenderingService.@Nullable ResultSummary resultSummary) {
+    }
+
     /**
-     * Fetches the current user's latest test feedback for the given exercise.
-     *
-     * @return a map of testCaseId → feedback detail, or null if no results available
+     * Fetches the current user's latest test feedback and result summary for the given exercise.
      */
-    private @Nullable Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> fetchTestResults(Exercise exercise, User user) {
-        // Single ordered query: get the student's non-test-run participation with latest result
+    private FeedbackData fetchFeedbackData(Exercise exercise, User user) {
         var participation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithLatestResult(exercise.getId(), user.getId(), false);
         if (participation.isEmpty()) {
-            return null;
+            return new FeedbackData(null, null);
         }
 
         long participationId = participation.get().getId();
         Optional<Result> latestResult = resultRepository.findFirstWithFeedbacksTestCasesByParticipationIdOrderByCompletionDateDesc(participationId);
         if (latestResult.isEmpty()) {
-            return null;
+            return new FeedbackData(null, null);
         }
 
+        Result resultObj = latestResult.get();
+
+        // Build per-test feedback map
         Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults = new HashMap<>();
-        for (Feedback feedback : latestResult.get().getFeedbacks()) {
+        for (Feedback feedback : resultObj.getFeedbacks()) {
             if (feedback.getTestCase() != null && feedback.getTestCase().getId() != null) {
                 var testCase = feedback.getTestCase();
                 String testName = testCase.getTestName() != null ? testCase.getTestName() : "Test " + testCase.getId();
                 boolean passed = Boolean.TRUE.equals(feedback.isPositive());
                 String message = feedback.getDetailText();
-                testResults.put(testCase.getId(), new ProblemStatementRenderingService.TestFeedbackDetail(testCase.getId(), testName, passed, message));
+                Double credits = feedback.getCredits();
+                testResults.put(testCase.getId(), new ProblemStatementRenderingService.TestFeedbackDetail(testCase.getId(), testName, passed, message, credits));
             }
         }
-        return testResults;
+
+        // Build result-level summary
+        String commitHash = null;
+        if (resultObj.getSubmission() instanceof ProgrammingSubmission ps) {
+            commitHash = ps.getCommitHash();
+        }
+        String submissionDate = null;
+        if (resultObj.getSubmission() != null && resultObj.getSubmission().getSubmissionDate() != null) {
+            submissionDate = resultObj.getSubmission().getSubmissionDate().toString();
+        }
+        String assessmentType = resultObj.getAssessmentType() != null ? resultObj.getAssessmentType().name() : null;
+
+        var resultSummary = new ProblemStatementRenderingService.ResultSummary(resultObj.getScore(), exercise.getMaxPoints(), exercise.getBonusPoints(), commitHash, submissionDate,
+                assessmentType);
+
+        return new FeedbackData(testResults, resultSummary);
     }
 }

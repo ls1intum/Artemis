@@ -104,7 +104,14 @@ public class ProblemStatementRenderingService {
     /**
      * Holds feedback detail for a single test case.
      */
-    public record TestFeedbackDetail(Long testId, String testName, boolean passed, @Nullable String message) {
+    public record TestFeedbackDetail(Long testId, String testName, boolean passed, @Nullable String message, @Nullable Double credits) {
+    }
+
+    /**
+     * Holds result-level summary data for the interactive modal (score, submission info).
+     */
+    public record ResultSummary(@Nullable Double score, @Nullable Double maxPoints, @Nullable Double bonusPoints, @Nullable String commitHash, @Nullable String submissionDate,
+            @Nullable String assessmentType) {
     }
 
     private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
@@ -163,10 +170,12 @@ public class ProblemStatementRenderingService {
      * @param selfContained if true, PlantUML diagrams are inlined as SVG; otherwise URLs are provided
      * @param interactive   if true and selfContained is true, includes vanilla JS for task feedback popups
      * @param testResults   map of testCaseId → passed (true/false), or null if no results available
+     * @param resultSummary result-level summary (score, commit hash, etc.) for the interactive modal, or null
      * @param locale        the locale for i18n of user-visible text
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, boolean interactive, @Nullable Map<Long, TestFeedbackDetail> testResults, Locale locale) {
+    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, boolean interactive, @Nullable Map<Long, TestFeedbackDetail> testResults,
+            @Nullable ResultSummary resultSummary, Locale locale) {
         String problemStatement = exercise.getProblemStatement();
         boolean useGraalJs = useMarkdownIt && markdownItRenderingService.isAvailable();
         String diagramMode = selfContained ? "inline" : "url";
@@ -219,8 +228,9 @@ public class ProblemStatementRenderingService {
             }
         }
 
-        // Step 5: Wrap in container div
-        html = "<div class=\"artemis-problem-statement\">" + html + "</div>";
+        // Step 5: Wrap in container div (with result summary for interactive modal)
+        String resultAttr = buildResultAttribute(resultSummary);
+        html = "<div class=\"artemis-problem-statement\"" + resultAttr + ">" + html + "</div>";
 
         // Step 6: Strip any remaining testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
@@ -446,6 +456,9 @@ public class ProblemStatementRenderingService {
                 Map<String, Object> entry = new LinkedHashMap<>();
                 entry.put("name", detail.testName());
                 entry.put("passed", detail.passed());
+                if (detail.credits() != null) {
+                    entry.put("credits", detail.credits());
+                }
                 if (detail.message() != null && !detail.message().isBlank()) {
                     entry.put("message", detail.message());
                 }
@@ -458,6 +471,19 @@ public class ProblemStatementRenderingService {
         catch (JsonProcessingException e) {
             log.error("Failed to serialize feedback JSON", e);
             return "[]";
+        }
+    }
+
+    private String buildResultAttribute(@Nullable ResultSummary resultSummary) {
+        if (resultSummary == null) {
+            return "";
+        }
+        try {
+            return " data-result=\"" + escapeHtmlAttribute(objectMapper.writeValueAsString(resultSummary)) + "\"";
+        }
+        catch (JsonProcessingException e) {
+            log.error("Failed to serialize result summary JSON", e);
+            return "";
         }
     }
 
@@ -543,7 +569,7 @@ public class ProblemStatementRenderingService {
         Safelist safelist = Safelist.relaxed();
 
         // Custom elements for tasks and diagrams
-        safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url");
+        safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url", "data-result");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
