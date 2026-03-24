@@ -111,6 +111,12 @@
     }
 }
 
+.message-entering.animate-enabled,
+.suggestion-entering,
+.suggestion-leaving {
+    overflow-anchor: none;
+}
+
 .suggestions-container {
     display: flex;
     flex-wrap: wrap;
@@ -155,14 +161,6 @@
     button:hover {
         background-color: var(--iris-accent-background);
     }
-}
-
-.related-entity-button {
-    background-color: var(--iris-secondary-background);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 0.8rem;
 }
 
 .rate-limit {
@@ -262,11 +260,6 @@
             }
         }
     }
-}
-
-.llm-message-wrapper {
-    width: fit-content;
-    position: relative;
 }
 
 .bubble-left {
@@ -409,6 +402,7 @@ pre {
         }
 
         .messages {
+            overflow-anchor: none;
             flex: 1;
             overflow-x: hidden;
             overflow-y: auto;
