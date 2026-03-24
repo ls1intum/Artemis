@@ -82,8 +82,11 @@ public class SentryConfiguration {
     }
 
     private double tracesSampler(SamplingContext samplingContext) {
-        Object customSamplingRequest = samplingContext.getCustomSamplingContext().get("request");
         double defaultSampleRate = getTracesSampleRate();
+        if (samplingContext.getCustomSamplingContext() == null) {
+            return defaultSampleRate;
+        }
+        Object customSamplingRequest = samplingContext.getCustomSamplingContext().get("request");
         Boolean parentSampled = samplingContext.getTransactionContext().getParentSampled();
 
         // Guard against other types of request; we want these to use defaultSampleRate
@@ -164,10 +167,24 @@ public class SentryConfiguration {
             if (errorEvent.getMessage() != null) {
                 // The actual string is wrapped inside a message object
                 String message = errorEvent.getMessage().getMessage();
-                if (errorEvent.getMessage().getMessage() != null) {
+                if (message != null) {
                     errorEvent.getMessage().setMessage(scrubStringMessage(message));
                 }
+
+                String formattedMessage = errorEvent.getMessage().getFormatted();
+                if (formattedMessage != null) {
+                    errorEvent.getMessage().setFormatted(scrubStringMessage(formattedMessage));
+                }
+                if (errorEvent.getMessage().getParams() != null) {
+                    List<String> filteredParams = errorEvent.getMessage().getParams().stream().map(this::scrubStringMessage).toList();
+                    errorEvent.getMessage().setParams(filteredParams);
+                }
             }
+
+            if (errorEvent.getTransaction() != null) {
+                errorEvent.setTransaction(scrubUrl(scrubStringMessage(errorEvent.getTransaction())));
+            }
+
             if (errorEvent.getExceptions() != null) {
                 for (SentryException ex : errorEvent.getExceptions()) {
                     String value = ex.getValue();
@@ -180,7 +197,9 @@ public class SentryConfiguration {
 
         // GetRequest can be called on any SentryBaseEvent, so we use common handling
         Request request = event.getRequest();
-        if (request != null) {
+        if (request != null)
+
+        {
             // Send no cookies
             request.setCookies("");
 

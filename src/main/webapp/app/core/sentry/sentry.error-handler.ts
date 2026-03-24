@@ -106,7 +106,7 @@ export class SentryErrorHandler extends ErrorHandler {
     }
 
     private scrubUrl(url: string): string {
-        const scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([a-z0-9]+)-[^/]+\.git/g, '/git/$1/$2.git');
+        const scrubbed: string = url.replace(/\/git\/([A-Z0-9]+)\/([^/]+)-[^/]+\.git/g, '/git/$1/$2.git');
 
         if (url.includes('-tests.git') || url.includes('-exercise.git') || url.includes('-solution.git')) {
             return url;
