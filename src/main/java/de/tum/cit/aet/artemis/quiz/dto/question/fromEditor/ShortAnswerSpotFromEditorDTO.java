@@ -40,8 +40,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      */
     public ShortAnswerSpot toDomainObject() {
         ShortAnswerSpot spot = new ShortAnswerSpot();
-        // Use id as tempID fallback for mapping resolution
-        spot.setTempID(tempID != null ? tempID : id);
+        spot.setTempID(effectiveId());
         spot.setWidth(width);
         spot.setSpotNr(spotNr);
         return spot;
@@ -53,7 +52,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      * @param spot the existing spot to update
      */
     public void applyTo(ShortAnswerSpot spot) {
-        spot.setTempID(tempID != null ? tempID : id);
+        spot.setTempID(effectiveId());
         spot.setWidth(width);
         spot.setSpotNr(spotNr);
     }

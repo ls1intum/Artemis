@@ -318,9 +318,7 @@ public class TextExerciseCreationUpdateResource {
         exercise.setTitle(dto.title());
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
-        // problemStatement: null -> empty string
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        exercise.setProblemStatement(Objects.toString(dto.problemStatement(), ""));
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());

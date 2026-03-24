@@ -191,21 +191,13 @@ public class ProgrammingExerciseUpdateResource {
         if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        // Check if Theia is enabled — validate against the merged entity state since DTO fields are nullable (patch-style)
-        if (moduleFeatureService.isTheiaEnabled()) {
-            // Require 1 / 3 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())
-                    && !updatedProgrammingExercise.isAllowOnlineIde()) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
-        else {
-            // Require 1 / 2 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
+        // Validate at least one participation mode is enabled
+        boolean hasOnlineEditor = Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor());
+        boolean hasOfflineIde = Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde());
+        if (!hasOnlineEditor && !hasOfflineIde && (!moduleFeatureService.isTheiaEnabled() || !updatedProgrammingExercise.isAllowOnlineIde())) {
+            String message = moduleFeatureService.isTheiaEnabled() ? "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE"
+                    : "You need to allow at least one participation mode, the online editor or the offline IDE";
+            throw new BadRequestAlertException(message, ENTITY_NAME, "noParticipationModeAllowed");
         }
 
         // Verify that the checkout directories have not been changed
@@ -279,8 +271,7 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        exercise.setProblemStatement(Objects.toString(dto.problemStatement(), ""));
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
