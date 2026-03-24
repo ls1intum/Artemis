@@ -39,7 +39,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
-import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.AssetRequirementsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DiagramRenderInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
@@ -54,10 +53,6 @@ public class ProblemStatementRenderingService {
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
     private static final String COMMONMARK_VERSION = "1.0.0";
-
-    private static final String GRAALJS_VERSION = "2.0.0";
-
-    private static final List<String> GRAALJS_REQUIRED_CSS = List.of("katex", "hljs", "github-alerts");
 
     private static final List<String> SELF_CONTAINED_CSS_RESOURCES = List.of("problem-statement-css/katex.min.css", "problem-statement-css/hljs.min.css",
             "problem-statement-css/github-colors-light.css", "problem-statement-css/github-base.css");
@@ -144,122 +139,17 @@ public class ProblemStatementRenderingService {
 
     private final PlantUmlService plantUmlService;
 
-    private final MarkdownItRenderingService markdownItRenderingService;
-
     private final ObjectMapper objectMapper;
 
     private final MessageSource messageSource;
 
     private final String serverUrl;
 
-    private final boolean useMarkdownIt;
-
-    public ProblemStatementRenderingService(PlantUmlService plantUmlService, MarkdownItRenderingService markdownItRenderingService, ObjectMapper objectMapper,
-            MessageSource messageSource, @Value("${server.url}") String serverUrl, @Value("${artemis.rendering.use-markdown-it:true}") boolean useMarkdownIt) {
+    public ProblemStatementRenderingService(PlantUmlService plantUmlService, ObjectMapper objectMapper, MessageSource messageSource, @Value("${server.url}") String serverUrl) {
         this.plantUmlService = plantUmlService;
-        this.markdownItRenderingService = markdownItRenderingService;
         this.objectMapper = objectMapper;
         this.messageSource = messageSource;
         this.serverUrl = serverUrl;
-        this.useMarkdownIt = useMarkdownIt;
-    }
-
-    /**
-     * Renders a problem statement for the given exercise into pre-rendered HTML with structured metadata.
-     *
-     * @param exercise      the exercise whose problem statement should be rendered
-     * @param selfContained if true, PlantUML diagrams are inlined as SVG; otherwise URLs are provided
-     * @param interactive   if true and selfContained is true, includes vanilla JS for task feedback popups
-     * @param testResults   map of testCaseId → passed (true/false), or null if no results available
-     * @param resultSummary result-level summary (score, commit hash, etc.) for the interactive modal, or null
-     * @param locale        the locale for i18n of user-visible text
-     * @return the rendered problem statement DTO
-     */
-    public RenderedProblemStatementDTO render(Exercise exercise, boolean selfContained, boolean interactive, @Nullable Map<Long, TestFeedbackDetail> testResults,
-            @Nullable ResultSummary resultSummary, Locale locale) {
-        String problemStatement = exercise.getProblemStatement();
-        boolean useGraalJs = useMarkdownIt && markdownItRenderingService.isAvailable();
-        String diagramMode = selfContained ? "inline" : "url";
-
-        if (problemStatement == null || problemStatement.isBlank()) {
-            String rendererVersion = useGraalJs ? GRAALJS_VERSION : COMMONMARK_VERSION;
-            return new RenderedProblemStatementDTO("", computeHash(""), rendererVersion, new AssetRequirementsDTO("absent", "absent", diagramMode, List.of()), List.of(), List.of(),
-                    null);
-        }
-
-        String processedMarkdown = problemStatement;
-
-        // Step 1: Extract and replace PlantUML blocks
-        List<DiagramRenderInfoDTO> diagrams = new ArrayList<>();
-        List<String> inlineSvgs = new ArrayList<>();
-        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, exercise.getId(), selfContained, diagrams, inlineSvgs, testResults);
-
-        // Step 2: Extract and replace task markers
-        List<TaskRenderInfoDTO> tasks = new ArrayList<>();
-        processedMarkdown = extractTasks(processedMarkdown, tasks, testResults, locale);
-
-        // Step 3: Render markdown to HTML and determine asset requirements
-        String html;
-        String rendererVersion;
-        AssetRequirementsDTO assets;
-
-        if (useGraalJs) {
-            html = renderWithGraalJs(processedMarkdown);
-            rendererVersion = GRAALJS_VERSION;
-            assets = new AssetRequirementsDTO("absent", "absent", diagramMode, GRAALJS_REQUIRED_CSS);
-        }
-        else {
-            html = renderWithCommonMark(processedMarkdown);
-            rendererVersion = COMMONMARK_VERSION;
-            assets = detectAssetRequirements(processedMarkdown, diagramMode);
-        }
-
-        // Step 4: Inject PlantUML SVGs after sanitization.
-        // SECURITY ASSUMPTION: We treat PlantUML-generated SVGs as trusted output. PlantUML converts
-        // its own DSL into SVG shapes/text, and we assume it does not propagate user-controlled content
-        // into executable SVG contexts (e.g., script, onload). This is the same trust model as the
-        // existing /api/programming/plantuml/svg endpoint which serves PlantUML SVGs without HTML
-        // sanitization. The SVGs are NOT passed through jsoup because jsoup cannot handle SVG
-        // namespaces/attributes without being overly permissive. If this assumption is ever violated,
-        // SVG sanitization must be added here.
-        if (selfContained) {
-            for (int i = 0; i < inlineSvgs.size(); i++) {
-                String placeholder = SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX;
-                html = html.replace(placeholder, inlineSvgs.get(i));
-            }
-        }
-
-        // Step 5: Wrap in container div (with result summary for interactive modal)
-        String resultAttr = buildResultAttribute(resultSummary);
-        html = "<div class=\"artemis-problem-statement\"" + resultAttr + ">" + html + "</div>";
-
-        // Step 6: Strip any remaining testid tags
-        html = html.replace("<testid>", "").replace("</testid>", "");
-
-        // Step 7: Prepend embedded CSS (after sanitization, since jsoup strips <style> tags)
-        html = EMBEDDED_CSS + html;
-
-        // Step 8: For self-contained mode, inline third-party CSS (katex, hljs, github-alerts)
-        // so the HTML renders correctly without the Angular CSS bundle.
-        // Only clear requiredCss if CSS was actually loaded successfully.
-        if (selfContained && SELF_CONTAINED_CSS != null) {
-            html = SELF_CONTAINED_CSS + html;
-            assets = new AssetRequirementsDTO(assets.katex(), assets.highlighting(), assets.diagramMode(), List.of());
-        }
-
-        // Step 9: Determine interactive script (only for selfContained + interactive + JS loaded)
-        // If JS resource failed to load, treat as non-interactive to avoid broken click affordances
-        String interactiveScript = (selfContained && interactive && INTERACTIVE_JS != null) ? INTERACTIVE_JS : null;
-
-        // Step 10: When selfContained but not effectively interactive, override CSS to remove click affordances
-        if (selfContained && interactiveScript == null) {
-            html = NON_INTERACTIVE_CSS_OVERRIDES + html;
-        }
-
-        // Step 11: Compute content hash (includes interactiveScript so ETag covers the full response)
-        String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
-
-        return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams, interactiveScript);
     }
 
     private static final String STATELESS_VERSION = "1.0.0-stateless";
@@ -445,11 +335,6 @@ public class ProblemStatementRenderingService {
         return new AssetRequirementsDTO(needsKatex ? "client-rendering-required" : "absent", needsHighlighting ? "client-rendering-required" : "absent", diagramMode, List.of());
     }
 
-    private String renderWithGraalJs(String markdown) {
-        String html = markdownItRenderingService.render(markdown);
-        return rewriteUrlsAndSanitize(html);
-    }
-
     private String renderWithCommonMark(String markdown) {
         var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
         Parser parser = Parser.builder().extensions(extensions).build();
@@ -463,64 +348,6 @@ public class ProblemStatementRenderingService {
         boolean needsKatex = KATEX_INLINE_PATTERN.matcher(markdown).find() || KATEX_BLOCK_PATTERN.matcher(markdown).find() || KATEX_BEGIN_PATTERN.matcher(markdown).find();
         boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(markdown).find();
         return new AssetRequirementsDTO(needsKatex ? "required" : "absent", needsHighlighting ? "required" : "absent", diagramMode, List.of());
-    }
-
-    private String extractPlantUmlDiagrams(String markdown, long exerciseId, boolean selfContained, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs,
-            @Nullable Map<Long, TestFeedbackDetail> testResults) {
-        Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
-        StringBuilder sb = new StringBuilder();
-        int diagramIndex = 0;
-
-        while (matcher.find()) {
-            String fullMatch = matcher.group(0);
-            String diagramId = "uml-" + diagramIndex;
-            String sourceHash = computeHash(fullMatch);
-
-            // Extract test references from testsColor() before cleaning
-            List<Long> testIds = extractTestsColorIds(fullMatch);
-
-            // Resolve or clean Artemis-specific testsColor()/testid markup for PlantUML rendering
-            String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
-
-            // Build SVG URL with cleaned source (light theme: server can't know client's theme)
-            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8);
-
-            String inlineSvg = null;
-            if (selfContained) {
-                try {
-                    inlineSvg = plantUmlService.generateSvg(cleanedSource, false);
-                    // PlantUML generates SVGs with preserveAspectRatio="none" and inline style with
-                    // fixed pixel dimensions, which prevents CSS-based responsive scaling. Fix both so
-                    // that max-width:100% + height:auto can scale the diagram proportionally.
-                    inlineSvg = inlineSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
-                    inlineSvg = inlineSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
-                    // PlantUML sets background:#FFFFFF on the SVG, making it opaque. Remove it so
-                    // the diagram adapts to whatever background the consumer provides (e.g. dark mode).
-                    inlineSvg = inlineSvg.replace("background:#FFFFFF;", "");
-                }
-                catch (IOException e) {
-                    log.error("Failed to generate inline SVG for diagram {} in exercise {}", diagramId, exerciseId, e);
-                    inlineSvg = "<div class=\"alert alert-danger\">Failed to render diagram</div>";
-                }
-                inlineSvgs.add(inlineSvg);
-            }
-
-            String replacement;
-            if (selfContained) {
-                // Use a placeholder that won't be stripped by jsoup sanitization
-                replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex
-                        + SVG_PLACEHOLDER_SUFFIX + "</div>";
-            }
-            else {
-                replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\"></div>";
-            }
-
-            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-            diagrams.add(new DiagramRenderInfoDTO(diagramId, selfContained ? "inline" : "url", svgUrl, inlineSvg, sourceHash, testIds));
-            diagramIndex++;
-        }
-        matcher.appendTail(sb);
-        return sb.toString();
     }
 
     /**
