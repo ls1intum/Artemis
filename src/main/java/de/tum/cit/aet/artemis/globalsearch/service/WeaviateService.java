@@ -21,6 +21,7 @@ import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateEnabled;
 import de.tum.cit.aet.artemis.globalsearch.config.schema.WeaviateCollectionSchema;
@@ -148,7 +149,7 @@ public class WeaviateService {
                 // - "none": Use self-provided vectors (respective weaviate instance can be started via docker/weaviate.yml)
                 // - "text2vec-transformers": Automatic embeddings with embeddinggemma-300m (respective weaviate instance can be started via docker/weaviate-embeddings.yml)
                 // - "text2vec-openai": OpenAI-compatible API embeddings, e.g. Ollama (weaviate started with docker/weaviate/openai.env)
-                if (VectorConfig.Kind.TEXT2VEC_OPENAI.jsonValue().equals(vectorizerModule)) {
+                if (SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(vectorizerModule)) {
                     collection.vectorConfig(VectorConfig.text2vecOpenAi(builder -> {
                         if (StringUtils.hasText(weaviateApiBaseUrl)) {
                             builder.baseUrl(weaviateApiBaseUrl);
@@ -161,11 +162,11 @@ public class WeaviateService {
                     log.info("Configured collection '{}' with text2vec-openai: baseUrl='{}', model='{}', apiKey configured={}", collectionName, weaviateApiBaseUrl,
                             weaviateApiEmbeddingModel, StringUtils.hasText(weaviateApiKey));
                 }
-                else if (VectorConfig.Kind.TEXT2VEC_TRANSFORMERS.jsonValue().equals(vectorizerModule)) {
+                else if (SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(vectorizerModule)) {
                     log.info("Configured collection '{}' with text2vec-transformers vectorizer", collectionName);
                     collection.vectorConfig(VectorConfig.text2vecTransformers());
                 }
-                else if (VectorConfig.Kind.NONE.jsonValue().equals(vectorizerModule)) {
+                else if (SupportedVectorizer.NONE.configValue().equals(vectorizerModule)) {
                     log.info("Configured collection '{}' with self-provided vectors (no automatic embeddings)", collectionName);
                     collection.vectorConfig(VectorConfig.selfProvided());
                 }
@@ -311,6 +312,6 @@ public class WeaviateService {
      * @return {@code true} if a text vectorizer is available, {@code false} otherwise
      */
     public boolean isVectorizerAvailable() {
-        return WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(vectorizerModule);
+        return SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(vectorizerModule);
     }
 }

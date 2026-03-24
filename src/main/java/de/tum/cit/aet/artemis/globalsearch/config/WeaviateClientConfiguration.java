@@ -46,7 +46,7 @@ public class WeaviateClientConfiguration {
     @Bean(destroyMethod = "close")
     public WeaviateClient weaviateClient() {
         try {
-            boolean usesOpenAiVectorizer = WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateProperties.vectorizerModule());
+            boolean usesOpenAiVectorizer = SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(weaviateProperties.vectorizerModule());
             boolean hasApiKey = StringUtils.hasText(weaviateProperties.apiKey());
             boolean hasAuthApiKey = StringUtils.hasText(weaviateProperties.authApiKey());
 

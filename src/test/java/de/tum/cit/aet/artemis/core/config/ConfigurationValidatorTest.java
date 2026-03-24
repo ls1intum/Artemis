@@ -13,6 +13,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.core.env.Environment;
 
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
+import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 
 /**
@@ -28,7 +29,7 @@ class ConfigurationValidatorTest {
 
     private static final String VALID_SCHEME = "http";
 
-    private static final String VALID_VECTORIZER_MODULE = WeaviateConfigurationProperties.VECTORIZER_NONE;
+    private static final String VALID_VECTORIZER_MODULE = WeaviateConfigurationProperties.DEFAULT_VECTORIZER_MODULE;
 
     private ConfigurationValidator createValidator(boolean weaviateEnabled, String weaviateHost, int weaviatePort, int weaviateGrpcPort, String weaviateScheme) {
         return createValidator(weaviateEnabled, weaviateHost, weaviatePort, weaviateGrpcPort, weaviateScheme, VALID_VECTORIZER_MODULE, null, null);
@@ -181,7 +182,7 @@ class ConfigurationValidatorTest {
             @Test
             void testNoneShouldPassValidation() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        WeaviateConfigurationProperties.VECTORIZER_NONE);
+                        WeaviateConfigurationProperties.DEFAULT_VECTORIZER_MODULE);
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
             }
@@ -189,7 +190,7 @@ class ConfigurationValidatorTest {
             @Test
             void testText2vecTransformersShouldPassValidation() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS);
+                        SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue());
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
             }
@@ -197,7 +198,7 @@ class ConfigurationValidatorTest {
             @Test
             void testText2vecOpenAiWithApiPropertiesShouldPassValidation() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI, "http://localhost:11434", "dummy");
+                        SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), "http://localhost:11434", "dummy");
 
                 assertThatCode(validator::validateConfigurations).doesNotThrowAnyException();
             }
@@ -205,7 +206,7 @@ class ConfigurationValidatorTest {
             @Test
             void testText2vecOpenAiWithoutBaseUrlShouldFailValidation() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI, null, "dummy");
+                        SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), null, "dummy");
 
                 assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.api-base-url");
             }
@@ -213,7 +214,7 @@ class ConfigurationValidatorTest {
             @Test
             void testText2vecOpenAiWithoutApiKeyShouldFailValidation() {
                 ConfigurationValidator validator = createValidator(true, VALID_HOST, VALID_HTTP_PORT, VALID_GRPC_PORT, VALID_SCHEME,
-                        WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI, "http://localhost:11434", null);
+                        SupportedVectorizer.TEXT2VEC_OPENAI.configValue(), "http://localhost:11434", null);
 
                 assertThatThrownBy(validator::validateConfigurations).isInstanceOf(WeaviateConfigurationException.class).hasMessageContaining("artemis.weaviate.api-key");
             }

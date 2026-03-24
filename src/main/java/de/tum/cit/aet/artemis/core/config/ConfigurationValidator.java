@@ -4,12 +4,11 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PASSWORD_MIN_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MAX_LENGTH;
 import static de.tum.cit.aet.artemis.core.config.Constants.USERNAME_MIN_LENGTH;
-import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_NONE;
-import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI;
-import static de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS;
+import static de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer.TEXT2VEC_OPENAI;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import jakarta.annotation.PostConstruct;
@@ -26,6 +25,7 @@ import org.springframework.util.StringUtils;
 import de.tum.cit.aet.artemis.core.exception.ConflictingPasskeyConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.InvalidAdminConfigurationException;
 import de.tum.cit.aet.artemis.core.exception.WeaviateConfigurationException;
+import de.tum.cit.aet.artemis.globalsearch.config.SupportedVectorizer;
 import de.tum.cit.aet.artemis.globalsearch.config.WeaviateConfigurationProperties;
 
 /**
@@ -230,20 +230,18 @@ public class ConfigurationValidator {
             effectiveScheme = weaviateScheme;
         }
 
-        boolean isSupportedVectorizerConfigured = VECTORIZER_NONE.equals(weaviateVectorizerModule) || VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(weaviateVectorizerModule)
-                || VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule);
+        boolean isSupportedVectorizerConfigured = SupportedVectorizer.isSupported(weaviateVectorizerModule);
         if (weaviateVectorizerModule == null || weaviateVectorizerModule.isBlank()) {
             invalidProperties.add("artemis.weaviate.vectorizer-module (must be configured when Weaviate is enabled)");
         }
-        else if (isSupportedVectorizerConfigured) {
-            invalidProperties.add(
-                    "artemis.weaviate.vectorizer-module (must be '" + VECTORIZER_NONE + "', '" + VECTORIZER_TEXT2VEC_TRANSFORMERS + "', or '" + VECTORIZER_TEXT2VEC_OPENAI + "')");
+        else if (!isSupportedVectorizerConfigured) {
+            invalidProperties.add("artemis.weaviate.vectorizer-module (must be one of " + Arrays.toString(SupportedVectorizer.values()) + ")");
         }
 
-        boolean shouldValidateOpenAPISpecificProperties = VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateVectorizerModule);
+        boolean shouldValidateOpenAPISpecificProperties = TEXT2VEC_OPENAI.configValue().equals(weaviateVectorizerModule);
         if (shouldValidateOpenAPISpecificProperties) {
             if (!StringUtils.hasText(weaviateApiBaseUrl)) {
-                invalidProperties.add("artemis.weaviate.api-base-url (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+                invalidProperties.add("artemis.weaviate.api-base-url (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
             }
             else {
                 try {
@@ -251,17 +249,17 @@ public class ConfigurationValidator {
                     String scheme = uri.getScheme();
                     boolean isInvalidUrl = !uri.isAbsolute() || (!"http".equals(scheme) && !"https".equals(scheme));
                     if (isInvalidUrl) {
-                        invalidProperties.add(
-                                "artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+                        invalidProperties.add("artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue()
+                                + " vectorizer)");
                     }
                 }
                 catch (IllegalArgumentException e) {
-                    invalidProperties
-                            .add("artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer)");
+                    invalidProperties.add(
+                            "artemis.weaviate.api-base-url (must be a valid absolute URL with http or https scheme when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer)");
                 }
             }
             if (!StringUtils.hasText(weaviateApiKey)) {
-                invalidProperties.add("artemis.weaviate.api-key (must be configured when using " + VECTORIZER_TEXT2VEC_OPENAI + " vectorizer, use a dummy value for Ollama)");
+                invalidProperties.add("artemis.weaviate.api-key (must be configured when using " + TEXT2VEC_OPENAI.configValue() + " vectorizer, use a dummy value for Ollama)");
             }
         }
 
