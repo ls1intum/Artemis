@@ -12,10 +12,20 @@ public enum SupportedVectorizer {
 
     NONE(VectorConfig.Kind.NONE), TEXT2VEC_TRANSFORMERS(VectorConfig.Kind.TEXT2VEC_TRANSFORMERS), TEXT2VEC_OPENAI(VectorConfig.Kind.TEXT2VEC_OPENAI);
 
+    private final VectorConfig.Kind vectorConfigKind;
+
     private final String configValue;
 
     SupportedVectorizer(VectorConfig.Kind kind) {
+        this.vectorConfigKind = kind;
         this.configValue = kind.jsonValue();
+    }
+
+    /**
+     * Returns the {@link VectorConfig.Kind} associated with this vectorizer.
+     */
+    public VectorConfig.Kind vectorConfigKind() {
+        return vectorConfigKind;
     }
 
     /**
@@ -23,6 +33,17 @@ public enum SupportedVectorizer {
      */
     public String configValue() {
         return configValue;
+    }
+
+    /**
+     * Resolves a configuration value to the matching {@link SupportedVectorizer}.
+     * Returns {@link #NONE} if the value does not match any supported vectorizer.
+     *
+     * @param value the vectorizer module string from configuration
+     * @return the matching vectorizer, or {@link #NONE} as fallback
+     */
+    public static SupportedVectorizer fromConfigValue(String value) {
+        return Arrays.stream(values()).filter(vectorizer -> vectorizer.configValue.equals(value)).findFirst().orElse(NONE);
     }
 
     /**

@@ -219,48 +219,12 @@ public class WeaviateService {
      */
     private void checkForConfigurationDrift(String collectionName) {
         try {
-            Optional<CollectionConfig> existingConfig = client.collections.getConfig(collectionName);
-            if (existingConfig.isEmpty()) {
+            Optional<VectorConfig> defaultVector = getDefaultVectorConfig(collectionName);
+            if (defaultVector.isEmpty()) {
                 return;
             }
 
-            Map<String, VectorConfig> vectors = existingConfig.get().vectors();
-            if (vectors == null || vectors.isEmpty()) {
-                return;
-            }
-
-            // Weaviate stores the default vector under the key "default"
-            VectorConfig existingVector = vectors.get("default");
-            if (existingVector == null) {
-                log.warn("Collection '{}' has no 'default' vector key; found keys: {}. Skipping configuration drift check.", collectionName, vectors.keySet());
-                return;
-            }
-            VectorConfig.Kind existingKind = existingVector._kind();
-
-            // Determine the expected kind from the configured vectorizer module
-            VectorConfig.Kind expectedKind = switch (vectorizerModule) {
-                case "text2vec-openai" -> VectorConfig.Kind.TEXT2VEC_OPENAI;
-                case "text2vec-transformers" -> VectorConfig.Kind.TEXT2VEC_TRANSFORMERS;
-                default -> VectorConfig.Kind.NONE;
-            };
-
-            List<String> mismatches = new ArrayList<>();
-
-            if (existingKind != expectedKind) {
-                mismatches.add("vectorizer module: existing='%s', configured='%s'".formatted(existingKind.jsonValue(), vectorizerModule));
-            }
-
-            // For text2vec-openai, also compare baseUrl and model
-            if (existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI) {
-                Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
-                if (!Objects.equals(existingOpenAi.baseUrl(), weaviateApiBaseUrl)) {
-                    mismatches.add("api-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), weaviateApiBaseUrl));
-                }
-                if (!Objects.equals(existingOpenAi.model(), weaviateApiEmbeddingModel)) {
-                    mismatches.add("api-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), weaviateApiEmbeddingModel));
-                }
-            }
-
+            List<String> mismatches = detectVectorizerMismatches(defaultVector.get());
             if (!mismatches.isEmpty()) {
                 log.warn(
                         "Collection '{}' exists but its vectorizer configuration differs from the application config: {}. "
@@ -271,6 +235,63 @@ public class WeaviateService {
         catch (Exception e) {
             log.debug("Could not verify configuration of existing collection '{}': {}", collectionName, e.getMessage());
         }
+    }
+
+    /**
+     * Retrieves the default vector configuration from an existing collection.
+     *
+     * @param collectionName the fully-qualified collection name
+     * @return the default vector config, or empty if not available
+     */
+    private Optional<VectorConfig> getDefaultVectorConfig(String collectionName) throws IOException {
+        Optional<CollectionConfig> existingConfig = client.collections.getConfig(collectionName);
+        if (existingConfig.isEmpty()) {
+            return Optional.empty();
+        }
+
+        Map<String, VectorConfig> vectors = existingConfig.get().vectors();
+        if (vectors == null || vectors.isEmpty()) {
+            return Optional.empty();
+        }
+
+        // Weaviate stores the default vector under the key "default"
+        VectorConfig defaultVector = vectors.get("default");
+        if (defaultVector == null) {
+            log.warn("Collection '{}' has no 'default' vector key; found keys: {}. Skipping configuration drift check.", collectionName, vectors.keySet());
+            return Optional.empty();
+        }
+        return Optional.of(defaultVector);
+    }
+
+    /**
+     * Compares the existing vector configuration against the application's configured vectorizer
+     * and returns a list of human-readable mismatch descriptions.
+     *
+     * @param existingVector the vector configuration currently stored in Weaviate
+     * @return a list of mismatch descriptions (empty if configurations match)
+     */
+    private List<String> detectVectorizerMismatches(VectorConfig existingVector) {
+        VectorConfig.Kind existingKind = existingVector._kind();
+        VectorConfig.Kind expectedKind = SupportedVectorizer.fromConfigValue(vectorizerModule).vectorConfigKind();
+
+        List<String> mismatches = new ArrayList<>();
+
+        if (existingKind != expectedKind) {
+            mismatches.add("vectorizer module: existing='%s', configured='%s'".formatted(existingKind.jsonValue(), vectorizerModule));
+        }
+
+        boolean shouldCompareOpenAIProperties = existingKind == VectorConfig.Kind.TEXT2VEC_OPENAI && expectedKind == VectorConfig.Kind.TEXT2VEC_OPENAI;
+        if (shouldCompareOpenAIProperties) {
+            Text2VecOpenAiVectorizer existingOpenAi = existingVector._as(VectorConfig.Kind.TEXT2VEC_OPENAI);
+            if (!Objects.equals(existingOpenAi.baseUrl(), weaviateApiBaseUrl)) {
+                mismatches.add("api-base-url: existing='%s', configured='%s'".formatted(existingOpenAi.baseUrl(), weaviateApiBaseUrl));
+            }
+            if (!Objects.equals(existingOpenAi.model(), weaviateApiEmbeddingModel)) {
+                mismatches.add("api-embedding-model: existing='%s', configured='%s'".formatted(existingOpenAi.model(), weaviateApiEmbeddingModel));
+            }
+        }
+
+        return mismatches;
     }
 
     /**
