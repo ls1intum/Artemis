@@ -1297,12 +1297,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         QuizExercise savedExercise = save(quizExercise);
 
         // Add competency links after the initial save (they need the exercise ID for @MapsId).
-        // Do NOT re-save the exercise — the competency links are added to the managed entity's
-        // collection and will be cascaded automatically (CascadeType.ALL on Exercise.competencyLinks).
-        // A second save through QuizService.save() would re-evaluate the quizQuestions @OrderColumn
-        // collection, which on MySQL causes the exercise_id FK to be nulled out on quiz_question rows.
+        // IMPORTANT: Do NOT re-save the exercise (neither via QuizService.save() nor via
+        // quizExerciseRepository.saveAndFlush()). Re-saving causes Hibernate's @OrderColumn
+        // management to null out the exercise_id FK on quiz_question rows.
+        // Instead, save the competency links directly via their own repository.
         if (competencyLinks != null && !competencyLinks.isEmpty()) {
             competencyExerciseLinkService.updateCompetencyLinks(() -> competencyLinks, savedExercise);
+            competencyExerciseLinkService.saveAll(savedExercise.getCompetencyLinks());
         }
 
         QuizExercise result = savedExercise;

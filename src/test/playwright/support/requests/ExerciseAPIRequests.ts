@@ -514,6 +514,7 @@ export class ExerciseAPIRequests {
         startOfWorkingTime?: dayjs.Dayjs;
         duration?: number;
         quizMode?: QuizMode;
+        competencyLinks?: { competency: { id: number }; weight: number }[];
     }): Promise<QuizExercise> {
         const {
             body,
@@ -523,6 +524,7 @@ export class ExerciseAPIRequests {
             startOfWorkingTime,
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
+            competencyLinks,
         } = options;
 
         const quizExercise: any = {
@@ -551,6 +553,9 @@ export class ExerciseAPIRequests {
             newQuizExercise = { ...quizExercise, ...body };
         }
 
+        if (competencyLinks) {
+            newQuizExercise.competencyLinks = competencyLinks;
+        }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
         const multipartData = {
             exercise: {

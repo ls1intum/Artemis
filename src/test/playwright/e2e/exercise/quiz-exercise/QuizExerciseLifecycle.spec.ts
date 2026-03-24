@@ -11,7 +11,7 @@ const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 /**
  * Helper to verify that the MC question from the template renders correctly in preview/solution views.
- * Asserts: question title, question text, hint, and all 4 answer option texts.
+ * Asserts: question title, question text, and all answer option texts.
  */
 async function assertMCQuestionInView(page: Page, title: string) {
     await expect(page.getByText(title)).toBeVisible({ timeout: 15000 });
@@ -27,12 +27,9 @@ async function assertMCQuestionInView(page: Page, title: string) {
  */
 async function assertSAQuestionInView(page: Page) {
     await expect(page.getByText(shortAnswerTemplate.title)).toBeVisible({ timeout: 15000 });
-    // The SA question text contains "Never gonna [-spot N]" patterns — spots render as inputs.
-    // Verify key text fragments that appear between spots.
     await expect(page.getByText('Never gonna').first()).toBeVisible();
     await expect(page.getByText('you up').first()).toBeVisible();
     await expect(page.getByText('you down').first()).toBeVisible();
-    // Verify spot input fields are rendered
     const spotInputs = page.locator('input.short-answer-question-container__input');
     await expect(spotInputs.first()).toBeVisible({ timeout: 5000 });
     const spotCount = await spotInputs.count();
@@ -44,15 +41,12 @@ async function assertSAQuestionInView(page: Page) {
  */
 async function assertSASolutionView(page: Page) {
     await expect(page.getByText(shortAnswerTemplate.title)).toBeVisible({ timeout: 15000 });
-    // Verify question text fragments are rendered
     await expect(page.getByText('Never gonna').first()).toBeVisible();
     await expect(page.getByText('you up').first()).toBeVisible();
-    // Verify solution inputs contain the correct answer values
     const solutionInputs = page.locator('input.short-answer-question-container__input');
     await expect(solutionInputs.first()).toBeVisible({ timeout: 5000 });
     const inputCount = await solutionInputs.count();
     expect(inputCount).toBe(shortAnswerTemplate.spots.length);
-    // Verify the first solution input has the correct answer
     await expect(solutionInputs.first()).toHaveValue(shortAnswerTemplate.solutions[0].text);
 }
 
@@ -78,7 +72,6 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             const saTitle = 'SA Lifecycle';
             const answerOptions = ['Correct A', 'Correct B', 'Wrong C', 'Wrong D'];
 
-            // --- Create quiz with MC + SA questions via UI ---
             await login(admin, '/course-management/');
             await courseManagement.openExercisesOfCourse(course.id!);
             await courseManagementExercises.createQuizExercise();
@@ -86,7 +79,6 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             await quizExerciseCreation.createAndEditMultipleChoiceQuestionInVisualMode(mcTitle, answerOptions);
             await quizExerciseCreation.addShortAnswerQuestion(saTitle);
 
-            // --- Verify save response ---
             const quizResponse = await quizExerciseCreation.saveQuiz();
             const quiz: QuizExercise = await quizResponse.json();
             createdQuizId = quiz.id;
@@ -96,25 +88,73 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
             expect(quiz.quizQuestions![0].type).toBe('multiple-choice');
             expect(quiz.quizQuestions![1].type).toBe('short-answer');
 
-            // --- Preview: verify MC question renders fully ---
+            // Preview: verify both questions render fully
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/preview`);
             await expect(page.getByText(mcTitle)).toBeVisible({ timeout: 15000 });
             for (const option of answerOptions) {
                 await expect(page.getByText(option, { exact: true })).toBeVisible();
             }
-            // Preview: verify SA question renders with text content
             await expect(page.getByText(saTitle)).toBeVisible();
             await expect(page.getByText('Never gonna').first()).toBeVisible();
-            await expect(page.getByText('you up').first()).toBeVisible();
 
-            // --- Solution: verify MC answers visible ---
+            // Solution: verify both questions
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quiz.id}/solution`);
             await expect(page.getByText(mcTitle)).toBeVisible({ timeout: 15000 });
             for (const option of answerOptions) {
                 await expect(page.getByText(option, { exact: true })).toBeVisible();
             }
-            // Solution: verify SA question visible
             await expect(page.getByText(saTitle)).toBeVisible();
+        });
+    });
+
+    test.describe('Quiz with Competency Links', () => {
+        let quizExercise: QuizExercise;
+        let competencyId: number;
+
+        test.beforeEach('Create competency and quiz with links', async ({ login, exerciseAPIRequests, courseManagementAPIRequests }) => {
+            await login(admin);
+            // Create a competency in the course
+            const competency = await courseManagementAPIRequests.createCompetency(course, 'Quiz Competency ' + generateUUID().substring(0, 5));
+            competencyId = competency.id!;
+
+            // Create quiz WITH competency link
+            quizExercise = await exerciseAPIRequests.createQuizExercise({
+                body: { course },
+                quizQuestions: [multipleChoiceTemplate, shortAnswerTemplate],
+                title: 'CQ' + generateUUID().substring(0, 5),
+                competencyLinks: [{ competency: { id: competencyId }, weight: 1 }],
+            });
+        });
+
+        test.afterEach('Delete quiz', async ({ login, exerciseAPIRequests }) => {
+            if (quizExercise?.id) {
+                await login(admin);
+                await exerciseAPIRequests.deleteQuizExercise(quizExercise.id);
+            }
+        });
+
+        test('Quiz created with competency has questions persisted and renderable', async ({ page, login }) => {
+            // Verify quiz was created with questions (catches exercise_id = NULL bug)
+            expect(quizExercise.id).toBeDefined();
+            expect(quizExercise.quizQuestions).toHaveLength(2);
+
+            // Edit view: verify quiz data loads (questions must be in DB)
+            await login(admin, `/course-management/${course.id}/quiz-exercises/${quizExercise.id}/edit`);
+            const titleField = page.locator('#field_title');
+            await expect(titleField).toHaveValue(quizExercise.title!, { timeout: 30000 });
+            const mcQuestionTitle = page.locator('#mc-question-title');
+            await expect(mcQuestionTitle).toBeVisible({ timeout: 10000 });
+            await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title);
+
+            // Preview: verify BOTH questions render (proves exercise_id FK is set)
+            await page.goto(`/course-management/${course.id}/quiz-exercises/${quizExercise.id}/preview`);
+            await assertMCQuestionInView(page, multipleChoiceTemplate.title);
+            await assertSAQuestionInView(page);
+
+            // Solution: verify both questions
+            await page.goto(`/course-management/${course.id}/quiz-exercises/${quizExercise.id}/solution`);
+            await assertMCQuestionInView(page, multipleChoiceTemplate.title);
+            await assertSASolutionView(page);
         });
     });
 
@@ -138,31 +178,24 @@ test.describe('Quiz Exercise Lifecycle', { tag: '@fast' }, () => {
         });
 
         test('Loads quiz with MC + SA in edit view, verifies all views render correctly', async ({ page, login }) => {
-            // --- Edit view: verify quiz metadata loaded ---
             await login(admin, `/course-management/${course.id}/quiz-exercises/${quizExercise.id}/edit`);
             const titleField = page.locator('#field_title');
             await expect(titleField).toHaveValue(quizExercise.title!, { timeout: 30000 });
 
-            // Edit view: verify MC question title and score loaded
             const mcQuestionTitle = page.locator('#mc-question-title');
             await expect(mcQuestionTitle).toBeVisible({ timeout: 10000 });
             await expect(mcQuestionTitle).toHaveValue(multipleChoiceTemplate.title);
             const scoreField = page.locator('#score').first();
             await expect(scoreField).toHaveValue(multipleChoiceTemplate.points.toString());
 
-            // Edit view: verify quiz has 2 questions by checking the question count indicator
-            // (SA question is below MC; its presence is verified in preview/solution below)
-
-            // --- Preview: verify MC question with all answer options ---
+            // Preview
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quizExercise.id}/preview`);
             await assertMCQuestionInView(page, multipleChoiceTemplate.title);
-            // Preview: verify SA question with spots
             await assertSAQuestionInView(page);
 
-            // --- Solution: verify MC question with all answer options ---
+            // Solution
             await page.goto(`/course-management/${course.id}/quiz-exercises/${quizExercise.id}/solution`);
             await assertMCQuestionInView(page, multipleChoiceTemplate.title);
-            // Solution: verify SA question with correct answers shown
             await assertSASolutionView(page);
         });
     });

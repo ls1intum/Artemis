@@ -2,6 +2,7 @@ package de.tum.cit.aet.artemis.exercise.service;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
+import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
@@ -30,8 +32,21 @@ public class CompetencyExerciseLinkService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
-    public CompetencyExerciseLinkService(Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
+    private final Optional<CompetencyExerciseLinkRepository> competencyExerciseLinkRepository;
+
+    public CompetencyExerciseLinkService(Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyExerciseLinkRepository> competencyExerciseLinkRepository) {
         this.competencyRepositoryApi = competencyRepositoryApi;
+        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+    }
+
+    /**
+     * Saves the given competency exercise links directly via the link repository,
+     * without re-saving the parent exercise entity.
+     *
+     * @param links the competency exercise links to save
+     */
+    public void saveAll(Collection<CompetencyExerciseLink> links) {
+        competencyExerciseLinkRepository.ifPresent(repo -> repo.saveAll(links));
     }
 
     /**

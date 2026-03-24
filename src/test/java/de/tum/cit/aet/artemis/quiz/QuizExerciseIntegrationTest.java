@@ -265,12 +265,11 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
             }
         }
 
-        // Verify competency links are saved
-        assertThat(createdQuiz.getCompetencyLinks()).as("Competency links saved").hasSize(1);
-
         // Verify the quiz can be loaded from DB with all data (this catches exercise_id = NULL issues)
-        QuizExercise loadedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(createdQuiz.getId());
+        QuizExercise loadedQuiz = quizExerciseTestRepository.findWithEagerQuestionsAndStatisticsAndCompetenciesAndBatchesAndGradingCriteriaById(createdQuiz.getId()).orElseThrow();
         assertThat(loadedQuiz.getQuizQuestions()).as("Questions loadable from DB after creation with competencies").hasSize(3);
+        // Verify competency links are saved
+        assertThat(loadedQuiz.getCompetencyLinks()).as("Competency links saved").hasSize(1);
     }
 
     @Test
