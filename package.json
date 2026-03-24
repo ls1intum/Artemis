@@ -272,7 +272,6 @@
         "update": "ncu -i --format group",
         "webapp:build": "npm run clean-www && npm run prebuild -- --develop && ng build --configuration development",
         "webapp:prod": "npm run clean-www && npm run prebuild && cross-env NG_BUILD_OPTIMIZE_CHUNKS=1 ng build --configuration production",
-        "build:server-renderer": "node src/main/scripts/build-server-renderer.js",
         "sbom:generate": "npx @cyclonedx/cyclonedx-npm --ignore-npm-errors --package-lock-only --omit dev --output-file build/reports/client-sbom.json --output-format JSON --spec-version 1.6 2>/dev/null"
     }
 }
