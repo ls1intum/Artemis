@@ -7,8 +7,10 @@ import { TeamService } from './team.service';
 import { Team, TeamImportStrategyType } from 'app/exercise/shared/entities/team/team.model';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { User } from 'app/core/user/user.model';
+import { Course } from 'app/core/course/shared/entities/course.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { WebsocketService } from 'app/shared/service/websocket.service';
+import * as downloadUtil from 'app/shared/util/download.util';
 
 describe('TeamService', () => {
     let service: TeamService;
@@ -221,5 +223,47 @@ describe('TeamService', () => {
         const req = httpMock.expectOne({ method: 'PUT' });
         expect(req.request.url).toContain('import-from-exercise/99');
         req.flush([]);
+    });
+
+    it('should find course with exercises and participations for team', () => {
+        const course = { id: 10 } as Course;
+        const team: Team = { shortName: 'alpha' };
+
+        service.findCourseWithExercisesAndParticipationsForTeam(course, team).subscribe((resp) => {
+            expect(resp.body).toBeDefined();
+        });
+
+        const req = httpMock.expectOne({ method: 'GET', url: 'api/exercise/courses/10/teams/alpha/with-exercises-and-participations' });
+        req.flush({ id: 10, title: 'Test Course' });
+    });
+
+    it('should export teams to JSON file', () => {
+        const downloadSpy = jest.spyOn(downloadUtil, 'downloadFile').mockImplementation();
+
+        const teams: Team[] = [
+            {
+                name: 'Team A',
+                students: [{ login: 'student1', firstName: 'John', lastName: 'Doe', visibleRegistrationNumber: '12345' } as User, { login: 'student2' } as User],
+            },
+            {
+                name: 'Team B',
+                students: undefined,
+            },
+        ];
+
+        service.exportTeams(teams);
+
+        expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), 'teams.json');
+        downloadSpy.mockRestore();
+    });
+
+    it('should export teams with empty student list', () => {
+        const downloadSpy = jest.spyOn(downloadUtil, 'downloadFile').mockImplementation();
+
+        const teams: Team[] = [{ name: 'Empty', students: [] }];
+        service.exportTeams(teams);
+
+        expect(downloadSpy).toHaveBeenCalledWith(expect.any(Blob), 'teams.json');
+        downloadSpy.mockRestore();
     });
 });

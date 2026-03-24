@@ -105,6 +105,54 @@ describe('Exam Management Service Tests', () => {
         tick();
     }));
 
+    it('should import an exam with exercise groups and convert to import DTO', fakeAsync(() => {
+        // GIVEN
+        const textExercise = new TextExercise(undefined, undefined);
+        textExercise.id = 10;
+        textExercise.title = 'Text Ex';
+        textExercise.shortName = 'tex';
+        textExercise.maxPoints = 50;
+        textExercise.bonusPoints = 5;
+
+        const examWithGroups: Exam = {
+            id: 2,
+            title: 'Import Exam',
+            testExam: true,
+            visibleDate: dayjs('2024-01-01'),
+            startDate: dayjs('2024-01-15'),
+            endDate: dayjs('2024-01-15'),
+            gracePeriod: 120,
+            workingTime: 3600,
+            examMaxPoints: 100,
+            numberOfExercisesInExam: 1,
+            exerciseGroups: [
+                {
+                    id: 1,
+                    title: 'Group 1',
+                    isMandatory: true,
+                    exercises: [textExercise],
+                } as ExerciseGroup,
+            ],
+        };
+
+        // WHEN
+        service.import(course.id!, examWithGroups).subscribe((res) => expect(res.body).toBeDefined());
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
+        const body = req.request.body;
+        expect(body.title).toBe('Import Exam');
+        expect(body.courseId).toBe(course.id);
+        expect(body.exerciseGroups).toHaveLength(1);
+        expect(body.exerciseGroups[0].title).toBe('Group 1');
+        expect(body.exerciseGroups[0].exercises).toHaveLength(1);
+        expect(body.exerciseGroups[0].exercises[0].id).toBe(10);
+
+        // CLEANUP
+        req.flush(examWithGroups);
+        tick();
+    }));
+
     it('should import an exercise group', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
