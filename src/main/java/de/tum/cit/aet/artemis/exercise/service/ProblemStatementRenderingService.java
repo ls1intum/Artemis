@@ -269,10 +269,12 @@ public class ProblemStatementRenderingService {
     private static final java.util.Set<String> SVG_ALLOWED_ELEMENTS = java.util.Set.of("svg", "g", "defs", "clippath", "rect", "circle", "ellipse", "line", "polyline", "polygon",
             "path", "text", "tspan");
 
+    // style is allowed on SVG elements: PlantUML uses inline style for stroke/fill/font properties.
+    // SVG style cannot execute JS in modern browsers (no expression(), no -moz-binding).
     private static final java.util.Set<String> SVG_ALLOWED_ATTRIBUTES = java.util.Set.of("viewbox", "width", "height", "x", "y", "cx", "cy", "r", "rx", "ry", "d", "points", "fill",
             "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "transform", "class", "id", "font-family", "font-size", "font-weight", "font-style",
             "text-anchor", "text-decoration", "preserveaspectratio", "xmlns", "version", "opacity", "fill-opacity", "stroke-opacity", "dominant-baseline", "dx", "dy",
-            "data-diagram-type", "data-qualified-name", "data-source-line");
+            "data-diagram-type", "data-qualified-name", "data-source-line", "style");
 
     /**
      * Stateless rendering: client provides all data, server just renders. Zero database access.
