@@ -130,13 +130,10 @@ public class ProgrammingExerciseUpdateResource {
             throw new BadRequestAlertException("Programming exercise cannot have an empty id when updating", ENTITY_NAME, "noProgrammingExerciseId");
         }
 
-        // Validate that either courseId or exerciseGroupId is set, but not both
-        if (updateDTO.courseId() == null && updateDTO.exerciseGroupId() == null) {
-            throw new BadRequestAlertException("Either courseId or exerciseGroupId must be set", ENTITY_NAME, "noCourseOrExerciseGroup");
-        }
-        if (updateDTO.courseId() != null && updateDTO.exerciseGroupId() != null) {
-            throw new BadRequestAlertException("A programming exercise can only be associated with either a course or an exercise group, not both", ENTITY_NAME,
-                    "bothCourseAndExerciseGroupSet");
+        // Validate that exactly one of courseId or exerciseGroupId is set
+        if ((updateDTO.courseId() == null) == (updateDTO.exerciseGroupId() == null)) {
+            throw new BadRequestAlertException("A programming exercise must be associated with exactly one of courseId or exerciseGroupId", ENTITY_NAME,
+                    "invalidCourseOrExerciseGroupAssociation");
         }
 
         // Load the existing exercise from the database with all necessary associations
