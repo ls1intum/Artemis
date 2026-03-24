@@ -5,6 +5,7 @@ import {
     Component,
     HostListener,
     OnChanges,
+    OnDestroy,
     OnInit,
     Renderer2,
     effect,
@@ -13,12 +14,14 @@ import {
     model,
     output,
     signal,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { Post } from 'app/communication/shared/entities/post.model';
 import { PostingDirective } from 'app/communication/directive/posting.directive';
 import { MetisService } from 'app/communication/service/metis.service';
-import { NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DynamicDialogRef } from 'primeng/dynamicdialog';
 import { ContextInformation, DisplayPriority, PageType, RouteComponents } from '../metis.util';
 import { faBookmark, faBullhorn, faComments, faEnvelopeOpenText, faPencilAlt, faShare, faSmile, faThumbtack, faTrash } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -69,7 +72,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
         ForwardedMessageComponent,
     ],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked, OnDestroy {
     metisService = inject(MetisService);
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
@@ -80,7 +83,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     previewMode = input<boolean>(false);
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
-    modalRef = input<NgbModalRef | undefined>(undefined);
+    modalRef = input<DynamicDialogRef | undefined>(undefined);
     searchConfig = input<CourseWideSearchConfig | undefined>(undefined);
     showAnswers = model<boolean>(false);
 
@@ -136,9 +139,13 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.course = this.metisService.getCourse() ?? throwError(() => new Error('Course not found'));
         // Reactive check: if forwarded post/answer is deleted, update flag
         effect(() => {
-            const hasDeletedForwardedPost = this.forwardedPosts().length > 0 && this.forwardedPosts()[0] === undefined;
-            const hasDeletedForwardedAnswerPost = this.forwardedAnswerPosts().length > 0 && this.forwardedAnswerPosts()[0] === undefined;
-            this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
+            const forwardedPosts = this.forwardedPosts();
+            const forwardedAnswerPosts = this.forwardedAnswerPosts();
+            untracked(() => {
+                const hasDeletedForwardedPost = forwardedPosts.length > 0 && forwardedPosts[0] === undefined;
+                const hasDeletedForwardedAnswerPost = forwardedAnswerPosts.length > 0 && forwardedAnswerPosts[0] === undefined;
+                this.hasOriginalPostBeenDeleted = hasDeletedForwardedAnswerPost || hasDeletedForwardedPost;
+            });
         });
     }
 
@@ -244,6 +251,18 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.enableBodyScroll();
     }
 
+    override ngOnDestroy() {
+        super.ngOnDestroy();
+        // Clear static reference to prevent memory leaks when component is destroyed
+        if (PostComponent.activeDropdownPost === this) {
+            PostComponent.activeDropdownPost = undefined;
+        }
+        // Restore scroll in case the component is destroyed while the dropdown is open
+        if (this.showDropdown) {
+            this.enableBodyScroll();
+        }
+    }
+
     /**
      * on initialization: evaluates post context and page type
      */
@@ -309,7 +328,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
         this.contextInformation = this.metisService.getContextInformation(this.posting);
         this.routerLink = this.metisService.getLinkForPost();
         this.queryParams = this.metisService.getQueryParamsForPost(this.posting);
-        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference) ?? false;
+        this.showAnnouncementIcon = (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel && this.showChannelReference()) ?? false;
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
         this.assignPostingToPost();
@@ -329,7 +348,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
      */
     onNavigateToContext($event: MouseEvent) {
         if (!$event.metaKey) {
-            this.modalRef()?.dismiss();
+            this.modalRef()?.close();
             this.metisConversationService.setActiveConversation(this.contextInformation.queryParams!['conversationId']);
         }
     }
@@ -372,7 +391,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     onChannelReferenceClicked(channelId: number) {
         const course = this.metisService.getCourse();
         if (isCommunicationEnabled(course)) {
-            if (this.isCommunicationPage) {
+            if (this.isCommunicationPage()) {
                 this.metisConversationService.setActiveConversation(channelId);
             } else {
                 this.router.navigate(['courses', course.id, 'communication'], {
