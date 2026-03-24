@@ -40,6 +40,9 @@ test.describe('Static code analysis tests', { tag: '@slow' }, () => {
     });
 
     test('Verifies SCA feedback is displayed correctly after submission', async ({ login, page, programmingExerciseScaFeedback }) => {
+        // The beforeEach creates a C exercise, waits for solution build, submits, and waits for
+        // the student build — all of which can take several minutes under CI load.
+        test.setTimeout(300000);
         await login(studentOne, `/courses/${course.id}/exercises/${exercise.id}`);
         const resultScore = page.locator('#exercise-headers-information').locator('#result-score');
         const expectedScore = resultScore.getByText(cScaSubmission.expectedResult);
