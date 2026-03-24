@@ -63,7 +63,14 @@
                             <jhi-global-search-navigation-view
                                 [searchQuery]="searchQuery()"
                                 [selectedIndex]="activeSplitPanel() === 'left' ? selectedIndex() : -1"
+                                [results]="results()"
+                                [hasSearched]="hasSearched()"
+                                [showResults]="showResults()"
+                                [isLoading]="isLoading()"
+                                [searchError]="searchError()"
+                                [activeFilters]="activeFilters()"
                                 (viewSelected)="updateIrisSource($event)"
+                                (entityClick)="onEntityClick($event)"
                                 [irisOpen]="true"
                             />
                         }
