@@ -1,3 +1,4 @@
+/* eslint-disable jest-extended/prefer-to-be-true, jest-extended/prefer-to-be-false */
 import dayjs from 'dayjs/esm';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -63,11 +64,11 @@ describe('UpdateTextExerciseDTO Model', () => {
             expect(dto.problemStatement).toBe('Write an essay');
             expect(dto.gradingInstructions).toBe('Check grammar');
             expect(dto.categories).toBeDefined();
-            expect(dto.presentationScoreEnabled).toBeTrue();
-            expect(dto.secondCorrectionEnabled).toBeFalse();
+            expect(dto.presentationScoreEnabled).toBe(true);
+            expect(dto.secondCorrectionEnabled).toBe(false);
             expect(dto.feedbackSuggestionModule).toBe('athena');
-            expect(dto.allowComplaintsForAutomaticAssessments).toBeFalse();
-            expect(dto.allowFeedbackRequests).toBeTrue();
+            expect(dto.allowComplaintsForAutomaticAssessments).toBe(false);
+            expect(dto.allowFeedbackRequests).toBe(true);
             expect(dto.channelName).toBe('essay-channel');
             expect(dto.competencyLinks).toBeDefined();
             expect(dto.competencyLinks).toHaveLength(1);

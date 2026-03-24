@@ -1,3 +1,4 @@
+/* eslint-disable jest-extended/prefer-to-be-true, jest-extended/prefer-to-be-false */
 import dayjs from 'dayjs/esm';
 import { Course, CourseInformationSharingConfiguration, Language } from './course.model';
 import { CourseCreateDTO, CourseUpdateDTO, toCourseCreateDTO, toCourseUpdateDTO } from './course-update-dto.model';
@@ -65,8 +66,8 @@ describe('Course Update DTO Model', () => {
             expect(dto.enrollmentStartDate).toBe(baseDate.subtract(1, 'month').toJSON());
             expect(dto.enrollmentEndDate).toBe(baseDate.toJSON());
             expect(dto.unenrollmentEndDate).toBe(baseDate.add(1, 'month').toJSON());
-            expect(dto.testCourse).toBeFalse();
-            expect(dto.onlineCourse).toBeTrue();
+            expect(dto.testCourse).toBe(false);
+            expect(dto.onlineCourse).toBe(true);
             expect(dto.language).toBe(Language.ENGLISH);
             expect(dto.defaultProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
             expect(dto.maxComplaints).toBe(3);
@@ -76,16 +77,16 @@ describe('Course Update DTO Model', () => {
             expect(dto.maxComplaintTextLimit).toBe(3000);
             expect(dto.maxComplaintResponseTextLimit).toBe(4000);
             expect(dto.color).toBe('#ff0000');
-            expect(dto.enrollmentEnabled).toBeTrue();
+            expect(dto.enrollmentEnabled).toBe(true);
             expect(dto.enrollmentConfirmationMessage).toBe('Welcome!');
-            expect(dto.unenrollmentEnabled).toBeTrue();
-            expect(dto.faqEnabled).toBeTrue();
-            expect(dto.learningPathsEnabled).toBeTrue();
-            expect(dto.studentCourseAnalyticsDashboardEnabled).toBeTrue();
+            expect(dto.unenrollmentEnabled).toBe(true);
+            expect(dto.faqEnabled).toBe(true);
+            expect(dto.learningPathsEnabled).toBe(true);
+            expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(true);
             expect(dto.presentationScore).toBe(10);
             expect(dto.maxPoints).toBe(100);
             expect(dto.accuracyOfScores).toBe(1);
-            expect(dto.restrictedAthenaModulesAccess).toBeTrue();
+            expect(dto.restrictedAthenaModulesAccess).toBe(true);
             expect(dto.timeZone).toBe('Europe/Berlin');
             expect(dto.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         });
@@ -97,16 +98,16 @@ describe('Course Update DTO Model', () => {
             };
             const dto = toCourseCreateDTO(minimalCourse);
 
-            expect(dto.testCourse).toBeFalse();
+            expect(dto.testCourse).toBe(false);
             expect(dto.maxComplaintTimeDays).toBe(7);
             expect(dto.maxRequestMoreFeedbackTimeDays).toBe(7);
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
-            expect(dto.unenrollmentEnabled).toBeFalse();
-            expect(dto.faqEnabled).toBeFalse();
-            expect(dto.learningPathsEnabled).toBeFalse();
-            expect(dto.studentCourseAnalyticsDashboardEnabled).toBeFalse();
-            expect(dto.restrictedAthenaModulesAccess).toBeFalse();
+            expect(dto.unenrollmentEnabled).toBe(false);
+            expect(dto.faqEnabled).toBe(false);
+            expect(dto.learningPathsEnabled).toBe(false);
+            expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
+            expect(dto.restrictedAthenaModulesAccess).toBe(false);
         });
 
         it('should not include id field', () => {
@@ -143,8 +144,8 @@ describe('Course Update DTO Model', () => {
             expect(dto.enrollmentStartDate).toBe(baseDate.subtract(1, 'month').toJSON());
             expect(dto.enrollmentEndDate).toBe(baseDate.toJSON());
             expect(dto.unenrollmentEndDate).toBe(baseDate.add(1, 'month').toJSON());
-            expect(dto.testCourse).toBeFalse();
-            expect(dto.onlineCourse).toBeTrue();
+            expect(dto.testCourse).toBe(false);
+            expect(dto.onlineCourse).toBe(true);
             expect(dto.language).toBe(Language.ENGLISH);
             expect(dto.defaultProgrammingLanguage).toBe(ProgrammingLanguage.JAVA);
             expect(dto.maxComplaints).toBe(3);
@@ -155,17 +156,17 @@ describe('Course Update DTO Model', () => {
             expect(dto.maxComplaintResponseTextLimit).toBe(4000);
             expect(dto.color).toBe('#ff0000');
             expect(dto.courseIcon).toBe('icon.png');
-            expect(dto.enrollmentEnabled).toBeTrue();
+            expect(dto.enrollmentEnabled).toBe(true);
             expect(dto.enrollmentConfirmationMessage).toBe('Welcome!');
-            expect(dto.unenrollmentEnabled).toBeTrue();
+            expect(dto.unenrollmentEnabled).toBe(true);
             expect(dto.courseInformationSharingMessagingCodeOfConduct).toBe('Be nice');
-            expect(dto.faqEnabled).toBeTrue();
-            expect(dto.learningPathsEnabled).toBeTrue();
-            expect(dto.studentCourseAnalyticsDashboardEnabled).toBeTrue();
+            expect(dto.faqEnabled).toBe(true);
+            expect(dto.learningPathsEnabled).toBe(true);
+            expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(true);
             expect(dto.presentationScore).toBe(10);
             expect(dto.maxPoints).toBe(100);
             expect(dto.accuracyOfScores).toBe(1);
-            expect(dto.restrictedAthenaModulesAccess).toBeTrue();
+            expect(dto.restrictedAthenaModulesAccess).toBe(true);
             expect(dto.timeZone).toBe('Europe/Berlin');
             expect(dto.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
         });
@@ -179,16 +180,16 @@ describe('Course Update DTO Model', () => {
             const dto = toCourseUpdateDTO(minimalCourse);
 
             expect(dto.id).toBe(1);
-            expect(dto.testCourse).toBeFalse();
+            expect(dto.testCourse).toBe(false);
             expect(dto.maxComplaintTimeDays).toBe(7);
             expect(dto.maxRequestMoreFeedbackTimeDays).toBe(7);
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
-            expect(dto.unenrollmentEnabled).toBeFalse();
-            expect(dto.faqEnabled).toBeFalse();
-            expect(dto.learningPathsEnabled).toBeFalse();
-            expect(dto.studentCourseAnalyticsDashboardEnabled).toBeFalse();
-            expect(dto.restrictedAthenaModulesAccess).toBeFalse();
+            expect(dto.unenrollmentEnabled).toBe(false);
+            expect(dto.faqEnabled).toBe(false);
+            expect(dto.learningPathsEnabled).toBe(false);
+            expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
+            expect(dto.restrictedAthenaModulesAccess).toBe(false);
         });
     });
 });
