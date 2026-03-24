@@ -109,7 +109,7 @@ If you have access to a remote GPU server running Ollama, you only need to start
 
 <Callout variant={CalloutVariant.info}>
   When using Ollama locally, Weaviate (running in Docker) needs to reach Ollama on your host machine.
-  Use `http://host.docker.internal:11434` as the `api-base-url` in your Artemis configuration (no `/v1` suffix — Weaviate appends it automatically).
+  Use `http://host.docker.internal:11434` as the `open-ai-base-url` in your Artemis configuration (no `/v1` suffix — Weaviate appends it automatically).
 </Callout>
 
 <Callout variant={CalloutVariant.info}>
@@ -124,11 +124,11 @@ If you have access to a remote GPU server running Ollama, you only need to start
 
 <Callout variant={CalloutVariant.warning}>
   <p><strong>Collections must be recreated when changing vectorizer settings.</strong> Weaviate does not update the vectorizer configuration of existing collections.
-  When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`api-base-url`, `api-embedding-model`, `api-key`),
+  When switching between vectorizer modules (e.g. `none` → `text2vec-openai`) or changing API settings (`open-ai-base-url`, `open-ai-embedding-model`, `gpu-api-key`),
   you must delete the existing collections first and restart Artemis so they are recreated with the new configuration.</p>
 
   <p>On startup, if a collection already exists and its vectorizer configuration differs from the application config, Artemis will log a warning like:<br/>
-  <code>Collection 'Artemis_Exercises' exists but its vectorizer configuration differs from the application config: api-base-url: existing='...', configured='...'. Delete the collection and restart Artemis to apply the new settings: curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"</code></p>
+  <code>Collection 'Artemis_Exercises' exists but its vectorizer configuration differs from the application config: open-ai-base-url: existing='...', configured='...'. Delete the collection and restart Artemis to apply the new settings: curl -X DELETE "http://localhost:8001/v1/schema/Artemis_Exercises"</code></p>
 
   <p>To delete all Artemis collections:</p>
 
@@ -362,13 +362,13 @@ docker compose -f weaviate.yml down && docker compose -f weaviate.yml up -d
 
 #### Configuring the Artemis Client
 
-Add the `auth-api-key` property to your Artemis configuration. The value must match one of the keys in `AUTHENTICATION_APIKEY_ALLOWED_KEYS`:
+Add the `api-key` property to your Artemis configuration. The value must match one of the keys in `AUTHENTICATION_APIKEY_ALLOWED_KEYS`:
 
 ```yaml
 artemis:
     weaviate:
         enabled: true
-        auth-api-key: admin-key    # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
+        api-key: admin-key    # Must match AUTHENTICATION_APIKEY_ALLOWED_KEYS on the Weaviate server
 ```
 
 #### Verifying Authentication
@@ -409,7 +409,7 @@ artemis:
         scheme: http                             # http scheme for development (https should be used in production environments)
         collection-prefix: Artemis_              # Prefix for all Weaviate collection names to avoid naming conflicts (e.g. with Pyris)
         vectorizer-module: text2vec-transformers # Vectorizer module: "none", "text2vec-transformers", or "text2vec-openai"
-        # auth-api-key: admin-key               # Optional: API key for Weaviate server authentication (see Authentication section)
+        # api-key: admin-key                    # Optional: API key for Weaviate server authentication (see Authentication section)
 ```
 
 #### Additional Properties for `text2vec-openai`
@@ -426,16 +426,16 @@ artemis:
         scheme: http
         collection-prefix: Artemis_
         vectorizer-module: text2vec-openai
-        api-embedding-model: qwen3-embedding:8b                    # Embedding model name served by Ollama / OpenAI-compatible API
-        api-base-url: http://host.docker.internal:11434            # Base URL for the API (no /v1 suffix); use host.docker.internal for local Ollama
-        api-key: dummy                                             # API key (use any non-empty value for Ollama)
+        open-ai-embedding-model: qwen3-embedding:8b                # Embedding model name served by Ollama / OpenAI-compatible API
+        open-ai-base-url: http://host.docker.internal:11434        # Base URL for the API (no /v1 suffix); use host.docker.internal for local Ollama
+        gpu-api-key: dummy                                         # API key for GPU server (use any non-empty value for Ollama)
 ```
 
 For a remote GPU server (e.g. TUM GPU server), use:
 
 ```yaml
-        api-base-url: https://gpu.aet.cit.tum.de/ollama/v1
-        api-key: <your-api-key>
+        open-ai-base-url: https://gpu.aet.cit.tum.de/ollama/v1
+        gpu-api-key: <your-api-key>
 ```
 
 ### Vectorizer Configuration
