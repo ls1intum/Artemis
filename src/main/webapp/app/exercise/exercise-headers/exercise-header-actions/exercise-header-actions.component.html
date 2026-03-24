@@ -29,10 +29,7 @@
             </div>
         </div>
     }
-    @if (
-        onSubmitExercise() &&
-        (exercise().type !== ExerciseType.QUIZ || (gradedParticipation()?.initializationState === InitializationState.INITIALIZED && !numberOfGradedParticipationResults()))
-    ) {
+    @if (onSubmitExercise() && (exercise().type !== ExerciseType.QUIZ || gradedParticipation()?.initializationState === InitializationState.INITIALIZED)) {
         <button
             jhi-exercise-action-button
             [buttonIcon]="faPaperPlane"

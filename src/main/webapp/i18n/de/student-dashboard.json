@@ -339,7 +339,9 @@
                 "presented": "Präsentiert",
                 "presentation": "Präsentation",
                 "selectExercise": "Bitte wähle eine Aufgabe aus.",
-                "status": "Status"
+                "status": "Status",
+                "codeIssues": "Code-Probleme",
+                "codeIssuesTooltip": "Anzahl der statischen Code-Analyse-Probleme in deiner letzten Abgabe."
             }
         }
     }

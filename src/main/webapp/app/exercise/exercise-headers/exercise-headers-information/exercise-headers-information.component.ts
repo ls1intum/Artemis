@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { countSubmissions, getExerciseDueDate } from 'app/exercise/util/exercise.utils';
@@ -95,6 +95,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
                 this.achievedPoints = roundValueSpecifiedByCourseSettings((latestRatedResult.score! * this.exercise.maxPoints!) / 100, this.course) ?? 0;
                 this.updatePointsItem();
             }
+            this.updateStaticCodeAnalysisItem();
         }
     }
 
@@ -104,6 +105,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.addStartDateItem();
         this.addSubmissionStatusItem();
         this.addSubmissionPolicyItem();
+        this.addStaticCodeAnalysisItem();
         this.addDifficultyItem();
         this.addCategoryItems();
     }
@@ -311,5 +313,32 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
 
     countSubmissions() {
         this.numberOfSubmissions = countSubmissions(this.studentParticipation);
+    }
+
+    addStaticCodeAnalysisItem() {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).staticCodeAnalysisEnabled) {
+            this.informationBoxItems.push(this.getStaticCodeAnalysisItem());
+        }
+    }
+
+    getStaticCodeAnalysisItem(): InformationBox {
+        const latestResult = this.sortedHistoryResults.first();
+        const issueCount = latestResult?.codeIssueCount ?? 0;
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.codeIssues',
+            content: {
+                type: 'string',
+                value: `${issueCount}`,
+            },
+            contentColor: issueCount > 0 ? 'warning' : 'success',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.codeIssuesTooltip',
+        };
+    }
+
+    updateStaticCodeAnalysisItem() {
+        const itemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.codeIssues');
+        if (itemIndex !== -1) {
+            this.informationBoxItems.splice(itemIndex, 1, this.getStaticCodeAnalysisItem());
+        }
     }
 }

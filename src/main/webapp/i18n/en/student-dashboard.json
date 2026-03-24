@@ -339,7 +339,9 @@
                 "presented": "Presented",
                 "presentation": "Presentation",
                 "selectExercise": "Please select an Exercise.",
-                "status": "Status"
+                "status": "Status",
+                "codeIssues": "Code Issues",
+                "codeIssuesTooltip": "Number of static code analysis issues found in your latest submission."
             }
         }
     }
