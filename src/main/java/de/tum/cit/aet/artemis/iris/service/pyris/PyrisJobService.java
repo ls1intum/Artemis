@@ -64,6 +64,9 @@ public class PyrisJobService {
     @Value("${artemis.iris.jobs.ingestion.timeout:3600}")
     private int ingestionJobTimeout; // in seconds
 
+    @Value("${artemis.iris.jobs.transcription.timeout:14400}")
+    private int transcriptionJobTimeout; // in seconds (default 4 hours)
+
     public PyrisJobService(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
         this.hazelcastInstance = hazelcastInstance;
     }
@@ -182,8 +185,8 @@ public class PyrisJobService {
     public String addTranscriptionWebhookJob(long courseId, long lectureId, long lectureUnitId) {
         var token = generateJobIdToken();
         var job = new TranscriptionWebhookJob(token, courseId, lectureId, lectureUnitId);
-        getPyrisJobMap().put(token, job, ingestionJobTimeout, TimeUnit.SECONDS);
-        log.info("Added transcription job to Hazelcast: courseId={}, lectureId={}, lectureUnitId={}, ttl={}s", courseId, lectureId, lectureUnitId, ingestionJobTimeout);
+        getPyrisJobMap().put(token, job, transcriptionJobTimeout, TimeUnit.SECONDS);
+        log.info("Added transcription job to Hazelcast: courseId={}, lectureId={}, lectureUnitId={}, ttl={}s", courseId, lectureId, lectureUnitId, transcriptionJobTimeout);
         return token;
     }
 
@@ -215,7 +218,10 @@ public class PyrisJobService {
      * @return the timeout in seconds
      */
     private int getTimeoutForJob(PyrisJob job) {
-        if (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob || job instanceof TranscriptionWebhookJob) {
+        if (job instanceof TranscriptionWebhookJob) {
+            return transcriptionJobTimeout;
+        }
+        if (job instanceof LectureIngestionWebhookJob || job instanceof FaqIngestionWebhookJob) {
             return ingestionJobTimeout;
         }
         return jobTimeout;
