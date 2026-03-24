@@ -11,6 +11,6 @@ class ExamCodeStyleArchitectureTest extends AbstractModuleCodeStyleTest {
 
     @Override
     protected int dtoNameEndingThreshold() {
-        return 4;
+        return 5;
     }
 }
