@@ -35,15 +35,18 @@
                     [showResults]="showResults()"
                     [isLoading]="isLoading()"
                     [searchError]="searchError()"
+                    [activeFilters]="activeFilters()"
                     (viewSelected)="navigateTo($event)"
                     (entityClick)="onEntityClick($event)"
                 />
             }
             @case (SearchView.Lecture) {
-                <!-- Placeholder for Lecture Search view -->
-                <div class="p-3 text-center text-secondary">
-                    <p>Lecture Search placeholder - to be replaced with actual component from PR #12191</p>
-                </div>
+                <jhi-global-search-lecture-results
+                    (back)="navigateTo(SearchView.Navigation)"
+                    (viewSelected)="navigateTo($event)"
+                    [searchQuery]="searchQuery()"
+                    [selectedIndex]="selectedIndex()"
+                />
             }
             @case (SearchView.Iris) {
                 <!-- Placeholder for Ask Iris view -->
