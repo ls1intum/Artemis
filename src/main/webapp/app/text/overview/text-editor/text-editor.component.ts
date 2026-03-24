@@ -199,7 +199,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                         this.hasAthenaResultForLatestSubmission = true;
                     }
                 }
-                this.updateParticipation(this.participation);
+                this.updateParticipation(changedParticipation);
             });
     }
 
