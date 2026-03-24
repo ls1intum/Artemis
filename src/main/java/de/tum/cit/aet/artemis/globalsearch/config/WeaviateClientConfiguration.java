@@ -46,61 +46,15 @@ public class WeaviateClientConfiguration {
     @Bean(destroyMethod = "close")
     public WeaviateClient weaviateClient() {
         try {
-            WeaviateClient client;
             boolean usesOpenAiVectorizer = WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_OPENAI.equals(weaviateProperties.vectorizerModule());
             boolean hasApiKey = StringUtils.hasText(weaviateProperties.apiKey());
             boolean hasAuthApiKey = StringUtils.hasText(weaviateProperties.authApiKey());
-            if (weaviateProperties.secure()) {
-                // Custom connection for HTTPS/secure connections.
-                // IMPORTANT: scheme() must be called first because it auto-sets both ports (443 for https, 80 for http).
-                // httpPort() and grpcPort() are called after to override with the configured values.
-                client = WeaviateClient.connectToCustom(config -> {
-                    config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost()).httpPort(weaviateProperties.httpPort())
-                            .grpcHost(weaviateProperties.httpHost()).grpcPort(weaviateProperties.grpcPort());
-                    if (hasAuthApiKey) {
-                        config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
-                    }
-                    if (hasApiKey) {
-                        config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
-                    }
-                    return config;
-                });
-            }
-            else {
-                // Local connection for non-secure connections
-                client = WeaviateClient.connectToLocal(config -> {
-                    config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort());
-                    if (hasAuthApiKey) {
-                        config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
-                    }
-                    if (hasApiKey && usesOpenAiVectorizer) {
-                        config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
-                    }
-                    return config;
-                });
-            }
-            if (hasAuthApiKey) {
-                log.debug("Configured Weaviate client with API key authentication");
-            }
-            if (hasApiKey) {
-                log.debug("Configured Weaviate client with X-OpenAI-Api-Key header for OpenAI-compatible vectorizer");
-            }
 
-            // The constructor already verified liveness; isReady() is an additional readiness check.
-            // Catch IOException separately so a transient readiness failure doesn't destroy a valid client.
-            try {
-                if (client.isReady()) {
-                    log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort());
-                }
-                else {
-                    log.warn("Weaviate client created but server is not ready at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(),
-                            weaviateProperties.httpPort());
-                }
-            }
-            catch (Exception readinessException) {
-                log.warn("Could not verify Weaviate readiness at {}://{}:{}: {}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort(),
-                        readinessException.getMessage());
-            }
+            WeaviateClient client = weaviateProperties.secure() ? createSecureClient(hasAuthApiKey, hasApiKey, usesOpenAiVectorizer)
+                    : createLocalClient(hasAuthApiKey, hasApiKey, usesOpenAiVectorizer);
+
+            logClientConfiguration(hasAuthApiKey, hasApiKey);
+            verifyReadiness(client);
             return client;
         }
         catch (Exception exception) {
@@ -108,6 +62,73 @@ public class WeaviateClientConfiguration {
                     weaviateProperties.httpPort(), weaviateProperties.grpcPort(), exception);
             throw new WeaviateConnectionException("Failed to configure Weaviate client", exception, weaviateProperties.httpHost(), weaviateProperties.httpPort(),
                     weaviateProperties.grpcPort(), weaviateProperties.secure());
+        }
+    }
+
+    /**
+     * Creates a Weaviate client using a custom (HTTPS/secure) connection.
+     * <p>
+     * IMPORTANT: {@code scheme()} must be called first because it auto-sets both ports
+     * (443 for https, 80 for http). {@code httpPort()} and {@code grpcPort()} are called
+     * after to override with the configured values.
+     */
+    private WeaviateClient createSecureClient(boolean hasAuthApiKey, boolean hasApiKey, boolean usesOpenAiVectorizer) {
+        return WeaviateClient.connectToCustom(config -> {
+            config.scheme(weaviateProperties.scheme()).httpHost(weaviateProperties.httpHost()).httpPort(weaviateProperties.httpPort()).grpcHost(weaviateProperties.httpHost())
+                    .grpcPort(weaviateProperties.grpcPort());
+            if (hasAuthApiKey) {
+                config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
+            }
+            if (hasApiKey && usesOpenAiVectorizer) {
+                config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
+            }
+            return config;
+        });
+    }
+
+    /**
+     * Creates a Weaviate client using a local (non-secure) connection.
+     */
+    private WeaviateClient createLocalClient(boolean hasAuthApiKey, boolean hasApiKey, boolean usesOpenAiVectorizer) {
+        return WeaviateClient.connectToLocal(config -> {
+            config.host(weaviateProperties.httpHost()).port(weaviateProperties.httpPort()).grpcPort(weaviateProperties.grpcPort());
+            if (hasAuthApiKey) {
+                config.authentication(Authentication.apiKey(weaviateProperties.authApiKey()));
+            }
+            if (hasApiKey && usesOpenAiVectorizer) {
+                config.setHeader("X-OpenAI-Api-Key", weaviateProperties.apiKey());
+            }
+            return config;
+        });
+    }
+
+    private void logClientConfiguration(boolean hasAuthApiKey, boolean hasApiKey) {
+        if (hasAuthApiKey) {
+            log.debug("Configured Weaviate client with API key authentication");
+        }
+        if (hasApiKey) {
+            log.debug("Configured Weaviate client with X-OpenAI-Api-Key header for OpenAI-compatible vectorizer");
+        }
+    }
+
+    /**
+     * Verifies that the Weaviate server is ready to accept requests.
+     * The client constructor already verified liveness; this is an additional readiness check.
+     * A transient readiness failure is logged but does not destroy the client.
+     */
+    private void verifyReadiness(WeaviateClient client) {
+        try {
+            if (client.isReady()) {
+                log.info("Connected to Weaviate at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort());
+            }
+            else {
+                log.warn("Weaviate client created but server is not ready at {}://{}:{}", weaviateProperties.scheme(), weaviateProperties.httpHost(),
+                        weaviateProperties.httpPort());
+            }
+        }
+        catch (Exception readinessException) {
+            log.warn("Could not verify Weaviate readiness at {}://{}:{}: {}", weaviateProperties.scheme(), weaviateProperties.httpHost(), weaviateProperties.httpPort(),
+                    readinessException.getMessage());
         }
     }
 
