@@ -14,10 +14,10 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
-import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
@@ -32,21 +32,21 @@ public class CompetencyExerciseLinkService {
 
     private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
 
-    private final Optional<CompetencyExerciseLinkRepository> competencyExerciseLinkRepository;
+    private final Optional<CompetencyRelationApi> competencyRelationApi;
 
-    public CompetencyExerciseLinkService(Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyExerciseLinkRepository> competencyExerciseLinkRepository) {
+    public CompetencyExerciseLinkService(Optional<CompetencyRepositoryApi> competencyRepositoryApi, Optional<CompetencyRelationApi> competencyRelationApi) {
         this.competencyRepositoryApi = competencyRepositoryApi;
-        this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
+        this.competencyRelationApi = competencyRelationApi;
     }
 
     /**
-     * Saves the given competency exercise links directly via the link repository,
+     * Saves the given competency exercise links directly via the API layer,
      * without re-saving the parent exercise entity.
      *
      * @param links the competency exercise links to save
      */
     public void saveAll(Collection<CompetencyExerciseLink> links) {
-        competencyExerciseLinkRepository.ifPresent(repo -> repo.saveAll(links));
+        competencyRelationApi.ifPresent(api -> api.saveAllExerciseLinks(links));
     }
 
     /**
