@@ -237,6 +237,44 @@ class QuizExerciseIntegrationTest extends AbstractQuizExerciseIntegrationTest {
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testCreateQuizExercise_withCompetencyLinks() throws Exception {
+        QuizExercise quizExercise = quizExerciseUtilService.createQuiz(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
+        quizExercise.setDuration(3600);
+        Course course = quizExercise.getCourseViaExerciseGroupOrCourseMember();
+        Competency competency = competencyUtilService.createCompetency(course);
+        quizExercise.setCompetencyLinks(Set.of(new CompetencyExerciseLink(competency, quizExercise, 1.0)));
+
+        QuizExercise createdQuiz = createQuizExerciseWithFiles(quizExercise, HttpStatus.CREATED, true);
+
+        // Verify questions are properly stored (exercise_id FK must be set)
+        assertThat(createdQuiz.getQuizQuestions()).as("Quiz questions were saved with competency links").hasSize(3);
+        for (QuizQuestion question : createdQuiz.getQuizQuestions()) {
+            assertThat(question.getId()).as("Question has a database ID").isNotNull();
+            if (question instanceof MultipleChoiceQuestion mc) {
+                assertThat(mc.getAnswerOptions()).as("MC answer options saved").isNotEmpty();
+            }
+            else if (question instanceof DragAndDropQuestion dnd) {
+                assertThat(dnd.getDragItems()).as("DnD drag items saved").isNotEmpty();
+                assertThat(dnd.getDropLocations()).as("DnD drop locations saved").isNotEmpty();
+                assertThat(dnd.getCorrectMappings()).as("DnD correct mappings saved").isNotEmpty();
+            }
+            else if (question instanceof ShortAnswerQuestion sa) {
+                assertThat(sa.getSpots()).as("SA spots saved").isNotEmpty();
+                assertThat(sa.getSolutions()).as("SA solutions saved").isNotEmpty();
+                assertThat(sa.getCorrectMappings()).as("SA correct mappings saved").isNotEmpty();
+            }
+        }
+
+        // Verify competency links are saved
+        assertThat(createdQuiz.getCompetencyLinks()).as("Competency links saved").hasSize(1);
+
+        // Verify the quiz can be loaded from DB with all data (this catches exercise_id = NULL issues)
+        QuizExercise loadedQuiz = quizExerciseTestRepository.findOneWithQuestionsAndStatistics(createdQuiz.getId());
+        assertThat(loadedQuiz.getQuizQuestions()).as("Questions loadable from DB after creation with competencies").hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuizExerciseForExam() throws Exception {
         QuizExercise quizExercise = createQuizOnServerForExam();
         createdQuizAssert(quizExercise);
