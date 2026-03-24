@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, computed, inject, input, output } from '@angular/core';
+import { Component, OnInit, computed, effect, inject, input, output, untracked } from '@angular/core';
 import { EmojiComponent } from 'app/communication/emoji/emoji.component';
 import { faCheckSquare, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
@@ -27,7 +27,7 @@ import { addPublicFilePrefix } from 'app/app.constants';
     styleUrls: ['../metis.component.scss'],
     imports: [ProfilePictureComponent, NgClass, FaIconComponent, NgbTooltip, TranslateDirective, ArtemisDatePipe, ArtemisTranslatePipe, EmojiComponent],
 })
-export class PostingHeaderComponent implements OnInit, OnChanges {
+export class PostingHeaderComponent implements OnInit {
     lastReadDate = input<dayjs.Dayjs>();
     posting = input<Posting>();
     readOnlyMode = input<boolean>(false);
@@ -56,6 +56,20 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
 
     private metisService = inject(MetisService);
     private accountService = inject(AccountService);
+
+    constructor() {
+        effect(() => {
+            // Track signal inputs that were monitored in ngOnChanges
+            this.posting();
+            this.hasChannelModerationRights();
+            untracked(() => {
+                if (this.posting()) {
+                    this.setUserProperties();
+                    this.setUserAuthorityIconAndTooltip();
+                }
+            });
+        });
+    }
 
     isPostResolved = computed<boolean>(() => {
         const posting = this.posting();
@@ -88,14 +102,6 @@ export class PostingHeaderComponent implements OnInit, OnChanges {
 
     private isPost(posting: Posting | AnswerPost | undefined): posting is Post {
         return posting !== undefined && 'resolved' in posting;
-    }
-
-    /**
-     * on changes: re-evaluates authority roles
-     */
-    ngOnChanges() {
-        this.setUserProperties();
-        this.setUserAuthorityIconAndTooltip();
     }
 
     /**

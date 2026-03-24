@@ -1,0 +1,77 @@
+<div class="pdf-viewer-container">
+    <ngx-extended-pdf-viewer
+        class="pdf-viewer"
+        [src]="pdfUrl()"
+        [page]="resolvedPage()"
+        [customToolbar]="customToolbar"
+        (pageChange)="onPageChange($event)"
+        (pagesLoaded)="onPagesLoaded($event)"
+        [showToolbar]="true"
+        [ignoreKeyboard]="true"
+        [zoom]="'page-width'"
+        [showSidebarButton]="false"
+        [showFindButton]="false"
+        [showOpenFileButton]="false"
+        [showPrintButton]="false"
+        [showDownloadButton]="false"
+        [showSecondaryToolbarButton]="false"
+        [showPresentationModeButton]="false"
+        [showRotateButton]="false"
+        [showRotateCwButton]="false"
+        [showRotateCcwButton]="false"
+        [showHandToolButton]="false"
+        [showSpreadButton]="false"
+        [showPropertiesButton]="false"
+        [showSinglePageModeButton]="false"
+        [showVerticalScrollButton]="false"
+        [showHorizontalScrollButton]="false"
+        [showWrappedScrollButton]="false"
+        [showInfiniteScrollButton]="false"
+        [showBookModeButton]="false"
+        [showTextEditor]="false"
+        [showStampEditor]="false"
+        [showCommentEditor]="false"
+        [showDrawEditor]="false"
+        [showHighlightEditor]="false"
+        [showSignatureEditor]="false"
+        [showMovePageButton]="false"
+        [showPagingButtons]="false"
+        [showFirstAndLastPageButtons]="false"
+        [showPreviousAndNextPageButtons]="false"
+        [showPageNumber]="false"
+        [showPageLabel]="false"
+        [showZoomButtons]="true"
+        [showZoomDropdown]="false"
+        [showScrollingButtons]="false"
+    />
+    <ng-template #customToolbar>
+        <div id="toolbarViewer" class="artemis-pdf-toolbar">
+            <div class="artemis-pdf-toolbar__center">
+                <button class="artemis-pdf-toolbar__button" type="button" title="Zoom Out" (click)="zoomOut()">
+                    <fa-icon [icon]="faMagnifyingGlassMinus" />
+                </button>
+                <button class="artemis-pdf-toolbar__button" type="button" title="Zoom In" (click)="zoomIn()">
+                    <fa-icon [icon]="faMagnifyingGlassPlus" />
+                </button>
+                @if (totalPages() > 0) {
+                    <span class="artemis-pdf-toolbar__page">{{ displayPage() }}/{{ totalPages() }}</span>
+                }
+            </div>
+        </div>
+    </ng-template>
+    @if (uploadDate() || version()) {
+        <div class="pdf-viewer-footer">
+            @if (uploadDate()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
+                {{ uploadDate() | artemisDate }}
+            }
+            @if (uploadDate() && version()) {
+                <span class="pdf-viewer-footer__separator">-</span>
+            }
+            @if (version()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
+                {{ version() }}
+            }
+        </div>
+    }
+</div>
