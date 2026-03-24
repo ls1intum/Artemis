@@ -1,7 +1,7 @@
 @if (exercise) {
-    <div class="d-flex flex-column scrollable-content">
+    <div id="course-exercise-details" class="d-flex flex-column h-100 overflow-hidden">
         <jhi-exercise-header
-            class="d-flex p-2 rounded-3 module-bg mb-2"
+            class="p-2 rounded-3 module-bg mb-2"
             [exercise]="exercise"
             [courseId]="courseId"
             [studentParticipation]="gradedStudentParticipation()"
@@ -14,7 +14,7 @@
         />
 
         <jhi-exercise-split-panel
-            class="d-flex flex-fill"
+            class="flex-fill overflow-hidden"
             [exercise]="exercise"
             [participationMode]="participationMode()"
             [studentParticipation]="activeParticipation()"

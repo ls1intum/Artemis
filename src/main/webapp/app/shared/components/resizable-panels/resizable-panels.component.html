@@ -15,7 +15,7 @@
                         </p-tab>
                     </p-tablist>
                 </p-tabs>
-                <div class="flex-grow-1 overflow-y-auto">
+                <div class="flex-grow-1 overflow-y-auto p-2">
                     <ng-container [ngTemplateOutlet]="leftPanel()!.templateRef" />
                 </div>
             </div>
@@ -37,7 +37,7 @@
                         }
                     </p-tablist>
                 </p-tabs>
-                <div class="flex-grow-1 overflow-y-auto">
+                <div class="flex-grow-1 overflow-y-auto p-2">
                     @if (rightPanels()[activeRightIndex()]) {
                         <ng-container [ngTemplateOutlet]="rightPanels()[activeRightIndex()].templateRef" />
                     }
@@ -62,7 +62,7 @@
                 }
             </p-tablist>
         </p-tabs>
-        <div class="flex-grow-1 overflow-y-auto">
+        <div class="flex-grow-1 overflow-y-auto p-2">
             @if (panels()[activeSingleIndex()]) {
                 <ng-container [ngTemplateOutlet]="panels()[activeSingleIndex()].templateRef" />
             }
