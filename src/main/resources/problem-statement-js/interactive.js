@@ -5,6 +5,13 @@
     var BACKDROP_ID = 'artemis-feedback-backdrop';
     var INIT_ATTR = 'data-artemis-interactive';
 
+    var ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle">'
+        + '<circle cx="8" cy="8" r="7.5" fill="#28a745"/>'
+        + '<path d="M5 8l2 2 4-4" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var ICON_FAIL = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle">'
+        + '<circle cx="8" cy="8" r="7.5" fill="#dc3545"/>'
+        + '<path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
+
     function init() {
         var tasks = document.querySelectorAll('.artemis-task[data-feedback]');
         for (var i = 0; i < tasks.length; i++) {
@@ -294,7 +301,8 @@
 
         var nameSpan = document.createElement('div');
         var icon = document.createElement('span');
-        icon.textContent = isPassed ? '\u2705 ' : '\u274C ';
+        icon.innerHTML = isPassed ? ICON_CHECK : ICON_FAIL;
+        setStyles(icon, { marginRight: '6px', display: 'inline-flex', alignItems: 'center' });
         nameSpan.appendChild(icon);
         var nameText = document.createElement('strong');
         nameText.textContent = item.name;
