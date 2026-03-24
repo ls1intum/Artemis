@@ -421,7 +421,6 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private restoreCodeGenerationState() {
         this.restoreRequestId += 1;
-        this.clearCodeGenerationStatusSubscription();
 
         if (!this.hyperionEnabled || !this.exercise?.id) {
             return;
@@ -429,6 +428,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         if (this.isGeneratingCode()) {
             return;
         }
+        this.clearCodeGenerationStatusSubscription();
         const request = this.createCheckOnlyCodeGenerationRequest();
         const requestId = this.restoreRequestId;
         this.statusSubscription = this.hyperionCodeGenerationApi.generateCode(this.exercise.id, request).subscribe({

@@ -815,6 +815,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(clearSpy).toHaveBeenCalledWith(true);
         });
 
+        it('should not cancel an in-flight status subscription while generation is still running', () => {
+            const unsubscribe = jest.fn();
+            comp.isGeneratingCode.set(true);
+            (comp as any).statusSubscription = { unsubscribe };
+
+            (comp as any).restoreCodeGenerationState();
+
+            expect(unsubscribe).not.toHaveBeenCalled();
+            expect(codeGenerationApi.generateCode).not.toHaveBeenCalled();
+        });
+
         it('should restore the running repository from the check-only response instead of the selected tab', () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
             const subscribeSpy = jest.spyOn(comp as any, 'subscribeToJob').mockImplementation();
