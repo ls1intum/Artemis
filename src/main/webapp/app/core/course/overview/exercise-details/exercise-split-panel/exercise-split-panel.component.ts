@@ -182,8 +182,9 @@ export class ExerciseSplitPanelComponent {
                 }
                 return;
             }
-            if (this.route.firstChild) return;
             if (!participation?.id) return;
+            const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
+            if (currentParticipationId === String(participation.id)) return;
             if (type === ExerciseType.TEXT) {
                 this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
             } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {

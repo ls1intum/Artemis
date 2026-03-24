@@ -232,21 +232,32 @@
                         ></button>
                     }
                 </span>
+                @if (isStartPracticeAvailable()) {
+                    <jhi-start-practice-mode-button
+                        [id]="'start-practice-' + exercise().id"
+                        class="start-practice"
+                        [smallButtons]="smallButtons()"
+                        [exercise]="exercise()"
+                        (practiceModeStarted)="receiveNewParticipation($event)"
+                    />
+                }
             </div>
         }
         <!-- MODELING/TEXT/FILE UPLOAD EXERCISE ACTIONS END -->
     }
     @if (
         exercise().allowFeedbackRequests &&
-        gradedParticipation() &&
-        (exercise().type === ExerciseType.PROGRAMMING || ((exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) && athenaEnabled && beforeDueDate()))
+        (gradedParticipation() || practiceParticipation()) &&
+        (exercise().type === ExerciseType.PROGRAMMING ||
+            ((exercise().type === ExerciseType.TEXT || exercise().type === ExerciseType.MODELING) &&
+                athenaEnabled &&
+                (participationMode() === 'practice' ? !!practiceParticipation() : beforeDueDate())))
     ) {
         <jhi-request-feedback-button
             [exercise]="exercise()"
             [smallButtons]="smallButtons()"
             [isGeneratingFeedback]="isGeneratingFeedback()"
             (generatingFeedback)="generatingFeedback.emit()"
-            [isSubmitted]="gradedParticipation()?.submissions?.last()?.submitted || false"
         />
     }
 </div>

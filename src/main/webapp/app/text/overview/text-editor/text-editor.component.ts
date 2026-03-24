@@ -150,10 +150,20 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 return this.alertService.error('artemisApp.textExercise.error');
             }
 
-            this.route.params?.subscribe(() => {
+            this.route.params?.subscribe((params) => {
                 this.submissionId = Number(this.route.snapshot.paramMap.get('submissionId')) || undefined;
                 this.resultId = Number(this.route.snapshot.paramMap.get('resultId')) || undefined;
-                this.updateParticipation(this.participation, this.submissionId, this.resultId);
+                const newParticipationId = Number(params['participationId']);
+                if (!Number.isNaN(newParticipationId) && newParticipationId !== this.participation?.id) {
+                    this.textService.get(newParticipationId, this.resultId).subscribe({
+                        next: (data: StudentParticipation) => {
+                            this.updateParticipation(data, this.submissionId, this.resultId);
+                        },
+                        error: (error: HttpErrorResponse) => onError(this.alertService, error),
+                    });
+                } else {
+                    this.updateParticipation(this.participation, this.submissionId, this.resultId);
+                }
             });
 
             this.textService.get(participationId!, this.resultId).subscribe({
@@ -323,7 +333,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
             this.textExercise.dueDate && this.participation.initializationDate && dayjs(this.participation.initializationDate).isAfter(this.textExercise.dueDate);
         const isAlwaysActive = !this.result && (!this.textExercise.dueDate || isInitializationAfterDueDate);
 
-        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate && !dayjs().isAfter(this.participation.individualDueDate);
+        this.isAllowedToSubmitAfterDueDate = !!isInitializationAfterDueDate && !this.participation.testRun && !dayjs().isAfter(this.participation.individualDueDate);
         this.isAlwaysActive = !!isAlwaysActive;
     }
 
@@ -337,7 +347,9 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         const isActive =
             !this.examMode &&
             (!this.result || this.isAutomaticResult) &&
-            (this.isAlwaysActive || (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
+            (!!this.participation?.testRun ||
+                this.isAlwaysActive ||
+                (this.textExercise && this.textExercise.dueDate && !hasExerciseDueDatePassed(this.textExercise, this.participation)));
         return !!isActive;
     }
 
