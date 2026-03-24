@@ -43,14 +43,6 @@
     flex: 0 0 50%;
     min-width: 0;
     padding: 0.5rem 0.75rem;
-
-    ::ng-deep .result-metadata {
-        flex-wrap: wrap;
-
-        & > span:not([class]) {
-            display: none;
-        }
-    }
 }
 
 .iris-split-right {

@@ -1294,6 +1294,15 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     white-space: pre-line;
 }
 
+// Compact metadata layout for the narrow left panel in Iris split view
+.iris-split-left .result-metadata {
+    flex-wrap: wrap;
+
+    > span:not([class]) {
+        display: none;
+    }
+}
+
 // Global search modal sizing
 .global-search-dialog {
     width: 100%;

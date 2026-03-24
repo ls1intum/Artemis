@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, forwardRef, inject, input, output, signal, viewChildren } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faArrowLeft, faFileLines, faHashtag } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faFileLines } from '@fortawesome/free-solid-svg-icons';
 import { Router, RouterLink } from '@angular/router';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -42,7 +42,6 @@ export class GlobalSearchLectureResultsComponent extends SearchResultView {
     private readonly selectableItems = viewChildren<ElementRef>('selectableItem');
     protected readonly faArrowLeft = faArrowLeft;
     protected readonly faFileLines = faFileLines;
-    protected readonly faHashtag = faHashtag;
     protected readonly skeletonItems = Array.from({ length: 5 });
     protected readonly SearchView = SearchView;
     protected readonly IrisLogoSize = IrisLogoSize;
