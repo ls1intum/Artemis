@@ -333,6 +333,6 @@ public class WeaviateService {
      * @return {@code true} if a text vectorizer is available, {@code false} otherwise
      */
     public boolean isVectorizerAvailable() {
-        return SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(vectorizerModule);
+        return SupportedVectorizer.TEXT2VEC_TRANSFORMERS.configValue().equals(vectorizerModule) || SupportedVectorizer.TEXT2VEC_OPENAI.configValue().equals(vectorizerModule);
     }
 }
