@@ -135,7 +135,7 @@
         modal.setAttribute('aria-label', 'Feedback for task: ' + taskName);
         setStyles(modal, {
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            zIndex: '10001', background: bodyBg, color: bodyColor, borderRadius: '8px', width: '90%',
+            zIndex: '10001', background: bodyBg, color: bodyColor, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif', borderRadius: '8px', width: '90%',
             maxWidth: '560px', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
             boxShadow: '0 8px 32px rgba(0,0,0,.25)', overflow: 'hidden'
         });
