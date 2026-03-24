@@ -1084,28 +1084,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param updateQuizExerciseDTO The DTO containing the properties to be merged into the domain object.
      */
     public void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
-        if (updateQuizExerciseDTO.title() != null) {
-            quizExercise.setTitle(updateQuizExerciseDTO.title());
-        }
-        if (updateQuizExerciseDTO.channelName() != null) {
-            quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
-        }
-        if (updateQuizExerciseDTO.categories() != null) {
-            quizExercise.setCategories(updateQuizExerciseDTO.categories());
-        }
+        // PUT semantics: all fields are assigned directly; null means "clear/unset".
+        quizExercise.setTitle(updateQuizExerciseDTO.title());
+        quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
+        quizExercise.setCategories(updateQuizExerciseDTO.categories());
+        quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
+        quizExercise.setDuration(updateQuizExerciseDTO.duration());
+        quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
+        quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
 
-        if (updateQuizExerciseDTO.difficulty() != null) {
-            quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
-        }
-        if (updateQuizExerciseDTO.duration() != null) {
-            quizExercise.setDuration(updateQuizExerciseDTO.duration());
-        }
-        if (updateQuizExerciseDTO.randomizeQuestionOrder() != null) {
-            quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
-        }
-        if (updateQuizExerciseDTO.quizMode() != null) {
-            quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
-        }
         if (updateQuizExerciseDTO.quizBatches() != null) {
             // Preserve existing batch IDs to avoid orphaning QuizSubmission.quizBatch references.
             // Use applyTo() for existing batches (id != null), toDomainObject() only for new ones.
@@ -1126,18 +1113,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             quizExercise.getQuizBatches().clear();
             quizExercise.getQuizBatches().addAll(mergedBatches);
         }
-        if (updateQuizExerciseDTO.releaseDate() != null) {
-            quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
+        else {
+            quizExercise.getQuizBatches().clear();
         }
-        if (updateQuizExerciseDTO.startDate() != null) {
-            quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
-        }
-        if (updateQuizExerciseDTO.dueDate() != null) {
-            quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
-        }
-        if (updateQuizExerciseDTO.includedInOverallScore() != null) {
-            quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
-        }
+
+        quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
+        quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
+        quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
+        quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
+
         if (updateQuizExerciseDTO.quizQuestions() != null) {
             // Build a map of existing questions by ID so we can preserve statistics
             Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
@@ -1155,6 +1139,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
+        else {
+            quizExercise.getQuizQuestions().clear();
+        }
+
         competencyExerciseLinkService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
@@ -1172,11 +1160,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
         copy.setExerciseGroup(quizExercise.getExerciseGroup());
-        copy.setQuizQuestions(quizExercise.getQuizQuestions());
+        copy.setQuizQuestions(new ArrayList<>(quizExercise.getQuizQuestions()));
         copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
-        copy.setCompetencyLinks(quizExercise.getCompetencyLinks());
-        copy.setQuizBatches(quizExercise.getQuizBatches());
-        copy.setGradingCriteria(quizExercise.getGradingCriteria());
+        copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
+        copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
+        copy.setGradingCriteria(new HashSet<>(quizExercise.getGradingCriteria()));
         return copy;
     }
 

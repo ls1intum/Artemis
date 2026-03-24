@@ -635,32 +635,36 @@ public class FileUploadExerciseResource {
         final FileUploadExercise existingExercise = fileUploadExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndCompetenciesAndGradingCriteria(exerciseId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "FileUploadExercise not found"));
 
-        // Capture original values BEFORE update() mutates the entity via L1 cache.
-        // updateFileUploadExercise() loads the same L1-cached entity, so it would see
-        // already-mutated "originals" and skip participant score / due date updates.
+        // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
         final Double originalMaxPoints = existingExercise.getMaxPoints();
         final Double originalBonusPoints = existingExercise.getBonusPoints();
         final ZonedDateTime originalDueDate = existingExercise.getDueDate();
+        final ZonedDateTime originalReleaseDate = existingExercise.getReleaseDate();
+        final ZonedDateTime originalAssessmentDueDate = existingExercise.getAssessmentDueDate();
+        final String originalProblemStatement = existingExercise.getProblemStatement();
+        final Set<Long> originalCompetencyIds = existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        // Apply updates for re-evaluation
+        // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         FileUploadExercise exerciseForReevaluation = update(updateFileUploadExerciseDTO, existingExercise);
         var course = courseRepository.findByIdElseThrow(exerciseForReevaluation.getCourseViaExerciseGroupOrCourseMember().getId());
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
-        // Delegate to the main update method (same pattern as ModelingExerciseResource)
-        ResponseEntity<FileUploadExercise> response = updateFileUploadExercise(updateFileUploadExerciseDTO, null, exerciseId);
+        // Save directly instead of delegating to updateFileUploadExercise() to avoid double side effects.
+        FileUploadExercise savedExercise = fileUploadExerciseRepository.save(exerciseForReevaluation);
 
-        // The call inside updateFileUploadExercise used already-mutated "originals" (no-op).
-        // Apply the correct originals now to ensure participant scores and due dates update.
-        FileUploadExercise savedExercise = response.getBody();
-        if (savedExercise != null) {
-            exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
-            participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
-        }
-        return response;
+        // Apply all post-save side effects once with the captured originals.
+        exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, originalProblemStatement, savedExercise, null);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedExercise));
+        exerciseVersionService.createExerciseVersion(savedExercise);
+
+        return ResponseEntity.ok(savedExercise);
     }
 
     /**
