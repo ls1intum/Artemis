@@ -7,7 +7,6 @@ import { ButtonDirective } from 'primeng/button';
 import { readStudentDTOsFromCSVFile } from 'app/shared/user-import/util/read-users-from-csv';
 import { AlertService } from 'app/shared/service/alert.service';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroupsService } from 'app/tutorialgroup/shared/service/tutorial-groups.service';
 import {
     TutorialRegistrationsImportModalTableComponent,
     TutorialRegistrationsImportModalTableRow,
@@ -15,6 +14,7 @@ import {
 import { TutorialGroupRegisterStudentDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
+import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 export enum ImportFlowStep {
     EXPLANATION = 'EXPLANATION',
@@ -38,7 +38,7 @@ export class TutorialRegistrationsImportModalComponent {
 
     private translateService = inject(TranslateService);
     private alertService = inject(AlertService);
-    private tutorialGroupsService = inject(TutorialGroupsService);
+    private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
     private parsedStudents = signal<TutorialGroupRegisterStudentDTO[]>([]);
@@ -106,7 +106,7 @@ export class TutorialRegistrationsImportModalComponent {
 
     importParsedStudents() {
         this.isLoading.set(true);
-        this.tutorialGroupsService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents()).subscribe({
+        this.tutorialGroupApiService.importRegistrations(this.courseId(), this.tutorialGroupId(), this.parsedStudents(), 'response').subscribe({
             next: (response: HttpResponse<Array<TutorialGroupRegisterStudentDTO>>) => {
                 const nonExistingStudents = response.body || [];
                 const studentResults: ImportResult[] = this.parsedStudents().map((parsedStudent) => {

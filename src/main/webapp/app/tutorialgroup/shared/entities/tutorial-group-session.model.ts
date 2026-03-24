@@ -51,7 +51,11 @@ export interface RawTutorialGroupSessionDTO {
     start: string;
     end: string;
     location: string;
-    attendance?: number;
+    isCancelled: boolean;
+    locationChanged: boolean;
+    timeChanged: boolean;
+    dateChanged: boolean;
+    attendanceCount?: number;
 }
 
 export interface CreateOrUpdateTutorialGroupSessionDTO {
