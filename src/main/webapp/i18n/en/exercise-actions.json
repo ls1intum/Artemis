@@ -13,7 +13,6 @@
             "requestManualFeedback": "Request feedback",
             "requestManualFeedbackTooltip": "Send a manual feedback request before the due date for review.",
             "requestAutomaticFeedback": "Request AI feedback",
-            "requestAutomaticFeedbackTooltip": "AI-Based Feedback can include mistakes. Consider checking important information.",
             "resumeExercisePractice": "Resume practice in exercise",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",

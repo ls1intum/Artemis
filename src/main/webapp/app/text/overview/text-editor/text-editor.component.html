@@ -36,14 +36,16 @@
                         }
                     }
                     @if (!this.isReadOnlyWithShowResult) {
-                        <jhi-button
-                            id="submit"
+                        <jhi-exercise-submit-button
+                            [exercise]="textExercise"
                             [title]="!isAllowedToSubmitAfterDueDate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                            (onClick)="submit()"
+                            (onSubmit)="submit()"
                             [disabled]="!isActive || !submission"
                             [isLoading]="isSaving"
                             [btnType]="isAllowedToSubmitAfterDueDate ? ButtonType.WARNING : ButtonType.PRIMARY"
                             [tooltip]="submitButtonTooltip"
+                            [isGeneratingFeedback]="isGeneratingFeedback"
+                            (generatingFeedback)="isGeneratingFeedback = true"
                         />
                     }
                 }

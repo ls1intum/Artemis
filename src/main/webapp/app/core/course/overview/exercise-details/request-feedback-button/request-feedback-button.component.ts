@@ -3,14 +3,14 @@ import { Subscription, filter, skip } from 'rxjs';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { faPenSquare } from '@fortawesome/free-solid-svg-icons';
-import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { PROFILE_ATHENA } from 'app/app.constants';
+//import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+//import { PROFILE_ATHENA } from 'app/app.constants';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
-import { isExamExercise } from 'app/shared/util/utils';
+//import { isExamExercise } from 'app/shared/util/utils';
 import { ExerciseDetailsType, ExerciseService } from 'app/exercise/services/exercise.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -32,7 +32,7 @@ import { LLMSelectionDecision, LLM_MODAL_DISMISSED } from 'app/core/user/shared/
     templateUrl: './request-feedback-button.component.html',
 })
 export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
-    private readonly profileService = inject(ProfileService);
+    //private readonly profileService = inject(ProfileService);
     private readonly alertService = inject(AlertService);
     private readonly courseExerciseService = inject(CourseExerciseService);
     private readonly translateService = inject(TranslateService);
@@ -67,14 +67,14 @@ export class RequestFeedbackButtonComponent implements OnInit, OnDestroy {
     private acceptSubscription?: Subscription;
 
     ngOnInit() {
-        this.athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
-        this.isExamExercise = isExamExercise(this.exercise());
-        if (this.isExamExercise || !this.exercise().id) {
-            return;
+        // TODO ldv: restore original guards
+        this.athenaEnabled = true;
+        this.isExamExercise = false;
+        this.requestFeedbackEnabled = true;
+        this.hasUserAcceptedLLMUsage = true;
+        if (this.exercise().id) {
+            this.updateParticipation();
         }
-        this.requestFeedbackEnabled = this.exercise().allowFeedbackRequests ?? false;
-        this.updateParticipation();
-        this.setUserAcceptedLLMUsage();
     }
     ngOnDestroy(): void {
         this.athenaResultUpdateListener?.unsubscribe();

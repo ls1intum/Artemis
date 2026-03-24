@@ -30,13 +30,24 @@
         </div>
     }
     @if (onSubmitExercise() && (exercise().type !== ExerciseType.QUIZ || gradedParticipation()?.initializationState === InitializationState.INITIALIZED)) {
-        <button
-            jhi-exercise-action-button
-            [buttonIcon]="faPaperPlane"
-            [buttonLabel]="'entity.action.submit' | artemisTranslate"
-            [smallButton]="smallButtons()"
-            (click)="onSubmitExercise()!()"
-        ></button>
+        <!-- TODO ldv: gate with exercise().feedbackSuggestionModule instead of always showing -->
+        <span
+            [ngbPopover]="submitPopContent"
+            [autoClose]="false"
+            placement="bottom-end bottom-start bottom auto"
+            container="body"
+            triggers="manual"
+            popoverClass="ai-feedback-popover"
+            #submitPopoverRef="ngbPopover"
+        >
+            <button
+                jhi-exercise-action-button
+                [buttonIcon]="faPaperPlane"
+                [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                [smallButton]="smallButtons()"
+                (click)="submitAndShowPopover()"
+            ></button>
+        </span>
     }
     @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
@@ -252,4 +263,20 @@
         [outlined]="button.outlined"
         [routerLink]="['/courses', courseId(), 'exercises', 'quiz-exercises', exercise().id, button.quizMode]"
     ></button>
+</ng-template>
+
+<ng-template #submitPopContent>
+    <div class="d-flex align-items-center mb-2">
+        <fa-icon [icon]="faRobot" class="me-2" />
+        <h5 class="mb-0" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.title"></h5>
+    </div>
+    <p class="mb-3" jhiTranslate="artemisApp.exercise.aiFeedbackPopover.description"></p>
+    <span (click)="closeSubmitPopover()">
+        <jhi-request-feedback-button
+            [exercise]="exercise()"
+            [isGeneratingFeedback]="isGeneratingFeedback()"
+            (generatingFeedback)="generatingFeedback.emit()"
+            [isSubmitted]="true"
+        />
+    </span>
 </ng-template>

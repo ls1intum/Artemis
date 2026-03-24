@@ -54,6 +54,7 @@ import { RatingComponent } from 'app/exercise/rating/rating.component';
 import { TranslateService } from '@ngx-translate/core';
 import { FullscreenComponent } from 'app/modeling/shared/fullscreen/fullscreen.component';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
 @Component({
     selector: 'jhi-modeling-submission',
@@ -81,6 +82,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
         DecimalPipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        ExerciseSubmitButtonComponent,
     ],
 })
 export class ModelingSubmissionComponent implements OnInit, OnDestroy, ComponentCanDeactivate {

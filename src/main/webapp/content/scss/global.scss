@@ -1254,3 +1254,8 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     min-width: 200px;
     white-space: pre-line;
 }
+
+// Override Bootstrap's default popover max-width for AI feedback popover.
+.ai-feedback-popover {
+    max-width: 500px;
+}

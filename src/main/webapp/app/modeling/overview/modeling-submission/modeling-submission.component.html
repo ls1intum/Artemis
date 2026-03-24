@@ -37,15 +37,17 @@
                     }
                 }
                 @if (!this.isFeedbackView) {
-                    <jhi-button
+                    <jhi-exercise-submit-button
                         class="submission-button"
-                        id="submit-modeling-submission"
+                        [exercise]="modelingExercise"
                         [disabled]="(!isActive && !isLate) || !submission || (!!result && !isAutomaticResult) || (isLate && !!submission.submitted)"
                         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDueDateMissed'"
-                        (onClick)="submit()"
+                        (onSubmit)="submit()"
                         [isLoading]="isSaving"
                         [btnType]="!isLate ? ButtonType.PRIMARY : ButtonType.WARNING"
                         [tooltip]="submitButtonTooltip"
+                        [isGeneratingFeedback]="isGeneratingFeedback"
+                        (generatingFeedback)="isGeneratingFeedback = true"
                     />
                 }
             </ng-container>

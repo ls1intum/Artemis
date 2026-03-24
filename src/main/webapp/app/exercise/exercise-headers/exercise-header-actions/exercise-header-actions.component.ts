@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, output, signal, untracked, viewChildren } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild, viewChildren } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -11,12 +11,13 @@ import {
     faPaperPlane,
     faPlayCircle,
     faRedo,
+    faRobot,
     faSignal,
     faTable,
     faUsers,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { QuizExercise, QuizStatus } from 'app/quiz/shared/entities/quiz-exercise.model';
@@ -45,7 +46,6 @@ import { CodeButtonComponent } from 'app/shared/components/buttons/code-button/c
 import { RequestFeedbackButtonComponent } from 'app/core/course/overview/exercise-details/request-feedback-button/request-feedback-button.component';
 import { CourseExerciseService } from 'app/exercise/course-exercises/course-exercise.service';
 import { StartPracticeModeButtonComponent } from 'app/core/course/overview/exercise-details/start-practice-mode-button/start-practice-mode-button.component';
-import { OpenCodeEditorButtonComponent } from 'app/core/course/overview/exercise-details/open-code-editor-button/open-code-editor-button.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ArtemisQuizService } from 'app/quiz/shared/service/quiz.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -74,14 +74,16 @@ interface InstructorActionItem {
         ExerciseActionButtonComponent,
         FeatureToggleDirective,
         StartPracticeModeButtonComponent,
-        OpenCodeEditorButtonComponent,
         CodeButtonComponent,
         RequestFeedbackButtonComponent,
+        NgbPopover,
     ],
     providers: [ExternalCloningService],
 })
 export class ExerciseHeaderActionsComponent {
+    private readonly elementRef = inject(ElementRef);
     private readonly actionButtons = viewChildren(ExerciseActionButtonComponent);
+    private readonly submitPopoverRef = viewChild<NgbPopover>('submitPopoverRef');
 
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faUsers = faUsers;
@@ -91,6 +93,7 @@ export class ExerciseHeaderActionsComponent {
     protected readonly faWrench = faWrench;
     protected readonly faFileSignature = faFileSignature;
     protected readonly faPaperPlane = faPaperPlane;
+    protected readonly faRobot = faRobot;
 
     protected readonly FeatureToggle = FeatureToggle;
     protected readonly ExerciseType = ExerciseType;
@@ -448,5 +451,31 @@ export class ExerciseHeaderActionsComponent {
             icon: faWrench,
             translation: 'entity.action.re-evaluate',
         };
+    }
+
+    closeSubmitPopover() {
+        this.submitPopoverRef()?.close();
+    }
+
+    submitAndShowPopover() {
+        this.onSubmitExercise()?.();
+        this.submitPopoverRef()?.open();
+    }
+
+    @HostListener('document:click', ['$event'])
+    onDocumentClick(event: MouseEvent) {
+        const pop = this.submitPopoverRef();
+        if (!pop?.isOpen()) {
+            return;
+        }
+
+        const target = event.target as HTMLElement;
+
+        // Don't close if clicking inside the popover, the trigger element, or an alert
+        if (target.closest('.popover') || target.closest('jhi-alert-overlay') || this.elementRef.nativeElement.contains(target)) {
+            return;
+        }
+
+        pop.close();
     }
 }

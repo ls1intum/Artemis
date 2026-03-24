@@ -46,6 +46,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { onTextEditorTab } from 'app/shared/util/text.utils';
 import { TranslateService } from '@ngx-translate/core';
+import { ExerciseSubmitButtonComponent } from 'app/exercise/shared/exercise-submit-button/exercise-submit-button.component';
 
 @Component({
     selector: 'jhi-text-editor',
@@ -71,6 +72,7 @@ import { TranslateService } from '@ngx-translate/core';
         UpperCasePipe,
         ArtemisTranslatePipe,
         HtmlForMarkdownPipe,
+        ExerciseSubmitButtonComponent,
     ],
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
