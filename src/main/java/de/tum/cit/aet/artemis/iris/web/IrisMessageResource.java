@@ -240,12 +240,25 @@ public class IrisMessageResource {
         }
 
         if ("mcq".equals(type)) {
+            ArrayNode options = rootObj.withArray("options");
+            if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= options.size()) {
+                throw new BadRequestException("Selected index is out of bounds");
+            }
             ObjectNode response = objectMapper.createObjectNode();
             response.put("selectedIndex", responseDTO.selectedIndex());
             response.put("submitted", responseDTO.submitted());
             rootObj.set("response", response);
         }
         else {
+            ArrayNode questions = rootObj.withArray("questions");
+            if (responseDTO.questionIndex() == null || responseDTO.questionIndex() < 0 || responseDTO.questionIndex() >= questions.size()) {
+                throw new BadRequestException("Question index is out of bounds");
+            }
+            ArrayNode questionOptions = ((ObjectNode) questions.get(responseDTO.questionIndex())).withArray("options");
+            if (responseDTO.selectedIndex() < 0 || responseDTO.selectedIndex() >= questionOptions.size()) {
+                throw new BadRequestException("Selected index is out of bounds");
+            }
+
             ArrayNode responses = rootObj.withArray("responses");
             boolean updated = false;
             for (int i = 0; i < responses.size(); i++) {
