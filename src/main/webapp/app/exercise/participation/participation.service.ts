@@ -60,9 +60,10 @@ export class ParticipationService {
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 
-    getQuizParticipationResult(quizExerciseId: number, participationId: number): Observable<EntityResponseType> {
+    getQuizParticipationResult(quizExerciseId: number, participationId: number, submissionId?: number): Observable<EntityResponseType> {
+        const params: Record<string, string> = submissionId !== undefined ? { submissionId: String(submissionId) } : {};
         return this.http
-            .get<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/participations/${participationId}/result`, { observe: 'response' })
+            .get<StudentParticipation>(`api/quiz/quiz-exercises/${quizExerciseId}/participations/${participationId}/result`, { params, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processParticipationEntityResponseType(res)));
     }
 

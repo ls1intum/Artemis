@@ -282,7 +282,7 @@ describe('ResultHistoryDropdownComponent', () => {
             component.navigateToSubmission(result, event);
 
             expect(event.stopPropagation).toHaveBeenCalled();
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'quiz-exercises', 10, 'live'], { queryParams: {} });
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'quiz-exercises', 10, 'live']);
         });
 
         it('should navigate to quiz practice mode for practice participation', () => {
@@ -290,12 +290,12 @@ describe('ResultHistoryDropdownComponent', () => {
             fixture.detectChanges();
 
             const participation: StudentParticipation = { id: 3, testRun: true } as StudentParticipation;
-            const result = { id: 1, submission: { id: 1, participation } } as unknown as Result;
+            const result = { id: 1, submission: { id: 7, participation } } as unknown as Result;
             const event = new Event('click');
 
             component.navigateToSubmission(result, event);
 
-            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'quiz-exercises', 10, 'practice'], { queryParams: { participationId: 3 } });
+            expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 5, 'exercises', 'quiz-exercises', 10, 'practice', 3, 'submission', 7]);
         });
 
         it('should navigate to text exercise submission', () => {

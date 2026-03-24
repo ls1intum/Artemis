@@ -154,6 +154,18 @@ export const courseRoutes: Routes = [
                         loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
                         loadChildren: () => import('app/fileupload/overview/file-upload-participation.route').then((m) => m.fileUploadParticipationRoute),
                     },
+                    {
+                        path: 'quiz-exercises/:exerciseId',
+                        data: {
+                            authorities: IS_AT_LEAST_STUDENT,
+                            pageTitle: 'overview.exercises',
+                            hasSidebar: true,
+                            showRefreshButton: true,
+                        },
+                        canActivate: [UserRouteAccessService],
+                        loadComponent: () => import('app/core/course/overview/exercise-details/course-exercise-details.component').then((m) => m.CourseExerciseDetailsComponent),
+                        loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
+                    },
                 ],
             },
             {
@@ -179,13 +191,6 @@ export const courseRoutes: Routes = [
                     authorities: IS_AT_LEAST_STUDENT,
                 },
                 loadChildren: () => import('app/modeling/overview/modeling-participation.route').then((m) => m.routes),
-            },
-            {
-                path: 'exercises/quiz-exercises/:exerciseId',
-                data: {
-                    authorities: IS_AT_LEAST_STUDENT,
-                },
-                loadChildren: () => import('app/quiz/overview/quiz-participation.route').then((m) => m.routes),
             },
             {
                 path: 'exercises/file-upload-exercises/:exerciseId/participate/:participationId',

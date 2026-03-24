@@ -4,7 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import dayjs from 'dayjs/esm';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription, combineLatest, map, of, take } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -181,28 +181,37 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
     ngOnInit() {
         // set correct mode
-        this.routeAndDataSubscription = combineLatest([this.route.data, this.route.params, this.route.parent?.parent?.params ?? of({ courseId: undefined })]).subscribe(
-            ([data, params, parentParams]) => {
-                this.mode = this.inputMode() ?? data.mode;
-                this.quizId = this.inputExerciseId() ?? Number(params['exerciseId']);
-                this.courseId = this.inputCourseId() ?? Number(parentParams['courseId']);
-                // init according to mode
-                switch (this.mode) {
-                    case 'practice':
-                        this.initPracticeMode();
-                        break;
-                    case 'preview':
-                        this.initPreview();
-                        break;
-                    case 'solution':
-                        this.initShowSolution();
-                        break;
-                    case 'live':
-                        this.initLiveMode();
-                        break;
-                }
-            },
-        );
+        this.routeAndDataSubscription = combineLatest([
+            this.route.data,
+            this.route.params,
+            this.route.parent?.params ?? of({} as Params),
+            this.route.parent?.parent?.params ?? of({} as Params),
+            this.route.parent?.parent?.parent?.params ?? of({} as Params),
+        ]).subscribe(([data, params, parentParams, grandParentParams, greatGrandParentParams]) => {
+            this.mode = this.inputMode() ?? data.mode;
+            // exerciseId: own params (old componentless route) or parent params (new component-based route)
+            this.quizId = this.inputExerciseId() ?? Number(params['exerciseId'] ?? parentParams['exerciseId']);
+            // courseId: grandparent (old route: courses/:courseId is 2 levels up) or great-grandparent (new route: exercises adds one level)
+            this.courseId = this.inputCourseId() ?? Number(grandParentParams['courseId'] ?? greatGrandParentParams['courseId']);
+            // init according to mode
+            switch (this.mode) {
+                case 'practice':
+                    this.initPracticeMode(
+                        params['participationId'] ? Number(params['participationId']) : undefined,
+                        params['submissionId'] ? Number(params['submissionId']) : undefined,
+                    );
+                    break;
+                case 'preview':
+                    this.initPreview();
+                    break;
+                case 'solution':
+                    this.initShowSolution();
+                    break;
+                case 'live':
+                    this.initLiveMode();
+                    break;
+            }
+        });
         // update displayed times in UI regularly
         this.interval = window.setInterval(() => {
             this.updateDisplayedTimes();
@@ -263,10 +272,9 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * loads quizExercise and starts practice mode, or loads an existing practice result if participationId is provided
      */
-    initPracticeMode() {
-        const participationId = this.route.snapshot.queryParams['participationId'];
+    initPracticeMode(participationId?: number, submissionId?: number) {
         if (participationId) {
-            this.loadExistingPracticeResult(Number(participationId));
+            this.loadExistingPracticeResult(participationId, submissionId);
         } else {
             this.quizExerciseService.findForStudent(this.quizId).subscribe({
                 next: (res: HttpResponse<QuizExercise>) => {
@@ -284,8 +292,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     /**
      * loads an existing practice participation result
      */
-    private loadExistingPracticeResult(participationId: number) {
-        this.participationService.getQuizParticipationResult(this.quizId, participationId).subscribe({
+    private loadExistingPracticeResult(participationId: number, submissionId?: number) {
+        this.participationService.getQuizParticipationResult(this.quizId, participationId, submissionId).subscribe({
             next: (response: HttpResponse<StudentParticipation>) => {
                 this.updateParticipationFromServer(response.body!);
             },

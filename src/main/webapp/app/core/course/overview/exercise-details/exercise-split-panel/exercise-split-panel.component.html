@@ -4,15 +4,6 @@
             @if (usesRouterOutlet()) {
                 <router-outlet />
             }
-            @if (exercise().type === ExerciseType.QUIZ) {
-                <jhi-quiz [inputExerciseId]="exercise().id" [inputCourseId]="exercise().course?.id" [inputMode]="'live'" />
-            }
-        </ng-template>
-    } @else if (exercise().type === ExerciseType.QUIZ) {
-        <ng-template jhiPanel label="Quiz" [icon]="getIcon(exercise().type)">
-            <div class="d-flex align-items-center justify-content-center h-100 text-body-secondary">
-                <span jhiTranslate="artemisApp.courseOverview.exerciseList.quizNotOpened"></span>
-            </div>
         </ng-template>
     }
 
