@@ -4,6 +4,7 @@
     var MODAL_ID = 'artemis-feedback-modal';
     var BACKDROP_ID = 'artemis-feedback-backdrop';
     var INIT_ATTR = 'data-artemis-interactive';
+    var i18n = (typeof __i18n !== 'undefined') ? __i18n : {};
 
     var ICON_CHECK = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" style="vertical-align:middle">'
         + '<circle cx="8" cy="8" r="7.5" fill="#28a745"/>'
@@ -82,7 +83,7 @@
             return;
         }
 
-        var taskName = this.getAttribute('data-task-name') || 'Task';
+        var taskName = this.getAttribute('data-task-name') || '';
         var result = getResultSummary();
 
         // Theme colors from CSS variables
@@ -132,7 +133,7 @@
         var modal = document.createElement('div');
         modal.id = MODAL_ID;
         modal.setAttribute('role', 'dialog');
-        modal.setAttribute('aria-label', 'Feedback for task: ' + taskName);
+        modal.setAttribute('aria-label', (i18n.feedbackTitle || 'Feedback for task:') + ' ' + taskName);
         setStyles(modal, {
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
             zIndex: '10001', background: bodyBg, color: bodyColor, fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif', borderRadius: '8px', width: '90%',
@@ -148,12 +149,12 @@
             flexShrink: '0'
         });
         var title = document.createElement('h3');
-        title.textContent = 'Feedback for task: ' + taskName;
+        title.textContent = (i18n.feedbackTitle || 'Feedback for task:') + ' ' + taskName;
         setStyles(title, { margin: '0', fontSize: '16px', fontWeight: '600' });
         header.appendChild(title);
         var closeBtn = document.createElement('button');
         closeBtn.textContent = '\u2715';
-        closeBtn.setAttribute('aria-label', 'Close');
+        closeBtn.setAttribute('aria-label', i18n.close || 'Close');
         setStyles(closeBtn, {
             background: 'none', border: 'none', color: '#fff', fontSize: '20px',
             cursor: 'pointer', padding: '0 0 0 12px', lineHeight: '1'
@@ -170,10 +171,10 @@
         if (result && result.score != null) {
             var scoreDiv = document.createElement('div');
             setStyles(scoreDiv, { marginBottom: '16px' });
-            var scoreText = 'Score: ' + Math.round(result.score * 10) / 10 + '%';
+            var scoreText = (i18n.score || 'Score:') + ' ' + Math.round(result.score * 10) / 10 + '%';
             if (result.maxPoints) {
                 var points = Math.round(result.score * result.maxPoints / 100 * 10) / 10;
-                scoreText += ' \u00B7 ' + points + ' of ' + result.maxPoints + ' points';
+                scoreText += ' \u00B7 ' + points + ' ' + (i18n.of || 'of') + ' ' + result.maxPoints + ' ' + (i18n.points || 'points');
             }
             var scoreH4 = document.createElement('h4');
             scoreH4.textContent = scoreText;
@@ -183,10 +184,10 @@
             // Submission info
             var metaParts = [];
             if (result.submissionDate) {
-                metaParts.push('Submitted ' + formatDate(result.submissionDate));
+                metaParts.push((i18n.submitted || 'Submitted') + ' ' + formatDate(result.submissionDate));
             }
             if (result.commitHash) {
-                metaParts.push('Commit ' + result.commitHash.substring(0, 8));
+                metaParts.push((i18n.commit || 'Commit') + ' ' + result.commitHash.substring(0, 8));
             }
             if (metaParts.length > 0) {
                 var metaP = document.createElement('p');
@@ -220,10 +221,10 @@
 
         // Feedback groups
         if (failed.length > 0) {
-            body.appendChild(buildGroup('Failed Tests', failed, false, failedGroupBg, failedGroupColor, failedItemBg, failedItemBorder, subtleBg, subtleBorder, bodyColor));
+            body.appendChild(buildGroup(i18n.failedTests || 'Failed Tests', failed, false, failedGroupBg, failedGroupColor, failedItemBg, failedItemBorder, subtleBg, subtleBorder, bodyColor));
         }
         if (passed.length > 0) {
-            body.appendChild(buildGroup('Passed Tests', passed, true, passedGroupBg, passedGroupColor, passedItemBg, passedItemBorder, subtleBg, subtleBorder, bodyColor));
+            body.appendChild(buildGroup(i18n.passedTests || 'Passed Tests', passed, true, passedGroupBg, passedGroupColor, passedItemBg, passedItemBorder, subtleBg, subtleBorder, bodyColor));
         }
 
         modal.appendChild(body);
@@ -235,7 +236,7 @@
             display: 'flex', justifyContent: 'flex-end', flexShrink: '0'
         });
         var footerBtn = document.createElement('button');
-        footerBtn.textContent = 'Close';
+        footerBtn.textContent = i18n.close || 'Close';
         setStyles(footerBtn, {
             padding: '6px 20px', border: '1px solid ' + secondaryColor, borderRadius: '4px',
             background: bodyBg, cursor: 'pointer', fontSize: '14px', color: bodyColor

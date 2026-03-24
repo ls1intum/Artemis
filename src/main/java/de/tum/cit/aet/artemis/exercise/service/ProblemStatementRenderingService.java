@@ -177,7 +177,7 @@ public class ProblemStatementRenderingService {
         html = EMBEDDED_CSS + html;
 
         // Step 8: Content hash (covers HTML + JS)
-        String interactiveScript = interactive ? INTERACTIVE_JS : null;
+        String interactiveScript = interactive ? buildLocalizedScript(locale) : null;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
         return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, interactiveScript);
@@ -439,6 +439,24 @@ public class ProblemStatementRenderingService {
         }
         catch (NoSuchAlgorithmException e) {
             throw new IllegalStateException("SHA-256 not available", e);
+        }
+    }
+
+    private @Nullable String buildLocalizedScript(Locale locale) {
+        if (INTERACTIVE_JS == null) {
+            return null;
+        }
+        String prefix = "exercise.problemStatement.modal.";
+        Map<String, String> i18n = new LinkedHashMap<>();
+        for (String key : List.of("feedbackTitle", "close", "score", "points", "of", "submitted", "commit", "failedTests", "passedTests")) {
+            i18n.put(key, messageSource.getMessage(prefix + key, null, key, locale));
+        }
+        try {
+            return "var __i18n = " + objectMapper.writeValueAsString(i18n) + ";\n" + INTERACTIVE_JS;
+        }
+        catch (JsonProcessingException e) {
+            log.error("Failed to serialize i18n JSON for interactive script", e);
+            return INTERACTIVE_JS;
         }
     }
 
