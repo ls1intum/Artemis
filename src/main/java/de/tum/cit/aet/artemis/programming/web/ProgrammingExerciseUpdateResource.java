@@ -500,24 +500,34 @@ public class ProgrammingExerciseUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
-        // Capture original values BEFORE update() mutates the entity via L1 cache.
+        // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
+        // These are needed for change detection in the service layer (notifications, build plans, etc.)
         final Double originalMaxPoints = programmingExercise.getMaxPoints();
         final Double originalBonusPoints = programmingExercise.getBonusPoints();
         final ZonedDateTime originalDueDate = programmingExercise.getDueDate();
+        final ZonedDateTime originalReleaseDate = programmingExercise.getReleaseDate();
+        final ZonedDateTime originalAssessmentDueDate = programmingExercise.getAssessmentDueDate();
+        final String originalProblemStatement = programmingExercise.getProblemStatement();
+        final String originalBuildPlanConfiguration = programmingExercise.getBuildConfig() != null ? programmingExercise.getBuildConfig().getBuildPlanConfiguration() : null;
+        final Set<Long> originalCompetencyIds = programmingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         update(updateDTO, programmingExercise);
 
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        ResponseEntity<ProgrammingExercise> response = updateProgrammingExercise(updateDTO, null);
 
-        // The call inside updateProgrammingExercise used already-mutated "originals" (no-op).
-        // Apply the correct originals now to ensure participant scores and due dates update.
-        ProgrammingExercise savedExercise = response.getBody();
-        if (savedExercise != null) {
-            exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
-            participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
-        }
-        return response;
+        // Call the service directly with the captured originals instead of re-entering the update path
+        // (which would re-capture stale "originals" from the already-mutated L1 cache entity).
+        ProgrammingExercise savedExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExercise, null, originalCompetencyIds,
+                originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
+
+        // Apply all post-save side effects that the normal update path performs
+        exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
+        exerciseVersionService.createExerciseVersion(savedExercise, user);
+
+        return ResponseEntity.ok(savedExercise);
     }
 }

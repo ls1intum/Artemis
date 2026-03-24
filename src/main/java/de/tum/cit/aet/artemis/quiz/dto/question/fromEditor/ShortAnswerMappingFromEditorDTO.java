@@ -26,6 +26,9 @@ public record ShortAnswerMappingFromEditorDTO(Long id, Long solutionTempId, Long
      * @return the corresponding DTO
      */
     public static ShortAnswerMappingFromEditorDTO of(ShortAnswerMapping mapping) {
+        if (mapping.getSolution() == null || mapping.getSpot() == null) {
+            throw new IllegalArgumentException("ShortAnswerMapping must have both solution and spot set");
+        }
         return new ShortAnswerMappingFromEditorDTO(mapping.getId(), mapping.getSolution().getId(), mapping.getSpot().getId());
     }
 

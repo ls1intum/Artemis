@@ -154,6 +154,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
               theiaImage: exercise.buildConfig.theiaImage,
               allowBranching: exercise.buildConfig.allowBranching ?? false,
               branchRegex: exercise.buildConfig.branchRegex,
+              branch: exercise.buildConfig.branch,
           }
         : undefined;
 
