@@ -32,6 +32,6 @@ public enum SupportedVectorizer {
      * @return {@code true} if the value matches any supported vectorizer
      */
     public static boolean isSupported(String value) {
-        return Arrays.stream(values()).anyMatch(v -> v.configValue.equals(value));
+        return Arrays.stream(values()).anyMatch(vectorizer -> vectorizer.configValue.equals(value));
     }
 }
