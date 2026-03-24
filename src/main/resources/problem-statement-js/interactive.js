@@ -12,6 +12,12 @@
         + '<circle cx="8" cy="8" r="7.5" fill="#dc3545"/>'
         + '<path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
+    // Read CSS variable or return fallback
+    function cssVar(name, fallback) {
+        var val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return val || fallback;
+    }
+
     function init() {
         var tasks = document.querySelectorAll('.artemis-task[data-feedback]');
         for (var i = 0; i < tasks.length; i++) {
@@ -79,6 +85,28 @@
         var taskName = this.getAttribute('data-task-name') || 'Task';
         var result = getResultSummary();
 
+        // Theme colors from CSS variables
+        var bodyBg = cssVar('--body-bg', '#fff');
+        var bodyColor = cssVar('--body-color', '#212529');
+        var borderColor = cssVar('--border-color', '#dee2e6');
+        var secondaryColor = cssVar('--secondary', '#6c757d');
+        var successColor = cssVar('--success', '#28a745');
+        var dangerColor = cssVar('--danger', '#dc3545');
+
+        // Detect dark mode: if body background is dark, adjust feedback colors
+        var isDark = isDarkBackground(bodyBg);
+        var passedGroupBg = isDark ? 'rgba(40,167,69,0.15)' : '#d4edda';
+        var passedGroupColor = isDark ? '#81c784' : '#155724';
+        var failedGroupBg = isDark ? 'rgba(220,53,69,0.15)' : '#f8d7da';
+        var failedGroupColor = isDark ? '#e57373' : '#721c24';
+        var passedItemBg = isDark ? 'rgba(40,167,69,0.08)' : '#f0faf2';
+        var passedItemBorder = isDark ? 'rgba(40,167,69,0.25)' : '#c3e6cb';
+        var failedItemBg = isDark ? 'rgba(220,53,69,0.08)' : '#fef2f2';
+        var failedItemBorder = isDark ? 'rgba(220,53,69,0.25)' : '#f5c6cb';
+        var subtleBg = isDark ? 'rgba(255,255,255,0.05)' : '#f8f9fa';
+        var subtleBorder = isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef';
+        var barTrackBg = isDark ? 'rgba(255,255,255,0.1)' : '#e9ecef';
+
         // Separate into passed / failed
         var passed = [];
         var failed = [];
@@ -107,7 +135,7 @@
         modal.setAttribute('aria-label', 'Feedback for task: ' + taskName);
         setStyles(modal, {
             position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
-            zIndex: '10001', background: '#fff', borderRadius: '8px', width: '90%',
+            zIndex: '10001', background: bodyBg, color: bodyColor, borderRadius: '8px', width: '90%',
             maxWidth: '560px', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
             boxShadow: '0 8px 32px rgba(0,0,0,.25)', overflow: 'hidden'
         });
@@ -163,13 +191,13 @@
             if (metaParts.length > 0) {
                 var metaP = document.createElement('p');
                 metaP.textContent = metaParts.join(' \u00B7 ');
-                setStyles(metaP, { margin: '0', fontSize: '13px', color: '#6c757d' });
+                setStyles(metaP, { margin: '0', fontSize: '13px', color: secondaryColor });
                 scoreDiv.appendChild(metaP);
             }
             body.appendChild(scoreDiv);
 
             var hr = document.createElement('hr');
-            setStyles(hr, { border: 'none', borderTop: '1px solid #dee2e6', margin: '0 0 16px' });
+            setStyles(hr, { border: 'none', borderTop: '1px solid ' + borderColor, margin: '0 0 16px' });
             body.appendChild(hr);
         }
 
@@ -177,14 +205,14 @@
         if (result && result.score != null && result.maxPoints) {
             var barContainer = document.createElement('div');
             setStyles(barContainer, {
-                height: '8px', background: '#e9ecef', borderRadius: '4px',
+                height: '8px', background: barTrackBg, borderRadius: '4px',
                 overflow: 'hidden', marginBottom: '16px'
             });
             var barFill = document.createElement('div');
             var pct = Math.min(100, Math.max(0, result.score));
             setStyles(barFill, {
                 height: '100%', width: pct + '%', borderRadius: '4px',
-                background: pct >= 50 ? '#28a745' : '#dc3545'
+                background: pct >= 50 ? successColor : dangerColor
             });
             barContainer.appendChild(barFill);
             body.appendChild(barContainer);
@@ -192,10 +220,10 @@
 
         // Feedback groups
         if (failed.length > 0) {
-            body.appendChild(buildGroup('Failed Tests', failed, false));
+            body.appendChild(buildGroup('Failed Tests', failed, false, failedGroupBg, failedGroupColor, failedItemBg, failedItemBorder, subtleBg, subtleBorder, bodyColor));
         }
         if (passed.length > 0) {
-            body.appendChild(buildGroup('Passed Tests', passed, true));
+            body.appendChild(buildGroup('Passed Tests', passed, true, passedGroupBg, passedGroupColor, passedItemBg, passedItemBorder, subtleBg, subtleBorder, bodyColor));
         }
 
         modal.appendChild(body);
@@ -203,14 +231,14 @@
         // Footer
         var footer = document.createElement('div');
         setStyles(footer, {
-            padding: '12px 20px', borderTop: '1px solid #dee2e6',
+            padding: '12px 20px', borderTop: '1px solid ' + borderColor,
             display: 'flex', justifyContent: 'flex-end', flexShrink: '0'
         });
         var footerBtn = document.createElement('button');
         footerBtn.textContent = 'Close';
         setStyles(footerBtn, {
-            padding: '6px 20px', border: '1px solid #6c757d', borderRadius: '4px',
-            background: '#fff', cursor: 'pointer', fontSize: '14px', color: '#212529'
+            padding: '6px 20px', border: '1px solid ' + secondaryColor, borderRadius: '4px',
+            background: bodyBg, cursor: 'pointer', fontSize: '14px', color: bodyColor
         });
         footerBtn.addEventListener('click', closeModal);
         footer.appendChild(footerBtn);
@@ -224,7 +252,7 @@
         closeBtn.focus();
     }
 
-    function buildGroup(label, items, isPassed) {
+    function buildGroup(label, items, isPassed, groupBg, groupColor, itemBg, itemBorder, subtleBg, subtleBorder, textColor) {
         var wrapper = document.createElement('div');
         setStyles(wrapper, { marginBottom: '12px' });
 
@@ -234,8 +262,8 @@
             padding: '10px 14px', borderRadius: '4px', cursor: 'pointer',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             userSelect: 'none',
-            background: isPassed ? '#d4edda' : '#f8d7da',
-            color: isPassed ? '#155724' : '#721c24'
+            background: groupBg,
+            color: groupColor
         });
         var headerLeft = document.createElement('div');
         var arrow = document.createElement('span');
@@ -269,7 +297,7 @@
         setStyles(groupBody, { padding: '0 8px' });
 
         for (var j = 0; j < items.length; j++) {
-            groupBody.appendChild(buildFeedbackItem(items[j], isPassed));
+            groupBody.appendChild(buildFeedbackItem(items[j], isPassed, itemBg, itemBorder, subtleBg, subtleBorder, textColor));
         }
 
         wrapper.appendChild(groupBody);
@@ -285,12 +313,12 @@
         return wrapper;
     }
 
-    function buildFeedbackItem(item, isPassed) {
+    function buildFeedbackItem(item, isPassed, itemBg, itemBorder, subtleBg, subtleBorder, textColor) {
         var itemDiv = document.createElement('div');
         setStyles(itemDiv, {
             padding: '10px 12px', margin: '6px 0', borderRadius: '4px',
-            border: '1px solid ' + (isPassed ? '#c3e6cb' : '#f5c6cb'),
-            background: isPassed ? '#f0faf2' : '#fef2f2'
+            border: '1px solid ' + itemBorder,
+            background: itemBg
         });
 
         // Header row: icon + name + credits
@@ -306,7 +334,7 @@
         nameSpan.appendChild(icon);
         var nameText = document.createElement('strong');
         nameText.textContent = item.name;
-        setStyles(nameText, { fontSize: '14px' });
+        setStyles(nameText, { fontSize: '14px', color: textColor });
         nameSpan.appendChild(nameText);
         headerRow.appendChild(nameSpan);
 
@@ -319,13 +347,13 @@
 
         itemDiv.appendChild(headerRow);
 
-        // Detail message (collapsible)
+        // Detail message (always visible)
         if (item.message) {
             var msgContent = document.createElement('pre');
             msgContent.textContent = item.message;
             setStyles(msgContent, {
-                fontSize: '12px', color: '#495057',
-                background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '4px',
+                fontSize: '12px', color: textColor,
+                background: subtleBg, border: '1px solid ' + subtleBorder, borderRadius: '4px',
                 padding: '8px', margin: '6px 0 0', whiteSpace: 'pre-wrap',
                 overflowWrap: 'break-word', maxHeight: '200px', overflowY: 'auto'
             });
@@ -351,6 +379,22 @@
         if (e.key === 'Escape') {
             closeModal();
         }
+    }
+
+    function isDarkBackground(bgColor) {
+        // Simple heuristic: parse hex color and check luminance
+        var hex = bgColor.replace('#', '');
+        if (hex.length === 3) {
+            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        }
+        if (hex.length !== 6) {
+            return false;
+        }
+        var r = parseInt(hex.substring(0, 2), 16);
+        var g = parseInt(hex.substring(2, 4), 16);
+        var b = parseInt(hex.substring(4, 6), 16);
+        var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance < 0.5;
     }
 
     function formatDate(isoString) {
