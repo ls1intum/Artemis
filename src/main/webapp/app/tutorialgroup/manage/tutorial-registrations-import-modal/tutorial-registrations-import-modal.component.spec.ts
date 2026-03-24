@@ -258,6 +258,24 @@ describe('TutorialRegistrationsImportModalComponent', () => {
         expectExplanationStep();
     });
 
+    it('should stay on the explanation step, show an error, and stop loading when parsing fails unexpectedly', async () => {
+        vi.spyOn(readUsersFromCsv, 'readStudentDTOsFromCSVFile').mockRejectedValue(new Error('parse failed'));
+
+        component.open();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        const file = new File(['login'], 'students.csv', { type: 'text/csv' });
+        await component.parseStudents(createFileChangeEvent(file));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(alertServiceMock.addErrorAlert).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupRegistrations.importModal.importErrorAlert');
+        expect(component.isLoading()).toBe(false);
+        expectExplanationStep();
+        expect(fixture.nativeElement.querySelector('jhi-loading-indicator-overlay')).toBeNull();
+    });
+
     it('should stay on the explanation step and stop loading when parsing yields no entries', async () => {
         vi.spyOn(readUsersFromCsv, 'readStudentDTOsFromCSVFile').mockResolvedValue({
             ok: true,

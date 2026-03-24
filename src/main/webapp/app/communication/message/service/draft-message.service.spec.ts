@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
 import { DraftData, DraftService } from './draft-message.service';
@@ -5,8 +7,14 @@ import { DraftData, DraftService } from './draft-message.service';
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 describe('DraftService', () => {
+    setupTestBed({ zoneless: true });
+
     let draftService: DraftService;
     let localStorageService: LocalStorageService;
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -17,19 +25,19 @@ describe('DraftService', () => {
     });
 
     it('should save draft if key and content are valid', () => {
-        const storeSpy = jest.spyOn(localStorageService, 'store');
+        const storeSpy = vi.spyOn(localStorageService, 'store');
         draftService.saveDraft('key', 'content');
         expect(storeSpy).toHaveBeenCalled();
     });
 
     it('should not save draft if content is empty', () => {
-        const storeSpy = jest.spyOn(localStorageService, 'store');
+        const storeSpy = vi.spyOn(localStorageService, 'store');
         draftService.saveDraft('key', '');
         expect(storeSpy).not.toHaveBeenCalled();
     });
 
     it('should clear draft if content is empty', () => {
-        const clearSpy = jest.spyOn(localStorageService, 'remove');
+        const clearSpy = vi.spyOn(localStorageService, 'remove');
         draftService.clearDraft('key');
         expect(clearSpy).toHaveBeenCalledWith('key');
     });
@@ -49,7 +57,7 @@ describe('DraftService', () => {
         };
         localStorageService.store<DraftData>('key', draftData);
 
-        const clearSpy = jest.spyOn(localStorageService, 'remove');
+        const clearSpy = vi.spyOn(localStorageService, 'remove');
         const result = draftService.loadDraft('key');
         expect(result).toBeUndefined();
         expect(clearSpy).toHaveBeenCalledWith('key');
@@ -64,7 +72,7 @@ describe('DraftService', () => {
         };
         localStorageService.store<DraftData>('key', draftData);
 
-        const clearSpy = jest.spyOn(localStorageService, 'remove');
+        const clearSpy = vi.spyOn(localStorageService, 'remove');
         const result = draftService.loadDraft('key');
         expect(result).toBeUndefined();
         expect(clearSpy).toHaveBeenCalledWith('key');
@@ -77,15 +85,15 @@ describe('DraftService', () => {
     });
 
     it('should return undefined if retrieved value is empty string', () => {
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue('');
-        const clearSpy = jest.spyOn(localStorageService, 'clear');
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue('');
+        const clearSpy = vi.spyOn(localStorageService, 'clear');
         const result = draftService.loadDraft('key');
         expect(result).toBeUndefined();
         expect(clearSpy).not.toHaveBeenCalled();
     });
 
     it('should fallback to string if JSON parse fails', () => {
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue('{ invalid json');
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue('{ invalid json');
         const result = draftService.loadDraft('key');
         expect(result).toBe('{ invalid json');
     });
@@ -96,7 +104,7 @@ describe('DraftService', () => {
     });
 
     it('should not crash if raw value is not a string', () => {
-        jest.spyOn(localStorageService, 'retrieve').mockReturnValue(12345);
+        vi.spyOn(localStorageService, 'retrieve').mockReturnValue(12345);
         const result = draftService.loadDraft('key');
         expect(result).toBeUndefined();
     });

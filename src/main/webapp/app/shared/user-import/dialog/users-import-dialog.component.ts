@@ -87,41 +87,45 @@ export class UsersImportDialogComponent implements OnDestroy {
             this.resetDialog();
             const file = event.target.files[0];
             this.isParsing = true;
+            try {
+                if (this.examUserMode()) {
+                    const result = await readExamUserDTOsFromCSVFile(file);
+                    if (!result.ok) {
+                        this.validationError = result.invalidRowIndices.join(', ');
+                        event.target.value = '';
+                        return;
+                    }
 
-            if (this.examUserMode()) {
-                const result = await readExamUserDTOsFromCSVFile(file);
+                    const examUsers = result.examUsers;
+                    if (examUsers.length === 0) {
+                        this.noUsersFoundError = true;
+                        event.target.value = '';
+                        return;
+                    }
+
+                    this.examUsersToImport = result.examUsers;
+                } else {
+                    const result = await readStudentDTOsFromCSVFile(file);
+                    if (!result.ok) {
+                        this.validationError = result.invalidRowIndices.join(', ');
+                        event.target.value = '';
+                        return;
+                    }
+
+                    const students = result.students;
+                    if (students.length === 0) {
+                        this.noUsersFoundError = true;
+                        event.target.value = '';
+                        return;
+                    }
+
+                    this.usersToImport = result.students;
+                }
+            } catch {
+                this.alertService.error('artemisApp.importUsers.genericErrorMessage');
+                event.target.value = '';
+            } finally {
                 this.isParsing = false;
-                if (!result.ok) {
-                    this.validationError = result.invalidRowIndices.join(', ');
-                    event.target.value = '';
-                    return;
-                }
-
-                const examUsers = result.examUsers;
-                if (examUsers.length === 0) {
-                    this.noUsersFoundError = true;
-                    event.target.value = '';
-                    return;
-                }
-
-                this.examUsersToImport = result.examUsers;
-            } else {
-                const result = await readStudentDTOsFromCSVFile(file);
-                this.isParsing = false;
-                if (!result.ok) {
-                    this.validationError = result.invalidRowIndices.join(', ');
-                    event.target.value = '';
-                    return;
-                }
-
-                const students = result.students;
-                if (students.length === 0) {
-                    this.noUsersFoundError = true;
-                    event.target.value = '';
-                    return;
-                }
-
-                this.usersToImport = result.students;
             }
         }
     }
@@ -170,6 +174,7 @@ export class UsersImportDialogComponent implements OnDestroy {
             });
         } else {
             this.alertService.error('artemisApp.importUsers.genericErrorMessage');
+            this.isImporting = false;
         }
     }
 

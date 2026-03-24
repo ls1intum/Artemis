@@ -52,6 +52,7 @@ const esModules = [
     'monaco-editor',
     'n-gram',
     'ngx-device-detector',
+    'ngx-extended-pdf-viewer',
     'ngx-infinite-scroll',
     'primeng',
     'rxjs/operators',
@@ -90,6 +91,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/**/*.routes.ts',        // ignore routes files because they cannot be properly tested
         '!<rootDir>/src/main/webapp/app/assessment/**',     // assessment module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/buildagent/**',     // buildagent module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/communication/**',   // communication module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/core/**',           // core module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/fileupload/**',     // fileupload module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/iris/**',           // iris module uses Vitest (see vitest.config.ts)
@@ -120,6 +122,7 @@ module.exports = {
     coveragePathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',        // assessment module uses Vitest
         '<rootDir>/src/main/webapp/app/buildagent/',        // buildagent module uses Vitest
+        '<rootDir>/src/main/webapp/app/communication/',      // communication module uses Vitest
         '<rootDir>/src/main/webapp/app/core/',              // core module uses Vitest
         '<rootDir>/src/main/webapp/app/fileupload/',        // fileupload module uses Vitest
         '<rootDir>/src/main/webapp/app/iris/',              // iris module uses Vitest
@@ -150,10 +153,10 @@ module.exports = {
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 87.5,
+            statements: 86.3,
             branches: 74.5,
-            functions: 78.5,
-            lines: 88.3,
+            functions: 76.1,
+            lines: 87.21,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
@@ -178,6 +181,7 @@ module.exports = {
     testPathIgnorePatterns: [
         '<rootDir>/src/main/webapp/app/assessment/',    // assessment module
         '<rootDir>/src/main/webapp/app/buildagent/',    // buildagent module
+        '<rootDir>/src/main/webapp/app/communication/', // communication module
         '<rootDir>/src/main/webapp/app/core/',          // core module
         '<rootDir>/src/main/webapp/app/fileupload/',    // fileupload module
         '<rootDir>/src/main/webapp/app/iris/',          // iris module

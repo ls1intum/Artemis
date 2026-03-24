@@ -17,6 +17,8 @@ import { MockPipe } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { GlobalSearchResult, GlobalSearchService } from '../../services/global-search.service';
+import { SearchView } from 'app/core/navbar/global-search/models/search-view.model';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 
 describe('GlobalSearchModalComponent', () => {
     setupTestBed({ zoneless: true });
@@ -54,6 +56,7 @@ describe('GlobalSearchModalComponent', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: GlobalSearchService, useValue: mockSearchService },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
 
@@ -417,6 +420,103 @@ describe('GlobalSearchModalComponent', () => {
             expect(component['hasSearched']()).toBe(true);
             // No additional HTTP call: still only the 1 from the first add
             expect(mockSearchService.search).toHaveBeenCalledOnce();
+        });
+    });
+
+    describe('View Navigation', () => {
+        it('should navigate back to Navigation view on Escape when in Lecture view', () => {
+            (component as any).currentView.set(SearchView.Lecture);
+            mockSearchOverlayService.isOpen.set(true);
+
+            const event = new KeyboardEvent('keydown', { key: 'Escape' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).currentView()).toBe(SearchView.Navigation);
+            expect(searchOverlayService.close).not.toHaveBeenCalled();
+        });
+
+        it('should close when Escape is pressed from Navigation view', () => {
+            (component as any).currentView.set(SearchView.Navigation);
+            mockSearchOverlayService.isOpen.set(true);
+
+            const event = new KeyboardEvent('keydown', { key: 'Escape' });
+            component.handleKeyboardEvent(event);
+
+            expect(searchOverlayService.close).toHaveBeenCalled();
+        });
+
+        it('should reset selectedIndex when navigating to a new view', () => {
+            (component as any).selectedIndex.set(2);
+
+            (component as any).navigateTo(SearchView.Lecture);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+    });
+
+    describe('Arrow Key Navigation', () => {
+        beforeEach(() => {
+            mockSearchOverlayService.isOpen.set(true);
+            fixture.detectChanges();
+        });
+
+        it('should increment selectedIndex on ArrowDown', () => {
+            (component as any).selectedIndex.set(-1);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(0);
+        });
+
+        it('should not exceed maxIndex on ArrowDown', () => {
+            const maxIdx = (component as any).maxIndex();
+            (component as any).selectedIndex.set(maxIdx);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(maxIdx);
+        });
+
+        it('should decrement selectedIndex on ArrowUp', () => {
+            (component as any).selectedIndex.set(0);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+
+        it('should not decrement selectedIndex below -1', () => {
+            (component as any).selectedIndex.set(-1);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(-1);
+        });
+
+        it('should call preventDefault on arrow keys', () => {
+            const downEvent = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            const downPreventDefaultSpy = vi.spyOn(downEvent, 'preventDefault');
+            component.handleKeyboardEvent(downEvent);
+            expect(downPreventDefaultSpy).toHaveBeenCalled();
+
+            const upEvent = new KeyboardEvent('keydown', { key: 'ArrowUp' });
+            const upPreventDefaultSpy = vi.spyOn(upEvent, 'preventDefault');
+            component.handleKeyboardEvent(upEvent);
+            expect(upPreventDefaultSpy).toHaveBeenCalled();
+        });
+
+        it('should not change selectedIndex when modal is closed', () => {
+            mockSearchOverlayService.isOpen.set(false);
+            (component as any).selectedIndex.set(-1);
+
+            const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
+            component.handleKeyboardEvent(event);
+
+            expect((component as any).selectedIndex()).toBe(-1);
         });
     });
 });
