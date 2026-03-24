@@ -45,7 +45,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { IrisLogoComponent, IrisLogoSize } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisStageDTO, IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
-import { IrisMessageContentType, IrisTextMessageContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMessageContent, IrisMessageContentType, IrisTextMessageContent, McqData, getMcqData, isMcqContent } from 'app/iris/shared/entities/iris-content-type.model';
+import { IrisMcqQuestionComponent } from 'app/iris/overview/mcq-question/iris-mcq-question.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
 import * as _ from 'lodash-es';
@@ -108,6 +109,7 @@ const COPY_FEEDBACK_DURATION_MS = 1500;
         ChatHistoryItemComponent,
         SearchFilterComponent,
         IrisCitationTextComponent,
+        IrisMcqQuestionComponent,
         IrisChatMemoriesIndicatorComponent,
         ConfirmDialogModule,
         MenuModule,
@@ -159,6 +161,10 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     protected readonly IrisSender = IrisSender;
     protected readonly IrisErrorMessageKey = IrisErrorMessageKey;
     protected readonly LLMSelectionDecision = LLMSelectionDecision;
+
+    // MCQ helpers
+    protected readonly isMcqContent = isMcqContent;
+    protected readonly getMcqData = (content: IrisMessageContent): McqData | undefined => getMcqData(content);
 
     // Observable-derived signals (using toSignal for reactive state)
     private readonly currentRelatedEntityId = toSignal(this.chatService.currentRelatedEntityId(), { initialValue: undefined });
