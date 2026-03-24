@@ -1,11 +1,13 @@
-import { Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, computed, inject, input, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { HttpClient } from '@angular/common/http';
 import { LectureUnitDirective } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.directive';
 import { AttachmentVideoUnit } from 'app/lecture/shared/entities/lecture-unit/attachmentVideoUnit.model';
 import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lecture-unit/lecture-unit.component';
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
+import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
@@ -31,14 +33,16 @@ import { FileService } from 'app/shared/service/file.service';
 import { ScienceService } from 'app/shared/science/science.service';
 import { ScienceEventType } from 'app/shared/science/science.model';
 import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.model';
+import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
-export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> {
+export class AttachmentVideoUnitComponent extends LectureUnitDirective<AttachmentVideoUnit> implements OnDestroy {
     protected readonly faDownload = faDownload;
     protected readonly faFileLines = faFileLines;
 
@@ -47,12 +51,28 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private readonly scienceService = inject(ScienceService);
     private readonly attachmentVideoUnitService = inject(AttachmentVideoUnitService);
     private readonly lectureTranscriptionService = inject(LectureTranscriptionService);
+    private readonly httpClient = inject(HttpClient);
+
+    targetTimestamp = input<number | undefined>(undefined); // For video deeplinking
+    targetPdfPage = input<number | undefined>(undefined); // For PDF deeplinking
 
     readonly transcriptSegments = signal<TranscriptSegment[]>([]);
     readonly playlistUrl = signal<string | undefined>(undefined);
     readonly isLoading = signal<boolean>(false);
 
+    readonly pdfUrl = signal<string | undefined>(undefined);
+    readonly isPdfLoading = signal<boolean>(false);
+    readonly pdfLoadError = signal<boolean>(false);
+
+    private pdfSubscription?: Subscription;
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
+
+    readonly hasPdf = computed(() => {
+        const attachment = this.lectureUnit().attachment;
+        const candidate = attachment?.studentVersion ?? attachment?.link ?? attachment?.name;
+        return this.hasAttachment() && candidate ? candidate.toLowerCase().endsWith('.pdf') : false;
+    });
 
     // TODO: This must use a server configuration to make it compatible with deployments other than TUM
     private readonly videoUrlAllowList = [RegExp('^https://(?:live\\.rbg\\.tum\\.de|tum\\.live)/w/\\w+/\\d+(/(CAM|COMB|PRES))?\\?video_only=1')];
@@ -100,6 +120,9 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
             if (!src) {
                 this.isLoading.set(false);
+                if (this.hasPdf()) {
+                    this.loadPdf();
+                }
                 return;
             }
 
@@ -121,6 +144,13 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
                         this.isLoading.set(false);
                     },
                 });
+            if (this.hasPdf()) {
+                this.loadPdf();
+            }
+        } else {
+            this.cancelPdfLoad();
+            this.clearPdfState();
+            this.isPdfLoading.set(false);
         }
     }
 
@@ -150,6 +180,58 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             });
     }
 
+    private loadPdf(): void {
+        this.isPdfLoading.set(true);
+        this.pdfLoadError.set(false);
+
+        const link = this.getAttachmentLink();
+
+        if (!link) {
+            this.pdfLoadError.set(true);
+            this.isPdfLoading.set(false);
+            return;
+        }
+
+        this.pdfSubscription = this.httpClient.get(link, { responseType: 'blob' }).subscribe({
+            next: (blob) => {
+                if (blob) {
+                    this.revokePdfUrl();
+                    this.pdfUrl.set(URL.createObjectURL(blob));
+                    this.pdfLoadError.set(false);
+                }
+                this.isPdfLoading.set(false);
+            },
+            error: () => {
+                this.pdfUrl.set(undefined);
+                this.pdfLoadError.set(true);
+                this.isPdfLoading.set(false);
+            },
+        });
+    }
+
+    ngOnDestroy(): void {
+        this.cancelPdfLoad();
+        this.revokePdfUrl();
+    }
+
+    private clearPdfState(): void {
+        this.revokePdfUrl();
+        this.pdfUrl.set(undefined);
+        this.pdfLoadError.set(false);
+    }
+
+    private revokePdfUrl(): void {
+        const url = this.pdfUrl();
+        if (url) {
+            URL.revokeObjectURL(url);
+        }
+    }
+
+    private cancelPdfLoad(): void {
+        this.pdfSubscription?.unsubscribe();
+        this.pdfSubscription = undefined;
+    }
+
     /**
      * Returns the name of the attachment file (including its file extension)
      */
@@ -162,20 +244,25 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return '';
     }
 
-    /**
-     * Downloads the file as the student version if available, otherwise the instructor version
-     * If it is not the student view, it always downloads the original version
-     */
+    /** Downloads student version if available, otherwise instructor version. */
     handleDownload() {
         this.scienceService.logEvent(ScienceEventType.LECTURE__OPEN_UNIT, this.lectureUnit().id);
 
-        // Determine the link based on the availability of a student version
-        const link = addPublicFilePrefix(this.lectureUnit().attachment!.studentVersion || this.fileService.createStudentLink(this.lectureUnit().attachment!.link!));
+        const link = this.getAttachmentLink();
 
         if (link) {
             this.fileService.downloadFileByAttachmentName(link, this.lectureUnit().attachment!.name!);
             this.onCompletion.emit({ lectureUnit: this.lectureUnit(), completed: true });
         }
+    }
+
+    private getAttachmentLink(): string | undefined {
+        const attachment = this.lectureUnit().attachment;
+        if (!attachment) {
+            return undefined;
+        }
+        const link = attachment.studentVersion ?? (attachment.link ? this.fileService.createStudentLink(attachment.link) : undefined);
+        return link ? addPublicFilePrefix(link) : undefined;
     }
 
     handleOriginalVersion() {

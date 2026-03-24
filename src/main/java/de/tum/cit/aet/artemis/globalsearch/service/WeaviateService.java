@@ -115,6 +115,10 @@ public class WeaviateService {
                     }
                 }
 
+                // Enable null state indexing so that properties with null values can be used in filters
+                // (e.g. release_date IS NULL, or filtering on exam properties that are null for non-exam exercises)
+                collection.invertedIndex(idx -> idx.indexNulls(true));
+
                 // Add properties
                 for (WeaviatePropertyDefinition prop : schema.properties()) {
                     collection.properties(createProperty(prop));
@@ -132,7 +136,7 @@ public class WeaviateService {
         }
         catch (IOException e) {
             log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-            throw new WeaviateException("Failed to create collection: " + collectionName, e);
+            throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
         }
         catch (WeaviateApiException e) {
             // In test environments, multiple Spring contexts may share one Weaviate instance,
@@ -142,7 +146,7 @@ public class WeaviateService {
             }
             else {
                 log.error("Failed to create collection '{}': {}", collectionName, e.getMessage(), e);
-                throw new WeaviateException("Failed to create collection: " + collectionName, e);
+                throw new WeaviateException("Failed to create Weaviate collection '" + collectionName + "': " + e.getMessage(), e);
             }
         }
     }
@@ -175,5 +179,17 @@ public class WeaviateService {
      */
     public CollectionHandle<Map<String, Object>> getCollection(String collectionName) {
         return client.collections.use(resolveCollectionName(collectionName));
+    }
+
+    /**
+     * Returns whether a text vectorizer is configured that can automatically
+     * create embeddings from text. When this returns {@code false}, only keyword
+     * (BM25) search should be used instead of hybrid search because hybrid search
+     * requires a vectorizer to convert the query text into a vector.
+     *
+     * @return {@code true} if a text vectorizer is available, {@code false} otherwise
+     */
+    public boolean isVectorizerAvailable() {
+        return WeaviateConfigurationProperties.VECTORIZER_TEXT2VEC_TRANSFORMERS.equals(vectorizerModule);
     }
 }
