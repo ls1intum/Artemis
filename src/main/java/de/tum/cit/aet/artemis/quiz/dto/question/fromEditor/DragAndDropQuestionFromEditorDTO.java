@@ -68,7 +68,7 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setExplanation(explanation);
         question.setPoints(points);
         question.setScoringType(scoringType);
-        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
+        question.setRandomizeOrder(Boolean.TRUE.equals(randomizeOrder));
         question.setBackgroundFilePath(backgroundFilePath);
 
         List<DropLocation> locations = new java.util.ArrayList<>(dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList());

@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import java.util.function.Consumer;
+
 import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
@@ -41,41 +43,26 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
      * @return a new Exercise entity with basic properties set
      */
     public Exercise toEntity() {
-        Exercise exercise = createExerciseByType(exerciseType);
+        Exercise exercise = switch (exerciseType) {
+            case MODELING -> new ModelingExercise();
+            case TEXT -> new TextExercise();
+            case PROGRAMMING -> new ProgrammingExercise();
+            case FILE_UPLOAD -> new FileUploadExercise();
+            case QUIZ -> new QuizExercise();
+        };
 
         exercise.setId(id);
-        if (title != null) {
-            exercise.setTitle(title);
-        }
-        if (shortName != null) {
-            exercise.setShortName(shortName);
-        }
-        if (maxPoints != null) {
-            exercise.setMaxPoints(maxPoints);
-        }
-        if (bonusPoints != null) {
-            exercise.setBonusPoints(bonusPoints);
-        }
+        setIfNotNull(title, exercise::setTitle);
+        setIfNotNull(shortName, exercise::setShortName);
+        setIfNotNull(maxPoints, exercise::setMaxPoints);
+        setIfNotNull(bonusPoints, exercise::setBonusPoints);
 
         return exercise;
     }
 
-    private static Exercise createExerciseByType(ExerciseType type) {
-        if (type == ExerciseType.MODELING) {
-            return new ModelingExercise();
+    private static <T> void setIfNotNull(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
         }
-        else if (type == ExerciseType.TEXT) {
-            return new TextExercise();
-        }
-        else if (type == ExerciseType.PROGRAMMING) {
-            return new ProgrammingExercise();
-        }
-        else if (type == ExerciseType.FILE_UPLOAD) {
-            return new FileUploadExercise();
-        }
-        else if (type == ExerciseType.QUIZ) {
-            return new QuizExercise();
-        }
-        throw new IllegalArgumentException("Unknown exercise type: " + type);
     }
 }

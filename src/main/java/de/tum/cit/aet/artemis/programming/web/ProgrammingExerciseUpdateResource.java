@@ -179,21 +179,8 @@ public class ProgrammingExerciseUpdateResource {
         if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
-        // Check if Theia is enabled
-        if (moduleFeatureService.isTheiaEnabled()) {
-            // Require 1 / 3 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde()) && !updateDTO.allowOnlineIde()) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
-        else {
-            // Require 1 / 2 participation modes to be enabled
-            if (!Boolean.TRUE.equals(updateDTO.allowOnlineEditor()) && !Boolean.TRUE.equals(updateDTO.allowOfflineIde())) {
-                throw new BadRequestAlertException("You need to allow at least one participation mode, the online editor or the offline IDE", ENTITY_NAME,
-                        "noParticipationModeAllowed");
-            }
-        }
+        // Require at least one participation mode to be enabled
+        validateAtLeastOneParticipationMode(updateDTO);
 
         // Verify that the checkout directories have not been changed
         programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(originalExercise, updatedProgrammingExercise);
@@ -283,42 +270,24 @@ public class ProgrammingExerciseUpdateResource {
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
-        // Only set boolean values if they are explicitly provided (not null)
-        if (dto.allowComplaintsForAutomaticAssessments() != null) {
-            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
-        }
-        if (dto.allowFeedbackRequests() != null) {
-            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
-        }
-        if (dto.presentationScoreEnabled() != null) {
-            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
-        }
-        if (dto.secondCorrectionEnabled() != null) {
-            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
-        }
+        // Only set boolean/nullable values if they are explicitly provided (not null)
+        setIfNotNull(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
+        setIfNotNull(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
+        setIfNotNull(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
+        setIfNotNull(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
 
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
 
         // Update programming exercise specific fields
-        if (dto.allowOnlineEditor() != null) {
-            exercise.setAllowOnlineEditor(dto.allowOnlineEditor());
-        }
-        if (dto.allowOfflineIde() != null) {
-            exercise.setAllowOfflineIde(dto.allowOfflineIde());
-        }
+        setIfNotNull(dto.allowOnlineEditor(), exercise::setAllowOnlineEditor);
+        setIfNotNull(dto.allowOfflineIde(), exercise::setAllowOfflineIde);
         exercise.setAllowOnlineIde(dto.allowOnlineIde());
-
-        if (dto.maxStaticCodeAnalysisPenalty() != null) {
-            exercise.setMaxStaticCodeAnalysisPenalty(dto.maxStaticCodeAnalysisPenalty());
-        }
+        setIfNotNull(dto.maxStaticCodeAnalysisPenalty(), exercise::setMaxStaticCodeAnalysisPenalty);
 
         exercise.setShowTestNamesToStudents(dto.showTestNamesToStudents());
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(dto.buildAndTestStudentSubmissionsAfterDueDate());
-
-        if (dto.testCasesChanged() != null) {
-            exercise.setTestCasesChanged(dto.testCasesChanged());
-        }
+        setIfNotNull(dto.testCasesChanged(), exercise::setTestCasesChanged);
 
         exercise.setSubmissionPolicy(dto.submissionPolicy());
         exercise.setProjectType(dto.projectType());
@@ -353,16 +322,10 @@ public class ProgrammingExerciseUpdateResource {
             return;
         }
 
-        if (dto.sequentialTestRuns() != null) {
-            buildConfig.setSequentialTestRuns(dto.sequentialTestRuns());
-        }
         // Note: branch is preserved from original (immutable during update)
-        if (dto.buildPlanConfiguration() != null) {
-            buildConfig.setBuildPlanConfiguration(dto.buildPlanConfiguration());
-        }
-        if (dto.buildScript() != null) {
-            buildConfig.setBuildScript(dto.buildScript());
-        }
+        setIfNotNull(dto.sequentialTestRuns(), buildConfig::setSequentialTestRuns);
+        setIfNotNull(dto.buildPlanConfiguration(), buildConfig::setBuildPlanConfiguration);
+        setIfNotNull(dto.buildScript(), buildConfig::setBuildScript);
         buildConfig.setCheckoutSolutionRepository(dto.checkoutSolutionRepository());
         buildConfig.setTestCheckoutPath(dto.testCheckoutPath());
         buildConfig.setAssignmentCheckoutPath(dto.assignmentCheckoutPath());
@@ -372,6 +335,23 @@ public class ProgrammingExerciseUpdateResource {
         buildConfig.setTheiaImage(dto.theiaImage());
         buildConfig.setAllowBranching(dto.allowBranching());
         buildConfig.setBranchRegex(dto.branchRegex());
+    }
+
+    private void validateAtLeastOneParticipationMode(UpdateProgrammingExerciseDTO updateDTO) {
+        boolean hasEditor = Boolean.TRUE.equals(updateDTO.allowOnlineEditor());
+        boolean hasOfflineIde = Boolean.TRUE.equals(updateDTO.allowOfflineIde());
+        boolean hasOnlineIde = moduleFeatureService.isTheiaEnabled() && updateDTO.allowOnlineIde();
+        if (!hasEditor && !hasOfflineIde && !hasOnlineIde) {
+            String message = moduleFeatureService.isTheiaEnabled() ? "You need to allow at least one participation mode, the online editor, the offline IDE, or the online IDE"
+                    : "You need to allow at least one participation mode, the online editor or the offline IDE";
+            throw new BadRequestAlertException(message, ENTITY_NAME, "noParticipationModeAllowed");
+        }
+    }
+
+    private static <T> void setIfNotNull(T value, java.util.function.Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
     }
 
     /**
