@@ -305,7 +305,9 @@ public class TextExerciseCreationUpdateResource {
         final ZonedDateTime originalReleaseDate = existingExercise.getReleaseDate();
         final ZonedDateTime originalAssessmentDueDate = existingExercise.getAssessmentDueDate();
         final String originalProblemStatement = existingExercise.getProblemStatement();
-        final Set<Long> originalCompetencyIds = existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+        final Set<Long> originalCompetencyIds = Hibernate.isInitialized(existingExercise.getCompetencyLinks())
+                ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
+                : Set.of();
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
         // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
