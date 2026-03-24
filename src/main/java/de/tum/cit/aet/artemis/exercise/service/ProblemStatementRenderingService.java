@@ -22,8 +22,6 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.safety.Cleaner;
 import org.jsoup.safety.Safelist;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -39,7 +37,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.communication.service.notifications.MarkdownRelativeToAbsolutePathAttributeProvider;
-import de.tum.cit.aet.artemis.exercise.dto.AssetRequirementsDTO;
 import de.tum.cit.aet.artemis.exercise.dto.DiagramRenderInfoDTO;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
 import de.tum.cit.aet.artemis.exercise.dto.TaskRenderInfoDTO;
@@ -52,7 +49,9 @@ public class ProblemStatementRenderingService {
 
     private static final Logger log = LoggerFactory.getLogger(ProblemStatementRenderingService.class);
 
-    private static final String COMMONMARK_VERSION = "1.0.0";
+    private static final String RENDERER_VERSION = "1.0.0";
+
+    private static final int MAX_PLANTUML_DIAGRAMS = 10;
 
     private static final List<String> SELF_CONTAINED_CSS_RESOURCES = List.of("problem-statement-css/katex.min.css", "problem-statement-css/hljs.min.css",
             "problem-statement-css/github-colors-light.css", "problem-statement-css/github-base.css");
@@ -61,15 +60,8 @@ public class ProblemStatementRenderingService {
 
     private static final @Nullable String INTERACTIVE_JS = loadInteractiveJs();
 
-    /**
-     * CSS overrides to remove click affordances when interactive mode is disabled.
-     */
-    private static final String NON_INTERACTIVE_CSS_OVERRIDES = """
-            <style>
-            .artemis-task{cursor:default}
-            .artemis-task-stats{text-decoration:none}
-            </style>
-            """.strip();
+    // Dangerous SVG constructs that PlantUML should never generate but we strip as defense-in-depth
+    private static final Pattern SVG_DANGEROUS_PATTERN = Pattern.compile("<script|</script|\\bon\\w+\\s*=|javascript:|foreignObject|<image|<use[\\s>]", Pattern.CASE_INSENSITIVE);
 
     // @formatter:off
     private static final String EMBEDDED_CSS = """
@@ -117,19 +109,9 @@ public class ProblemStatementRenderingService {
 
     private static final Pattern TESTID_PATTERN = Pattern.compile("<testid>(\\d+)</testid>");
 
-    // Artemis-specific markup in PlantUML: <color:testsColor(<testid>N</testid>)>text</color>
     private static final Pattern TESTS_COLOR_TAG_PATTERN = Pattern.compile("<color:testsColor\\(<testid>(\\d+)</testid>\\)>(.*?)</color>");
 
-    // Artemis-specific markup in PlantUML: #testsColor(<testid>N</testid>) on arrows
     private static final Pattern TESTS_COLOR_ARROW_PATTERN = Pattern.compile("#testsColor\\(<testid>(\\d+)</testid>\\)");
-
-    private static final Pattern KATEX_INLINE_PATTERN = Pattern.compile("(?<!\\\\)\\$(?!\\$)(.+?)(?<!\\\\)\\$");
-
-    private static final Pattern KATEX_BLOCK_PATTERN = Pattern.compile("\\$\\$[\\s\\S]+?\\$\\$");
-
-    private static final Pattern KATEX_BEGIN_PATTERN = Pattern.compile("\\\\begin\\{");
-
-    private static final Pattern FENCED_CODE_PATTERN = Pattern.compile("```(\\w+)");
 
     private static final String SVG_PLACEHOLDER_PREFIX = "<span class=\"artemis-svg-placeholder\" data-svg-index=\"";
 
@@ -152,62 +134,39 @@ public class ProblemStatementRenderingService {
         this.serverUrl = serverUrl;
     }
 
-    private static final String STATELESS_VERSION = "1.0.0-stateless";
-
-    private static final int MAX_PLANTUML_DIAGRAMS = 10;
-
-    private static final java.util.Set<String> SVG_ALLOWED_ELEMENTS = java.util.Set.of("svg", "g", "defs", "clippath", "rect", "circle", "ellipse", "line", "polyline", "polygon",
-            "path", "text", "tspan");
-
-    // style is allowed on SVG elements: PlantUML uses inline style for stroke/fill/font properties.
-    // SVG style cannot execute JS in modern browsers (no expression(), no -moz-binding).
-    private static final java.util.Set<String> SVG_ALLOWED_ATTRIBUTES = java.util.Set.of("viewbox", "width", "height", "x", "y", "cx", "cy", "r", "rx", "ry", "d", "points", "fill",
-            "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "transform", "class", "id", "font-family", "font-size", "font-weight", "font-style",
-            "text-anchor", "text-decoration", "preserveaspectratio", "xmlns", "version", "opacity", "fill-opacity", "stroke-opacity", "dominant-baseline", "dx", "dy",
-            "data-diagram-type", "data-qualified-name", "data-source-line", "style");
-
     /**
-     * Stateless rendering: client provides all data, server just renders. Zero database access.
-     * Uses CommonMark only (no GraalJS). SVGs are sanitized with an allowlist before inlining.
+     * Stateless rendering: client provides all data, server returns self-contained HTML with interactive JS.
+     * Zero database access. Uses CommonMark with inline PlantUML SVGs.
      *
      * @param markdown      the raw problem statement markdown
-     * @param selfContained if true, inlines PlantUML SVGs and CSS
-     * @param interactive   if true, includes vanilla JS for task feedback modal
      * @param testResults   client-provided test results, or null
      * @param resultSummary client-provided result summary (score, commit hash, etc.), or null
      * @param locale        the locale for i18n of user-visible text
      * @return the rendered problem statement DTO
      */
-    public RenderedProblemStatementDTO renderStateless(String markdown, boolean selfContained, boolean interactive, @Nullable Map<Long, TestFeedbackDetail> testResults,
-            @Nullable ResultSummary resultSummary, Locale locale) {
+    public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, @Nullable ResultSummary resultSummary, Locale locale) {
 
         if (markdown == null || markdown.isBlank()) {
-            return new RenderedProblemStatementDTO("", computeHash(""), STATELESS_VERSION, new AssetRequirementsDTO("absent", "absent", "url", List.of()), List.of(), List.of(),
-                    null);
+            return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, List.of(), List.of(), null);
         }
 
         String processedMarkdown = markdown;
 
-        // Step 1: Extract PlantUML diagrams (limit to MAX_PLANTUML_DIAGRAMS)
+        // Step 1: Extract PlantUML diagrams (max 10)
         List<DiagramRenderInfoDTO> diagrams = new ArrayList<>();
         List<String> inlineSvgs = new ArrayList<>();
-        processedMarkdown = extractPlantUmlDiagramsStateless(processedMarkdown, selfContained, diagrams, inlineSvgs, testResults);
+        processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, diagrams, inlineSvgs, testResults);
 
         // Step 2: Extract tasks
         List<TaskRenderInfoDTO> tasks = new ArrayList<>();
         processedMarkdown = extractTasks(processedMarkdown, tasks, testResults, locale);
 
-        // Step 3: Render with CommonMark (always, no GraalJS)
+        // Step 3: CommonMark → HTML
         String html = renderWithCommonMark(processedMarkdown);
-        String diagramMode = selfContained ? "inline" : "url";
-        AssetRequirementsDTO assets = detectStatelessAssetRequirements(markdown, diagramMode);
 
-        // Step 4: Inject sanitized SVGs
-        if (selfContained) {
-            for (int i = 0; i < inlineSvgs.size(); i++) {
-                String placeholder = SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX;
-                html = html.replace(placeholder, inlineSvgs.get(i));
-            }
+        // Step 4: Inject SVGs (after sanitization since jsoup can't handle SVG)
+        for (int i = 0; i < inlineSvgs.size(); i++) {
+            html = html.replace(SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX, inlineSvgs.get(i));
         }
 
         // Step 5: Wrap in container div with result summary
@@ -217,36 +176,26 @@ public class ProblemStatementRenderingService {
         // Step 6: Strip testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Step 7: Prepend embedded CSS
+        // Step 7: Prepend CSS (embedded + third-party)
         html = EMBEDDED_CSS + html;
-
-        // Step 8: For self-contained, inline third-party CSS
-        if (selfContained && SELF_CONTAINED_CSS != null) {
+        if (SELF_CONTAINED_CSS != null) {
             html = SELF_CONTAINED_CSS + html;
         }
 
-        // Step 9: Interactive script
-        String interactiveScript = (selfContained && interactive && INTERACTIVE_JS != null) ? INTERACTIVE_JS : null;
-
-        if (selfContained && interactiveScript == null) {
-            html = NON_INTERACTIVE_CSS_OVERRIDES + html;
-        }
-
-        // Step 10: Content hash and build DTO
+        // Step 8: Content hash (covers HTML + JS)
+        String interactiveScript = INTERACTIVE_JS;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
-        return new RenderedProblemStatementDTO(html, contentHash, STATELESS_VERSION, assets, tasks, diagrams, interactiveScript);
+        return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, tasks, diagrams, interactiveScript);
     }
 
-    private String extractPlantUmlDiagramsStateless(String markdown, boolean selfContained, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs,
-            @Nullable Map<Long, TestFeedbackDetail> testResults) {
+    private String extractPlantUmlDiagrams(String markdown, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
         StringBuilder sb = new StringBuilder();
         int diagramIndex = 0;
 
         while (matcher.find()) {
             if (diagramIndex >= MAX_PLANTUML_DIAGRAMS) {
-                // Replace remaining diagrams with an error message
                 matcher.appendReplacement(sb, Matcher.quoteReplacement("<div class=\"alert alert-warning\">Diagram limit exceeded</div>"));
                 continue;
             }
@@ -256,35 +205,27 @@ public class ProblemStatementRenderingService {
             String sourceHash = computeHash(fullMatch);
             List<Long> testIds = extractTestsColorIds(fullMatch);
             String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
-            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, java.nio.charset.StandardCharsets.UTF_8);
+            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, StandardCharsets.UTF_8);
 
             String inlineSvg = null;
-            if (selfContained) {
-                try {
-                    String rawSvg = plantUmlService.generateSvg(cleanedSource, false);
-                    rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
-                    rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
-                    rawSvg = rawSvg.replace("background:#FFFFFF;", "");
-                    inlineSvg = sanitizeSvg(rawSvg);
-                }
-                catch (Exception e) {
-                    log.error("Failed to generate inline SVG for diagram {} in stateless render", diagramId, e);
-                    inlineSvg = "<div class=\"alert alert-danger\">Failed to render diagram</div>";
-                }
-                inlineSvgs.add(inlineSvg);
+            try {
+                String rawSvg = plantUmlService.generateSvg(cleanedSource, false);
+                rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
+                rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
+                rawSvg = rawSvg.replace("background:#FFFFFF;", "");
+                inlineSvg = rejectDangerousSvg(rawSvg);
             }
+            catch (Exception e) {
+                log.error("Failed to generate inline SVG for diagram {} in stateless render", diagramId, e);
+                inlineSvg = "<div class=\"alert alert-danger\">Failed to render diagram</div>";
+            }
+            inlineSvgs.add(inlineSvg);
 
-            String replacement;
-            if (selfContained) {
-                replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex
-                        + SVG_PLACEHOLDER_SUFFIX + "</div>";
-            }
-            else {
-                replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\"></div>";
-            }
+            String replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex
+                    + SVG_PLACEHOLDER_SUFFIX + "</div>";
 
             matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-            diagrams.add(new DiagramRenderInfoDTO(diagramId, selfContained ? "inline" : "url", svgUrl, inlineSvg, sourceHash, testIds));
+            diagrams.add(new DiagramRenderInfoDTO(diagramId, "inline", svgUrl, inlineSvg, sourceHash, testIds));
             diagramIndex++;
         }
         matcher.appendTail(sb);
@@ -292,70 +233,17 @@ public class ProblemStatementRenderingService {
     }
 
     /**
-     * Sanitizes PlantUML-generated SVG using an allowlist of elements and attributes.
-     * Only passive geometry, text, and container elements are retained.
-     * All style elements/attributes, scripts, event handlers, and external references are stripped.
+     * Defense-in-depth: reject SVG if it contains dangerous constructs that PlantUML should never generate.
+     * Falls back to a safe error message instead of inlining the suspect SVG.
      */
-    static String sanitizeSvg(String rawSvg) {
-        var doc = org.jsoup.Jsoup.parse(rawSvg, "", org.jsoup.parser.Parser.xmlParser());
-        sanitizeSvgElement(doc);
-        return doc.html();
-    }
-
-    private static void sanitizeSvgElement(org.jsoup.nodes.Node node) {
-        var children = new ArrayList<>(node.childNodes());
-        for (var child : children) {
-            if (child instanceof org.jsoup.nodes.Element el) {
-                if (!SVG_ALLOWED_ELEMENTS.contains(el.tagName().toLowerCase(Locale.ROOT))) {
-                    el.remove();
-                }
-                else {
-                    // Remove disallowed attributes
-                    var attrs = new ArrayList<>(el.attributes().asList());
-                    for (var attr : attrs) {
-                        if (!SVG_ALLOWED_ATTRIBUTES.contains(attr.getKey().toLowerCase(Locale.ROOT))) {
-                            el.removeAttr(attr.getKey());
-                        }
-                    }
-                    sanitizeSvgElement(el);
-                }
-            }
-            else if (child instanceof org.jsoup.nodes.TextNode) {
-                // Text nodes are safe, keep them
-            }
-            else {
-                child.remove();
-            }
+    private static String rejectDangerousSvg(String svg) {
+        if (SVG_DANGEROUS_PATTERN.matcher(svg).find()) {
+            log.warn("PlantUML SVG contained dangerous construct — falling back to error placeholder");
+            return "<div class=\"alert alert-danger\">SVG rejected for security reasons</div>";
         }
+        return svg;
     }
 
-    private static AssetRequirementsDTO detectStatelessAssetRequirements(String markdown, String diagramMode) {
-        boolean needsKatex = KATEX_INLINE_PATTERN.matcher(markdown).find() || KATEX_BLOCK_PATTERN.matcher(markdown).find() || KATEX_BEGIN_PATTERN.matcher(markdown).find();
-        boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(markdown).find();
-        return new AssetRequirementsDTO(needsKatex ? "client-rendering-required" : "absent", needsHighlighting ? "client-rendering-required" : "absent", diagramMode, List.of());
-    }
-
-    private String renderWithCommonMark(String markdown) {
-        var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
-        Parser parser = Parser.builder().extensions(extensions).build();
-        HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
-                .build();
-        String html = renderer.render(parser.parse(markdown));
-        return sanitizeHtml(html);
-    }
-
-    private static AssetRequirementsDTO detectAssetRequirements(String markdown, String diagramMode) {
-        boolean needsKatex = KATEX_INLINE_PATTERN.matcher(markdown).find() || KATEX_BLOCK_PATTERN.matcher(markdown).find() || KATEX_BEGIN_PATTERN.matcher(markdown).find();
-        boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(markdown).find();
-        return new AssetRequirementsDTO(needsKatex ? "required" : "absent", needsHighlighting ? "required" : "absent", diagramMode, List.of());
-    }
-
-    /**
-     * Extracts numeric test IDs from testsColor() calls in PlantUML source.
-     *
-     * @param plantUmlSource the PlantUML diagram source
-     * @return list of test IDs referenced in testsColor() calls
-     */
     private List<Long> extractTestsColorIds(String plantUmlSource) {
         List<Long> testIds = new ArrayList<>();
         Matcher matcher = TESTID_PATTERN.matcher(plantUmlSource);
@@ -365,18 +253,11 @@ public class ProblemStatementRenderingService {
         return testIds;
     }
 
-    /**
-     * Resolves Artemis-specific testsColor() markup in PlantUML source to actual colors.
-     * If test results are available, uses green/red based on pass/fail status.
-     * If no results, uses grey (default/uncolored).
-     */
     private static String resolvePlantUmlTestColors(String source, @Nullable Map<Long, TestFeedbackDetail> testResults) {
-        // <color:testsColor(<testid>N</testid>)>text</color> → <color:COLOR>text</color>
         String resolved = TESTS_COLOR_TAG_PATTERN.matcher(source).replaceAll(match -> {
             String color = resolveTestColor(match.group(1), testResults);
             return Matcher.quoteReplacement("<color:" + color + ">" + match.group(2) + "</color>");
         });
-        // #testsColor(<testid>N</testid>) on arrows → #COLOR
         resolved = TESTS_COLOR_ARROW_PATTERN.matcher(resolved).replaceAll(match -> {
             String color = resolveTestColor(match.group(1), testResults);
             return Matcher.quoteReplacement("#" + color);
@@ -384,9 +265,6 @@ public class ProblemStatementRenderingService {
         return resolved;
     }
 
-    /**
-     * Resolves a test ID (guaranteed digits-only by regex) to a PlantUML color.
-     */
     private static String resolveTestColor(String testIdStr, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         if (testResults == null) {
             return "grey";
@@ -498,21 +376,12 @@ public class ProblemStatementRenderingService {
         }
     }
 
-    /**
-     * Computes the aggregate test status for a task.
-     * Mirrors the Angular client's testStatusForTask logic:
-     * FAIL (any failed) > not-executed (any missing) > SUCCESS (all passed).
-     *
-     * @return "success", "fail", "not-executed", or null if no results
-     */
     private static @Nullable String computeTaskTestStatus(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         if (testResults == null || testIds.isEmpty()) {
             return null;
         }
-
         boolean anyFailed = false;
         boolean anyNotExecuted = false;
-
         for (Long testId : testIds) {
             TestFeedbackDetail detail = testResults.get(testId);
             if (detail == null) {
@@ -522,7 +391,6 @@ public class ProblemStatementRenderingService {
                 anyFailed = true;
             }
         }
-
         if (anyFailed) {
             return "fail";
         }
@@ -532,11 +400,6 @@ public class ProblemStatementRenderingService {
         return "success";
     }
 
-    /**
-     * Counts successful and failed tests for a task.
-     *
-     * @return int[2]: [successCount, failCount]
-     */
     private static int[] countTestResults(List<Long> testIds, @Nullable Map<Long, TestFeedbackDetail> testResults) {
         if (testResults == null) {
             return new int[] { 0, 0 };
@@ -555,69 +418,23 @@ public class ProblemStatementRenderingService {
         return new int[] { success, fail };
     }
 
-    /**
-     * Rewrites relative URLs to absolute and sanitizes HTML.
-     * Used for the GraalJS path where URL rewriting can't happen during rendering.
-     */
-    private String rewriteUrlsAndSanitize(String html) {
-        Document dirty = Jsoup.parseBodyFragment(html);
-        dirty.select("a[href^=/]").forEach(el -> el.attr("href", serverUrl + el.attr("href")));
-        dirty.select("img[src^=/]").forEach(el -> el.attr("src", serverUrl + el.attr("src")));
-        Cleaner cleaner = new Cleaner(HTML_SAFELIST);
-        Document clean = cleaner.clean(dirty);
-        return clean.body().html();
-    }
-
-    /**
-     * Sanitizes HTML using the shared safelist.
-     * Used for the CommonMark fallback path.
-     */
-    private String sanitizeHtml(String html) {
+    private String renderWithCommonMark(String markdown) {
+        var extensions = List.of(TablesExtension.create(), StrikethroughExtension.create());
+        Parser parser = Parser.builder().extensions(extensions).build();
+        HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).attributeProviderFactory(ctx -> new MarkdownRelativeToAbsolutePathAttributeProvider(serverUrl))
+                .build();
+        String html = renderer.render(parser.parse(markdown));
         return Jsoup.clean(html, HTML_SAFELIST);
     }
 
     private static Safelist buildSafelist() {
         Safelist safelist = Safelist.relaxed();
-
-        // Custom elements for tasks and diagrams
         safelist.addAttributes("div", "class", "data-diagram-id", "data-svg-url", "data-result");
         safelist.addAttributes("span", "class", "data-task-name", "data-test-ids", "data-test-status", "data-feedback", "data-svg-index");
         safelist.addAttributes("code", "class");
         safelist.addAttributes("pre", "class");
-
-        // KaTeX HTML output: spans with class, style (sizing/positioning), and aria-hidden.
-        // TRUST BOUNDARY: allowing style on span enables CSS injection (e.g. position:fixed overlays)
-        // from user-authored HTML (markdown-it runs with html:true). This is accepted because:
-        // 1. Problem statements are authored by trusted instructors/editors, not students
-        // 2. CSS cannot execute JavaScript in modern browsers (no expression(), no -moz-binding)
-        // 3. jsoup does not support CSS property whitelisting — it's all-or-nothing for style
-        // 4. KaTeX requires inline styles for layout (strut heights, spacing, etc.)
-        // If this trust model changes (e.g. student-authored content), style must be restricted.
-        safelist.addAttributes("span", "style", "aria-hidden");
-
-        // GitHub alerts: class on p and div (div already has class above)
         safelist.addAttributes("p", "class");
-
-        // FontAwesome icons for task status
         safelist.addAttributes("i", "class");
-
-        // MathML tags for KaTeX accessibility
-        safelist.addTags("math", "semantics", "annotation", "mrow", "mi", "mo", "mn", "ms", "mtext", "msup", "msub", "msubsup", "mfrac", "msqrt", "mroot", "mover", "munder",
-                "munderover", "mspace", "mtable", "mtr", "mtd", "menclose", "mpadded", "mphantom", "mstyle", "merror");
-
-        // MathML attributes
-        safelist.addAttributes("math", "xmlns", "display");
-        safelist.addAttributes("annotation", "encoding");
-        safelist.addAttributes("mo", "fence", "stretchy", "symmetric", "lspace", "rspace", "minsize", "maxsize", "separator", "form", "movablelimits");
-        safelist.addAttributes("mi", "mathvariant");
-        safelist.addAttributes("mspace", "width");
-        safelist.addAttributes("mfrac", "linethickness");
-        safelist.addAttributes("mtd", "columnalign");
-        safelist.addAttributes("mover", "accent");
-        safelist.addAttributes("munder", "accentunder");
-        safelist.addAttributes("mpadded", "width", "height", "depth", "lspace", "voffset");
-        safelist.addAttributes("mstyle", "displaystyle", "scriptlevel");
-
         return safelist;
     }
 

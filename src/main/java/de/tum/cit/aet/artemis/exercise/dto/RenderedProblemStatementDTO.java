@@ -8,6 +8,6 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record RenderedProblemStatementDTO(String html, String contentHash, String rendererVersion, AssetRequirementsDTO assets, List<TaskRenderInfoDTO> tasks,
-        List<DiagramRenderInfoDTO> diagrams, @Nullable String interactiveScript) implements Serializable {
+public record RenderedProblemStatementDTO(String html, String contentHash, String rendererVersion, List<TaskRenderInfoDTO> tasks, List<DiagramRenderInfoDTO> diagrams,
+        @Nullable String interactiveScript) implements Serializable {
 }

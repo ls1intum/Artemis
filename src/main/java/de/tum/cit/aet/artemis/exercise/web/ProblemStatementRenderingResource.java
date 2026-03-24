@@ -43,7 +43,8 @@ public class ProblemStatementRenderingResource {
 
     /**
      * POST problem-statement/render : Stateless rendering of a problem statement.
-     * The client sends markdown + test data, the server returns rendered HTML. Zero database access.
+     * The client sends markdown + test data, the server returns self-contained HTML with interactive JS.
+     * Zero database access.
      *
      * @param renderRequest the render request containing markdown, test results, and configuration
      * @return the rendered problem statement DTO
@@ -55,7 +56,6 @@ public class ProblemStatementRenderingResource {
 
         log.debug("REST request to render problem statement (stateless)");
 
-        // Convert client-provided test results to internal format
         Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults = null;
         if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
             testResults = new HashMap<>();
@@ -65,7 +65,6 @@ public class ProblemStatementRenderingResource {
             }
         }
 
-        // Convert client-provided result summary
         ProblemStatementRenderingService.ResultSummary resultSummary = null;
         if (renderRequest.resultSummary() != null) {
             var rs = renderRequest.resultSummary();
@@ -76,8 +75,7 @@ public class ProblemStatementRenderingResource {
         String lang = renderRequest.locale() != null ? renderRequest.locale() : "en";
         Locale locale = Locale.forLanguageTag(lang);
 
-        RenderedProblemStatementDTO result = renderingService.renderStateless(renderRequest.markdown(), renderRequest.selfContained(), renderRequest.interactive(), testResults,
-                resultSummary, locale);
+        RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale);
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
     }
