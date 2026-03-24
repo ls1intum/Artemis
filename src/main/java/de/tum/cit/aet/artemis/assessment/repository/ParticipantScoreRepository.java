@@ -131,14 +131,21 @@ public interface ParticipantScoreRepository extends ArtemisJpaRepository<Partici
     List<ScoreDistributionDTO> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 
     /**
-     * Delete all participant scores for a given exercise
+     * Delete all participant scores for a given exercise.
      * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
+     * <p>
+     * Uses a JPQL bulk DELETE to execute immediately at the database level. This is necessary
+     * because subsequent result deletions use JPQL DELETE ({@code deleteResultById}), which
+     * bypasses Hibernate's auto-flush. A derived delete (select-then-remove) would only schedule
+     * the deletes in the persistence context without flushing them, causing FK constraint
+     * violations when the result JPQL DELETE runs.
      *
      * @param exerciseId the exercise id for which to remove all participant scores
      */
     @Transactional // ok because of delete
     @Modifying
-    void deleteAllByExerciseId(long exerciseId);
+    @Query("DELETE FROM ParticipantScore p WHERE p.exercise.id = :exerciseId")
+    void deleteAllByExerciseId(@Param("exerciseId") long exerciseId);
 
     @Transactional // ok because of modifying query
     @Modifying
