@@ -218,9 +218,7 @@ public class ProgrammingExerciseUpdateResource {
         // Ignore changes to the default branch - preserve the original
         updatedProgrammingExercise.getBuildConfig().setBranch(originalExercise.getBuildConfig().getBranch());
 
-        if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
-            updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
-        }
+        updatedProgrammingExercise.setAuxiliaryRepositories(Objects.requireNonNullElseGet(updatedProgrammingExercise.getAuxiliaryRepositories(), ArrayList::new));
 
         // Update the auxiliary repositories in the DB and ProgrammingExercise instance
         auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(originalExercise, updatedProgrammingExercise);
@@ -228,9 +226,7 @@ public class ProgrammingExerciseUpdateResource {
         // Update the auxiliary repositories in the VCS
         programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(originalExercise, updatedProgrammingExercise);
 
-        if (updatedProgrammingExercise.getBonusPoints() == null) {
-            updatedProgrammingExercise.setBonusPoints(0.0);
-        }
+        updatedProgrammingExercise.setBonusPoints(Objects.requireNonNullElse(updatedProgrammingExercise.getBonusPoints(), 0.0));
 
         // Only save after checking for errors
         ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(originalExercise, updatedProgrammingExercise,
@@ -261,8 +257,7 @@ public class ProgrammingExerciseUpdateResource {
         exercise.validateTitle();
         exercise.setShortName(dto.shortName());
 
-        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
-        exercise.setProblemStatement(newProblemStatement);
+        exercise.setProblemStatement(Objects.requireNonNullElse(dto.problemStatement(), ""));
 
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());

@@ -1,7 +1,9 @@
 package de.tum.cit.aet.artemis.text.dto;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -42,24 +44,11 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs;
-        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs;
-
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
         Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
-        if (criteria != null && Hibernate.isInitialized(criteria)) {
-            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
-        }
-        else {
-            gradingCriterionDTOs = null;
-        }
-        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
-            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyExerciseLinkDTO::of).collect(Collectors.toSet());
-        }
-        else {
-            competencyLinkDTOs = null;
-        }
+        Set<GradingCriterionDTO> gradingCriterionDTOs = mapIfInitialized(criteria, GradingCriterionDTO::of);
+        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = mapIfInitialized(competencyLinks, CompetencyExerciseLinkDTO::of);
 
         return new UpdateTextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
@@ -67,5 +56,9 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
                 courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
+    }
+
+    private static <T, R> Set<R> mapIfInitialized(Collection<T> collection, Function<T, R> mapper) {
+        return collection != null && Hibernate.isInitialized(collection) ? collection.stream().map(mapper).collect(Collectors.toSet()) : null;
     }
 }

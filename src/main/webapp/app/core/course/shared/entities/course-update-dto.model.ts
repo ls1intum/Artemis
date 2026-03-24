@@ -78,56 +78,48 @@ function applyCourseDefaults(course: Course) {
 }
 
 /**
+ * Builds the shared properties common to both create and update DTOs.
+ */
+function buildSharedCourseProperties(course: Course) {
+    return {
+        title: course.title!,
+        shortName: course.shortName!,
+        description: course.description,
+        semester: course.semester,
+        studentGroupName: course.studentGroupName,
+        teachingAssistantGroupName: course.teachingAssistantGroupName,
+        editorGroupName: course.editorGroupName,
+        instructorGroupName: course.instructorGroupName,
+        startDate: convertDateFromClient(course.startDate),
+        endDate: convertDateFromClient(course.endDate),
+        enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+        enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+        unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
+        onlineCourse: course.onlineCourse,
+        language: course.language,
+        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+        maxComplaints: course.maxComplaints,
+        maxTeamComplaints: course.maxTeamComplaints,
+        color: course.color,
+        enrollmentEnabled: course.enrollmentEnabled,
+        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
+        presentationScore: course.presentationScore,
+        maxPoints: course.maxPoints,
+        accuracyOfScores: course.accuracyOfScores,
+        timeZone: course.timeZone,
+        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+        ...applyCourseDefaults(course),
+    };
+}
+
+/**
  * Converts a Course entity to a CourseCreateDTO for sending to the server.
  *
  * @param course the course entity to convert
  * @returns a CourseCreateDTO with only the fields needed for creation
  */
 export function toCourseCreateDTO(course: Course): CourseCreateDTO {
-    return {
-        // Basic info
-        title: course.title!,
-        shortName: course.shortName!,
-        description: course.description,
-        semester: course.semester,
-
-        // Group names
-        studentGroupName: course.studentGroupName,
-        teachingAssistantGroupName: course.teachingAssistantGroupName,
-        editorGroupName: course.editorGroupName,
-        instructorGroupName: course.instructorGroupName,
-
-        // Dates (converted to ISO strings)
-        startDate: convertDateFromClient(course.startDate),
-        endDate: convertDateFromClient(course.endDate),
-        enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
-        enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
-        unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
-
-        // Configuration flags
-        onlineCourse: course.onlineCourse,
-        language: course.language,
-        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
-
-        // Complaint settings
-        maxComplaints: course.maxComplaints,
-        maxTeamComplaints: course.maxTeamComplaints,
-
-        // UI settings
-        color: course.color,
-        enrollmentEnabled: course.enrollmentEnabled,
-        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
-
-        // Course features
-        presentationScore: course.presentationScore,
-        maxPoints: course.maxPoints,
-        accuracyOfScores: course.accuracyOfScores,
-        timeZone: course.timeZone,
-        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
-
-        // Shared defaults
-        ...applyCourseDefaults(course),
-    };
+    return buildSharedCourseProperties(course);
 }
 
 /**
@@ -199,52 +191,9 @@ export interface CourseUpdateDTO {
  */
 export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
     return {
-        // ID is required for update
+        ...buildSharedCourseProperties(course),
         id: course.id!,
-
-        // Basic info
-        title: course.title!,
-        shortName: course.shortName!,
-        description: course.description,
-        semester: course.semester,
-
-        // Group names
-        studentGroupName: course.studentGroupName,
-        teachingAssistantGroupName: course.teachingAssistantGroupName,
-        editorGroupName: course.editorGroupName,
-        instructorGroupName: course.instructorGroupName,
-
-        // Dates (converted to ISO strings)
-        startDate: convertDateFromClient(course.startDate),
-        endDate: convertDateFromClient(course.endDate),
-        enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
-        enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
-        unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
-
-        // Configuration flags
-        onlineCourse: course.onlineCourse,
-        language: course.language,
-        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
-
-        // Complaint settings
-        maxComplaints: course.maxComplaints,
-        maxTeamComplaints: course.maxTeamComplaints,
-
-        // UI settings
-        color: course.color,
         courseIcon: course.courseIcon,
-        enrollmentEnabled: course.enrollmentEnabled,
-        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
-
-        // Course features
-        presentationScore: course.presentationScore,
-        maxPoints: course.maxPoints,
-        accuracyOfScores: course.accuracyOfScores,
-        timeZone: course.timeZone,
-        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
-
-        // Shared defaults
-        ...applyCourseDefaults(course),
     };
 }

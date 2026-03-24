@@ -70,7 +70,7 @@ public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setExplanation(explanation);
         question.setPoints(points);
         question.setScoringType(scoringType);
-        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
+        question.setRandomizeOrder(Boolean.TRUE.equals(randomizeOrder));
         question.setSimilarityValue(similarityValue);
         question.setMatchLetterCase(matchLetterCase);
 

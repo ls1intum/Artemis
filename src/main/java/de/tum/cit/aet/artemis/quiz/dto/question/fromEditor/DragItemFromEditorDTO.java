@@ -39,7 +39,7 @@ public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pi
     public DragItem toDomainObject() {
         DragItem dragItem = new DragItem();
         // Use id as tempID fallback for mapping resolution
-        dragItem.setTempID(tempID != null ? tempID : id);
+        dragItem.setTempID(effectiveId());
         dragItem.setText(text);
         dragItem.setPictureFilePath(pictureFilePath);
         return dragItem;
@@ -51,7 +51,7 @@ public record DragItemFromEditorDTO(Long id, Long tempID, String text, String pi
      * @param dragItem the existing drag item to update
      */
     public void applyTo(DragItem dragItem) {
-        dragItem.setTempID(tempID != null ? tempID : id);
+        dragItem.setTempID(effectiveId());
         dragItem.setText(text);
         dragItem.setPictureFilePath(pictureFilePath);
     }

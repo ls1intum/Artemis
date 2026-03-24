@@ -247,9 +247,6 @@ export class FormDateTimePickerComponent implements ControlValueAccessor, OnDest
     }
 
     ngOnDestroy(): void {
-        if (this.pickerOpenTimeoutId) {
-            clearTimeout(this.pickerOpenTimeoutId);
-        }
         this.onPickerClose();
     }
 
