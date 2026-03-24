@@ -3,13 +3,9 @@ package de.tum.cit.aet.artemis.text.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -26,12 +22,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
+import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.atlas.api.AtlasMLApi;
-import de.tum.cit.aet.artemis.atlas.api.CompetencyApi;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.dto.atlasml.SaveCompetencyRequestDTO.OperationTypeDTO;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -83,8 +77,6 @@ public class TextExerciseCreationUpdateResource {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final Optional<CompetencyApi> competencyApi;
-
     private final Optional<SlideApi> slideApi;
 
     private final Optional<AtlasMLApi> atlasMLApi;
@@ -100,8 +92,8 @@ public class TextExerciseCreationUpdateResource {
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
-            ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
+            ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi, Optional<SlideApi> slideApi,
+            Optional<AtlasMLApi> atlasMLApi) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -114,7 +106,6 @@ public class TextExerciseCreationUpdateResource {
         this.exerciseVersionService = exerciseVersionService;
         this.athenaApi = athenaApi;
         this.competencyProgressApi = competencyProgressApi;
-        this.competencyApi = competencyApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
     }
@@ -322,7 +313,9 @@ public class TextExerciseCreationUpdateResource {
         exercise.validateGeneralSettings();
 
         updateGradingCriteria(dto, exercise);
-        updateCompetencyLinks(dto, exercise);
+        if (Hibernate.isInitialized(exercise.getCompetencyLinks())) {
+            exerciseService.updateCompetencyLinks(dto, exercise);
+        }
 
         return exercise;
     }
@@ -360,82 +353,13 @@ public class TextExerciseCreationUpdateResource {
      * Replaces the grading criteria of the given exercise according to PUT semantics.
      */
     private void updateGradingCriteria(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
-            clearInitializedCollection(exercise.getGradingCriteria());
-            return;
-        }
-
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
-
-        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
-
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
-            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
-            if (criterion == null) {
-                criterion = gcDto.toEntity();
+        if (dto.gradingCriteria() != null) {
+            exercise.getGradingCriteria().clear();
+            for (GradingCriterionDTO criterionDTO : dto.gradingCriteria()) {
+                GradingCriterion criterion = criterionDTO.toEntity();
                 criterion.setExercise(exercise);
+                exercise.getGradingCriteria().add(criterion);
             }
-            else {
-                gcDto.applyTo(criterion);
-            }
-            return criterion;
-        }).collect(Collectors.toSet());
-
-        managedCriteria.clear();
-        managedCriteria.addAll(updated);
-    }
-
-    /**
-     * Replaces the competency links of the given exercise according to PUT semantics.
-     */
-    private void updateCompetencyLinks(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            clearInitializedCollection(exercise.getCompetencyLinks());
-            return;
-        }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
-
-        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-
-        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
-
-        Long exerciseCourseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
-
-        Set<CompetencyExerciseLink> updated = new HashSet<>();
-        for (var linkDto : dto.competencyLinks()) {
-
-            if (exerciseCourseId != null && linkDto.courseId() != null && !Objects.equals(exerciseCourseId, linkDto.courseId())) {
-                throw new BadRequestAlertException("The competency does not belong to the exercise's course.", "CourseCompetency", "wrongCourse");
-            }
-
-            var competencyDto = linkDto.courseCompetencyDTO();
-            Long competencyId = competencyDto.id();
-
-            CompetencyExerciseLink link = existingByCompetencyId.get(competencyId);
-            if (link == null) {
-                Competency competencyRef = api.loadCompetency(competencyId);
-                competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-                link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-            }
-            else {
-                link.setWeight(linkDto.weight());
-            }
-
-            updated.add(link);
-        }
-
-        managedLinks.clear();
-        managedLinks.addAll(updated);
-    }
-
-    /**
-     * Clears the given collection if it is initialized.
-     */
-    private static <T> void clearInitializedCollection(Set<T> set) {
-        if (set != null && Hibernate.isInitialized(set)) {
-            set.clear();
         }
     }
 

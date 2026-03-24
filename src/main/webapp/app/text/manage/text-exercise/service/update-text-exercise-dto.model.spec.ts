@@ -67,9 +67,9 @@ describe('toUpdateTextExerciseDTO', () => {
         expect(dto.courseId).toBe(10);
         expect(dto.exerciseGroupId).toBeUndefined();
 
-        // Competency links (mapped to CompetencyExerciseLinkDTO with courseCompetencyDTO)
+        // Competency links (mapped to CompetencyLinkDTO with competency id)
         expect(dto.competencyLinks).toHaveLength(1);
-        expect(dto.competencyLinks![0].courseCompetencyDTO.id).toBe(200);
+        expect(dto.competencyLinks![0].competency.id).toBe(200);
         expect(dto.competencyLinks![0].weight).toBe(2);
     });
 

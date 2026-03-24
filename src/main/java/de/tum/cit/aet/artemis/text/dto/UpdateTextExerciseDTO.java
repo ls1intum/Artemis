@@ -12,11 +12,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
-import de.tum.cit.aet.artemis.atlas.dto.CompetencyExerciseLinkDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
+import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.text.domain.TextExercise;
 
 /**
@@ -28,7 +28,7 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
         ZonedDateTime startDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, ZonedDateTime exampleSolutionPublicationDate, String exampleSolution, Long courseId,
-        Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyExerciseLinkDTO> competencyLinks) {
+        Long exerciseGroupId, Set<GradingCriterionDTO> gradingCriteria, Set<CompetencyLinkDTO> competencyLinks) implements CompetencyLinksHolderDTO {
 
     /**
      * Creates an UpdateTextExerciseDTO from the given TextExercise domain object.
@@ -45,10 +45,9 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
         Set<GradingCriterion> criteria = exercise.getGradingCriteria();
-        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
 
         Set<GradingCriterionDTO> gradingCriterionDTOs = mapIfInitialized(criteria, GradingCriterionDTO::of);
-        Set<CompetencyExerciseLinkDTO> competencyLinkDTOs = mapIfInitialized(competencyLinks, CompetencyExerciseLinkDTO::of);
+        Set<CompetencyLinkDTO> competencyLinkDTOs = mapIfInitialized(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
 
         return new UpdateTextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),

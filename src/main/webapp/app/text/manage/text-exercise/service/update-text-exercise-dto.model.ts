@@ -4,7 +4,7 @@ import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exerc
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
-import { CompetencyExerciseLinkDTO, mapCompetencyLinks } from 'app/atlas/shared/dto/competency-exercise-link-dto';
+import { CompetencyLinkDTO } from 'app/programming/manage/services/update-programming-exercise-dto.model';
 
 /**
  * DTO for updating text exercises.
@@ -40,7 +40,7 @@ export interface UpdateTextExerciseDTO {
     channelName?: string;
 
     // Competency links as DTOs
-    competencyLinks?: CompetencyExerciseLinkDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
 
     // Course/ExerciseGroup references (by ID)
     courseId?: number;
@@ -95,7 +95,10 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         allowComplaintsForAutomaticAssessments: textExercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: textExercise.allowFeedbackRequests,
         channelName: textExercise.channelName,
-        competencyLinks: mapCompetencyLinks(textExercise.competencyLinks),
+        competencyLinks: textExercise.competencyLinks?.map((link) => ({
+            competency: { id: link.competency!.id! },
+            weight: link.weight,
+        })),
         courseId,
         exerciseGroupId,
         exampleSolution: textExercise.exampleSolution,

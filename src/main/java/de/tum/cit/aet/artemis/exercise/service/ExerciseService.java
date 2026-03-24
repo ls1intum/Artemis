@@ -963,10 +963,7 @@ public class ExerciseService {
      * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
      */
     public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        if (competencyLinks == null || competencyLinks.isEmpty()) {
-            return;
-        }
-        if (competencyRelationApi.isEmpty()) {
+        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRelationApi.isEmpty()) {
             return;
         }
         // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+

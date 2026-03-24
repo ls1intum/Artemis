@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import java.util.function.Consumer;
+
 import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
@@ -42,22 +44,18 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
      */
     public Exercise toEntity() {
         Exercise exercise = createExerciseByType(exerciseType);
-
         exercise.setId(id);
-        if (title != null) {
-            exercise.setTitle(title);
-        }
-        if (shortName != null) {
-            exercise.setShortName(shortName);
-        }
-        if (maxPoints != null) {
-            exercise.setMaxPoints(maxPoints);
-        }
-        if (bonusPoints != null) {
-            exercise.setBonusPoints(bonusPoints);
-        }
-
+        setIfNotNull(title, exercise::setTitle);
+        setIfNotNull(shortName, exercise::setShortName);
+        setIfNotNull(maxPoints, exercise::setMaxPoints);
+        setIfNotNull(bonusPoints, exercise::setBonusPoints);
         return exercise;
+    }
+
+    private static <T> void setIfNotNull(T value, Consumer<T> setter) {
+        if (value != null) {
+            setter.accept(value);
+        }
     }
 
     private static Exercise createExerciseByType(ExerciseType type) {
