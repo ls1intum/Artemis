@@ -317,7 +317,9 @@ public class ParticipationResource {
         }
 
         if (exercise instanceof TextExercise || exercise instanceof ModelingExercise) {
-            boolean hasSubmittedOnce = submissionRepository.findAllByParticipationId(participation.getId()).stream().anyMatch(Submission::isSubmitted);
+            var submissions = submissionRepository.findAllByParticipationId(participation.getId());
+            // For practice mode, any submission is sufficient; for graded mode, a submission with submitted=true is required
+            boolean hasSubmittedOnce = participation.isPracticeMode() ? !submissions.isEmpty() : submissions.stream().anyMatch(Submission::isSubmitted);
             if (!hasSubmittedOnce) {
                 throw new BadRequestAlertException("You need to submit at least once", "participation", "noSubmissionExists", true);
             }

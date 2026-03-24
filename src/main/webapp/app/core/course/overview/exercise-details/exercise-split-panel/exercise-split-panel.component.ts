@@ -1,4 +1,4 @@
-import { Component, computed, effect, inject, input, viewChild } from '@angular/core';
+import { Component, computed, effect, inject, input } from '@angular/core';
 import { ActivatedRoute, ChildrenOutletContexts, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
@@ -12,6 +12,7 @@ import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-subm
 import { FileUploadSubmissionComponent } from 'app/fileupload/overview/file-upload-submission/file-upload-submission.component';
 import { QuizParticipationComponent } from 'app/quiz/overview/participation/quiz-participation.component';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
+import { ParticipationMode } from 'app/exercise/exercise-headers/participation-mode-toggle/participation-mode-toggle.component';
 import { isCommunicationEnabled, isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 import { PanelDirective, ResizablePanelsComponent } from 'app/shared/components/resizable-panels/resizable-panels.component';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
@@ -44,7 +45,6 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
         PanelDirective,
         ProblemStatementComponent,
         DiscussionFeedComponent,
-        QuizParticipationComponent,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
         TranslateDirective,
@@ -91,8 +91,7 @@ export class ExerciseSplitPanelComponent {
     readonly exampleSolutionInfo = input<ExampleSolutionInfo>();
     readonly exampleSolutionCollapsed = input<boolean>(true);
     readonly onChangeExampleSolution = input<(() => void) | undefined>(undefined);
-
-    private readonly quizParticipation = viewChild(QuizParticipationComponent);
+    readonly participationMode = input<ParticipationMode>('graded');
 
     readonly showDiscussion = computed(() => {
         const course = this.exercise().course;
@@ -121,8 +120,9 @@ export class ExerciseSplitPanelComponent {
     });
 
     readonly showEditorPanel = computed(() => {
-        if (!this.studentParticipation()) return false;
         const type = this.exercise().type;
+        if (type === ExerciseType.QUIZ) return true;
+        if (!this.studentParticipation()) return false;
         if (type === ExerciseType.PROGRAMMING) {
             return (this.exercise() as ProgrammingExercise).allowOnlineEditor ?? false;
         }
@@ -135,7 +135,7 @@ export class ExerciseSplitPanelComponent {
 
     readonly usesRouterOutlet = computed(() => {
         const type = this.exercise().type;
-        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || this.showCodeEditor();
+        return type === ExerciseType.TEXT || type === ExerciseType.MODELING || type === ExerciseType.FILE_UPLOAD || type === ExerciseType.QUIZ || this.showCodeEditor();
     });
 
     readonly showComplaintView = computed(() => {
@@ -170,9 +170,21 @@ export class ExerciseSplitPanelComponent {
         effect(() => {
             const participation = this.studentParticipation();
             const exercise = this.exercise();
-            if (!participation?.id || !exercise.id || this.route.firstChild) return;
+            if (!exercise.id) return;
 
             const type = exercise.type;
+            if (type === ExerciseType.QUIZ) {
+                const canPractice = !!(exercise as QuizExercise).quizEnded;
+                const targetSegment = this.participationMode() === 'practice' && canPractice ? 'practice' : 'live';
+                const currentSegment = this.route.firstChild?.snapshot.url[0]?.path;
+                if (currentSegment !== targetSegment) {
+                    this.router.navigate(['quiz-exercises', exercise.id, targetSegment], { relativeTo: this.route.parent });
+                }
+                return;
+            }
+            if (!participation?.id) return;
+            const currentParticipationId = this.route.firstChild?.snapshot.paramMap.get('participationId');
+            if (currentParticipationId === String(participation.id)) return;
             if (type === ExerciseType.TEXT) {
                 this.router.navigate(['text-exercises', exercise.id, 'participate', participation.id], { relativeTo: this.route.parent });
             } else if (type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).allowOnlineEditor) {
@@ -209,8 +221,9 @@ export class ExerciseSplitPanelComponent {
                 component.submit();
             } else if (component instanceof FileUploadSubmissionComponent) {
                 component.submitExercise();
+            } else if (component instanceof QuizParticipationComponent) {
+                component.onSubmit();
             }
         }
-        this.quizParticipation()?.onSubmit();
     }
 }

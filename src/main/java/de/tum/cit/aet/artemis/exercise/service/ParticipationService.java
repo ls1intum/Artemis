@@ -576,7 +576,7 @@ public class ParticipationService {
      */
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
-            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
+            return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), false);
         }
         else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerSubmissionsAndTeamStudentsByExerciseIdAndTeamId(exercise.getId(), team.getId());
@@ -642,7 +642,15 @@ public class ParticipationService {
         if (exercise.isTestExamExercise()) {
             return studentParticipationRepository.findLatestWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
         }
-        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        // After the due date, prefer the practice participation for submission context (student is in practice mode)
+        if (exercise.getDueDate() != null && ZonedDateTime.now().isAfter(exercise.getDueDate())) {
+            Optional<StudentParticipation> practiceParticipation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(),
+                    username, true);
+            if (practiceParticipation.isPresent()) {
+                return practiceParticipation;
+            }
+        }
+        return studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
     /**

@@ -148,9 +148,12 @@ export class ResultHistoryDropdownComponent {
         const courseId = getCourseFromExercise(exercise)?.id;
 
         if (exercise.type === ExerciseType.QUIZ) {
-            const quizMode = isPracticeMode(participation) ? 'practice' : 'live';
-            const queryParams = isPracticeMode(participation) ? { participationId: participation.id } : {};
-            this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, quizMode], { queryParams });
+            if (isPracticeMode(participation)) {
+                const submissionId = result.submission?.id;
+                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id, 'submission', submissionId]);
+            } else {
+                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
+            }
             return;
         }
 

@@ -9,7 +9,7 @@
                     (click)="sortedHistoryResults.length ? resultHistoryDropdown.toggleResultsPopover($event) : undefined"
                 >
                     <jhi-information-box [informationBoxData]="informationBoxItem">
-                        <span contentComponent class="d-flex align-items-center gap-1" [class.opacity-50]="isPractice">
+                        <span contentComponent class="d-flex align-items-center gap-1">
                             <jhi-submission-result-status
                                 class="text-truncate result pe-none"
                                 [exercise]="informationBoxItem.content.value"

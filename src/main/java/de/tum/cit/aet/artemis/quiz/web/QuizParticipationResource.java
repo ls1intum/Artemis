@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
@@ -140,17 +141,19 @@ public class QuizParticipationResource {
     }
 
     /**
-     * GET /quiz-exercises/{exerciseId}/participations/{participationId}/result : get the result of a specific quiz participation.
-     * This is used to view an existing practice mode result without starting a new practice session.
+     * GET /quiz-exercises/{exerciseId}/participations/{participationId}/result : get the result of a quiz participation.
+     * When submissionId is provided, loads that specific submission; otherwise loads the most recent one.
      *
      * @param exerciseId      the id of the quiz exercise
      * @param participationId the id of the participation to retrieve the result for
+     * @param submissionId    optional id of a specific submission to view
      * @return the ResponseEntity with status 200 (OK) and the participation with result
      */
     @GetMapping("quiz-exercises/{exerciseId}/participations/{participationId}/result")
     @EnforceAtLeastStudentInExercise
-    public ResponseEntity<StudentQuizParticipationDTO> getParticipationResult(@PathVariable Long exerciseId, @PathVariable Long participationId) {
-        log.debug("REST request to get quiz participation result : exerciseId={}, participationId={}", exerciseId, participationId);
+    public ResponseEntity<StudentQuizParticipationDTO> getParticipationResult(@PathVariable Long exerciseId, @PathVariable Long participationId,
+            @RequestParam(required = false) Long submissionId) {
+        log.debug("REST request to get quiz participation result : exerciseId={}, participationId={}, submissionId={}", exerciseId, participationId, submissionId);
         QuizExercise exercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exerciseId);
 
         StudentParticipation participation = studentParticipationRepository.findByIdWithResultsElseThrow(participationId);
@@ -160,14 +163,26 @@ public class QuizParticipationResource {
             throw new BadRequestAlertException("The participation does not belong to the specified exercise", "participation", "exerciseMismatch");
         }
 
-        var result = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).orElse(new Result());
         QuizSubmission submission;
-        if (result.getId() != null) {
-            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
+        Result result;
+        if (submissionId != null) {
+            submission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(submissionId)
+                    .orElseThrow(() -> new BadRequestAlertException("No quiz submission found with id " + submissionId, "quizSubmission", "notFound"));
+            if (!participationId.equals(submission.getParticipation().getId())) {
+                throw new BadRequestAlertException("The submission does not belong to the specified participation", "quizSubmission", "participationMismatch");
+            }
+            result = submission.getResults().stream().findFirst().orElse(new Result());
         }
         else {
-            submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().findFirst().orElseThrow();
+            result = resultRepository.findFirstBySubmissionParticipationIdOrderByCompletionDateDesc(participationId).orElse(new Result());
+            if (result.getId() != null) {
+                submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByResultId(result.getId()).orElseThrow();
+            }
+            else {
+                submission = quizSubmissionRepository.findWithEagerSubmittedAnswersByParticipationId(participationId).stream().findFirst().orElseThrow();
+            }
         }
+
         submission.setResults(List.of(result));
         participation.setSubmissions(Set.of(submission));
         participation.setExercise(exercise);

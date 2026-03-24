@@ -16,6 +16,7 @@
         <jhi-exercise-split-panel
             class="d-flex flex-fill"
             [exercise]="exercise"
+            [participationMode]="participationMode()"
             [studentParticipation]="activeParticipation()"
             [irisEnabled]="irisEnabled() && irisChatEnabled()"
             [courseId]="courseId"

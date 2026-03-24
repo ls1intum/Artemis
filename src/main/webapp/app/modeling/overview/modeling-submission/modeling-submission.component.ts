@@ -364,6 +364,7 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
             this.modelingExercise &&
             !!this.modelingExercise.dueDate &&
             !!this.participation.initializationDate &&
+            !this.participation.testRun &&
             dayjs(this.participation.initializationDate).isAfter(getExerciseDueDate(this.modelingExercise, this.participation));
 
         this.isAfterAssessmentDueDate = !this.modelingExercise.assessmentDueDate || dayjs().isAfter(this.modelingExercise.assessmentDueDate);
