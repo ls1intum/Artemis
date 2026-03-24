@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { Overlay } from '@angular/cdk/overlay';
@@ -14,6 +15,7 @@ import { mockServerSessionHttpResponseWithId, mockWebsocketServerMessage } from 
 import { IrisExerciseChatbotButtonComponent } from 'app/iris/overview/exercise-chatbot/exercise-chatbot-button.component';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
 import { ChatServiceMode, IrisChatService } from 'app/iris/overview/services/iris-chat.service';
+import { IrisStageStateDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisLogoComponent } from 'app/iris/overview/iris-logo/iris-logo.component';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisStatusService } from 'app/iris/overview/services/iris-status.service';
@@ -22,6 +24,7 @@ import dayjs from 'dayjs/esm';
 import { provideHttpClient } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { User } from 'app/core/user/user.model';
+import { TranslateService } from '@ngx-translate/core';
 
 describe('ExerciseChatbotButtonComponent', () => {
     setupTestBed({ zoneless: true });
@@ -34,7 +37,7 @@ describe('ExerciseChatbotButtonComponent', () => {
     let mockDialog: MatDialog;
     let mockOverlay: Overlay;
     let mockActivatedRoute: ActivatedRoute;
-    let mockDialogClose: any;
+    let mockDialogClose: ReturnType<typeof vi.fn>;
     let mockDialogAfterClosed: Subject<void>;
     let mockParamsSubject: Subject<any>;
     let mockQueryParamsSubject: Subject<any>;
@@ -89,6 +92,17 @@ describe('ExerciseChatbotButtonComponent', () => {
                 { provide: ActivatedRoute, useValue: mockActivatedRoute },
                 { provide: IrisStatusService, useValue: statusMock },
                 { provide: UserService, useValue: {} },
+                {
+                    provide: TranslateService,
+                    useValue: {
+                        get: vi.fn().mockReturnValue(of('')),
+                        instant: vi.fn((key: string) => key),
+                        getCurrentLang: vi.fn().mockReturnValue('en'),
+                        onTranslationChange: new Subject(),
+                        onLangChange: new Subject(),
+                        onDefaultLangChange: new Subject(),
+                    },
+                },
             ],
         }).compileComponents();
 
@@ -220,69 +234,17 @@ describe('ExerciseChatbotButtonComponent', () => {
         expect(component.chatOpen()).toBe(false);
     });
 
-    describe('checkOverflow', () => {
-        it('should set isOverflowing to false when chatBubble element does not exist', () => {
-            component.isOverflowing.set(true);
-            component.checkOverflow();
-            expect(component.isOverflowing()).toBe(false);
-        });
-
-        it('should set isOverflowing to false when bubble-text element does not exist', () => {
-            // Create a mock bubble element without bubble-text child
-            const mockBubble = document.createElement('div');
-            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
-
-            component.isOverflowing.set(true);
-            component.checkOverflow();
-
-            expect(component.isOverflowing()).toBe(false);
-        });
-
-        it('should set isOverflowing to true when text scrollHeight exceeds clientHeight', () => {
-            // Create mock elements
-            const mockBubble = document.createElement('div');
-            const mockText = document.createElement('div');
-            mockText.classList.add('bubble-text');
-            mockBubble.appendChild(mockText);
-
-            // Mock scrollHeight > clientHeight
-            Object.defineProperty(mockText, 'scrollHeight', { value: 100, configurable: true });
-            Object.defineProperty(mockText, 'clientHeight', { value: 50, configurable: true });
-
-            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
-
-            component.checkOverflow();
-
-            expect(component.isOverflowing()).toBe(true);
-        });
-
-        it('should set isOverflowing to false when text scrollHeight equals clientHeight', () => {
-            // Create mock elements
-            const mockBubble = document.createElement('div');
-            const mockText = document.createElement('div');
-            mockText.classList.add('bubble-text');
-            mockBubble.appendChild(mockText);
-
-            // Mock scrollHeight = clientHeight
-            Object.defineProperty(mockText, 'scrollHeight', { value: 50, configurable: true });
-            Object.defineProperty(mockText, 'clientHeight', { value: 50, configurable: true });
-
-            vi.spyOn(component, 'chatBubble' as any).mockReturnValue({ nativeElement: mockBubble });
-
-            component.checkOverflow();
-
-            expect(component.isOverflowing()).toBe(false);
-        });
-    });
-
     describe('handleButtonClick', () => {
-        it('should close dialog and set chatOpen to false when chat is open', () => {
+        it('should close dialog and set chatOpen to false when chat is open', async () => {
             component.openChat();
             expect(component.chatOpen()).toBe(true);
 
             component.handleButtonClick();
 
-            expect(mockDialog.closeAll).toHaveBeenCalled();
+            expect(mockDialogClose).toHaveBeenCalled();
+            // chatOpen is reset via afterClosed subscription
+            mockDialogAfterClosed.next();
+            await fixture.whenStable();
             expect(component.chatOpen()).toBe(false);
         });
 
@@ -308,6 +270,32 @@ describe('ExerciseChatbotButtonComponent', () => {
 
             expect(component.chatOpen()).toBe(false);
             expect(component.newIrisMessage()).toBeUndefined();
+        });
+    });
+
+    describe('stage display name', () => {
+        it('should show rotation label when stage message is empty', async () => {
+            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: '', internal: false }]);
+            await fixture.whenStable();
+
+            expect(component.displayName()).toBe('artemisApp.iris.stages.thinking');
+            expect(component.isProcessing()).toBe(true);
+        });
+
+        it('should show stage message when provided', async () => {
+            chatService.stages.next([{ name: 'Executing pipeline', state: IrisStageStateDTO.IN_PROGRESS, weight: 10, message: 'Checking info', internal: false }]);
+            await fixture.whenStable();
+
+            expect(component.displayName()).toBe('Checking info');
+            expect(component.isProcessing()).toBe(true);
+        });
+
+        it('should return empty string when no active stage', async () => {
+            chatService.stages.next([{ name: 'Done Stage', state: IrisStageStateDTO.DONE, weight: 10, message: '', internal: false }]);
+            await fixture.whenStable();
+
+            expect(component.displayName()).toBe('');
+            expect(component.isProcessing()).toBe(false);
         });
     });
 
