@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.core.config;
 import java.util.List;
 import java.util.Optional;
 
-import io.sentry.protocol.SentryException;
 import jakarta.annotation.PostConstruct;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
@@ -22,6 +21,7 @@ import io.sentry.Sentry;
 import io.sentry.SentryBaseEvent;
 import io.sentry.SentryEvent;
 import io.sentry.protocol.Request;
+import io.sentry.protocol.SentryException;
 import io.sentry.protocol.SentryTransaction;
 import tech.jhipster.config.JHipsterConstants;
 
