@@ -116,6 +116,12 @@ public abstract class HyperionCodeGenerationService {
         return coreLogicResponse.getFiles();
     }
 
+    /**
+     * Sanitizes consistency issue text before it is embedded into prompts.
+     *
+     * @param consistencyIssues raw consistency issue text
+     * @return trimmed, control-character-free text truncated to the configured limit
+     */
     private String normalizeConsistencyIssues(String consistencyIssues) {
         if (consistencyIssues == null) {
             throw new IllegalArgumentException("consistencyIssues must not be null");
@@ -131,6 +137,14 @@ public abstract class HyperionCodeGenerationService {
         return sanitized;
     }
 
+    /**
+     * Creates the common template variable set shared by the different generation stages.
+     *
+     * @param exercise            programming exercise context
+     * @param repositoryStructure tree-format representation of the repository
+     * @param consistencyIssues   sanitized consistency issue text
+     * @return mutable template variable map populated with the shared values
+     */
     protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues) {
         if (exercise == null) {
             throw new IllegalArgumentException("exercise must not be null");
@@ -189,6 +203,12 @@ public abstract class HyperionCodeGenerationService {
         }
     }
 
+    /**
+     * Parses the LLM response into the DTO expected by the generation pipeline.
+     *
+     * @param responseText raw text returned by the model
+     * @return parsed code generation response
+     */
     private CodeGenerationResponseDTO parseCodeGenerationResponse(String responseText) {
         if (responseText == null || responseText.isBlank()) {
             throw new IllegalArgumentException("AI response content is missing");
@@ -209,6 +229,12 @@ public abstract class HyperionCodeGenerationService {
         throw new IllegalArgumentException("AI response content could not be parsed");
     }
 
+    /**
+     * Extracts likely JSON payload candidates from raw LLM output.
+     *
+     * @param responseText raw LLM output
+     * @return ordered JSON candidates to try parsing, from most specific to fallback
+     */
     private List<String> extractJsonCandidates(String responseText) {
         Matcher codeBlockMatcher = JSON_CODE_BLOCK_PATTERN.matcher(responseText);
         if (codeBlockMatcher.find()) {
@@ -227,6 +253,12 @@ public abstract class HyperionCodeGenerationService {
         return List.of(responseText);
     }
 
+    /**
+     * Detects whether a runtime exception originated from response parsing or DTO mapping.
+     *
+     * @param throwable exception to inspect
+     * @return true if the causal chain contains a response-processing exception
+     */
     private static boolean isResponseProcessingException(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
@@ -238,6 +270,12 @@ public abstract class HyperionCodeGenerationService {
         return false;
     }
 
+    /**
+     * Detects the 60-second channel timeout surfaced by the Spring AI client.
+     *
+     * @param throwable exception to inspect
+     * @return true if the causal chain indicates the channel response timed out
+     */
     private static boolean isChannelResponseTimeout(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
@@ -253,6 +291,15 @@ public abstract class HyperionCodeGenerationService {
         return false;
     }
 
+    /**
+     * Persists token-usage telemetry when usage metadata is available from the model response.
+     *
+     * @param user         user who triggered the generation
+     * @param exercise     exercise being generated
+     * @param courseId     resolved course id for attribution
+     * @param prompt       prompt identifier used for the call
+     * @param chatResponse model response containing usage metadata
+     */
     private void storeTokenUsage(User user, ProgrammingExercise exercise, Long courseId, String prompt, ChatResponse chatResponse) {
         if (llmTokenUsageService == null || chatResponse == null || chatResponse.getMetadata() == null || chatResponse.getMetadata().getUsage() == null) {
             return;
@@ -288,6 +335,12 @@ public abstract class HyperionCodeGenerationService {
         }
     }
 
+    /**
+     * Normalizes nullable or negative token counts before persistence.
+     *
+     * @param tokenCount token count reported by the model metadata
+     * @return non-negative token count
+     */
     private static int sanitizeTokenCount(Integer tokenCount) {
         if (tokenCount == null) {
             return 0;
@@ -295,11 +348,23 @@ public abstract class HyperionCodeGenerationService {
         return Math.max(tokenCount, 0);
     }
 
+    /**
+     * Builds the telemetry pipeline id for a prompt invocation.
+     *
+     * @param prompt prompt path or identifier
+     * @return pipeline id used for token-usage attribution
+     */
     private String buildPipelineId(String prompt) {
         String promptId = extractPromptId(prompt);
         return String.join("_", "HYPERION", "CODE", "GENERATION", getRepositoryType().name(), promptId);
     }
 
+    /**
+     * Extracts a stable uppercase prompt id from the prompt file name.
+     *
+     * @param prompt prompt path or identifier
+     * @return normalized prompt id, or {@code UNKNOWN} when none can be derived
+     */
     private static String extractPromptId(String prompt) {
         if (prompt == null || prompt.isBlank()) {
             return "UNKNOWN";

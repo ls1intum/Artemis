@@ -346,6 +346,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.runNextCodeGeneration();
     }
 
+    /**
+     * Starts the next queued repository generation request or finishes the queue when none remain.
+     */
     private runNextCodeGeneration() {
         const repositoryType = this.queuedCodeGenerationRepositories.shift();
         if (!repositoryType || !this.exercise?.id) {
@@ -399,10 +402,18 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return errorKey === 'codeGenerationRunning' || errorKey === 'error.codeGenerationRunning';
     }
 
+    /**
+     * Opens the modal that informs the user another code generation run is already active.
+     */
     private openCodeGenerationRunningModal(): void {
         this.modalService.open(this.codeGenerationRunningModal, { backdrop: 'static', keyboard: false, size: 'md' });
     }
 
+    /**
+     * Updates repository-specific generation state when the user switches domains in the editor.
+     *
+     * Restores a running generation only when no local generation queue is currently active.
+     */
     protected override applyDomainChange(domainType: any, domainValue: any) {
         super.applyDomainChange(domainType, domainValue);
         if (!this.hasCustomCodeGenerationSelection && !this.isGeneratingCode()) {
@@ -411,6 +422,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.restoreCodeGenerationState();
     }
 
+    /**
+     * Cleans up active code generation subscriptions, timers, and AI resources on component teardown.
+     */
     override ngOnDestroy() {
         this.clearJobSubscription(true);
         this.clearCodeGenerationStatusSubscription();
@@ -419,6 +433,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         super.ngOnDestroy();
     }
 
+    /**
+     * Restores an already running Hyperion generation job for the current exercise.
+     *
+     * The restore check is skipped while this component is already driving an active generation queue,
+     * so tab switches do not cancel the queue's slot-release polling.
+     */
     private restoreCodeGenerationState() {
         this.restoreRequestId += 1;
 
@@ -459,6 +479,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    /**
+     * Maps repository tabs that support generation to the repository type expected by the code generation request.
+     * @param repositoryType currently selected repository in the editor
+     * @returns the matching supported generation repository, or `undefined` for unsupported tabs
+     */
     private mapRepositoryTypeToCodeGenerationRequest(repositoryType: RepositoryType): SupportedCodeGenerationRepositoryType | undefined {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
@@ -472,11 +497,21 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Creates the request payload used to start code generation or perform a slot/check-only probe.
+     * @param repositoryType repository to generate
+     * @param checkOnly whether the request should only query the current generation status
+     * @returns a request object matching the backend's runtime contract
+     */
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false): CodeGenerationRequest {
         // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
         return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
     }
 
+    /**
+     * Creates a request that checks whether a generation job is active without starting a new one.
+     * @returns check-only request payload for the Hyperion endpoint
+     */
     private createCheckOnlyCodeGenerationRequest(): CodeGenerationRequest {
         return { checkOnly: true } as unknown as CodeGenerationRequest;
     }
@@ -513,6 +548,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, 1_200_000);
     }
 
+    /**
+     * Toggles the repository-selection popover for multi-repository generation.
+     * @param event click event from the settings trigger
+     */
     toggleCodeGenerationSettings(event: Event): void {
         this.codeGenerationStatusPopover()?.hide();
         const popover = this.codeGenerationSettingsPopover();
@@ -528,6 +567,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         popover.show(event, event.currentTarget as HTMLElement | undefined);
     }
 
+    /**
+     * Toggles the live generation status popover.
+     * @param event click event from the status trigger
+     * @param target optional target element used for popover alignment
+     */
     toggleCodeGenerationStatus(event: Event, target?: HTMLElement): void {
         this.codeGenerationSettingsPopover()?.hide();
         const popover = this.codeGenerationStatusPopover();
@@ -544,14 +588,28 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.scheduleCodeGenerationStatusPopoverRealign();
     }
 
+    /**
+     * Returns whether the given repository is currently selected for code generation.
+     * @param repositoryType repository to inspect
+     * @returns true if generation is enabled for the repository
+     */
     isCodeGenerationRepositoryEnabled(repositoryType: SupportedCodeGenerationRepositoryType): boolean {
         return this.codeGenerationStatuses().find((status) => status.repositoryType === repositoryType)?.enabled ?? false;
     }
 
+    /**
+     * Toggles the generation selection state for a repository.
+     * @param repositoryType repository to enable or disable
+     */
     toggleCodeGenerationRepository(repositoryType: SupportedCodeGenerationRepositoryType): void {
         this.setCodeGenerationRepositoryEnabled(repositoryType, !this.isCodeGenerationRepositoryEnabled(repositoryType));
     }
 
+    /**
+     * Enables or disables code generation for a repository.
+     * @param repositoryType repository to update
+     * @param enabled whether the repository should be included in the next run
+     */
     setCodeGenerationRepositoryEnabled(repositoryType: SupportedCodeGenerationRepositoryType, enabled: boolean): void {
         if (this.isGeneratingCode()) {
             return;
@@ -561,6 +619,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.updateCodeGenerationStatus(repositoryType, (status) => ({ ...status, enabled }));
     }
 
+    /**
+     * Returns the translation key for a repository label in the generation UI.
+     * @param repositoryType repository to translate
+     * @returns translation key for the repository label
+     */
     getCodeGenerationRepositoryTranslationKey(repositoryType: SupportedCodeGenerationRepositoryType): string {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
@@ -572,6 +635,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Returns the translation key for a repository generation state.
+     * @param state repository generation state
+     * @returns translation key for the state label
+     */
     getCodeGenerationStateTranslationKey(state: CodeGenerationExecutionState): string {
         switch (state) {
             case 'queued':
@@ -589,6 +657,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Returns the CSS text color class for a repository generation state.
+     * @param state repository generation state
+     * @returns Bootstrap text color class used in the status popover
+     */
     getCodeGenerationStateClass(state: CodeGenerationExecutionState): string {
         switch (state) {
             case 'success':
@@ -606,10 +679,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Returns the translation key for a file activity event.
+     * @param eventType file activity event type
+     * @returns translation key describing the file activity
+     */
     getCodeGenerationFileActionTranslationKey(eventType: CodeGenerationFileEventType): string {
         return eventType === 'NEW_FILE' ? 'artemisApp.programmingExercise.codeGeneration.status.fileCreated' : 'artemisApp.programmingExercise.codeGeneration.status.fileUpdated';
     }
 
+    /**
+     * Clears the active job subscription and optionally stops the generation spinner.
+     * @param stopSpinner whether the global generation indicator should be switched off
+     */
     private clearJobSubscription(stopSpinner: boolean) {
         this.clearCodeGenerationRepositoryPulls();
         if (stopSpinner) {
@@ -627,6 +709,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Processes job events for the active repository generation run.
+     * @param repositoryType repository currently associated with the job
+     * @param event websocket event emitted by Hyperion
+     */
     private handleCodeGenerationJobEvent(repositoryType: SupportedCodeGenerationRepositoryType, event: HyperionEvent) {
         switch (event.type) {
             case 'STARTED':
@@ -664,6 +751,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Finalizes the active repository run and optionally advances the queue.
+     * @param continueQueue whether queued repositories should still be processed
+     */
     private finishCurrentCodeGeneration(continueQueue: boolean) {
         const hasMoreRepositories = continueQueue && this.queuedCodeGenerationRepositories.length > 0;
         this.clearJobSubscription(!hasMoreRepositories);
@@ -674,6 +765,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Stops the current generation queue, marks remaining repositories as skipped, and optionally shows an alert.
+     * @param repositoryType repository whose run failed or timed out
+     * @param message optional detailed message shown in the status card
+     * @param alertTranslationKey translation key for the alert to display
+     * @param showAlert whether an alert should be shown to the user
+     */
     private stopCodeGenerationQueue(
         repositoryType: SupportedCodeGenerationRepositoryType,
         message: string | undefined,
@@ -700,6 +798,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }
     }
 
+    /**
+     * Marks any repositories still waiting in the queue as skipped.
+     */
     private markQueuedCodeGenerationRepositoriesSkipped() {
         if (!this.queuedCodeGenerationRepositories.length) {
             return;
@@ -720,6 +821,12 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         );
     }
 
+    /**
+     * Records file activity emitted for a repository during generation.
+     * @param repositoryType repository where the file change occurred
+     * @param eventType file activity event type
+     * @param path changed file path
+     */
     private registerCodeGenerationFileActivity(repositoryType: SupportedCodeGenerationRepositoryType, eventType: CodeGenerationFileEventType, path: string) {
         const activity: CodeGenerationFileActivity = {
             repositoryType,
@@ -733,6 +840,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }));
     }
 
+    /**
+     * Debounces repository refreshes triggered by file activity for the currently selected repository.
+     * @param repositoryType repository whose working tree should be refreshed
+     */
     private scheduleCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType) {
         if (this.selectedRepository !== repositoryType) {
             return;
@@ -751,6 +862,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.codeGenerationPullTimeoutHandles.set(repositoryType, timeoutHandle);
     }
 
+    /**
+     * Pulls repository changes immediately when a debounced refresh becomes due.
+     * @param repositoryType repository to refresh
+     */
     private flushCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType) {
         const existingTimeoutHandle = this.codeGenerationPullTimeoutHandles.get(repositoryType);
         if (existingTimeoutHandle) {
@@ -791,6 +906,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             });
     }
 
+    /**
+     * Clears all pending repository-refresh timers and bookkeeping for generation file activity.
+     */
     private clearCodeGenerationRepositoryPulls() {
         this.codeGenerationPullTimeoutHandles.forEach((timeoutHandle) => clearTimeout(timeoutHandle));
         this.codeGenerationPullTimeoutHandles.clear();
@@ -798,6 +916,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.repositoriesWithInFlightCodeGenerationPull.clear();
     }
 
+    /**
+     * Returns the repositories currently selected for generation in the configured execution order.
+     * @returns selected repositories in generation order
+     */
     private getSelectedCodeGenerationRepositories(): SupportedCodeGenerationRepositoryType[] {
         const enabledRepositories = new Set(
             this.codeGenerationStatuses()
@@ -808,6 +930,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         return SUPPORTED_CODE_GENERATION_REPOSITORIES.filter((repositoryType) => enabledRepositories.has(repositoryType));
     }
 
+    /**
+     * Resets the per-repository status cards for a new generation run.
+     * @param repositories repositories participating in the new run
+     */
     private initializeCodeGenerationRunStatuses(repositories: SupportedCodeGenerationRepositoryType[]) {
         const enabledRepositories = new Set(repositories);
         this.codeGenerationStatuses.set(
@@ -823,6 +949,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         this.scheduleCodeGenerationStatusPopoverRealign();
     }
 
+    /**
+     * Syncs the default repository selection to the repository currently open in the editor.
+     */
     private syncCodeGenerationSelectionWithSelectedRepository() {
         const repositoryType = this.mapRepositoryTypeToCodeGenerationRequest(this.selectedRepository);
         this.codeGenerationStatuses.update((statuses) =>
@@ -833,6 +962,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         );
     }
 
+    /**
+     * Creates the initial status object for a repository card.
+     * @param repositoryType repository represented by the card
+     * @returns default repository generation status
+     */
     private createCodeGenerationStatus(repositoryType: SupportedCodeGenerationRepositoryType): CodeGenerationRepositoryStatus {
         return {
             repositoryType,
@@ -842,11 +976,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         };
     }
 
+    /**
+     * Applies a status update to a repository card and realigns the status popover when visible.
+     * @param repositoryType repository whose card should be updated
+     * @param updater pure updater function for the repository status
+     */
     private updateCodeGenerationStatus(repositoryType: SupportedCodeGenerationRepositoryType, updater: (status: CodeGenerationRepositoryStatus) => CodeGenerationRepositoryStatus) {
         this.codeGenerationStatuses.update((statuses) => statuses.map((status) => (status.repositoryType === repositoryType ? updater(status) : status)));
         this.scheduleCodeGenerationStatusPopoverRealign();
     }
 
+    /**
+     * Schedules a popover realignment after status content changes.
+     */
     private scheduleCodeGenerationStatusPopoverRealign() {
         const popover = this.codeGenerationStatusPopover();
         if (!popover?.overlayVisible) {
@@ -858,6 +1000,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    /**
+     * Repositions the status popover so its pointer stays visually centered on the status button.
+     */
     private realignCodeGenerationStatusPopover() {
         const popover = this.codeGenerationStatusPopover();
         const target = popover?.target as HTMLElement | undefined;
@@ -882,11 +1027,20 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         container.style.setProperty('--p-popover-arrow-left', `${arrowLeft}px`);
     }
 
+    /**
+     * Returns the visual rect used as the arrow target for the status popover.
+     * @param target popover target element
+     * @returns icon rect when present, otherwise the full target rect
+     */
     private getCodeGenerationStatusArrowTargetRect(target: HTMLElement): DOMRect {
         const iconElement = target.querySelector('svg');
         return iconElement?.getBoundingClientRect() ?? target.getBoundingClientRect();
     }
 
+    /**
+     * Polls the backend until the previous exercise-level generation slot has been released.
+     * @param attempt current poll attempt index
+     */
     private waitForCodeGenerationSlotRelease(attempt = 0) {
         if (!this.exercise?.id) {
             this.clearJobSubscription(true);
@@ -911,6 +1065,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         });
     }
 
+    /**
+     * Schedules the next slot-release poll attempt or fails the queue after the retry limit.
+     * @param attempt current poll attempt index
+     */
     private scheduleNextSlotReleasePoll(attempt: number) {
         if (attempt + 1 >= CODE_GENERATION_SLOT_RELEASE_MAX_POLLS) {
             const nextRepository = this.queuedCodeGenerationRepositories[0];
@@ -932,11 +1090,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
         }, CODE_GENERATION_SLOT_RELEASE_POLL_INTERVAL_MS);
     }
 
+    /**
+     * Clears the active HTTP subscription used for restore checks or slot-release polling.
+     */
     private clearCodeGenerationStatusSubscription() {
         this.statusSubscription?.unsubscribe();
         this.statusSubscription = undefined;
     }
 
+    /**
+     * Clears the scheduled timer used for slot-release polling retries.
+     */
     private clearSlotReleasePoll() {
         if (this.slotReleasePollTimeoutHandle) {
             clearTimeout(this.slotReleasePollTimeoutHandle);
