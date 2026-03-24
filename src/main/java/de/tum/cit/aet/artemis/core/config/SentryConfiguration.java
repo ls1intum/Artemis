@@ -212,7 +212,8 @@ public class SentryConfiguration {
             }
 
             if (request.getHeaders() != null) {
-                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().startsWith("X-Artemis-Client-")).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
+                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().startsWith("X-Artemis-Client-"))
+                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
             }
         }
         event.setUser(null); // Make sure to never send user data
