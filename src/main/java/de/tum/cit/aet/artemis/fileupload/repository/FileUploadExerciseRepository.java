@@ -75,7 +75,7 @@ public interface FileUploadExerciseRepository extends ArtemisJpaRepository<FileU
      * @param exerciseId the id of the exercise to find
      * @return the exercise with minimal data necessary for exercise versioning
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig", "course" })
     Optional<FileUploadExercise> findForVersioningById(long exerciseId);
 
     /**

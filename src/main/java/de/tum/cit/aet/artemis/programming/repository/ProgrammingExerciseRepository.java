@@ -155,7 +155,7 @@ public interface ProgrammingExerciseRepository extends DynamicSpecificationRepos
      */
     @EntityGraph(type = LOAD, attributePaths = { "auxiliaryRepositories", "templateParticipation", "solutionParticipation", "tasks", "testCases", "tasks.testCases",
             "staticCodeAnalysisCategories", "submissionPolicy", "buildConfig", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria",
-            "plagiarismDetectionConfig" })
+            "plagiarismDetectionConfig", "course" })
     Optional<ProgrammingExercise> findForVersioningById(long exerciseId);
 
     /**
