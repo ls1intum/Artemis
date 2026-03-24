@@ -12,16 +12,16 @@ import { OneToOneChatService } from 'app/communication/conversations/service/one
 import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
-import { RawTutorialGroupDTO, TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { RawTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import * as CourseModel from 'app/core/course/shared/entities/course.model';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScaleType } from '@swimlane/ngx-charts';
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
+import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
 
 describe('CourseTutorialGroupDetailComponent', () => {
     setupTestBed({ zoneless: true });
@@ -55,9 +55,8 @@ describe('CourseTutorialGroupDetailComponent', () => {
         fixture = TestBed.createComponent(TutorialGroupDetailComponent);
         component = fixture.componentInstance;
 
-        vi.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(true);
-
-        fixture.componentRef.setInput('course', { id: 1 } as Course);
+        fixture.componentRef.setInput('courseId', 1);
+        fixture.componentRef.setInput('isMessagingEnabled', true);
     });
 
     beforeAll(() => {
@@ -76,8 +75,8 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display no conversation links if messaging disabled', () => {
-        vi.spyOn(CourseModel, 'isMessagingEnabled').mockReturnValue(false);
-        const raw: RawTutorialGroupDTO = {
+        fixture.componentRef.setInput('isMessagingEnabled', false);
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -85,6 +84,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -103,7 +103,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display conversation links if tutorChatId and groupChannelId available and messaging enabled', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -111,6 +111,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -129,7 +130,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should not display group channel link if groupChannelId not available and messaging enabled', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -137,6 +138,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -151,7 +153,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display tutorial chat button if tutorChatId not available and messaging enabled', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -159,6 +161,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -175,7 +178,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display current lesson button if currentTutorialLectureId available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -183,6 +186,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -197,7 +201,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose correct language', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -205,6 +209,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -218,7 +223,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose correct capacity', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -226,6 +231,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -239,7 +245,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose placeholder if capacity not available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -247,6 +253,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: 'Garching',
@@ -260,7 +267,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose correct mode key if group is online', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -268,6 +275,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -281,7 +289,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose correct mode key if group is offline', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -289,6 +297,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -302,7 +311,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose correct campus', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -310,6 +319,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: 'Garching',
@@ -323,7 +333,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose placeholder if campus not available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -331,6 +341,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -347,6 +358,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs('2025-01-15T13:00:00+01:00');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -357,6 +369,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -367,6 +380,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -376,7 +390,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -384,6 +398,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -411,7 +426,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose no nextSession if no sessions available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -419,6 +434,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -436,6 +452,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const referenceStart = dayjs().startOf('day').add(13, 'hour');
         const referenceEnd = referenceStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: referenceStart.subtract(3, 'week').toISOString(),
             end: referenceEnd.subtract(3, 'week').toISOString(),
             location: '01.05.13',
@@ -446,6 +463,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: referenceStart.subtract(2, 'week').toISOString(),
             end: referenceEnd.subtract(2, 'week').toISOString(),
             location: '01.05.13',
@@ -456,6 +474,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: referenceStart.subtract(1, 'week').toISOString(),
             end: referenceEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -465,7 +484,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: 7,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -473,6 +492,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -491,6 +511,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -501,6 +522,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -511,6 +533,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -520,7 +543,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -528,6 +551,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -545,6 +569,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -555,6 +580,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -565,6 +591,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -574,7 +601,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -582,6 +609,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -599,6 +627,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -609,6 +638,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -619,6 +649,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -628,7 +659,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -636,6 +667,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
@@ -653,6 +685,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -663,6 +696,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -673,6 +707,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -682,7 +717,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -690,6 +725,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -704,10 +740,10 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(pieChartData).toBeDefined();
         expect(pieChartData).toHaveLength(2);
         const firstCategory = pieChartData[0];
-        expect(firstCategory.name).toBe('Attended');
+        expect(firstCategory.name).toBe('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.attended');
         expect(firstCategory.value).toBe(70);
         const secondCategory = pieChartData[1];
-        expect(secondCategory.name).toBe('Not Attended');
+        expect(secondCategory.name).toBe('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended');
         expect(secondCategory.value).toBe(30);
     });
 
@@ -715,6 +751,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -725,6 +762,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: 7,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -735,6 +773,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -744,7 +783,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -752,6 +791,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
@@ -766,7 +806,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(pieChartData).toBeDefined();
         expect(pieChartData).toHaveLength(1);
         const firstCategory = pieChartData[0];
-        expect(firstCategory.name).toBe('Not Attended');
+        expect(firstCategory.name).toBe('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended');
         expect(firstCategory.value).toBe(100);
     });
 
@@ -774,6 +814,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -784,6 +825,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const secondSession: RawTutorialGroupSessionDTO = {
+            id: 2,
             start: nextSessionStart.toISOString(),
             end: nextSessionEnd.toISOString(),
             location: '01.05.13',
@@ -794,6 +836,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             attendanceCount: undefined,
         };
         const thirdSession: RawTutorialGroupSessionDTO = {
+            id: 3,
             start: nextSessionStart.add(1, 'week').toISOString(),
             end: nextSessionEnd.add(1, 'week').toISOString(),
             location: '01.05.13',
@@ -803,7 +846,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -811,6 +854,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession, secondSession, thirdSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -825,7 +869,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(pieChartData).toBeDefined();
         expect(pieChartData).toHaveLength(1);
         const firstCategory = pieChartData[0];
-        expect(firstCategory.name).toBe('Not Attended');
+        expect(firstCategory.name).toBe('artemisApp.pages.tutorialGroupDetail.pieChartCategoryLabel.notAttended');
         expect(firstCategory.value).toBe(100);
     });
 
@@ -833,6 +877,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -842,7 +887,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: 6,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -850,6 +895,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -870,6 +916,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -879,7 +926,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: 7,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -887,6 +934,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -907,6 +955,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -916,7 +965,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: 8,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -924,6 +973,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -944,6 +994,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -953,7 +1004,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: 9,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -961,6 +1012,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -981,6 +1033,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -990,7 +1043,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: 9,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -998,6 +1051,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
@@ -1018,6 +1072,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
         const nextSessionStart = dayjs().startOf('day').add(1, 'day').add(13, 'hour');
         const nextSessionEnd = nextSessionStart.add(2, 'hour');
         const firstSession: RawTutorialGroupSessionDTO = {
+            id: 1,
             start: nextSessionStart.subtract(1, 'week').toISOString(),
             end: nextSessionEnd.subtract(1, 'week').toISOString(),
             location: '01.05.13',
@@ -1027,7 +1082,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             dateChanged: false,
             attendanceCount: undefined,
         };
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1035,6 +1090,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [firstSession],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -1052,7 +1108,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose tutorChatLink if tutorChatId available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1060,6 +1116,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
@@ -1077,7 +1134,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose no tutorChatLink if tutorChatId is unavailable', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1085,6 +1142,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -1100,7 +1158,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose groupChannelLink if groupChannelId available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1108,6 +1166,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: undefined,
@@ -1125,7 +1184,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should expose no groupChannelLink if groupChannelId is unavailable', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1133,6 +1192,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 10,
             campus: undefined,
@@ -1148,7 +1208,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display no data available disclaimer if no average attendance available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1156,6 +1216,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: 'Garching',
@@ -1171,7 +1232,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     it('should display no upcoming session disclaimer if no nextSession available', () => {
-        const raw: RawTutorialGroupDTO = {
+        const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
             language: 'English',
@@ -1179,6 +1240,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
             sessions: [],
             tutorName: 'Marlon Nienaber',
             tutorLogin: 'gx89tum',
+            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: undefined,
             campus: 'Garching',
