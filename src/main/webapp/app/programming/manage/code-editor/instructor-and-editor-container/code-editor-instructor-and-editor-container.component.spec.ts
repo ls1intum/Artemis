@@ -466,7 +466,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(comp.hyperionEnabled).toBeFalse();
         });
 
-        it('should trigger repository pull on FILE_UPDATED and NEW_FILE events', async () => {
+        it('should debounce repository pulls across FILE_UPDATED and NEW_FILE events', fakeAsync(() => {
             comp.selectedRepository = RepositoryType.TEMPLATE;
             selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
             (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
@@ -476,17 +476,46 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             const pullSpy = jest.spyOn(repoService, 'pull');
 
             comp.generateCode();
-            await Promise.resolve();
+            tick();
 
             job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
             job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java' });
 
-            expect(pullSpy).toHaveBeenCalledTimes(2);
+            expect(pullSpy).not.toHaveBeenCalled();
+
+            tick(250);
+
+            expect(pullSpy).toHaveBeenCalledOnce();
             expect(comp.codeGenerationActivityLog()).toEqual([
                 expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java' }),
                 expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java' }),
             ]);
-        });
+        }));
+
+        it('should flush a pending repository pull when DONE arrives before the debounce window elapses', fakeAsync(() => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3' }));
+
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            const pullSpy = jest.spyOn(repoService, 'pull');
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
+            expect(pullSpy).not.toHaveBeenCalled();
+
+            job$.next({ type: 'DONE', success: true, attempts: 1 });
+            tick();
+
+            expect(pullSpy).toHaveBeenCalledOnce();
+
+            tick(250);
+
+            expect(pullSpy).toHaveBeenCalledOnce();
+        }));
 
         it('should not pull the repository when file events belong to a non-selected repository', async () => {
             comp.selectedRepository = RepositoryType.SOLUTION;
