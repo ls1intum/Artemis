@@ -59,11 +59,14 @@ public class ProblemStatementRenderingService {
     // @formatter:off
     private static final String EMBEDDED_CSS = """
             <style>
-            .artemis-problem-statement{color:var(--body-color,#212529)}
+            .artemis-problem-statement{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;line-height:1.5;color:var(--body-color,#212529)}
+            .artemis-problem-statement h1,.artemis-problem-statement h2,.artemis-problem-statement h3,.artemis-problem-statement h4{font-weight:400}
+            .artemis-problem-statement ol,.artemis-problem-statement ul{margin-bottom:.75em}
+            .artemis-problem-statement hr{border:none;border-top:1px solid var(--border-color,#dee2e6);margin:16px 0}
             .artemis-problem-statement svg{max-width:100%;height:auto}
             .artemis-problem-statement a{color:var(--link-color,#3e8acc)}
-            .artemis-problem-statement pre{background:var(--artemis-pre-background,#f5f5f5);color:var(--artemis-pre-color,#333);border:1px solid var(--artemis-pre-border,#ccc);border-radius:4px;padding:10px;white-space:pre-wrap;overflow-wrap:break-word}
-            .artemis-problem-statement :not(pre)>code{font-size:87.5%;color:#d63384}
+            .artemis-problem-statement pre{background:var(--artemis-pre-background,#f5f5f5);color:var(--artemis-pre-color,#333);border:1px solid var(--artemis-pre-border,#ccc);border-radius:4px;padding:10px;font-size:13px;line-height:1.43;white-space:pre-wrap;overflow-wrap:break-word}
+            .artemis-problem-statement :not(pre)>code{font-size:87.5%;color:#d63384;padding:2px 4px;background:var(--artemis-pre-background,#f5f5f5);border-radius:4px}
             .artemis-problem-statement blockquote{color:var(--markdown-preview-blockquote,#6a737d);border-left:4px solid var(--markdown-preview-blockquote-border,#dfe2e5);padding:0 1em;margin:0 0 16px}
             .artemis-problem-statement img{max-width:100%}
             .artemis-task{cursor:pointer;font-weight:600}
