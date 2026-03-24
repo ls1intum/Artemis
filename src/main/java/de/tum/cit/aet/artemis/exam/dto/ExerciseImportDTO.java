@@ -1,5 +1,8 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
+import java.util.Map;
+import java.util.function.Supplier;
+
 import jakarta.validation.constraints.NotNull;
 
 import org.jspecify.annotations.Nullable;
@@ -23,6 +26,10 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
 public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exerciseType, @Nullable String title, @Nullable String shortName, @Nullable Double maxPoints,
         @Nullable Double bonusPoints) {
 
+    // Use a Map instead of a switch expression to avoid generating a synthetic $1 class
+    private static final Map<ExerciseType, Supplier<Exercise>> EXERCISE_FACTORIES = Map.of(ExerciseType.MODELING, ModelingExercise::new, ExerciseType.TEXT, TextExercise::new,
+            ExerciseType.PROGRAMMING, ProgrammingExercise::new, ExerciseType.FILE_UPLOAD, FileUploadExercise::new, ExerciseType.QUIZ, QuizExercise::new);
+
     /**
      * Creates an ExerciseImportDTO from an existing Exercise entity.
      *
@@ -41,13 +48,7 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
      * @return a new Exercise entity with basic properties set
      */
     public Exercise toEntity() {
-        Exercise exercise = switch (exerciseType) {
-            case MODELING -> new ModelingExercise();
-            case TEXT -> new TextExercise();
-            case PROGRAMMING -> new ProgrammingExercise();
-            case FILE_UPLOAD -> new FileUploadExercise();
-            case QUIZ -> new QuizExercise();
-        };
+        Exercise exercise = EXERCISE_FACTORIES.get(exerciseType).get();
         exercise.setId(id);
         exercise.setTitle(title);
         exercise.setShortName(shortName);
