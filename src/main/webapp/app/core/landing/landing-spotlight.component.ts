@@ -15,7 +15,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
 
         .spotlight {
             display: grid;
-            grid-template-columns: 560px 1fr;
+            grid-template-columns: 480px 1fr;
             gap: 40px;
             padding: 40px 160px 40px;
             align-items: center;
@@ -116,6 +116,13 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             border-radius: 16px;
             background: var(--iris-secondary-background);
             min-height: 300px;
+            border: 0;
+            box-shadow: none;
+        }
+
+        .spotlight-media.no-frame {
+            border-radius: 0;
+            background: transparent;
         }
 
         @media (max-width: 1024px) {
@@ -164,9 +171,18 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             </div>
             <div class="spotlight-right">
                 @if (currentStep().videoSrc; as videoSrc) {
-                    <video class="spotlight-media" autoplay muted playsinline preload="metadata" [attr.poster]="currentStep().imageSrc" (ended)="onVideoEnded()">
-                        <source [src]="videoSrc" [attr.type]="videoSrc.endsWith('.webm') ? 'video/webm' : 'video/quicktime'" />
-                    </video>
+                    <video
+                        class="spotlight-media"
+                        [class.no-frame]="currentStep().titleKey === 'landing.spotlight.steps.feedback.title'"
+                        [src]="videoSrc"
+                        [autoplay]="true"
+                        [muted]="true"
+                        playsinline
+                        preload="metadata"
+                        [attr.poster]="currentStep().imageSrc"
+                        (loadeddata)="onVideoLoaded($event)"
+                        (ended)="onVideoEnded()"
+                    ></video>
                 } @else {
                     <img class="spotlight-media" [src]="currentStep().imageSrc" [alt]="currentStep().titleKey" />
                 }
@@ -210,6 +226,16 @@ export class LandingSpotlightComponent implements OnInit {
         }
 
         this.advanceTo(this.activeIndex() + 1);
+    }
+
+    onVideoLoaded(event: Event): void {
+        const videoElement = event.target as HTMLVideoElement | null;
+        if (!videoElement) {
+            return;
+        }
+
+        videoElement.currentTime = 0;
+        void videoElement.play().catch(() => {});
     }
 
     private advanceTo(index: number): void {

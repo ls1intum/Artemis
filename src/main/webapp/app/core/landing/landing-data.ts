@@ -37,6 +37,7 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
         titleKey: 'landing.spotlight.steps.feedback.title',
         descriptionKey: 'landing.spotlight.steps.feedback.description',
         imageSrc: 'content/images/landing/iris-logo.png',
+        videoSrc: 'content/images/landing/demo-videos/interactive-exercise.webm',
     },
     {
         titleKey: 'landing.spotlight.steps.tutor.title',
