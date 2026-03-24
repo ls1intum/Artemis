@@ -181,6 +181,37 @@ describe('Participation Service', () => {
         tick();
     }));
 
+    it('should update individual due dates', fakeAsync(() => {
+        const exercise = new ProgrammingExercise(new Course(), undefined);
+        exercise.id = 1;
+
+        const participation1: StudentParticipation = {
+            id: 10,
+            type: ParticipationType.STUDENT,
+            individualDueDate: dayjs('2024-06-15T10:00:00'),
+        };
+        const participation2: StudentParticipation = {
+            id: 11,
+            type: ParticipationType.STUDENT,
+            individualDueDate: dayjs('2024-06-20T10:00:00'),
+        };
+
+        const returnedFromService = [participation1, participation2];
+
+        service
+            .updateIndividualDueDates(exercise, [participation1, participation2])
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.body).toEqual(returnedFromService));
+
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/exercise/exercises/${exercise.id}/participations/update-individual-due-date` });
+        expect(req.request.body).toEqual([
+            { id: 10, exerciseId: 1, individualDueDate: expect.any(String) },
+            { id: 11, exerciseId: 1, individualDueDate: expect.any(String) },
+        ]);
+        req.flush(returnedFromService);
+        tick();
+    }));
+
     it('should return a list of Participation', fakeAsync(() => {
         const returnedFromService = Object.assign(
             {
