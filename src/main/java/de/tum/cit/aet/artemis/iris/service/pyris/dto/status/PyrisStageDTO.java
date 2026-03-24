@@ -1,6 +1,6 @@
 package de.tum.cit.aet.artemis.iris.service.pyris.dto.status;
 
-import jakarta.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
