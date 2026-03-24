@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import jakarta.validation.Valid;
+
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +21,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -37,7 +41,9 @@ import de.tum.cit.aet.artemis.exam.api.ExamDateApi;
 import de.tum.cit.aet.artemis.exam.config.ExamApiNotPresentException;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
+import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequest;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInput;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.service.ProblemStatementRenderingService;
@@ -126,6 +132,47 @@ public class ProblemStatementRenderingResource {
         RenderedProblemStatementDTO result = renderingService.render(exercise, selfContained, interactive, feedbackData.testResults(), feedbackData.resultSummary(), locale);
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").cacheControl(CacheControl.maxAge(5, TimeUnit.MINUTES).cachePrivate()).body(result);
+    }
+
+    /**
+     * POST problem-statement/render : Stateless rendering of a problem statement.
+     * The client sends markdown + test data, the server returns rendered HTML. Zero database access.
+     *
+     * @param renderRequest the render request containing markdown, test results, and configuration
+     * @return the rendered problem statement DTO
+     */
+    @PostMapping(value = "problem-statement/render", produces = MediaType.APPLICATION_JSON_VALUE)
+    @EnforceAtLeastStudent
+    @AllowedTools(ToolTokenType.SCORPIO)
+    public ResponseEntity<RenderedProblemStatementDTO> renderProblemStatement(@Valid @RequestBody ProblemStatementRenderRequest renderRequest) {
+
+        log.debug("REST request to render problem statement (stateless)");
+
+        // Convert client-provided test results to internal format
+        Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults = null;
+        if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
+            testResults = new HashMap<>();
+            for (TestFeedbackInput input : renderRequest.testResults()) {
+                testResults.put(input.testId(),
+                        new ProblemStatementRenderingService.TestFeedbackDetail(input.testId(), input.testName(), input.passed(), input.message(), input.credits()));
+            }
+        }
+
+        // Convert client-provided result summary
+        ProblemStatementRenderingService.ResultSummary resultSummary = null;
+        if (renderRequest.resultSummary() != null) {
+            var rs = renderRequest.resultSummary();
+            resultSummary = new ProblemStatementRenderingService.ResultSummary(rs.score(), rs.maxPoints(), rs.bonusPoints(), rs.commitHash(), rs.submissionDate(),
+                    rs.assessmentType());
+        }
+
+        String lang = renderRequest.locale() != null ? renderRequest.locale() : "en";
+        Locale locale = Locale.forLanguageTag(lang);
+
+        RenderedProblemStatementDTO result = renderingService.renderStateless(renderRequest.markdown(), renderRequest.selfContained(), renderRequest.interactive(), testResults,
+                resultSummary, locale);
+
+        return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
     }
 
     private record FeedbackData(@Nullable Map<Long, ProblemStatementRenderingService.TestFeedbackDetail> testResults,

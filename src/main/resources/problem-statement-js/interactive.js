@@ -321,26 +321,14 @@
 
         // Detail message (collapsible)
         if (item.message) {
-            var msgToggle = document.createElement('div');
-            msgToggle.textContent = '\u25B6 Show details';
-            setStyles(msgToggle, {
-                fontSize: '12px', color: '#6c757d', cursor: 'pointer',
-                marginTop: '6px', userSelect: 'none'
-            });
             var msgContent = document.createElement('pre');
             msgContent.textContent = item.message;
             setStyles(msgContent, {
-                display: 'none', fontSize: '12px', color: '#495057',
+                fontSize: '12px', color: '#495057',
                 background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '4px',
                 padding: '8px', margin: '6px 0 0', whiteSpace: 'pre-wrap',
                 overflowWrap: 'break-word', maxHeight: '200px', overflowY: 'auto'
             });
-            msgToggle.addEventListener('click', function () {
-                var showing = msgContent.style.display !== 'none';
-                msgContent.style.display = showing ? 'none' : 'block';
-                msgToggle.textContent = showing ? '\u25B6 Show details' : '\u25BC Hide details';
-            });
-            itemDiv.appendChild(msgToggle);
             itemDiv.appendChild(msgContent);
         }
 

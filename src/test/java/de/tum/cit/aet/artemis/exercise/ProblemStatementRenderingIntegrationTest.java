@@ -23,7 +23,10 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.test_repository.ExamTestRepository;
 import de.tum.cit.aet.artemis.exam.util.ExamUtilService;
+import de.tum.cit.aet.artemis.exercise.dto.ProblemStatementRenderRequest;
 import de.tum.cit.aet.artemis.exercise.dto.RenderedProblemStatementDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ResultSummaryInput;
+import de.tum.cit.aet.artemis.exercise.dto.TestFeedbackInput;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.test_repository.SubmissionTestRepository;
 import de.tum.cit.aet.artemis.exercise.util.ExerciseUtilService;
@@ -997,5 +1000,92 @@ class ProblemStatementRenderingIntegrationTest extends AbstractSpringIntegration
         RenderedProblemStatementDTO result = request.get(renderUrl(exercise.getId(), true), HttpStatus.OK, RenderedProblemStatementDTO.class);
 
         assertThat(result.diagrams().getFirst().inlineSvg()).contains("grey");
+    }
+
+    // --- Stateless POST endpoint tests ---
+
+    private static final String POST_URL = "/api/exercise/problem-statement/render";
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderMarkdownViaStatelessPost() throws Exception {
+        var body = new ProblemStatementRenderRequest("# Hello\n\nThis is **bold**.", null, null, false, false, "en");
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("<h1>Hello</h1>");
+        assertThat(result.html()).contains("<strong>bold</strong>");
+        assertThat(result.rendererVersion()).isEqualTo("1.0.0-stateless");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldEmbedTestResultsViaStatelessPost() throws Exception {
+        var testResults = List.of(new TestFeedbackInput(1, "testSort", true, null, 1.0), new TestFeedbackInput(2, "testEdge", false, "Array index out of bounds", 0.0));
+        var resultSummary = new ResultSummaryInput(50.0, 10.0, 0.0, "abc123", "2025-12-01T10:00:00Z", "AUTOMATIC");
+        var body = new ProblemStatementRenderRequest("[task][Sort](<testid>1</testid>,<testid>2</testid>)", testResults, resultSummary, true, true, "en");
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).contains("data-feedback");
+        assertThat(result.html()).contains("data-result");
+        assertThat(result.html()).contains("abc123");
+        assertThat(result.html()).contains("Array index out of bounds");
+        assertThat(result.tasks()).hasSize(1);
+        assertThat(result.tasks().getFirst().testStatus()).isEqualTo("fail");
+        assertThat(result.interactiveScript()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldRenderWithoutTestResultsViaStatelessPost() throws Exception {
+        var body = new ProblemStatementRenderRequest("[task][Sort](<testid>1</testid>)", null, null, true, true, "en");
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.html()).doesNotContain("data-feedback");
+        assertThat(result.html()).doesNotContain("data-result");
+        assertThat(result.tasks().getFirst().testStatus()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReportClientRenderingRequiredForKatex() throws Exception {
+        var body = new ProblemStatementRenderRequest("Formula: $$E=mc^2$$", null, null, false, false, "en");
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.assets().katex()).isEqualTo("client-rendering-required");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldReportClientRenderingRequiredForHighlighting() throws Exception {
+        var body = new ProblemStatementRenderRequest("```java\nclass Foo {}\n```", null, null, false, false, "en");
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.assets().highlighting()).isEqualTo("client-rendering-required");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldInlineSanitizedSvgViaStatelessPost() throws Exception {
+        var body = new ProblemStatementRenderRequest("@startuml\n!pragma layout smetana\nclass A\n@enduml", null, null, true, false, "en");
+
+        RenderedProblemStatementDTO result = request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.OK);
+
+        assertThat(result.diagrams()).hasSize(1);
+        assertThat(result.diagrams().getFirst().inlineSvg()).contains("<svg");
+        // SVG should not contain script, style, or event handlers (sanitized)
+        assertThat(result.diagrams().getFirst().inlineSvg()).doesNotContain("<script");
+        assertThat(result.diagrams().getFirst().inlineSvg()).doesNotContain("onload");
+        assertThat(result.diagrams().getFirst().inlineSvg()).doesNotContain("<style");
+    }
+
+    @Test
+    void shouldReturn401ForUnauthenticatedStatelessPost() throws Exception {
+        var body = new ProblemStatementRenderRequest("# Hello", null, null, false, false, "en");
+        request.postWithResponseBody(POST_URL, body, RenderedProblemStatementDTO.class, HttpStatus.UNAUTHORIZED);
     }
 }

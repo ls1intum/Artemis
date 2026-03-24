@@ -87,8 +87,9 @@ public class ProblemStatementRenderingService {
             .artemis-problem-statement blockquote{color:var(--markdown-preview-blockquote,#6a737d);border-left:4px solid var(--markdown-preview-blockquote-border,#dfe2e5);padding:0 1em;margin:0 0 16px}
             .artemis-problem-statement img{max-width:100%}
             .artemis-task{cursor:pointer;font-weight:600}
-            .artemis-icon-success{color:var(--success,#28a745)}
-            .artemis-icon-fail{color:var(--danger,#dc3545)}
+            i.fa.artemis-icon-success,i.fa.artemis-icon-fail{display:inline-block;width:1em;height:1em;vertical-align:-0.125em;background-size:contain;background-repeat:no-repeat}
+            i.fa.artemis-icon-success{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%2328a745'/%3E%3Cpath d='M5 8l2 2 4-4' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='none'/%3E%3C/svg%3E")}
+            i.fa.artemis-icon-fail{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='7.5' fill='%23dc3545'/%3E%3Cpath d='M5.5 5.5l5 5M10.5 5.5l-5 5' stroke='%23fff' stroke-width='1.5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E")}
             .artemis-task-stats{font-weight:400;font-size:.9em;margin-left:4px;text-decoration:underline}
             .artemis-task-success .artemis-task-stats{color:var(--success,#28a745)}
             .artemis-task-fail .artemis-task-stats{color:var(--danger,#dc3545)}
@@ -259,6 +260,187 @@ public class ProblemStatementRenderingService {
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
         return new RenderedProblemStatementDTO(html, contentHash, rendererVersion, assets, tasks, diagrams, interactiveScript);
+    }
+
+    private static final String STATELESS_VERSION = "1.0.0-stateless";
+
+    private static final int MAX_PLANTUML_DIAGRAMS = 10;
+
+    private static final java.util.Set<String> SVG_ALLOWED_ELEMENTS = java.util.Set.of("svg", "g", "defs", "clippath", "rect", "circle", "ellipse", "line", "polyline", "polygon",
+            "path", "text", "tspan");
+
+    private static final java.util.Set<String> SVG_ALLOWED_ATTRIBUTES = java.util.Set.of("viewbox", "width", "height", "x", "y", "cx", "cy", "r", "rx", "ry", "d", "points", "fill",
+            "stroke", "stroke-width", "stroke-linecap", "stroke-linejoin", "stroke-dasharray", "transform", "class", "id", "font-family", "font-size", "font-weight", "font-style",
+            "text-anchor", "text-decoration", "preserveaspectratio", "xmlns", "version", "opacity", "fill-opacity", "stroke-opacity", "dominant-baseline", "dx", "dy",
+            "data-diagram-type", "data-qualified-name", "data-source-line");
+
+    /**
+     * Stateless rendering: client provides all data, server just renders. Zero database access.
+     * Uses CommonMark only (no GraalJS). SVGs are sanitized with an allowlist before inlining.
+     *
+     * @param markdown      the raw problem statement markdown
+     * @param selfContained if true, inlines PlantUML SVGs and CSS
+     * @param interactive   if true, includes vanilla JS for task feedback modal
+     * @param testResults   client-provided test results, or null
+     * @param resultSummary client-provided result summary (score, commit hash, etc.), or null
+     * @param locale        the locale for i18n of user-visible text
+     * @return the rendered problem statement DTO
+     */
+    public RenderedProblemStatementDTO renderStateless(String markdown, boolean selfContained, boolean interactive, @Nullable Map<Long, TestFeedbackDetail> testResults,
+            @Nullable ResultSummary resultSummary, Locale locale) {
+
+        if (markdown == null || markdown.isBlank()) {
+            return new RenderedProblemStatementDTO("", computeHash(""), STATELESS_VERSION, new AssetRequirementsDTO("absent", "absent", "url", List.of()), List.of(), List.of(),
+                    null);
+        }
+
+        String processedMarkdown = markdown;
+
+        // Step 1: Extract PlantUML diagrams (limit to MAX_PLANTUML_DIAGRAMS)
+        List<DiagramRenderInfoDTO> diagrams = new ArrayList<>();
+        List<String> inlineSvgs = new ArrayList<>();
+        processedMarkdown = extractPlantUmlDiagramsStateless(processedMarkdown, selfContained, diagrams, inlineSvgs, testResults);
+
+        // Step 2: Extract tasks
+        List<TaskRenderInfoDTO> tasks = new ArrayList<>();
+        processedMarkdown = extractTasks(processedMarkdown, tasks, testResults, locale);
+
+        // Step 3: Render with CommonMark (always, no GraalJS)
+        String html = renderWithCommonMark(processedMarkdown);
+        String diagramMode = selfContained ? "inline" : "url";
+        AssetRequirementsDTO assets = detectStatelessAssetRequirements(markdown, diagramMode);
+
+        // Step 4: Inject sanitized SVGs
+        if (selfContained) {
+            for (int i = 0; i < inlineSvgs.size(); i++) {
+                String placeholder = SVG_PLACEHOLDER_PREFIX + i + SVG_PLACEHOLDER_SUFFIX;
+                html = html.replace(placeholder, inlineSvgs.get(i));
+            }
+        }
+
+        // Step 5: Wrap in container div with result summary
+        String resultAttr = buildResultAttribute(resultSummary);
+        html = "<div class=\"artemis-problem-statement\"" + resultAttr + ">" + html + "</div>";
+
+        // Step 6: Strip testid tags
+        html = html.replace("<testid>", "").replace("</testid>", "");
+
+        // Step 7: Prepend embedded CSS
+        html = EMBEDDED_CSS + html;
+
+        // Step 8: For self-contained, inline third-party CSS
+        if (selfContained && SELF_CONTAINED_CSS != null) {
+            html = SELF_CONTAINED_CSS + html;
+        }
+
+        // Step 9: Interactive script
+        String interactiveScript = (selfContained && interactive && INTERACTIVE_JS != null) ? INTERACTIVE_JS : null;
+
+        if (selfContained && interactiveScript == null) {
+            html = NON_INTERACTIVE_CSS_OVERRIDES + html;
+        }
+
+        // Step 10: Content hash and build DTO
+        String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
+
+        return new RenderedProblemStatementDTO(html, contentHash, STATELESS_VERSION, assets, tasks, diagrams, interactiveScript);
+    }
+
+    private String extractPlantUmlDiagramsStateless(String markdown, boolean selfContained, List<DiagramRenderInfoDTO> diagrams, List<String> inlineSvgs,
+            @Nullable Map<Long, TestFeedbackDetail> testResults) {
+        Matcher matcher = PLANTUML_PATTERN.matcher(markdown);
+        StringBuilder sb = new StringBuilder();
+        int diagramIndex = 0;
+
+        while (matcher.find()) {
+            if (diagramIndex >= MAX_PLANTUML_DIAGRAMS) {
+                // Replace remaining diagrams with an error message
+                matcher.appendReplacement(sb, Matcher.quoteReplacement("<div class=\"alert alert-warning\">Diagram limit exceeded</div>"));
+                continue;
+            }
+
+            String fullMatch = matcher.group(0);
+            String diagramId = "uml-" + diagramIndex;
+            String sourceHash = computeHash(fullMatch);
+            List<Long> testIds = extractTestsColorIds(fullMatch);
+            String cleanedSource = resolvePlantUmlTestColors(fullMatch, testResults);
+            String svgUrl = serverUrl + "/api/programming/plantuml/svg?plantuml=" + java.net.URLEncoder.encode(cleanedSource, java.nio.charset.StandardCharsets.UTF_8);
+
+            String inlineSvg = null;
+            if (selfContained) {
+                try {
+                    String rawSvg = plantUmlService.generateSvg(cleanedSource, false);
+                    rawSvg = rawSvg.replace("preserveAspectRatio=\"none\"", "preserveAspectRatio=\"xMidYMid meet\"");
+                    rawSvg = rawSvg.replaceFirst("style=\"width:\\d+px;height:\\d+px;", "style=\"");
+                    rawSvg = rawSvg.replace("background:#FFFFFF;", "");
+                    inlineSvg = sanitizeSvg(rawSvg);
+                }
+                catch (Exception e) {
+                    log.error("Failed to generate inline SVG for diagram {} in stateless render", diagramId, e);
+                    inlineSvg = "<div class=\"alert alert-danger\">Failed to render diagram</div>";
+                }
+                inlineSvgs.add(inlineSvg);
+            }
+
+            String replacement;
+            if (selfContained) {
+                replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\">" + SVG_PLACEHOLDER_PREFIX + diagramIndex
+                        + SVG_PLACEHOLDER_SUFFIX + "</div>";
+            }
+            else {
+                replacement = "<div class=\"artemis-diagram\" data-diagram-id=\"" + diagramId + "\" data-svg-url=\"" + svgUrl + "\"></div>";
+            }
+
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(replacement));
+            diagrams.add(new DiagramRenderInfoDTO(diagramId, selfContained ? "inline" : "url", svgUrl, inlineSvg, sourceHash, testIds));
+            diagramIndex++;
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * Sanitizes PlantUML-generated SVG using an allowlist of elements and attributes.
+     * Only passive geometry, text, and container elements are retained.
+     * All style elements/attributes, scripts, event handlers, and external references are stripped.
+     */
+    static String sanitizeSvg(String rawSvg) {
+        var doc = org.jsoup.Jsoup.parse(rawSvg, "", org.jsoup.parser.Parser.xmlParser());
+        sanitizeSvgElement(doc);
+        return doc.html();
+    }
+
+    private static void sanitizeSvgElement(org.jsoup.nodes.Node node) {
+        var children = new ArrayList<>(node.childNodes());
+        for (var child : children) {
+            if (child instanceof org.jsoup.nodes.Element el) {
+                if (!SVG_ALLOWED_ELEMENTS.contains(el.tagName().toLowerCase(Locale.ROOT))) {
+                    el.remove();
+                }
+                else {
+                    // Remove disallowed attributes
+                    var attrs = new ArrayList<>(el.attributes().asList());
+                    for (var attr : attrs) {
+                        if (!SVG_ALLOWED_ATTRIBUTES.contains(attr.getKey().toLowerCase(Locale.ROOT))) {
+                            el.removeAttr(attr.getKey());
+                        }
+                    }
+                    sanitizeSvgElement(el);
+                }
+            }
+            else if (child instanceof org.jsoup.nodes.TextNode) {
+                // Text nodes are safe, keep them
+            }
+            else {
+                child.remove();
+            }
+        }
+    }
+
+    private static AssetRequirementsDTO detectStatelessAssetRequirements(String markdown, String diagramMode) {
+        boolean needsKatex = KATEX_INLINE_PATTERN.matcher(markdown).find() || KATEX_BLOCK_PATTERN.matcher(markdown).find() || KATEX_BEGIN_PATTERN.matcher(markdown).find();
+        boolean needsHighlighting = FENCED_CODE_PATTERN.matcher(markdown).find();
+        return new AssetRequirementsDTO(needsKatex ? "client-rendering-required" : "absent", needsHighlighting ? "client-rendering-required" : "absent", diagramMode, List.of());
     }
 
     private String renderWithGraalJs(String markdown) {
