@@ -233,6 +233,29 @@ describe('Participation Service', () => {
         expect(resultGetBuildJobId).toEqual(expected);
     }));
 
+    it('should update individual due dates', fakeAsync(() => {
+        const exercise = { id: 1, type: 'programming' } as ProgrammingExercise;
+        const participations: StudentParticipation[] = [
+            { id: 10, individualDueDate: dayjs('2026-02-01T23:59:00Z') } as StudentParticipation,
+            { id: 11, individualDueDate: dayjs('2026-02-15T23:59:00Z') } as StudentParticipation,
+        ];
+
+        const returnedFromService = participations.map((p) => ({ ...p, results: [], submissions: [] }));
+
+        service
+            .updateIndividualDueDates(exercise, participations)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp.body).toHaveLength(2));
+
+        const req = httpMock.expectOne({ method: 'PUT', url: `api/exercise/exercises/${exercise.id}/participations/update-individual-due-date` });
+        expect(req.request.body).toHaveLength(2);
+        expect(req.request.body[0].id).toBe(10);
+        expect(req.request.body[0].exerciseId).toBe(1);
+        expect(req.request.body[0].individualDueDate).toBeDefined();
+        req.flush(returnedFromService);
+        tick();
+    }));
+
     afterEach(() => {
         httpMock.verify();
     });
