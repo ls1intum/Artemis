@@ -140,6 +140,12 @@ $iris-z-index-dropdown: 1050;
     }
 }
 
+.message-entering.animate-enabled,
+.suggestion-entering,
+.suggestion-leaving {
+    overflow-anchor: none;
+}
+
 .suggestions-container {
     display: flex;
     flex-wrap: wrap;
@@ -410,6 +416,7 @@ pre {
         }
 
         .messages {
+            overflow-anchor: none;
             flex: 1;
             overflow-x: hidden;
             overflow-y: auto;

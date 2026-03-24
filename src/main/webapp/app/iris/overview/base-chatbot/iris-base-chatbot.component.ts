@@ -248,6 +248,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
     readonly isScrolledToBottom = signal(true);
     readonly resendAnimationActive = signal(false);
     readonly clickedSuggestion = signal<string | undefined>(undefined);
+    private readonly isSuggestionAnimating = signal(false);
 
     // Animation state (internal tracking)
     private shouldAnimate = false;
@@ -358,6 +359,7 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             if (this.previousSessionId !== sessionId) {
                 this.animatingMessageIds.set(new Set<number>());
                 this.shouldAnimate = false;
+                this.isScrolledToBottom.set(true);
                 const timeoutId = setTimeout(() => (this.shouldAnimate = true));
                 onCleanup(() => clearTimeout(timeoutId));
             }
@@ -368,7 +370,9 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
         effect((onCleanup) => {
             const rawMessages = this.rawMessages();
             if (rawMessages.length !== this.previousMessageCount) {
-                this.scrollToBottom('smooth');
+                if (this.isScrolledToBottom() && !this.isSuggestionAnimating()) {
+                    this.scrollToBottom('smooth');
+                }
                 const timeoutId = setTimeout(() => this.messageTextarea()?.nativeElement?.focus(), 10);
                 onCleanup(() => clearTimeout(timeoutId));
             }
@@ -388,14 +392,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             this.previousMessageCount = rawMessages.length;
         });
 
-        // Handle new message scroll
-        effect(() => {
-            const num = this.numNewMessages();
-            if (num > 0) {
-                this.scrollToBottom('smooth');
-            }
-        });
-
         // Handle active status changes
         effect(() => {
             const activeValue = this.active();
@@ -405,13 +401,18 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
             }
         });
 
-        // Reset clicked suggestion when new suggestions arrive and scroll to show them
+        // Reset clicked suggestion when new suggestions arrive
         effect(() => {
-            const suggestions = this.suggestions();
+            this.suggestions();
             this.clickedSuggestion.set(undefined);
-            if (suggestions.length > 0) {
-                // Scroll after suggestion animation completes (1s delay + 0.3s animation)
-                setTimeout(() => this.scrollToBottom('smooth'), 1350);
+        });
+
+        // Suppress auto-scroll during suggestion animation window
+        effect((onCleanup) => {
+            if (this.canShowSuggestions()) {
+                this.isSuggestionAnimating.set(true);
+                const timeoutId = setTimeout(() => this.isSuggestionAnimating.set(false), 1300);
+                onCleanup(() => clearTimeout(timeoutId));
             }
         });
 
@@ -621,15 +622,6 @@ export class IrisBaseChatbotComponent implements AfterViewInit {
                 behavior: behavior,
             });
         });
-        // Follow-up scroll after message animation (0.3s) completes to capture full height
-        setTimeout(() => {
-            const messagesElement: HTMLElement = this.messagesElement()?.nativeElement;
-            if (!messagesElement) return;
-            messagesElement.scrollTo({
-                top: messagesElement.scrollHeight,
-                behavior: behavior,
-            });
-        }, 350);
     }
 
     /**

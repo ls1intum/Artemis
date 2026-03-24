@@ -153,6 +153,15 @@
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
             },
+            "stages": {
+                "thinking": "Thinking hard",
+                "analyzing": "Analyzing context",
+                "processing": "Processing your request",
+                "formulating": "Formulating a response",
+                "error": {
+                    "internal": "An internal error occurred"
+                }
+            },
             "chatBubble": {
                 "seeFull": "See full message"
             },
