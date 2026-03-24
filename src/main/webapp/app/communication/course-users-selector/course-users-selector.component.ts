@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, HostBinding, OnDestroy, OnInit, ViewEncapsulation, inject, input, viewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
 import { CourseManagementService } from 'app/core/course/manage/services/course-management.service';
@@ -48,23 +48,19 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     private ngUnsubscribe = new Subject<void>();
 
-    @ViewChild('instance', { static: true }) typeAheadInstance: NgbTypeahead;
-    @Input() disabled = false;
-    @ViewChild('searchInput') searchInput: ElementRef;
-    @Input()
-    courseId: number;
-    @Input()
+    readonly typeAheadInstance = viewChild.required<NgbTypeahead>('instance');
+    disabled = false;
+    readonly searchInput = viewChild.required<ElementRef>('searchInput');
+    readonly courseId = input.required<number>();
+
     @HostBinding('attr.id')
     id = 'users-selector' + selectorId++;
-    @Input()
-    label?: string;
-    @Input()
-    rolesToAllowSearchingIn: SearchRoleGroup[] = ['tutors', 'students', 'instructors'];
-    @Input()
-    multiSelect = true;
 
-    @Input()
-    showUserList = true;
+    readonly label = input<string>();
+    readonly rolesToAllowSearchingIn = input<SearchRoleGroup[]>(['tutors', 'students', 'instructors']);
+    readonly multiSelect = input(true);
+
+    readonly showUserList = input(true);
 
     searchStudents = true;
     searchTutors = true;
@@ -78,13 +74,14 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     searchFailed = false;
 
     ngOnInit(): void {
-        if (this.rolesToAllowSearchingIn.includes('students')) {
+        const rolesToAllowSearchingIn = this.rolesToAllowSearchingIn();
+        if (rolesToAllowSearchingIn.includes('students')) {
             this.searchStudents = true;
         }
-        if (this.rolesToAllowSearchingIn.includes('tutors')) {
+        if (rolesToAllowSearchingIn.includes('tutors')) {
             this.searchTutors = true;
         }
-        if (this.rolesToAllowSearchingIn.includes('instructors')) {
+        if (rolesToAllowSearchingIn.includes('instructors')) {
             this.searchInstructors = true;
         }
     }
@@ -129,13 +126,13 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         const value = (event.target as HTMLInputElement).value;
         // If the input value has fewer than 3 characters, close the suggestion popup
         if (value.length < 3) {
-            this.typeAheadInstance.dismissPopup();
+            this.typeAheadInstance().dismissPopup();
         }
     }
 
     onFilterChange() {
-        this.typeAheadInstance?.dismissPopup();
-        this.searchInput.nativeElement.dispatchEvent(new Event('input'));
+        this.typeAheadInstance()?.dismissPopup();
+        this.searchInput().nativeElement.dispatchEvent(new Event('input'));
     }
 
     search: OperatorFunction<string, readonly UserPublicInfoDTO[]> = (text$: Observable<string>) =>
@@ -161,7 +158,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
                     return of([]);
                 } else {
                     this.isSearching = true;
-                    return this.courseManagementService.searchUsers(this.courseId, term, rolesToSearchIn).pipe(
+                    return this.courseManagementService.searchUsers(this.courseId(), term, rolesToSearchIn).pipe(
                         map((users) => users.body!),
                         map((users) => users.filter((user) => !this.selectedUsers.find((selectedUser) => selectedUser.id === user.id))),
                         tap(() => {
@@ -204,7 +201,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             return;
         }
 
-        if (this.multiSelect) {
+        if (this.multiSelect()) {
             this.selectedUsers = selectedUsers ?? [];
         } else {
             this.selectedUsers = selectedUsers?.length ? [selectedUsers[0]] : [];
@@ -216,7 +213,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     private onUserSelected(selectedUser: UserPublicInfoDTO) {
         if (selectedUser) {
             if (!this.selectedUsers.find((user) => user.id === selectedUser.id)) {
-                if (this.multiSelect) {
+                if (this.multiSelect()) {
                     this.selectedUsers = [...this.selectedUsers, selectedUser];
                 } else {
                     this.selectedUsers = [selectedUser];
@@ -227,8 +224,9 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     }
 
     private resetSearchInput() {
-        if (this.searchInput) {
-            this.searchInput.nativeElement.value = '';
+        const searchInput = this.searchInput();
+        if (searchInput) {
+            searchInput.nativeElement.value = '';
         }
     }
 
