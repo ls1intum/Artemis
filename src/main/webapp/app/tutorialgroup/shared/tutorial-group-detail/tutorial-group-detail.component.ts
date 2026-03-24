@@ -85,7 +85,7 @@ export interface DeleteTutorialGroupEvent {
 type ListOption = 'all-sessions' | 'future-sessions';
 
 @Component({
-    selector: 'jhi-course-tutorial-group-detail',
+    selector: 'jhi-tutorial-group-detail',
     imports: [
         ProfilePictureComponent,
         FaIconComponent,
