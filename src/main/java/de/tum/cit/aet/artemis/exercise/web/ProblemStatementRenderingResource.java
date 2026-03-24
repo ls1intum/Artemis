@@ -75,7 +75,8 @@ public class ProblemStatementRenderingResource {
         String lang = renderRequest.locale() != null ? renderRequest.locale() : "en";
         Locale locale = Locale.forLanguageTag(lang);
 
-        RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode());
+        RenderedProblemStatementDTO result = renderingService.render(renderRequest.markdown(), testResults, resultSummary, locale, renderRequest.darkMode(),
+                renderRequest.interactive());
 
         return ResponseEntity.ok().eTag("\"" + result.contentHash() + "\"").body(result);
     }
