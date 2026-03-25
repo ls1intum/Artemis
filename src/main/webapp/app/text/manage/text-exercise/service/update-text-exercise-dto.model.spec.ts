@@ -2,8 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { toUpdateTextExerciseDTO } from './update-text-exercise-dto.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import dayjs from 'dayjs/esm';
 
 describe('UpdateTextExerciseDTO', () => {
@@ -27,11 +26,9 @@ describe('UpdateTextExerciseDTO', () => {
                 shortName: 'TE',
                 maxPoints: 10,
                 bonusPoints: 2,
-                assessmentType: AssessmentType.MANUAL,
                 releaseDate,
                 dueDate,
                 difficulty: DifficultyLevel.MEDIUM,
-                mode: ExerciseMode.INDIVIDUAL,
                 includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY,
                 problemStatement: 'Write something',
                 gradingInstructions: 'Grade carefully',
@@ -50,11 +47,9 @@ describe('UpdateTextExerciseDTO', () => {
             expect(dto.shortName).toBe('TE');
             expect(dto.maxPoints).toBe(10);
             expect(dto.bonusPoints).toBe(2);
-            expect(dto.assessmentType).toBe(AssessmentType.MANUAL);
             expect(dto.releaseDate).toBe(releaseDate.toJSON());
             expect(dto.dueDate).toBe(dueDate.toJSON());
             expect(dto.difficulty).toBe(DifficultyLevel.MEDIUM);
-            expect(dto.mode).toBe(ExerciseMode.INDIVIDUAL);
             expect(dto.problemStatement).toBe('Write something');
             expect(dto.exampleSolution).toBe('Example solution text');
             expect(dto.courseId).toBe(5);
