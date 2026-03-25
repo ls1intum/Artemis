@@ -88,11 +88,12 @@ class TextExerciseVersionIntegrationTest extends AbstractSpringIntegrationIndepe
         // Act: Update the exercise
         TextExercise updatedExercise;
         if (reEvaluate) {
-            updatedExercise = request.putWithResponseBody("/api/text/text-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false", textExercise, TextExercise.class,
-                    HttpStatus.OK);
+            updatedExercise = request.putWithResponseBody("/api/text/text-exercises/" + exerciseId + "/re-evaluate?deleteFeedback=false",
+                    de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class, HttpStatus.OK);
         }
         else {
-            updatedExercise = request.putWithResponseBody("/api/text/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
+            updatedExercise = request.putWithResponseBody("/api/text/text-exercises", de.tum.cit.aet.artemis.text.dto.UpdateTextExerciseDTO.of(textExercise), TextExercise.class,
+                    HttpStatus.OK);
         }
 
         // Assert: Verify operation succeeded
