@@ -88,10 +88,9 @@ export class SentryErrorHandler extends ErrorHandler {
             }
 
             if (trans.request.headers) {
-                for (let h of trans.request.headers.keys()) {
-                  if (h.startsWith("X-Artemis-Client-"))
-                    trans.request.headers.delete(h);
-                }
+                trans.request.headers = Object.fromEntries(
+                     Object.entries(trans.request.headers).filter(([key]) => !key.startsWith('X-Artemis-Client-'))
+                );
             }
         }
 
