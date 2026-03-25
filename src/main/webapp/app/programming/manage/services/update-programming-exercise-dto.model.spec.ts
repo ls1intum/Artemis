@@ -14,7 +14,6 @@ describe('UpdateProgrammingExerciseDTO mapping', () => {
 
     it('should convert a programming exercise to an update DTO with all fields', () => {
         jest.spyOn(dateUtils, 'convertDateFromClient').mockReturnValue('2024-06-01T10:00:00.000Z' as any);
-        jest.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore').mockImplementation((exercise) => exercise);
         jest.spyOn(ExerciseService, 'stringifyExerciseDTOCategories').mockReturnValue(['cat1']);
 
         const course = new Course();
@@ -104,13 +103,10 @@ describe('UpdateProgrammingExerciseDTO mapping', () => {
         // Auxiliary repos
         expect(dto.auxiliaryRepositories).toHaveLength(1);
         expect(dto.auxiliaryRepositories![0].name).toBe('aux-repo');
-
-        expect(ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore).toHaveBeenCalledWith(exercise);
     });
 
     it('should handle exercise without build config', () => {
         jest.spyOn(dateUtils, 'convertDateFromClient').mockReturnValue(undefined);
-        jest.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore').mockImplementation((exercise) => exercise);
         jest.spyOn(ExerciseService, 'stringifyExerciseDTOCategories').mockReturnValue(undefined as any);
 
         const exercise = new ProgrammingExercise(undefined, undefined);
