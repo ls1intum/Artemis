@@ -5,9 +5,12 @@
     "license": "MIT",
     "devDependencies": {
         "@playwright/test": "1.58.2",
+        "@typescript-eslint/eslint-plugin": "8.57.0",
+        "@typescript-eslint/parser": "8.57.0",
         "cross-env": "10.1.0",
         "dayjs": "1.11.19",
         "dotenv": "17.3.1",
+        "eslint": "9.39.2",
         "istanbul-lib-coverage": "3.2.2",
         "istanbul-lib-report": "3.0.1",
         "istanbul-reports": "3.2.0",
@@ -31,6 +34,8 @@
         "merge-junit-reports": "junit-merge ./test-reports/results-parallel.xml ./test-reports/results-sequential.xml -o ./test-reports/results.xml",
         "merge-coverage-reports": "node ./merge-coverage-reports.mjs",
         "update": "ncu -i --format group",
-        "pretest": "tsc --incremental -p tsconfig.json"
+        "pretest": "tsc --incremental -p tsconfig.json",
+        "lint": "eslint .",
+        "lint:fix": "eslint --fix ."
     }
 }
