@@ -2,8 +2,8 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
@@ -59,14 +59,14 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = toExamUpdateDTO({ id: 1 });
+        const expectedDto = toExamUpdateDTO({ id: 1 } as Exam);
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toEqual(expectedBody);
+        expect(req.request.body).toEqual(expectedDto);
 
         // CLEANUP
         req.flush(mockExam);
@@ -76,14 +76,14 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = toExamUpdateDTO({ id: 1 });
+        const expectedDto = toExamUpdateDTO({ id: 1 } as Exam);
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'PUT', url: `${service.resourceUrl}/${course.id!}/exams` });
-        expect(req.request.body).toEqual(expectedBody);
+        expect(req.request.body).toEqual(expectedDto);
 
         // CLEANUP
         req.flush(mockExam);
@@ -93,14 +93,14 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedBody = ExamManagementService.convertExamToImportDTO({ id: 1 }, course.id!);
+        const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
-        expect(req.request.body).toEqual(expectedBody);
+        expect(req.request.body).toEqual(expectedDto);
 
         // CLEANUP
         req.flush(mockExam);

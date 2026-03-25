@@ -264,9 +264,13 @@ public class LectureUnitService {
         if (competencyRepositoryApi.isEmpty()) {
             return;
         }
-        // TODO: think about optimizing this by loading all new competencies in a single query
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            // this handles the case where all competency links were removed
+        if (dto.competencyLinks() == null) {
+            // null means "not provided" — do not change existing links (PATCH semantics)
+            // This is consistent with ExerciseService.updateCompetencyLinks
+            return;
+        }
+        if (dto.competencyLinks().isEmpty()) {
+            // empty set means "remove all" — clear existing links
             entity.getCompetencyLinks().clear();
         }
         else {
@@ -276,6 +280,7 @@ public class LectureUnitService {
             // 2) New state of links (reusing existing ones where possible)
             Set<CompetencyLectureUnitLink> updatedLinks = new HashSet<>();
 
+            // TODO: think about optimizing this by loading all new competencies in a single query
             for (var dtoLink : dto.competencyLinks()) {
                 long competencyId = dtoLink.competency().id();
                 double weight = dtoLink.weight();

@@ -1,10 +1,10 @@
 package de.tum.cit.aet.artemis.assessment.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
-import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -258,7 +258,7 @@ public class GradingScaleResource {
         GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
 
         // Update exam max points if provided
-        if (dto.examMaxPoints() != null && dto.examMaxPoints() != exam.getExamMaxPoints()) {
+        if (dto.examMaxPoints() != null && !Objects.equals(dto.examMaxPoints(), exam.getExamMaxPoints())) {
             exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }
@@ -315,8 +315,12 @@ public class GradingScaleResource {
             return;
         }
 
-        setIfPresent(dto.courseMaxPoints(), course::setMaxPoints);
-        setIfPresent(dto.coursePresentationScore(), course::setPresentationScore);
+        if (dto.courseMaxPoints() != null) {
+            course.setMaxPoints(dto.courseMaxPoints());
+        }
+        if (dto.coursePresentationScore() != null) {
+            course.setPresentationScore(dto.coursePresentationScore());
+        }
     }
 
     /**

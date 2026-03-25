@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.assessment.dto;
 
-import java.util.Collections;
-import java.util.Objects;
+import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
@@ -33,7 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
  * @param examMaxPoints           optional: max points for the exam (for exam grading scales)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
         @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,
         @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
@@ -42,13 +41,13 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
      * Returns the grade steps, defaulting to an empty set if null.
      */
     public Set<GradeStepDTO> gradeStepsOrEmpty() {
-        return Objects.requireNonNullElse(gradeSteps, Collections.emptySet());
+        return gradeSteps != null ? gradeSteps : new HashSet<>();
     }
 
     /**
      * DTO for a grade step within a grading scale.
      */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record GradeStepDTO(double lowerBoundPercentage, boolean lowerBoundInclusive, double upperBoundPercentage, boolean upperBoundInclusive, @NotNull String gradeName,
             boolean isPassingGrade) {
 
@@ -78,7 +77,9 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
      */
     public void applyTo(GradingScale gradingScale) {
         gradingScale.setGradeType(gradeType);
-        gradingScale.setBonusStrategy(bonusStrategy);
+        if (bonusStrategy != null) {
+            gradingScale.setBonusStrategy(bonusStrategy);
+        }
         gradingScale.setPlagiarismGrade(plagiarismGrade);
         gradingScale.setNoParticipationGrade(noParticipationGrade);
         gradingScale.setPresentationsNumber(presentationsNumber);

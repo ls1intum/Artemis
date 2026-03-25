@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.text.web;
 
-import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
-
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
@@ -11,6 +9,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -43,8 +42,8 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastEditor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
-import de.tum.cit.aet.artemis.core.util.DTOHelper;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -97,11 +96,13 @@ public class TextExerciseCreationUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public TextExerciseCreationUpdateResource(TextExerciseRepository textExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ParticipationRepository participationRepository, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, InstanceMessageSendService instanceMessageSendService, ChannelService channelService,
             ExerciseVersionService exerciseVersionService, Optional<AthenaApi> athenaApi, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi) {
+            Optional<CompetencyApi> competencyApi, Optional<SlideApi> slideApi, Optional<AtlasMLApi> atlasMLApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.textExerciseRepository = textExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -117,6 +118,7 @@ public class TextExerciseCreationUpdateResource {
         this.competencyApi = competencyApi;
         this.slideApi = slideApi;
         this.atlasMLApi = atlasMLApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -155,10 +157,10 @@ public class TextExerciseCreationUpdateResource {
         // Check that only allowed athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(textExercise, course, ENTITY_NAME), () -> textExercise.setFeedbackSuggestionModule(null));
 
-        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(textExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(textExercise);
         TextExercise savedExercise = textExerciseRepository.save(textExercise);
         if (!competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
             savedExercise = textExerciseRepository.save(savedExercise);
         }
         final TextExercise result = savedExercise;
@@ -215,7 +217,8 @@ public class TextExerciseCreationUpdateResource {
         if (updateTextExerciseDTO.courseId() == null && updateTextExerciseDTO.exerciseGroupId() == null) {
             throw new BadRequestAlertException("Either courseId or exerciseGroupId must be provided.", ENTITY_NAME, "courseOrExerciseGroupMissing");
         }
-        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateTextExerciseDTO.courseId())) {
+        // For course exercises, verify the courseId matches; for exam exercises, courseId is null (exerciseGroupId is used instead)
+        if (updateTextExerciseDTO.courseId() != null && !Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updateTextExerciseDTO.courseId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
 
@@ -226,6 +229,8 @@ public class TextExerciseCreationUpdateResource {
         Double oldBonusPoints = originalExercise.getBonusPoints();
         String oldProblemStatement = originalExercise.getProblemStatement();
         String oldFeedbackSuggestionModule = originalExercise.getFeedbackSuggestionModule();
+        // Capture original competency IDs before update() mutates the entity (L1 cache)
+        Set<Long> originalCompetencyIds = originalExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         // Apply the DTO to the original exercise
         TextExercise updatedExercise = update(updateTextExerciseDTO, originalExercise);
@@ -259,7 +264,7 @@ public class TextExerciseCreationUpdateResource {
         exerciseService.notifyAboutExerciseChanges(oldReleaseDate, oldAssessmentDueDate, oldProblemStatement, persistedExercise, notificationText);
         slideApi.ifPresent(api -> api.handleDueDateChange(oldDueDate, persistedExercise));
 
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalExercise, Optional.of(persistedExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, persistedExercise));
 
         // Notify AtlasML about the text exercise update
         notifyAtlasML(persistedExercise, OperationTypeDTO.UPDATE, "text exercise update");
@@ -293,15 +298,39 @@ public class TextExerciseCreationUpdateResource {
         final TextExercise existingExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResultsAndGradingCriteriaElseThrow(exerciseId);
         authCheckService.checkGivenExerciseIdSameForExerciseRequestBodyIdElseThrow(exerciseId, updateTextExerciseDTO.id());
 
+        // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
+        final Double originalMaxPoints = existingExercise.getMaxPoints();
+        final Double originalBonusPoints = existingExercise.getBonusPoints();
+        final ZonedDateTime originalDueDate = existingExercise.getDueDate();
+        final ZonedDateTime originalReleaseDate = existingExercise.getReleaseDate();
+        final ZonedDateTime originalAssessmentDueDate = existingExercise.getAssessmentDueDate();
+        final String originalProblemStatement = existingExercise.getProblemStatement();
+        final Set<Long> originalCompetencyIds = Hibernate.isInitialized(existingExercise.getCompetencyLinks())
+                ? existingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet())
+                : Set.of();
+
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        // Apply DTO to existing exercise
+        // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
         TextExercise exerciseForReevaluation = update(updateTextExerciseDTO, existingExercise);
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(exerciseForReevaluation);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
         exerciseService.reEvaluateExercise(exerciseForReevaluation, deleteFeedbackAfterGradingInstructionUpdate);
 
-        return updateTextExercise(updateTextExerciseDTO, null);
+        // Save directly instead of delegating to updateTextExercise() to avoid double side effects.
+        TextExercise savedExercise = textExerciseRepository.save(exerciseForReevaluation);
+
+        // Apply all post-save side effects once with the captured originals.
+        exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        instanceMessageSendService.sendTextExerciseSchedule(savedExercise.getId());
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, originalProblemStatement, savedExercise, null);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, savedExercise));
+        exerciseVersionService.createExerciseVersion(savedExercise);
+
+        return ResponseEntity.ok(savedExercise);
     }
 
     /**
@@ -315,25 +344,103 @@ public class TextExerciseCreationUpdateResource {
         if (dto == null) {
             throw new BadRequestAlertException("No text exercise was provided.", ENTITY_NAME, "isNull");
         }
-        applyCommonFields(dto, exercise);
+        exercise.setTitle(dto.title());
         exercise.validateTitle();
-        exercise.setProblemStatement(Objects.requireNonNullElse(dto.problemStatement(), ""));
+        exercise.setShortName(dto.shortName());
+        // problemStatement: null -> empty string
+        String newProblemStatement = dto.problemStatement() == null ? "" : dto.problemStatement();
+        exercise.setProblemStatement(newProblemStatement);
+
+        exercise.setChannelName(dto.channelName());
+        exercise.setCategories(dto.categories());
+        exercise.setDifficulty(dto.difficulty());
+
+        exercise.setMaxPoints(dto.maxPoints());
+        exercise.setBonusPoints(dto.bonusPoints());
+        exercise.setIncludedInOverallScore(dto.includedInOverallScore());
+
+        exercise.setReleaseDate(dto.releaseDate());
+        exercise.setStartDate(dto.startDate());
+        exercise.setDueDate(dto.dueDate());
+        exercise.setAssessmentDueDate(dto.assessmentDueDate());
+        exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
 
         // validates general settings: points, dates, etc.
         exercise.validateGeneralSettings();
 
+        // Only set boolean values if they are explicitly provided (not null)
+        if (dto.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
+        }
+        if (dto.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
+        }
+        if (dto.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
+        }
+        exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
+        exercise.setGradingInstructions(dto.gradingInstructions());
+
+        // TextExercise specific fields
+        exercise.setExampleSolution(dto.exampleSolution());
+
         updateGradingCriteria(dto, exercise);
-        updateCompetencyLinks(dto, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
 
         return exercise;
     }
 
     /**
-     * Applies fields common to both create and update operations from the DTO to the exercise.
+     * Replaces the grading criteria of the given exercise according to PUT semantics.
      */
-    private void applyCommonFields(UpdateTextExerciseDTO dto, TextExercise exercise) {
+    private void updateGradingCriteria(UpdateTextExerciseDTO dto, TextExercise exercise) {
+        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
+            clearInitializedCollection(exercise.getGradingCriteria());
+            return;
+        }
+
+        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+
+        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
+                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
+
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
+            if (criterion == null) {
+                criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+            }
+            else {
+                gcDto.applyTo(criterion);
+            }
+            return criterion;
+        }).collect(Collectors.toSet());
+
+        managedCriteria.clear();
+        managedCriteria.addAll(updated);
+    }
+
+    /**
+     * Clears the given collection if it is initialized.
+     */
+    private static <T> void clearInitializedCollection(Set<T> set) {
+        if (set != null && Hibernate.isInitialized(set)) {
+            set.clear();
+        }
+    }
+
+    /**
+     * Applies DTO values to a new TextExercise entity for creation via PUT.
+     * Sets courseId/exerciseGroupId as proxy objects so that
+     * {@link CourseService#retrieveCourseOverExerciseGroupOrCourseId} can resolve them.
+     */
+    private void applyDtoToNewExercise(UpdateTextExerciseDTO dto, TextExercise exercise) {
         exercise.setTitle(dto.title());
         exercise.setShortName(dto.shortName());
+        exercise.setProblemStatement(dto.problemStatement());
         exercise.setChannelName(dto.channelName());
         exercise.setCategories(dto.categories());
         exercise.setDifficulty(dto.difficulty());
@@ -345,92 +452,43 @@ public class TextExerciseCreationUpdateResource {
         exercise.setDueDate(dto.dueDate());
         exercise.setAssessmentDueDate(dto.assessmentDueDate());
         exercise.setExampleSolutionPublicationDate(dto.exampleSolutionPublicationDate());
-        setIfPresent(dto.allowComplaintsForAutomaticAssessments(), exercise::setAllowComplaintsForAutomaticAssessments);
-        setIfPresent(dto.allowFeedbackRequests(), exercise::setAllowFeedbackRequests);
-        setIfPresent(dto.presentationScoreEnabled(), exercise::setPresentationScoreEnabled);
-        setIfPresent(dto.secondCorrectionEnabled(), exercise::setSecondCorrectionEnabled);
         exercise.setFeedbackSuggestionModule(dto.feedbackSuggestionModule());
         exercise.setGradingInstructions(dto.gradingInstructions());
         exercise.setExampleSolution(dto.exampleSolution());
-    }
-
-    /**
-     * Replaces the grading criteria of the given exercise according to PUT semantics.
-     */
-    private void updateGradingCriteria(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
-            DTOHelper.clearIfInitialized(exercise.getGradingCriteria());
-            return;
+        if (dto.allowComplaintsForAutomaticAssessments() != null) {
+            exercise.setAllowComplaintsForAutomaticAssessments(dto.allowComplaintsForAutomaticAssessments());
+        }
+        if (dto.allowFeedbackRequests() != null) {
+            exercise.setAllowFeedbackRequests(dto.allowFeedbackRequests());
+        }
+        if (dto.presentationScoreEnabled() != null) {
+            exercise.setPresentationScoreEnabled(dto.presentationScoreEnabled());
+        }
+        if (dto.secondCorrectionEnabled() != null) {
+            exercise.setSecondCorrectionEnabled(dto.secondCorrectionEnabled());
         }
 
-        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
-
-        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
-                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
-
-        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> resolveGradingCriterion(gcDto, existingById, exercise)).collect(Collectors.toSet());
-
-        managedCriteria.clear();
-        managedCriteria.addAll(updated);
-    }
-
-    /**
-     * Resolves a single grading criterion from a DTO, reusing an existing managed criterion if available.
-     */
-    private GradingCriterion resolveGradingCriterion(de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO gcDto, Map<Long, GradingCriterion> existingById,
-            TextExercise exercise) {
-        if (gcDto.id() != null) {
-            GradingCriterion existing = existingById.get(gcDto.id());
-            if (existing != null) {
-                gcDto.applyTo(existing);
-                return existing;
+        // Transfer grading criteria from the DTO
+        if (dto.gradingCriteria() != null && !dto.gradingCriteria().isEmpty()) {
+            for (var gcDto : dto.gradingCriteria()) {
+                GradingCriterion criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+                exercise.getGradingCriteria().add(criterion);
             }
         }
-        GradingCriterion newCriterion = gcDto.toEntity();
-        newCriterion.setExercise(exercise);
-        return newCriterion;
-    }
 
-    /**
-     * Replaces the competency links of the given exercise according to PUT semantics.
-     */
-    private void updateCompetencyLinks(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        boolean hasLinks = dto.competencyLinks() != null && !dto.competencyLinks().isEmpty();
-        if (!hasLinks) {
-            DTOHelper.clearIfInitialized(exercise.getCompetencyLinks());
-            return;
-        }
-        CompetencyApi api = competencyApi.orElseThrow(() -> new BadRequestAlertException("Competency links require Atlas to be enabled.", "CourseCompetency", "atlasDisabled"));
-
-        Set<CompetencyExerciseLink> managedLinks = exercise.ensureCompetencyLinksSet();
-        Map<Long, CompetencyExerciseLink> existingByCompetencyId = managedLinks.stream().filter(link -> link.getCompetency() != null && link.getCompetency().getId() != null)
-                .collect(Collectors.toMap(link -> link.getCompetency().getId(), link -> link, (a, b) -> a));
-
-        Long exerciseCourseId = Optional.ofNullable(exercise.getCourseViaExerciseGroupOrCourseMember()).map(c -> c.getId()).orElse(null);
-        Set<CompetencyExerciseLink> updated = dto.competencyLinks().stream().map(linkDto -> {
-            Long competencyId = linkDto.courseCompetencyDTO().id();
-            CompetencyExerciseLink existing = existingByCompetencyId.get(competencyId);
-            if (existing != null) {
-                existing.setWeight(linkDto.weight());
-                return existing;
+        // Transfer competency links from the DTO (extractCompetencyLinksForCreation will handle them)
+        if (dto.competencyLinks() != null && !dto.competencyLinks().isEmpty()) {
+            for (var linkDto : dto.competencyLinks()) {
+                if (linkDto == null || linkDto.competency() == null) {
+                    throw new BadRequestAlertException("Each competency link must include a competency.", ENTITY_NAME, "competencyIdMissing");
+                }
+                Competency competencyRef = new Competency();
+                competencyRef.setId(linkDto.competency().id());
+                CompetencyExerciseLink link = new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
+                exercise.getCompetencyLinks().add(link);
             }
-            Competency competencyRef = api.loadCompetency(competencyId);
-            competencyRef.validateCompetencyBelongsToExerciseCourse(exerciseCourseId);
-            return new CompetencyExerciseLink(competencyRef, exercise, linkDto.weight());
-        }).collect(Collectors.toSet());
-
-        managedLinks.clear();
-        managedLinks.addAll(updated);
-    }
-
-    /**
-     * Applies DTO values to a new TextExercise entity for creation via PUT.
-     * Sets courseId/exerciseGroupId as proxy objects so that
-     * {@link CourseService#retrieveCourseOverExerciseGroupOrCourseId} can resolve them.
-     */
-    private void applyDtoToNewExercise(UpdateTextExerciseDTO dto, TextExercise exercise) {
-        applyCommonFields(dto, exercise);
-        exercise.setProblemStatement(dto.problemStatement());
+        }
 
         // Set course or exercise group reference
         if (dto.courseId() != null) {

@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
@@ -71,13 +70,11 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
 import de.tum.cit.aet.artemis.fileupload.domain.FileUploadExercise;
-import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.lti.api.LtiApi;
 import de.tum.cit.aet.artemis.lti.domain.LtiResourceLaunch;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
@@ -901,84 +898,4 @@ public class ExerciseService {
         return events;
     }
 
-    /**
-     * Updates the competency links of an exercise based on the DTO values.
-     * Reuses existing managed links where possible, creates new ones for new competencies,
-     * and removes links that are no longer present.
-     *
-     * @param dto    the DTO containing the new competency link state
-     * @param entity the exercise entity to update
-     */
-    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
-        if (competencyRepositoryApi.isEmpty()) {
-            return;
-        }
-        boolean hasLinks = dto.competencyLinks() != null && !dto.competencyLinks().isEmpty();
-        if (!hasLinks) {
-            entity.getCompetencyLinks().clear();
-            return;
-        }
-
-        final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
-
-        Set<CompetencyExerciseLink> updatedLinks = dto.competencyLinks().stream().map(dtoLink -> resolveCompetencyLink(dtoLink, existingLinksByCompetencyId, entity))
-                .collect(Collectors.toSet());
-
-        entity.getCompetencyLinks().clear();
-        entity.getCompetencyLinks().addAll(updatedLinks);
-    }
-
-    /**
-     * Resolves a single competency link from a DTO, reusing an existing managed link if one exists for the same competency.
-     */
-    private CompetencyExerciseLink resolveCompetencyLink(CompetencyLinkDTO dtoLink, Map<Long, CompetencyExerciseLink> existingLinksByCompetencyId, Exercise entity) {
-        long competencyId = dtoLink.competency().id();
-        double weight = dtoLink.weight();
-        CompetencyExerciseLink existing = existingLinksByCompetencyId.get(competencyId);
-        if (existing != null) {
-            existing.setWeight(weight);
-            return existing;
-        }
-        return new CompetencyExerciseLink(competencyRepositoryApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId), entity, weight);
-    }
-
-    /**
-     * Extracts competency links from a new exercise before its first save.
-     * The links are cleared from the exercise so it can be saved without them
-     * (since they need the exercise ID which doesn't exist yet).
-     *
-     * @param exercise the new exercise (not yet saved) from which to extract competency links
-     * @return the extracted competency links (may be empty)
-     */
-    public Set<CompetencyExerciseLink> extractCompetencyLinksForCreation(Exercise exercise) {
-        Set<CompetencyExerciseLink> competencyLinks = new HashSet<>(exercise.getCompetencyLinks());
-        exercise.getCompetencyLinks().clear();
-        return competencyLinks;
-    }
-
-    /**
-     * Restores competency links to a saved exercise and persists them.
-     * <p>
-     * This method must be called AFTER the exercise has been saved and has an ID.
-     * It sets the proper exercise reference on each link (required for @MapsId) and
-     * adds them to the exercise. The caller must save the exercise again after this call
-     * to persist the links via cascade.
-     *
-     * @param exercise        the saved exercise (must have an ID)
-     * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
-     */
-    public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        boolean shouldSkip = competencyLinks == null || competencyLinks.isEmpty() || competencyRepositoryApi.isEmpty();
-        if (shouldSkip) {
-            return;
-        }
-        // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
-        Set<Long> competencyIds = competencyLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-        Map<Long, CourseCompetency> managedCompetencies = competencyRepositoryApi.get().findAllCompetenciesById(competencyIds).stream()
-                .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
-
-        Set<CompetencyExerciseLink> resolvedLinks = competencyLinks.stream().filter(link -> managedCompetencies.containsKey(link.getCompetency().getId()))
-                .map(link -> new CompetencyExerciseLink(managedCompetencies.get(link.getCompetency().getId()), exercise, link.getWeight())).collect(Collectors.toSet());
-        exercise.setCompetencyLinks(resolvedLinks);
-    }
 }

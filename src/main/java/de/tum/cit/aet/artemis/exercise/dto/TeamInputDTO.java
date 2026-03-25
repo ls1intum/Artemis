@@ -1,7 +1,6 @@
 package de.tum.cit.aet.artemis.exercise.dto;
 
-import java.util.Collections;
-import java.util.Objects;
+import java.util.HashSet;
 import java.util.Set;
 
 import jakarta.validation.constraints.NotNull;
@@ -35,7 +34,7 @@ public record TeamInputDTO(@Nullable Long id, @NotNull @Size(max = 250) String n
      * Returns the students, defaulting to an empty set if null.
      */
     public Set<Long> studentsOrEmpty() {
-        return Objects.requireNonNullElse(students, Collections.emptySet());
+        return students != null ? students : new HashSet<>();
     }
 
     /**

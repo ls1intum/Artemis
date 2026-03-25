@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.dto.exercise;
 
-import static de.tum.cit.aet.artemis.core.util.DTOHelper.mapInitializedSet;
-
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -9,6 +7,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.validation.Valid;
+
+import org.hibernate.Hibernate;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -27,7 +27,7 @@ import de.tum.cit.aet.artemis.quiz.dto.question.fromEditor.QuizQuestionFromEdito
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record UpdateQuizExerciseDTO(String title, String channelName, Set<String> categories, Set<CompetencyLinkDTO> competencyLinks, DifficultyLevel difficulty, Integer duration,
         Boolean randomizeQuestionOrder, QuizMode quizMode, Set<@Valid QuizBatchFromEditorDTO> quizBatches, ZonedDateTime releaseDate, ZonedDateTime startDate,
         ZonedDateTime dueDate, IncludedInOverallScore includedInOverallScore, List<@Valid QuizQuestionFromEditorDTO> quizQuestions) implements CompetencyLinksHolderDTO {
@@ -43,7 +43,10 @@ public record UpdateQuizExerciseDTO(String title, String channelName, Set<String
         Set<QuizBatchFromEditorDTO> batchDTOs = Optional.ofNullable(quizExercise.getQuizBatches()).orElse(Set.of()).stream().map(QuizBatchFromEditorDTO::of)
                 .collect(Collectors.toSet());
         // Only convert competency links if they are initialized (to avoid LazyInitializationException)
-        Set<CompetencyLinkDTO> competencyLinkDTOs = mapInitializedSet(quizExercise.getCompetencyLinks(), CompetencyLinkDTO::of);
+        Set<CompetencyLinkDTO> competencyLinkDTOs = null;
+        if (Hibernate.isInitialized(quizExercise.getCompetencyLinks()) && quizExercise.getCompetencyLinks() != null) {
+            competencyLinkDTOs = quizExercise.getCompetencyLinks().stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        }
         return new UpdateQuizExerciseDTO(quizExercise.getTitle(), quizExercise.getChannelName(), quizExercise.getCategories(), competencyLinkDTOs, quizExercise.getDifficulty(),
                 quizExercise.getDuration(), quizExercise.isRandomizeQuestionOrder(), quizExercise.getQuizMode(), batchDTOs, quizExercise.getReleaseDate(),
                 quizExercise.getStartDate(), quizExercise.getDueDate(), quizExercise.getIncludedInOverallScore(), questionDTOs);

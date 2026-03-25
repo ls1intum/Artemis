@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.exam.dto;
 
-import static de.tum.cit.aet.artemis.core.util.DTOHelper.setIfPresent;
-
 import java.time.ZonedDateTime;
 
 import jakarta.validation.constraints.NotNull;
@@ -18,7 +16,7 @@ import de.tum.cit.aet.artemis.exam.domain.Exam;
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean testExam, boolean examWithAttendanceCheck, @NotNull ZonedDateTime visibleDate,
         @NotNull ZonedDateTime startDate, @NotNull ZonedDateTime endDate, @Nullable ZonedDateTime publishResultsDate, @Nullable ZonedDateTime examStudentReviewStart,
         @Nullable ZonedDateTime examStudentReviewEnd, @Nullable Integer gracePeriod, int workingTime, @Nullable String startText, @Nullable String endText,
@@ -57,7 +55,9 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
         exam.setPublishResultsDate(publishResultsDate);
         exam.setExamStudentReviewStart(examStudentReviewStart);
         exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        setIfPresent(gracePeriod, exam::setGracePeriod);
+        if (gracePeriod != null) {
+            exam.setGracePeriod(gracePeriod);
+        }
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);
@@ -91,7 +91,9 @@ public record ExamUpdateDTO(@Nullable Long id, @NotNull String title, boolean te
         exam.setPublishResultsDate(publishResultsDate);
         exam.setExamStudentReviewStart(examStudentReviewStart);
         exam.setExamStudentReviewEnd(examStudentReviewEnd);
-        setIfPresent(gracePeriod, exam::setGracePeriod);
+        if (gracePeriod != null) {
+            exam.setGracePeriod(gracePeriod);
+        }
         exam.setWorkingTime(workingTime);
         exam.setStartText(startText);
         exam.setEndText(endText);

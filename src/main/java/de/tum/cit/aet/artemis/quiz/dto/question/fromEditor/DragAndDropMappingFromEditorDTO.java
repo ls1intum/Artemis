@@ -1,7 +1,5 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
-import java.util.Objects;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -30,10 +28,12 @@ public record DragAndDropMappingFromEditorDTO(Long id, Long dragItemTempId, Long
      * @return the corresponding DTO
      */
     public static DragAndDropMappingFromEditorDTO of(DragAndDropMapping mapping) {
-        // Use real ID as fallback for tempID when dealing with persisted entities
-        Long dragItemEffectiveId = Objects.requireNonNullElse(mapping.getDragItem().getTempID(), mapping.getDragItem().getId());
-        Long dropLocationEffectiveId = Objects.requireNonNullElse(mapping.getDropLocation().getTempID(), mapping.getDropLocation().getId());
-        return new DragAndDropMappingFromEditorDTO(mapping.getId(), dragItemEffectiveId, dropLocationEffectiveId);
+        DragItem dragItem = mapping.getDragItem();
+        DropLocation dropLocation = mapping.getDropLocation();
+        if (dragItem == null || dropLocation == null) {
+            throw new IllegalArgumentException("DragAndDropMapping must have both a dragItem and a dropLocation, but mapping id=" + mapping.getId() + " is missing one.");
+        }
+        return new DragAndDropMappingFromEditorDTO(mapping.getId(), dragItem.getId(), dropLocation.getId());
     }
 
     /**
@@ -44,12 +44,6 @@ public record DragAndDropMappingFromEditorDTO(Long id, Long dragItemTempId, Long
      */
     public DragAndDropMapping toDomainObject() {
         DragAndDropMapping mapping = new DragAndDropMapping();
-        DragItem dragItem = new DragItem();
-        DropLocation dropLocation = new DropLocation();
-        dragItem.setTempID(dragItemTempId);
-        dropLocation.setTempID(dropLocationTempId);
-        mapping.setDragItem(dragItem);
-        mapping.setDropLocation(dropLocation);
         return mapping;
     }
 }
