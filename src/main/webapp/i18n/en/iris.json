@@ -281,6 +281,9 @@
                     "detailsLoadFailed": "Failed to load memory details."
                 }
             }
+        },
+        "pyrisSearchAskRequest": {
+            "limit": "limit"
         }
     }
 }
