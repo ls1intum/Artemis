@@ -174,32 +174,8 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
                 quizQuestions: [multipleChoiceQuizTemplate],
                 title: 'Progress Test Quiz',
                 duration: 15,
-            });
-
-            // Add competency link to the quiz exercise via PUT (must send full DTO — PUT semantics replace all fields)
-            const updateDTO = {
-                title: quizExercise.title,
-                channelName: quizExercise.channelName?.replace(/[^a-z0-9:-]/g, '-'),
-                duration: quizExercise.duration,
-                quizMode: quizExercise.quizMode,
-                randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,
-                releaseDate: quizExercise.releaseDate,
-                dueDate: quizExercise.dueDate,
-                includedInOverallScore: quizExercise.includedInOverallScore,
-                quizQuestions: quizExercise.quizQuestions,
-                quizBatches: quizExercise.quizBatches,
                 competencyLinks: [{ competency: { id: competency.id }, weight: 1 }],
-            };
-            const putResponse = await page.request.put(`api/quiz/quiz-exercises/${quizExercise.id}`, {
-                multipart: {
-                    exercise: {
-                        name: 'exercise',
-                        mimeType: 'application/json',
-                        buffer: Buffer.from(JSON.stringify(updateDTO)),
-                    },
-                },
             });
-            expect(putResponse.ok(), `PUT competency link failed: ${putResponse.status()}`).toBeTruthy();
 
             // Make quiz visible and start it
             await exerciseAPIRequests.setQuizVisible(quizExercise.id!);
