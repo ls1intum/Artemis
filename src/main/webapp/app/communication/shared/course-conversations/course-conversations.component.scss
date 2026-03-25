@@ -3,10 +3,6 @@
 @import '../../../../../../../node_modules/bootstrap/scss/mixins';
 @import '../../../../content/scss/artemis-mixins';
 
-.second-layer-modal-bg {
-    background-color: var(--secondary);
-}
-
 .scrollable-communication-content {
     --channel-search-height: 59px;
     @include dynamic-content-height(--header-height, --channel-search-height);
