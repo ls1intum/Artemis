@@ -262,7 +262,7 @@ test.describe('Exam statistics', { tag: '@slow' }, () => {
     // This test creates an exam, has 4 students participate, waits for the exam to end,
     // assesses all submissions, and then checks statistics — all within the test timeout.
     // A generous timeout is needed because the exam must end before assessment can begin.
-    test.setTimeout(180_000);
+    test.describe.configure({ timeout: 180_000 });
 
     let exam: Exam;
     let exercise: Exercise;

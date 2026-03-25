@@ -777,9 +777,6 @@ export class ExerciseAPIRequests {
      * completes before the solution build, resulting in score=0.
      */
     async waitForSolutionBuild(exerciseId: number) {
-        const MAX_RETRIES = 20;
-        const RETRY_DELAY = 3000;
-
         for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
             const response = await this.page.request.get(`${PROGRAMMING_EXERCISE_BASE}/${exerciseId}/test-cases`);
             const testCases = await response.json();

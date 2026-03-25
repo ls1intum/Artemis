@@ -48,10 +48,17 @@ export class ExamScoresPage {
     }
 
     private async checkStudentResult(studentResult: StudentResult) {
+        const { overallPointsAchieved, overallScoreAchieved, overallGrade } = studentResult;
+        if (overallPointsAchieved === undefined || overallScoreAchieved === undefined || overallGrade === undefined) {
+            throw new Error(
+                `StudentResult for ${studentResult.login} is missing required fields: ` +
+                    `overallPointsAchieved=${overallPointsAchieved}, overallScoreAchieved=${overallScoreAchieved}, overallGrade=${overallGrade}`,
+            );
+        }
         const studentResultRow = this.page.locator('tr', { hasText: studentResult.login });
         await expect(studentResultRow).toBeVisible({ timeout: 15000 });
-        await expect(studentResultRow.locator('td').nth(6).getByText(Math.floor(studentResult.overallPointsAchieved!).toString())).toBeVisible({ timeout: 10000 });
-        await expect(studentResultRow.locator('td').nth(7).getByText(Math.floor(studentResult.overallScoreAchieved!).toString())).toBeVisible({ timeout: 10000 });
-        await expect(studentResultRow.locator('td').nth(8).getByText(studentResult.overallGrade!)).toBeVisible({ timeout: 10000 });
+        await expect(studentResultRow.locator('td').nth(6).getByText(Math.floor(overallPointsAchieved).toString())).toBeVisible({ timeout: 10000 });
+        await expect(studentResultRow.locator('td').nth(7).getByText(Math.floor(overallScoreAchieved).toString())).toBeVisible({ timeout: 10000 });
+        await expect(studentResultRow.locator('td').nth(8).getByText(overallGrade)).toBeVisible({ timeout: 10000 });
     }
 }

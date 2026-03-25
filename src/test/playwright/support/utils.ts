@@ -498,4 +498,3 @@ export async function startAssessing(
     await exerciseAssessment.clickStartNewAssessment();
     exerciseAssessment.getLockedMessage();
 }
-// E2E stability verified
