@@ -1,24 +1,31 @@
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ChannelIconComponent } from 'app/communication/course-conversations-components/other/channel-icon/channel-icon.component';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { generateExampleChannelDTO } from 'test/helpers/sample/conversationExampleModels';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { TranslateService } from '@ngx-translate/core';
+import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { ChannelItemComponent } from 'app/communication/course-conversations-components/dialogs/channels-overview-dialog/channel-item/channel-item.component';
 
 describe('ChannelItemComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ChannelItemComponent;
     let fixture: ComponentFixture<ChannelItemComponent>;
-    const canJoinChannel = jest.fn();
-    const canLeaveConversation = jest.fn();
+    const canJoinChannel = vi.fn();
+    const canLeaveConversation = vi.fn();
     const channel = generateExampleChannelDTO({ id: 1 } as ChannelDTO);
 
-    beforeEach(waitForAsync(() => {
+    beforeEach(async () => {
         TestBed.configureTestingModule({
-            declarations: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
-        }).compileComponents();
-    }));
+            imports: [ChannelItemComponent, MockPipe(ArtemisTranslatePipe), MockComponent(ChannelIconComponent), MockDirective(TranslateDirective)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+        });
+    });
 
     beforeEach(() => {
         canJoinChannel.mockReturnValue(true);
@@ -27,12 +34,12 @@ describe('ChannelItemComponent', () => {
         component = fixture.componentInstance;
         component.canJoinChannel = canJoinChannel;
         component.canLeaveConversation = canLeaveConversation;
-        component.channel = channel;
+        fixture.componentRef.setInput('channel', channel);
         fixture.detectChanges();
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
+        vi.restoreAllMocks();
     });
 
     it('should create', () => {
@@ -57,7 +64,7 @@ describe('ChannelItemComponent', () => {
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
 
         // change dto to one where not is member
-        component.channel = generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO);
+        fixture.componentRef.setInput('channel', generateExampleChannelDTO({ id: 2, isMember: false } as ChannelDTO));
         fixture.changeDetectorRef.detectChanges();
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
@@ -65,7 +72,7 @@ describe('ChannelItemComponent', () => {
     });
 
     it('should emit channel action when the user clicks on the interaction buttons', () => {
-        const emitAction = jest.spyOn(component.channelAction, 'emit');
+        const emitAction = vi.spyOn(component.channelAction, 'emit');
         fixture.nativeElement.querySelector('#view' + channel.id).click();
         expect(emitAction).toHaveBeenCalledWith({ action: 'view', channel });
 
