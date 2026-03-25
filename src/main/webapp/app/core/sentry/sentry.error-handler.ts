@@ -1,7 +1,6 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import type { Integration } from '@sentry/core';
-import type { Event, TransactionEvent} from '@sentry/types';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
