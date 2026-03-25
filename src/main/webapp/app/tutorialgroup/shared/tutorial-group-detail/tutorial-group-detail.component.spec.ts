@@ -1,7 +1,8 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { TutorialGroupDetailComponent } from './tutorial-group-detail.component';
+import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from './tutorial-group-detail.component';
+import { HttpResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
@@ -13,15 +14,21 @@ import { AlertService } from 'app/shared/service/alert.service';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MockRouter } from 'test/helpers/mocks/mock-router';
 import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { RawTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import * as CourseModel from 'app/core/course/shared/entities/course.model';
+import { CreateOrUpdateTutorialGroupSessionDTO, RawTutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { By } from '@angular/platform-browser';
 import dayjs from 'dayjs/esm';
 import { GraphColors } from 'app/exercise/shared/entities/statistics.model';
 import { ScaleType } from '@swimlane/ngx-charts';
+import { of, throwError } from 'rxjs';
+import { OneToOneChatDTO } from 'app/communication/shared/entities/conversation/one-to-one-chat.model';
 import { User } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { ConfirmationService } from 'primeng/api';
+import {
+    TutorialSessionCreateOrEditModalComponent,
+    UpdateTutorialGroupSessionData,
+} from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 
 describe('CourseTutorialGroupDetailComponent', () => {
     setupTestBed({ zoneless: true });
@@ -57,6 +64,7 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
         fixture.componentRef.setInput('courseId', 1);
         fixture.componentRef.setInput('isMessagingEnabled', true);
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.STUDENT);
     });
 
     beforeAll(() => {
@@ -71,8 +79,73 @@ describe('CourseTutorialGroupDetailComponent', () => {
     });
 
     afterEach(() => {
+        vi.clearAllMocks();
         vi.restoreAllMocks();
     });
+
+    function createTutorialGroupWithSingleActiveSession(): TutorialGroupDetailDTO {
+        const session: RawTutorialGroupSessionDTO = {
+            id: 1,
+            start: dayjs('2025-01-15T13:00:00+01:00').toISOString(),
+            end: dayjs('2025-01-15T15:00:00+01:00').toISOString(),
+            location: '01.05.13',
+            isCancelled: false,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [session],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+
+        return new TutorialGroupDetailDTO(raw);
+    }
+
+    function createTutorialGroupWithSingleCancelledSession(): TutorialGroupDetailDTO {
+        const session: RawTutorialGroupSessionDTO = {
+            id: 1,
+            start: dayjs('2025-01-15T13:00:00+01:00').toISOString(),
+            end: dayjs('2025-01-15T15:00:00+01:00').toISOString(),
+            location: '01.05.13',
+            isCancelled: true,
+            locationChanged: false,
+            timeChanged: false,
+            dateChanged: false,
+            attendanceCount: 7,
+        };
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [session],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+
+        return new TutorialGroupDetailDTO(raw);
+    }
+
+    // test validating display of controls based on access control level and available data
 
     it('should display no conversation links if messaging disabled', () => {
         fixture.componentRef.setInput('isMessagingEnabled', false);
@@ -198,6 +271,216 @@ describe('CourseTutorialGroupDetailComponent', () => {
         fixture.detectChanges();
         const currentTutorialLectureLink = fixture.debugElement.query(By.css('[data-testid="tutorial-lecture-link"]'));
         expect(currentTutorialLectureLink).not.toBeNull();
+    });
+
+    it('should not display any management action if access level is STUDENT', () => {
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="registrations-link"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="new-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-session-button"]'))).toBeNull();
+    });
+
+    it('should display no other management actions than registrations link if access level is TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="registrations-link"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="new-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-session-button"]'))).toBeNull();
+    });
+
+    it('should display no other management actions than registrations link and session actions if access level is TUTOR_OF_GROUP', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="registrations-link"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="new-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-session-button"]'))).not.toBeNull();
+    });
+
+    it('should display all management actions except delete group button if access level is EDITOR_OF_GROUP', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.EDITOR_OF_GROUP);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="registrations-link"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="new-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-session-button"]'))).not.toBeNull();
+    });
+
+    it('should display all management actions if access level is INSTRUCTOR_OF_GROUP_OR_ADMIN', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="registrations-link"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="new-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="delete-session-button"]'))).not.toBeNull();
+    });
+
+    it('should display edit session button if session is not cancelled', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).not.toBeNull();
+    });
+
+    it('should not display edit session button if session is cancelled', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleCancelledSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="edit-session-button"]'))).toBeNull();
+    });
+
+    it('should display cancel session button but not activate session button if session is not cancelled', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).toBeNull();
+    });
+
+    it('should display activate session button but not cancel session button if session is cancelled', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleCancelledSession());
+        fixture.detectChanges();
+
+        expect(fixture.debugElement.query(By.css('[data-testid="activate-session-button"]'))).not.toBeNull();
+        expect(fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]'))).toBeNull();
+    });
+
+    // tests validating conversion and exposure of input data
+
+    it('should expose tutorChatLink if tutorChatId available', () => {
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+
+        const tutorChatLink = component.tutorChatLink();
+        expect(tutorChatLink).toBeDefined();
+        expect(tutorChatLink!.routerLink).toEqual(['/courses', 1, 'communication']);
+        expect(tutorChatLink!.queryParameters).toEqual({ conversationId: 3 });
+    });
+
+    it('should expose no tutorChatLink if tutorChatId is unavailable', () => {
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: undefined,
+        };
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+
+        const tutorChatLink = component.tutorChatLink();
+        expect(tutorChatLink).toBeUndefined();
+    });
+
+    it('should expose groupChannelLink if groupChannelId available', () => {
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: undefined,
+            campus: undefined,
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+
+        const groupChannelLink = component.groupChannelLink();
+        expect(groupChannelLink).toBeDefined();
+        expect(groupChannelLink!.routerLink).toEqual(['/courses', 1, 'communication']);
+        expect(groupChannelLink!.queryParameters).toEqual({ conversationId: 2 });
+    });
+
+    it('should expose no groupChannelLink if groupChannelId is unavailable', () => {
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: 10,
+            campus: undefined,
+            groupChannelId: undefined,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+
+        const groupChannelLink = component.groupChannelLink();
+        expect(groupChannelLink).toBeUndefined();
     });
 
     it('should expose correct language', () => {
@@ -505,6 +788,30 @@ describe('CourseTutorialGroupDetailComponent', () => {
 
         const nextSession = component.nextSession();
         expect(nextSession).toBeUndefined();
+    });
+
+    it('should display no upcoming session disclaimer if no nextSession available', () => {
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: undefined,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: 3,
+        };
+        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
+        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.detectChanges();
+
+        const noUpcomingEventDisclaimer = fixture.debugElement.query(By.css('[data-testid="no-upcoming-session-disclaimer"]'));
+        expect(noUpcomingEventDisclaimer).not.toBeNull();
     });
 
     it('should compute correct averageAttendancePercentage', () => {
@@ -1107,106 +1414,6 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(pieChartColors.domain).toEqual([GraphColors.LIGHT_GREY]);
     });
 
-    it('should expose tutorChatLink if tutorChatId available', () => {
-        const raw: TutorialGroupDetail = {
-            id: 1,
-            title: 'TG 1 MN 13',
-            language: 'English',
-            isOnline: false,
-            sessions: [],
-            tutorName: 'Marlon Nienaber',
-            tutorLogin: 'gx89tum',
-            tutorId: 12,
-            tutorImageUrl: undefined,
-            capacity: undefined,
-            campus: undefined,
-            groupChannelId: 2,
-            tutorChatId: 3,
-        };
-        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
-        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
-        fixture.detectChanges();
-
-        const tutorChatLink = component.tutorChatLink();
-        expect(tutorChatLink).toBeDefined();
-        expect(tutorChatLink!.routerLink).toEqual(['/courses', 1, 'communication']);
-        expect(tutorChatLink!.queryParameters).toEqual({ conversationId: 3 });
-    });
-
-    it('should expose no tutorChatLink if tutorChatId is unavailable', () => {
-        const raw: TutorialGroupDetail = {
-            id: 1,
-            title: 'TG 1 MN 13',
-            language: 'English',
-            isOnline: false,
-            sessions: [],
-            tutorName: 'Marlon Nienaber',
-            tutorLogin: 'gx89tum',
-            tutorId: 12,
-            tutorImageUrl: undefined,
-            capacity: 10,
-            campus: undefined,
-            groupChannelId: 2,
-            tutorChatId: undefined,
-        };
-        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
-        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
-        fixture.detectChanges();
-
-        const tutorChatLink = component.tutorChatLink();
-        expect(tutorChatLink).toBeUndefined();
-    });
-
-    it('should expose groupChannelLink if groupChannelId available', () => {
-        const raw: TutorialGroupDetail = {
-            id: 1,
-            title: 'TG 1 MN 13',
-            language: 'English',
-            isOnline: false,
-            sessions: [],
-            tutorName: 'Marlon Nienaber',
-            tutorLogin: 'gx89tum',
-            tutorId: 12,
-            tutorImageUrl: undefined,
-            capacity: undefined,
-            campus: undefined,
-            groupChannelId: 2,
-            tutorChatId: 3,
-        };
-        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
-        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
-        fixture.detectChanges();
-
-        const groupChannelLink = component.groupChannelLink();
-        expect(groupChannelLink).toBeDefined();
-        expect(groupChannelLink!.routerLink).toEqual(['/courses', 1, 'communication']);
-        expect(groupChannelLink!.queryParameters).toEqual({ conversationId: 2 });
-    });
-
-    it('should expose no groupChannelLink if groupChannelId is unavailable', () => {
-        const raw: TutorialGroupDetail = {
-            id: 1,
-            title: 'TG 1 MN 13',
-            language: 'English',
-            isOnline: false,
-            sessions: [],
-            tutorName: 'Marlon Nienaber',
-            tutorLogin: 'gx89tum',
-            tutorId: 12,
-            tutorImageUrl: undefined,
-            capacity: 10,
-            campus: undefined,
-            groupChannelId: undefined,
-            tutorChatId: 3,
-        };
-        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
-        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
-        fixture.detectChanges();
-
-        const groupChannelLink = component.groupChannelLink();
-        expect(groupChannelLink).toBeUndefined();
-    });
-
     it('should display no data available disclaimer if no average attendance available', () => {
         const raw: TutorialGroupDetail = {
             id: 1,
@@ -1231,7 +1438,12 @@ describe('CourseTutorialGroupDetailComponent', () => {
         expect(noDataAvailableDisclaimer).not.toBeNull();
     });
 
-    it('should display no upcoming session disclaimer if no nextSession available', () => {
+    // tests validating behavior triggered by controls
+
+    it('should create tutor chat and navigate to it when tutor chat button is clicked', () => {
+        const oneToOneChatService = TestBed.inject(OneToOneChatService);
+        const createSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(of(new HttpResponse({ body: { id: 42 } as OneToOneChatDTO })));
+
         const raw: TutorialGroupDetail = {
             id: 1,
             title: 'TG 1 MN 13',
@@ -1242,16 +1454,168 @@ describe('CourseTutorialGroupDetailComponent', () => {
             tutorLogin: 'gx89tum',
             tutorId: 12,
             tutorImageUrl: undefined,
-            capacity: undefined,
+            capacity: 10,
             campus: 'Garching',
             groupChannelId: 2,
-            tutorChatId: 3,
+            tutorChatId: undefined,
         };
-        const testTutorialGroup = new TutorialGroupDetailDTO(raw);
-        fixture.componentRef.setInput('tutorialGroup', testTutorialGroup);
+        fixture.componentRef.setInput('tutorialGroup', new TutorialGroupDetailDTO(raw));
         fixture.detectChanges();
 
-        const noUpcomingEventDisclaimer = fixture.debugElement.query(By.css('[data-testid="no-upcoming-session-disclaimer"]'));
-        expect(noUpcomingEventDisclaimer).not.toBeNull();
+        const tutorChatButton = fixture.debugElement.query(By.css('[data-testid="tutor-chat-button"]'));
+        expect(tutorChatButton).not.toBeNull();
+
+        tutorChatButton.triggerEventHandler('click');
+
+        expect(createSpy).toHaveBeenCalledWith(1, 'gx89tum');
+        expect(mockRouter.navigate).toHaveBeenCalledWith(['/courses', 1, 'communication'], { queryParams: { conversationId: 42 } });
+    });
+
+    it('should show error alert if tutor chat creation fails when tutor chat button is clicked', () => {
+        const oneToOneChatService = TestBed.inject(OneToOneChatService);
+        const alertService = TestBed.inject(AlertService);
+        const createSpy = vi.spyOn(oneToOneChatService, 'create').mockReturnValue(throwError(() => new Error('network error')));
+        const addErrorAlertSpy = vi.spyOn(alertService, 'addErrorAlert');
+
+        const raw: TutorialGroupDetail = {
+            id: 1,
+            title: 'TG 1 MN 13',
+            language: 'English',
+            isOnline: false,
+            sessions: [],
+            tutorName: 'Marlon Nienaber',
+            tutorLogin: 'gx89tum',
+            tutorId: 12,
+            tutorImageUrl: undefined,
+            capacity: 10,
+            campus: 'Garching',
+            groupChannelId: 2,
+            tutorChatId: undefined,
+        };
+        fixture.componentRef.setInput('tutorialGroup', new TutorialGroupDetailDTO(raw));
+        fixture.detectChanges();
+
+        const tutorChatButton = fixture.debugElement.query(By.css('[data-testid="tutor-chat-button"]'));
+        expect(tutorChatButton).not.toBeNull();
+
+        tutorChatButton.triggerEventHandler('click');
+
+        expect(createSpy).toHaveBeenCalledWith(1, 'gx89tum');
+        expect(mockRouter.navigate).not.toHaveBeenCalled();
+        expect(addErrorAlertSpy).toHaveBeenCalledWith('artemisApp.pages.tutorialGroupDetail.networkError.createOneToOneChat');
+    });
+
+    it('should confirm tutorial group deletion and emit delete group event on accept', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+            confirmation.accept?.();
+            return confirmationService;
+        });
+        const deleteGroupEmitSpy = vi.spyOn(component.onDeleteGroup, 'emit');
+
+        fixture.debugElement.query(By.css('[data-testid="delete-button"]')).triggerEventHandler('click', { target: document.createElement('button') });
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(deleteGroupEmitSpy).toHaveBeenCalledWith({ courseId: 1, tutorialGroupId: 1 });
+    });
+
+    it('should confirm session deletion and emit delete session event on accept', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        const confirmationService = fixture.debugElement.injector.get(ConfirmationService);
+        const confirmSpy = vi.spyOn(confirmationService, 'confirm').mockImplementation((confirmation: { accept?: () => void }) => {
+            confirmation.accept?.();
+            return confirmationService;
+        });
+        const deleteSessionEmitSpy = vi.spyOn(component.onDeleteSession, 'emit');
+
+        fixture.debugElement.query(By.css('[data-testid="delete-session-button"]')).triggerEventHandler('click', { target: document.createElement('button') });
+
+        expect(confirmSpy).toHaveBeenCalledOnce();
+        expect(deleteSessionEmitSpy).toHaveBeenCalledWith({ courseId: 1, tutorialGroupId: 1, tutorialGroupSessionId: 1 });
+    });
+
+    it('should emit cancel session event when cancel session button is clicked', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        const cancelSessionEmitSpy = vi.spyOn(component.onCancelSession, 'emit');
+
+        fixture.debugElement.query(By.css('[data-testid="cancel-session-button"]')).triggerEventHandler('click');
+
+        expect(cancelSessionEmitSpy).toHaveBeenCalledWith({ courseId: 1, tutorialGroupId: 1, tutorialGroupSessionId: 1 });
+    });
+
+    it('should emit activate session event when activate session button is clicked', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleCancelledSession());
+        fixture.detectChanges();
+
+        const activateSessionEmitSpy = vi.spyOn(component.onActivateSession, 'emit');
+
+        fixture.debugElement.query(By.css('[data-testid="activate-session-button"]')).triggerEventHandler('click');
+
+        expect(activateSessionEmitSpy).toHaveBeenCalledWith({ courseId: 1, tutorialGroupId: 1, tutorialGroupSessionId: 1 });
+    });
+
+    it('should emit update session event after edit session flow', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        const updateSessionEmitSpy = vi.spyOn(component.onUpdateSession, 'emit');
+        const modal = fixture.debugElement.query(By.directive(TutorialSessionCreateOrEditModalComponent)).componentInstance as TutorialSessionCreateOrEditModalComponent;
+        const updateTutorialGroupSessionData: UpdateTutorialGroupSessionData = {
+            tutorialGroupSessionId: 1,
+            updateTutorialGroupSessionDTO: {
+                date: '2025-01-20',
+                startTime: '10:00',
+                endTime: '12:00',
+                location: '02.03.04',
+                attendance: 8,
+            },
+        };
+
+        fixture.debugElement.query(By.css('[data-testid="edit-session-button"]')).triggerEventHandler('click');
+        modal.onUpdate.emit(updateTutorialGroupSessionData);
+
+        expect(updateSessionEmitSpy).toHaveBeenCalledWith({
+            courseId: 1,
+            tutorialGroupId: 1,
+            tutorialGroupSessionId: 1,
+            updateTutorialGroupSessionDTO: updateTutorialGroupSessionData.updateTutorialGroupSessionDTO,
+        });
+    });
+
+    it('should emit create session event after new session flow', () => {
+        fixture.componentRef.setInput('loggedInUserAccessLevel', TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN);
+        fixture.componentRef.setInput('tutorialGroup', createTutorialGroupWithSingleActiveSession());
+        fixture.detectChanges();
+
+        const createSessionEmitSpy = vi.spyOn(component.onCreateSession, 'emit');
+        const modal = fixture.debugElement.query(By.directive(TutorialSessionCreateOrEditModalComponent)).componentInstance as TutorialSessionCreateOrEditModalComponent;
+        const createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO = {
+            date: '2025-01-20',
+            startTime: '10:00',
+            endTime: '12:00',
+            location: '02.03.04',
+            attendance: 8,
+        };
+
+        fixture.debugElement.query(By.css('[data-testid="new-session-button"]')).triggerEventHandler('click');
+        modal.onCreate.emit(createTutorialGroupSessionDTO);
+
+        expect(createSessionEmitSpy).toHaveBeenCalledWith({
+            courseId: 1,
+            tutorialGroupId: 1,
+            createTutorialGroupSessionDTO,
+        });
     });
 });
