@@ -17,7 +17,17 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
     let component: TutorialSessionCreateOrEditModalComponent;
     let fixture: ComponentFixture<TutorialSessionCreateOrEditModalComponent>;
 
-    const existingSession = new TutorialGroupSessionDTO(17, dayjs('2026-04-20T10:15:00'), dayjs('2026-04-20T11:45:00'), 'Room 101', false, false, false, false, 9);
+    const existingSession = new TutorialGroupSessionDTO({
+        id: 17,
+        start: dayjs('2026-04-20T10:15:00').toISOString(),
+        end: dayjs('2026-04-20T11:45:00').toISOString(),
+        location: 'Room 101',
+        isCancelled: false,
+        locationChanged: false,
+        timeChanged: false,
+        dateChanged: false,
+        attendanceCount: 9,
+    });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
