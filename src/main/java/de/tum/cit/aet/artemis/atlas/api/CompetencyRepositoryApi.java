@@ -55,8 +55,4 @@ public class CompetencyRepositoryApi extends AbstractAtlasApi {
     public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
         return courseCompetencyRepository.findAllById(ids);
     }
-
-    public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
-        return courseCompetencyRepository.findAllById(ids);
-    }
 }
