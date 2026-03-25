@@ -87,6 +87,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         if (!courseId || !currentSettings) {
             return;
         }
+        const previousEnabled = currentSettings.enabled;
         currentSettings.enabled = enabled;
         this.irisSettings.set(currentSettings);
         this.irisSettingsService.updateCourseSettings(courseId, currentSettings).subscribe({
@@ -96,6 +97,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
                 }
             },
             error: () => {
+                currentSettings.enabled = previousEnabled;
                 this.irisSettings.set(currentSettings);
             },
         });

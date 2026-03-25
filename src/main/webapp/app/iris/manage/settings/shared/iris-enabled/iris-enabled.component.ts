@@ -132,6 +132,7 @@ export class IrisEnabledComponent implements OnInit {
         }
 
         // Optimistic UI update
+        const previousEnabled = currentSettings.enabled;
         currentSettings.enabled = enabled;
         this.settings.set(currentSettings);
 
@@ -143,6 +144,7 @@ export class IrisEnabledComponent implements OnInit {
                 }
             },
             error: (error: HttpErrorResponse) => {
+                currentSettings.enabled = previousEnabled;
                 this.settings.set(currentSettings);
                 onError(this.alertService, error);
             },
