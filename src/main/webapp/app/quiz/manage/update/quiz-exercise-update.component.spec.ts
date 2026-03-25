@@ -1452,6 +1452,7 @@ describe('QuizExerciseUpdateComponent', () => {
                     comp.quizIsValid = true;
                     comp.quizExercise = quizExercise;
                     comp.quizExercise.dueDateError = false;
+                    comp.quizExercise.isEditable = true;
 
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(false);
                     vi.spyOn(comp, 'hasErrorInQuizBatches').mockReturnValue(false);
@@ -1478,6 +1479,11 @@ describe('QuizExerciseUpdateComponent', () => {
 
                 it('should be disabled if the saved quiz has already started', () => {
                     vi.spyOn(comp, 'hasSavedQuizStarted', 'get').mockReturnValue(true);
+                    expect(comp.isSaveDisabled()).toBeTruthy();
+                });
+
+                it('should be disabled if quiz is not editable', () => {
+                    comp.quizExercise.isEditable = false;
                     expect(comp.isSaveDisabled()).toBeTruthy();
                 });
 
