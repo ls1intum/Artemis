@@ -2,25 +2,13 @@
     @let tutorialGroupToPass = tutorialGroup();
     @let courseIdToPass = courseId();
     @let isMessagingEnabledToPass = isMessagingEnabled();
-    @let loggedInUserIsAtLeastTutorOfGroupToPass = loggedInUserIsAtLeastTutorOfGroup();
-    @let loggedInUserIsAtLeastEditorInCourseToPass = loggedInUserIsAtLeastEditorInCourse();
-    @let loggedInUserIsAtLeastInstructorInCourseToPass = loggedInUserIsAtLeastInstructorInCourse();
-    @if (
-        tutorialGroupToPass &&
-        courseIdToPass &&
-        isMessagingEnabledToPass !== undefined &&
-        loggedInUserIsAtLeastTutorOfGroupToPass !== undefined &&
-        loggedInUserIsAtLeastEditorInCourseToPass !== undefined &&
-        loggedInUserIsAtLeastInstructorInCourseToPass !== undefined
-    ) {
+    @let userTutorialGroupDetailAccessLevel = loggedInUserTutorialGroupDetailAccessLevel();
+    @if (tutorialGroupToPass && courseIdToPass && isMessagingEnabledToPass !== undefined && userTutorialGroupDetailAccessLevel !== undefined) {
         <jhi-tutorial-group-detail
             [tutorialGroup]="tutorialGroupToPass"
             [courseId]="courseIdToPass"
             [isMessagingEnabled]="isMessagingEnabledToPass"
-            [loggedInUserIsAtLeastTutorOfGroup]="loggedInUserIsAtLeastTutorOfGroupToPass"
-            [loggedInUserIsAtLeastEditorInCourse]="loggedInUserIsAtLeastEditorInCourseToPass"
-            [loggedInUserIsAtLeastInstructorInCourse]="loggedInUserIsAtLeastInstructorInCourseToPass"
-            [componentDisplayedInManagement]="true"
+            [loggedInUserAccessLevel]="userTutorialGroupDetailAccessLevel"
             (onDeleteSession)="deleteSession($event)"
             (onDeleteGroup)="deleteGroup($event)"
             (onCancelSession)="cancelSession($event)"

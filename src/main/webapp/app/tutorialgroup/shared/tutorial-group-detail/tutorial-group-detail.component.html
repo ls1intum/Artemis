@@ -43,28 +43,28 @@
                     data-testid="group-channel-link"
                 ></a>
             }
-            @if (componentDisplayedInManagement()) {
-                <a
-                    [routerLink]="['registrations']"
-                    pButton
-                    class="p-button-secondary p-button-sm"
-                    data-testid="registrations-link"
-                    jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"
-                ></a>
-                @if (loggedInUserIsAtLeastEditorInCourse()) {
-                    <a [routerLink]="['edit']" pButton class="p-button-primary p-button-sm" data-testid="edit-button" jhiTranslate="entity.action.edit"></a>
-                }
-                @if (loggedInUserIsAtLeastInstructorInCourse()) {
-                    <button
-                        pButton
-                        severity="danger"
-                        class="p-button-primary p-button-sm"
-                        data-testid="delete-button"
-                        (click)="confirmTutorialGroupDeletion($event)"
-                        jhiTranslate="entity.action.delete"
-                    ></button>
-                }
-            }
+        }
+        @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE) {
+            <a
+                [routerLink]="['registrations']"
+                pButton
+                class="p-button-secondary p-button-sm"
+                data-testid="registrations-link"
+                jhiTranslate="artemisApp.pages.tutorialGroupDetail.registrationsLinkLabel"
+            ></a>
+        }
+        @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.EDITOR_OF_GROUP) {
+            <a [routerLink]="['edit']" pButton class="p-button-primary p-button-sm" data-testid="edit-button" jhiTranslate="entity.action.edit"></a>
+        }
+        @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN) {
+            <button
+                pButton
+                severity="danger"
+                class="p-button-primary p-button-sm"
+                data-testid="delete-button"
+                (click)="confirmTutorialGroupDeletion($event)"
+                jhiTranslate="entity.action.delete"
+            ></button>
         }
     </div>
     <hr />
@@ -195,7 +195,7 @@
     <div class="list-controls-row">
         <h2 jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionsListTitle"></h2>
         <div class="spacer"></div>
-        @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
+        @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
             <button
                 pButton
                 class="p-button-primary p-button-sm"
@@ -222,7 +222,7 @@
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.location"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.status"></th>
                     <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.attendance"></th>
-                    @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
+                    @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
                         <th jhiTranslate="artemisApp.pages.tutorialGroupDetail.sessionTableColumnTitle.actions"></th>
                     }
                 </tr>
@@ -263,26 +263,42 @@
                             />
                         </td>
                         <td>{{ session.attendance }}</td>
-                        @if (componentDisplayedInManagement() && loggedInUserIsAtLeastTutorOfGroup()) {
+                        @if (loggedInUserAccessLevel() >= TutorialGroupDetailManagementAccessLevel.TUTOR_OF_GROUP) {
                             <td>
                                 <div class="session-actions">
                                     @if (!session.isCancelled) {
-                                        <button [pTooltip]="editSessionButtonTooltipLabel()" tooltipPosition="left" (click)="openSessionModal(session.id)">
+                                        <button
+                                            [pTooltip]="editSessionButtonTooltipLabel()"
+                                            tooltipPosition="left"
+                                            data-testid="edit-session-button"
+                                            (click)="openSessionModal(session.id)"
+                                        >
                                             <fa-icon [icon]="faPenToSquare" aria-hidden="true" />
                                         </button>
                                     }
                                     @if (session.isCancelled) {
-                                        <button [pTooltip]="activateSessionButtonTooltipLabel()" tooltipPosition="left" (click)="activateTutorialGroupSession(session.id)">
+                                        <button
+                                            [pTooltip]="activateSessionButtonTooltipLabel()"
+                                            tooltipPosition="left"
+                                            data-testid="activate-session-button"
+                                            (click)="activateTutorialGroupSession(session.id)"
+                                        >
                                             <fa-icon [icon]="faCirclePlay" aria-hidden="true" />
                                         </button>
                                     } @else {
-                                        <button [pTooltip]="cancelSessionButtonTooltipLabel()" tooltipPosition="left" (click)="cancelTutorialGroupSession(session.id)">
+                                        <button
+                                            [pTooltip]="cancelSessionButtonTooltipLabel()"
+                                            tooltipPosition="left"
+                                            data-testid="cancel-session-button"
+                                            (click)="cancelTutorialGroupSession(session.id)"
+                                        >
                                             <fa-icon [icon]="faBan" aria-hidden="true" />
                                         </button>
                                     }
                                     <button
                                         [pTooltip]="deleteSessionButtonTooltipLabel()"
                                         class="danger"
+                                        data-testid="delete-session-button"
                                         tooltipPosition="left"
                                         (click)="confirmSessionDeletion($event, session.id)"
                                     >

@@ -35,7 +35,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import { ButtonModule } from 'primeng/button';
-import { AccountService } from 'app/core/auth/account.service';
 import { getCurrentLocaleSignal } from 'app/shared/util/global.utils';
 import { LectureService } from 'app/lecture/manage/services/lecture.service';
 import { ConfirmationService } from 'primeng/api';
@@ -84,6 +83,23 @@ export interface DeleteTutorialGroupEvent {
 
 type ListOption = 'all-sessions' | 'future-sessions';
 
+/**
+ * Access levels for the tutorial group detail component.
+ *
+ * The numeric values are intentionally ordered so they can be compared directly.
+ * `STUDENT` is used for the student-facing detail view, where no management
+ * actions are available. Higher levels progressively unlock management actions
+ * such as accessing registrations, editing or deleting the group, and creating,
+ * editing, cancelling, activating, or deleting sessions.
+ */
+export enum TutorialGroupDetailAccessLevel {
+    STUDENT = 0,
+    TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE = 1,
+    TUTOR_OF_GROUP = 2,
+    EDITOR_OF_GROUP = 3,
+    INSTRUCTOR_OF_GROUP_OR_ADMIN = 4,
+}
+
 @Component({
     selector: 'jhi-tutorial-group-detail',
     imports: [
@@ -122,11 +138,11 @@ export class TutorialGroupDetailComponent {
     protected readonly faBan = faBan;
     protected readonly faCirclePlay = faCirclePlay;
     protected readonly currentTutorialLectureId = inject(LectureService).currentTutorialLectureId;
+    protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
 
     private translateService = inject(TranslateService);
     private oneToOneChatService = inject(OneToOneChatService);
     private alertService = inject(AlertService);
-    private accountService = inject(AccountService);
     private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
     private currentLocale = getCurrentLocaleSignal(this.translateService);
@@ -134,14 +150,18 @@ export class TutorialGroupDetailComponent {
     private sessionModal = viewChild.required<TutorialSessionCreateOrEditModalComponent>('sessionModal');
 
     activatedRoute = inject(ActivatedRoute);
+    pieChart = viewChild(PieChartComponent);
     tutorialGroup = input.required<TutorialGroupDetailDTO>();
     courseId = input.required<number>();
+
     isMessagingEnabled = input.required<boolean>();
-    loggedInUserIsAtLeastTutorOfGroup = input.required<boolean>();
-    loggedInUserIsAtLeastEditorInCourse = input.required<boolean>();
-    loggedInUserIsAtLeastInstructorInCourse = input.required<boolean>();
-    componentDisplayedInManagement = input<boolean>(false);
-    tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
+    loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
+    userIsNotTutor = computed(() => this.loggedInUserAccessLevel() !== TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
+
+    tutorChatLink = computed(() => this.computeTutorChatLink());
+    groupChannelLink = computed(() => this.computeGroupChannelLink());
+    onDeleteGroup = output<DeleteTutorialGroupEvent>();
+
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().tutorImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
@@ -149,14 +169,13 @@ export class TutorialGroupDetailComponent {
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));
     tutorialGroupCampus = computed<string>(() => this.tutorialGroup().campus ?? '-');
     averageAttendancePercentage = computed<string | undefined>(() => this.computeAverageAttendancePercentage());
-    pieChart = viewChild(PieChartComponent);
     pieChartData = computed<NgxChartsSingleSeriesDataEntry[]>(() => this.computePieChartData());
     pieChartColors = computed<Color>(() => this.computePieChartColor());
+
     sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
-    tutorChatLink = computed(() => this.computeTutorChatLink());
-    groupChannelLink = computed(() => this.computeGroupChannelLink());
-    userIsNotTutor = computed(() => this.accountService.userIdentity()?.login !== this.tutorialGroup().tutorLogin);
+
+    tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     editSessionButtonTooltipLabel = computed(() => this.computeEditSessionButtonTooltipLabel());
     cancelSessionButtonTooltipLabel = computed(() => this.computeCancelSessionButtonTooltipLabel());
     activateSessionButtonTooltipLabel = computed(() => this.computeActivateSessionButtonTooltipLabel());
@@ -166,7 +185,6 @@ export class TutorialGroupDetailComponent {
     onUpdateSession = output<UpdateTutorialGroupSessionEvent>();
     onCreateSession = output<CreateTutorialGroupSessionEvent>();
     onActivateSession = output<ModifyTutorialGroupSessionEvent>();
-    onDeleteGroup = output<DeleteTutorialGroupEvent>();
 
     constructor() {
         effect(() => {

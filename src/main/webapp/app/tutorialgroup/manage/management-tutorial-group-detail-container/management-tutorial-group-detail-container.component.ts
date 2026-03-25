@@ -8,6 +8,7 @@ import {
     CreateTutorialGroupSessionEvent,
     DeleteTutorialGroupEvent,
     ModifyTutorialGroupSessionEvent,
+    TutorialGroupDetailAccessLevel,
     TutorialGroupDetailComponent,
     UpdateTutorialGroupSessionEvent,
 } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
@@ -43,9 +44,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
     tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
     courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
     isMessagingEnabled = computed(() => this.computeIfMessagingEnabled());
-    loggedInUserIsAtLeastTutorOfGroup = computed(() => this.computeIfLoggedInUserIsAtLeastTutorOfGroup());
-    loggedInUserIsAtLeastEditorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastEditorInCourse());
-    loggedInUserIsAtLeastInstructorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastInstructorInCourse());
+    loggedInUserTutorialGroupDetailAccessLevel = computed(() => this.computeLoggedInUserTutorialGroupDetailAccessLevel());
 
     constructor() {
         const course = getRouteData<Course>(this.route, 'course');
@@ -189,22 +188,19 @@ export class ManagementTutorialGroupDetailContainerComponent {
         return isMessagingEnabled(course);
     }
 
-    private computeIfLoggedInUserIsAtLeastTutorOfGroup(): boolean | undefined {
+    private computeLoggedInUserTutorialGroupDetailAccessLevel(): TutorialGroupDetailAccessLevel | undefined {
+        const course = this.tutorialGroupSharedStateService.course();
+        if (!course) return undefined;
+        if (this.accountService.isAtLeastInstructorInCourse(course)) {
+            return TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN;
+        }
+        if (this.accountService.isAtLeastEditorInCourse(course)) {
+            return TutorialGroupDetailAccessLevel.EDITOR_OF_GROUP;
+        }
         const tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup();
-        const course = this.tutorialGroupSharedStateService.course();
-        if (!tutorialGroup || !course) return undefined;
-        return tutorialGroup.tutorLogin === this.accountService.userIdentity()?.login || this.accountService.isAtLeastEditorInCourse(course);
-    }
-
-    private computeIfLoggedInUserIsAtLeastEditorInCourse(): boolean | undefined {
-        const course = this.tutorialGroupSharedStateService.course();
-        if (!course) return undefined;
-        return this.accountService.isAtLeastEditorInCourse(course);
-    }
-
-    private computeIfLoggedInUserIsAtLeastInstructorInCourse(): boolean | undefined {
-        const course = this.tutorialGroupSharedStateService.course();
-        if (!course) return undefined;
-        return this.accountService.isAtLeastInstructorInCourse(course);
+        if (tutorialGroup && tutorialGroup.tutorLogin === this.accountService.userIdentity()?.login) {
+            return TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP;
+        }
+        return TutorialGroupDetailAccessLevel.TUTOR_OF_OTHER_GROUP_OR_EDITOR_OR_INSTRUCTOR_OF_OTHER_COURSE;
     }
 }
