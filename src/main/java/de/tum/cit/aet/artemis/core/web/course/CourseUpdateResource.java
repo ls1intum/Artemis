@@ -6,11 +6,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,11 +94,10 @@ public class CourseUpdateResource {
     }
 
     private static Set<String> getChangedGroupNames(CourseUpdateDTO courseUpdateDTO, Course existingCourse) {
-        Set<String> existingGroupNames = Stream.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(), existingCourse.getEditorGroupName(),
-                existingCourse.getInstructorGroupName()).filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
-        Set<String> newGroupNames = Stream
-                .of(courseUpdateDTO.studentGroupName(), courseUpdateDTO.teachingAssistantGroupName(), courseUpdateDTO.editorGroupName(), courseUpdateDTO.instructorGroupName())
-                .filter(Objects::nonNull).collect(Collectors.toCollection(HashSet::new));
+        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
+                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
+        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdateDTO.studentGroupName(), courseUpdateDTO.teachingAssistantGroupName(), courseUpdateDTO.editorGroupName(),
+                courseUpdateDTO.instructorGroupName()));
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
         return changedGroupNames;
@@ -120,10 +118,8 @@ public class CourseUpdateResource {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        if (!Objects.equals(courseId, courseUpdateDTO.id())) {
-            throw new BadRequestAlertException("Invalid course id", Course.ENTITY_NAME, "idMismatch", true);
-        }
-
+        // Always use the path variable for lookups to prevent a DTO with a mismatched id
+        // from loading (and potentially modifying) a different course than the URL indicates
         var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
@@ -164,13 +160,15 @@ public class CourseUpdateResource {
             throw new BadRequestAlertException("The course title is too long", Course.ENTITY_NAME, "courseTitleTooLong");
         }
 
-        // Save values that are needed for change detection after applyTo() mutates the entity
+        // Save the existing course icon path before applying DTO changes
         String existingCourseIcon = existingCourse.getCourseIcon();
-        String existingCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
-        boolean wasLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
+        // Save values that are checked AFTER applyTo mutates the entity
+        boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
+        String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
+        existingCourse.setId(courseId); // Ensure the ID is correct
 
         existingCourse.validateEnrollmentConfirmationMessage();
         existingCourse.validateComplaintsAndRequestMoreFeedbackConfig();
@@ -204,14 +202,14 @@ public class CourseUpdateResource {
             }
         }
 
-        if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), existingCodeOfConduct)) {
+        if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
         Course result = courseRepository.save(existingCourse);
 
         // if learning paths got enabled, generate learning paths for students
-        if (!wasLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
+        if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));

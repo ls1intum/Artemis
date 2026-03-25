@@ -81,10 +81,10 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateApollonDiagram_OK() throws Exception {
-        apollonDiagram.setCourseId(course1.getId());
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
+        apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram response = request.putWithResponseBody("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.OK);
 
         assertThat(response.getDiagramType()).as("diagram type updated").isEqualByComparingTo(DiagramType.ClassDiagram);
@@ -93,18 +93,18 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationInd
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testUpdateApollonDiagram_BAD_REQUEST_WithoutId() throws Exception {
+    void testUpdateApollonDiagram_CREATED() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
-        request.put("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.BAD_REQUEST);
+        request.post("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testUpdateApollonDiagram_AccessForbidden() throws Exception {
-        apollonDiagram.setCourseId(course1.getId());
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
+        apollonDiagram.setCourseId(course1.getId());
         request.putWithResponseBody("/api/modeling/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.FORBIDDEN);
     }
 
