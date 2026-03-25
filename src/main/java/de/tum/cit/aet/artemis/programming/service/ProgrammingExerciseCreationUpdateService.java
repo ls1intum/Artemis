@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -35,6 +36,7 @@ import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.programming.domain.AuxiliaryRepository;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -99,6 +101,8 @@ public class ProgrammingExerciseCreationUpdateService {
 
     private final ParticipationRepository participationRepository;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ProgrammingExerciseCreationUpdateService(ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             ProgrammingExerciseBuildConfigRepository programmingExerciseBuildConfigRepository, ProgrammingSubmissionService programmingSubmissionService,
             UserRepository userRepository, ExerciseService exerciseService, ProgrammingExerciseRepository programmingExerciseRepository, ChannelService channelService,
@@ -106,7 +110,8 @@ public class ProgrammingExerciseCreationUpdateService {
             ProgrammingExerciseCreationScheduleService programmingExerciseCreationScheduleService, ProgrammingExerciseAtlasIrisService programmingExerciseAtlasIrisService,
             ModuleFeatureService moduleFeatureService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService) {
+            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, GitService gitService,
+            CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseRepositoryService = programmingExerciseRepositoryService;
         this.programmingExerciseBuildConfigRepository = programmingExerciseBuildConfigRepository;
         this.programmingSubmissionService = programmingSubmissionService;
@@ -125,6 +130,7 @@ public class ProgrammingExerciseCreationUpdateService {
         this.versionControlService = versionControlService;
         this.participationRepository = participationRepository;
         this.gitService = gitService;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -183,7 +189,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExercise.getBuildConfig().setId(null);
 
         // Extract competency links before first save - they require the exercise ID which doesn't exist yet
-        var competencyLinks = exerciseService.extractCompetencyLinksForCreation(programmingExercise);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(programmingExercise);
 
         // We save once in order to generate an id for the programming exercise
         var savedBuildConfig = programmingExerciseBuildConfigRepository.saveAndFlush(programmingExercise.getBuildConfig());
@@ -228,7 +234,7 @@ public class ProgrammingExerciseCreationUpdateService {
         programmingExerciseAtlasIrisService.updateCompetencyProgressOnCreation(savedProgrammingExercise);
 
         // Restore competency links with proper exercise reference before final save
-        exerciseService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
+        competencyExerciseLinkService.addCompetencyLinksForCreation(savedProgrammingExercise, competencyLinks);
 
         return programmingExerciseRepository.saveForCreation(savedProgrammingExercise);
     }
@@ -296,19 +302,24 @@ public class ProgrammingExerciseCreationUpdateService {
     }
 
     /**
-     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise      the changed programming exercise with its new values
-     * @param notificationText                optional text about the changes for a notification
-     * @return the updates programming exercise from the database
+     * @param updatedProgrammingExercise     the changed programming exercise with its new values
+     * @param notificationText               optional text about the changes for a notification
+     * @param originalCompetencyIds          the IDs of competencies originally linked to the exercise before the update
+     * @param originalBuildPlanConfiguration the build plan configuration before the update (for change detection)
+     * @param originalReleaseDate            the release date before the update (for notification change detection)
+     * @param originalAssessmentDueDate      the assessment due date before the update (for notification change detection)
+     * @param originalProblemStatement       the problem statement before the update (for notification change detection)
+     * @return the updated programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) throws JsonProcessingException {
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText, Set<Long> originalCompetencyIds,
+            @Nullable String originalBuildPlanConfiguration, @Nullable ZonedDateTime originalReleaseDate, @Nullable ZonedDateTime originalAssessmentDueDate,
+            @Nullable String originalProblemStatement) throws JsonProcessingException {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
-        programmingExerciseBuildPlanService.updateBuildPlanForExercise(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseBuildPlanService.updateBuildPlanForExercise(originalBuildPlanConfiguration, updatedProgrammingExercise);
 
-        channelService.updateExerciseChannel(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        channelService.updateExerciseChannel(updatedProgrammingExercise, updatedProgrammingExercise);
 
         String problemStatementWithTestNames = updatedProgrammingExercise.getProblemStatement();
         programmingExerciseTaskService.replaceTestNamesWithIds(updatedProgrammingExercise);
@@ -319,16 +330,16 @@ public class ProgrammingExerciseCreationUpdateService {
         // The returned value should use test case names since it gets send back to the client
         savedProgrammingExercise.setProblemStatement(problemStatementWithTestNames);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
 
-        if (programmingExerciseBeforeUpdate.isCourseExercise()) {
+        if (updatedProgrammingExercise.isCourseExercise()) {
             programmingExerciseCreationScheduleService.scheduleOperations(updatedProgrammingExercise.getId());
         }
 
-        exerciseService.notifyAboutExerciseChanges(programmingExerciseBeforeUpdate, updatedProgrammingExercise, notificationText);
+        // Use scalar-based overload since the "before" entity is the same L1-cached object
+        exerciseService.notifyAboutExerciseChanges(originalReleaseDate, originalAssessmentDueDate, originalProblemStatement, updatedProgrammingExercise, notificationText);
 
-        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
+        programmingExerciseAtlasIrisService.updateCompetencyProgressOnExerciseUpdate(originalCompetencyIds, savedProgrammingExercise);
 
         return savedProgrammingExercise;
     }

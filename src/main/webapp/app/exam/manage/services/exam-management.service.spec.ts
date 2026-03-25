@@ -3,12 +3,12 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { Exam } from 'app/exam/shared/entities/exam.model';
+import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import dayjs from 'dayjs/esm';
 import { ExamInformationDTO } from 'app/exam/shared/entities/exam-information.model';
 import { StudentDTO } from 'app/core/shared/entities/student-dto.model';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { ExerciseGroup } from 'app/exam/shared/entities/exercise-group.model';
-import { toExamUpdateDTO } from 'app/exam/manage/services/exam-update-dto.model';
 import { ExamScoreDTO } from 'app/exam/manage/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/assessment/shared/assessment-dashboard/stats-for-dashboard.model';
 import { TextSubmission } from 'app/text/shared/entities/text-submission.model';
@@ -59,7 +59,7 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedDto = toExamUpdateDTO({ id: 1 });
+        const expectedDto = toExamUpdateDTO({ id: 1 } as Exam);
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -76,7 +76,7 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedDto = toExamUpdateDTO({ id: 1 });
+        const expectedDto = toExamUpdateDTO({ id: 1 } as Exam);
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -93,7 +93,7 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 }, course.id!);
+        const expectedDto = ExamManagementService.convertExamToImportDTO({ id: 1 } as Exam, course.id!);
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
