@@ -104,7 +104,7 @@ export class QuizExerciseService {
         });
 
         return this.http
-            .patch<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
+            .put<QuizExercise>(this.resourceUrl + '/' + id, formData, { params: options, observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

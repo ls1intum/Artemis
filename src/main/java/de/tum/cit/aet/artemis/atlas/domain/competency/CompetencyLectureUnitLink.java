@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -30,7 +29,7 @@ public class CompetencyLectureUnitLink extends CompetencyLearningObjectLink {
     protected CompetencyLectureUnitId id = new CompetencyLectureUnitId();
 
     @JsonIgnoreProperties("competencyLinks")
-    @ManyToOne(optional = false, cascade = CascadeType.PERSIST)
+    @ManyToOne(optional = false)
     @MapsId("lectureUnitId")
     private LectureUnit lectureUnit;
 
