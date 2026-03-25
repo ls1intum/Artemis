@@ -132,7 +132,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.route.data.subscribe(({ course }) => {
             if (course) {
-                if (course.onboardingDone === false && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
+                if (course.onboardingDone !== true && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
                     this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
                     return;
                 }

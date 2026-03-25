@@ -175,6 +175,7 @@ export interface CourseUpdateDTO {
     restrictedAthenaModulesAccess: boolean;
     timeZone?: string;
     courseInformationSharingConfiguration?: CourseInformationSharingConfiguration;
+    onboardingDone: boolean;
 }
 
 /**
@@ -238,5 +239,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+        onboardingDone: course.onboardingDone ?? false,
     };
 }
