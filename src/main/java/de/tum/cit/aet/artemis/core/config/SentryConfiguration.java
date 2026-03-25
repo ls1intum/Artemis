@@ -212,7 +212,7 @@ public class SentryConfiguration {
             }
 
             if (request.getHeaders() != null) {
-                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().startsWith("X-Artemis-Client-"))
+                request.setHeaders(request.getHeaders().entrySet().stream().filter((entry) -> !entry.getKey().toLowerCase().startsWith("x-artemis-client-"))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue)));
             }
         }

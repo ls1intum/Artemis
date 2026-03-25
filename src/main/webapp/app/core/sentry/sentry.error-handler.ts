@@ -1,6 +1,7 @@
 import { ErrorHandler, Injectable, inject } from '@angular/core';
 import { browserTracingIntegration, captureException, dedupeIntegration, init } from '@sentry/angular';
 import type { Integration } from '@sentry/core';
+import type { Event, TransactionEvent} from '@sentry/types';
 import { PROFILE_PROD, PROFILE_TEST, VERSION } from 'app/app.constants';
 import { ProfileInfo } from 'app/core/layouts/profiles/profile-info.model';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -72,8 +73,7 @@ export class SentryErrorHandler extends ErrorHandler {
         this.reportIfPasskeyIsNotSupported();
     }
 
-    // any type used here since we want to handle both transactions and errors
-    private scrubSentryPayload(trans: any): any {
+    private scrubSentryPayload(trans: Event | TransactionEvent): Event | TransactionEvent {
         if (trans.user) {
             delete trans.user;
         }
@@ -88,7 +88,7 @@ export class SentryErrorHandler extends ErrorHandler {
             }
 
             if (trans.request.headers) {
-                trans.request.headers = Object.fromEntries(Object.entries(trans.request.headers).filter(([key]) => !key.startsWith('X-Artemis-Client-')));
+                trans.request.headers = Object.fromEntries(Object.entries(trans.request.headers).filter(([key]) => !key.toLowerCase().startsWith('x-artemis-client-')));
             }
         }
 
