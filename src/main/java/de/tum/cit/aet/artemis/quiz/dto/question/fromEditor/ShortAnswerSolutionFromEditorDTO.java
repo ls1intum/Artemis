@@ -27,9 +27,7 @@ public record ShortAnswerSolutionFromEditorDTO(Long id, Long tempID, @NotEmpty S
      * @return the corresponding DTO
      */
     public static ShortAnswerSolutionFromEditorDTO of(ShortAnswerSolution solution) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = solution.getTempID() != null ? solution.getTempID() : solution.getId();
-        return new ShortAnswerSolutionFromEditorDTO(solution.getId(), effectiveTempID, solution.getText());
+        return new ShortAnswerSolutionFromEditorDTO(solution.getId(), solution.getId(), solution.getText());
     }
 
     /**
@@ -39,7 +37,7 @@ public record ShortAnswerSolutionFromEditorDTO(Long id, Long tempID, @NotEmpty S
      */
     public ShortAnswerSolution toDomainObject() {
         ShortAnswerSolution solution = new ShortAnswerSolution();
-        solution.setTempID(effectiveId());
+        solution.setId(id);
         solution.setText(text);
         return solution;
     }
@@ -50,7 +48,6 @@ public record ShortAnswerSolutionFromEditorDTO(Long id, Long tempID, @NotEmpty S
      * @param solution the existing solution to update
      */
     public void applyTo(ShortAnswerSolution solution) {
-        solution.setTempID(effectiveId());
         solution.setText(text);
     }
 

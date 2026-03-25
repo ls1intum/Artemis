@@ -19,13 +19,12 @@ public record DropLocationCreateDTO(@NotNull Long tempID, @NotNull Double posX, 
      * @return the {@link DropLocation} domain object with properties set from this DTO
      */
     public DropLocation toDomainObject() {
-        DropLocation dragItem = new DropLocation();
-        dragItem.setTempID(tempID);
-        dragItem.setPosX(posX);
-        dragItem.setPosY(posY);
-        dragItem.setWidth(width);
-        dragItem.setHeight(height);
-        return dragItem;
+        DropLocation dropLocation = new DropLocation();
+        dropLocation.setPosX(posX);
+        dropLocation.setPosY(posY);
+        dropLocation.setWidth(width);
+        dropLocation.setHeight(height);
+        return dropLocation;
     }
 
     /**
@@ -38,6 +37,6 @@ public record DropLocationCreateDTO(@NotNull Long tempID, @NotNull Double posX, 
      * @return the {@link DropLocationCreateDTO} with properties set from the domain object
      */
     public static DropLocationCreateDTO of(DropLocation dropLocation) {
-        return new DropLocationCreateDTO(dropLocation.getTempID(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(), dropLocation.getHeight());
+        return new DropLocationCreateDTO(dropLocation.getId(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(), dropLocation.getHeight());
     }
 }

@@ -1,11 +1,8 @@
 package de.tum.cit.aet.artemis.programming.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -14,7 +11,9 @@ import org.jspecify.annotations.Nullable;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -30,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
  * This DTO includes all fields that can be updated through the update endpoint.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record UpdateProgrammingExerciseDTO(
         // Core identification
         @Nullable Long id,
@@ -76,9 +75,23 @@ public record UpdateProgrammingExerciseDTO(
                 : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = mapIfInitialized(exercise.getGradingCriteria(), GradingCriterionDTO::of, Collectors.toSet());
-        Set<CompetencyLinkDTO> competencyLinkDTOs = mapIfInitialized(exercise.getCompetencyLinks(), CompetencyLinkDTO::of, Collectors.toSet());
-        List<AuxiliaryRepositoryDTO> auxiliaryRepositoryDTOs = mapIfInitialized(exercise.getAuxiliaryRepositories(), AuxiliaryRepositoryDTO::of, Collectors.toUnmodifiableList());
+        Set<GradingCriterionDTO> gradingCriterionDTOs = null;
+        Set<CompetencyLinkDTO> competencyLinkDTOs = null;
+        List<AuxiliaryRepositoryDTO> auxiliaryRepositoryDTOs = null;
+
+        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
+
+        if (criteria != null && Hibernate.isInitialized(criteria)) {
+            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
+        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
+            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        }
+        if (exercise.getAuxiliaryRepositories() != null && Hibernate.isInitialized(exercise.getAuxiliaryRepositories())) {
+            auxiliaryRepositoryDTOs = exercise.getAuxiliaryRepositories().isEmpty() ? List.of()
+                    : exercise.getAuxiliaryRepositories().stream().map(AuxiliaryRepositoryDTO::of).toList();
+        }
 
         return new UpdateProgrammingExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
@@ -90,12 +103,5 @@ public record UpdateProgrammingExerciseDTO(
                 exercise.getMaxStaticCodeAnalysisPenalty(), exercise.getProgrammingLanguage(), exercise.getPackageName(), exercise.getShowTestNamesToStudents(),
                 exercise.getBuildAndTestStudentSubmissionsAfterDueDate(), exercise.getTestCasesChanged(), exercise.getProjectKey(), exercise.getSubmissionPolicy(),
                 exercise.getProjectType(), exercise.isReleaseTestsWithExampleSolution(), UpdateProgrammingExerciseBuildConfigDTO.of(exercise.getBuildConfig()));
-    }
-
-    private static <T, R, C extends Collection<R>> C mapIfInitialized(Collection<T> source, Function<T, R> mapper, Collector<R, ?, C> collector) {
-        if (source == null || !Hibernate.isInitialized(source)) {
-            return null;
-        }
-        return source.stream().map(mapper).collect(collector);
     }
 }

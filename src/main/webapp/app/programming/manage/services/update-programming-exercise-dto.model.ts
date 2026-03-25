@@ -4,42 +4,7 @@ import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
 import { SubmissionPolicy } from 'app/exercise/shared/entities/submission/submission-policy.model';
-
-/**
- * DTO for competency reference (just the ID)
- */
-export interface CompetencyDTO {
-    id: number;
-}
-
-/**
- * DTO for competency links with weight
- */
-export interface CompetencyLinkDTO {
-    competency: CompetencyDTO;
-    weight: number;
-}
-
-/**
- * DTO for grading criterion
- */
-export interface GradingCriterionDTO {
-    id?: number;
-    title?: string;
-    structuredGradingInstructions?: GradingInstructionDTO[];
-}
-
-/**
- * DTO for grading instruction
- */
-export interface GradingInstructionDTO {
-    id?: number;
-    credits?: number;
-    gradingScale?: string;
-    instructionDescription?: string;
-    feedback?: string;
-    usageCount?: number;
-}
+import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 /**
  * DTO for auxiliary repository
@@ -56,7 +21,9 @@ export interface AuxiliaryRepositoryDTO {
  * DTO for build config
  */
 export interface UpdateProgrammingExerciseBuildConfigDTO {
+    id?: number;
     sequentialTestRuns?: boolean;
+    branch?: string;
     buildPlanConfiguration?: string;
     buildScript?: string;
     checkoutSolutionRepository: boolean;
@@ -140,11 +107,11 @@ export interface UpdateProgrammingExerciseDTO {
  * @returns the corresponding DTO
  */
 export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): UpdateProgrammingExerciseDTO {
-    // Apply bonus points constraint
-    ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(exercise);
+    // Compute constrained bonus points without mutating the input
+    const bonusPoints = exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (exercise.bonusPoints ?? 0);
 
     // Convert competency links to DTOs
-    const competencyLinkDTOs: CompetencyLinkDTO[] | undefined = exercise.competencyLinks?.map((link) => ({
+    const competencyLinkDTOs: CompetencyLinkDTO[] = (exercise.competencyLinks ?? []).map((link) => ({
         competency: { id: link.competency!.id! },
         weight: link.weight,
     }));
@@ -208,7 +175,7 @@ export function toUpdateProgrammingExerciseDTO(exercise: ProgrammingExercise): U
         categories,
         difficulty: exercise.difficulty,
         maxPoints: exercise.maxPoints,
-        bonusPoints: exercise.bonusPoints,
+        bonusPoints,
         includedInOverallScore: exercise.includedInOverallScore,
         allowComplaintsForAutomaticAssessments: exercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: exercise.allowFeedbackRequests,
