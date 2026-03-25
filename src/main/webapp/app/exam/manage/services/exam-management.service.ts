@@ -441,7 +441,7 @@ export class ExamManagementService {
      * @param exam The exam to convert
      * @param courseId The target course id
      */
-    public static convertExamToImportDTO(exam: Exam, courseId: number): object {
+    public static convertExamToImportDTO(exam: Exam, courseId: number): ExamImportDTO {
         return {
             title: exam.title,
             testExam: exam.testExam ?? false,
@@ -473,7 +473,7 @@ export class ExamManagementService {
                 isMandatory: group.isMandatory ?? true,
                 exercises: group.exercises?.map((exercise) => ({
                     id: exercise.id,
-                    exerciseType: exercise.type?.toUpperCase().replace('-', '_'),
+                    exerciseType: exercise.type,
                     title: exercise.title,
                     shortName: exercise.shortName,
                     maxPoints: exercise.maxPoints,
@@ -554,4 +554,48 @@ export class ExamManagementService {
     exportExamUsers(courseId: number, examId: number): Observable<ExportExamUserDTO[]> {
         return this.http.get<ExportExamUserDTO[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/export-students`);
     }
+}
+
+interface ExerciseImportDTO {
+    id?: number;
+    exerciseType?: string;
+    title?: string;
+    shortName?: string;
+    maxPoints?: number;
+    bonusPoints?: number;
+}
+
+interface ExerciseGroupImportDTO {
+    title?: string;
+    isMandatory: boolean;
+    exercises?: ExerciseImportDTO[];
+}
+
+interface ExamImportDTO {
+    title?: string;
+    testExam: boolean;
+    examWithAttendanceCheck: boolean;
+    visibleDate?: string;
+    startDate?: string;
+    endDate?: string;
+    publishResultsDate?: string;
+    examStudentReviewStart?: string;
+    examStudentReviewEnd?: string;
+    gracePeriod?: number;
+    workingTime: number;
+    startText?: string;
+    endText?: string;
+    confirmationStartText?: string;
+    confirmationEndText?: string;
+    examMaxPoints?: number;
+    randomizeExerciseOrder?: boolean;
+    numberOfExercisesInExam?: number;
+    numberOfCorrectionRoundsInExam?: number;
+    examiner?: string;
+    moduleNumber?: string;
+    courseName?: string;
+    exampleSolutionPublicationDate?: string;
+    channelName?: string;
+    courseId: number;
+    exerciseGroups?: ExerciseGroupImportDTO[];
 }

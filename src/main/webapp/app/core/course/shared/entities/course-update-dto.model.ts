@@ -60,37 +60,53 @@ export interface CourseCreateDTO {
 }
 
 /**
- * Builds the fields shared by both CourseCreateDTO and CourseUpdateDTO.
+ * Converts a Course entity to a CourseCreateDTO for sending to the server.
+ *
+ * @param course the course entity to convert
+ * @returns a CourseCreateDTO with only the fields needed for creation
  */
-function courseCommonFields(course: Course): Omit<CourseUpdateDTO, 'id' | 'courseIcon' | 'courseInformationSharingMessagingCodeOfConduct'> {
+export function toCourseCreateDTO(course: Course): CourseCreateDTO {
     return {
+        // Basic info
         title: course.title!,
         shortName: course.shortName!,
         description: course.description,
         semester: course.semester,
+
+        // Group names
         studentGroupName: course.studentGroupName,
         teachingAssistantGroupName: course.teachingAssistantGroupName,
         editorGroupName: course.editorGroupName,
         instructorGroupName: course.instructorGroupName,
+
+        // Dates (converted to ISO strings)
         startDate: convertDateFromClient(course.startDate),
         endDate: convertDateFromClient(course.endDate),
         enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
         enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
         unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
+
+        // Configuration flags
         testCourse: course.testCourse ?? false,
         onlineCourse: course.onlineCourse,
         language: course.language,
         defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+
+        // Complaint settings
         maxComplaints: course.maxComplaints,
         maxTeamComplaints: course.maxTeamComplaints,
         maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
         maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
         maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
         maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
+
+        // UI settings
         color: course.color,
         enrollmentEnabled: course.enrollmentEnabled,
         enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
         unenrollmentEnabled: course.unenrollmentEnabled ?? false,
+
+        // Course features
         faqEnabled: course.faqEnabled ?? false,
         learningPathsEnabled: course.learningPathsEnabled ?? false,
         studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
@@ -101,13 +117,6 @@ function courseCommonFields(course: Course): Omit<CourseUpdateDTO, 'id' | 'cours
         timeZone: course.timeZone,
         courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
     };
-}
-
-/**
- * Converts a Course entity to a CourseCreateDTO for sending to the server.
- */
-export function toCourseCreateDTO(course: Course): CourseCreateDTO {
-    return courseCommonFields(course);
 }
 
 /**
@@ -173,11 +182,65 @@ export interface CourseUpdateDTO {
 
 /**
  * Converts a Course entity to a CourseUpdateDTO for sending to the server.
+ *
+ * @param course the course entity to convert
+ * @returns a CourseUpdateDTO with only the fields needed for update
  */
 export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
-    return Object.assign(courseCommonFields(course), {
+    return {
+        // ID is required for update
         id: course.id!,
+
+        // Basic info
+        title: course.title!,
+        shortName: course.shortName!,
+        description: course.description,
+        semester: course.semester,
+
+        // Group names
+        studentGroupName: course.studentGroupName,
+        teachingAssistantGroupName: course.teachingAssistantGroupName,
+        editorGroupName: course.editorGroupName,
+        instructorGroupName: course.instructorGroupName,
+
+        // Dates (converted to ISO strings)
+        startDate: convertDateFromClient(course.startDate),
+        endDate: convertDateFromClient(course.endDate),
+        enrollmentStartDate: convertDateFromClient(course.enrollmentStartDate),
+        enrollmentEndDate: convertDateFromClient(course.enrollmentEndDate),
+        unenrollmentEndDate: convertDateFromClient(course.unenrollmentEndDate),
+
+        // Configuration flags
+        testCourse: course.testCourse ?? false,
+        onlineCourse: course.onlineCourse,
+        language: course.language,
+        defaultProgrammingLanguage: course.defaultProgrammingLanguage,
+
+        // Complaint settings
+        maxComplaints: course.maxComplaints,
+        maxTeamComplaints: course.maxTeamComplaints,
+        maxComplaintTimeDays: course.maxComplaintTimeDays ?? 7,
+        maxRequestMoreFeedbackTimeDays: course.maxRequestMoreFeedbackTimeDays ?? 7,
+        maxComplaintTextLimit: course.maxComplaintTextLimit ?? 2000,
+        maxComplaintResponseTextLimit: course.maxComplaintResponseTextLimit ?? 2000,
+
+        // UI settings
+        color: course.color,
         courseIcon: course.courseIcon,
+        enrollmentEnabled: course.enrollmentEnabled,
+        enrollmentConfirmationMessage: course.enrollmentConfirmationMessage,
+        unenrollmentEnabled: course.unenrollmentEnabled ?? false,
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
-    }) as CourseUpdateDTO;
+
+        // Course features
+        faqEnabled: course.faqEnabled ?? false,
+        learningPathsEnabled: course.learningPathsEnabled ?? false,
+        studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
+        presentationScore: course.presentationScore,
+        maxPoints: course.maxPoints,
+        accuracyOfScores: course.accuracyOfScores,
+        restrictedAthenaModulesAccess: course.restrictedAthenaModulesAccess ?? false,
+        timeZone: course.timeZone,
+        courseInformationSharingConfiguration: course.courseInformationSharingConfiguration,
+    };
 }
