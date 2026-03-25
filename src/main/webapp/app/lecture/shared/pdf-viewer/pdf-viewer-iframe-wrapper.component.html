@@ -1,0 +1,18 @@
+<div class="pdf-iframe-wrapper">
+    <iframe #pdfIframe [src]="iframeSrc() | safeResourceUrl" class="pdf-iframe" title="PDF Viewer" (load)="onIframeLoad()"></iframe>
+    @if (uploadDate() || version()) {
+        <div class="pdf-viewer-footer">
+            @if (uploadDate()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
+                {{ uploadDate() | artemisDate }}
+            }
+            @if (uploadDate() && version()) {
+                <span class="pdf-viewer-footer__separator">-</span>
+            }
+            @if (version()) {
+                <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
+                {{ version() }}
+            }
+        </div>
+    }
+</div>

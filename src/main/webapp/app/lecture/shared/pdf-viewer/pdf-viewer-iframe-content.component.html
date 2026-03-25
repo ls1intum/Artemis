@@ -1,8 +1,8 @@
-<div class="pdf-viewer-container">
+<div class="iframe-pdf-container">
     <ngx-extended-pdf-viewer
-        class="pdf-viewer"
+        class="iframe-pdf-viewer"
         [src]="pdfUrl()"
-        [page]="resolvedPage()"
+        [page]="initialPage()"
         [customToolbar]="customToolbar"
         (pageChange)="onPageChange($event)"
         (pagesLoaded)="onPagesLoaded($event)"
@@ -54,24 +54,9 @@
                     <fa-icon [icon]="faMagnifyingGlassPlus" />
                 </button>
                 @if (totalPages() > 0) {
-                    <span class="artemis-pdf-toolbar__page">{{ displayPage() }}/{{ totalPages() }}</span>
+                    <span class="artemis-pdf-toolbar__page">{{ currentPage() }}/{{ totalPages() }}</span>
                 }
             </div>
         </div>
     </ng-template>
-    @if (uploadDate() || version()) {
-        <div class="pdf-viewer-footer">
-            @if (uploadDate()) {
-                <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
-                {{ uploadDate() | artemisDate }}
-            }
-            @if (uploadDate() && version()) {
-                <span class="pdf-viewer-footer__separator">-</span>
-            }
-            @if (version()) {
-                <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
-                {{ version() }}
-            }
-        </div>
-    }
 </div>

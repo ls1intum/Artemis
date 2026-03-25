@@ -7,7 +7,7 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
-import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
+import { PdfViewerIframeWrapperComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer-iframe-wrapper.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
@@ -38,7 +38,7 @@ import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerComponent, FaIconComponent],
+    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerIframeWrapperComponent, FaIconComponent],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })

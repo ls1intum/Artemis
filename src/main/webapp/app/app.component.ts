@@ -146,13 +146,14 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * The skeleton should not be shown for the problem statement component if it is directly accessed and
-     * for the standalone feedback component.
+     * The skeleton should not be shown for the problem statement component if it is directly accessed,
+     * for the standalone feedback component, and for the PDF viewer iframe content.
      */
     private shouldShowSkeleton(url: string): boolean {
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        return !isStandaloneProblemStatement && !isStandaloneFeedback;
+        const isPdfViewerIframe = url.includes('/pdf-viewer-iframe');
+        return !isStandaloneProblemStatement && !isStandaloneFeedback && !isPdfViewerIframe;
     }
 
     ngOnDestroy(): void {
