@@ -179,7 +179,7 @@ test.describe('Student Competency Progress View', { tag: '@fast' }, () => {
             // Add competency link to the quiz exercise via PUT (must send full DTO — PUT semantics replace all fields)
             const updateDTO = {
                 title: quizExercise.title,
-                channelName: quizExercise.channelName?.replace(/[^a-z0-9:\-]/g, '-'),
+                channelName: quizExercise.channelName?.replace(/[^a-z0-9:-]/g, '-'),
                 duration: quizExercise.duration,
                 quizMode: quizExercise.quizMode,
                 randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,
