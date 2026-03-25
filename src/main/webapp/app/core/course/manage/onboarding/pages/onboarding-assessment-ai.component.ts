@@ -36,14 +36,14 @@ export class OnboardingAssessmentAiComponent {
         });
     }
 
-    updateField(field: keyof Course, value: any) {
-        const current = this.course();
-        (current as any)[field] = value;
-        this.courseUpdated.emit(Course.from(current));
+    updateField<K extends keyof Course>(field: K, value: Course[K]) {
+        const current = Course.from(this.course());
+        current[field] = value;
+        this.courseUpdated.emit(current);
     }
 
     toggleComplaints() {
-        const current = this.course();
+        const current = Course.from(this.course());
         if (this.complaintsToggled()) {
             this.complaintsToggled.set(false);
             current.maxComplaints = 0;
@@ -57,11 +57,11 @@ export class OnboardingAssessmentAiComponent {
             current.maxComplaintTextLimit = 2000;
             current.maxComplaintResponseTextLimit = 2000;
         }
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     toggleRequestMoreFeedback() {
-        const current = this.course();
+        const current = Course.from(this.course());
         if (this.requestMoreFeedbackToggled()) {
             this.requestMoreFeedbackToggled.set(false);
             current.maxRequestMoreFeedbackTimeDays = 0;
@@ -69,6 +69,6 @@ export class OnboardingAssessmentAiComponent {
             this.requestMoreFeedbackToggled.set(true);
             current.maxRequestMoreFeedbackTimeDays = 7;
         }
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 }

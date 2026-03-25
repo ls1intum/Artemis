@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, input, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -6,6 +7,8 @@ import { RouterLink } from '@angular/router';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
+import { AlertService } from 'app/shared/service/alert.service';
+import { onError } from 'app/shared/util/global.utils';
 
 /**
  * Simple toggle component for enabling/disabling Iris at the course level.
@@ -92,6 +95,7 @@ import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-co
 export class IrisEnabledComponent implements OnInit {
     protected readonly faArrowRight = faArrowRight;
     private irisSettingsService = inject(IrisSettingsService);
+    private alertService = inject(AlertService);
 
     course = input.required<Course>();
 
@@ -128,22 +132,19 @@ export class IrisEnabledComponent implements OnInit {
         }
 
         // Optimistic UI update
-        const newSettings: IrisCourseSettingsDTO = {
-            ...currentSettings,
-            enabled,
-        };
-        this.settings.set(newSettings);
+        currentSettings.enabled = enabled;
+        this.settings.set(currentSettings);
 
         // Save to server
-        this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
+        this.irisSettingsService.updateCourseSettings(courseId, currentSettings).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.settings.set(response.body.settings);
                 }
             },
-            error: () => {
-                // Revert on error
+            error: (error: HttpErrorResponse) => {
                 this.settings.set(currentSettings);
+                onError(this.alertService, error);
             },
         });
     }

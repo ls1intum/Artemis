@@ -87,9 +87,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         if (!courseId || !currentSettings) {
             return;
         }
-        const newSettings: IrisCourseSettingsDTO = Object.assign({}, currentSettings, { enabled });
-        this.irisSettings.set(newSettings);
-        this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
+        currentSettings.enabled = enabled;
+        this.irisSettings.set(currentSettings);
+        this.irisSettingsService.updateCourseSettings(courseId, currentSettings).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.irisSettings.set(response.body.settings);
@@ -101,10 +101,10 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         });
     }
 
-    updateField(field: keyof Course, value: any) {
-        const current = this.course();
-        (current as any)[field] = value;
-        this.courseUpdated.emit(Course.from(current));
+    updateField<K extends keyof Course>(field: K, value: Course[K]) {
+        const current = Course.from(this.course());
+        current[field] = value;
+        this.courseUpdated.emit(current);
     }
 
     openColorSelector(event: MouseEvent) {
@@ -112,9 +112,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     }
 
     onSelectedColor(color: string) {
-        const current = this.course();
+        const current = Course.from(this.course());
         current.color = color;
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     openAboutIrisModal(): void {

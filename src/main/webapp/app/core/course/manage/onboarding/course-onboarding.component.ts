@@ -1,4 +1,5 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
@@ -36,6 +37,7 @@ export class CourseOnboardingComponent implements OnInit {
     private router = inject(Router);
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);
+    private destroyRef = inject(DestroyRef);
 
     readonly activeStep = signal(0);
     readonly isSaving = signal(false);
@@ -55,13 +57,13 @@ export class CourseOnboardingComponent implements OnInit {
     readonly canFinish = computed(() => this.activeStep() === this.totalSteps - 2);
 
     ngOnInit() {
-        this.route.queryParams.subscribe((params) => {
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             const step = parseInt(params['step'], 10);
             if (!isNaN(step) && step >= 0 && step < this.totalSteps) {
                 this.activeStep.set(step);
             }
         });
-        this.route.data.subscribe(({ course }) => {
+        this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
             if (course) {
                 this.course.set(course);
             }

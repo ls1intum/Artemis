@@ -123,8 +123,10 @@ describe('OnboardingEnrollmentComponent', () => {
     });
 
     describe('toggleOnlineCourse', () => {
-        it('should enable online course and disable enrollment', () => {
+        it('should enable online course and disable enrollment with cleanup', () => {
             course.enrollmentEnabled = true;
+            course.enrollmentConfirmationMessage = 'Some message';
+            course.unenrollmentEnabled = true;
             fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
 
@@ -133,6 +135,8 @@ describe('OnboardingEnrollmentComponent', () => {
             const emitted = emitSpy.mock.calls[0][0];
             expect(emitted.onlineCourse).toBe(true);
             expect(emitted.enrollmentEnabled).toBe(false);
+            expect(emitted.enrollmentConfirmationMessage).toBeUndefined();
+            expect(emitted.unenrollmentEnabled).toBe(false);
             expect(emitSpy).toHaveBeenCalled();
         });
 

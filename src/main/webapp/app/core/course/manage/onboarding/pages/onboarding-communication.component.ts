@@ -33,28 +33,28 @@ export class OnboardingCommunicationComponent {
     }
 
     toggleCommunication() {
-        const current = this.course();
+        const current = Course.from(this.course());
         if (this.communicationEnabled) {
             current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
         } else {
-            current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
+            current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         }
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     toggleMessaging() {
-        const current = this.course();
+        const current = Course.from(this.course());
         if (this.messagingEnabled) {
             current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_ONLY;
         } else {
             current.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING;
         }
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     updateCodeOfConduct(message: string) {
-        const current = this.course();
+        const current = Course.from(this.course());
         current.courseInformationSharingMessagingCodeOfConduct = message;
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 }

@@ -39,14 +39,14 @@ export class OnboardingEnrollmentComponent {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
 
-    updateField(field: keyof Course, value: any) {
-        const current = this.course();
-        (current as any)[field] = value;
-        this.courseUpdated.emit(Course.from(current));
+    updateField<K extends keyof Course>(field: K, value: Course[K]) {
+        const current = Course.from(this.course());
+        current[field] = value;
+        this.courseUpdated.emit(current);
     }
 
     toggleEnrollment() {
-        const current = this.course();
+        const current = Course.from(this.course());
         current.enrollmentEnabled = !current.enrollmentEnabled;
         if (current.enrollmentEnabled && current.onlineCourse) {
             current.onlineCourse = false;
@@ -55,27 +55,29 @@ export class OnboardingEnrollmentComponent {
             current.enrollmentConfirmationMessage = undefined;
             current.unenrollmentEnabled = false;
         }
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     toggleUnenrollment() {
-        const current = this.course();
+        const current = Course.from(this.course());
         current.unenrollmentEnabled = !current.unenrollmentEnabled;
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     toggleOnlineCourse() {
-        const current = this.course();
+        const current = Course.from(this.course());
         current.onlineCourse = !current.onlineCourse;
         if (current.onlineCourse) {
             current.enrollmentEnabled = false;
+            current.enrollmentConfirmationMessage = undefined;
+            current.unenrollmentEnabled = false;
         }
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 
     updateEnrollmentMessage(message: string) {
-        const current = this.course();
+        const current = Course.from(this.course());
         current.enrollmentConfirmationMessage = message;
-        this.courseUpdated.emit(Course.from(current));
+        this.courseUpdated.emit(current);
     }
 }

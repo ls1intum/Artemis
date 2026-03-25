@@ -97,7 +97,7 @@ describe('OnboardingCommunicationComponent', () => {
             expect(emitted.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.DISABLED);
         });
 
-        it('should enable communication with messaging when currently disabled', () => {
+        it('should enable communication only when currently disabled', () => {
             course.courseInformationSharingConfiguration = CourseInformationSharingConfiguration.DISABLED;
             fixture.componentRef.setInput('course', course);
             const emitSpy = vi.spyOn(comp.courseUpdated, 'emit');
@@ -106,7 +106,7 @@ describe('OnboardingCommunicationComponent', () => {
 
             expect(emitSpy).toHaveBeenCalled();
             const emitted = emitSpy.mock.calls[0][0];
-            expect(emitted.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
+            expect(emitted.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_ONLY);
         });
     });
 
