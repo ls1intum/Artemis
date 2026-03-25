@@ -9,6 +9,7 @@
 #include <functional>
 #include <iostream>
 #include <cctype>
+#include <mutex>
 
 /**
  * @file Helpers.hpp
@@ -92,10 +93,19 @@ namespace Helpers {
         }
     } // namespace Normalize
 
+    inline std::mutex streamMutex;
+
     struct StreamGuard {
-        std::ostream& stream;
+        std::ios& stream;
         std::streambuf* original;
-        ~StreamGuard() { stream.rdbuf(); }
+
+        StreamGuard(std::ios& s, std::streambuf* new_buf)
+                : stream(s), original(s.rdbuf(new_buf)) {}
+
+        ~StreamGuard() { stream.rdbuf(original); }
+
+        StreamGuard(const StreamGuard&) = delete;
+        StreamGuard& operator=(const StreamGuard&) = delete;
     };
 
     /**
@@ -115,11 +125,11 @@ namespace Helpers {
      */
     template<typename Fn, typename... Args>
     std::string GetOutput(Fn&& fn, Args&&... args) {
-        std::streambuf* originalCout = std::cout.rdbuf();
-        StreamGuard guard{std::cout, originalCout};
-
         std::ostringstream out;
-        std::cout.rdbuf(out.rdbuf());
+
+        std::lock_guard<std::mutex> lock(streamMutex);
+
+        StreamGuard guard{std::cout, out.rdbuf()};
 
         std::forward<Fn>(fn)(std::forward<Args>(args)...);
 
@@ -159,16 +169,13 @@ namespace Helpers {
      */
     template<typename Fn, typename... Args>
     std::string GetIO(Fn&& fn, Args&&... inputArgs) {
-        std::streambuf* originalCout = std::cout.rdbuf();
-        std::streambuf* originalCin  = std::cin.rdbuf();
-        StreamGuard coutGuard{std::cout, originalCout};
-        StreamGuard cinGuard{std::cin, originalCin};
-
         std::istringstream in(buildInput(std::forward<Args>(inputArgs)...));
         std::ostringstream out;
 
-        std::cout.rdbuf(out.rdbuf());
-        std::cin.rdbuf(in.rdbuf());
+        std::lock_guard<std::mutex> lock(streamMutex);
+
+        StreamGuard coutGuard{std::cout, out.rdbuf()};
+        StreamGuard cinGuard{std::cin, in.rdbuf()};
 
         std::forward<Fn>(fn)();
 
