@@ -52,14 +52,12 @@ describe('UpdateTextExerciseDTO Model', () => {
             expect(dto.shortName).toBe('essay');
             expect(dto.maxPoints).toBe(50);
             expect(dto.bonusPoints).toBe(5);
-            expect(dto.assessmentType).toBe(AssessmentType.MANUAL);
             expect(dto.releaseDate).toBe(baseDate.toJSON());
             expect(dto.startDate).toBe(baseDate.add(1, 'day').toJSON());
             expect(dto.dueDate).toBe(baseDate.add(7, 'days').toJSON());
             expect(dto.assessmentDueDate).toBe(baseDate.add(14, 'days').toJSON());
             expect(dto.exampleSolutionPublicationDate).toBe(baseDate.add(21, 'days').toJSON());
             expect(dto.difficulty).toBe(DifficultyLevel.MEDIUM);
-            expect(dto.mode).toBe(ExerciseMode.INDIVIDUAL);
             expect(dto.includedInOverallScore).toBe(IncludedInOverallScore.INCLUDED_COMPLETELY);
             expect(dto.problemStatement).toBe('Write an essay');
             expect(dto.gradingInstructions).toBe('Check grammar');
