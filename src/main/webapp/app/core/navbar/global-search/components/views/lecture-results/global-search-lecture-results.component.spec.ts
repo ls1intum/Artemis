@@ -45,7 +45,7 @@ describe('GlobalSearchLectureResultsComponent', () => {
                 provideRouter([]),
                 { provide: LectureSearchService, useValue: mockSearchService },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(false) } },
+                { provide: ProfileService, useValue: { isModuleFeatureActive: vi.fn().mockReturnValue(true) } },
             ],
         });
 
@@ -141,14 +141,14 @@ describe('GlobalSearchLectureResultsComponent', () => {
     });
 
     describe('itemCount', () => {
-        it('should be 0 when there are no results', () => {
+        it('should be 1 when there are no results (iris action slot is always present)', () => {
             (component as any).lectureResults.set([]);
-            expect(component.itemCount()).toBe(0);
+            expect(component.itemCount()).toBe(1);
         });
 
-        it('should equal the number of results', () => {
+        it('should equal the number of results plus 1 for the iris action slot', () => {
             (component as any).lectureResults.set([mockResult, mockResultNoSnippet]);
-            expect(component.itemCount()).toBe(2);
+            expect(component.itemCount()).toBe(3);
         });
     });
 
@@ -167,7 +167,8 @@ describe('GlobalSearchLectureResultsComponent', () => {
     describe('Keyboard navigation', () => {
         it('should navigate to result link when Enter is pressed on a selected result', () => {
             (component as any).lectureResults.set([mockResult]);
-            fixture.componentRef.setInput('selectedIndex', 0);
+            // selectedIndex 1 because slot 0 is the iris action button (irisOpen defaults to false)
+            fixture.componentRef.setInput('selectedIndex', 1);
             fixture.detectChanges();
 
             const navigateSpy = vi.spyOn((component as any).router, 'navigateByUrl');

@@ -16,11 +16,9 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
-import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -144,6 +143,8 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
+
     private final ProgrammingExerciseVisibleService programmingExerciseVisibleService;
 
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
@@ -153,7 +154,8 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService, ProgrammingExerciseVisibleService programmingExerciseVisibleService) {
+            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi,
+            ProgrammingExerciseVisibleService programmingExerciseVisibleService) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -178,6 +180,7 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.competencyRepositoryApi = competencyRepositoryApi;
         this.programmingExerciseVisibleService = programmingExerciseVisibleService;
     }
 
@@ -846,39 +849,6 @@ public class ExerciseService {
     }
 
     /**
-     * Saves the exercise and links it to the competencies.
-     *
-     * @param exercise     exercise to save
-     * @param saveFunction function to save the exercise
-     * @param <T>          type of the exercise
-     * @return saved exercise
-     */
-    public <T extends Exercise> T saveWithCompetencyLinks(T exercise, Function<T, T> saveFunction) {
-        // persist exercise before linking it to the competency
-        Set<CompetencyExerciseLink> links = exercise.getCompetencyLinks();
-        exercise.setCompetencyLinks(new HashSet<>());
-
-        T savedExercise = saveFunction.apply(exercise);
-
-        if (Hibernate.isInitialized(links) && !links.isEmpty()) {
-            savedExercise.setCompetencyLinks(links);
-            reconnectCompetencyExerciseLinks(savedExercise);
-            competencyRelationApi.ifPresent(api -> savedExercise.setCompetencyLinks(new HashSet<>(api.saveAllExerciseLinks(links))));
-        }
-
-        return savedExercise;
-    }
-
-    /**
-     * Reconnects the competency exercise links to the exercise after the cycle was broken by the deserialization.
-     *
-     * @param exercise exercise to reconnect the links
-     */
-    public void reconnectCompetencyExerciseLinks(Exercise exercise) {
-        exercise.getCompetencyLinks().forEach(link -> link.setExercise(exercise));
-    }
-
-    /**
      * Retrieves a {@link NonQuizExerciseCalendarEventDTO} for each {@link FileUploadExercise}, {@link TextExercise}, {@link ModelingExercise}
      * and {@link ProgrammingExercise} associated to the given courseId. Each DTO encapsulates the releaseDate, startDate, dueDate and assessmentDueDate
      * of the respective exercise.
@@ -947,4 +917,5 @@ public class ExerciseService {
         }
         return events;
     }
+
 }
