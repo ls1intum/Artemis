@@ -244,8 +244,10 @@ public class TutorialGroupResource {
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
         TutorialGroupScheduleDTO tutorialGroupScheduleDTO = createTutorialGroupDTO.tutorialGroupScheduleDTO();
-        TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
-        tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, tutorialGroup, schedule);
+        if (tutorialGroupScheduleDTO != null) {
+            TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
+            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, tutorialGroup, schedule);
+        }
 
         if (!user.equals(teachingAssistant)) {
             var tutorialGroupAssignedNotification = new TutorialGroupAssignedNotification(course.getId(), course.getTitle(), course.getCourseIcon(), tutorialGroup.getTitle(),
