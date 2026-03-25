@@ -3,28 +3,13 @@ import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/ent
 import { QuizBatch, QuizExercise, QuizMode } from 'app/quiz/shared/entities/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
-import { CompetencyExerciseLink } from 'app/atlas/shared/entities/competency.model';
-
-/**
- * DTO matching the server-side CompetencyLinkDTO (lecture module): { competency: { id }, weight }
- */
-interface CompetencyLinkUpdateDTO {
-    competency: { id: number };
-    weight: number;
-}
-
-function toCompetencyLinkUpdateDTO(link: CompetencyExerciseLink): CompetencyLinkUpdateDTO {
-    return {
-        competency: { id: link.competency!.id! },
-        weight: link.weight,
-    };
-}
+import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 export interface QuizExerciseUpdateDTO {
     title?: string;
     channelName?: string;
     categories?: ExerciseCategory[];
-    competencyLinks?: CompetencyLinkUpdateDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
     difficulty?: DifficultyLevel;
     duration?: number;
     randomizeQuestionOrder?: boolean;
@@ -42,7 +27,10 @@ export function toQuizExerciseUpdateDTO(quizExercise: QuizExercise): QuizExercis
         title: quizExercise.title,
         channelName: quizExercise.channelName,
         categories: quizExercise.categories,
-        competencyLinks: quizExercise.competencyLinks?.map(toCompetencyLinkUpdateDTO) || [],
+        competencyLinks: (quizExercise.competencyLinks ?? []).map((link) => ({
+            competency: { id: link.competency!.id! },
+            weight: link.weight ?? 1,
+        })),
         difficulty: quizExercise.difficulty,
         duration: quizExercise.duration,
         randomizeQuestionOrder: quizExercise.randomizeQuestionOrder,

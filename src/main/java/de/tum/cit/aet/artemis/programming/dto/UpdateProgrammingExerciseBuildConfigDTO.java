@@ -12,7 +12,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
  * DTO for updating ProgrammingExerciseBuildConfig.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record UpdateProgrammingExerciseBuildConfigDTO(Long id, Boolean sequentialTestRuns, String branch, String buildPlanConfiguration, String buildScript,
         boolean checkoutSolutionRepository, String testCheckoutPath, String assignmentCheckoutPath, String solutionCheckoutPath, int timeoutSeconds, String dockerFlags,
         @Nullable String theiaImage, boolean allowBranching, @Nullable String branchRegex) {

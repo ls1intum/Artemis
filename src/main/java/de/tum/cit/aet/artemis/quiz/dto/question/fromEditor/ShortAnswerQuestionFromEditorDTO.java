@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -10,6 +13,7 @@ import jakarta.validation.constraints.Positive;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.quiz.domain.ScoringType;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
@@ -74,12 +78,33 @@ public record ShortAnswerQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setSimilarityValue(similarityValue);
         question.setMatchLetterCase(matchLetterCase);
 
-        List<ShortAnswerSpot> shortAnswerSpots = new java.util.ArrayList<>(spots.stream().map(ShortAnswerSpotFromEditorDTO::toDomainObject).toList());
-        List<ShortAnswerSolution> shortAnswerSolutions = new java.util.ArrayList<>(solutions.stream().map(ShortAnswerSolutionFromEditorDTO::toDomainObject).toList());
-        List<ShortAnswerMapping> shortAnswerMappings = new java.util.ArrayList<>(correctMappings.stream().map(ShortAnswerMappingFromEditorDTO::toDomainObject).toList());
-        question.setSpots(shortAnswerSpots);
-        question.setSolutions(shortAnswerSolutions);
-        question.setCorrectMappings(shortAnswerMappings);
+        List<ShortAnswerSpot> spotEntities = new ArrayList<>(spots.stream().map(ShortAnswerSpotFromEditorDTO::toDomainObject).toList());
+        List<ShortAnswerSolution> solutionEntities = new ArrayList<>(solutions.stream().map(ShortAnswerSolutionFromEditorDTO::toDomainObject).toList());
+        question.setSpots(spotEntities);
+        question.setSolutions(solutionEntities);
+
+        // Resolve mappings using DTO effectiveId (tempID for new items, id for existing).
+        Map<Long, ShortAnswerSpot> effectiveIdToSpot = new HashMap<>();
+        for (int i = 0; i < spots.size(); i++) {
+            effectiveIdToSpot.put(spots.get(i).effectiveId(), spotEntities.get(i));
+        }
+        Map<Long, ShortAnswerSolution> effectiveIdToSolution = new HashMap<>();
+        for (int i = 0; i < solutions.size(); i++) {
+            effectiveIdToSolution.put(solutions.get(i).effectiveId(), solutionEntities.get(i));
+        }
+
+        List<ShortAnswerMapping> mappings = new ArrayList<>(correctMappings.stream().map(m -> {
+            ShortAnswerSpot spot = effectiveIdToSpot.get(m.spotTempId());
+            ShortAnswerSolution solution = effectiveIdToSolution.get(m.solutionTempId());
+            if (spot == null || solution == null) {
+                throw new BadRequestAlertException("Could not resolve short answer mappings", "quizExercise", "invalidMappings");
+            }
+            ShortAnswerMapping mapping = new ShortAnswerMapping();
+            mapping.setSpot(spot);
+            mapping.setSolution(solution);
+            return mapping;
+        }).toList());
+        question.setCorrectMappings(mappings);
         return question;
     }
 }

@@ -30,9 +30,7 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
      * @return the corresponding DTO
      */
     public static DropLocationFromEditorDTO of(DropLocation dropLocation) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = dropLocation.getTempID() != null ? dropLocation.getTempID() : dropLocation.getId();
-        return new DropLocationFromEditorDTO(dropLocation.getId(), effectiveTempID, dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(),
+        return new DropLocationFromEditorDTO(dropLocation.getId(), dropLocation.getId(), dropLocation.getPosX(), dropLocation.getPosY(), dropLocation.getWidth(),
                 dropLocation.getHeight());
     }
 
@@ -43,8 +41,7 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
      */
     public DropLocation toDomainObject() {
         DropLocation dropLocation = new DropLocation();
-        // Use id as tempID fallback for mapping resolution
-        dropLocation.setTempID(tempID != null ? tempID : id);
+        dropLocation.setId(id);
         dropLocation.setPosX(posX);
         dropLocation.setPosY(posY);
         dropLocation.setWidth(width);
@@ -58,7 +55,6 @@ public record DropLocationFromEditorDTO(Long id, Long tempID, @NotNull Double po
      * @param dropLocation the existing drop location to update
      */
     public void applyTo(DropLocation dropLocation) {
-        dropLocation.setTempID(tempID != null ? tempID : id);
         dropLocation.setPosX(posX);
         dropLocation.setPosY(posY);
         dropLocation.setWidth(width);

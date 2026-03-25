@@ -378,21 +378,22 @@ public class ChannelService {
     }
 
     /**
-     * Update the channel of an exam
+     * Update the channel of an exam.
+     * Looks up the existing channel by exam ID and updates its name to match
+     * the exam's current channel name.
      *
-     * @param originalExam the original exam
-     * @param updatedExam  the updated exam
-     * @return the updated channel
+     * @param exam the exam whose channel should be updated (must have its new channel name already set)
+     * @return the updated channel, or null if the exam has no channel name or no channel exists
      */
-    public Channel updateExamChannel(Exam originalExam, Exam updatedExam) {
-        if (updatedExam.getChannelName() == null) {
+    public Channel updateExamChannel(Exam exam) {
+        if (exam.getChannelName() == null) {
             return null;
         }
-        Channel channel = channelRepository.findChannelByExamId(originalExam.getId());
+        Channel channel = channelRepository.findChannelByExamId(exam.getId());
         if (channel == null) {
             return null;
         }
-        return updateChannelName(channel, updatedExam.getChannelName());
+        return updateChannelName(channel, exam.getChannelName());
     }
 
     private Channel updateChannelName(Channel channel, String newChannelName) {
