@@ -1,4 +1,5 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, ElementRef, OnDestroy, OnInit, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
@@ -92,6 +93,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     private irisSettingsService = inject(IrisSettingsService);
     private router = inject(Router);
     private markdownService = inject(ArtemisMarkdownService);
+    private destroyRef = inject(DestroyRef);
 
     private readonly exploreSection = viewChild<ElementRef>('exploreSection');
 
@@ -123,7 +125,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
         this.irisEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_IRIS));
 
-        this.route.queryParams.subscribe((params) => {
+        this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
             if (params['fromOnboarding'] === 'true') {
                 this.fromOnboarding.set(true);
                 this.router.navigate([], { queryParams: {}, replaceUrl: true });

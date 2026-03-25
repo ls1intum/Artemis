@@ -9,6 +9,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { IrisCourseSettingsDTO } from 'app/iris/shared/entities/settings/iris-course-settings.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { onError } from 'app/shared/util/global.utils';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 /**
  * Simple toggle component for enabling/disabling Iris at the course level.
@@ -131,20 +132,19 @@ export class IrisEnabledComponent implements OnInit {
             return;
         }
 
-        // Optimistic UI update
-        const previousEnabled = currentSettings.enabled;
-        currentSettings.enabled = enabled;
-        this.settings.set(currentSettings);
+        // Optimistic UI update — clone to avoid mutating the signal value in place
+        const newSettings = deepClone(currentSettings);
+        newSettings.enabled = enabled;
+        this.settings.set(newSettings);
 
         // Save to server
-        this.irisSettingsService.updateCourseSettings(courseId, currentSettings).subscribe({
+        this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.settings.set(response.body.settings);
                 }
             },
             error: (error: HttpErrorResponse) => {
-                currentSettings.enabled = previousEnabled;
                 this.settings.set(currentSettings);
                 onError(this.alertService, error);
             },

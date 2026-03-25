@@ -18,7 +18,7 @@ export class CourseOnboardingPage {
     }
 
     /**
-     * @returns The current active step index (0-based) based on the step indicator.
+     * @returns A locator for the currently active step indicator element.
      */
     getActiveStepItem() {
         return this.page.locator('.step-item.active');

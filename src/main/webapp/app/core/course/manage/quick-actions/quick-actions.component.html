@@ -87,7 +87,8 @@
                 <span class="quick-action-label" jhiTranslate="entity.action.addCompetency"></span>
             </button>
         }
-
+    }
+    @if (course()?.isAtLeastTutor) {
         <button class="quick-action-card quick-action-card--faqs" (click)="navigateToCourseManagementSection(CourseManagementSection.FAQ)">
             <div class="quick-action-icon">
                 <fa-icon [icon]="faQuestion" />

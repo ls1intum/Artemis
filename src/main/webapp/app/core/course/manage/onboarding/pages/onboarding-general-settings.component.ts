@@ -7,6 +7,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingLanguage } from 'app/programming/shared/entities/programming-exercise.model';
 import { getSemesters } from 'app/shared/util/semester-utils';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_IRIS } from 'app/app.constants';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 import { KeyValuePipe, NgClass, NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -87,17 +88,16 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
         if (!courseId || !currentSettings) {
             return;
         }
-        const previousEnabled = currentSettings.enabled;
-        currentSettings.enabled = enabled;
-        this.irisSettings.set(currentSettings);
-        this.irisSettingsService.updateCourseSettings(courseId, currentSettings).subscribe({
+        const newSettings = deepClone(currentSettings);
+        newSettings.enabled = enabled;
+        this.irisSettings.set(newSettings);
+        this.irisSettingsService.updateCourseSettings(courseId, newSettings).subscribe({
             next: (response) => {
                 if (response.body) {
                     this.irisSettings.set(response.body.settings);
                 }
             },
             error: () => {
-                currentSettings.enabled = previousEnabled;
                 this.irisSettings.set(currentSettings);
             },
         });
