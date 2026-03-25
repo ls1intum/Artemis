@@ -153,15 +153,12 @@ export class TutorialGroupDetailComponent {
     pieChart = viewChild(PieChartComponent);
     tutorialGroup = input.required<TutorialGroupDetailDTO>();
     courseId = input.required<number>();
-
     isMessagingEnabled = input.required<boolean>();
     loggedInUserAccessLevel = input.required<TutorialGroupDetailAccessLevel>();
     userIsNotTutor = computed(() => this.loggedInUserAccessLevel() !== TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP);
-
     tutorChatLink = computed(() => this.computeTutorChatLink());
     groupChannelLink = computed(() => this.computeGroupChannelLink());
     onDeleteGroup = output<DeleteTutorialGroupEvent>();
-
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
     teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().tutorImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
@@ -171,10 +168,8 @@ export class TutorialGroupDetailComponent {
     averageAttendancePercentage = computed<string | undefined>(() => this.computeAverageAttendancePercentage());
     pieChartData = computed<NgxChartsSingleSeriesDataEntry[]>(() => this.computePieChartData());
     pieChartColors = computed<Color>(() => this.computePieChartColor());
-
     sessionListOptions = computed(() => this.computeSessionListOptions());
     selectedSessionListOption = signal<ListOption>('all-sessions');
-
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     editSessionButtonTooltipLabel = computed(() => this.computeEditSessionButtonTooltipLabel());
     cancelSessionButtonTooltipLabel = computed(() => this.computeCancelSessionButtonTooltipLabel());
