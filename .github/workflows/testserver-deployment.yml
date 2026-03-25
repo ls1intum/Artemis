@@ -47,7 +47,7 @@ jobs:
   # Log the inputs for debugging
   log-inputs:
     name: Log Inputs
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     steps:
       - name: Print Inputs
         run: |
@@ -58,7 +58,7 @@ jobs:
 
   determine-build-context:
     name: Determine Build Context
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     needs: log-inputs
     outputs:
       pr_number: ${{ steps.get_pr.outputs.pr_number }}
@@ -131,7 +131,7 @@ jobs:
     name: Check Existing Build of Pull Request
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     needs: determine-build-context
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     steps:
       - name: Get latest successful build for branch
         id: check_build
@@ -151,7 +151,7 @@ jobs:
     name: Check Existing Build of main or develop branch
     if: ${{ needs.determine-build-context.outputs.is_main_or_develop == 'true' }}
     needs: determine-build-context
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     steps:
       - name: Get latest successful build for main or develop branch
         id: check_main_build
@@ -169,7 +169,7 @@ jobs:
 
   check-database-migration-approval:
     name: Check Database Migration Approval
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     needs: [determine-build-context]
     if: ${{ needs.determine-build-context.outputs.pr_number != '' }}
     steps:
@@ -203,7 +203,7 @@ jobs:
     # Use always() since one of the jobs will always skip
     if: always() && (needs.conditional-build.result == 'success' || needs.check-existing-build-for-pull-request.result == 'success' || needs.check-existing-build-for-branch.result == 'success') && (needs.check-database-migration-approval.result == 'success' || needs.check-database-migration-approval.result == 'skipped')
     name: Deploy to Test-Server
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, deploy-artemis]
     environment:
       name: ${{ github.event.inputs.environment_name }}
       url: ${{ vars.DEPLOYMENT_URL }}
@@ -228,6 +228,7 @@ jobs:
           DEPLOYMENT_SSH_KEY: "${{ secrets.DEPLOYMENT_SSH_KEY }}"
         run: |
           mkdir -p ~/.ssh
+          rm -f $SSH_AUTH_SOCK
           ssh-agent -a $SSH_AUTH_SOCK > /dev/null
           ssh-add - <<< $GATEWAY_SSH_KEY
           ssh-add - <<< $DEPLOYMENT_SSH_KEY
@@ -243,3 +244,8 @@ jobs:
           DEPLOYMENT_FOLDER: ${{ vars.DEPLOYMENT_FOLDER }}
         run: |
           ./artemis-server-cli docker-deploy "$DEPLOYMENT_USER@$DEPLOYMENT_HOSTS" -g "$GATEWAY_USER@$GATEWAY_HOST" -t $TAG -b $BRANCH_NAME -d $DEPLOYMENT_FOLDER -y
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f /tmp/ssh_agent.sock

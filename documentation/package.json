@@ -7,6 +7,8 @@
         "clear": "docusaurus clear",
         "deploy": "docusaurus deploy",
         "docusaurus": "docusaurus",
+        "lint": "eslint src",
+        "lint:fix": "eslint --fix src",
         "postinstall": "patch-package",
         "serve": "docusaurus serve",
         "start": "docusaurus start",
@@ -33,7 +35,10 @@
         "@docusaurus/tsconfig": "3.9.2",
         "@docusaurus/types": "3.9.2",
         "@types/prop-types": "15.7.15",
-        "baseline-browser-mapping": "2.10.0",
+        "@typescript-eslint/eslint-plugin": "8.57.0",
+        "@typescript-eslint/parser": "8.57.0",
+        "baseline-browser-mapping": "2.10.8",
+        "eslint": "9.39.2",
         "patch-package": "8.0.1",
         "prettier": "3.8.1",
         "typescript": "5.9.3"
@@ -43,7 +48,8 @@
         "minimatch": "10.2.4",
         "qs": "6.15.0",
         "serialize-javascript": "7.0.4",
-        "webpack": "5.105.2"
+        "undici": "7.24.3",
+        "webpack": "5.105.4"
     },
     "browserslist": {
         "production": [
