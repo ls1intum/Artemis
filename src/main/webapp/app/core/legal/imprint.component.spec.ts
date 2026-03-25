@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SessionStorageService } from 'app/shared/service/session-storage.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
@@ -14,6 +16,8 @@ import { ActivatedRoute } from '@angular/router';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 
 describe('ImprintComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: ImprintComponent;
     let fixture: ComponentFixture<ImprintComponent>;
     let legalDocumentService: LegalDocumentService;
@@ -35,9 +39,13 @@ describe('ImprintComponent', () => {
         fixture.detectChanges();
     });
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     it('should load imprint on init in correct language', () => {
-        jest.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
-        const imprintServiceSpy = jest.spyOn(legalDocumentService, 'getImprint');
+        vi.spyOn(languageHelper, 'language', 'get').mockReturnValue(of('en'));
+        const imprintServiceSpy = vi.spyOn(legalDocumentService, 'getImprint');
         component.ngOnInit();
         fixture.changeDetectorRef.detectChanges();
         expect(imprintServiceSpy).toHaveBeenCalledOnce();

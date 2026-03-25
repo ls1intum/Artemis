@@ -139,12 +139,28 @@
             "chat": {
                 "helpOffer": "How can I help you today?"
             },
+            "mcq": {
+                "submit": "Submit Answer",
+                "correct": "Correct!",
+                "incorrect": "Incorrect.",
+                "explanation": "Explanation:"
+            },
             "citation": {
-                "inLecture": "in"
+                "unitLabel": "Unit:",
+                "lectureLabel": "Lecture:"
             },
             "tutorSuggestion": {
                 "loading": "Loading suggestions...",
                 "noIris": "Iris is currently unavailable."
+            },
+            "stages": {
+                "thinking": "Thinking hard",
+                "analyzing": "Analyzing context",
+                "processing": "Processing your request",
+                "formulating": "Formulating a response",
+                "error": {
+                    "internal": "An internal error occurred"
+                }
             },
             "chatBubble": {
                 "seeFull": "See full message"
@@ -193,7 +209,8 @@
                 "deleteSessionQuestion": "Are you sure you want to delete the chat session \"{{title}}\"? This action cannot be undone.",
                 "deleteSessionSuccess": "Chat session deleted.",
                 "deleteSessionError": "Failed to delete chat session.",
-                "sessionMenuAriaLabel": "Chat session actions"
+                "sessionMenuAriaLabel": "Chat session actions",
+                "switchSession": "Switch chat session"
             },
             "aboutIrisModal": {
                 "meetIris": "Meet Iris",
@@ -226,6 +243,16 @@
                 "empty": "No memories found.",
                 "delete": "Delete",
                 "deleting": "Deleting...",
+                "indicator": {
+                    "usedSingular": "1 memory used",
+                    "usedPlural": "{{count}} memories used",
+                    "createdSingular": "1 created",
+                    "createdPlural": "{{count}} created",
+                    "compactUsed": "{{count}} used",
+                    "compactCreated": "{{count}} created",
+                    "usedSectionTitle": "Used memories",
+                    "createdSectionTitle": "Created memories"
+                },
                 "conflict": {
                     "warning": "There are conflicts between memories that need to be resolved.",
                     "resolve": "Resolve",

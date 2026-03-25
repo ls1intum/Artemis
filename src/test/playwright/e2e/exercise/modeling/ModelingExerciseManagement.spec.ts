@@ -1,24 +1,17 @@
 import dayjs from 'dayjs';
 import { MODELING_EDITOR_CANVAS } from '../../../support/constants';
 
-import { Course } from 'app/core/course/shared/entities/course.model';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 
 import { admin, instructor, studentOne } from '../../../support/users';
 import { generateUUID } from '../../../support/utils';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { SEED_COURSES } from '../../../support/seedData';
+
+const course = { id: SEED_COURSES.exerciseManagement.id } as any;
 
 test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
-    let course: Course;
-
-    test.beforeEach('Create course', async ({ login, courseManagementAPIRequests }) => {
-        await login(admin);
-        course = await courseManagementAPIRequests.createCourse();
-        await courseManagementAPIRequests.addInstructorToCourse(course, instructor);
-        await courseManagementAPIRequests.addStudentToCourse(course, studentOne);
-    });
-
     test.describe('Create Modeling Exercise', () => {
         let modelingExercise: ModelingExercise;
 
@@ -52,7 +45,8 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
             await modelingExerciseAssessment.assessComponent(0, 'Unnecessary');
             await modelingExerciseAssessment.submitExample();
             await page.goto(`/course-management/${course.id}/modeling-exercises/${modelingExercise.id}/edit`);
-            await expect(modelingExerciseEditor.getModelingCanvas()).toBeAttached();
+            await modelingExerciseEditor.waitForExampleSolutionEditor();
+            await expect(modelingExerciseEditor.getModelingCanvas()).toBeVisible();
         });
 
         test.afterEach('Delete modeling exercise', async ({ login, exerciseAPIRequests }) => {
@@ -119,10 +113,10 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
 
         test('Student can not see unreleased Modeling Exercise', async ({ page, login, exerciseAPIRequests, courseOverview }) => {
             await login(instructor);
-            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course }, 'Modeling ' + generateUUID(), dayjs().add(1, 'hour'));
-            await login(studentOne, '/courses');
-            await page.getByText(course.title!).click({ force: true });
-            await expect(courseOverview.getExercises()).toHaveCount(0);
+            const exerciseTitle = 'Modeling ' + generateUUID();
+            modelingExercise = await exerciseAPIRequests.createModelingExercise({ course }, exerciseTitle, dayjs().add(1, 'hour'));
+            await login(studentOne, `/courses/${course.id}/exercises`);
+            await expect(courseOverview.getExercise(exerciseTitle)).toHaveCount(0);
         });
 
         test('Student can see released Modeling Exercise', async ({ login, page, exerciseAPIRequests }) => {
@@ -133,7 +127,5 @@ test.describe('Modeling Exercise Management', { tag: '@fast' }, () => {
         });
     });
 
-    test.afterEach('Delete course', async ({ courseManagementAPIRequests }) => {
-        await courseManagementAPIRequests.deleteCourse(course, admin);
-    });
+    // Seed courses are persistent — no cleanup needed
 });

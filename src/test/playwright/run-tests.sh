@@ -69,25 +69,21 @@ if [ ${#TEST_PATHS[@]} -gt 0 ]; then
     # Run parallel tests (fast and slow projects)
     echo "--- Running parallel tests ---"
     run_playwright parallel --project=fast-tests --project=slow-tests "${TEST_PATHS[@]}"
-
-    # Run sequential tests
-    echo "--- Running sequential tests ---"
-    run_playwright sequential --project=sequential-tests --workers 1 "${TEST_PATHS[@]}"
 else
     echo "Running all tests"
 
     # Run parallel tests (fast and slow projects)
     echo "--- Running parallel tests ---"
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
-
-    # Run sequential tests
-    echo "--- Running sequential tests ---"
-    run_playwright sequential e2e --project=sequential-tests --workers 1
 fi
 
-# Merge reports
-echo "--- Merging test reports ---"
-npm run merge-junit-reports || true
+# Remove any stale results.xml (e.g. from playwright:setup init test) before
+# moving the real report into place, so CI never consumes an outdated report.
+echo "--- Finalizing test reports ---"
+rm -f ./test-reports/results.xml
+if [ -f ./test-reports/results-parallel.xml ]; then
+    mv ./test-reports/results-parallel.xml ./test-reports/results.xml
+fi
 npm run merge-coverage-reports || true
 
 # Write marker file if reporter failed but tests passed (picked up by execute.sh for CI reporting).
