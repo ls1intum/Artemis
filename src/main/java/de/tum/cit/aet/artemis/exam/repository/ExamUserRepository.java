@@ -39,10 +39,17 @@ public interface ExamUserRepository extends ArtemisJpaRepository<ExamUser, Long>
     @Query("""
             SELECT new de.tum.cit.aet.artemis.exam.dto.ExamUserAttendanceCheckDTO(
                 examUser.id,
-                examUser.studentImagePath,
                 examUser.user.login,
+                examUser.user.firstName,
+                examUser.user.lastName,
                 examUser.user.registrationNumber,
+                examUser.user.email,
+                examUser.didCheckImage,
+                examUser.didCheckName,
+                examUser.didCheckRegistrationNumber,
+                examUser.didCheckLogin,
                 examUser.signingImagePath,
+                examUser.studentImagePath,
                 studentExams.started,
                 studentExams.submitted
             )
