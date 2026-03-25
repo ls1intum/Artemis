@@ -3,9 +3,9 @@
         <div class="modal-header">
             <h4 class="modal-title">
                 <span>
-                    @if (getAsChannel(activeConversation); as channel) {
+                    @if (getAsChannel(activeConversation()); as channel) {
                         <jhi-channel-icon [isPublic]="channel.isPublic!" [isAnnouncementChannel]="channel.isAnnouncementChannel!" />
-                    } @else if (getAsGroupChat(activeConversation)) {
+                    } @else if (getAsGroupChat(activeConversation())) {
                         <fa-icon [icon]="faPeopleGroup" size="xs" />
                     } @else {
                         <jhi-profile-picture
@@ -18,14 +18,14 @@
                             [imageUrl]="addPublicFilePrefix(otherUser?.imageUrl)"
                         />
                     }
-                    {{ conversationService.getConversationName(activeConversation, true) }}
+                    {{ conversationService.getConversationName(activeConversation(), true) }}
                 </span>
-                @if (getAsChannel(activeConversation); as channel) {
+                @if (getAsChannel(activeConversation()); as channel) {
                     @if (channel.tutorialGroupId && channel.tutorialGroupTitle) {
                         <a
                             (click)="clear()"
                             class="btn btn-info btn-sm ms-2"
-                            [routerLink]="['/courses', course.id, 'tutorial-groups', channel.tutorialGroupId]"
+                            [routerLink]="['/courses', course()?.id, 'tutorial-groups', channel.tutorialGroupId]"
                             role="button"
                             jhiTranslate="artemisApp.entities.tutorialGroup.channelReverse"
                             [translateValues]="{ title: channel.tutorialGroupTitle }"
@@ -72,19 +72,19 @@
             @switch (selectedTab) {
                 @case (Tabs.MEMBERS) {
                     <jhi-conversation-members
-                        [course]="course"
-                        [activeConversationInput]="activeConversation"
+                        [course]="course()!"
+                        [activeConversationInput]="activeConversation()!"
                         (changesPerformed)="changesWerePerformed = true"
                         (userNameClicked)="onUserNameClicked($event)"
                     />
                 }
                 @case (Tabs.INFO) {
-                    <jhi-conversation-info [activeConversation]="activeConversation" [course]="course" (changesPerformed)="changesWerePerformed = true" />
+                    <jhi-conversation-info [activeConversation]="activeConversation()!" [course]="course()" (changesPerformed)="changesWerePerformed = true" />
                 }
                 @case (Tabs.SETTINGS) {
                     <jhi-conversation-settings
-                        [activeConversation]="activeConversation"
-                        [course]="course"
+                        [activeConversation]="activeConversation()!"
+                        [course]="course()!"
                         (channelArchivalChange)="onArchivalChange()"
                         (channelPrivacyChange)="onPrivacyChange()"
                         (channelDeleted)="onChannelDeleted()"

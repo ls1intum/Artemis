@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { HttpResponse, provideHttpClient } from '@angular/common/http';
@@ -12,6 +14,8 @@ import { FaqService } from 'app/communication/faq/faq.service';
 import { FaqCategory } from 'app/communication/shared/entities/faq-category.model';
 
 describe('Faq Service', () => {
+    setupTestBed({ zoneless: true });
+
     let httpMock: HttpTestingController;
     let service: FaqService;
     let expectedResult: any;
@@ -225,13 +229,13 @@ describe('Faq Service', () => {
             let filteredFaq = [faq1, faq11, faq2];
 
             filteredFaq = service.applyFilters(activeFilters, filteredFaq);
-            expect(filteredFaq).toBeArrayOfSize(3);
-            expect(filteredFaq).toIncludeAllMembers([faq1, faq11, faq2]);
+            expect(filteredFaq).toHaveLength(3);
+            expect(filteredFaq).toEqual(expect.arrayContaining([faq1, faq11, faq2]));
 
             activeFilters.add('test');
             filteredFaq = service.applyFilters(activeFilters, filteredFaq);
-            expect(filteredFaq).toBeArrayOfSize(2);
-            expect(filteredFaq).toIncludeAllMembers([faq1, faq11]);
+            expect(filteredFaq).toHaveLength(2);
+            expect(filteredFaq).toEqual(expect.arrayContaining([faq1, faq11]));
         });
 
         it('should convert stringified categories from server into FaqCategory objects', () => {
@@ -245,8 +249,8 @@ describe('Faq Service', () => {
             faq1.questionTitle = 'Title';
             faq1.questionAnswer = 'Answer';
 
-            expect(service.hasSearchTokens(faq1, 'title answer')).toBeTrue();
-            expect(service.hasSearchTokens(faq1, 'title answer missing')).toBeFalse();
+            expect(service.hasSearchTokens(faq1, 'title answer')).toBe(true);
+            expect(service.hasSearchTokens(faq1, 'title answer missing')).toBe(false);
         });
 
         it('should send a POST request to ingest faqs and return an OK response', () => {

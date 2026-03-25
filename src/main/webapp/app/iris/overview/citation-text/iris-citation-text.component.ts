@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component, HostListener, ViewEncapsulation, computed, inject, input } from '@angular/core';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { IrisCitationMetaDTO } from 'app/iris/shared/entities/iris-citation-meta-dto.model';
 import { htmlForMarkdown } from 'app/shared/util/markdown.conversion.util';
 import { IrisCitationParsed } from './iris-citation-text.model';
-import { escapeHtml, formatCitationLabel, getCitationLabelText, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
+import { escapeHtml, formatCitationLabel, replaceCitationBlocks, resolveCitationTypeClass } from './iris-citation-text.util';
 import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faCircleQuestion, faFilePdf, faFileVideo } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -21,6 +22,7 @@ import { IconDefinition, faChevronLeft, faChevronRight, faCircleExclamation, faC
 export class IrisCitationTextComponent {
     private readonly domSanitizer = inject(DomSanitizer);
     private readonly translateService = inject(TranslateService);
+    private readonly router = inject(Router);
 
     /**
      * Maps citation type classes to FontAwesome icons.
@@ -64,24 +66,38 @@ export class IrisCitationTextComponent {
         const label = formatCitationLabel(parsed);
         const typeClass = resolveCitationTypeClass(parsed);
         const hasSummary = !!parsed.summary;
-        const classes = `iris-citation ${typeClass}${hasSummary ? ' iris-citation--has-summary' : ''}`;
+        const isClickable = !!meta && !!meta.courseId && !!meta.lectureId && !!parsed.entityId && (!!parsed.page || !!parsed.start);
         const iconSvg = this.getIconSvg(typeClass);
-        const summaryFallbackTitle = getCitationLabelText(parsed);
+        const dataAttrs = this.buildNavigationDataAttributes(parsed, meta);
 
-        // Include summary tooltip with fallback title and lecture context if available
-        const summaryContent = hasSummary
-            ? `<span class="iris-citation__summary">
+        if (hasSummary) {
+            const wrapperClasses = `iris-citation-single ${typeClass} iris-citation--has-summary`;
+            const citationClasses = `iris-citation ${typeClass}${isClickable ? ' iris-citation--clickable' : ''}`;
+
+            const summaryContent = `<span class="iris-citation__summary">
                    <span class="iris-citation__summary-content">
-                       ${this.renderSummaryContent(parsed.summary, meta, summaryFallbackTitle)}
+                       <span class="iris-citation__summary-item is-active${isClickable ? ' iris-citation__summary-item--clickable' : ''}"${dataAttrs}>
+                           ${this.renderSummaryContent(parsed.summary, meta)}
+                       </span>
                    </span>
-               </span>`
-            : '';
+               </span>`;
 
+            return `
+                <span class="${wrapperClasses}">
+                    <span class="${citationClasses}"${dataAttrs}>
+                        <span class="iris-citation__icon">${iconSvg}</span>
+                        <span class="iris-citation__text">${label}</span>
+                    </span>
+                    ${summaryContent}
+                </span>
+            `.trim();
+        }
+
+        const classes = `iris-citation ${typeClass}${isClickable ? ' iris-citation--clickable' : ''}`;
         return `
-            <span class="${classes}">
+            <span class="${classes}"${dataAttrs}>
                 <span class="iris-citation__icon">${iconSvg}</span>
                 <span class="iris-citation__text">${label}</span>
-                ${summaryContent}
             </span>
         `.trim();
     }
@@ -91,12 +107,15 @@ export class IrisCitationTextComponent {
      */
     private renderCitationGroupHtml(parsedIrisCitation: IrisCitationParsed[], metadata: Array<IrisCitationMetaDTO | undefined>): string {
         const first = parsedIrisCitation[0];
+        const firstMeta = metadata[0];
         const label = formatCitationLabel(first);
         const typeClass = resolveCitationTypeClass(first);
         const hasSummary = parsedIrisCitation.some((p) => !!p.summary);
+        const isClickable = !!firstMeta && !!firstMeta.courseId && !!firstMeta.lectureId && !!first.entityId && (!!first.page || !!first.start);
         const groupClasses = `iris-citation-group ${typeClass}${hasSummary ? ' iris-citation-group--has-summary' : ''}`;
         const count = parsedIrisCitation.length - 1;
         const iconSvg = this.getIconSvg(typeClass);
+        const dataAttrs = this.buildNavigationDataAttributes(first, firstMeta);
 
         // Render summary tooltip with navigation if available
         const summaryContent = hasSummary
@@ -110,7 +129,7 @@ export class IrisCitationTextComponent {
 
         return `
             <span class="${groupClasses}">
-                <span class="iris-citation ${typeClass}">
+                <span class="iris-citation ${typeClass}${isClickable ? ' iris-citation--clickable' : ''}"${dataAttrs}>
                     <span class="iris-citation__icon">${iconSvg}</span>
                     <span class="iris-citation__text">${label}</span>
                 </span>
@@ -121,21 +140,45 @@ export class IrisCitationTextComponent {
     }
 
     /**
-     * Renders the content of a citation summary tooltip including title, lecture context, and summary text.
+     * Renders the content of a citation summary tooltip including summary text and optional lecture metadata.
      */
-    private renderSummaryContent(summary: string, meta?: IrisCitationMetaDTO, fallbackTitle?: string): string {
+    private renderSummaryContent(summary: string, meta?: IrisCitationMetaDTO): string {
         const lectureUnitTitle = meta?.lectureUnitTitle?.trim();
         const lectureTitle = meta?.lectureTitle?.trim();
         const summaryText = summary?.trim();
-        const title = lectureUnitTitle || fallbackTitle || '';
+        const unitTitle = lectureUnitTitle || '';
+        const hasUnit = !!unitTitle;
+        const hasLecture = !!lectureTitle;
+        const hasMeta = hasUnit || hasLecture;
 
-        const titleHtml = title ? `<span class="iris-citation__summary-title">${escapeHtml(title)}</span>` : '';
-        const lectureHtml = lectureTitle
-            ? `<span class="iris-citation__summary-lecture">${escapeHtml(this.translateService.instant('artemisApp.iris.citation.inLecture'))} ${escapeHtml(lectureTitle)}</span>`
-            : '';
         const summaryHtml = summaryText ? `<span class="iris-citation__summary-text">${escapeHtml(summaryText)}</span>` : '';
+        if (!hasMeta) {
+            return summaryHtml;
+        }
 
-        return `${titleHtml}${lectureHtml}${summaryHtml}`;
+        const unitLabel = escapeHtml(this.translateService.instant('artemisApp.iris.citation.unitLabel'));
+        const lectureLabel = escapeHtml(this.translateService.instant('artemisApp.iris.citation.lectureLabel'));
+        const dividerHtml = '<span class="iris-citation__summary-divider"></span>';
+        const unitHtml = hasUnit ? this.renderSummaryMetaRow('unit', unitLabel, unitTitle) : '';
+        const lectureHtml = hasLecture ? this.renderSummaryMetaRow('lecture', lectureLabel, lectureTitle ?? '') : '';
+        const metaHtml = `
+            <span class="iris-citation__summary-meta">
+                ${unitHtml}${lectureHtml}
+            </span>
+        `.trim();
+
+        const divider = summaryHtml.trim() ? dividerHtml : '';
+
+        return `${summaryHtml}${divider}${metaHtml}`;
+    }
+
+    private renderSummaryMetaRow(type: 'unit' | 'lecture', label: string, value: string): string {
+        return `
+            <span class="iris-citation__summary-row iris-citation__summary-row--${type}">
+                <span class="iris-citation__summary-label">${label}</span>
+                <span class="iris-citation__summary-value">${escapeHtml(value)}</span>
+            </span>
+        `.trim();
     }
 
     /**
@@ -150,13 +193,14 @@ export class IrisCitationTextComponent {
 
                 const meta = metas[index];
                 const isActive = summaryIndex === 0 ? 'is-active' : '';
-                const summaryFallbackTitle = getCitationLabelText(cite);
+                const dataAttrs = this.buildNavigationDataAttributes(cite, meta);
+                const isClickable = !!meta && !!meta.courseId && !!meta.lectureId && !!cite.entityId && (!!cite.page || !!cite.start);
                 summaryIndex++;
 
                 return `
-                    <span class="iris-citation__summary-item ${isActive}"
-                          data-citation-index="${index}">
-                        ${this.renderSummaryContent(cite.summary, meta, summaryFallbackTitle)}
+                    <span class="iris-citation__summary-item ${isActive}${isClickable ? ' iris-citation__summary-item--clickable' : ''}"
+                          data-citation-index="${index}"${dataAttrs}>
+                        ${this.renderSummaryContent(cite.summary, meta)}
                     </span>
                 `.trim();
             })
@@ -218,13 +262,94 @@ export class IrisCitationTextComponent {
     }
 
     /**
-     * Handles navigation button clicks using event delegation.
+     * Builds data attributes for navigation.
+     */
+    private buildNavigationDataAttributes(parsed: IrisCitationParsed, meta?: IrisCitationMetaDTO): string {
+        if (!meta) {
+            return '';
+        }
+
+        const courseId = meta.courseId;
+        const lectureId = meta.lectureId;
+        const unitId = parsed.entityId;
+
+        if (courseId === undefined || courseId === null || lectureId === undefined || lectureId === null || !unitId) {
+            return '';
+        }
+
+        const attrs: string[] = [];
+        attrs.push(`data-course-id="${escapeHtml(String(courseId))}"`);
+        attrs.push(`data-lecture-id="${escapeHtml(String(lectureId))}"`);
+        attrs.push(`data-unit-id="${escapeHtml(String(unitId))}"`);
+        if (parsed.start) {
+            attrs.push(`data-timestamp="${escapeHtml(parsed.start)}"`);
+        }
+        if (parsed.page) {
+            attrs.push(`data-page="${escapeHtml(parsed.page)}"`);
+        }
+
+        return attrs.length > 0 ? ' ' + attrs.join(' ') : '';
+    }
+
+    /**
+     * Navigates to the citation source.
+     */
+    private navigateToCitation(element: HTMLElement): void {
+        const courseId = element.getAttribute('data-course-id');
+        const lectureId = element.getAttribute('data-lecture-id');
+        const unitId = element.getAttribute('data-unit-id');
+        const timestamp = element.getAttribute('data-timestamp');
+        const page = element.getAttribute('data-page');
+
+        if (!courseId || !lectureId || !unitId) {
+            return;
+        }
+
+        const queryParams: any = { unit: unitId };
+        if (timestamp) {
+            queryParams.timestamp = timestamp;
+        }
+        if (page) {
+            queryParams.page = page;
+        }
+
+        this.router.navigate(['/courses', courseId, 'lectures', lectureId], { queryParams });
+    }
+
+    /**
+     * Handles citation and navigation button clicks using event delegation.
      */
     @HostListener('click', ['$event'])
     onHostClick(event: MouseEvent): void {
         const target = event.target as HTMLElement;
-        const button = target.closest('.iris-citation__nav-button');
+        const summaryItem = target.closest('.iris-citation__summary-item--clickable') as HTMLElement | null;
+        if (summaryItem) {
+            event.stopPropagation();
+            this.navigateToCitation(summaryItem);
+            return;
+        }
 
+        const citation = target.closest('.iris-citation--clickable') as HTMLElement | null;
+        if (citation) {
+            const summaryElement = target.closest('.iris-citation__summary');
+            if (!summaryElement) {
+                event.stopPropagation();
+                this.navigateToCitation(citation);
+                return;
+            }
+        }
+
+        const summary = target.closest('.iris-citation__summary') as HTMLElement | null;
+        if (summary && !target.closest('.iris-citation__nav')) {
+            const activeSummaryItem = summary.querySelector('.iris-citation__summary-item.is-active.iris-citation__summary-item--clickable') as HTMLElement | null;
+            if (activeSummaryItem) {
+                event.stopPropagation();
+                this.navigateToCitation(activeSummaryItem);
+                return;
+            }
+        }
+
+        const button = target.closest('.iris-citation__nav-button');
         if (!button) return;
 
         event.stopPropagation();
