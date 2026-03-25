@@ -15,8 +15,6 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import jakarta.persistence.EntityManager;
-
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.jspecify.annotations.NonNull;
@@ -129,8 +127,6 @@ public class ResultService {
 
     private final SubmissionFilterService submissionFilterService;
 
-    private final EntityManager entityManager;
-
     private final Optional<ParticipantScoreScheduleService> participantScoreScheduleService;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, AssessmentNoteRepository assessmentNoteRepository, Optional<LtiApi> ltiApi,
@@ -139,7 +135,7 @@ public class ResultService {
             ParticipantScoreRepository participantScoreRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService,
             Optional<StudentExamApi> studentExamApi, BuildJobRepository buildJobRepository, BuildLogEntryService buildLogEntryService,
             StudentParticipationRepository studentParticipationRepository, ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService, EntityManager entityManager,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionFilterService submissionFilterService,
             Optional<ParticipantScoreScheduleService> participantScoreScheduleService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
@@ -161,7 +157,6 @@ public class ResultService {
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.submissionFilterService = submissionFilterService;
-        this.entityManager = entityManager;
         this.participantScoreScheduleService = participantScoreScheduleService;
     }
 

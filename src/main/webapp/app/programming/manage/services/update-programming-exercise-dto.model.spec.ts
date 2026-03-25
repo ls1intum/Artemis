@@ -193,12 +193,15 @@ describe('UpdateProgrammingExerciseDTO', () => {
             expect(dto.releaseTestsWithExampleSolution).toBeFalse();
         });
 
-        it('should call setBonusPointsConstrainedByIncludedInOverallScore', () => {
-            const spy = jest.spyOn(ExerciseService, 'setBonusPointsConstrainedByIncludedInOverallScore');
+        it('should constrain bonus points based on includedInOverallScore', () => {
+            exercise.bonusPoints = 10;
+            exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+            const dtoIncluded = toUpdateProgrammingExerciseDTO(exercise);
+            expect(dtoIncluded.bonusPoints).toBe(10);
 
-            toUpdateProgrammingExerciseDTO(exercise);
-
-            expect(spy).toHaveBeenCalledWith(exercise);
+            exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+            const dtoNotIncluded = toUpdateProgrammingExerciseDTO(exercise);
+            expect(dtoNotIncluded.bonusPoints).toBe(0);
         });
 
         it('should convert categories using stringifyExerciseDTOCategories', () => {
