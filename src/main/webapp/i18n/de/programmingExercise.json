@@ -316,6 +316,11 @@
                 "statusTitle": "Generierungsstatus",
                 "statusTooltip": "Live-Status der Generierung anzeigen",
                 "executionOrder": "Ausgewählte Repositories werden nacheinander in dieser Reihenfolge generiert: Template, Lösung, Test.",
+                "repositories": {
+                    "template": "Template Repository",
+                    "solution": "Solution Repository",
+                    "tests": "Tests Repository"
+                },
                 "activityTitle": "Dateiaktivität",
                 "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
                 "attempts": "Versuche: {{attempts}}",

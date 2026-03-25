@@ -628,11 +628,11 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     getCodeGenerationRepositoryTranslationKey(repositoryType: SupportedCodeGenerationRepositoryType): string {
         switch (repositoryType) {
             case RepositoryType.TEMPLATE:
-                return 'artemisApp.editor.repoSelect.templateRepo';
+                return 'artemisApp.programmingExercise.codeGeneration.repositories.template';
             case RepositoryType.SOLUTION:
-                return 'artemisApp.editor.repoSelect.solutionRepo';
+                return 'artemisApp.programmingExercise.codeGeneration.repositories.solution';
             case RepositoryType.TESTS:
-                return 'artemisApp.editor.repoSelect.testRepo';
+                return 'artemisApp.programmingExercise.codeGeneration.repositories.tests';
         }
     }
 

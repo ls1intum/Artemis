@@ -316,7 +316,6 @@
                                                     [translateValues]="{ attempts: status.attempts }"
                                                 ></div>
                                             }
-                                            <div class="code-generation-popover__subtitle" jhiTranslate="artemisApp.programmingExercise.codeGeneration.activityTitle"></div>
                                             @if (status.fileActivities.length) {
                                                 <div class="code-generation-activity-list">
                                                     @for (activity of status.fileActivities; track activity.timestamp + activity.path) {

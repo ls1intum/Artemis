@@ -316,6 +316,11 @@
                 "statusTitle": "Generation Status",
                 "statusTooltip": "Show live generation status",
                 "executionOrder": "Selected repositories run consecutively in this order: Template, Solution, Test.",
+                "repositories": {
+                    "template": "Template Repository",
+                    "solution": "Solution Repository",
+                    "tests": "Tests Repository"
+                },
                 "activityTitle": "File Activity",
                 "noActivity": "No files have been created or updated yet.",
                 "attempts": "Attempts made: {{attempts}}",
