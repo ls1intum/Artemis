@@ -335,12 +335,19 @@ public class ExamImportService {
                     if (optionalOriginalQuizExercise.isEmpty()) {
                         yield Optional.empty();
                     }
-                    // The import service copies questions from the second parameter (importedExercise),
-                    // so we need to pass the original quiz with questions but set the new exercise group on it
                     var originalQuizExercise = optionalOriginalQuizExercise.get();
-                    originalQuizExercise.setExerciseGroup(exerciseToCopy.getExerciseGroup());
+                    // The import service mutates the second parameter (importedExercise) in-place
+                    // (e.g., nulling question IDs and clearing statistics). We must NOT pass the
+                    // same managed entity for both parameters, as that would corrupt the original
+                    // quiz in the L1 cache. The exerciseToCopy skeleton already has the correct
+                    // exercise group, title, shortName, etc. from the DTO conversion.
+                    // However, the skeleton does not contain quiz questions or batches (these are
+                    // not part of ExerciseImportDTO), so we must copy them from the original.
+                    QuizExercise quizSkeleton = (QuizExercise) exerciseToCopy;
+                    quizSkeleton.setQuizQuestions(originalQuizExercise.getQuizQuestions());
+                    quizSkeleton.setQuizBatches(originalQuizExercise.getQuizBatches());
                     // We don't allow a modification of the exercise at this point, so we can just pass an empty list of files.
-                    yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, originalQuizExercise, null));
+                    yield Optional.of(quizExerciseImportService.importQuizExercise(originalQuizExercise, quizSkeleton, null));
                 }
             };
             // Attach the newly created Exercise to the new Exercise Group only if the importing was successful

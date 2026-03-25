@@ -1,10 +1,9 @@
 import dayjs from 'dayjs/esm';
-import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
-import { DifficultyLevel, ExerciseMode, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
+import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
-import { CompetencyExerciseLinkDTO, mapCompetencyLinks } from 'app/atlas/shared/dto/competency-exercise-link-dto';
+import { CompetencyLinkDTO, GradingCriterionDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 /**
  * DTO for updating text exercises.
@@ -18,14 +17,12 @@ export interface UpdateTextExerciseDTO {
     shortName?: string;
     maxPoints: number;
     bonusPoints?: number;
-    assessmentType?: AssessmentType;
     releaseDate?: dayjs.Dayjs | string | null;
     startDate?: dayjs.Dayjs | string | null;
     dueDate?: dayjs.Dayjs | string | null;
     assessmentDueDate?: dayjs.Dayjs | string | null;
     exampleSolutionPublicationDate?: dayjs.Dayjs | string | null;
     difficulty?: DifficultyLevel;
-    mode?: ExerciseMode;
 
     // Exercise fields
     includedInOverallScore?: IncludedInOverallScore;
@@ -39,8 +36,11 @@ export interface UpdateTextExerciseDTO {
     allowFeedbackRequests?: boolean;
     channelName?: string;
 
+    // Grading criteria
+    gradingCriteria?: GradingCriterionDTO[];
+
     // Competency links as DTOs
-    competencyLinks?: CompetencyExerciseLinkDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
 
     // Course/ExerciseGroup references (by ID)
     courseId?: number;
@@ -59,11 +59,28 @@ export interface UpdateTextExerciseDTO {
  * @returns the corresponding DTO
  */
 export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextExerciseDTO {
-    // Apply bonus points constraint (modifies in place and returns the same object)
-    ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(textExercise);
+    // Compute constrained bonus points without mutating the input
+    const bonusPoints = textExercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY ? 0 : (textExercise.bonusPoints ?? 0);
 
-    // Convert competency links to DTOs matching the server CompetencyExerciseLinkDTO structure
-    const competencyLinkDTOs: CompetencyExerciseLinkDTO[] | undefined = textExercise.competencyLinks ? mapCompetencyLinks(textExercise.competencyLinks) : undefined;
+    // Convert competency links to DTOs (just competency ID and weight)
+    const competencyLinkDTOs: CompetencyLinkDTO[] = (textExercise.competencyLinks ?? []).map((link) => ({
+        competency: { id: link.competency!.id! },
+        weight: link.weight,
+    }));
+
+    // Convert grading criteria to DTOs
+    const gradingCriteriaDTOs: GradingCriterionDTO[] | undefined = textExercise.gradingCriteria?.map((criterion) => ({
+        id: criterion.id,
+        title: criterion.title,
+        structuredGradingInstructions: criterion.structuredGradingInstructions?.map((instruction) => ({
+            id: instruction.id,
+            credits: instruction.credits,
+            gradingScale: instruction.gradingScale,
+            instructionDescription: instruction.instructionDescription,
+            feedback: instruction.feedback,
+            usageCount: instruction.usageCount,
+        })),
+    }));
 
     // Determine courseId and exerciseGroupId - only one should be set (mutually exclusive)
     // For course exercises: set courseId, leave exerciseGroupId undefined
@@ -79,15 +96,13 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         title: textExercise.title,
         shortName: textExercise.shortName,
         maxPoints: textExercise.maxPoints!,
-        bonusPoints: textExercise.bonusPoints,
-        assessmentType: textExercise.assessmentType,
+        bonusPoints,
         releaseDate: convertDateFromClient(textExercise.releaseDate),
         startDate: convertDateFromClient(textExercise.startDate),
         dueDate: convertDateFromClient(textExercise.dueDate),
         assessmentDueDate: convertDateFromClient(textExercise.assessmentDueDate),
         exampleSolutionPublicationDate: convertDateFromClient(textExercise.exampleSolutionPublicationDate),
         difficulty: textExercise.difficulty,
-        mode: textExercise.mode,
         includedInOverallScore: textExercise.includedInOverallScore,
         problemStatement: textExercise.problemStatement,
         gradingInstructions: textExercise.gradingInstructions,
@@ -98,6 +113,7 @@ export function toUpdateTextExerciseDTO(textExercise: TextExercise): UpdateTextE
         allowComplaintsForAutomaticAssessments: textExercise.allowComplaintsForAutomaticAssessments,
         allowFeedbackRequests: textExercise.allowFeedbackRequests,
         channelName: textExercise.channelName,
+        gradingCriteria: gradingCriteriaDTOs,
         competencyLinks: competencyLinkDTOs,
         courseId,
         exerciseGroupId,

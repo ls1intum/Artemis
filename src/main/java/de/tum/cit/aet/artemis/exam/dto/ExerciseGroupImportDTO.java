@@ -15,7 +15,7 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
  * DTO for importing exercise groups.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record ExerciseGroupImportDTO(@Nullable String title, boolean isMandatory, @Nullable List<ExerciseImportDTO> exercises) {
 
     /**
