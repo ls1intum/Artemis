@@ -73,7 +73,7 @@ export class SentryErrorHandler extends ErrorHandler {
         this.reportIfPasskeyIsNotSupported();
     }
 
-    private scrubSentryPayload(trans: Event | TransactionEvent): Event | TransactionEvent {
+    private scrubSentryPayload(trans: any): any {
         if (trans.user) {
             delete trans.user;
         }
