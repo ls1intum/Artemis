@@ -197,7 +197,7 @@ public class CampusOnlineCourseImportService {
         catch (DataIntegrityViolationException e) {
             throw new BadRequestAlertException("This CAMPUSOnline course is already linked to an Artemis course", ENTITY_NAME, "alreadyLinked");
         }
-        return new CampusOnlineCourseDTO(campusOnlineCourseId, course.getTitle(), course.getSemester(), null, responsibleInstructor, department, studyProgram, false);
+        return new CampusOnlineCourseDTO(campusOnlineCourseId, course.getTitle(), course.getSemester(), null, responsibleInstructor, department, studyProgram, true);
     }
 
     /**
