@@ -1,12 +1,21 @@
-import { Component, ElementRef, OnDestroy, OnInit, computed, effect, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 
+type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF';
+
+interface IframeMessageData {
+    page?: number;
+    pagesCount?: number;
+    url?: string;
+    initialPage?: number;
+}
+
 interface IframeMessage {
-    type: string;
-    [key: string]: unknown;
+    type: IframeMessageType;
+    data?: IframeMessageData;
 }
 
 /**
@@ -20,8 +29,9 @@ interface IframeMessage {
     imports: [ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
     templateUrl: './pdf-viewer-iframe-wrapper.component.html',
     styleUrls: ['./pdf-viewer-iframe-wrapper.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PdfViewerIframeWrapperComponent implements OnInit, OnDestroy {
+export class PdfViewerIframeWrapperComponent {
     pdfUrl = input.required<string>();
     uploadDate = input<Dayjs | undefined>(undefined);
     version = input<number | undefined>(undefined);
@@ -35,26 +45,45 @@ export class PdfViewerIframeWrapperComponent implements OnInit, OnDestroy {
         return '/pdf-viewer-iframe';
     });
 
+    private iframeLoadTimeoutId?: number;
+
     constructor() {
+        const destroyRef = inject(DestroyRef);
+
         // Effect to load PDF when iframe is ready and URL changes
         effect(() => {
             if (this.iframeReady() && this.pdfUrl()) {
                 this.loadPdfInIframe();
             }
         });
-    }
 
-    ngOnInit(): void {
-        window.addEventListener('message', this.handleIframeMessage);
-    }
+        // Setup message listener with automatic cleanup
+        const messageHandler = (event: MessageEvent<IframeMessage>) => {
+            this.handleIframeMessage(event);
+        };
 
-    ngOnDestroy(): void {
-        window.removeEventListener('message', this.handleIframeMessage);
+        window.addEventListener('message', messageHandler);
+        destroyRef.onDestroy(() => {
+            window.removeEventListener('message', messageHandler);
+            this.clearIframeLoadTimeout();
+        });
     }
 
     onIframeLoad(): void {
-        // Wait for explicit "ready" message from iframe content component.
-        // No timeout needed - the iframe will signal when it's ready.
+        // Safety timeout: if iframe doesn't send "ready" within 10s, proceed anyway
+        this.iframeLoadTimeoutId = window.setTimeout(() => {
+            if (!this.iframeReady()) {
+                globalThis.console.warn('PDF viewer iframe did not signal ready within 10 seconds, proceeding anyway');
+                this.iframeReady.set(true);
+            }
+        }, 10000);
+    }
+
+    private clearIframeLoadTimeout(): void {
+        if (this.iframeLoadTimeoutId !== undefined) {
+            window.clearTimeout(this.iframeLoadTimeoutId);
+            this.iframeLoadTimeoutId = undefined;
+        }
     }
 
     private loadPdfInIframe(): void {
@@ -62,14 +91,14 @@ export class PdfViewerIframeWrapperComponent implements OnInit, OnDestroy {
         // which means we received the "ready" message and the listener is registered.
         this.postMessageToIframe('loadPDF', {
             url: this.pdfUrl(),
-            initialPage: this.initialPage() || 1,
+            initialPage: this.initialPage() ?? 1,
         });
     }
 
     private readonly handleIframeMessage = (event: MessageEvent<IframeMessage>): void => {
-        // Verify the message is from our iframe
         const iframe = this.pdfIframe()?.nativeElement;
-        if (!iframe || event.source !== iframe.contentWindow) {
+        // Validate both origin AND source for security
+        if (!iframe || event.origin !== window.location.origin || event.source !== iframe.contentWindow) {
             return;
         }
 
@@ -79,15 +108,22 @@ export class PdfViewerIframeWrapperComponent implements OnInit, OnDestroy {
             case 'ready':
                 // Iframe signals it's ready to receive messages.
                 // Setting this triggers the effect which calls loadPdfInIframe().
+                this.clearIframeLoadTimeout();
                 this.iframeReady.set(true);
+                break;
+            case 'pageChange':
+                // Handle page change notifications from iframe if needed
+                break;
+            case 'pagesLoaded':
+                // Handle pages loaded notifications from iframe if needed
                 break;
         }
     };
 
-    private postMessageToIframe(type: string, data: object): void {
+    private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {
         const iframe = this.pdfIframe()?.nativeElement;
         if (iframe?.contentWindow) {
-            iframe.contentWindow.postMessage({ type, data }, '*');
+            iframe.contentWindow.postMessage({ type, data }, window.location.origin);
         }
     }
 }

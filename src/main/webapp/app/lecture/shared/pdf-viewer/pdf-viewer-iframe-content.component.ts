@@ -1,9 +1,23 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewEncapsulation, inject, signal } from '@angular/core';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
+
+type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF';
+
+interface IframeMessageData {
+    page?: number;
+    pagesCount?: number;
+    url?: string;
+    initialPage?: number;
+}
+
+interface IframeMessage {
+    type: IframeMessageType;
+    data?: IframeMessageData;
+}
 
 /**
  * Standalone PDF viewer component that runs inside an iframe.
@@ -16,9 +30,11 @@ pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
     templateUrl: './pdf-viewer-iframe-content.component.html',
     styleUrls: ['./pdf-viewer-iframe-content.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
+export class PdfViewerIframeContentComponent implements OnInit {
     private readonly pdfNotificationService = inject(PDFNotificationService);
+    private readonly destroyRef = inject(DestroyRef);
 
     readonly pdfUrl = signal<string>('');
     readonly initialPage = signal<number>(1);
@@ -29,19 +45,26 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
     protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
 
     ngOnInit(): void {
-        // Listen for messages from parent window
-        window.addEventListener('message', this.handleParentMessage);
+        const messageHandler = (event: MessageEvent) => {
+            this.handleParentMessage(event);
+        };
+
+        window.addEventListener('message', messageHandler);
+        this.destroyRef.onDestroy(() => {
+            window.removeEventListener('message', messageHandler);
+        });
 
         // Notify parent that iframe is ready
         this.postMessageToParent('ready', {});
     }
 
-    ngOnDestroy(): void {
-        window.removeEventListener('message', this.handleParentMessage);
-    }
+    private readonly handleParentMessage = (event: MessageEvent<IframeMessage>): void => {
+        // Validate origin FIRST (security-critical)
+        if (event.origin !== window.location.origin) {
+            return;
+        }
 
-    private readonly handleParentMessage = (event: MessageEvent): void => {
-        // Validate message structure (guards against messages from other sources)
+        // Then validate message structure
         if (!event.data || typeof event.data !== 'object') {
             return;
         }
@@ -50,9 +73,9 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
         switch (type) {
             case 'loadPDF':
-                if (data.url) {
+                if (data?.url) {
                     this.pdfUrl.set(data.url);
-                    this.initialPage.set(data.initialPage || 1);
+                    this.initialPage.set(data.initialPage ?? 1);
                 }
                 break;
         }
@@ -65,7 +88,7 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     onPagesLoaded(event: PagesLoadedEvent): void {
         this.totalPages.set(event.pagesCount ?? 0);
-        this.postMessageToParent('pagesLoaded', { pagesCount: event.pagesCount });
+        this.postMessageToParent('pagesLoaded', { pagesCount: event.pagesCount ?? 0 });
     }
 
     zoomIn(): void {
@@ -78,10 +101,14 @@ export class PdfViewerIframeContentComponent implements OnInit, OnDestroy {
 
     private dispatchZoomEvent(eventName: 'zoomin' | 'zoomout'): void {
         const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal();
-        pdfViewerApplication?.eventBus?.dispatch(eventName);
+        if (!pdfViewerApplication?.eventBus) {
+            globalThis.console.warn('PDF viewer not initialized, zoom action ignored');
+            return;
+        }
+        pdfViewerApplication.eventBus.dispatch(eventName);
     }
 
-    private postMessageToParent(type: string, data: object): void {
-        window.parent.postMessage({ type, ...data }, '*');
+    private postMessageToParent(type: IframeMessageType, data: IframeMessageData): void {
+        window.parent.postMessage({ type, data }, window.location.origin);
     }
 }

@@ -66,6 +66,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private pdfSubscription?: Subscription;
 
+    // Validated PDF page (must be positive)
+    readonly validatedPdfPage = computed(() => {
+        const page = this.targetPdfPage();
+        return page && page > 0 ? page : undefined;
+    });
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     readonly hasPdf = computed(() => {
@@ -222,8 +228,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private revokePdfUrl(): void {
         const url = this.pdfUrl();
-        if (url) {
-            URL.revokeObjectURL(url);
+        if (url && url.startsWith('blob:')) {
+            try {
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                globalThis.console.warn('Failed to revoke blob URL:', error);
+            }
         }
     }
 

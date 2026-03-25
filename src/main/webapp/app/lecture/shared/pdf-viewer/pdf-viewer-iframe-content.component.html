@@ -47,10 +47,10 @@
     <ng-template #customToolbar>
         <div id="toolbarViewer" class="artemis-pdf-toolbar">
             <div class="artemis-pdf-toolbar__center">
-                <button class="artemis-pdf-toolbar__button" type="button" title="Zoom Out" (click)="zoomOut()">
+                <button class="artemis-pdf-toolbar__button" type="button" title="Zoom Out" aria-label="Zoom out" (click)="zoomOut()">
                     <fa-icon [icon]="faMagnifyingGlassMinus" />
                 </button>
-                <button class="artemis-pdf-toolbar__button" type="button" title="Zoom In" (click)="zoomIn()">
+                <button class="artemis-pdf-toolbar__button" type="button" title="Zoom In" aria-label="Zoom in" (click)="zoomIn()">
                     <fa-icon [icon]="faMagnifyingGlassPlus" />
                 </button>
                 @if (totalPages() > 0) {
