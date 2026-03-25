@@ -30,6 +30,7 @@ import {
     UPLOAD_EXERCISE_BASE,
 } from '../constants';
 import { dayjsToString, generateUUID, titleLowercase } from '../utils';
+import { BUILD_FINISH_TIMEOUT } from '../timeouts';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
@@ -51,8 +52,9 @@ type PatchProgrammingExerciseTestVisibilityDto = {
     visibility: Visibility;
 }[];
 
-const MAX_RETRIES: number = 40;
 const RETRY_DELAY: number = 3000;
+// Align with BUILD_FINISH_TIMEOUT so solution builds have enough time to complete even under CI load
+const MAX_RETRIES: number = Math.ceil(BUILD_FINISH_TIMEOUT / RETRY_DELAY);
 
 export class ExerciseAPIRequests {
     private readonly page: Page;
