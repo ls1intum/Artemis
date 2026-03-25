@@ -9,19 +9,21 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCheck, faInfoCircle, faPlus, faSort, faTimes, faUpload, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfoCircle, faPenToSquare, faPlus, faSort, faTimes, faUpload, faXmark } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { SortDirective } from 'app/shared/sort/directive/sort.directive';
 import { SortByDirective } from 'app/shared/sort/directive/sort-by.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { AttendanceCheckDialogComponent } from 'app/exam/manage/students/verify-attendance-check/attendance-check/attendance-check-dialog.component';
 
 @Component({
     selector: 'jhi-exam-students-attendance-check',
     templateUrl: './exam-students-attendance-check.component.html',
     encapsulation: ViewEncapsulation.None,
-    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective],
+    imports: [TranslateDirective, FaIconComponent, SortDirective, SortByDirective, ArtemisTranslatePipe, AttendanceCheckDialogComponent],
 })
 export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     private route = inject(ActivatedRoute);
@@ -63,6 +65,7 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faXmark = faXmark;
     faSort = faSort;
+    faPenToSquare = faPenToSquare;
 
     ngOnInit() {
         this.isLoading = true;
@@ -101,6 +104,10 @@ export class ExamStudentsAttendanceCheckComponent implements OnInit, OnDestroy {
 
     sortRows() {
         this.sortService.sortByProperty(this.allExamUsersAttendanceCheck, this.predicate, this.ascending);
+    }
+
+    updateExamUserAttendanceCheck(updatedExamUserAttendanceCheck: ExamUserAttendanceCheckDTO) {
+        this.allExamUsersAttendanceCheck = this.allExamUsersAttendanceCheck.map((c) => (c.id === updatedExamUserAttendanceCheck.id ? updatedExamUserAttendanceCheck : c));
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;

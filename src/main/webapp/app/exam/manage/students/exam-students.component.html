@@ -228,13 +228,9 @@
                             </span>
                         </ng-template>
                         <ng-template ngx-datatable-cell-template let-value="value">
-                            @if (
-                                value.didExamUserAttendExam &&
-                                hasExamEnded &&
-                                (!value.didCheckLogin || !value.didCheckImage || !value.didCheckName || !value.didCheckRegistrationNumber || !value.signingImagePath)
-                            ) {
+                            @if (value.didExamUserAttendExam && hasExamEnded && (!value.didCheckImage || !value.didCheckName)) {
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckFailed' | artemisTranslate }}">
-                                    <fa-icon [icon]="faTimes" style="color: red" class="fa-2x" />
+                                    <fa-icon [icon]="faTimes" class="fa-2x text-danger" />
                                 </div>
                             }
                             @if (
@@ -247,7 +243,11 @@
                                 hasExamEnded
                             ) {
                                 <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPassed' | artemisTranslate }}">
-                                    <fa-icon [icon]="faCheck" style="color: green" class="fa-2x" />
+                                    <fa-icon [icon]="faCheck" class="fa-2x text-success" />
+                                </div>
+                            } @else if (value.didExamUserAttendExam && value.didCheckImage && value.didCheckName && hasExamEnded) {
+                                <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}">
+                                    <fa-icon [icon]="faCheck" class="fa-2x text-warning" />
                                 </div>
                             }
                             @if (!value.didExamUserAttendExam) {
