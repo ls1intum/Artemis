@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnInit, input, signal } from '@angular/core';
+import { Component, OnInit, input, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -30,7 +30,7 @@ type PostCreator = (post: Post) => Observable<Post>;
     styleUrls: ['../../metis.component.scss'],
     imports: [FormsModule, ReactiveFormsModule, TranslateDirective, HelpIconComponent, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
+export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit {
     isCommunicationPage = input<boolean>(false);
 
     exercises?: Exercise[];
@@ -66,13 +66,6 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.isAtLeastInstructorInCourse = this.metisService.metisUserIsAtLeastInstructorInCourse();
     }
 
-    /**
-     * on initialization: reset all input field of the modal, determine the post context;
-     */
-    ngOnChanges() {
-        super.ngOnChanges();
-    }
-
     isDialogVisible = signal(false);
 
     /**
@@ -97,7 +90,9 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.similarPosts = [];
-        this.posting.title = this.posting.title ?? '';
+        const posting = this.posting()!;
+        posting.title = posting.title ?? '';
+        this.posting.set(posting);
         this.resetCurrentContextSelectorOption();
         this.formGroup = this.formBuilder.group(this.postValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
@@ -112,10 +107,10 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     createPosting(): void {
         this.isLoading = true;
-        this.posting = this.setPostProperties(this.posting);
+        this.posting.set(this.setPostProperties(this.posting()!));
 
         const override = this.createOverride();
-        const create$ = override ? override(this.posting) : this.metisService.createPost(this.posting);
+        const create$ = override ? override(this.posting()!) : this.metisService.createPost(this.posting()!);
 
         create$.subscribe({
             next: (post: Post) => {
@@ -135,8 +130,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting = this.setPostProperties(this.posting);
-        this.metisService.updatePost(this.posting).subscribe({
+        this.posting.set(this.setPostProperties(this.posting()!));
+        this.metisService.updatePost(this.posting()!).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.resetFormGroup();
@@ -155,7 +150,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         if (this.editType === this.EditType.UPDATE) {
             this.modalTitle = 'artemisApp.metis.editPosting';
         } else if (this.editType === this.EditType.CREATE) {
-            this.modalTitle = 'artemisApp.metis.' + (getAsChannelDTO(this.posting.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
+            this.modalTitle =
+                'artemisApp.metis.' + (getAsChannelDTO(this.posting()?.conversation)?.isAnnouncementChannel ? 'createModalTitleAnnouncement' : 'createModalTitlePost');
         }
     }
 
@@ -176,14 +172,15 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     }
 
     private resetCurrentContextSelectorOption(): void {
-        this.currentContextSelectorOption = { conversation: this.posting.conversation };
+        this.currentContextSelectorOption = { conversation: this.posting()?.conversation };
     }
 
     private postValidator() {
+        const posting = this.posting();
         return {
             // the pattern ensures that the title and content must include at least one non-whitespace character
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), PostTitleValidationPattern]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            title: [posting?.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), PostTitleValidationPattern]],
+            content: [posting?.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         };
     }

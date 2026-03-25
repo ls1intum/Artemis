@@ -3,14 +3,15 @@ import {
     ChangeDetectorRef,
     Component,
     HostListener,
-    OnChanges,
     OnDestroy,
     OnInit,
     Renderer2,
     ViewContainerRef,
+    effect,
     inject,
     input,
     output,
+    untracked,
     viewChild,
 } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
@@ -53,7 +54,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
         ArtemisDatePipe,
     ],
 })
-export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
+export class AnswerPostComponent extends PostingDirective<AnswerPost> implements OnInit, OnDestroy {
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
     private document = inject<Document>(DOCUMENT);
@@ -87,14 +88,15 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     constructor() {
         super();
         this.course = this.metisService.getCourse();
+        // Track posting signal changes (replaces ngOnChanges)
+        effect(() => {
+            this.posting();
+            untracked(() => this.assignPostingToAnswerPost());
+        });
     }
 
     ngOnInit() {
         super.ngOnInit();
-        this.assignPostingToAnswerPost();
-    }
-
-    ngOnChanges() {
         this.assignPostingToAnswerPost();
     }
 
@@ -103,11 +105,11 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     onPostingUpdated(updatedPosting: AnswerPost) {
-        this.posting = updatedPosting;
+        this.posting.set(updatedPosting);
     }
 
     onReactionsUpdated(updatedReactions: Reaction[]) {
-        this.posting = { ...this.posting, reactions: updatedReactions };
+        this.posting.set({ ...this.posting()!, reactions: updatedReactions });
     }
 
     /**
@@ -218,8 +220,9 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
 
     private assignPostingToAnswerPost() {
         // This is needed because otherwise instanceof returns 'object'.
-        if (this.posting && !(this.posting instanceof AnswerPost)) {
-            this.posting = Object.assign(new AnswerPost(), this.posting);
+        const posting = this.posting();
+        if (posting && !(posting instanceof AnswerPost)) {
+            this.posting.set(Object.assign(new AnswerPost(), posting));
         }
     }
 }

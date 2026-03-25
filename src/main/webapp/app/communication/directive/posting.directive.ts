@@ -1,5 +1,5 @@
 import { Posting } from 'app/communication/shared/entities/posting.model';
-import { ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, inject, input } from '@angular/core';
+import { ChangeDetectorRef, Directive, OnDestroy, OnInit, inject, input, model } from '@angular/core';
 import { MetisService } from 'app/communication/service/metis.service';
 import { DisplayPriority } from 'app/communication/metis.util';
 import { faBookmark } from '@fortawesome/free-solid-svg-icons';
@@ -11,7 +11,7 @@ import { Router } from '@angular/router';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
-    @Input() posting: T;
+    readonly posting = model<T>();
     readonly isCommunicationPage = input<boolean | undefined>();
     readonly showChannelReference = input<boolean>();
 
@@ -43,7 +43,7 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     faBookmark = faBookmark;
 
     ngOnInit(): void {
-        this.content = this.posting?.content;
+        this.content = this.posting()?.content;
     }
 
     ngOnDestroy(): void {
@@ -155,24 +155,28 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     }
 
     markMessageAsUnread() {
-        this.metisService.markMessageAsUnread(this.posting);
+        this.metisService.markMessageAsUnread(this.posting()!);
     }
 
     protected toggleSavePost() {
-        if (this.posting.isSaved) {
-            this.metisService.removeSavedPost(this.posting);
-            this.posting.isSaved = false;
-        } else {
-            this.metisService.savePost(this.posting);
-            this.posting.isSaved = true;
+        const posting = this.posting();
+        if (posting) {
+            if (posting.isSaved) {
+                this.metisService.removeSavedPost(posting);
+                posting.isSaved = false;
+            } else {
+                this.metisService.savePost(posting);
+                posting.isSaved = true;
+            }
+            this.posting.set(posting);
         }
     }
 
     private deletePostingWithoutTimeout() {
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(this.posting);
+            this.metisService.deleteAnswerPost(this.posting()!);
         } else {
-            this.metisService.deletePost(this.posting);
+            this.metisService.deletePost(this.posting()!);
         }
     }
 
@@ -202,11 +206,11 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
      * Create a or navigate to one-to-one chat with the referenced user
      */
     onUserNameClicked() {
-        if (!this.posting.author?.id) {
+        if (!this.posting()?.author?.id) {
             return;
         }
 
-        const referencedUserId = this.posting.author?.id;
+        const referencedUserId = this.posting()!.author!.id!;
 
         const course = this.metisService.getCourse();
         if (isMessagingEnabled(course)) {

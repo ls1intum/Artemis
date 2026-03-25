@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
@@ -18,13 +18,14 @@ import { Subscription } from 'rxjs';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnChanges, OnDestroy {
+export class MessageReplyInlineInputComponent extends PostingCreateEditDirective<AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
 
     private readonly DRAFT_KEY_PREFIX = 'thread_draft_';
     private currentUserId: number | undefined;
     private draftMessageSubscription?: Subscription;
+    private previousPostingPostId: number | undefined;
 
     readonly activeConversation = input<ConversationDTO>();
 
@@ -35,18 +36,15 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         void this.loadCurrentUser();
     }
 
-    ngOnChanges(changes: SimpleChanges | void) {
-        if (this.formGroup && changes) {
-            for (const propName in changes) {
-                if (changes.hasOwnProperty(propName) && propName === 'posting') {
-                    if (changes['posting'].previousValue?.post?.id === changes['posting'].currentValue?.post?.id) {
-                        this.posting.content = this.formGroup.get('content')?.value;
-                    }
-                }
+    protected override onPostingChanged(): void {
+        const p = this.posting();
+        if (this.formGroup && p) {
+            if (this.previousPostingPostId !== undefined && this.previousPostingPostId === p.post?.id) {
+                p.content = this.formGroup.get('content')?.value;
             }
+            this.previousPostingPostId = p.post?.id;
         }
-
-        super.ngOnChanges();
+        super.onPostingChanged();
         this.loadDraft();
     }
 
@@ -63,14 +61,15 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      */
     resetFormGroup(content: string | undefined = undefined): void {
         this.draftMessageSubscription?.unsubscribe();
+        const posting = this.posting()!;
 
         if (content !== undefined) {
-            this.posting.content = content;
+            posting.content = content;
         }
 
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
 
         // Subscribe and store the subscription
@@ -88,8 +87,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
+        const posting = this.posting()!;
+        posting.content = this.formGroup.get('content')?.value;
+        this.metisService.createAnswerPost(posting).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup('');
                 this.isLoading = false;
@@ -107,8 +107,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(this.posting).subscribe({
+        const posting = this.posting()!;
+        posting.content = this.formGroup.get('content')?.value;
+        this.metisService.updateAnswerPost(posting).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.clearDraft();
@@ -128,7 +129,7 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     private getDraftKey(): string {
         const userId = this.currentUserId;
         const conversationId = this.activeConversation()?.id;
-        const postId = this.posting.post?.id;
+        const postId = this.posting()?.post?.id;
         if (!userId || !conversationId || !postId) {
             return '';
         }
@@ -144,8 +145,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         const key = this.getDraftKey();
         const draft = this.draftService.loadDraft(key);
         if (draft) {
-            this.posting.content = draft;
-            this.resetFormGroup();
+            const posting = this.posting();
+            if (posting) {
+                posting.content = draft;
+                this.resetFormGroup();
+            }
         }
     }
 

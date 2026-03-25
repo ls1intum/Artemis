@@ -40,10 +40,12 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * resets the answer post content
      */
     resetFormGroup(): void {
-        this.posting = this.posting || { content: '' };
+        if (!this.posting()) {
+            this.posting.set({ content: '' } as AnswerPost);
+        }
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [this.posting()!.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
     }
 
@@ -52,8 +54,9 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(this.posting).subscribe({
+        const posting = this.posting()!;
+        posting.content = this.formGroup.get('content')?.value;
+        this.metisService.createAnswerPost(posting).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading = false;
@@ -71,8 +74,9 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(this.posting).subscribe({
+        const posting = this.posting()!;
+        posting.content = this.formGroup.get('content')?.value;
+        this.metisService.updateAnswerPost(posting).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading = false;

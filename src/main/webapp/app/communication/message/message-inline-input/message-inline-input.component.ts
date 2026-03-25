@@ -1,4 +1,4 @@
-import { Component, OnChanges, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -20,7 +20,7 @@ import { Subscription } from 'rxjs';
     encapsulation: ViewEncapsulation.None,
     imports: [FormsModule, ReactiveFormsModule, PostingMarkdownEditorComponent, PostingButtonComponent, ArtemisTranslatePipe],
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnChanges, OnDestroy {
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private draftService = inject(DraftService);
 
@@ -36,8 +36,8 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         this.loadCurrentUser();
     }
 
-    ngOnChanges() {
-        super.ngOnChanges();
+    protected override onPostingChanged(): void {
+        super.onPostingChanged();
         this.loadDraft();
     }
 
@@ -57,7 +57,7 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [this.posting()?.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
 
         // Subscribe to content changes to save drafts
@@ -77,8 +77,9 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     createPosting(): void {
         // Wait for the markdown editor's 200ms textChangedEmitDelay to complete
         setTimeout(() => {
-            this.posting.content = this.formGroup.get('content')?.value;
-            this.metisService.createPost(this.posting).subscribe({
+            const posting = this.posting()!;
+            posting.content = this.formGroup.get('content')?.value;
+            this.metisService.createPost(posting).subscribe({
                 next: (post: Post) => {
                     this.isLoading = false;
                     this.clearDraft();
@@ -96,9 +97,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.content = this.formGroup.get('content')?.value;
+        const posting = this.posting()!;
+        posting.content = this.formGroup.get('content')?.value;
         this.isModalOpen.emit();
-        this.metisService.updatePost(this.posting).subscribe({
+        this.metisService.updatePost(posting).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.clearDraft();
@@ -128,8 +130,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
         const key = this.getDraftKey();
         const draft = this.draftService.loadDraft(key);
         if (draft) {
-            this.posting.content = draft;
-            this.resetFormGroup();
+            const posting = this.posting();
+            if (posting) {
+                posting.content = draft;
+                this.resetFormGroup();
+            }
         }
     }
 
