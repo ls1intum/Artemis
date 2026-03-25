@@ -1,4 +1,4 @@
-import { Component, effect, inject, input, output } from '@angular/core';
+import { Component, effect, inject, input, output, untracked } from '@angular/core';
 import { CourseNotification } from 'app/communication/shared/entities/course-notification/course-notification';
 import { CourseNotificationService } from 'app/communication/course-notification/course-notification.service';
 import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
@@ -56,42 +56,52 @@ export class CourseNotificationComponent {
 
     constructor() {
         effect(() => {
-            this.faIcon = this.courseNotificationService.getIconFromType(this.courseNotification().notificationType);
-            // For translations, we pass all parameters and the course name and id so they can automatically be used.
-            this.notificationParameters = {
-                ...Object.entries(this.courseNotification().parameters!).reduce(
-                    (acc, [key, value]) => {
-                        if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
-                            acc[key] = value;
-                        } else {
-                            acc[key] = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString()))?.replace(/<[^>]*>/g, '') || '';
-                        }
+            const notification = this.courseNotification();
+            untracked(() => {
+                this.faIcon = this.courseNotificationService.getIconFromType(notification.notificationType);
+                // For translations, we pass all parameters and the course name and id so they can automatically be used.
+                this.notificationParameters = {
+                    ...Object.entries(notification.parameters!).reduce(
+                        (acc, [key, value]) => {
+                            if (!value || !CourseNotificationService.NOTIFICATION_MARKDOWN_PARAMETERS.includes(key)) {
+                                acc[key] = value;
+                            } else {
+                                let sanitized = this.sanitizer.sanitize(1, this.markdownService.safeHtmlForPostingMarkdown(value!.toString())) || '';
+                                // Iteratively strip HTML tags to prevent incomplete sanitization (e.g. nested tags like <scr<script>ipt>)
+                                let previous: string;
+                                do {
+                                    previous = sanitized;
+                                    sanitized = sanitized.replace(/<[^>]*>/g, '');
+                                } while (sanitized !== previous);
+                                acc[key] = sanitized;
+                            }
 
-                        return acc;
-                    },
-                    {} as Record<string, any>,
-                ),
-                courseName: this.courseNotification().courseName,
-                courseId: this.courseNotification().courseId,
-            };
-            this.notificationType = this.courseNotification().notificationType!;
-            this.notificationUrl = this.parseUrlToRouterObject(this.courseNotification().relativeWebAppUrl!);
-            this.notificationTimeTranslationKey = this.courseNotificationService.getDateTranslationKey(this.courseNotification());
-            this.notificationTimeTranslationParameters = this.courseNotificationService.getDateTranslationParams(this.courseNotification());
-            if ('authorName' in this.notificationParameters && 'authorImageUrl' in this.notificationParameters && 'authorId' in this.notificationParameters) {
-                this.authorName = this.notificationParameters.authorName as string;
-                this.authorId = this.notificationParameters.authorId as number;
-                this.authorImageUrl = this.notificationParameters.authorImageUrl as string;
-                this.isShowProfilePicture = true;
-            } else if ('replyAuthorName' in this.notificationParameters && 'replyImageUrl' in this.notificationParameters && 'replyAuthorId' in this.notificationParameters) {
-                this.authorName = this.notificationParameters.replyAuthorName as string;
-                this.authorId = this.notificationParameters.replyAuthorId as number;
-                this.authorImageUrl = this.notificationParameters.replyImageUrl as string;
-                this.isShowProfilePicture = true;
-            } else {
-                this.isShowProfilePicture = false;
-            }
-            this.notificationInitialized = true;
+                            return acc;
+                        },
+                        {} as Record<string, any>,
+                    ),
+                    courseName: notification.courseName,
+                    courseId: notification.courseId,
+                };
+                this.notificationType = notification.notificationType!;
+                this.notificationUrl = this.parseUrlToRouterObject(notification.relativeWebAppUrl!);
+                this.notificationTimeTranslationKey = this.courseNotificationService.getDateTranslationKey(notification);
+                this.notificationTimeTranslationParameters = this.courseNotificationService.getDateTranslationParams(notification);
+                if ('authorName' in this.notificationParameters && 'authorImageUrl' in this.notificationParameters && 'authorId' in this.notificationParameters) {
+                    this.authorName = this.notificationParameters.authorName as string;
+                    this.authorId = this.notificationParameters.authorId as number;
+                    this.authorImageUrl = this.notificationParameters.authorImageUrl as string;
+                    this.isShowProfilePicture = true;
+                } else if ('replyAuthorName' in this.notificationParameters && 'replyImageUrl' in this.notificationParameters && 'replyAuthorId' in this.notificationParameters) {
+                    this.authorName = this.notificationParameters.replyAuthorName as string;
+                    this.authorId = this.notificationParameters.replyAuthorId as number;
+                    this.authorImageUrl = this.notificationParameters.replyImageUrl as string;
+                    this.isShowProfilePicture = true;
+                } else {
+                    this.isShowProfilePicture = false;
+                }
+                this.notificationInitialized = true;
+            });
         });
     }
 
