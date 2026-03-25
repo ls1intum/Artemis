@@ -29,7 +29,7 @@ import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPoli
  * This DTO includes all fields that can be updated through the update endpoint.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record UpdateProgrammingExerciseDTO(
         // Core identification
         @Nullable Long id,

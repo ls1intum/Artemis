@@ -253,17 +253,8 @@ public class BonusResource {
                 .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonusId));
 
         boolean isSourceGradeScaleUpdated = false;
-        GradingScale existingSourceScale = existingBonus.getSourceGradingScale();
-        GradingScale updatedSourceScale = updatedBonus.getSourceGradingScale();
-
-        boolean sourceScaleChanged = (updatedSourceScale != null && existingSourceScale == null)
-                || (updatedSourceScale != null && existingSourceScale != null && !existingSourceScale.getId().equals(updatedSourceScale.getId()));
-
-        if (sourceScaleChanged) {
-            if (updatedSourceScale.getId() == null) {
-                throw new BadRequestAlertException("Source grading scale id must not be null", ENTITY_NAME, "nullSourceGradingScaleId");
-            }
-            var sourceFromDb = gradingScaleRepository.findById(updatedSourceScale.getId()).orElseThrow();
+        if (updatedBonus.getSourceGradingScale() != null && !existingBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
+            var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
             existingBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
             isSourceGradeScaleUpdated = true;
@@ -273,6 +264,7 @@ public class BonusResource {
         existingBonus.setWeight(updatedBonus.getWeight());
         existingBonus.setBonusStrategy(updatedBonus.getBonusStrategy());
 
+        bonusToGradingScale.addBonusFrom(existingBonus);
         bonusToGradingScale.setBonusStrategy(updatedBonus.getBonusStrategy());
         gradingScaleRepository.save(bonusToGradingScale);
         Bonus savedBonus = bonusService.saveBonus(existingBonus, isSourceGradeScaleUpdated);

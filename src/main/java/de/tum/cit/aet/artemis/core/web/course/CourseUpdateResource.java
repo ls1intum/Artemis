@@ -118,7 +118,9 @@ public class CourseUpdateResource {
         log.debug("REST request to update Course : {}", courseUpdateDTO);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseUpdateDTO.id());
+        // Always use the path variable for lookups to prevent a DTO with a mismatched id
+        // from loading (and potentially modifying) a different course than the URL indicates
+        var existingCourse = courseRepository.findByIdForUpdateElseThrow(courseId);
 
         if (existingCourse.getTimeZone() != null && courseUpdateDTO.timeZone() == null) {
             throw new IllegalArgumentException("You can not remove the time zone of a course");
@@ -160,6 +162,9 @@ public class CourseUpdateResource {
 
         // Save the existing course icon path before applying DTO changes
         String existingCourseIcon = existingCourse.getCourseIcon();
+        // Save values that are checked AFTER applyTo mutates the entity
+        boolean oldLearningPathsEnabled = existingCourse.getLearningPathsEnabled();
+        String oldCodeOfConduct = existingCourse.getCourseInformationSharingMessagingCodeOfConduct();
 
         // Apply DTO values to the existing course entity - this preserves all relationships
         courseUpdateDTO.applyTo(existingCourse);
@@ -197,14 +202,14 @@ public class CourseUpdateResource {
             }
         }
 
-        if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), existingCourse.getCourseInformationSharingMessagingCodeOfConduct())) {
+        if (!Objects.equals(courseUpdateDTO.courseInformationSharingMessagingCodeOfConduct(), oldCodeOfConduct)) {
             conductAgreementService.resetUsersAgreeToCodeOfConductInCourse(existingCourse);
         }
 
         Course result = courseRepository.save(existingCourse);
 
         // if learning paths got enabled, generate learning paths for students
-        if (!existingCourse.getLearningPathsEnabled() && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
+        if (!oldLearningPathsEnabled && courseUpdateDTO.learningPathsEnabled() && learningPathApi.isPresent()) {
             Course courseWithCompetencies = courseRepository.findWithEagerCompetenciesAndPrerequisitesByIdElseThrow(result.getId());
             Set<User> students = userRepository.getStudentsWithLearnerProfile(courseWithCompetencies);
             learnerProfileApi.ifPresent(api -> api.createCourseLearnerProfiles(courseWithCompetencies, students));

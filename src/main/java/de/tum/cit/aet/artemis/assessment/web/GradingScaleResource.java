@@ -4,6 +4,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 import java.util.Optional;
 
 import jakarta.validation.Valid;
@@ -257,7 +258,7 @@ public class GradingScaleResource {
         GradingScale existingGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
 
         // Update exam max points if provided
-        if (dto.examMaxPoints() != null && !dto.examMaxPoints().equals(exam.getExamMaxPoints())) {
+        if (dto.examMaxPoints() != null && !Objects.equals(dto.examMaxPoints(), exam.getExamMaxPoints())) {
             exam.setExamMaxPoints(dto.examMaxPoints());
             api.save(exam);
         }

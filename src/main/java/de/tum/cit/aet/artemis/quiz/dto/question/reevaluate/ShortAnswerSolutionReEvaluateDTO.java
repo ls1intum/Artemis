@@ -11,6 +11,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 public record ShortAnswerSolutionReEvaluateDTO(Long id, Long tempID, @NotBlank String text, @NotNull Boolean invalid) {
 
     public static ShortAnswerSolutionReEvaluateDTO of(ShortAnswerSolution shortAnswerSolution) {
-        return new ShortAnswerSolutionReEvaluateDTO(shortAnswerSolution.getId(), shortAnswerSolution.getTempID(), shortAnswerSolution.getText(), shortAnswerSolution.isInvalid());
+        return new ShortAnswerSolutionReEvaluateDTO(shortAnswerSolution.getId(), null, shortAnswerSolution.getText(), shortAnswerSolution.isInvalid());
     }
 }

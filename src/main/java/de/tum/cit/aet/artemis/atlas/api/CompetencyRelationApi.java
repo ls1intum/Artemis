@@ -1,10 +1,6 @@
 package de.tum.cit.aet.artemis.atlas.api;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.springframework.context.annotation.Conditional;
@@ -18,7 +14,6 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyExerciseLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyLectureUnitLinkRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRelationRepository;
-import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
 
 @Controller
 @Conditional(AtlasEnabled.class)
@@ -31,14 +26,14 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
 
     private final CompetencyLectureUnitLinkRepository lectureUnitLinkRepository;
 
-    private final CourseCompetencyRepository courseCompetencyRepository;
+    private final CompetencyRepositoryApi competencyRepositoryApi;
 
     public CompetencyRelationApi(CompetencyRelationRepository competencyRelationRepository, CompetencyExerciseLinkRepository competencyExerciseLinkRepository,
-            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, CourseCompetencyRepository courseCompetencyRepository) {
+            CompetencyLectureUnitLinkRepository lectureUnitLinkRepository, CompetencyRepositoryApi competencyRepositoryApi) {
         this.competencyRelationRepository = competencyRelationRepository;
         this.competencyExerciseLinkRepository = competencyExerciseLinkRepository;
         this.lectureUnitLinkRepository = lectureUnitLinkRepository;
-        this.courseCompetencyRepository = courseCompetencyRepository;
+        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     public void deleteAllByCourseId(Long courseId) {
@@ -50,7 +45,11 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     }
 
     /**
-     * Saves all given competency exercise links, ensuring referenced competencies are managed Hibernate entities.
+     * Saves all exercise links, resolving detached competency references to managed entities.
+     * <p>
+     * Uses individual lookups via {@link CompetencyRepositoryApi#findCompetencyOrPrerequisiteByIdElseThrow}
+     * instead of {@code findAllById} to avoid Hibernate 6.6+ polymorphic query issues with
+     * the abstract {@code CourseCompetency} SINGLE_TABLE base class.
      *
      * @param competencyExerciseLinks the links to save
      * @return the saved links
@@ -58,24 +57,13 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
     public List<CompetencyExerciseLink> saveAllExerciseLinks(Iterable<CompetencyExerciseLink> competencyExerciseLinks) {
         List<CompetencyExerciseLink> links = StreamSupport.stream(competencyExerciseLinks.spliterator(), false).toList();
 
-        // Load all competencies from database to ensure they are managed entities
-        // Hibernate 6.6+ requires all referenced entities to be managed during persist/merge
-        Set<Long> competencyIds = links.stream().map(link -> {
-            if (link.getCompetency() == null || link.getCompetency().getId() == null) {
-                throw new IllegalArgumentException("Each competency exercise link must reference a competency with a non-null id");
-            }
-            return link.getCompetency().getId();
-        }).collect(Collectors.toSet());
-        Map<Long, CourseCompetency> competencyMap = courseCompetencyRepository.findAllById(competencyIds).stream()
-                .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
-
-        Set<Long> missingIds = competencyIds.stream().filter(id -> !competencyMap.containsKey(id)).collect(Collectors.toSet());
-        if (!missingIds.isEmpty()) {
-            throw new IllegalArgumentException("Unknown competency ids: " + missingIds);
-        }
-
-        // Replace detached competencies with managed entities
-        links.forEach(link -> link.setCompetency(competencyMap.get(link.getCompetency().getId())));
+        // Load each competency individually as a managed entity.
+        // Using findAllById on the abstract CourseCompetency (SINGLE_TABLE inheritance)
+        // can return empty results under Hibernate 6.6+ due to polymorphic query issues.
+        links.forEach(link -> {
+            CourseCompetency managedCompetency = competencyRepositoryApi.findCompetencyOrPrerequisiteByIdElseThrow(link.getCompetency().getId());
+            link.setCompetency(managedCompetency);
+        });
 
         return competencyExerciseLinkRepository.saveAll(links);
     }
@@ -86,13 +74,5 @@ public class CompetencyRelationApi extends AbstractAtlasApi {
 
     public void deleteAllLectureUnitLinksByLectureId(Long lectureId) {
         lectureUnitLinkRepository.deleteAllByLectureId(lectureId);
-    }
-
-    public CourseCompetency findCompetencyOrPrerequisiteByIdElseThrow(long competencyId) {
-        return courseCompetencyRepository.findByIdElseThrow(competencyId);
-    }
-
-    public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {
-        return courseCompetencyRepository.findAllById(ids);
     }
 }
