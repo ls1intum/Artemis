@@ -12,6 +12,8 @@ import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.atlas.repository.CompetencyRepository;
 import de.tum.cit.aet.artemis.atlas.repository.CourseCompetencyRepository;
+import de.tum.cit.aet.artemis.atlas.repository.PrerequisiteRepository;
+import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 
 @Controller
 @Conditional(AtlasEnabled.class)
@@ -20,10 +22,14 @@ public class CompetencyRepositoryApi extends AbstractAtlasApi {
 
     private final CompetencyRepository competencyRepository;
 
+    private final PrerequisiteRepository prerequisiteRepository;
+
     private final CourseCompetencyRepository courseCompetencyRepository;
 
-    public CompetencyRepositoryApi(CompetencyRepository competencyRepository, CourseCompetencyRepository courseCompetencyRepository) {
+    public CompetencyRepositoryApi(CompetencyRepository competencyRepository, PrerequisiteRepository prerequisiteRepository,
+            CourseCompetencyRepository courseCompetencyRepository) {
         this.competencyRepository = competencyRepository;
+        this.prerequisiteRepository = prerequisiteRepository;
         this.courseCompetencyRepository = courseCompetencyRepository;
     }
 
@@ -31,8 +37,19 @@ public class CompetencyRepositoryApi extends AbstractAtlasApi {
         return competencyRepository.findAllByCourseId(courseId);
     }
 
+    /**
+     * Finds a CourseCompetency (Competency or Prerequisite) by ID.
+     * Uses the concrete subtype repositories because Hibernate 6.6+ has issues with
+     * findById (EntityManager.find) and JPQL queries on the abstract CourseCompetency
+     * SINGLE_TABLE base class.
+     *
+     * @param competencyId the ID to look up
+     * @return the found CourseCompetency
+     * @throws EntityNotFoundException if no Competency or Prerequisite with the given ID exists
+     */
     public CourseCompetency findCompetencyOrPrerequisiteByIdElseThrow(long competencyId) {
-        return courseCompetencyRepository.findByIdElseThrow(competencyId);
+        return competencyRepository.findById(competencyId).map(c -> (CourseCompetency) c).or(() -> prerequisiteRepository.findById(competencyId).map(p -> (CourseCompetency) p))
+                .orElseThrow(() -> new EntityNotFoundException("CourseCompetency", competencyId));
     }
 
     public List<CourseCompetency> findAllCompetenciesById(Iterable<Long> ids) {

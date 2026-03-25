@@ -39,7 +39,6 @@ import org.springframework.web.multipart.MultipartFile;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyProgressApi;
-import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
 import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -60,9 +59,11 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 import de.tum.cit.aet.artemis.core.util.FileUtil;
 import de.tum.cit.aet.artemis.core.util.PageUtil;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseSpecificationService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
+import de.tum.cit.aet.artemis.lecture.dto.CompetencyLinkDTO;
 import de.tum.cit.aet.artemis.quiz.domain.AnswerOption;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
@@ -80,7 +81,6 @@ import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 import de.tum.cit.aet.artemis.quiz.domain.SubmittedAnswer;
-import de.tum.cit.aet.artemis.quiz.dto.QuizBatchFromEditorDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseReEvaluateDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithQuestionsDTO;
 import de.tum.cit.aet.artemis.quiz.dto.exercise.QuizExerciseWithSolutionDTO;
@@ -138,12 +138,14 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
 
     private final Optional<SlideApi> slideApi;
 
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, ResultRepository resultRepository, QuizSubmissionRepository quizSubmissionRepository,
             InstanceMessageSendService instanceMessageSendService, QuizStatisticService quizStatisticService, QuizBatchService quizBatchService,
             ExerciseSpecificationService exerciseSpecificationService, DragAndDropMappingRepository dragAndDropMappingRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, ExerciseService exerciseService, UserRepository userRepository, QuizBatchRepository quizBatchRepository,
             ChannelService channelService, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyProgressApi> competencyProgressApi,
-            Optional<SlideApi> slideApi) {
+            Optional<SlideApi> slideApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         super(dragAndDropMappingRepository, shortAnswerMappingRepository);
         this.quizExerciseRepository = quizExerciseRepository;
         this.resultRepository = resultRepository;
@@ -159,6 +161,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyProgressApi = competencyProgressApi;
         this.slideApi = slideApi;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -335,10 +338,15 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return recalculationNecessary;
     }
 
-    private static boolean applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
+    /**
+     * @return a map from DTO tempID to the newly created ShortAnswerSolution entities (for mapping resolution)
+     */
+    private static ApplyResult applyShortAnswerSolutionsFromDTOs(List<ShortAnswerSolutionReEvaluateDTO> solutionDTOs, List<ShortAnswerSolution> originalSolution) {
         boolean recalculationNecessary = false;
+        Map<Long, ShortAnswerSolution> tempIdToNewSolution = new HashMap<>();
         List<ShortAnswerSolution> solutionsToRemove = new ArrayList<>();
-        Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream()
+        // Only map existing solutions (id != null); new solutions have id=null and are handled separately below
+        Map<Long, ShortAnswerSolutionReEvaluateDTO> solutionReEvaluateDTOMap = solutionDTOs.stream().filter(dto -> dto.id() != null)
                 .collect(Collectors.toMap(ShortAnswerSolutionReEvaluateDTO::id, Function.identity()));
         for (ShortAnswerSolution originalSolutionItem : originalSolution) {
             ShortAnswerSolutionReEvaluateDTO solutionDTOItem = solutionReEvaluateDTOMap.get(originalSolutionItem.getId());
@@ -363,14 +371,17 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
             if (solutionDTO.tempID() != null) {
                 ShortAnswerSolution newSolution = new ShortAnswerSolution();
-                newSolution.setTempID(solutionDTO.tempID());
                 newSolution.setText(solutionDTO.text());
                 newSolution.setInvalid(solutionDTO.invalid());
                 originalSolution.add(newSolution);
+                tempIdToNewSolution.put(solutionDTO.tempID(), newSolution);
                 recalculationNecessary = true;
             }
         }
-        return recalculationNecessary;
+        return new ApplyResult(recalculationNecessary, tempIdToNewSolution);
+    }
+
+    private record ApplyResult(boolean recalculationNecessary, Map<Long, ShortAnswerSolution> tempIdToNewSolution) {
     }
 
     private static boolean applyShortAnswerSpotsFromDTOs(List<ShortAnswerSpotReEvaluateDTO> spotDTOs, List<ShortAnswerSpot> originalSpots) {
@@ -395,7 +406,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     private static boolean addNewShortAnswerMappingFromDTO(ShortAnswerQuestion originalQuestion, ShortAnswerMappingReEvaluateDTO mappingDTO,
-            Set<ShortAnswerMapping> existingMappings) {
+            Set<ShortAnswerMapping> existingMappings, Map<Long, ShortAnswerSolution> tempIdToNewSolution) {
         if (mappingDTO.solutionId() == null && mappingDTO.solutionTempID() == null) {
             throw new BadRequestException("The short answer mapping for spot id " + mappingDTO.spotId() + " has no solutionId or solutionTempID");
         }
@@ -404,8 +415,10 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
         boolean mappingExists;
         if (mappingDTO.solutionTempID() != null) {
-            mappingExists = existingMappings.stream()
-                    .anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && Objects.equals(mapping.getSolution().getTempID(), mappingDTO.solutionTempID()));
+            // For new solutions (identified by tempID), check if a mapping to this new solution already exists
+            ShortAnswerSolution newSolution = tempIdToNewSolution.get(mappingDTO.solutionTempID());
+            mappingExists = newSolution != null
+                    && existingMappings.stream().anyMatch(mapping -> mapping.getSpot().getId().equals(mappingDTO.spotId()) && mapping.getSolution() == newSolution);
         }
         else {
             mappingExists = existingMappings.stream()
@@ -418,8 +431,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
                 .orElseThrow(() -> new BadRequestException("The short answer spot with id " + mappingDTO.spotId() + " does not exist"));
         ShortAnswerSolution solution;
         if (mappingDTO.solutionTempID() != null) {
-            solution = originalQuestion.getSolutions().stream().filter(item -> Objects.equals(item.getTempID(), mappingDTO.solutionTempID())).findFirst()
-                    .orElseThrow(() -> new BadRequestException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist"));
+            // Look up the new solution from the tempID map (built during applyShortAnswerSolutionsFromDTOs)
+            solution = tempIdToNewSolution.get(mappingDTO.solutionTempID());
+            if (solution == null) {
+                throw new BadRequestException("The short answer solution with tempID " + mappingDTO.solutionTempID() + " does not exist");
+            }
         }
         else {
             solution = originalQuestion.getSolutions().stream().filter(item -> item.getId().equals(mappingDTO.solutionId())).findFirst()
@@ -432,12 +448,13 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         return true;
     }
 
-    private static boolean applyShortAnswerMappingFromDTOs(ShortAnswerQuestionReEvaluateDTO saDTO, ShortAnswerQuestion originalQuestion) {
+    private static boolean applyShortAnswerMappingFromDTOs(ShortAnswerQuestionReEvaluateDTO saDTO, ShortAnswerQuestion originalQuestion,
+            Map<Long, ShortAnswerSolution> tempIdToNewSolution) {
         boolean recalculationNecessary = false;
         List<ShortAnswerMapping> mappingsToRemove = new ArrayList<>();
         for (ShortAnswerMapping originalMapping : originalQuestion.getCorrectMappings()) {
             boolean mappingExistsInDTO = saDTO.correctMappings().stream()
-                    .anyMatch(dto -> dto.spotId().equals(originalMapping.getSpot().getId()) && dto.solutionId().equals(originalMapping.getSolution().getId()));
+                    .anyMatch(dto -> dto.spotId().equals(originalMapping.getSpot().getId()) && Objects.equals(dto.solutionId(), originalMapping.getSolution().getId()));
             if (!mappingExistsInDTO) {
                 mappingsToRemove.add(originalMapping);
                 recalculationNecessary = true;
@@ -446,7 +463,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         originalQuestion.getCorrectMappings().removeAll(mappingsToRemove);
         Set<ShortAnswerMapping> existingMappings = new HashSet<>(originalQuestion.getCorrectMappings());
         for (var mappingDTO : saDTO.correctMappings()) {
-            if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings)) {
+            if (addNewShortAnswerMappingFromDTO(originalQuestion, mappingDTO, existingMappings, tempIdToNewSolution)) {
                 recalculationNecessary = true;
             }
         }
@@ -476,8 +493,9 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
         }
 
         recalculationNecessary = applyShortAnswerSpotsFromDTOs(shortAnswerQuestionDTO.spots(), originalQuestion.getSpots()) || recalculationNecessary;
-        recalculationNecessary = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions()) || recalculationNecessary;
-        recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion) || recalculationNecessary;
+        ApplyResult solutionResult = applyShortAnswerSolutionsFromDTOs(shortAnswerQuestionDTO.solutions(), originalQuestion.getSolutions());
+        recalculationNecessary = solutionResult.recalculationNecessary() || recalculationNecessary;
+        recalculationNecessary = applyShortAnswerMappingFromDTOs(shortAnswerQuestionDTO, originalQuestion, solutionResult.tempIdToNewSolution()) || recalculationNecessary;
 
         return recalculationNecessary;
     }
@@ -752,7 +770,8 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }
         }
         var allFilesToRemoveMerged = filesToRemove.entrySet().stream()
-                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).toList();
+                .flatMap(entry -> entry.getValue().stream().map(path -> FilePathConverter.fileSystemPathForExternalUri(URI.create(path), entry.getKey()))).filter(Objects::nonNull)
+                .toList();
         FileUtil.deleteFiles(allFilesToRemoveMerged);
     }
 
@@ -1004,17 +1023,19 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * (e.g., to detect changes or prevent invalid modifications) and applies updates from the provided
      * updated quiz exercise.
      *
-     * @param originalQuiz     the original quiz exercise loaded from the database, used for comparisons
-     *                             and checks (e.g., to verify if the quiz has started or for file change detection).
-     * @param updatedQuiz      the quiz exercise object containing the updated values to be applied and saved.
-     * @param files            the list of multipart files for drag-and-drop question updates (may be null or empty).
-     * @param notificationText optional text to include in notifications sent about the exercise update.
+     * @param originalQuiz          the original quiz exercise loaded from the database, used for comparisons
+     *                                  and checks (e.g., to verify if the quiz has started or for file change detection).
+     * @param updatedQuiz           the quiz exercise object containing the updated values to be applied and saved.
+     * @param files                 the list of multipart files for drag-and-drop question updates (may be null or empty).
+     * @param notificationText      optional text to include in notifications sent about the exercise update.
+     * @param originalCompetencyIds the IDs of competencies originally linked to the exercise before the update
      * @return the updated and saved quiz exercise.
      * @throws IOException              if an error occurs during file handling or updates.
      * @throws BadRequestAlertException if the updated quiz is invalid (e.g., fails validation checks,
      *                                      quiz has already started, or conversion between exam/course types).
      */
-    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText) throws IOException {
+    public QuizExercise performUpdate(QuizExercise originalQuiz, QuizExercise updatedQuiz, @NonNull List<MultipartFile> files, String notificationText,
+            Set<Long> originalCompetencyIds) throws IOException {
 
         if (!updatedQuiz.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is not valid", ENTITY_NAME, "invalidQuiz");
@@ -1050,7 +1071,7 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             updatedQuiz.setChannelName(updatedChannel.getName());
         }
         QuizExercise finalQuizExercise = updatedQuiz;
-        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsync(originalQuiz, Optional.of(finalQuizExercise)));
+        competencyProgressApi.ifPresent(api -> api.updateProgressForUpdatedLearningObjectAsyncWithOriginalCompetencyIds(originalCompetencyIds, finalQuizExercise));
         slideApi.ifPresent(api -> api.handleDueDateChange(originalQuiz, finalQuizExercise));
         return updatedQuiz;
     }
@@ -1063,50 +1084,44 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @param updateQuizExerciseDTO The DTO containing the properties to be merged into the domain object.
      */
     public void mergeDTOIntoDomainObject(QuizExercise quizExercise, UpdateQuizExerciseDTO updateQuizExerciseDTO) {
-        if (updateQuizExerciseDTO.title() != null) {
-            quizExercise.setTitle(updateQuizExerciseDTO.title());
-        }
-        if (updateQuizExerciseDTO.channelName() != null) {
-            quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
-        }
-        // TODO: we must support empty competency links, so checking for null here might be a problem
-        if (updateQuizExerciseDTO.categories() != null) {
-            quizExercise.setCategories(updateQuizExerciseDTO.categories());
-        }
+        // PUT semantics: all fields are assigned directly; null means "clear/unset".
+        quizExercise.setTitle(updateQuizExerciseDTO.title());
+        quizExercise.setChannelName(updateQuizExerciseDTO.channelName());
+        quizExercise.setCategories(updateQuizExerciseDTO.categories());
+        quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
+        quizExercise.setDuration(updateQuizExerciseDTO.duration());
+        quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
+        quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
 
-        exerciseService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
-
-        if (updateQuizExerciseDTO.difficulty() != null) {
-            quizExercise.setDifficulty(updateQuizExerciseDTO.difficulty());
-        }
-        if (updateQuizExerciseDTO.duration() != null) {
-            quizExercise.setDuration(updateQuizExerciseDTO.duration());
-        }
-        if (updateQuizExerciseDTO.randomizeQuestionOrder() != null) {
-            quizExercise.setRandomizeQuestionOrder(updateQuizExerciseDTO.randomizeQuestionOrder());
-        }
-        if (updateQuizExerciseDTO.quizMode() != null) {
-            quizExercise.setQuizMode(updateQuizExerciseDTO.quizMode());
-        }
-        // TODO: should it really be possible to update quiz batches in the quiz exercise update endpoint?
         if (updateQuizExerciseDTO.quizBatches() != null) {
-            // Convert DTOs to new entities to avoid detached entity issues
-            Set<QuizBatch> newBatches = updateQuizExerciseDTO.quizBatches().stream().map(QuizBatchFromEditorDTO::toDomainObject).collect(Collectors.toSet());
+            // Preserve existing batch IDs to avoid orphaning QuizSubmission.quizBatch references.
+            // Use applyTo() for existing batches (id != null), toDomainObject() only for new ones.
+            Map<Long, QuizBatch> existingBatchesById = quizExercise.getQuizBatches().stream().filter(b -> b.getId() != null)
+                    .collect(Collectors.toMap(QuizBatch::getId, b -> b, (a, b) -> a));
+
+            Set<QuizBatch> mergedBatches = updateQuizExerciseDTO.quizBatches().stream().map(dto -> {
+                if (dto.id() != null) {
+                    QuizBatch existing = existingBatchesById.get(dto.id());
+                    if (existing != null) {
+                        dto.applyTo(existing);
+                        return existing;
+                    }
+                }
+                return dto.toDomainObject();
+            }).collect(Collectors.toSet());
+
             quizExercise.getQuizBatches().clear();
-            quizExercise.getQuizBatches().addAll(newBatches);
+            quizExercise.getQuizBatches().addAll(mergedBatches);
         }
-        if (updateQuizExerciseDTO.releaseDate() != null) {
-            quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
+        else {
+            quizExercise.getQuizBatches().clear();
         }
-        if (updateQuizExerciseDTO.startDate() != null) {
-            quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
-        }
-        if (updateQuizExerciseDTO.dueDate() != null) {
-            quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
-        }
-        if (updateQuizExerciseDTO.includedInOverallScore() != null) {
-            quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
-        }
+
+        quizExercise.setReleaseDate(updateQuizExerciseDTO.releaseDate());
+        quizExercise.setStartDate(updateQuizExerciseDTO.startDate());
+        quizExercise.setDueDate(updateQuizExerciseDTO.dueDate());
+        quizExercise.setIncludedInOverallScore(updateQuizExerciseDTO.includedInOverallScore());
+
         if (updateQuizExerciseDTO.quizQuestions() != null) {
             // Build a map of existing questions by ID so we can preserve statistics
             Map<Long, QuizQuestion> existingQuestionsById = quizExercise.getQuizQuestions().stream().filter(q -> q.getId() != null)
@@ -1124,6 +1139,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             }).toList());
             quizExercise.setQuizQuestions(newQuestions);
         }
+        else {
+            quizExercise.getQuizQuestions().clear();
+        }
+
+        competencyExerciseLinkService.updateCompetencyLinks(updateQuizExerciseDTO, quizExercise);
     }
 
     /**
@@ -1140,11 +1160,11 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
             copy.setCourse(quizExercise.getCourseViaExerciseGroupOrCourseMember());
         }
         copy.setExerciseGroup(quizExercise.getExerciseGroup());
-        copy.setQuizQuestions(quizExercise.getQuizQuestions());
+        copy.setQuizQuestions(new ArrayList<>(quizExercise.getQuizQuestions()));
         copy.setQuizPointStatistic(quizExercise.getQuizPointStatistic());
-        copy.setCompetencyLinks(quizExercise.getCompetencyLinks());
-        copy.setQuizBatches(quizExercise.getQuizBatches());
-        copy.setGradingCriteria(quizExercise.getGradingCriteria());
+        copy.setCompetencyLinks(new HashSet<>(quizExercise.getCompetencyLinks()));
+        copy.setQuizBatches(new HashSet<>(quizExercise.getQuizBatches()));
+        copy.setGradingCriteria(new HashSet<>(quizExercise.getGradingCriteria()));
         return copy;
     }
 
@@ -1244,53 +1264,6 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
     }
 
     /**
-     * Resolves the mappings in DragAndDrop and ShortAnswer questions within the given QuizExercise.
-     * <p>
-     * This method iterates through all questions in the quiz exercise. For DragAndDropQuestions and ShortAnswerQuestions,
-     * it replaces the temporary objects in the correct mappings with the actual objects from the question's collections,
-     * matching them by their temporary IDs (tempID).
-     * <p>
-     * If a mapping cannot be resolved (i.e., no matching object found for a tempID), a BadRequestAlertException is thrown.
-     *
-     * @param quizExercise the QuizExercise containing the questions to process
-     * @throws BadRequestAlertException if any mapping cannot be resolved due to invalid tempIDs
-     */
-    public void resolveQuizQuestionMappings(QuizExercise quizExercise) throws BadRequestAlertException {
-        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
-            if (question instanceof DragAndDropQuestion dnd) {
-                Map<Long, DragItem> idToDragItem = dnd.getDragItems().stream().collect(Collectors.toMap(DragItem::getTempID, Function.identity()));
-                Map<Long, DropLocation> idToDropLocation = dnd.getDropLocations().stream().collect(Collectors.toMap(DropLocation::getTempID, Function.identity()));
-                for (DragAndDropMapping mapping : dnd.getCorrectMappings()) {
-                    Long dragItemTempId = mapping.getDragItem().getTempID();
-                    Long dropLocationTempId = mapping.getDropLocation().getTempID();
-                    DragItem dragItem = idToDragItem.get(dragItemTempId);
-                    DropLocation dropLocation = idToDropLocation.get(dropLocationTempId);
-                    if (dragItem == null || dropLocation == null) {
-                        throw new BadRequestAlertException("Could not resolve drag and drop mappings", ENTITY_NAME, "invalidMappings");
-                    }
-                    mapping.setDragItem(dragItem);
-                    mapping.setDropLocation(dropLocation);
-                }
-            }
-            else if (question instanceof ShortAnswerQuestion sa) {
-                Map<Long, ShortAnswerSpot> idToSpot = sa.getSpots().stream().collect(Collectors.toMap(ShortAnswerSpot::getTempID, Function.identity()));
-                Map<Long, ShortAnswerSolution> idToSolution = sa.getSolutions().stream().collect(Collectors.toMap(ShortAnswerSolution::getTempID, Function.identity()));
-                for (ShortAnswerMapping mapping : sa.getCorrectMappings()) {
-                    Long spotTempId = mapping.getSpot().getTempID();
-                    Long solutionTempId = mapping.getSolution().getTempID();
-                    ShortAnswerSpot spot = idToSpot.get(spotTempId);
-                    ShortAnswerSolution solution = idToSolution.get(solutionTempId);
-                    if (spot == null || solution == null) {
-                        throw new BadRequestAlertException("Could not resolve short answer mappings", ENTITY_NAME, "invalidMappings");
-                    }
-                    mapping.setSpot(spot);
-                    mapping.setSolution(solution);
-                }
-            }
-        }
-    }
-
-    /**
      * Creates a new quiz exercise, handling validation, file processing, saving, and related updates.
      *
      * @param quizExercise    the quiz exercise domain object to create (without competency links)
@@ -1300,25 +1273,25 @@ public class QuizExerciseService extends QuizService<QuizExercise> {
      * @return the created and saved quiz exercise
      * @throws IOException if there is an error handling the files
      */
-    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyExerciseLink> competencyLinks) throws IOException {
-        resolveQuizQuestionMappings(quizExercise);
+    public QuizExercise createQuizExercise(QuizExercise quizExercise, List<MultipartFile> files, boolean isExam, Set<CompetencyLinkDTO> competencyLinks) throws IOException {
+        // Mapping resolution is handled in the Create DTO toDomainObject() methods at question level.
         if (!quizExercise.isValid()) {
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
         quizExercise.validateGeneralSettings();
         handleDndQuizFileCreation(quizExercise, files);
 
-        // Clear competency links before first save — they are passed separately and will be added after the exercise has an ID.
-        // Without this, CascadeType.ALL on Exercise.competencyLinks would cascade links with null exercise references.
-        quizExercise.setCompetencyLinks(new HashSet<>());
-
         // Save the exercise first to get an ID (competency links are passed separately and require the exercise ID)
         QuizExercise savedExercise = save(quizExercise);
 
-        // Restore competency links with proper exercise reference and save again
+        // Add competency links after the initial save (they need the exercise ID for @MapsId).
+        // IMPORTANT: Do NOT re-save the exercise (neither via QuizService.save() nor via
+        // quizExerciseRepository.saveAndFlush()). Re-saving causes Hibernate's @OrderColumn
+        // management to null out the exercise_id FK on quiz_question rows.
+        // Instead, save the competency links directly via their own repository.
         if (competencyLinks != null && !competencyLinks.isEmpty()) {
-            exerciseService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
-            savedExercise = save(savedExercise);
+            competencyExerciseLinkService.updateCompetencyLinks(() -> competencyLinks, savedExercise);
+            competencyExerciseLinkService.saveAll(savedExercise.getCompetencyLinks());
         }
 
         QuizExercise result = savedExercise;

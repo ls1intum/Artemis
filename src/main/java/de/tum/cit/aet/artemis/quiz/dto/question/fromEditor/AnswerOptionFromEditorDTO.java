@@ -39,6 +39,7 @@ public record AnswerOptionFromEditorDTO(Long id, @NotEmpty String text, String h
      */
     public AnswerOption toDomainObject() {
         AnswerOption answerOption = new AnswerOption();
+        answerOption.setId(id);
         answerOption.setText(text);
         answerOption.setHint(hint);
         answerOption.setExplanation(explanation);

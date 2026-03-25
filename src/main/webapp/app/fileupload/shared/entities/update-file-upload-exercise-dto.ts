@@ -1,5 +1,5 @@
 import { DifficultyLevel, IncludedInOverallScore } from 'app/exercise/shared/entities/exercise/exercise.model';
-import { CompetencyExerciseLinkDTO, mapCompetencyLinks } from 'app/atlas/shared/dto/competency-exercise-link-dto';
+import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grading-criterion.model';
 import { FileUploadExercise } from 'app/fileupload/shared/entities/file-upload-exercise.model';
 import { ExerciseService } from 'app/exercise/services/exercise.service';
@@ -38,7 +38,7 @@ export interface UpdateFileUploadExerciseDto {
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
     feedbackSuggestionModule?: string;
-    competencyLinks?: CompetencyExerciseLinkDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
 }
 
 /**
@@ -74,6 +74,9 @@ export function toUpdateFileUploadExerciseDTO(fileUploadExercise: FileUploadExer
         gradingCriteria: fileUploadExercise.gradingCriteria ?? [],
         gradingInstructions: fileUploadExercise.gradingInstructions,
         feedbackSuggestionModule: fileUploadExercise.feedbackSuggestionModule,
-        competencyLinks: mapCompetencyLinks(fileUploadExercise.competencyLinks),
+        competencyLinks: (fileUploadExercise.competencyLinks ?? []).map((link) => ({
+            competency: { id: link.competency!.id! },
+            weight: link.weight ?? 1,
+        })),
     };
 }
