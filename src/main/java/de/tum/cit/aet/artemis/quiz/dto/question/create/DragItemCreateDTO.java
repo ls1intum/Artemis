@@ -19,7 +19,6 @@ public record DragItemCreateDTO(@NotNull Long tempID, String text, String pictur
      */
     public DragItem toDomainObject() {
         DragItem dragItem = new DragItem();
-        dragItem.setTempID(tempID);
         dragItem.setText(text);
         dragItem.setPictureFilePath(pictureFilePath);
         return dragItem;
@@ -35,6 +34,6 @@ public record DragItemCreateDTO(@NotNull Long tempID, String text, String pictur
      * @return the {@link DragItemCreateDTO} with properties set from the domain object
      */
     public static DragItemCreateDTO of(DragItem dragItem) {
-        return new DragItemCreateDTO(dragItem.getTempID(), dragItem.getText(), dragItem.getPictureFilePath());
+        return new DragItemCreateDTO(dragItem.getId(), dragItem.getText(), dragItem.getPictureFilePath());
     }
 }

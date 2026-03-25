@@ -24,8 +24,8 @@ import de.tum.cit.aet.artemis.communication.service.conversation.ChannelService;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseImportService;
-import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingExercise;
 import de.tum.cit.aet.artemis.modeling.domain.ModelingSubmission;
@@ -44,16 +44,16 @@ public class ModelingExerciseImportService extends ExerciseImportService {
 
     private final Optional<CompetencyProgressApi> competencyProgressApi;
 
-    private final ExerciseService exerciseService;
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
 
     public ModelingExerciseImportService(ModelingExerciseRepository modelingExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
             SubmissionRepository submissionRepository, ResultRepository resultRepository, ChannelService channelService, FeedbackService feedbackService,
-            Optional<CompetencyProgressApi> competencyProgressApi, ExerciseService exerciseService) {
+            Optional<CompetencyProgressApi> competencyProgressApi, CompetencyExerciseLinkService competencyExerciseLinkService) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository, feedbackService);
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.channelService = channelService;
         this.competencyProgressApi = competencyProgressApi;
-        this.exerciseService = exerciseService;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -72,7 +72,13 @@ public class ModelingExerciseImportService extends ExerciseImportService {
         Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
         ModelingExercise newExercise = copyModelingExerciseBasis(importedExercise, gradingInstructionCopyTracker);
 
-        ModelingExercise newModelingExercise = exerciseService.saveWithCompetencyLinks(newExercise, modelingExerciseRepository::save);
+        var competencyLinks = competencyExerciseLinkService.extractCompetencyLinksForCreation(newExercise);
+        ModelingExercise savedExercise = modelingExerciseRepository.save(newExercise);
+        if (!competencyLinks.isEmpty()) {
+            competencyExerciseLinkService.addCompetencyLinksForCreation(savedExercise, competencyLinks);
+            savedExercise = modelingExerciseRepository.save(savedExercise);
+        }
+        final ModelingExercise newModelingExercise = savedExercise;
 
         channelService.createExerciseChannel(newModelingExercise, Optional.ofNullable(importedExercise.getChannelName()));
         newModelingExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
