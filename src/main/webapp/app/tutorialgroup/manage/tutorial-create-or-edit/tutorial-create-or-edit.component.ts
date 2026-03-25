@@ -71,7 +71,6 @@ export class TutorialCreateOrEditComponent {
     private inputsInvalid = computed(() => this.computeIfInputsInvalid());
 
     courseId = input.required<number>();
-    tutorialGroupId = input<number>();
     tutors = input.required<TutorialGroupTutorDTO[]>();
     tutorialGroup = input<TutorialGroupDetailDTO>();
     schedule = input<TutorialGroupScheduleDTO>();
@@ -157,7 +156,7 @@ export class TutorialCreateOrEditComponent {
     save() {
         const courseId = this.courseId();
         if (this.tutorialGroup()) {
-            const tutorialGroupId = this.tutorialGroupId();
+            const tutorialGroupId = this.tutorialGroup()?.id;
             if (!tutorialGroupId) return;
             const updateTutorialGroupDTO = this.assembleCreateOrUpdateTutorialGroupDTO();
             if (this.scheduleChangeOverwritesSessions()) {
@@ -222,6 +221,15 @@ export class TutorialCreateOrEditComponent {
         }
         return {
             status: ValidationStatus.VALID,
+        };
+    }
+
+    private computeTutorValidation(): Validation {
+        const selectedTutorId = this.selectedTutorId();
+        if (selectedTutorId) return { status: ValidationStatus.VALID };
+        return {
+            status: ValidationStatus.INVALID,
+            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.tutorRequired',
         };
     }
 
@@ -297,15 +305,6 @@ export class TutorialCreateOrEditComponent {
             };
         }
         return { status: ValidationStatus.VALID };
-    }
-
-    private computeTutorValidation(): Validation {
-        const selectedTutorId = this.selectedTutorId();
-        if (selectedTutorId) return { status: ValidationStatus.VALID };
-        return {
-            status: ValidationStatus.INVALID,
-            message: 'artemisApp.pages.createOrEditTutorialGroup.validationError.tutorRequired',
-        };
     }
 
     private computeLocationValidation(): Validation {
