@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { provideHttpClient } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, DefaultUrlSerializer, Router, UrlSerializer } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { expectedProfileInfo } from 'test/helpers/sample/profile-info-sample-data';
 import { LocalStorageService } from 'app/shared/service/local-storage.service';
@@ -110,7 +110,6 @@ describe('NavbarComponent', () => {
             providers: [
                 provideHttpClient(),
                 provideHttpClientTesting(),
-                { provide: UrlSerializer, useClass: DefaultUrlSerializer },
                 { provide: AccountService, useClass: MockAccountService },
                 LocalStorageService,
                 SessionStorageService,

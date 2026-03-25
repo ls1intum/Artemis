@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.FilePathType;
 import de.tum.cit.aet.artemis.core.config.Constants;
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
 import de.tum.cit.aet.artemis.core.exception.FilePathParsingException;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.core.util.FilePathConverter;
@@ -36,7 +37,7 @@ import de.tum.cit.aet.artemis.core.util.FilePathConverter;
 @Table(name = "drag_item")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DragItem extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DragItem extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     private static final Logger log = LoggerFactory.getLogger(DragItem.class);
 

@@ -375,7 +375,7 @@ export class ExerciseAPIRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
             newModelingExercise = Object.assign({}, templateCopy, body);
@@ -514,6 +514,7 @@ export class ExerciseAPIRequests {
         startOfWorkingTime?: dayjs.Dayjs;
         duration?: number;
         quizMode?: QuizMode;
+        competencyLinks?: { competency: { id: number }; weight: number }[];
     }): Promise<QuizExercise> {
         const {
             body,
@@ -523,6 +524,7 @@ export class ExerciseAPIRequests {
             startOfWorkingTime,
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
+            competencyLinks,
         } = options;
 
         const quizExercise: any = {
@@ -537,7 +539,7 @@ export class ExerciseAPIRequests {
         let url: string;
         let newQuizExercise: any;
         let quizBatches: any[] = [];
-        if (body.hasOwnProperty('course')) {
+        if (Object.hasOwn(body, 'course')) {
             url = `api/quiz/courses/${body.course.id}/quiz-exercises`;
             const dates = {
                 releaseDate: dayjsToString(releaseDate),
@@ -551,6 +553,9 @@ export class ExerciseAPIRequests {
             newQuizExercise = { ...quizExercise, ...body };
         }
 
+        if (competencyLinks) {
+            newQuizExercise.competencyLinks = competencyLinks;
+        }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
         const multipartData = {
             exercise: {
@@ -811,12 +816,13 @@ export class ExerciseAPIRequests {
      */
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
-        const team: Team = {
+        // The server expects TeamInputDTO with user IDs, not full User objects
+        const teamDTO = {
             name: `Team ${teamId}`,
             shortName: `team${teamId}`,
-            students,
-            owner: tutor,
+            students: students.map((s: any) => s.id),
+            ownerId: tutor.id,
         };
-        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: team });
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: teamDTO });
     }
 }
