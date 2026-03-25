@@ -8,7 +8,7 @@ function isWritableSignal(value: unknown): value is WritableSignal<unknown> {
 
 @Directive()
 export abstract class AbstractDialogComponent implements OnInit {
-    dialogRef = inject(DynamicDialogRef);
+    dialogRef = inject(DynamicDialogRef, { optional: true });
     dialogConfig = inject(DynamicDialogConfig, { optional: true });
     isInitialized = false;
 
@@ -49,10 +49,10 @@ export abstract class AbstractDialogComponent implements OnInit {
     }
 
     dismiss() {
-        this.dialogRef.destroy();
+        this.dialogRef?.destroy();
     }
 
     close(result?: any) {
-        this.dialogRef.close(result);
+        this.dialogRef?.close(result);
     }
 }

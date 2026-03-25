@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, effect, inject, input, untracked } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Post } from 'app/communication/shared/entities/post.model';
@@ -30,6 +30,15 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     private readonly DRAFT_KEY_PREFIX = 'message_draft_';
     private currentUserId: number | undefined;
     private draftMessageSubscription?: Subscription;
+
+    constructor() {
+        super();
+        // Track activeConversation changes to reload drafts when switching conversations
+        effect(() => {
+            this.activeConversation();
+            untracked(() => this.loadDraft());
+        });
+    }
 
     ngOnInit(): void {
         super.ngOnInit();

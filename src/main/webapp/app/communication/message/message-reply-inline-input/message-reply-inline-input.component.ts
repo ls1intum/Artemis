@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewEncapsulation, effect, inject, input, output, untracked } from '@angular/core';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
 import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
@@ -30,6 +30,15 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     readonly activeConversation = input<ConversationDTO>();
 
     readonly valueChange = output<void>();
+
+    constructor() {
+        super();
+        // Track activeConversation changes to reload drafts when switching conversations
+        effect(() => {
+            this.activeConversation();
+            untracked(() => this.loadDraft());
+        });
+    }
 
     ngOnInit(): void {
         super.ngOnInit();
