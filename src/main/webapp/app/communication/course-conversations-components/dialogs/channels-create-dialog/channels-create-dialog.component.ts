@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { ChannelFormData, ChannelType } from 'app/communication/course-conversations-components/dialogs/channels-create-dialog/channel-form/channel-form.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -13,7 +13,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
     imports: [TranslateDirective, ChannelFormComponent, ArtemisTranslatePipe],
 })
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
-    @Input() course: Course;
+    course = signal<Course | undefined>(undefined);
 
     initialize() {
         super.initialize(['course']);
