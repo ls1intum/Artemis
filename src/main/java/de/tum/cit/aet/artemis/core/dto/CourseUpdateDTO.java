@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
  * @see de.tum.cit.aet.artemis.core.web.course.CourseUpdateResource#updateCourse
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record CourseUpdateDTO(
         // ID is required for update
         @NotNull Long id,

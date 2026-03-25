@@ -1,6 +1,9 @@
 package de.tum.cit.aet.artemis.quiz.dto.question.fromEditor;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -10,6 +13,7 @@ import jakarta.validation.constraints.Positive;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropMapping;
 import de.tum.cit.aet.artemis.quiz.domain.DragAndDropQuestion;
 import de.tum.cit.aet.artemis.quiz.domain.DragItem;
@@ -68,14 +72,36 @@ public record DragAndDropQuestionFromEditorDTO(Long id, @NotEmpty String title, 
         question.setExplanation(explanation);
         question.setPoints(points);
         question.setScoringType(scoringType);
-        question.setRandomizeOrder(Boolean.TRUE.equals(randomizeOrder));
+        question.setRandomizeOrder(randomizeOrder != null ? randomizeOrder : Boolean.FALSE);
         question.setBackgroundFilePath(backgroundFilePath);
 
-        List<DropLocation> locations = new java.util.ArrayList<>(dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList());
-        List<DragItem> items = new java.util.ArrayList<>(dragItems.stream().map(DragItemFromEditorDTO::toDomainObject).toList());
-        List<DragAndDropMapping> mappings = new java.util.ArrayList<>(correctMappings.stream().map(DragAndDropMappingFromEditorDTO::toDomainObject).toList());
+        List<DropLocation> locations = new ArrayList<>(dropLocations.stream().map(DropLocationFromEditorDTO::toDomainObject).toList());
+        List<DragItem> items = new ArrayList<>(dragItems.stream().map(DragItemFromEditorDTO::toDomainObject).toList());
         question.setDropLocations(locations);
         question.setDragItems(items);
+
+        // Resolve mappings using DTO effectiveId (tempID for new items, id for existing).
+        // tempID stays in the DTO — entity objects don't have tempID set.
+        Map<Long, DragItem> effectiveIdToDragItem = new HashMap<>();
+        for (int i = 0; i < dragItems.size(); i++) {
+            effectiveIdToDragItem.put(dragItems.get(i).effectiveId(), items.get(i));
+        }
+        Map<Long, DropLocation> effectiveIdToDropLocation = new HashMap<>();
+        for (int i = 0; i < dropLocations.size(); i++) {
+            effectiveIdToDropLocation.put(dropLocations.get(i).effectiveId(), locations.get(i));
+        }
+
+        List<DragAndDropMapping> mappings = new ArrayList<>(correctMappings.stream().map(m -> {
+            DragItem dragItem = effectiveIdToDragItem.get(m.dragItemTempId());
+            DropLocation dropLocation = effectiveIdToDropLocation.get(m.dropLocationTempId());
+            if (dragItem == null || dropLocation == null) {
+                throw new BadRequestAlertException("Could not resolve drag and drop mappings", "quizExercise", "invalidMappings");
+            }
+            DragAndDropMapping mapping = new DragAndDropMapping();
+            mapping.setDragItem(dragItem);
+            mapping.setDropLocation(dropLocation);
+            return mapping;
+        }).toList());
         question.setCorrectMappings(mappings);
         return question;
     }

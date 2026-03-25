@@ -41,31 +41,41 @@ public record ExerciseImportDTO(@NotNull Long id, @NotNull ExerciseType exercise
      * @return a new Exercise entity with basic properties set
      */
     public Exercise toEntity() {
-        // Use if-else instead of switch to avoid generating a synthetic class in this record
-        Exercise exercise;
-        if (exerciseType == ExerciseType.MODELING) {
-            exercise = new ModelingExercise();
-        }
-        else if (exerciseType == ExerciseType.TEXT) {
-            exercise = new TextExercise();
-        }
-        else if (exerciseType == ExerciseType.PROGRAMMING) {
-            exercise = new ProgrammingExercise();
-        }
-        else if (exerciseType == ExerciseType.FILE_UPLOAD) {
-            exercise = new FileUploadExercise();
-        }
-        else if (exerciseType == ExerciseType.QUIZ) {
-            exercise = new QuizExercise();
-        }
-        else {
-            throw new IllegalArgumentException("Unknown exercise type: " + exerciseType);
-        }
+        Exercise exercise = createExerciseByType(exerciseType);
+
         exercise.setId(id);
-        exercise.setTitle(title);
-        exercise.setShortName(shortName);
-        exercise.setMaxPoints(maxPoints);
-        exercise.setBonusPoints(bonusPoints);
+        if (title != null) {
+            exercise.setTitle(title);
+        }
+        if (shortName != null) {
+            exercise.setShortName(shortName);
+        }
+        if (maxPoints != null) {
+            exercise.setMaxPoints(maxPoints);
+        }
+        if (bonusPoints != null) {
+            exercise.setBonusPoints(bonusPoints);
+        }
+
         return exercise;
+    }
+
+    private static Exercise createExerciseByType(ExerciseType type) {
+        if (type == ExerciseType.MODELING) {
+            return new ModelingExercise();
+        }
+        else if (type == ExerciseType.TEXT) {
+            return new TextExercise();
+        }
+        else if (type == ExerciseType.PROGRAMMING) {
+            return new ProgrammingExercise();
+        }
+        else if (type == ExerciseType.FILE_UPLOAD) {
+            return new FileUploadExercise();
+        }
+        else if (type == ExerciseType.QUIZ) {
+            return new QuizExercise();
+        }
+        throw new IllegalArgumentException("Unknown exercise type: " + type);
     }
 }

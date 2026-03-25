@@ -28,9 +28,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      * @return the corresponding DTO
      */
     public static ShortAnswerSpotFromEditorDTO of(ShortAnswerSpot spot) {
-        // Use id as tempID fallback for persisted entities
-        Long effectiveTempID = spot.getTempID() != null ? spot.getTempID() : spot.getId();
-        return new ShortAnswerSpotFromEditorDTO(spot.getId(), effectiveTempID, spot.getWidth(), spot.getSpotNr());
+        return new ShortAnswerSpotFromEditorDTO(spot.getId(), spot.getId(), spot.getWidth(), spot.getSpotNr());
     }
 
     /**
@@ -40,8 +38,7 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      */
     public ShortAnswerSpot toDomainObject() {
         ShortAnswerSpot spot = new ShortAnswerSpot();
-        // Use id as tempID fallback for mapping resolution
-        spot.setTempID(effectiveId());
+        spot.setId(id);
         spot.setWidth(width);
         spot.setSpotNr(spotNr);
         return spot;
@@ -53,7 +50,6 @@ public record ShortAnswerSpotFromEditorDTO(Long id, Long tempID, Integer width, 
      * @param spot the existing spot to update
      */
     public void applyTo(ShortAnswerSpot spot) {
-        spot.setTempID(effectiveId());
         spot.setWidth(width);
         spot.setSpotNr(spotNr);
     }

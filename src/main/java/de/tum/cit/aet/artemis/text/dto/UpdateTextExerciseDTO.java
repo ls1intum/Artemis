@@ -1,9 +1,7 @@
 package de.tum.cit.aet.artemis.text.dto;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -12,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
 import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.exercise.domain.DifficultyLevel;
 import de.tum.cit.aet.artemis.exercise.domain.IncludedInOverallScore;
@@ -23,7 +22,7 @@ import de.tum.cit.aet.artemis.text.domain.TextExercise;
  * DTO for updating text exercises.
  * Uses DTOs instead of entity classes to avoid Hibernate detached entity issues.
  */
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record UpdateTextExerciseDTO(Long id, String title, String channelName, String shortName, String problemStatement, Set<String> categories, DifficultyLevel difficulty,
         Double maxPoints, Double bonusPoints, IncludedInOverallScore includedInOverallScore, Boolean allowComplaintsForAutomaticAssessments, Boolean allowFeedbackRequests,
         Boolean presentationScoreEnabled, Boolean secondCorrectionEnabled, String feedbackSuggestionModule, String gradingInstructions, ZonedDateTime releaseDate,
@@ -44,10 +43,24 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
         Long courseId = exercise.getCourseViaExerciseGroupOrCourseMember() != null ? exercise.getCourseViaExerciseGroupOrCourseMember().getId() : null;
         Long exerciseGroupId = exercise.getExerciseGroup() != null ? exercise.getExerciseGroup().getId() : null;
 
-        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        Set<GradingCriterionDTO> gradingCriterionDTOs;
+        Set<CompetencyLinkDTO> competencyLinkDTOs;
 
-        Set<GradingCriterionDTO> gradingCriterionDTOs = mapIfInitialized(criteria, GradingCriterionDTO::of);
-        Set<CompetencyLinkDTO> competencyLinkDTOs = mapIfInitialized(exercise.getCompetencyLinks(), CompetencyLinkDTO::of);
+        Set<GradingCriterion> criteria = exercise.getGradingCriteria();
+        Set<CompetencyExerciseLink> competencyLinks = exercise.getCompetencyLinks();
+
+        if (criteria != null && Hibernate.isInitialized(criteria)) {
+            gradingCriterionDTOs = criteria.isEmpty() ? Set.of() : criteria.stream().map(GradingCriterionDTO::of).collect(Collectors.toSet());
+        }
+        else {
+            gradingCriterionDTOs = null;
+        }
+        if (competencyLinks != null && Hibernate.isInitialized(competencyLinks)) {
+            competencyLinkDTOs = competencyLinks.isEmpty() ? Set.of() : competencyLinks.stream().map(CompetencyLinkDTO::of).collect(Collectors.toSet());
+        }
+        else {
+            competencyLinkDTOs = null;
+        }
 
         return new UpdateTextExerciseDTO(exercise.getId(), exercise.getTitle(), exercise.getChannelName(), exercise.getShortName(), exercise.getProblemStatement(),
                 exercise.getCategories(), exercise.getDifficulty(), exercise.getMaxPoints(), exercise.getBonusPoints(), exercise.getIncludedInOverallScore(),
@@ -55,9 +68,5 @@ public record UpdateTextExerciseDTO(Long id, String title, String channelName, S
                 exercise.getSecondCorrectionEnabled(), exercise.getFeedbackSuggestionModule(), exercise.getGradingInstructions(), exercise.getReleaseDate(),
                 exercise.getStartDate(), exercise.getDueDate(), exercise.getAssessmentDueDate(), exercise.getExampleSolutionPublicationDate(), exercise.getExampleSolution(),
                 courseId, exerciseGroupId, gradingCriterionDTOs, competencyLinkDTOs);
-    }
-
-    private static <T, R> Set<R> mapIfInitialized(Collection<T> collection, Function<T, R> mapper) {
-        return collection != null && Hibernate.isInitialized(collection) ? collection.stream().map(mapper).collect(Collectors.toSet()) : null;
     }
 }

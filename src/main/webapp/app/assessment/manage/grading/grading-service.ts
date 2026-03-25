@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { GradeType, GradingScale } from 'app/assessment/shared/entities/grading-scale.model';
+import { BonusStrategy } from 'app/assessment/shared/entities/bonus.model';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
@@ -16,7 +17,7 @@ export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
  */
 export interface GradingScaleUpdateDTO {
     gradeType: GradeType;
-    bonusStrategy?: string;
+    bonusStrategy?: BonusStrategy;
     plagiarismGrade?: string;
     noParticipationGrade?: string;
     presentationsNumber?: number;
@@ -385,7 +386,7 @@ export class GradingService {
     private toUpdateDTO(gradingScale: GradingScale): GradingScaleUpdateDTO {
         return {
             gradeType: gradingScale.gradeType,
-            bonusStrategy: (gradingScale as any).bonusStrategy,
+            bonusStrategy: gradingScale.bonusStrategy,
             plagiarismGrade: gradingScale.plagiarismGrade,
             noParticipationGrade: gradingScale.noParticipationGrade,
             presentationsNumber: gradingScale.presentationsNumber,
