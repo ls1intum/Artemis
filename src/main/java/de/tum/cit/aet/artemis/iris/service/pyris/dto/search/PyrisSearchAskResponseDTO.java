@@ -4,6 +4,6 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public record PyrisSearchAskResponseDTO(String answer, List<PyrisLectureSearchResultDTO> sources) {
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record PyrisSearchAskResponseDTO(String answer, @JsonInclude(JsonInclude.Include.NON_NULL) List<PyrisLectureSearchResultDTO> sources) {
 }
