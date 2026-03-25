@@ -10,64 +10,7 @@ import { AboutIrisModalComponent } from 'app/iris/overview/about-iris-modal/abou
     selector: 'jhi-control-center',
     imports: [IrisEnabledComponent, IrisLogoComponent, TranslateDirective],
     templateUrl: './control-center.component.html',
-    styles: [
-        `
-            :host {
-                display: block;
-                flex: 0 0 auto;
-                width: 100%;
-            }
-
-            @media (min-width: 768px) {
-                :host {
-                    max-width: 320px;
-                    flex-shrink: 0;
-                }
-            }
-
-            .iris-panel {
-                border: 1px solid var(--bs-border-color);
-                border-radius: 0.75rem;
-                padding: 1.25rem;
-                height: 100%;
-                display: flex;
-                flex-direction: column;
-            }
-
-            .iris-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: 1rem;
-            }
-
-            .iris-title {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-weight: 600;
-                font-size: 1.1rem;
-            }
-
-            .iris-toggle {
-                flex: 1;
-                display: flex;
-                align-items: center;
-            }
-
-            .iris-learn-more {
-                font-size: 0.8rem;
-                font-weight: 400;
-                cursor: pointer;
-                color: var(--bs-primary);
-                text-decoration: none;
-
-                &:hover {
-                    text-decoration: underline;
-                }
-            }
-        `,
-    ],
+    styleUrls: ['./control-center.component.scss'],
 })
 export class ControlCenterComponent {
     protected readonly IrisLogoSize = IrisLogoSize;

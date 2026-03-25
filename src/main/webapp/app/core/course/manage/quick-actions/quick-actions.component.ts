@@ -112,6 +112,7 @@ export enum CourseManagementSection {
                 overflow: hidden;
                 transform: translateY(0);
                 will-change: transform;
+                width: 180px;
 
                 &::before {
                     content: '';
@@ -172,7 +173,8 @@ export enum CourseManagementSection {
             .quick-action-label {
                 font-weight: 600;
                 font-size: 0.8rem;
-                white-space: nowrap;
+                flex: 1;
+                text-align: center;
             }
         `,
     ],
