@@ -48,7 +48,6 @@ export interface CourseCreateDTO {
     unenrollmentEnabled: boolean;
 
     // Course features
-    faqEnabled: boolean;
     learningPathsEnabled: boolean;
     studentCourseAnalyticsDashboardEnabled: boolean;
     presentationScore?: number;
@@ -107,7 +106,6 @@ export function toCourseCreateDTO(course: Course): CourseCreateDTO {
         unenrollmentEnabled: course.unenrollmentEnabled ?? false,
 
         // Course features
-        faqEnabled: course.faqEnabled ?? false,
         learningPathsEnabled: course.learningPathsEnabled ?? false,
         studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
         presentationScore: course.presentationScore,
@@ -169,7 +167,6 @@ export interface CourseUpdateDTO {
     courseInformationSharingMessagingCodeOfConduct?: string;
 
     // Course features
-    faqEnabled: boolean;
     learningPathsEnabled: boolean;
     studentCourseAnalyticsDashboardEnabled: boolean;
     presentationScore?: number;
@@ -233,7 +230,6 @@ export function toCourseUpdateDTO(course: Course): CourseUpdateDTO {
         courseInformationSharingMessagingCodeOfConduct: course.courseInformationSharingMessagingCodeOfConduct,
 
         // Course features
-        faqEnabled: course.faqEnabled ?? false,
         learningPathsEnabled: course.learningPathsEnabled ?? false,
         studentCourseAnalyticsDashboardEnabled: course.studentCourseAnalyticsDashboardEnabled ?? false,
         presentationScore: course.presentationScore,
