@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.Strings;
@@ -47,6 +46,7 @@ import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.assessment.service.RatingService;
 import de.tum.cit.aet.artemis.assessment.service.TutorLeaderboardService;
 import de.tum.cit.aet.artemis.atlas.api.CompetencyRelationApi;
+import de.tum.cit.aet.artemis.atlas.api.CompetencyRepositoryApi;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyExerciseLink;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CourseCompetency;
 import de.tum.cit.aet.artemis.communication.service.notifications.GroupNotificationScheduleService;
@@ -70,7 +70,6 @@ import de.tum.cit.aet.artemis.exercise.domain.Exercise;
 import de.tum.cit.aet.artemis.exercise.domain.ExerciseMode;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
-import de.tum.cit.aet.artemis.exercise.dto.CompetencyLinksHolderDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.repository.StudentParticipationRepository;
 import de.tum.cit.aet.artemis.exercise.repository.SubmissionRepository;
@@ -143,6 +142,8 @@ public class ExerciseService {
 
     private final ParticipationFilterService participationFilterService;
 
+    private final Optional<CompetencyRepositoryApi> competencyRepositoryApi;
+
     public ExerciseService(ExerciseRepository exerciseRepository, AuthorizationCheckService authCheckService, AuditEventRepository auditEventRepository,
             TeamRepository teamRepository, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ParticipantScoreRepository participantScoreRepository, Optional<LtiApi> ltiApi,
@@ -150,7 +151,7 @@ public class ExerciseService {
             ComplaintResponseRepository complaintResponseRepository, GradingCriterionRepository gradingCriterionRepository, FeedbackRepository feedbackRepository,
             RatingService ratingService, ExerciseDateService exerciseDateService, ExampleSubmissionRepository exampleSubmissionRepository, QuizBatchService quizBatchService,
             Optional<ExamLiveEventsApi> examLiveEventsApi, GroupNotificationScheduleService groupNotificationScheduleService, Optional<CompetencyRelationApi> competencyRelationApi,
-            ParticipationFilterService participationFilterService) {
+            ParticipationFilterService participationFilterService, Optional<CompetencyRepositoryApi> competencyRepositoryApi) {
         this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
         this.authCheckService = authCheckService;
@@ -175,6 +176,7 @@ public class ExerciseService {
         this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.competencyRelationApi = competencyRelationApi;
         this.participationFilterService = participationFilterService;
+        this.competencyRepositoryApi = competencyRepositoryApi;
     }
 
     /**
@@ -865,106 +867,35 @@ public class ExerciseService {
         Set<CalendarEventDTO> events = new HashSet<>();
         boolean userIsCourseStaff = !userIsStudent;
         if (userIsCourseStaff || dto.releaseDate() == null || dto.releaseDate().isBefore(now())) {
-            addDateEvent(events, dto, dto.releaseDate(), "exerciseReleaseEvent-", getLocalizedPrefix("Release: ", "Veröffentlichung: ", language));
-            addDateEvent(events, dto, dto.startDate(), "exerciseStartEvent-", "Start: ");
-            addDateEvent(events, dto, dto.dueDate(), "exerciseDueEvent-", getLocalizedPrefix("Due: ", "Abgabefrist: ", language));
-            addDateEvent(events, dto, dto.assessmentDueDate(), "exerciseAssessmentDueEvent-", getLocalizedPrefix("Assessment due: ", "Korrekturfrist: ", language));
+            if (dto.releaseDate() != null) {
+                String releaseDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Release: ";
+                    case GERMAN -> "Veröffentlichung: ";
+                };
+                events.add(new CalendarEventDTO("exerciseReleaseEvent-" + dto.originEntityId(), dto.type(), releaseDateTitlePrefix + dto.title(), dto.releaseDate(), null, null,
+                        null));
+            }
+            if (dto.startDate() != null) {
+                String startDateTitlePrefix = "Start: ";
+                events.add(new CalendarEventDTO("exerciseStartEvent-" + dto.originEntityId(), dto.type(), startDateTitlePrefix + dto.title(), dto.startDate(), null, null, null));
+            }
+            if (dto.dueDate() != null) {
+                String dueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Due: ";
+                    case GERMAN -> "Abgabefrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseDueEvent-" + dto.originEntityId(), dto.type(), dueDateTitlePrefix + dto.title(), dto.dueDate(), null, null, null));
+            }
+            if (dto.assessmentDueDate() != null) {
+                String assessmentDueDateTitlePrefix = switch (language) {
+                    case ENGLISH -> "Assessment due: ";
+                    case GERMAN -> "Korrekturfrist: ";
+                };
+                events.add(new CalendarEventDTO("exerciseAssessmentDueEvent-" + dto.originEntityId(), dto.type(), assessmentDueDateTitlePrefix + dto.title(),
+                        dto.assessmentDueDate(), null, null, null));
+            }
         }
         return events;
     }
 
-    private static void addDateEvent(Set<CalendarEventDTO> events, NonQuizExerciseCalendarEventDTO dto, ZonedDateTime date, String eventIdPrefix, String titlePrefix) {
-        if (date != null) {
-            events.add(new CalendarEventDTO(eventIdPrefix + dto.originEntityId(), dto.type(), titlePrefix + dto.title(), date, null, null, null));
-        }
-    }
-
-    private static String getLocalizedPrefix(String english, String german, Language language) {
-        return switch (language) {
-            case ENGLISH -> english;
-            case GERMAN -> german;
-        };
-    }
-
-    /**
-     * Updates the competency links of an exercise based on the DTO values.
-     * Reuses existing managed links where possible, creates new ones for new competencies,
-     * and removes links that are no longer present.
-     *
-     * @param dto    the DTO containing the new competency link state
-     * @param entity the exercise entity to update
-     */
-    public void updateCompetencyLinks(CompetencyLinksHolderDTO dto, Exercise entity) {
-        if (competencyRelationApi.isEmpty()) {
-            return;
-        }
-        if (dto.competencyLinks() == null || dto.competencyLinks().isEmpty()) {
-            entity.getCompetencyLinks().clear();
-            return;
-        }
-
-        final var existingLinksByCompetencyId = entity.getCompetencyLinks().stream().collect(Collectors.toMap(link -> link.getCompetency().getId(), Function.identity()));
-        entity.getCompetencyLinks().clear();
-
-        for (var dtoLink : dto.competencyLinks()) {
-            long competencyId = dtoLink.competency().id();
-            var existingLink = existingLinksByCompetencyId.get(competencyId);
-            if (existingLink != null) {
-                existingLink.setWeight(dtoLink.weight());
-                entity.getCompetencyLinks().add(existingLink);
-            }
-            else {
-                var competency = competencyRelationApi.get().findCompetencyOrPrerequisiteByIdElseThrow(competencyId);
-                entity.getCompetencyLinks().add(new CompetencyExerciseLink(competency, entity, dtoLink.weight()));
-            }
-        }
-    }
-
-    /**
-     * Extracts competency links from a new exercise before its first save.
-     * The links are cleared from the exercise so it can be saved without them
-     * (since they need the exercise ID which doesn't exist yet).
-     *
-     * @param exercise the new exercise (not yet saved) from which to extract competency links
-     * @return the extracted competency links (may be empty)
-     */
-    public Set<CompetencyExerciseLink> extractCompetencyLinksForCreation(Exercise exercise) {
-        Set<CompetencyExerciseLink> competencyLinks = new HashSet<>(exercise.getCompetencyLinks());
-        exercise.getCompetencyLinks().clear();
-        return competencyLinks;
-    }
-
-    /**
-     * Restores competency links to a saved exercise and persists them.
-     * <p>
-     * This method must be called AFTER the exercise has been saved and has an ID.
-     * It sets the proper exercise reference on each link (required for @MapsId) and
-     * adds them to the exercise. The caller must save the exercise again after this call
-     * to persist the links via cascade.
-     *
-     * @param exercise        the saved exercise (must have an ID)
-     * @param competencyLinks the links previously extracted via extractCompetencyLinksForCreation
-     */
-    public void addCompetencyLinksForCreation(Exercise exercise, Set<CompetencyExerciseLink> competencyLinks) {
-        if (competencyLinks == null || competencyLinks.isEmpty() || competencyRelationApi.isEmpty()) {
-            return;
-        }
-        // Batch-load all competencies as managed entities to avoid detached entity issues with Hibernate 6.6+
-        Set<Long> competencyIds = competencyLinks.stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
-        Map<Long, CourseCompetency> managedCompetencies = competencyRelationApi.get().findAllCompetenciesById(competencyIds).stream()
-                .collect(Collectors.toMap(CourseCompetency::getId, Function.identity()));
-
-        exercise.setCompetencyLinks(resolveCompetencyLinks(competencyLinks, managedCompetencies, exercise));
-    }
-
-    private Set<CompetencyExerciseLink> resolveCompetencyLinks(Set<CompetencyExerciseLink> competencyLinks, Map<Long, CourseCompetency> managedCompetencies, Exercise exercise) {
-        Set<CompetencyExerciseLink> resolvedLinks = new HashSet<>();
-        for (CompetencyExerciseLink link : competencyLinks) {
-            CourseCompetency managedCompetency = managedCompetencies.get(link.getCompetency().getId());
-            if (managedCompetency != null) {
-                resolvedLinks.add(new CompetencyExerciseLink(managedCompetency, exercise, link.getWeight()));
-            }
-        }
-        return resolvedLinks;
-    }
 }

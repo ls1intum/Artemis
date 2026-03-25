@@ -701,7 +701,16 @@ public class ParticipationService {
                 continue;
             }
             final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
-            final ZonedDateTime newIndividualDueDate = resolveIndividualDueDate(exercise, toBeUpdated.getIndividualDueDate());
+
+            // individual due dates can only exist if the exercise has a due date
+            // they also have to be after the exercise due date
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = toBeUpdated.getIndividualDueDate();
+            }
 
             if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
                 originalParticipation.setIndividualDueDate(newIndividualDueDate);
@@ -729,7 +738,14 @@ public class ParticipationService {
                 continue;
             }
             final StudentParticipation originalParticipation = optionalOriginalParticipation.get();
-            final ZonedDateTime newIndividualDueDate = resolveIndividualDueDate(exercise, dto.individualDueDate());
+
+            final ZonedDateTime newIndividualDueDate;
+            if (exercise.getDueDate() == null || (dto.individualDueDate() != null && dto.individualDueDate().isBefore(exercise.getDueDate()))) {
+                newIndividualDueDate = null;
+            }
+            else {
+                newIndividualDueDate = dto.individualDueDate();
+            }
 
             if (!Objects.equals(originalParticipation.getIndividualDueDate(), newIndividualDueDate)) {
                 originalParticipation.setIndividualDueDate(newIndividualDueDate);
@@ -738,17 +754,6 @@ public class ParticipationService {
         }
 
         return changedParticipations;
-    }
-
-    /**
-     * Resolves the individual due date for a participation. Returns null if the exercise has no due date
-     * or if the candidate date is before the exercise due date.
-     */
-    private static ZonedDateTime resolveIndividualDueDate(Exercise exercise, ZonedDateTime candidateDate) {
-        if (exercise.getDueDate() == null || (candidateDate != null && candidateDate.isBefore(exercise.getDueDate()))) {
-            return null;
-        }
-        return candidateDate;
     }
 
     /**

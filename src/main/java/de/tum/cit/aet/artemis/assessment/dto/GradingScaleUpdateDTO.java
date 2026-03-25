@@ -32,7 +32,7 @@ import de.tum.cit.aet.artemis.assessment.domain.GradingScale;
  * @param examMaxPoints           optional: max points for the exam (for exam grading scales)
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonInclude(JsonInclude.Include.NON_EMPTY)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable BonusStrategy bonusStrategy, @Nullable @Size(max = 100) String plagiarismGrade,
         @Nullable @Size(max = 100) String noParticipationGrade, @Nullable Integer presentationsNumber, @Nullable Double presentationsWeight, @Nullable Set<GradeStepDTO> gradeSteps,
         @Nullable Integer courseMaxPoints, @Nullable Integer coursePresentationScore, @Nullable Integer examMaxPoints) {
@@ -47,7 +47,7 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
     /**
      * DTO for a grade step within a grading scale.
      */
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     public record GradeStepDTO(double lowerBoundPercentage, boolean lowerBoundInclusive, double upperBoundPercentage, boolean upperBoundInclusive, @NotNull String gradeName,
             boolean isPassingGrade) {
 
@@ -77,7 +77,9 @@ public record GradingScaleUpdateDTO(@NotNull GradeType gradeType, @Nullable Bonu
      */
     public void applyTo(GradingScale gradingScale) {
         gradingScale.setGradeType(gradeType);
-        gradingScale.setBonusStrategy(bonusStrategy);
+        if (bonusStrategy != null) {
+            gradingScale.setBonusStrategy(bonusStrategy);
+        }
         gradingScale.setPlagiarismGrade(plagiarismGrade);
         gradingScale.setNoParticipationGrade(noParticipationGrade);
         gradingScale.setPresentationsNumber(presentationsNumber);

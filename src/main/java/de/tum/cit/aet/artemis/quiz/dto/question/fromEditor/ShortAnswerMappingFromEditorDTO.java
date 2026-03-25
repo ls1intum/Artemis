@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerMapping;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSolution;
-import de.tum.cit.aet.artemis.quiz.domain.ShortAnswerSpot;
 
 /**
  * DTO for short answer mappings in the editor context.
@@ -28,10 +26,10 @@ public record ShortAnswerMappingFromEditorDTO(Long id, Long solutionTempId, Long
      * @return the corresponding DTO
      */
     public static ShortAnswerMappingFromEditorDTO of(ShortAnswerMapping mapping) {
-        // Use real ID as fallback for tempID when dealing with persisted entities
-        Long solutionEffectiveId = mapping.getSolution().getTempID() != null ? mapping.getSolution().getTempID() : mapping.getSolution().getId();
-        Long spotEffectiveId = mapping.getSpot().getTempID() != null ? mapping.getSpot().getTempID() : mapping.getSpot().getId();
-        return new ShortAnswerMappingFromEditorDTO(mapping.getId(), solutionEffectiveId, spotEffectiveId);
+        if (mapping.getSolution() == null || mapping.getSpot() == null) {
+            throw new IllegalArgumentException("ShortAnswerMapping must have both solution and spot set");
+        }
+        return new ShortAnswerMappingFromEditorDTO(mapping.getId(), mapping.getSolution().getId(), mapping.getSpot().getId());
     }
 
     /**
@@ -42,12 +40,6 @@ public record ShortAnswerMappingFromEditorDTO(Long id, Long solutionTempId, Long
      */
     public ShortAnswerMapping toDomainObject() {
         ShortAnswerMapping mapping = new ShortAnswerMapping();
-        ShortAnswerSolution solution = new ShortAnswerSolution();
-        ShortAnswerSpot spot = new ShortAnswerSpot();
-        solution.setTempID(solutionTempId);
-        spot.setTempID(spotTempId);
-        mapping.setSolution(solution);
-        mapping.setSpot(spot);
         return mapping;
     }
 }
