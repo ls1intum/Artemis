@@ -2,10 +2,14 @@ package de.tum.cit.aet.artemis.programming.web;
 
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +26,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.assessment.domain.GradingCriterion;
-import de.tum.cit.aet.artemis.assessment.dto.GradingCriterionDTO;
 import de.tum.cit.aet.artemis.athena.api.AthenaApi;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -35,6 +38,8 @@ import de.tum.cit.aet.artemis.core.service.ModuleFeatureService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
 import de.tum.cit.aet.artemis.core.service.feature.Feature;
 import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
+import de.tum.cit.aet.artemis.exercise.repository.ParticipationRepository;
+import de.tum.cit.aet.artemis.exercise.service.CompetencyExerciseLinkService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseService;
 import de.tum.cit.aet.artemis.exercise.service.ExerciseVersionService;
 import de.tum.cit.aet.artemis.lecture.api.SlideApi;
@@ -90,11 +95,15 @@ public class ProgrammingExerciseUpdateResource {
 
     private final ExerciseVersionService exerciseVersionService;
 
+    private final ParticipationRepository participationRepository;
+
+    private final CompetencyExerciseLinkService competencyExerciseLinkService;
+
     public ProgrammingExerciseUpdateResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ProgrammingExerciseValidationService programmingExerciseValidationService,
             ProgrammingExerciseCreationUpdateService programmingExerciseCreationUpdateService, ProgrammingExerciseRepositoryService programmingExerciseRepositoryService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, Optional<AthenaApi> athenaApi, ModuleFeatureService moduleFeatureService, Optional<SlideApi> slideApi,
-            ExerciseVersionService exerciseVersionService) {
+            ExerciseVersionService exerciseVersionService, ParticipationRepository participationRepository, CompetencyExerciseLinkService competencyExerciseLinkService) {
         this.programmingExerciseValidationService = programmingExerciseValidationService;
         this.programmingExerciseCreationUpdateService = programmingExerciseCreationUpdateService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -108,6 +117,8 @@ public class ProgrammingExerciseUpdateResource {
         this.moduleFeatureService = moduleFeatureService;
         this.slideApi = slideApi;
         this.exerciseVersionService = exerciseVersionService;
+        this.participationRepository = participationRepository;
+        this.competencyExerciseLinkService = competencyExerciseLinkService;
     }
 
     /**
@@ -152,8 +163,39 @@ public class ProgrammingExerciseUpdateResource {
             throw new ConflictException("The course or exercise group cannot be changed", ENTITY_NAME, "courseOrExerciseGroupCannotChange");
         }
 
-        // Create a copy for "before update" state to track changes
-        var originalExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(updateDTO.id());
+        // Save immutable field values BEFORE update() mutates the managed entity.
+        // Hibernate L1 cache means any second lookup returns the same object, so we
+        // must capture scalar values rather than relying on a separate entity reference.
+        final String originalShortName = programmingExerciseBeforeUpdate.getShortName();
+        final Boolean originalStaticCodeAnalysisEnabled = programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled();
+        final Long originalCourseId = programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember() != null
+                ? programmingExerciseBeforeUpdate.getCourseViaExerciseGroupOrCourseMember().getId()
+                : null;
+        final String originalAssignmentCheckoutPath = programmingExerciseBeforeUpdate.getBuildConfig() != null
+                ? programmingExerciseBeforeUpdate.getBuildConfig().getAssignmentCheckoutPath()
+                : null;
+        final String originalSolutionCheckoutPath = programmingExerciseBeforeUpdate.getBuildConfig() != null
+                ? programmingExerciseBeforeUpdate.getBuildConfig().getSolutionCheckoutPath()
+                : null;
+        final String originalTestCheckoutPath = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getTestCheckoutPath()
+                : null;
+        final String originalBranch = programmingExerciseBeforeUpdate.getBuildConfig() != null ? programmingExerciseBeforeUpdate.getBuildConfig().getBranch() : null;
+        final String originalFeedbackSuggestionModule = programmingExerciseBeforeUpdate.getFeedbackSuggestionModule();
+        final ZonedDateTime originalDueDate = programmingExerciseBeforeUpdate.getDueDate();
+        final ZonedDateTime originalReleaseDate = programmingExerciseBeforeUpdate.getReleaseDate();
+        final ZonedDateTime originalAssessmentDueDate = programmingExerciseBeforeUpdate.getAssessmentDueDate();
+        final String originalProblemStatement = programmingExerciseBeforeUpdate.getProblemStatement();
+        final String originalBuildPlanConfiguration = programmingExerciseBeforeUpdate.getBuildConfig() != null
+                ? programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration()
+                : null;
+        final Double originalMaxPoints = programmingExerciseBeforeUpdate.getMaxPoints();
+        final Double originalBonusPoints = programmingExerciseBeforeUpdate.getBonusPoints();
+        // Save auxiliary repos before update() overwrites them on the same entity (L1 cache)
+        final List<AuxiliaryRepository> originalAuxRepos = programmingExerciseBeforeUpdate.getAuxiliaryRepositories() != null
+                ? new ArrayList<>(programmingExerciseBeforeUpdate.getAuxiliaryRepositories())
+                : new ArrayList<>();
+        // Capture original competency IDs before update() mutates the entity (L1 cache)
+        final Set<Long> originalCompetencyIds = programmingExerciseBeforeUpdate.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
 
         // Update the existing exercise with DTO values
         ProgrammingExercise updatedProgrammingExercise = update(updateDTO, programmingExerciseBeforeUpdate);
@@ -173,10 +215,10 @@ public class ProgrammingExerciseUpdateResource {
         PlagiarismDetectionConfigHelper.validatePlagiarismDetectionConfigOrThrow(updatedProgrammingExercise, ENTITY_NAME);
 
         // Validate immutable fields haven't changed
-        if (!Objects.equals(originalExercise.getShortName(), updateDTO.shortName())) {
+        if (!Objects.equals(originalShortName, updateDTO.shortName())) {
             throw new BadRequestAlertException("The programming exercise short name cannot be changed", ENTITY_NAME, "shortNameCannotChange");
         }
-        if (!Objects.equals(originalExercise.isStaticCodeAnalysisEnabled(), updateDTO.staticCodeAnalysisEnabled())) {
+        if (!Objects.equals(originalStaticCodeAnalysisEnabled, updateDTO.staticCodeAnalysisEnabled())) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
         // Check if Theia is enabled
@@ -196,7 +238,12 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Verify that the checkout directories have not been changed
-        programmingExerciseValidationService.validateCheckoutDirectoriesUnchanged(originalExercise, updatedProgrammingExercise);
+        var updatedBuildConfig = updatedProgrammingExercise.getBuildConfig();
+        if (!Objects.equals(originalAssignmentCheckoutPath, updatedBuildConfig != null ? updatedBuildConfig.getAssignmentCheckoutPath() : null)
+                || !Objects.equals(originalSolutionCheckoutPath, updatedBuildConfig != null ? updatedBuildConfig.getSolutionCheckoutPath() : null)
+                || !Objects.equals(originalTestCheckoutPath, updatedBuildConfig != null ? updatedBuildConfig.getTestCheckoutPath() : null)) {
+            throw new BadRequestAlertException("The custom checkout paths cannot be changed!", ENTITY_NAME, "checkoutDirectoriesChanged");
+        }
 
         // Verify that the programming language supports the selected network access option
         programmingExerciseValidationService.validateDockerFlags(updatedProgrammingExercise);
@@ -207,43 +254,57 @@ public class ProgrammingExerciseUpdateResource {
         }
 
         // Forbid changing the course the exercise belongs to
-        if (!Objects.equals(originalExercise.getCourseViaExerciseGroupOrCourseMember().getId(), updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
+        if (!Objects.equals(originalCourseId, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember().getId())) {
             throw new ConflictException("Exercise course id does not match the stored course id", ENTITY_NAME, "cannotChangeCourseId");
         }
 
-        // Forbid conversion between normal course exercise and exam exercise
-        exerciseService.checkForConversionBetweenExamAndCourseExercise(updatedProgrammingExercise, originalExercise, ENTITY_NAME);
+        // Note: conversion between exam/course exercise is already validated above (lines 148-154)
+        // by comparing courseId and exerciseGroupId before the entity is mutated.
 
         // Check that only allowed Athena modules are used
         athenaApi.ifPresentOrElse(api -> api.checkHasAccessToAthenaModule(updatedProgrammingExercise, course, ENTITY_NAME),
                 () -> updatedProgrammingExercise.setFeedbackSuggestionModule(null));
         // Changing Athena module after the due date has passed is not allowed
-        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(originalExercise, updatedProgrammingExercise, ENTITY_NAME));
+        // Use a proxy exercise with the old module for comparison since update() mutates the original
+        ProgrammingExercise exerciseWithOldModule = new ProgrammingExercise();
+        exerciseWithOldModule.setFeedbackSuggestionModule(originalFeedbackSuggestionModule);
+        exerciseWithOldModule.setDueDate(originalDueDate);
+        athenaApi.ifPresent(api -> api.checkValidAthenaModuleChange(exerciseWithOldModule, updatedProgrammingExercise, ENTITY_NAME));
 
         // Ignore changes to the default branch - preserve the original
-        updatedProgrammingExercise.getBuildConfig().setBranch(originalExercise.getBuildConfig().getBranch());
+        if (updatedProgrammingExercise.getBuildConfig() != null) {
+            updatedProgrammingExercise.getBuildConfig().setBranch(originalBranch);
+        }
 
         if (updatedProgrammingExercise.getAuxiliaryRepositories() == null) {
             updatedProgrammingExercise.setAuxiliaryRepositories(new ArrayList<>());
         }
 
+        // Create a proxy with the original aux repos for comparison (L1 cache means
+        // programmingExerciseBeforeUpdate is already mutated by update())
+        ProgrammingExercise exerciseWithOriginalAuxRepos = new ProgrammingExercise();
+        exerciseWithOriginalAuxRepos.setId(updatedProgrammingExercise.getId());
+        exerciseWithOriginalAuxRepos.setProgrammingLanguage(updatedProgrammingExercise.getProgrammingLanguage());
+        exerciseWithOriginalAuxRepos.setAuxiliaryRepositories(originalAuxRepos);
+
         // Update the auxiliary repositories in the DB and ProgrammingExercise instance
-        auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(originalExercise, updatedProgrammingExercise);
+        auxiliaryRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseWithOriginalAuxRepos, updatedProgrammingExercise);
 
         // Update the auxiliary repositories in the VCS
-        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(originalExercise, updatedProgrammingExercise);
+        programmingExerciseRepositoryService.handleAuxiliaryRepositoriesWhenUpdatingExercises(exerciseWithOriginalAuxRepos, updatedProgrammingExercise);
 
         if (updatedProgrammingExercise.getBonusPoints() == null) {
             updatedProgrammingExercise.setBonusPoints(0.0);
         }
 
         // Only save after checking for errors
-        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(originalExercise, updatedProgrammingExercise,
-                notificationText);
+        ProgrammingExercise savedProgrammingExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(updatedProgrammingExercise, notificationText,
+                originalCompetencyIds, originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
 
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-        exerciseService.updatePointsInRelatedParticipantScores(originalExercise, updatedProgrammingExercise);
-        slideApi.ifPresent(api -> api.handleDueDateChange(originalExercise, updatedProgrammingExercise));
+        exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, updatedProgrammingExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, originalDueDate);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, updatedProgrammingExercise));
         exerciseVersionService.createExerciseVersion(savedProgrammingExercise, user);
         return ResponseEntity.ok(savedProgrammingExercise);
     }
@@ -337,7 +398,7 @@ public class ProgrammingExerciseUpdateResource {
         updateGradingCriteria(dto, exercise);
 
         // Update competency links using the proper mechanism
-        exerciseService.updateCompetencyLinks(dto, exercise);
+        competencyExerciseLinkService.updateCompetencyLinks(dto, exercise);
 
         return exercise;
     }
@@ -381,14 +442,32 @@ public class ProgrammingExerciseUpdateResource {
      * @param exercise the exercise to update
      */
     private void updateGradingCriteria(UpdateProgrammingExerciseDTO dto, ProgrammingExercise exercise) {
-        if (dto.gradingCriteria() != null) {
-            exercise.getGradingCriteria().clear();
-            for (GradingCriterionDTO criterionDTO : dto.gradingCriteria()) {
-                GradingCriterion criterion = criterionDTO.toEntity();
-                criterion.setExercise(exercise);
-                exercise.getGradingCriteria().add(criterion);
-            }
+        if (dto.gradingCriteria() == null || dto.gradingCriteria().isEmpty()) {
+            Set<GradingCriterion> criteria = exercise.ensureGradingCriteriaSet();
+            criteria.clear();
+            return;
         }
+
+        Set<GradingCriterion> managedCriteria = exercise.ensureGradingCriteriaSet();
+
+        // Preserve existing criteria by matching on ID to avoid dangling Feedback.gradingInstruction references
+        Map<Long, GradingCriterion> existingById = managedCriteria.stream().filter(gc -> gc.getId() != null)
+                .collect(Collectors.toMap(GradingCriterion::getId, gc -> gc, (a, b) -> a));
+
+        Set<GradingCriterion> updated = dto.gradingCriteria().stream().map(gcDto -> {
+            GradingCriterion criterion = (gcDto.id() != null) ? existingById.get(gcDto.id()) : null;
+            if (criterion == null) {
+                criterion = gcDto.toEntity();
+                criterion.setExercise(exercise);
+            }
+            else {
+                gcDto.applyTo(criterion);
+            }
+            return criterion;
+        }).collect(Collectors.toSet());
+
+        managedCriteria.clear();
+        managedCriteria.addAll(updated);
     }
 
     /**
@@ -409,8 +488,8 @@ public class ProgrammingExerciseUpdateResource {
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws JsonProcessingException {
         log.debug("REST request to re-evaluate ProgrammingExercise with id: {}", updateDTO.id());
 
-        // Check that the exercise exists for given id (with grading criteria and example submissions for re-evaluation)
-        var programmingExercise = programmingExerciseRepository.findByIdWithGradingCriteriaAndExampleSubmissionsElseThrow(exerciseId);
+        // Load the exercise with all associations needed by update() and reEvaluateExercise()
+        var programmingExercise = programmingExerciseRepository.findForUpdateByIdElseThrow(exerciseId);
 
         if (updateDTO.id() == null || exerciseId != updateDTO.id()) {
             throw new ConflictException("Exercise id in path does not match id in request body", ENTITY_NAME, "idMismatch");
@@ -421,7 +500,34 @@ public class ProgrammingExerciseUpdateResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(programmingExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
 
+        // Capture ALL original values BEFORE update() mutates the entity via L1 cache.
+        // These are needed for change detection in the service layer (notifications, build plans, etc.)
+        final Double originalMaxPoints = programmingExercise.getMaxPoints();
+        final Double originalBonusPoints = programmingExercise.getBonusPoints();
+        final ZonedDateTime originalDueDate = programmingExercise.getDueDate();
+        final ZonedDateTime originalReleaseDate = programmingExercise.getReleaseDate();
+        final ZonedDateTime originalAssessmentDueDate = programmingExercise.getAssessmentDueDate();
+        final String originalProblemStatement = programmingExercise.getProblemStatement();
+        final String originalBuildPlanConfiguration = programmingExercise.getBuildConfig() != null ? programmingExercise.getBuildConfig().getBuildPlanConfiguration() : null;
+        final Set<Long> originalCompetencyIds = programmingExercise.getCompetencyLinks().stream().map(link -> link.getCompetency().getId()).collect(Collectors.toSet());
+
+        // Apply DTO changes BEFORE re-evaluation so that updated grading criteria take effect.
+        update(updateDTO, programmingExercise);
+
         exerciseService.reEvaluateExercise(programmingExercise, deleteFeedbackAfterGradingInstructionUpdate);
-        return updateProgrammingExercise(updateDTO, null);
+
+        // Call the service directly with the captured originals instead of re-entering the update path
+        // (which would re-capture stale "originals" from the already-mutated L1 cache entity).
+        ProgrammingExercise savedExercise = programmingExerciseCreationUpdateService.updateProgrammingExercise(programmingExercise, null, originalCompetencyIds,
+                originalBuildPlanConfiguration, originalReleaseDate, originalAssessmentDueDate, originalProblemStatement);
+
+        // Apply all post-save side effects that the normal update path performs
+        exerciseService.logUpdate(savedExercise, savedExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        exerciseService.updatePointsInRelatedParticipantScores(originalMaxPoints, originalBonusPoints, savedExercise);
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedExercise, originalDueDate);
+        slideApi.ifPresent(api -> api.handleDueDateChange(originalDueDate, savedExercise));
+        exerciseVersionService.createExerciseVersion(savedExercise, user);
+
+        return ResponseEntity.ok(savedExercise);
     }
 }

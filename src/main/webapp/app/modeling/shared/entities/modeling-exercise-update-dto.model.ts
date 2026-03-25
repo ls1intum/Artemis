@@ -3,7 +3,7 @@ import { GradingCriterion } from 'app/exercise/structured-grading-criterion/grad
 import { ExerciseService } from 'app/exercise/services/exercise.service';
 import { convertDateFromClient } from 'app/shared/util/date.utils';
 import { ModelingExercise } from 'app/modeling/shared/entities/modeling-exercise.model';
-import { CompetencyExerciseLinkDTO, mapCompetencyLinks } from 'app/atlas/shared/dto/competency-exercise-link-dto';
+import { CompetencyLinkDTO } from 'app/exercise/shared/exercise-update-shared-dto.model';
 
 export interface UpdateModelingExerciseDTO {
     id: number;
@@ -38,7 +38,7 @@ export interface UpdateModelingExerciseDTO {
     gradingCriteria?: GradingCriterion[];
     gradingInstructions?: string;
     feedbackSuggestionModule?: string;
-    competencyLinks?: CompetencyExerciseLinkDTO[];
+    competencyLinks?: CompetencyLinkDTO[];
 }
 
 /**
@@ -74,6 +74,9 @@ export function toUpdateModelingExerciseDTO(modelingExercise: ModelingExercise):
         gradingCriteria: modelingExercise.gradingCriteria ?? [],
         gradingInstructions: modelingExercise.gradingInstructions,
         feedbackSuggestionModule: modelingExercise.feedbackSuggestionModule,
-        competencyLinks: mapCompetencyLinks(modelingExercise.competencyLinks),
+        competencyLinks: (modelingExercise.competencyLinks ?? []).map((link) => ({
+            competency: { id: link.competency!.id! },
+            weight: link.weight ?? 1,
+        })),
     };
 }

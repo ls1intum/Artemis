@@ -281,7 +281,7 @@ public class ExamResource {
         // Validate the updated exam
         checkForExamConflictsElseThrow(courseId, originalExam);
 
-        Channel updatedChannel = channelService.updateExamChannel(originalExam, originalExam);
+        Channel updatedChannel = channelService.updateExamChannel(originalExam);
 
         Exam savedExam = examRepository.save(originalExam);
 
