@@ -5,13 +5,14 @@ import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free
 
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
 
-type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF';
+type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange';
 
 interface IframeMessageData {
     page?: number;
     pagesCount?: number;
     url?: string;
     initialPage?: number;
+    isDarkMode?: boolean;
 }
 
 interface IframeMessage {
@@ -40,6 +41,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
     readonly initialPage = signal<number>(1);
     readonly currentPage = signal<number>(1);
     readonly totalPages = signal<number>(0);
+    readonly isDarkMode = signal<boolean>(false);
 
     protected readonly faMagnifyingGlassMinus = faMagnifyingGlassMinus;
     protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
@@ -76,6 +78,14 @@ export class PdfViewerIframeContentComponent implements OnInit {
                 if (data?.url) {
                     this.pdfUrl.set(data.url);
                     this.initialPage.set(data.initialPage ?? 1);
+                }
+                if (data?.isDarkMode !== undefined) {
+                    this.isDarkMode.set(data.isDarkMode);
+                }
+                break;
+            case 'themeChange':
+                if (data?.isDarkMode !== undefined) {
+                    this.isDarkMode.set(data.isDarkMode);
                 }
                 break;
         }

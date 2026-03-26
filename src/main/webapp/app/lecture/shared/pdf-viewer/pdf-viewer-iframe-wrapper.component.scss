@@ -1,7 +1,5 @@
 jhi-lecture-pdf-viewer-iframe {
     display: block;
-    border: 2px solid var(--border-color);
-    border-radius: var(--bs-border-radius);
     margin-top: 1.5rem;
     margin-bottom: 1rem;
 }
@@ -10,6 +8,9 @@ jhi-lecture-pdf-viewer-iframe {
     --pdf-bar-height: 36px;
     width: 100%;
     height: 100%;
+    border: 1px solid var(--card-border-color);
+    border-radius: 0.15rem;
+    overflow: hidden;
 }
 
 .pdf-iframe {
@@ -24,18 +25,16 @@ jhi-lecture-pdf-viewer-iframe {
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: var(--pdf-bar-height);
-    height: var(--pdf-bar-height);
-    padding: 0 0.75rem;
+    padding: 0.25rem 0.75rem;
     box-sizing: border-box;
     text-align: center;
-    font-size: 0.8rem;
+    font-size: 0.65rem;
     line-height: 1;
-    color: var(--bs-secondary-color);
-    background-color: var(--bs-body-bg) !important;
-    border-top: 2px solid var(--border-color);
+    color: var(--body-color);
     margin-top: 0;
     white-space: nowrap;
+    border-top: 1px solid var(--card-border-color);
+    background-color: var(--card-bg);
 }
 
 .pdf-viewer-footer__separator {

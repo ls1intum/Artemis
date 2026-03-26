@@ -1,4 +1,4 @@
-<div class="iframe-pdf-container">
+<div class="iframe-pdf-container" [class.dark-mode]="isDarkMode()">
     <ngx-extended-pdf-viewer
         class="iframe-pdf-viewer"
         [src]="pdfUrl()"

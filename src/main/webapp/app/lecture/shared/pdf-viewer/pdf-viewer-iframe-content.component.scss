@@ -1,3 +1,9 @@
+@import 'src/main/webapp/content/scss/themes/default-variables';
+
+// Dark mode values from _dark-variables.scss (cannot import both theme files due to conflicts)
+$neutral-dark: rgb(24, 26, 24);
+$gray-700-dark: #444;
+
 :host {
     display: block;
     width: 100%;
@@ -9,7 +15,14 @@
     width: 100%;
     height: 100%;
     --pdf-bar-height: 36px;
-    --pdf-viewer-bg: #f8f9fa;
+    --pdf-viewer-bg: #{$gray-100};
+
+    // Define semantic variables for light mode using Artemis theme variables.
+    // IMPORTANT: These must be defined explicitly because this iframe is a separate
+    // document and cannot access the parent application's CSS custom properties.
+    --card-bg: #{$white};
+    --card-border-color: #{$gray-300};
+    --body-color: #{$gray-900};
 }
 
 .iframe-pdf-viewer {
@@ -20,9 +33,6 @@
 
 #viewerContainer {
     background-color: var(--pdf-viewer-bg) !important;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
 }
 
 .pdfViewer,
@@ -39,8 +49,9 @@ ngx-extended-pdf-viewer {
     height: var(--pdf-bar-height);
     min-height: var(--pdf-bar-height);
     box-sizing: border-box;
-    border-color: #dee2e6;
-    background-color: #ffffff !important;
+    border: none !important;
+    border-bottom: 1px solid var(--card-border-color) !important;
+    background-color: var(--card-bg) !important;
 }
 
 .artemis-pdf-toolbar__center {
@@ -63,16 +74,18 @@ ngx-extended-pdf-viewer {
     padding: 0;
     border: none;
     background-color: transparent;
-    color: #6c757d;
+    color: var(--body-color);
     cursor: pointer;
     transition: color 0.2s ease;
 
     &:hover {
-        color: #212529;
+        color: var(--body-color);
+        opacity: 0.8;
     }
 
     &:active {
-        color: #000000;
+        color: var(--body-color);
+        opacity: 0.8;
     }
 
     fa-icon {
@@ -84,14 +97,13 @@ ngx-extended-pdf-viewer {
     margin-left: 0.25rem;
     font-weight: 500;
     font-size: 0.9rem;
-    color: #6c757d;
+    color: var(--body-color);
 }
 
 .toolbar,
 #toolbarContainer,
 #mainContainer {
-    border-color: #dee2e6;
-    border-width: 2px;
+    border: none !important;
 }
 
 * {
@@ -106,11 +118,20 @@ canvas,
 div.page,
 .pdfViewer .page,
 [data-page-number] {
-    border: none;
+    border: none !important;
     outline: none;
+    margin: 0 auto 0.5rem !important;
 }
 
 .page:not(:last-child),
 div.page:not(:last-child) {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.5rem !important;
+}
+
+// Dark mode overrides (toggled by TypeScript based on parent theme)
+.iframe-pdf-container.dark-mode {
+    --pdf-viewer-bg: var(--gray-900);
+    --card-bg: #{$neutral-dark};
+    --card-border-color: #{$gray-700-dark};
+    --body-color: #{$gray-100};
 }

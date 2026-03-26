@@ -3,14 +3,16 @@ import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
+import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
-type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF';
+type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange';
 
 interface IframeMessageData {
     page?: number;
     pagesCount?: number;
     url?: string;
     initialPage?: number;
+    isDarkMode?: boolean;
 }
 
 interface IframeMessage {
@@ -46,6 +48,7 @@ export class PdfViewerIframeWrapperComponent {
     });
 
     private iframeLoadTimeoutId?: number;
+    private readonly themeService = inject(ThemeService);
 
     constructor() {
         const destroyRef = inject(DestroyRef);
@@ -54,6 +57,14 @@ export class PdfViewerIframeWrapperComponent {
         effect(() => {
             if (this.iframeReady() && this.pdfUrl()) {
                 this.loadPdfInIframe();
+            }
+        });
+
+        // Effect to notify iframe of theme changes
+        effect(() => {
+            const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
+            if (this.iframeReady()) {
+                this.postMessageToIframe('themeChange', { isDarkMode });
             }
         });
 
@@ -89,9 +100,11 @@ export class PdfViewerIframeWrapperComponent {
     private loadPdfInIframe(): void {
         // Send immediately - this only gets called when iframeReady is true,
         // which means we received the "ready" message and the listener is registered.
+        const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
         this.postMessageToIframe('loadPDF', {
             url: this.pdfUrl(),
             initialPage: this.initialPage() ?? 1,
+            isDarkMode,
         });
     }
 
