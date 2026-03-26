@@ -260,8 +260,10 @@ const routes: Routes = [
         path: 'pdf-viewer-iframe',
         loadComponent: () => import('./lecture/shared/pdf-viewer/pdf-viewer-iframe-content.component').then((m) => m.PdfViewerIframeContentComponent),
         data: {
+            authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'PDF Viewer',
         },
+        canActivate: [UserRouteAccessService],
     },
 ];
 

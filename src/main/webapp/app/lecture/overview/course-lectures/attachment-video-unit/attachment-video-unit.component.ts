@@ -208,6 +208,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             });
     }
 
+    /**
+     * Loads the PDF using a direct URL approach for better performance.
+     * This enables streaming, HTTP caching, and reduces memory consumption.
+     * If this fails, the iframe will signal an error and trigger the blob fallback.
+     */
     private loadPdf(): void {
         this.isPdfLoading.set(true);
         this.pdfLoadError.set(false);
