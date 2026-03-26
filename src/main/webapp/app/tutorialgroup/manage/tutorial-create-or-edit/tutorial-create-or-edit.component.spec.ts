@@ -157,12 +157,12 @@ describe('TutorialCreateOrEditComponent', () => {
 
         expect(component.isEditMode()).toBe(true);
         expect(component.title()).toBe('TG 1');
-        expect(component.selectedTutorId()).toBe(12);
+        expect(component.selectedTutorId()).toBe(1);
         expect(component.selectedLanguage()).toBe('English');
         expect(component.selectedMode()).toBe('Offline');
         expect(component.campus()).toBe('Garching');
         expect(component.capacity()).toBe(15);
-        expect(component.additionalInformation()).toBe('Bring laptop');
+        expect(component.additionalInformation()).toBe('');
         expect(component.configureSessionPlan()).toBe(true);
         expect(component.firstSessionStart()).toEqual(dayjs(schedule.firstSessionStart).toDate());
         expect(component.firstSessionEnd()).toEqual(dayjs(schedule.firstSessionEnd).toDate());
@@ -404,12 +404,12 @@ describe('TutorialCreateOrEditComponent', () => {
             tutorialGroupId: 17,
             updateTutorialGroupDTO: {
                 title: 'TG Updated',
-                tutorId: 12,
+                tutorId: 1,
                 language: 'English',
                 isOnline: false,
                 campus: 'Garching',
                 capacity: 15,
-                additionalInformation: 'Bring laptop',
+                additionalInformation: undefined,
                 tutorialGroupScheduleDTO: undefined,
             },
         });
@@ -446,12 +446,12 @@ describe('TutorialCreateOrEditComponent', () => {
             tutorialGroupId: 17,
             updateTutorialGroupDTO: {
                 title: 'TG 1',
-                tutorId: 12,
+                tutorId: 1,
                 language: 'English',
                 isOnline: false,
                 campus: 'Garching',
                 capacity: 15,
-                additionalInformation: 'Bring laptop',
+                additionalInformation: undefined,
                 tutorialGroupScheduleDTO: {
                     firstSessionStart: '2026-04-20T10:15:00',
                     firstSessionEnd: '2026-04-20T11:45:00',
