@@ -104,6 +104,7 @@ module.exports = {
         '!<rootDir>/src/main/webapp/app/tutorialgroup/**',  // tutorialgroup module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/atlas/**',          // atlas module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/table-view/**',          // table view module uses Vitest (see vitest.config.ts)
+        '!<rootDir>/src/main/webapp/app/shared/route/**',               // route utils use Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/components/buttons/**',  // buttons module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/exam/manage/students/**', // exam manage students module uses Vitest (see vitest.config.ts)
         '!<rootDir>/src/main/webapp/app/shared/sort/**', // sort directives use vitest (see vitest.config.ts)
@@ -134,6 +135,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/text/',              // text module uses Vitest
         '<rootDir>/src/main/webapp/app/tutorialgroup/',     // tutorialgroup module uses Vitest
         '<rootDir>/src/main/webapp/app/atlas/',             // atlas module uses Vitest
+        '<rootDir>/src/main/webapp/app/shared/route/', // route utils use Vitest
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // buttons module uses Vitest
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module uses Vitest
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives use Vitest
@@ -193,6 +195,7 @@ module.exports = {
         '<rootDir>/src/main/webapp/app/tutorialgroup/', // tutorialgroup module
         '<rootDir>/src/main/webapp/app/atlas/',         // atlas module
         '<rootDir>/src/main/webapp/app/exam/manage/students/', // exam manage students module
+        '<rootDir>/src/main/webapp/app/shared/route/', // shared/route utils
         '<rootDir>/src/main/webapp/app/shared/components/buttons/', // shared/buttons components
         '<rootDir>/src/main/webapp/app/shared/table-view/', // shared/table-view component
         '<rootDir>/src/main/webapp/app/shared/sort/', // sort directives
