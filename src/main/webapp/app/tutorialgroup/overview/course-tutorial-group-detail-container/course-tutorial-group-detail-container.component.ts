@@ -18,7 +18,7 @@ export class CourseTutorialGroupDetailContainerComponent {
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
     private course = this.tutorialGroupCourseAndGroupService.course;
 
-    courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
+    courseId = getNumericPathVariableSignal(this.route, 'courseId');
     tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
     isMessagingEnabled = computed(() => isMessagingEnabled(this.course()));
     isLoading = computed(() => this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading() || this.tutorialGroupCourseAndGroupService.isCourseLoading());

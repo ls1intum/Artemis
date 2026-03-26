@@ -44,7 +44,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
 
     isLoading = computed(() => this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading() || this.isActionLoading());
     tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
-    courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
+    courseId = getNumericPathVariableSignal(this.route, 'courseId');
     isMessagingEnabled = computed(() => isMessagingEnabled(this.course()));
     loggedInUserTutorialGroupDetailAccessLevel = computed(() => this.computeLoggedInUserTutorialGroupDetailAccessLevel());
 
