@@ -14,9 +14,9 @@
     --pdf-bar-height: 36px;
     // Light mode theme variables (must be explicit since iframe cannot access parent app's CSS properties)
     --pdf-viewer-bg: #{light.$gray-100};
-    --card-bg: #{light.$white};
-    --card-border-color: #{light.$gray-300};
-    --body-color: #{light.$gray-900};
+    --card-bg: #{light.$card-bg};
+    --card-border-color: #{light.$card-border-color};
+    --body-color: #{light.$body-color};
 }
 
 .iframe-pdf-viewer {
@@ -118,7 +118,7 @@
 // Dark mode overrides (toggled by TypeScript based on parent theme)
 .iframe-pdf-container.dark-mode {
     --pdf-viewer-bg: #{dark.$gray-900};
-    --card-bg: #{dark.$gray-900};
-    --card-border-color: #{dark.$gray-700};
-    --body-color: #{dark.$gray-100};
+    --card-bg: #{dark.$card-bg};
+    --card-border-color: #{dark.$card-border-color};
+    --body-color: #{dark.$body-color};
 }
