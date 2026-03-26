@@ -59,6 +59,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private static final String SECOND_COURSE_EDITOR1_LOGIN = TEST_PREFIX + "secondcourseeditor1";
 
+    private static final String SECOND_COURSE_INSTRUCTOR1_LOGIN = TEST_PREFIX + "secondcourseinstructor1";
+
     private User firstCourseInstructor1;
 
     private User firstCourseTutor1;
@@ -142,6 +144,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         secondCourse = courseRepository.save(secondCourse);
         secondCourseId = secondCourse.getId();
         userUtilService.addEditor(secondCourse.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
+        userUtilService.addInstructor(secondCourse.getInstructorGroupName(), SECOND_COURSE_INSTRUCTOR1_LOGIN);
         secondCourseEditor1 = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();
     }
 
@@ -716,30 +719,37 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     class DeleteTutorialGroupTests {
 
         @Test
-        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
+            Long tutorialGroupId = firstCourseTutorialGroup1.getId();
+            Long channelId = firstCourseChannel1.getId();
 
+            request.delete("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.NO_CONTENT);
+
+            assertThat(tutorialGroupTestRepository.findById(tutorialGroupId)).isEmpty();
+            assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroupId)).isEmpty();
+            assertThat(channelRepository.findById(channelId)).isEmpty();
         }
 
         @Test
-        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructorWithNonExistingGroup_shouldReturnNotFound() throws Exception {
-
+            request.delete("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/-1", HttpStatus.NOT_FOUND);
         }
 
         @Test
-        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = SECOND_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructorWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
-
+            request.delete("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructorOfOtherCourse_shouldReturnForbidden() throws Exception {
-
+            request.delete("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.FORBIDDEN);
         }
 
-        // TODO; add notification case
+        // TODO: add notification case
     }
 
     @Nested
