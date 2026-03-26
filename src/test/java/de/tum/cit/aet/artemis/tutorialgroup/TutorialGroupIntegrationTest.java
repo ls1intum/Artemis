@@ -40,8 +40,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private static final String TEST_PREFIX = "tutorialgroup";
 
-    private static final String OTHER_COURSE_EDITOR_LOGIN = TEST_PREFIX + "othercourseeditor1";
-
     private User firstCourseInstructor1;
 
     private User firstCourseTutor1;
@@ -55,6 +53,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     private User firstCourseStudent3;
 
     private User firstCourseStudent4;
+
+    private Long secondCourseId;
+
+    private User secondCourseEditor1;
 
     private TutorialGroup firstCourseTutorialGroup1;
 
@@ -110,17 +112,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Tue 13", null, 20, true, null, Language.GERMAN.name(),
                 firstCourseTutor2, Set.of(firstCourseStudent2));
         firstCourseChannel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup2);
+
+        var secondCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
+        secondCourse.setTimeZone(timeZone);
+        secondCourse = courseRepository.save(secondCourse);
+        secondCourseId = secondCourse.getId();
+        userUtilService.addEditor(secondCourse.getEditorGroupName(), TEST_PREFIX + "othercourseeditor1");
+        secondCourseEditor1 = userRepository.findOneByLogin(TEST_PREFIX + "othercourseeditor1").orElseThrow();
     }
 
     @Override
     String getTestPrefix() {
         return TEST_PREFIX;
-    }
-
-    private Course createOtherCourseWithEditor() {
-        var otherCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
-        userUtilService.addEditor(otherCourse.getEditorGroupName(), OTHER_COURSE_EDITOR_LOGIN);
-        return otherCourse;
     }
 
     @Test
@@ -363,10 +366,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
         void getTutorialGroupSchedule_asEditorNotInCourse_shouldReturnForbidden() throws Exception {
-            createOtherCourseWithEditor();
-
             request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.FORBIDDEN, String.class);
         }
     }
@@ -447,10 +448,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
         void create_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
-            createOtherCourseWithEditor();
-
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
                     "Garching", 10, "Bring you machine.", null);
 
@@ -565,14 +564,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
         void update_asEditorWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
-            var otherCourse = createOtherCourseWithEditor();
-
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
                     "Garching", 15, "Updated information.", null);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + otherCourse.getId() + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
                     createAndUpdateTutorialGroupDTO, HttpStatus.BAD_REQUEST);
         }
 
@@ -599,10 +596,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
         void update_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
-            createOtherCourseWithEditor();
-
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
                     "Garching", 15, "Updated information.", null);
 
