@@ -1,3 +1,4 @@
+<p-confirmDialog key="revert-field" appendTo="body" styleClass="revert-confirm-dialog" />
 <div class="version-history-page">
     <jhi-exercise-version-history-layout>
         <div version-history-left class="timeline-pane">
@@ -66,12 +67,14 @@
                             [snapshot]="snapshot"
                             [previousSnapshot]="viewMode() === 'changes' ? previousSnapshot() : undefined"
                             [viewMode]="viewMode()"
+                            (revertField)="onRevertField($event)"
                         />
                         <jhi-programming-exercise-version-programming-metadata
                             [exerciseId]="exerciseId()"
                             [programmingData]="snapshot.programmingData"
                             [previousProgrammingData]="viewMode() === 'changes' ? previousSnapshot()?.programmingData : undefined"
                             [viewMode]="viewMode()"
+                            (revertField)="onRevertField($event)"
                         />
                     </div>
                 }

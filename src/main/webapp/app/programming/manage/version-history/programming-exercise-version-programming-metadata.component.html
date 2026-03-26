@@ -9,7 +9,24 @@
                     <div class="metadata-list">
                         @for (field of languageFields(); track field.id) {
                             <div class="metadata-row">
-                                <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                                <span class="metadata-row__label">
+                                    {{ field.translatedLabel }}
+                                    @if (isDiffView() && field.revertable) {
+                                        <button
+                                            pButton
+                                            type="button"
+                                            text
+                                            rounded
+                                            size="small"
+                                            class="metadata-diff__revert"
+                                            [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
+                                            tooltipPosition="right"
+                                            (click)="revertField.emit({ fieldId: field.id, previousRaw: field.previousRaw })"
+                                        >
+                                            <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
+                                        </button>
+                                    }
+                                </span>
                                 @if (isDiffView()) {
                                     <div class="metadata-diff">
                                         <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
@@ -44,7 +61,7 @@
                                         <div class="metadata-diff metadata-diff--stacked">
                                             <div class="metadata-diff__box metadata-diff__box--old">
                                                 <div class="metadata-diff__header">
-                                                    <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousValue' | artemisTranslate" />
+                                                    <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
                                                 </div>
                                                 <span class="metadata-row__value--mono" [class.metadata-diff__value--empty]="field.previousEmpty">
                                                     {{ field.previousDisplay }}
@@ -52,7 +69,7 @@
                                             </div>
                                             <div class="metadata-diff__box metadata-diff__box--new">
                                                 <div class="metadata-diff__header">
-                                                    <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.currentValue' | artemisTranslate" />
+                                                    <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
                                                 </div>
                                                 <span class="metadata-row__value--mono" [class.metadata-diff__value--empty]="field.currentEmpty">
                                                     {{ field.currentDisplay }}
@@ -177,7 +194,24 @@
                     <div class="metadata-list">
                         @for (field of gradingFields(); track field.id) {
                             <div class="metadata-row">
-                                <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                                <span class="metadata-row__label">
+                                    {{ field.translatedLabel }}
+                                    @if (isDiffView() && field.revertable) {
+                                        <button
+                                            pButton
+                                            type="button"
+                                            text
+                                            rounded
+                                            size="small"
+                                            class="metadata-diff__revert"
+                                            [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
+                                            tooltipPosition="right"
+                                            (click)="revertField.emit({ fieldId: field.id, previousRaw: field.previousRaw })"
+                                        >
+                                            <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
+                                        </button>
+                                    }
+                                </span>
                                 @if (isDiffView()) {
                                     <div class="metadata-diff">
                                         <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
@@ -206,7 +240,24 @@
                     <div class="metadata-list">
                         @for (field of buildConfigurationFields(); track field.id) {
                             <div class="metadata-row">
-                                <span class="metadata-row__label">{{ field.translatedLabel }}</span>
+                                <span class="metadata-row__label">
+                                    {{ field.translatedLabel }}
+                                    @if (isDiffView() && field.revertable) {
+                                        <button
+                                            pButton
+                                            type="button"
+                                            text
+                                            rounded
+                                            size="small"
+                                            class="metadata-diff__revert"
+                                            [pTooltip]="'artemisApp.exercise.versionHistory.revert.tooltip' | artemisTranslate: { value: field.previousDisplay }"
+                                            tooltipPosition="right"
+                                            (click)="revertField.emit({ fieldId: field.id, previousRaw: field.previousRaw })"
+                                        >
+                                            <fa-icon [icon]="faRotateLeft" aria-hidden="true" />
+                                        </button>
+                                    }
+                                </span>
                                 @if (isDiffView()) {
                                     <div class="metadata-diff">
                                         <span class="metadata-diff__value metadata-diff__value--old" [class.metadata-diff__value--empty]="field.previousEmpty">
@@ -233,13 +284,13 @@
                                 <div class="metadata-diff metadata-diff--stacked">
                                     <div class="metadata-diff__box metadata-diff__box--old">
                                         <div class="metadata-diff__header">
-                                            <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousValue' | artemisTranslate" />
+                                            <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
                                         </div>
                                         <pre class="json-block">{{ previousFormattedBuildPlanConfiguration() ?? '-' }}</pre>
                                     </div>
                                     <div class="metadata-diff__box metadata-diff__box--new">
                                         <div class="metadata-diff__header">
-                                            <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.currentValue' | artemisTranslate" />
+                                            <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
                                         </div>
                                         <pre class="json-block">{{ formattedBuildPlanConfiguration() ?? '-' }}</pre>
                                     </div>
@@ -259,13 +310,13 @@
                                 <div class="metadata-diff metadata-diff--stacked">
                                     <div class="metadata-diff__box metadata-diff__box--old">
                                         <div class="metadata-diff__header">
-                                            <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousValue' | artemisTranslate" />
+                                            <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
                                         </div>
                                         <pre class="json-block">{{ previousBuildScript() ?? '-' }}</pre>
                                     </div>
                                     <div class="metadata-diff__box metadata-diff__box--new">
                                         <div class="metadata-diff__header">
-                                            <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.currentValue' | artemisTranslate" />
+                                            <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
                                         </div>
                                         <pre class="json-block">{{ currentBuildScript() ?? '-' }}</pre>
                                     </div>
@@ -288,7 +339,7 @@
                         <div class="metadata-diff metadata-diff--stacked">
                             <div class="metadata-diff__box metadata-diff__box--old">
                                 <div class="metadata-diff__header">
-                                    <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousValue' | artemisTranslate" />
+                                    <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
                                 </div>
                                 @if (previousAuxiliaryRepositoryLines().length > 0) {
                                     <div class="metadata-line-list">
@@ -302,7 +353,7 @@
                             </div>
                             <div class="metadata-diff__box metadata-diff__box--new">
                                 <div class="metadata-diff__header">
-                                    <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.currentValue' | artemisTranslate" />
+                                    <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
                                 </div>
                                 @if (currentAuxiliaryRepositoryLines().length > 0) {
                                     <div class="metadata-line-list">
@@ -335,7 +386,7 @@
                         <div class="metadata-diff metadata-diff--stacked">
                             <div class="metadata-diff__box metadata-diff__box--old">
                                 <div class="metadata-diff__header">
-                                    <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousValue' | artemisTranslate" />
+                                    <p-tag severity="danger" [value]="'artemisApp.exercise.versionHistory.snapshot.previousVersion' | artemisTranslate" />
                                 </div>
                                 @if (previousStaticCodeAnalysisCategoryLines().length > 0) {
                                     <div class="metadata-line-list">
@@ -349,7 +400,7 @@
                             </div>
                             <div class="metadata-diff__box metadata-diff__box--new">
                                 <div class="metadata-diff__header">
-                                    <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.currentValue' | artemisTranslate" />
+                                    <p-tag severity="success" [value]="'artemisApp.exercise.versionHistory.snapshot.thisVersion' | artemisTranslate" />
                                 </div>
                                 @if (currentStaticCodeAnalysisCategoryLines().length > 0) {
                                     <div class="metadata-line-list">

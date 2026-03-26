@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { faCopy } from '@fortawesome/free-regular-svg-icons';
-import { faEye, faPenToSquare } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faPenToSquare, faRotateLeft } from '@fortawesome/free-solid-svg-icons';
 import { CdkCopyToClipboard } from '@angular/cdk/clipboard';
 import {
     AuxiliaryRepositorySnapshotDTO,
@@ -11,6 +11,7 @@ import {
     StaticCodeAnalysisCategorySnapshotDTO,
 } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { VersionHistoryViewMode, booleanLabel, valuesDiffer } from 'app/exercise/version-history/shared/version-history.utils';
+import { isRevertable } from 'app/exercise/version-history/shared/revert-field.registry';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseVersionRepositoryCommitDiffComponent } from 'app/programming/manage/version-history/programming-exercise-version-repository-commit-diff.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -35,6 +36,7 @@ interface MetadataField {
     changed: boolean;
     currentEmpty: boolean;
     previousEmpty: boolean;
+    revertable: boolean;
     kind?: 'text' | 'commit' | 'repository';
     shortCommitHash?: string;
     fullCommitHash?: string;
@@ -82,6 +84,9 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
     protected readonly faCopy = faCopy;
     protected readonly faEye = faEye;
     protected readonly faPenToSquare = faPenToSquare;
+    protected readonly faRotateLeft = faRotateLeft;
+
+    readonly revertField = output<{ fieldId: string; previousRaw: unknown }>();
 
     readonly isDiffView = computed(() => this.viewMode() === 'changes' && !!this.previousProgrammingData());
 
@@ -378,6 +383,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             changed: valuesDiffer(currentRaw, previousRaw),
             currentEmpty: currentRaw === undefined || currentRaw === '',
             previousEmpty: previousRaw === undefined || previousRaw === '',
+            revertable: isRevertable(labelId),
             kind: 'text',
         };
     }
@@ -401,6 +407,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             changed: valuesDiffer(currentValue, previousValue),
             currentEmpty: currentValue === undefined || currentValue === '',
             previousEmpty: previousValue === undefined || previousValue === '',
+            revertable: false,
             kind: 'commit',
             fullCommitHash: fullHash,
             shortCommitHash: fullHash ? (fullHash.length > 8 ? fullHash.slice(0, 8) : fullHash) : '-',
@@ -430,6 +437,7 @@ export class ProgrammingExerciseVersionProgrammingMetadataComponent {
             changed: valuesDiffer(currentValue, previousValue),
             currentEmpty: currentValue === undefined || currentValue === '',
             previousEmpty: previousValue === undefined || previousValue === '',
+            revertable: false,
             kind: 'repository',
             repositoryUri,
             repositoryViewLink: this.buildRepositoryViewLink(repositoryType),

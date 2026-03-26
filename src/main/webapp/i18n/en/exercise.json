@@ -55,8 +55,8 @@
                 "snapshot": {
                     "empty": "Select a version to inspect its metadata.",
                     "sharedTitle": "Exercise Metadata",
-                    "previousValue": "Previous value",
-                    "currentValue": "Current value",
+                    "previousVersion": "Previous version",
+                    "thisVersion": "This version",
                     "presentationScoreEnabled": "Presentation Score Enabled",
                     "secondCorrectionEnabled": "Second Correction Enabled",
                     "feedbackSuggestionModule": "Feedback Suggestion Module",
@@ -80,6 +80,14 @@
                     "invalidExerciseId": "Could not determine exercise id.",
                     "timelineLoadFailed": "Version timeline could not be loaded.",
                     "snapshotLoadFailed": "Version snapshot could not be loaded."
+                },
+                "revert": {
+                    "tooltip": "Revert to: {{ value }}",
+                    "confirmHeader": "Revert confirmation",
+                    "confirmMessage": "Are you sure you want to revert <strong>{{ field }}</strong> from <strong>\"{{ currentValue }}\"</strong> to <strong>\"{{ targetValue }}\"</strong>?",
+                    "confirmMessageProblemStatement": "The <strong>problem statement</strong> will be reverted to the previous version (the part highlighted in red).",
+                    "success": "Successfully reverted {{ field }}.",
+                    "error": "Failed to revert {{ field }}."
                 }
             },
             "import": {

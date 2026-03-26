@@ -1,18 +1,27 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { ExerciseSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
 import { ExerciseVersionMetadata } from 'app/exercise/version-history/shared/exercise-version-history.model';
 import { ExerciseVersionHistoryService } from 'app/exercise/version-history/shared/exercise-version-history.service';
 import { ExerciseVersionHistoryLayoutComponent } from 'app/exercise/version-history/shared/exercise-version-history-layout.component';
 import { ExerciseVersionHistoryTimelineComponent } from 'app/exercise/version-history/shared/exercise-version-history-timeline.component';
 import { ExerciseVersionSharedSnapshotMetadataComponent } from 'app/exercise/version-history/shared/exercise-version-shared-snapshot-metadata.component';
+import { getRevertConfig } from 'app/exercise/version-history/shared/revert-field.registry';
 import { VersionHistoryViewMode } from 'app/exercise/version-history/shared/version-history.utils';
+import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
+import { ProgrammingExerciseService } from 'app/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseVersionProgrammingMetadataComponent } from 'app/programming/manage/version-history/programming-exercise-version-programming-metadata.component';
+import { AlertService } from 'app/shared/service/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { cloneDeep } from 'lodash-es';
+import dayjs from 'dayjs/esm';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { MessageModule } from 'primeng/message';
 import { SkeletonModule } from 'primeng/skeleton';
 import { Tab, TabList, Tabs } from 'primeng/tabs';
+import { ConfirmationService } from 'primeng/api';
 import { finalize } from 'rxjs';
 
 @Component({
@@ -21,6 +30,7 @@ import { finalize } from 'rxjs';
     styleUrls: ['./programming-exercise-version-history.component.scss'],
     imports: [
         TranslateDirective,
+        ConfirmDialogModule,
         MessageModule,
         SkeletonModule,
         Tabs,
@@ -31,6 +41,7 @@ import { finalize } from 'rxjs';
         ExerciseVersionSharedSnapshotMetadataComponent,
         ProgrammingExerciseVersionProgrammingMetadataComponent,
     ],
+    providers: [ConfirmationService],
     changeDetection: ChangeDetectionStrategy.OnPush,
 })
 /**
@@ -45,6 +56,10 @@ import { finalize } from 'rxjs';
 export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     private readonly route = inject(ActivatedRoute);
     private readonly versionHistoryService = inject(ExerciseVersionHistoryService);
+    private readonly programmingExerciseService = inject(ProgrammingExerciseService);
+    private readonly confirmationService = inject(ConfirmationService);
+    private readonly alertService = inject(AlertService);
+    private readonly translateService = inject(TranslateService);
     private readonly destroyRef = inject(DestroyRef);
 
     private readonly pageSize = 20;
@@ -113,6 +128,10 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
     readonly diffBaseError = signal<string | undefined>(undefined);
     /** Currently selected snapshot view. */
     readonly viewMode = signal<VersionHistoryViewMode>('full');
+    /** The current exercise entity, fetched for revert operations. */
+    readonly currentExercise = signal<ProgrammingExercise | undefined>(undefined);
+    /** Whether a revert operation is in progress. */
+    readonly isReverting = signal(false);
 
     /** Whether there are more pages of versions available on the server. */
     readonly hasMore = computed(() => this.nextPage() !== undefined);
@@ -172,6 +191,7 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
 
         this.exerciseId.set(exerciseId);
         this.loadVersions(0, true);
+        this.loadExercise(exerciseId);
     }
 
     /** Selects a version and loads its snapshot. No-ops if already selected unless the previous fetch failed. */
@@ -211,6 +231,158 @@ export class ProgrammingExerciseVersionHistoryComponent implements OnInit {
         if (value === 'full' || value === 'changes') {
             this.onSelectViewMode(value);
         }
+    }
+
+    /**
+     * Handles a revert request emitted by a presentational metadata child component.
+     *
+     * Looks up the field in the revert registry, reads the exercise's actual current
+     * value for the confirmation dialog, then opens a PrimeNG ConfirmDialog.
+     * On acceptance the appropriate update endpoint is called via {@link executeRevert}.
+     */
+    onRevertField(event: { fieldId: string; fieldLabel: string; previousRaw: unknown }): void {
+        const config = getRevertConfig(event.fieldId);
+        if (!config) {
+            return;
+        }
+
+        const exercise = this.currentExercise();
+        if (!exercise) {
+            this.alertService.error('artemisApp.exercise.versionHistory.revert.error');
+            return;
+        }
+
+        const fieldLabel = event.fieldLabel;
+        const header = this.translateService.instant('artemisApp.exercise.versionHistory.revert.confirmHeader');
+
+        let message: string;
+        if (config.updateStrategy === 'problemStatement') {
+            message = this.translateService.instant('artemisApp.exercise.versionHistory.revert.confirmMessageProblemStatement');
+        } else {
+            const targetDisplay = this.formatDisplayValue(event.previousRaw);
+            const currentValue = this.getNestedValue(exercise, config.entityPath);
+            const currentDisplay = this.formatDisplayValue(currentValue);
+            message = this.translateService.instant('artemisApp.exercise.versionHistory.revert.confirmMessage', {
+                field: fieldLabel,
+                currentValue: currentDisplay,
+                targetValue: targetDisplay,
+            });
+        }
+
+        this.confirmationService.confirm({
+            key: 'revert-field',
+            header,
+            message,
+            accept: () => this.executeRevert(event.fieldId, fieldLabel, event.previousRaw, config, exercise),
+        });
+    }
+
+    /**
+     * Performs the actual revert by calling the appropriate backend endpoint.
+     *
+     * For `problemStatement` fields, uses the dedicated PATCH endpoint.
+     * For all other fields, clones the current exercise entity, patches the
+     * single field at the configured entity path, and calls the full update
+     * or timeline update endpoint.
+     *
+     * On success, invalidates the snapshot cache and reloads both the exercise
+     * entity and the version timeline so the UI reflects the new state.
+     */
+    private executeRevert(fieldId: string, fieldLabel: string, previousRaw: unknown, config: NonNullable<ReturnType<typeof getRevertConfig>>, exercise: ProgrammingExercise): void {
+        const exerciseId = this.exerciseId();
+        if (!exerciseId) {
+            return;
+        }
+
+        this.isReverting.set(true);
+
+        if (config.updateStrategy === 'problemStatement') {
+            const problemStatement = previousRaw as string | undefined;
+            this.programmingExerciseService
+                .updateProblemStatement(exerciseId, problemStatement)
+                .pipe(finalize(() => this.isReverting.set(false)))
+                .subscribe({
+                    next: () => this.onRevertSuccess(fieldLabel, exerciseId),
+                    error: () => this.alertService.error('artemisApp.exercise.versionHistory.revert.error', { field: fieldLabel }),
+                });
+            return;
+        }
+
+        const clone = cloneDeep(exercise);
+        const convertedValue = this.convertValue(previousRaw, config.valueType);
+        this.setNestedValue(clone, config.entityPath, convertedValue);
+
+        const update$ = config.updateStrategy === 'timeline' ? this.programmingExerciseService.updateTimeline(clone) : this.programmingExerciseService.update(clone);
+
+        update$.pipe(finalize(() => this.isReverting.set(false))).subscribe({
+            next: () => this.onRevertSuccess(fieldLabel, exerciseId),
+            error: () => this.alertService.error('artemisApp.exercise.versionHistory.revert.error', { field: fieldLabel }),
+        });
+    }
+
+    /** Invalidates caches and reloads state after a successful revert. */
+    private onRevertSuccess(fieldLabel: string, exerciseId: number): void {
+        this.alertService.success('artemisApp.exercise.versionHistory.revert.success', { field: fieldLabel });
+        this.snapshotCache.set({});
+        this.loadExercise(exerciseId);
+        this.loadVersions(0, true);
+    }
+
+    /** Fetches the full exercise entity (with plagiarism config) for use by the revert logic. */
+    private loadExercise(exerciseId: number): void {
+        this.programmingExerciseService.find(exerciseId, true).subscribe({
+            next: (response) => {
+                if (response.body) {
+                    this.currentExercise.set(response.body);
+                }
+            },
+        });
+    }
+
+    /** Formats a raw field value for display in the confirmation dialog. */
+    private formatDisplayValue(value: unknown): string {
+        if (value === undefined || value === null) {
+            return '-';
+        }
+        if (typeof value === 'boolean') {
+            return value ? 'Yes' : 'No';
+        }
+        return String(value);
+    }
+
+    /** Converts a snapshot raw value to the type expected by the exercise entity (e.g. ISO string → dayjs for dates). */
+    private convertValue(raw: unknown, valueType: string): unknown {
+        if (raw === undefined || raw === null) {
+            return undefined;
+        }
+        switch (valueType) {
+            case 'date':
+                return typeof raw === 'string' ? dayjs(raw) : undefined;
+            case 'number':
+                return typeof raw === 'number' ? raw : Number(raw);
+            case 'boolean':
+                return typeof raw === 'boolean' ? raw : raw === 'true';
+            default:
+                return raw;
+        }
+    }
+
+    /** Reads a deeply nested property from an object using a dot-separated path. */
+    private getNestedValue(obj: Record<string, any>, path: string): unknown {
+        return path.split('.').reduce((current, key) => current?.[key], obj as any);
+    }
+
+    /** Sets a deeply nested property on an object using a dot-separated path, creating intermediate objects as needed. */
+    private setNestedValue(obj: Record<string, any>, path: string, value: unknown): void {
+        const keys = path.split('.');
+        let current: any = obj;
+        for (let i = 0; i < keys.length - 1; i++) {
+            if (current[keys[i]] === undefined || current[keys[i]] === null) {
+                current[keys[i]] = {};
+            }
+            current = current[keys[i]];
+        }
+        current[keys[keys.length - 1]] = value;
     }
 
     /**

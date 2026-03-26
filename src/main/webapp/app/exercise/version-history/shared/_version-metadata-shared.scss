@@ -116,14 +116,14 @@
 
     .metadata-diff__value--old,
     .metadata-diff__box--old {
-        background: var(--p-red-50);
-        border-color: var(--p-red-200);
+        background: var(--artemis-alert-danger-background);
+        border-color: var(--artemis-alert-danger-border);
     }
 
     .metadata-diff__value--new,
     .metadata-diff__box--new {
-        background: var(--p-green-50);
-        border-color: var(--p-green-200);
+        background: var(--artemis-alert-success-background);
+        border-color: var(--artemis-alert-success-border);
     }
 
     .metadata-diff__value--old {
@@ -138,6 +138,23 @@
     .metadata-diff__header {
         display: flex;
         justify-content: flex-start;
+    }
+
+    .metadata-diff__revert {
+        flex-shrink: 0;
+        align-self: center;
+        margin-left: 0.25rem;
+    }
+
+    .metadata-section__header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.6rem;
+
+        h4 {
+            margin: 0;
+        }
     }
 
     @media (max-width: 1100px) {

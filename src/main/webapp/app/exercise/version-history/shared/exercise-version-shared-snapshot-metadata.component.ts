@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, computed, effect, inject, input, output, signal } from '@angular/core';
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { CompetencyExerciseLinkSnapshotDTO, ExerciseSnapshotDTO, GradingCriterionSnapshotDTO } from 'app/exercise/synchronization/metadata/exercise-metadata-snapshot.dto';
@@ -7,6 +7,7 @@ import { normalizeCategoryArray } from 'app/exercise/synchronization/metadata/ex
 import { serializeGradingCriteriaToMarkdown } from 'app/exercise/version-history/shared/grading-criteria-markdown.util';
 import { ExerciseVersionMarkdownDiffComponent } from 'app/exercise/version-history/shared/exercise-version-markdown-diff.component';
 import { VersionHistoryViewMode, booleanLabel, valuesDiffer } from 'app/exercise/version-history/shared/version-history.utils';
+import { isRevertable } from 'app/exercise/version-history/shared/revert-field.registry';
 import { CustomExerciseCategoryBadgeComponent } from 'app/exercise/exercise-categories/custom-exercise-category-badge/custom-exercise-category-badge.component';
 import { ProgrammingExercisePlantUmlExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-plant-uml.extension';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -19,9 +20,13 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisMarkdownService } from 'app/shared/service/markdown.service';
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
+import { faRotateLeft } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ButtonModule } from 'primeng/button';
 import { DividerModule } from 'primeng/divider';
 import { PanelModule } from 'primeng/panel';
 import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
 
 interface MetadataField {
     id: string;
@@ -33,6 +38,7 @@ interface MetadataField {
     changed: boolean;
     currentEmpty: boolean;
     previousEmpty: boolean;
+    revertable: boolean;
 }
 
 interface MetadataDateField {
@@ -40,7 +46,10 @@ interface MetadataDateField {
     label: string;
     currentValue?: dayjs.Dayjs;
     previousValue?: dayjs.Dayjs;
+    currentRaw?: string;
+    previousRaw?: string;
     changed: boolean;
+    revertable: boolean;
 }
 
 interface CompetencyEntry {
@@ -60,6 +69,9 @@ interface CompetencyEntry {
         PanelModule,
         DividerModule,
         TagModule,
+        ButtonModule,
+        TooltipModule,
+        FaIconComponent,
         TranslateDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
@@ -84,6 +96,10 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
 
     readonly problemStatement = signal<SafeHtml | undefined>(undefined);
     readonly gradingInstructions = signal<SafeHtml | undefined>(undefined);
+
+    readonly revertField = output<{ fieldId: string; fieldLabel: string; previousRaw: unknown }>();
+
+    protected readonly faRotateLeft = faRotateLeft;
 
     readonly problemStatementDiffActions = [new FormulaAction(), new TaskAction(), new TestCaseAction()];
 
@@ -267,6 +283,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
     readonly competenciesChanged = computed(() => valuesDiffer(this.snapshot().competencyLinks, this.previousSnapshot()?.competencyLinks));
 
     readonly problemStatementChanged = computed(() => valuesDiffer(this.snapshot().problemStatement, this.previousSnapshot()?.problemStatement));
+    readonly problemStatementLabel = computed(() => this.translateLabel('artemisApp.exercise.versionHistory.snapshot.problemStatement'));
 
     readonly gradingCriteria = computed(() => this.sortGradingCriteria(this.snapshot().gradingCriteria));
     readonly gradingConfigurationChanged = computed(() =>
@@ -326,6 +343,7 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             changed: valuesDiffer(currentRaw, previousRaw),
             currentEmpty: currentRaw === undefined || currentRaw === '',
             previousEmpty: previousRaw === undefined || previousRaw === '',
+            revertable: isRevertable(id),
         };
     }
 
@@ -337,7 +355,10 @@ export class ExerciseVersionSharedSnapshotMetadataComponent implements OnDestroy
             label: this.translateLabel(labelKey),
             currentValue: currentDate,
             previousValue: previousDate,
+            currentRaw: currentValue,
+            previousRaw: previousValue,
             changed: valuesDiffer(currentValue, previousValue),
+            revertable: isRevertable(id),
         };
     }
 

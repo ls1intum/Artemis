@@ -76,3 +76,7 @@ $footer-height: 31px;
 .snapshot-skeleton__item {
     margin-bottom: 0.75rem;
 }
+
+:host ::ng-deep .revert-confirm-dialog {
+    min-width: min(28rem, 90vw);
+}
