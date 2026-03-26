@@ -605,13 +605,32 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutTutorialGroupsConfiguration_shouldReturnBadRequest() throws Exception {
+            Course course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
+            TutorialGroupsConfiguration configuration = course.getTutorialGroupsConfiguration();
+            course.setTutorialGroupsConfiguration(null);
+            configuration.setCourse(null);
+            courseRepository.save(course);
+            tutorialGroupsConfigurationRepository.delete(configuration);
 
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 15, "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutCourseTimezone_shouldReturnBadRequest() throws Exception {
+            Course course = courseRepository.findByIdElseThrow(courseId);
+            course.setTimeZone(null);
+            courseRepository.save(course);
 
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 15, "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.BAD_REQUEST);
         }
 
         @Test
