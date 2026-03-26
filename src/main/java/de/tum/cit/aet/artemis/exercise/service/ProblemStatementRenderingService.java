@@ -83,6 +83,14 @@ public class ProblemStatementRenderingService {
             .artemis-problem-statement table th,.artemis-problem-statement table td{border:1px solid var(--border-color,#dee2e6);padding:8px}
             </style>
             """;
+
+    // @formatter:off
+    private static final String DARK_MODE_CSS = """
+            <style>
+            .artemis-problem-statement{color:#e0e0e0;--body-color:#e0e0e0;--border-color:#444;--link-color:#58a6ff;--body-bg:#1e1e1e;--artemis-pre-background:#2d2d2d;--artemis-pre-color:#e0e0e0;--artemis-pre-border:#444;--markdown-preview-blockquote:#999;--markdown-preview-blockquote-border:#555;--success:#28a745;--danger:#dc3545;--secondary:#999;--info:#58a6ff}
+            .artemis-problem-statement :not(pre)>code{background:#2d2d2d}
+            </style>
+            """;
     // @formatter:on
 
     /**
@@ -173,8 +181,8 @@ public class ProblemStatementRenderingService {
         // Step 6: Strip testid tags
         html = html.replace("<testid>", "").replace("</testid>", "");
 
-        // Step 7: Prepend embedded CSS
-        html = EMBEDDED_CSS + html;
+        // Step 7: Prepend embedded CSS (+ dark mode overrides if needed)
+        html = EMBEDDED_CSS + (darkMode ? DARK_MODE_CSS : "") + html;
 
         // Step 8: Content hash (covers HTML + JS)
         String interactiveScript = interactive ? buildLocalizedScript(locale) : null;
