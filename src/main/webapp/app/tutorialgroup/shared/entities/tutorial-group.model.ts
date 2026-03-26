@@ -55,10 +55,10 @@ export class TutorialGroupDetailDTO {
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
         this.sessions = (rawDto.sessions ?? []).map((rawSessionDto) => new TutorialGroupDetailSessionDTO(rawSessionDto));
-        this.tutorName = rawDto.teachingAssistantName;
-        this.tutorLogin = rawDto.teachingAssistantLogin;
+        this.tutorName = rawDto.tutorName;
+        this.tutorLogin = rawDto.tutorLogin;
         this.tutorId = 1; // temporary compatibility solution -> does not break anything, will fix on main PR
-        this.tutorImageUrl = rawDto.teachingAssistantImageUrl;
+        this.tutorImageUrl = rawDto.tutorImageUrl;
         this.capacity = rawDto.capacity;
         this.campus = rawDto.campus;
         this.groupChannelId = rawDto.groupChannelId;
@@ -71,10 +71,10 @@ export class RawTutorialGroupDetailGroupDTO {
     title: string;
     language: string;
     isOnline: boolean;
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
+    tutorName: string;
+    tutorLogin: string;
     sessions: RawTutorialGroupDetailSessionDTO[] | undefined;
-    teachingAssistantImageUrl?: string;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
     groupChannelId?: number;

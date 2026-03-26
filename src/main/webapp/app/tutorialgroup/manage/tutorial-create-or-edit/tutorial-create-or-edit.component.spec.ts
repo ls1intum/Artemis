@@ -18,8 +18,7 @@ import {
     TutorialCreateOrEditComponent,
     UpdateTutorialGroupEvent,
 } from 'app/tutorialgroup/manage/tutorial-create-or-edit/tutorial-create-or-edit.component';
-import { TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
-import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
+import { RawTutorialGroupDetailGroupDTO, TutorialGroupDetailDTO, TutorialGroupScheduleDTO, TutorialGroupTutorDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
 import { PrimeNgConfirmDialogStubComponent } from 'test/helpers/stubs/tutorialgroup/prime-ng-confirm-dialog-stub.component';
 
@@ -67,7 +66,7 @@ describe('TutorialCreateOrEditComponent', () => {
         vi.restoreAllMocks();
     });
 
-    function createTutorialGroupDetailDTO(overrides: Partial<TutorialGroupDetail> = {}): TutorialGroupDetailDTO {
+    function createTutorialGroupDetailDTO(overrides: Partial<RawTutorialGroupDetailGroupDTO> = {}): TutorialGroupDetailDTO {
         return new TutorialGroupDetailDTO({
             id: 17,
             title: 'TG 1',
@@ -76,11 +75,9 @@ describe('TutorialCreateOrEditComponent', () => {
             sessions: [],
             tutorName: 'Grace Hopper',
             tutorLogin: 'grace',
-            tutorId: 12,
             tutorImageUrl: undefined,
             capacity: 15,
             campus: 'Garching',
-            additionalInformation: 'Bring laptop',
             groupChannelId: undefined,
             tutorChatId: undefined,
             ...overrides,
