@@ -111,21 +111,14 @@ ngx-extended-pdf-viewer {
     filter: none;
 }
 
-.page,
-.pdfPage,
-canvas,
-.canvasWrapper,
-div.page,
-.pdfViewer .page,
-[data-page-number] {
+.page {
     border: none !important;
     outline: none;
-    margin: 0 auto 0.5rem !important;
-}
+    margin: 0 auto 0 !important;
 
-.page:not(:last-child),
-div.page:not(:last-child) {
-    margin-bottom: 0.5rem !important;
+    &:not(:last-child) {
+        margin-bottom: 0.5rem !important;
+    }
 }
 
 // Dark mode overrides (toggled by TypeScript based on parent theme)

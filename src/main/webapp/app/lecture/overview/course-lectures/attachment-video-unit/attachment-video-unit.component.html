@@ -79,12 +79,14 @@
                 <fa-icon [icon]="faFileLines" size="3x" class="text-danger" />
             </div>
         } @else if (pdfUrl()) {
-            <jhi-lecture-pdf-viewer-iframe
-                [pdfUrl]="pdfUrl()!"
-                [uploadDate]="lectureUnit().attachment?.uploadDate"
-                [version]="lectureUnit().attachment?.version"
-                [initialPage]="validatedPdfPage()"
-            />
+            <div class="pdf-viewer-spacing">
+                <jhi-lecture-pdf-viewer-iframe
+                    [pdfUrl]="pdfUrl()!"
+                    [uploadDate]="lectureUnit().attachment?.uploadDate"
+                    [version]="lectureUnit().attachment?.version"
+                    [initialPage]="validatedPdfPage()"
+                />
+            </div>
         }
     }
 </jhi-lecture-unit-card>
