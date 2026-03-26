@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { MODULE_FEATURE_HYPERION, MODULE_FEATURE_IRIS, MODULE_FEATURE_LTI, PROFILE_ATHENA } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
-import { Subscription, firstValueFrom } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { CourseManagementService } from '../services/course-management.service';
 import { CourseManagementDetailViewDto } from 'app/core/course/shared/entities/course-management-detail-view-dto.model';
@@ -119,7 +119,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
     /**
      * On init load the course information and subscribe to listen for changes in courses.
      */
-    async ngOnInit() {
+    ngOnInit() {
         this.ltiEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_LTI));
         this.isAthenaEnabled.set(this.profileService.isProfileActive(PROFILE_ATHENA));
         this.isHyperionEnabled.set(this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION));
@@ -132,7 +132,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             }
         });
 
-        this.route.data.subscribe(({ course }) => {
+        this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(({ course }) => {
             if (course) {
                 if (course.onboardingDone !== true && course.isAtLeastInstructor && !this.accountService.isAdmin()) {
                     this.router.navigate(['/course-management', course.id, 'onboarding'], { replaceUrl: true });
@@ -142,15 +142,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
                 this.messagingEnabled.set(!!course.courseInformationSharingConfiguration?.includes('MESSAGING'));
                 this.communicationEnabled.set(!!course.courseInformationSharingConfiguration?.includes('COMMUNICATION'));
                 this.fetchOrganizations(course.id);
+                this.fetchIrisSettings(course);
             }
             this.isAdmin.set(this.accountService.isAdmin());
             this.getCourseDetailSections();
         });
-        const currentCourse = this.course();
-        if (this.irisEnabled() && currentCourse?.isAtLeastInstructor) {
-            const irisSettings = await firstValueFrom(this.irisSettingsService.getCourseSettingsWithRateLimit(currentCourse.id!));
-            this.irisChatEnabled.set(irisSettings?.settings?.enabled ?? false);
-        }
         this.paramSub = this.route.params.subscribe((params) => {
             const courseId = params['courseId'];
             this.fetchCourseStatistics(courseId);
@@ -360,6 +356,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses(courseId: number) {
+        this.eventManager.destroy(this.eventSubscription);
         this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
@@ -389,6 +386,14 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
             },
             error: (error: HttpErrorResponse) => onError(this.alertService, error),
         });
+    }
+
+    private fetchIrisSettings(course: Course) {
+        if (this.irisEnabled() && course.isAtLeastInstructor) {
+            this.irisSettingsService.getCourseSettingsWithRateLimit(course.id!).subscribe((irisSettings) => {
+                this.irisChatEnabled.set(irisSettings?.settings?.enabled ?? false);
+            });
+        }
     }
 
     private fetchOrganizations(courseId: number) {
