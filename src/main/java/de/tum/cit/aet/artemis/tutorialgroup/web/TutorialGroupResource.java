@@ -192,7 +192,7 @@ public class TutorialGroupResource {
             throw new InternalServerErrorException("The course of the tutorial group has an invalid timezone value. This should never happen when tutorial groups exist.");
         }
         if (!tutorialGroupRepository.existsByIdAndCourse_Id(tutorialGroupId, courseId)) {
-            throw new BadRequestException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
+            throw new EntityNotFoundException("There exists no tutorial group with the given tutorialGroupId for the course with the given courseId.");
         }
         ZoneId timeZone = ZoneId.of(timeZoneString.get());
         TutorialGroupDetailDTO tutorialGroupDetailDTO = tutorialGroupService.getTutorialGroupDTO(tutorialGroupId, courseId, timeZone);
@@ -212,7 +212,7 @@ public class TutorialGroupResource {
 
     @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastEditorInCourse
-    public ResponseEntity<Void> createTutorialGroup(@PathVariable Long courseId, @RequestBody @Valid CreateAndUpdateTutorialGroupDTO createTutorialGroupDTO) {
+    public ResponseEntity<Long> createTutorialGroup(@PathVariable Long courseId, @RequestBody @Valid CreateAndUpdateTutorialGroupDTO createTutorialGroupDTO) {
         log.debug("REST request to create TutorialGroup: {} in course: {}", createTutorialGroupDTO, courseId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -240,13 +240,18 @@ public class TutorialGroupResource {
         tutorialGroup.setCampus(createTutorialGroupDTO.campus());
         tutorialGroup.setCapacity(createTutorialGroupDTO.capacity());
         tutorialGroup.setAdditionalInformation(createTutorialGroupDTO.additionalInformation());
-
         tutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
         TutorialGroupScheduleDTO tutorialGroupScheduleDTO = createTutorialGroupDTO.tutorialGroupScheduleDTO();
         if (tutorialGroupScheduleDTO != null) {
             TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
             tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, tutorialGroup, schedule);
+            tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).orElseThrow();
+            tutorialGroup.setTutorialGroupSchedule(schedule);
+        }
+
+        if (configuration.getUseTutorialGroupChannels()) {
+            tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
         }
 
         if (!user.equals(teachingAssistant)) {
@@ -255,11 +260,7 @@ public class TutorialGroupResource {
             courseNotificationService.sendCourseNotification(tutorialGroupAssignedNotification, List.of(teachingAssistant));
         }
 
-        if (configuration.getUseTutorialGroupChannels()) {
-            tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
-        }
-
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().body(tutorialGroup.getId());
     }
 
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
@@ -317,9 +318,7 @@ public class TutorialGroupResource {
         TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
         tutorialGroupScheduleService.updateScheduleIfChanged(configuration, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
 
-        if (titleChanges && configuration.getUseTutorialGroupChannels()) {
-            tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannel(tutorialGroup);
-        }
+        tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
 
         return ResponseEntity.noContent().build();
     }
