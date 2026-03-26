@@ -1,0 +1,37 @@
+<div class="mcq-container">
+    <div class="mcq-question" [id]="questionLabelId">{{ mcqData().question }}</div>
+    <div class="mcq-options" role="radiogroup" [attr.aria-labelledby]="questionLabelId">
+        @for (option of mcqData().options; track $index) {
+            <button
+                class="mcq-option"
+                role="radio"
+                [attr.aria-checked]="selectedIndex() === $index"
+                [attr.aria-disabled]="submitted()"
+                [class.selected]="selectedIndex() === $index && !submitted()"
+                [class.correct]="submitted() && option.correct"
+                [class.incorrect]="submitted() && selectedIndex() === $index && !option.correct"
+                [disabled]="submitted()"
+                (click)="selectOption($index)"
+            >
+                <span class="mcq-option-label">{{ optionLabel($index) }}</span>
+                <span class="mcq-option-text">{{ option.text }}</span>
+            </button>
+        }
+    </div>
+    @if (!submitted()) {
+        <button class="mcq-submit" [disabled]="selectedIndex() === undefined" (click)="submit()" jhiTranslate="artemisApp.iris.mcq.submit"></button>
+    }
+    @if (submitted()) {
+        <div class="mcq-feedback" role="status" aria-live="polite" [class.mcq-feedback-correct]="isCorrectAnswer()" [class.mcq-feedback-incorrect]="!isCorrectAnswer()">
+            @if (isCorrectAnswer()) {
+                <span jhiTranslate="artemisApp.iris.mcq.correct"></span>
+            } @else {
+                <span jhiTranslate="artemisApp.iris.mcq.incorrect"></span>
+            }
+        </div>
+        <div class="mcq-explanation">
+            <strong jhiTranslate="artemisApp.iris.mcq.explanation"></strong>
+            {{ mcqData().explanation }}
+        </div>
+    }
+</div>
