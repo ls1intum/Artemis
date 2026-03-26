@@ -94,3 +94,27 @@ export type TutorialGroupRegisterStudentDTO =
     | { login: undefined; registrationNumber: string }
     | { login: string; registrationNumber: undefined }
     | { login: string; registrationNumber: string };
+
+export interface TutorialGroupTutorDTO {
+    id: number;
+    nameAndLogin: string;
+}
+
+export interface CreateOrUpdateTutorialGroupDTO {
+    title: string;
+    tutorId: number;
+    language: string;
+    isOnline: boolean;
+    campus?: string;
+    capacity?: number;
+    additionalInformation?: string;
+    tutorialGroupScheduleDTO?: TutorialGroupScheduleDTO;
+}
+
+export interface TutorialGroupScheduleDTO {
+    firstSessionStart: string;
+    firstSessionEnd: string;
+    repetitionFrequency: number;
+    tutorialPeriodEnd: string;
+    location: string;
+}
