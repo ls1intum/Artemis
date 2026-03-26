@@ -5,7 +5,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 
-type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange';
+type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange' | 'pdfLoadError';
 
 interface IframeMessageData {
     page?: number;
@@ -82,7 +82,6 @@ export class PdfViewerIframeWrapperComponent {
         // Safety timeout: if iframe doesn't send "ready" within 10s, proceed anyway
         this.iframeLoadTimeoutId = window.setTimeout(() => {
             if (!this.iframeReady()) {
-                globalThis.console.warn('PDF viewer iframe did not signal ready within 10 seconds, proceeding anyway');
                 this.iframeReady.set(true);
             }
         }, 10000);
@@ -99,8 +98,9 @@ export class PdfViewerIframeWrapperComponent {
         // Send immediately - this only gets called when iframeReady is true,
         // which means we received the "ready" message and the listener is registered.
         const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
+        const url = this.pdfUrl();
         this.postMessageToIframe('loadPDF', {
-            url: this.pdfUrl(),
+            url: url,
             initialPage: this.initialPage() ?? 1,
             isDarkMode,
         });
@@ -120,6 +120,13 @@ export class PdfViewerIframeWrapperComponent {
             // Setting this triggers the effect which calls loadPdfInIframe().
             this.clearIframeLoadTimeout();
             this.iframeReady.set(true);
+        } else if (type === 'pdfLoadError') {
+            // Notify parent component to try blob approach
+            window.dispatchEvent(
+                new CustomEvent('pdf-load-error', {
+                    detail: { pdfUrl: this.pdfUrl() },
+                }),
+            );
         }
     };
 

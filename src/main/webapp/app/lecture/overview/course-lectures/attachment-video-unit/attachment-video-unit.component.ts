@@ -72,6 +72,28 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return page && page > 0 ? page : undefined;
     });
 
+    constructor() {
+        super();
+
+        const destroyRef = this.destroyRef;
+
+        // Listen for PDF load errors from iframe to trigger blob fallback
+        const pdfErrorHandler = (event: Event) => {
+            const customEvent = event as CustomEvent<{ pdfUrl: string }>;
+            const failedUrl = customEvent.detail?.pdfUrl;
+            const currentLink = this.getAttachmentLink();
+
+            if (failedUrl === currentLink) {
+                this.loadPdfAsBlob();
+            }
+        };
+
+        window.addEventListener('pdf-load-error', pdfErrorHandler);
+        destroyRef.onDestroy(() => {
+            window.removeEventListener('pdf-load-error', pdfErrorHandler);
+        });
+    }
+
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     readonly hasPdf = computed(() => {
@@ -198,6 +220,26 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
+        // Use direct API URL for better performance (enables streaming, HTTP caching, lower memory)
+        this.pdfUrl.set(link);
+        this.isPdfLoading.set(false);
+    }
+
+    /**
+     * Fallback method that loads PDF as blob if direct URL approach fails.
+     * Only called when iframe signals a load error via window event.
+     */
+    private loadPdfAsBlob(): void {
+        this.isPdfLoading.set(true);
+
+        const link = this.getAttachmentLink();
+        if (!link) {
+            this.pdfLoadError.set(true);
+            this.isPdfLoading.set(false);
+            return;
+        }
+
+        // Blob approach as safety fallback
         this.pdfSubscription = this.httpClient.get(link, { responseType: 'blob' }).subscribe({
             next: (blob) => {
                 if (blob) {
@@ -229,11 +271,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     private revokePdfUrl(): void {
         const url = this.pdfUrl();
         if (url && url.startsWith('blob:')) {
-            try {
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                globalThis.console.warn('Failed to revoke blob URL:', error);
-            }
+            URL.revokeObjectURL(url);
         }
     }
 

@@ -469,11 +469,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.hasPdf()).toBe(false);
         });
 
-        it('loadPdf: loads PDF as blob and creates object URL', async () => {
-            const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
-            const mockUrl = 'blob:http://localhost/test-pdf';
-            const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockUrl);
-
+        it('loadPdf: loads PDF directly via URL (no blob)', async () => {
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
             fixture.detectChanges();
 
@@ -482,9 +478,38 @@ describe('AttachmentVideoUnitComponent', () => {
             // Trigger toggleCollapse to load PDF
             component.toggleCollapse(false);
 
-            expect(component.isPdfLoading()).toBe(true);
+            await fixture.whenStable();
 
-            // Mock the HTTP request for PDF file
+            // New behavior: PDF is loaded directly via URL, no HTTP request for blob
+            expect(component.isPdfLoading()).toBe(false);
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+
+            // Verify no blob request was made
+            httpMock.verify();
+        });
+
+        it('loadPdf: falls back to blob on error', async () => {
+            const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
+            const mockBlobUrl = 'blob:http://localhost/fallback-pdf';
+            const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockBlobUrl);
+
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            // Initial direct URL load (no HTTP request)
+            component.toggleCollapse(false);
+            await fixture.whenStable();
+
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+
+            // Simulate PDF load error by dispatching the custom event
+            window.dispatchEvent(
+                new CustomEvent('pdf-load-error', {
+                    detail: { pdfUrl: 'api/core/files//path/to/file/test.pdf' },
+                }),
+            );
+
+            // Now the blob fallback should trigger an HTTP request
             const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
             expect(req.request.method).toBe('GET');
             req.flush(testBlob);
@@ -492,28 +517,10 @@ describe('AttachmentVideoUnitComponent', () => {
             await fixture.whenStable();
 
             expect(component.isPdfLoading()).toBe(false);
-            expect(component.pdfUrl()).toBe(mockUrl);
+            expect(component.pdfUrl()).toBe(mockBlobUrl);
             expect(createObjectURLSpy).toHaveBeenCalledWith(testBlob);
 
             createObjectURLSpy.mockRestore();
-        });
-
-        it('loadPdf: handles error gracefully', async () => {
-            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
-            fixture.detectChanges();
-
-            component.toggleCollapse(false);
-
-            expect(component.isPdfLoading()).toBe(true);
-
-            // Mock the HTTP request to return an error with proper blob error response
-            const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
-            req.error(new ProgressEvent('error'), { status: 404, statusText: 'Not Found' });
-
-            await fixture.whenStable();
-
-            expect(component.isPdfLoading()).toBe(false);
-            expect(component.pdfUrl()).toBeUndefined();
         });
 
         it('toggleCollapse: resets pdfUrl when collapsed', async () => {
@@ -529,13 +536,10 @@ describe('AttachmentVideoUnitComponent', () => {
         it('toggleCollapse: loads both video and PDF when both present', async () => {
             const src = 'https://live.rbg.tum.de/w/abcd/1234?video_only=1';
             const playlist = 'https://cdn.tum/live/abcd/1234/playlist.m3u8';
-            const testBlob = new Blob(['fake pdf content'], { type: 'application/pdf' });
-            const mockUrl = 'blob:http://localhost/test-pdf';
 
             component.lectureUnit().videoSource = src;
             component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
 
-            vi.spyOn(URL, 'createObjectURL').mockReturnValue(mockUrl);
             vi.spyOn(lectureTranscriptionService, 'getTranscription').mockReturnValue(of(undefined));
 
             fixture.detectChanges();
@@ -546,14 +550,11 @@ describe('AttachmentVideoUnitComponent', () => {
             const videoReq = httpMock.expectOne((request) => request.url === '/api/nebula/video-utils/tum-live-playlist');
             videoReq.flush(playlist);
 
-            // Mock PDF request
-            const pdfReq = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
-            pdfReq.flush(testBlob);
-
             await fixture.whenStable();
 
             expect(component.playlistUrl()).toBe(playlist);
-            expect(component.pdfUrl()).toBe(mockUrl);
+            // PDF is now loaded directly via URL (no blob)
+            expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
         });
 
         it('ngOnDestroy: cleanup', async () => {

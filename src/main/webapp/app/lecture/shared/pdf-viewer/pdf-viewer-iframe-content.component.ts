@@ -5,7 +5,7 @@ import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free
 
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
 
-type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange';
+type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange' | 'pdfLoadError';
 
 interface IframeMessageData {
     page?: number;
@@ -102,6 +102,11 @@ export class PdfViewerIframeContentComponent implements OnInit {
         this.postMessageToParent('pagesLoaded', { pagesCount: event.pagesCount ?? 0 });
     }
 
+    onPdfLoadingFailed(): void {
+        // Notify parent about load failure to trigger blob fallback
+        this.postMessageToParent('pdfLoadError', {});
+    }
+
     zoomIn(): void {
         this.dispatchZoomEvent('zoomin');
     }
@@ -113,7 +118,6 @@ export class PdfViewerIframeContentComponent implements OnInit {
     private dispatchZoomEvent(eventName: 'zoomin' | 'zoomout'): void {
         const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal();
         if (!pdfViewerApplication?.eventBus) {
-            globalThis.console.warn('PDF viewer not initialized, zoom action ignored');
             return;
         }
         pdfViewerApplication.eventBus.dispatch(eventName);

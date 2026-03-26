@@ -6,6 +6,7 @@
         [customToolbar]="customToolbar"
         (pageChange)="onPageChange($event)"
         (pagesLoaded)="onPagesLoaded($event)"
+        (pdfLoadingFailed)="onPdfLoadingFailed($event)"
         [showToolbar]="true"
         [ignoreKeyboard]="true"
         [zoom]="'page-width'"
