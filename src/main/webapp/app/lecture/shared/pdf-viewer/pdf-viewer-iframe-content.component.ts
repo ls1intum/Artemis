@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewEncapsulati
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
 
@@ -27,7 +28,7 @@ interface IframeMessage {
 @Component({
     selector: 'jhi-pdf-viewer-iframe-content',
     standalone: true,
-    imports: [NgxExtendedPdfViewerModule, FaIconComponent],
+    imports: [NgxExtendedPdfViewerModule, FaIconComponent, ArtemisTranslatePipe],
     templateUrl: './pdf-viewer-iframe-content.component.html',
     styleUrls: ['./pdf-viewer-iframe-content.component.scss'],
     encapsulation: ViewEncapsulation.None,

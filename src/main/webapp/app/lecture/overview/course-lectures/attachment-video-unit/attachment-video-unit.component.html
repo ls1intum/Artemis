@@ -75,8 +75,12 @@
                 </div>
             </div>
         } @else if (pdfLoadError()) {
-            <div class="d-flex justify-content-center p-3">
-                <fa-icon [icon]="faFileLines" size="3x" class="text-danger" />
+            <div class="alert alert-danger d-flex align-items-center gap-2 m-3" role="alert">
+                <fa-icon [icon]="faFileLines" />
+                <div>
+                    <div class="fw-bold" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailed"></div>
+                    <div jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadFailedDetail"></div>
+                </div>
             </div>
         } @else if (pdfUrl()) {
             <div class="pdf-viewer-spacing">

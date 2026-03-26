@@ -223,8 +223,7 @@
                 "loadFailed": "Failed to load PDF",
                 "loadFailedDetail": "Failed to load PDF document. Please try again.",
                 "zoomOut": "Zoom out",
-                "zoomIn": "Zoom in",
-                "resetZoom": "Reset zoom"
+                "zoomIn": "Zoom in"
             }
         },
         "exerciseUnit": {
