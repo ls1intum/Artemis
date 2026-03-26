@@ -82,7 +82,7 @@ export class CourseTutorialGroupDetailComponent {
     tutorialGroup = input.required<TutorialGroupDetailDTO>();
     tutorialGroupSessions = computed<TutorialGroupDetailSession[]>(() => this.computeSessionsToDisplay());
     nextSession = computed<TutorialGroupDetailSession | undefined>(() => this.computeNextSessionDataUsing());
-    teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().teachingAssistantImageUrl));
+    teachingAssistantImageUrl = computed(() => addPublicFilePrefix(this.tutorialGroup().tutorImageUrl));
     tutorialGroupLanguage = computed<string>(() => this.tutorialGroup().language);
     tutorialGroupCapacity = computed<string>(() => String(this.tutorialGroup().capacity ?? '-'));
     tutorialGroupMode = computed<string>(() => (this.tutorialGroup().isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline'));

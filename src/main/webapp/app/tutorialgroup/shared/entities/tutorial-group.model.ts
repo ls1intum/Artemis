@@ -42,7 +42,7 @@ export class TutorialGroupDetailDTO {
     tutorName: string;
     tutorLogin: string;
     tutorId: number;
-    teachingAssistantImageUrl?: string;
+    tutorImageUrl?: string;
     capacity?: number;
     campus?: string;
     additionalInformation?: string;
@@ -58,7 +58,7 @@ export class TutorialGroupDetailDTO {
         this.tutorName = rawDto.teachingAssistantName;
         this.tutorLogin = rawDto.teachingAssistantLogin;
         this.tutorId = 1; // temporary compatibility solution -> does not break anything, will fix on main PR
-        this.teachingAssistantImageUrl = rawDto.teachingAssistantImageUrl;
+        this.tutorImageUrl = rawDto.teachingAssistantImageUrl;
         this.capacity = rawDto.capacity;
         this.campus = rawDto.campus;
         this.groupChannelId = rawDto.groupChannelId;
