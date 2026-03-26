@@ -1,8 +1,5 @@
-@import 'src/main/webapp/content/scss/themes/default-variables';
-
-// Dark mode values from _dark-variables.scss (cannot import both theme files due to conflicts)
-$neutral-dark: rgb(24, 26, 24);
-$gray-700-dark: #444;
+@use 'src/main/webapp/content/scss/themes/default-variables' as light;
+@use 'src/main/webapp/content/scss/themes/dark-variables' as dark;
 
 :host {
     display: block;
@@ -15,11 +12,11 @@ $gray-700-dark: #444;
     width: 100%;
     height: 100%;
     --pdf-bar-height: 36px;
-    --pdf-viewer-bg: #{$gray-100};
-    // Light mode theme variables - must be explicit since iframe cannot access parent app's CSS properties
-    --card-bg: #{$white};
-    --card-border-color: #{$gray-300};
-    --body-color: #{$gray-900};
+    // Light mode theme variables (must be explicit since iframe cannot access parent app's CSS properties)
+    --pdf-viewer-bg: #{light.$gray-100};
+    --card-bg: #{light.$white};
+    --card-border-color: #{light.$gray-300};
+    --body-color: #{light.$gray-900};
 }
 
 .iframe-pdf-viewer {
@@ -120,8 +117,8 @@ $gray-700-dark: #444;
 
 // Dark mode overrides (toggled by TypeScript based on parent theme)
 .iframe-pdf-container.dark-mode {
-    --pdf-viewer-bg: var(--gray-900);
-    --card-bg: #{$neutral-dark};
-    --card-border-color: #{$gray-700-dark};
-    --body-color: #{$gray-100};
+    --pdf-viewer-bg: #{dark.$gray-900};
+    --card-bg: #{dark.$gray-900};
+    --card-border-color: #{dark.$gray-700};
+    --body-color: #{dark.$gray-100};
 }
