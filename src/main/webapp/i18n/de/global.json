@@ -82,7 +82,13 @@
             },
             "comingSoon": "Demnächst verfügbar",
             "enterToActivate": "Eingabetaste drücken zum Aktivieren",
-            "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut."
+            "searchFailed": "Suche fehlgeschlagen. Bitte versuche es erneut.",
+            "askIris": "Iris KI fragen",
+            "askIrisDescription": "KI-generierte Antwort aus deinen Vorlesungsinhalten",
+            "irisAnswerTitle": "Iris KI-Antwort",
+            "irisAnswerSources": "Quellen",
+            "irisAnswerError": "Iris konnte keine Antwort generieren. Bitte versuche es erneut.",
+            "continueInIris": "Gespräch in Iris fortsetzen"
         },
         "menu": {
             "home": "Startseite",
