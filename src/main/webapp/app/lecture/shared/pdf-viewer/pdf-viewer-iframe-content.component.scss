@@ -16,10 +16,7 @@ $gray-700-dark: #444;
     height: 100%;
     --pdf-bar-height: 36px;
     --pdf-viewer-bg: #{$gray-100};
-
-    // Define semantic variables for light mode using Artemis theme variables.
-    // IMPORTANT: These must be defined explicitly because this iframe is a separate
-    // document and cannot access the parent application's CSS custom properties.
+    // Light mode theme variables - must be explicit since iframe cannot access parent app's CSS properties
     --card-bg: #{$white};
     --card-border-color: #{$gray-300};
     --body-color: #{$gray-900};
@@ -31,14 +28,14 @@ $gray-700-dark: #444;
     height: 100%;
 }
 
-#viewerContainer {
+.iframe-pdf-container #viewerContainer {
     background-color: var(--pdf-viewer-bg) !important;
 }
 
-.pdfViewer,
-#viewer,
-.viewer,
-ngx-extended-pdf-viewer {
+.iframe-pdf-container .pdfViewer,
+.iframe-pdf-container #viewer,
+.iframe-pdf-container .viewer,
+.iframe-pdf-container ngx-extended-pdf-viewer {
     background-color: var(--pdf-viewer-bg) !important;
 }
 
@@ -100,18 +97,18 @@ ngx-extended-pdf-viewer {
     color: var(--body-color);
 }
 
-.toolbar,
-#toolbarContainer,
-#mainContainer {
+.iframe-pdf-container .toolbar,
+.iframe-pdf-container #toolbarContainer,
+.iframe-pdf-container #mainContainer {
     border: none !important;
 }
 
-* {
+.iframe-pdf-container * {
     box-shadow: none;
     filter: none;
 }
 
-.page {
+.iframe-pdf-container .page {
     border: none !important;
     outline: none;
     margin: 0 auto 0 !important;
