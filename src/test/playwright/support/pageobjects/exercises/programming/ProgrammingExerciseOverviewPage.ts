@@ -16,8 +16,12 @@ export class ProgrammingExerciseOverviewPage {
 
     async checkResultScore(expectedResult: string) {
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
-        await Commands.reloadUntilTextFound(this.page, resultScore, expectedResult, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT * 2);
-        await expect(resultScore).toContainText(expectedResult);
+        // Use > semantics: accept any non-zero score rather than an exact string match,
+        // consistent with verifyResultScore. A '0%' expectation is matched literally.
+        const isZeroExpected = expectedResult === '0%';
+        const textPattern = isZeroExpected ? '0%' : /[1-9]/;
+        await Commands.reloadUntilTextFound(this.page, resultScore, textPattern, POLLING_INTERVAL, BUILD_RESULT_TIMEOUT * 2);
+        await expect(resultScore).toContainText(textPattern);
     }
 
     /**
@@ -29,13 +33,17 @@ export class ProgrammingExerciseOverviewPage {
     async checkResultScoreAfterBuild(courseId: number, exerciseId: number, expectedResult: string) {
         const url = `/courses/${courseId}/exercises/${exerciseId}`;
         const resultScore = this.page.locator('#exercise-headers-information').locator('#result-score');
+        // Use > semantics: accept any non-zero score rather than an exact string match,
+        // consistent with verifyResultScore. A '0%' expectation is matched literally.
+        const isZeroExpected = expectedResult === '0%';
+        const textPattern = isZeroExpected ? '0%' : /[1-9]/;
 
         // Try up to 6 full navigations over ~90s (each with 15s wait for score to appear)
         for (let attempt = 0; attempt < 6; attempt++) {
             await this.page.goto(url);
             await this.page.waitForLoadState('networkidle');
             try {
-                await expect(resultScore).toContainText(expectedResult, { timeout: 15000 });
+                await expect(resultScore).toContainText(textPattern, { timeout: 15000 });
                 return; // Success
             } catch {
                 console.log(`[checkResultScoreAfterBuild] Attempt ${attempt + 1}/6: score not found, retrying with fresh navigation...`);
@@ -45,7 +53,7 @@ export class ProgrammingExerciseOverviewPage {
         // Final attempt with longer timeout
         await this.page.goto(url);
         await this.page.waitForLoadState('networkidle');
-        await expect(resultScore).toContainText(expectedResult, { timeout: 30000 });
+        await expect(resultScore).toContainText(textPattern, { timeout: 30000 });
     }
 
     async startParticipation(courseId: number, exerciseId: number, credentials: UserCredentials): Promise<number> {

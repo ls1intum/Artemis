@@ -78,16 +78,17 @@ export class Commands {
         throw new Error(`Timed out finding an element matching the "${locator}" locator (URL: ${page.url()})`);
     };
 
-    static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string, interval = 5000, timeout = 60000) => {
+    static reloadUntilTextFound = async (page: Page, locator: Locator, expectedText: string | RegExp, interval = 5000, timeout = 60000) => {
         const startTime = Date.now();
         let lastSeenText: string | null = null;
+        const matches = (text: string | null): boolean => text != null && (expectedText instanceof RegExp ? expectedText.test(text) : text.includes(expectedText));
 
         while (Date.now() - startTime < timeout) {
             try {
                 await locator.waitFor({ state: 'visible', timeout: interval });
                 const text = await locator.textContent();
                 lastSeenText = text;
-                if (text?.includes(expectedText)) {
+                if (matches(text)) {
                     return;
                 }
             } catch {

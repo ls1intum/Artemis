@@ -172,7 +172,9 @@ test.describe('Exam participation', () => {
             await page.locator(`#exercise-${textExercise.id} #text-editor`).waitFor({ state: 'visible' });
             await expect(page.locator(`#exercise-${textExercise.id} #text-editor`))
                 .toHaveValue('', { timeout: 5000 })
-                .catch(() => {});
+                .catch(() => {
+                    console.warn('Text editor did not clear within 5s — proceeding; this is best-effort and not the assertion under test');
+                });
             await examParticipation.makeTextExerciseSubmission(textExercise.id!, textFixtureShort);
             await examNavigation.openOrSaveExerciseByTitle(textExercise.exerciseGroup!.title!);
 
