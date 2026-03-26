@@ -1,3 +1,5 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { CourseNotificationOverviewComponent } from 'app/communication/course-notification/course-notification-overview/course-notification-overview.component';
@@ -8,6 +10,7 @@ import { CourseNotificationViewingStatus } from 'app/communication/shared/entiti
 import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective } from 'ng-mocks';
+import { faBell } from '@fortawesome/free-solid-svg-icons';
 import { CourseNotificationBubbleComponent } from 'app/communication/course-notification/course-notification-bubble/course-notification-bubble.component';
 import { CourseNotificationComponent } from 'app/communication/course-notification/course-notification/course-notification.component';
 import { CommonModule } from '@angular/common';
@@ -19,6 +22,8 @@ import { MockActivatedRoute } from 'test/helpers/mocks/activated-route/mock-acti
 import { ActivatedRoute } from '@angular/router';
 
 describe('CourseNotificationOverviewComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: CourseNotificationOverviewComponent;
     let fixture: ComponentFixture<CourseNotificationOverviewComponent>;
     let courseNotificationService: CourseNotificationService;
@@ -35,26 +40,35 @@ describe('CourseNotificationOverviewComponent', () => {
         return new CourseNotification(id, courseId, 'newPostNotification', category, status, dayjs(), { courseTitle: 'Test Course', courseIconUrl: 'test-icon-url' }, '/');
     };
 
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
+
     beforeEach(async () => {
         notificationCountSubject = new Subject<number>();
         notificationsSubject = new Subject<CourseNotification[]>();
 
         courseNotificationService = {
-            getNotificationCountForCourse$: jest.fn().mockReturnValue(notificationCountSubject.asObservable()),
-            getNotificationsForCourse$: jest.fn().mockReturnValue(notificationsSubject.asObservable()),
-            setNotificationStatus: jest.fn(),
-            setNotificationStatusInMap: jest.fn(),
-            decreaseNotificationCountBy: jest.fn(),
-            archiveAll: jest.fn(),
-            archiveAllInMap: jest.fn(),
-            removeNotificationFromMap: jest.fn(),
-            getNextNotificationPage: jest.fn().mockReturnValue(true),
+            getNotificationCountForCourse$: vi.fn().mockReturnValue(notificationCountSubject.asObservable()),
+            getNotificationsForCourse$: vi.fn().mockReturnValue(notificationsSubject.asObservable()),
+            setNotificationStatus: vi.fn(),
+            setNotificationStatusInMap: vi.fn(),
+            decreaseNotificationCountBy: vi.fn(),
+            archiveAll: vi.fn(),
+            archiveAllInMap: vi.fn(),
+            removeNotificationFromMap: vi.fn(),
+            getNextNotificationPage: vi.fn().mockReturnValue(true),
+            getIconFromType: vi.fn().mockReturnValue(faBell),
+            getDateTranslationKey: vi.fn().mockReturnValue(''),
+            getDateTranslationParams: vi.fn().mockReturnValue({}),
+            safeHtmlForPostingMarkdown: vi.fn().mockReturnValue(''),
             pageSize: 10,
         } as unknown as CourseNotificationService;
 
         await TestBed.configureTestingModule({
-            imports: [CommonModule, FontAwesomeModule],
-            declarations: [
+            imports: [
+                CommonModule,
+                FontAwesomeModule,
                 CourseNotificationOverviewComponent,
                 MockComponent(CourseNotificationBubbleComponent),
                 MockComponent(CourseNotificationComponent),
@@ -65,7 +79,11 @@ describe('CourseNotificationOverviewComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
             ],
-        }).compileComponents();
+        });
+        TestBed.overrideComponent(CourseNotificationOverviewComponent, {
+            remove: { imports: [CourseNotificationComponent, CourseNotificationBubbleComponent, TranslateDirective] },
+            add: { imports: [MockComponent(CourseNotificationComponent), MockComponent(CourseNotificationBubbleComponent), MockDirective(TranslateDirective)] },
+        });
 
         fixture = TestBed.createComponent(CourseNotificationOverviewComponent);
         component = fixture.componentInstance;
@@ -76,22 +94,18 @@ describe('CourseNotificationOverviewComponent', () => {
         componentAsAny = component as any;
     });
 
-    afterEach(() => {
-        jest.restoreAllMocks();
-    });
-
     it('should create', () => {
         expect(component).toBeTruthy();
     });
 
     it('should initialize with the correct default values', () => {
-        expect(componentAsAny.isShown).toBeFalse();
+        expect(componentAsAny.isShown).toBe(false);
         expect(componentAsAny.selectedCategory).toBe(CourseNotificationCategory.GENERAL);
         expect(componentAsAny.notifications).toBeUndefined();
         expect(componentAsAny.notificationsForSelectedCategory).toEqual([]);
         expect(componentAsAny.courseNotificationCount).toBe(0);
-        expect(componentAsAny.pagesFinished).toBeFalse();
-        expect(componentAsAny.isLoading).toBeFalse();
+        expect(componentAsAny.pagesFinished).toBe(false);
+        expect(componentAsAny.isLoading).toBe(false);
     });
 
     it('should set up notification count subscription on init', () => {
@@ -118,16 +132,16 @@ describe('CourseNotificationOverviewComponent', () => {
 
     it('should toggle overlay visibility when toggleOverlay is called', () => {
         componentAsAny.isShown = false;
-        const updateSpy = jest.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
 
         componentAsAny.toggleOverlay();
 
-        expect(componentAsAny.isShown).toBeTrue();
+        expect(componentAsAny.isShown).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
 
         componentAsAny.toggleOverlay();
 
-        expect(componentAsAny.isShown).toBeFalse();
+        expect(componentAsAny.isShown).toBe(false);
         expect(updateSpy).toHaveBeenCalledOnce();
     });
 
@@ -136,7 +150,7 @@ describe('CourseNotificationOverviewComponent', () => {
             .fill(null)
             .map((_, i) => createMockNotification(i, 101, CourseNotificationCategory.COMMUNICATION));
         componentAsAny.pagesFinished = false;
-        const querySpy = jest.spyOn(component as any, 'queryCurrentCategory');
+        const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
         componentAsAny.toggleOverlay();
 
@@ -147,14 +161,14 @@ describe('CourseNotificationOverviewComponent', () => {
     it('should correctly check if a category is selected', () => {
         componentAsAny.selectedCategory = CourseNotificationCategory.COMMUNICATION;
 
-        expect(componentAsAny.isCategorySelected('COMMUNICATION')).toBeTrue();
-        expect(componentAsAny.isCategorySelected('GENERAL')).toBeFalse();
+        expect(componentAsAny.isCategorySelected('COMMUNICATION')).toBe(true);
+        expect(componentAsAny.isCategorySelected('GENERAL')).toBe(false);
     });
 
     it('should change selected category and update notifications', () => {
-        const updateClientSpy = jest.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
-        const updateServerSpy = jest.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnServer');
-        const filterSpy = jest.spyOn(component as any, 'filterNotificationsIntoCurrentCategory');
+        const updateClientSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const updateServerSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnServer');
+        const filterSpy = vi.spyOn(component as any, 'filterNotificationsIntoCurrentCategory');
 
         componentAsAny.selectCategory('GENERAL');
 
@@ -169,7 +183,7 @@ describe('CourseNotificationOverviewComponent', () => {
             .fill(null)
             .map((_, i) => createMockNotification(i, 101, CourseNotificationCategory.COMMUNICATION));
         componentAsAny.pagesFinished = false;
-        const querySpy = jest.spyOn(component as any, 'queryCurrentCategory');
+        const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
         componentAsAny.selectCategory('GENERAL');
 
@@ -178,24 +192,24 @@ describe('CourseNotificationOverviewComponent', () => {
 
     it('should hide overlay when clicking outside the component', () => {
         componentAsAny.isShown = true;
-        const updateSpy = jest.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
-        const elementContainsSpy = jest.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(false);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const elementContainsSpy = vi.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(false);
 
         componentAsAny.onClickOutside({});
 
-        expect(componentAsAny.isShown).toBeFalse();
+        expect(componentAsAny.isShown).toBe(false);
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
 
     it('should not hide overlay when clicking inside the component', () => {
         componentAsAny.isShown = true;
-        const updateSpy = jest.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
-        const elementContainsSpy = jest.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(true);
+        const updateSpy = vi.spyOn(component as any, 'updateCurrentCategoryNotificationsToSeenOnClient');
+        const elementContainsSpy = vi.spyOn(componentAsAny.elementRef.nativeElement, 'contains').mockReturnValue(true);
 
         componentAsAny.onClickOutside({});
 
-        expect(componentAsAny.isShown).toBeTrue();
+        expect(componentAsAny.isShown).toBe(true);
         expect(updateSpy).not.toHaveBeenCalled();
         expect(elementContainsSpy).toHaveBeenCalledOnce();
     });
@@ -203,18 +217,18 @@ describe('CourseNotificationOverviewComponent', () => {
     it('should load more notifications when scrolling to bottom', () => {
         componentAsAny.pagesFinished = false;
         componentAsAny.isLoading = false;
-        const querySpy = jest.spyOn(component as any, 'queryCurrentCategory');
+        const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
         componentAsAny.onScrollReachBottom();
 
-        expect(componentAsAny.isLoading).toBeTrue();
+        expect(componentAsAny.isLoading).toBe(true);
         expect(querySpy).toHaveBeenCalledOnce();
     });
 
     it('should not load more notifications when already loading or finished', () => {
         componentAsAny.pagesFinished = false;
         componentAsAny.isLoading = true;
-        const querySpy = jest.spyOn(component as any, 'queryCurrentCategory');
+        const querySpy = vi.spyOn(component as any, 'queryCurrentCategory');
 
         componentAsAny.onScrollReachBottom();
 
@@ -298,23 +312,23 @@ describe('CourseNotificationOverviewComponent', () => {
 
         componentAsAny.queryCurrentCategory();
 
-        expect(componentAsAny.isLoading).toBeTrue();
+        expect(componentAsAny.isLoading).toBe(true);
         expect(courseNotificationService.getNextNotificationPage).toHaveBeenCalledWith(101);
     });
 
     it('should set pagesFinished when service returns false', () => {
         componentAsAny.pagesFinished = false;
-        jest.spyOn(courseNotificationService, 'getNextNotificationPage').mockReturnValue(false);
+        vi.spyOn(courseNotificationService, 'getNextNotificationPage').mockReturnValue(false);
 
         componentAsAny.queryCurrentCategory();
 
-        expect(componentAsAny.pagesFinished).toBeTrue();
-        expect(componentAsAny.isLoading).toBeFalse();
+        expect(componentAsAny.pagesFinished).toBe(true);
+        expect(componentAsAny.isLoading).toBe(false);
     });
 
     it('should properly clean up subscriptions on destroy', () => {
-        const countUnsubscribeSpy = jest.fn();
-        const notificationsUnsubscribeSpy = jest.fn();
+        const countUnsubscribeSpy = vi.fn();
+        const notificationsUnsubscribeSpy = vi.fn();
 
         componentAsAny.courseNotificationCountSubscription = {
             unsubscribe: countUnsubscribeSpy,
@@ -331,7 +345,7 @@ describe('CourseNotificationOverviewComponent', () => {
     });
 
     it('should toggle overlay when button is clicked', () => {
-        const toggleSpy = jest.spyOn(component as any, 'toggleOverlay');
+        const toggleSpy = vi.spyOn(component as any, 'toggleOverlay');
         const button = fixture.debugElement.query(By.css('button'));
 
         button.nativeElement.click();
@@ -346,7 +360,7 @@ describe('CourseNotificationOverviewComponent', () => {
         fixture.changeDetectorRef.detectChanges();
 
         const overlay = fixture.debugElement.query(By.css('.course-notification-overview-overlay'));
-        expect(overlay.classes['is-shown']).toBeTrue();
+        expect(overlay.classes['is-shown']).toBe(true);
     });
 
     it('should display loading indicator when isLoading is true', () => {
@@ -384,7 +398,7 @@ describe('CourseNotificationOverviewComponent', () => {
         const categoryElements = fixture.debugElement.queryAll(By.css('.course-notification-overview-category'));
         expect(categoryElements.length).toBeGreaterThan(0);
 
-        const selectCategorySpy = jest.spyOn(component as any, 'selectCategory');
+        const selectCategorySpy = vi.spyOn(component as any, 'selectCategory');
 
         categoryElements[0].nativeElement.click();
 

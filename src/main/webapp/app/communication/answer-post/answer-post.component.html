@@ -1,7 +1,7 @@
 <div
     [id]="'item-' + posting.id"
     class="answer-post hover-container"
-    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage, 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
+    [ngClass]="{ 'module-bg rounded-2': isCommunicationPage(), 'is-saved': !isConsecutive() && posting.isSaved, 'non-consecutive': !isConsecutive() }"
 >
     @if (posting.isSaved) {
         <div class="post-is-saved-message post-content-padding fs-xx-small py-1" [ngClass]="{ 'is-saved': isConsecutive() && posting.isSaved }">
@@ -21,7 +21,7 @@
             <jhi-posting-header
                 [posting]="posting"
                 [readOnlyMode]="isReadOnlyMode()"
-                [isCommunicationPage]="isCommunicationPage"
+                [isCommunicationPage]="isCommunicationPage()"
                 [lastReadDate]="lastReadDate()"
                 [isDeleted]="isDeleted"
                 (onUserNameClicked)="onUserNameClicked()"
@@ -49,7 +49,7 @@
                         [course]="course"
                         [posting]="posting"
                         [isLastAnswer]="isLastAnswer()"
-                        [isThreadSidebar]="isThreadSidebar"
+                        [isThreadSidebar]="isThreadSidebar()"
                         (openPostingCreateEditModal)="createAnswerPostModal.open()"
                         (reactionsUpdated)="onReactionsUpdated($event)"
                         (mayDeleteOutput)="onMayDelete($event)"
@@ -71,7 +71,7 @@
                     [isReadOnlyMode]="isReadOnlyMode()"
                     [posting]="posting"
                     [isLastAnswer]="isLastAnswer()"
-                    [isThreadSidebar]="isThreadSidebar"
+                    [isThreadSidebar]="isThreadSidebar()"
                     (openPostingCreateEditModal)="createAnswerPostModal.open()"
                     (reactionsUpdated)="onReactionsUpdated($event)"
                     [isEmojiCount]="true"

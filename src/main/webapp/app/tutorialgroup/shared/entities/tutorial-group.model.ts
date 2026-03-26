@@ -5,7 +5,6 @@ import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutoria
 import { RawTutorialGroupDetailSessionDTO, TutorialGroupDetailSessionDTO, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
-import dayjs from 'dayjs/esm';
 
 export class TutorialGroup implements BaseEntity {
     public id?: number;
@@ -53,19 +52,7 @@ export class TutorialGroupDetailGroupDTO {
         this.title = rawDto.title;
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
-        this.sessions = (rawDto.sessions ?? []).map(
-            (session: RawTutorialGroupDetailSessionDTO) =>
-                new TutorialGroupDetailSessionDTO(
-                    dayjs(session.start),
-                    dayjs(session.end),
-                    session.location,
-                    session.isCancelled,
-                    session.locationChanged,
-                    session.timeChanged,
-                    session.dateChanged,
-                    session.attendanceCount,
-                ),
-        );
+        this.sessions = (rawDto.sessions ?? []).map((rawSessionDto) => new TutorialGroupDetailSessionDTO(rawSessionDto));
         this.teachingAssistantName = rawDto.teachingAssistantName;
         this.teachingAssistantLogin = rawDto.teachingAssistantLogin;
         this.teachingAssistantImageUrl = rawDto.teachingAssistantImageUrl;
@@ -90,3 +77,17 @@ export class RawTutorialGroupDetailGroupDTO {
     groupChannelId?: number;
     tutorChatId?: number;
 }
+
+export interface TutorialGroupRegisteredStudentDTO {
+    id: number;
+    name?: string;
+    profilePictureUrl?: string;
+    login: string;
+    email?: string;
+    registrationNumber?: string;
+}
+
+export type TutorialGroupRegisterStudentDTO =
+    | { login: undefined; registrationNumber: string }
+    | { login: string; registrationNumber: undefined }
+    | { login: string; registrationNumber: string };
