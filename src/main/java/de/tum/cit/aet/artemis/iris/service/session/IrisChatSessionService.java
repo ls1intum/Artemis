@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.iris.service.session;
 
+import static de.tum.cit.aet.artemis.core.util.TimeUtil.toInstant;
+
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Comparator;
@@ -21,6 +23,10 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.atlas.api.LearningMetricsApi;
+import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyJol;
+import de.tum.cit.aet.artemis.atlas.dto.CompetencyJolDTO;
+import de.tum.cit.aet.artemis.atlas.dto.metrics.StudentMetricsDTO;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
@@ -46,13 +52,26 @@ import de.tum.cit.aet.artemis.iris.repository.IrisSessionRepository;
 import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisMessageService;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
+import de.tum.cit.aet.artemis.iris.service.pyris.PyrisDTOService;
 import de.tum.cit.aet.artemis.iris.service.pyris.PyrisPipelineService;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.PyrisPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.ChatContext;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisChatPipelineExecutionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.chat.PyrisEventDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisCourseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisExerciseWithStudentSubmissionsDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisLectureUnitDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisSubmissionDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisTextExerciseDTO;
+import de.tum.cit.aet.artemis.iris.service.pyris.dto.data.PyrisUserDTO;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.CompetencyJolSetEvent;
 import de.tum.cit.aet.artemis.iris.service.pyris.event.NewResultEvent;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
 import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
+import de.tum.cit.aet.artemis.lecture.domain.AttachmentVideoUnit;
 import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingSubmission;
@@ -111,6 +130,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private final Optional<TextRepositoryApi> textRepositoryApi;
 
+    private final PyrisDTOService pyrisDTOService;
+
+    private final Optional<LearningMetricsApi> learningMetricsApi;
+
     private final IrisMessageService irisMessageService;
 
     private final Optional<IrisCitationService> irisCitationService;
@@ -125,7 +148,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             ObjectMapper objectMapper, ExerciseRepository exerciseRepository, SubmissionRepository submissionRepository,
             StudentParticipationRepository studentParticipationRepository, UserRepository userRepository, CourseRepository courseRepository,
             Optional<LectureRepositoryApi> lectureRepositoryApi, Optional<TextRepositoryApi> textRepositoryApi, IrisCitationService irisCitationService,
-            MessageSource messageSource) {
+            MessageSource messageSource, PyrisDTOService pyrisDTOService, Optional<LearningMetricsApi> learningMetricsApi) {
         super(irisSessionRepository, programmingSubmissionRepository, programmingExerciseStudentParticipationRepository, objectMapper, irisMessageService, irisMessageRepository,
                 irisChatWebsocketService, llmTokenUsageService, Optional.of(irisCitationService));
         this.irisSettingsService = irisSettingsService;
@@ -146,22 +169,19 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         this.irisMessageService = irisMessageService;
         this.irisCitationService = Optional.of(irisCitationService);
         this.messageSource = messageSource;
+        this.pyrisDTOService = pyrisDTOService;
+        this.learningMetricsApi = learningMetricsApi;
     }
 
     // -------------------------------------------------------------------------
     // Context helpers
     // -------------------------------------------------------------------------
 
-    private boolean isExerciseSession(IrisChatSession session) {
-        return session.getExerciseId() != null;
-    }
-
-    private boolean isLectureSession(IrisChatSession session) {
-        return session.getLectureId() != null;
-    }
-
-    private boolean isProgrammingExercise(IrisChatSession session) {
-        return programmingExerciseRepository.existsById(session.getExerciseId());
+    private ChatContext determineChatContext(IrisChatSession session) {
+        if (session.getExerciseId() != null) {
+            return programmingExerciseRepository.existsById(session.getExerciseId()) ? ChatContext.EXERCISE : ChatContext.TEXT_EXERCISE;
+        }
+        return session.getLectureId() != null ? ChatContext.LECTURE : ChatContext.COURSE;
     }
 
     // -------------------------------------------------------------------------
@@ -204,20 +224,30 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
 
     private void requestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
             Map<String, String> uncommittedFiles) {
-        if (isExerciseSession(session)) {
-            if (isProgrammingExercise(session)) {
-                executeProgrammingExercisePipeline(session, event, settings, latestSubmission, uncommittedFiles);
+        requestAndHandleResponse(session, event, settings, latestSubmission, uncommittedFiles, null);
+    }
+
+    private void requestAndHandleResponse(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings, Optional<ProgrammingSubmission> latestSubmission,
+            Map<String, String> uncommittedFiles, Object eventObject) {
+        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
+        var course = courseRepository.findByIdElseThrow(chatSession.getCourseId());
+        var actualSettings = settings.orElseGet(() -> irisSettingsService.getSettingsForCourse(course));
+        if (!actualSettings.enabled()) {
+            throw new ConflictException("Iris is not enabled", "Iris", "irisDisabled");
+        }
+
+        var context = determineChatContext(chatSession);
+
+        // Validate exam exercises
+        if (chatSession.getExerciseId() != null) {
+            var exercise = exerciseRepository.findByIdElseThrow(chatSession.getExerciseId());
+            if (exercise.isExamExercise()) {
+                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
             }
-            else {
-                executeTextExercisePipeline(session);
-            }
         }
-        else if (isLectureSession(session)) {
-            executeLecturePipeline(session);
-        }
-        else {
-            executeCoursePipeline(session, null);
-        }
+
+        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), chatSession, event,
+                executionDto -> buildChatDTO(context, chatSession, executionDto, actualSettings.customInstructions(), course, latestSubmission, uncommittedFiles, eventObject));
     }
 
     // -------------------------------------------------------------------------
@@ -242,29 +272,28 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
      */
     @Override
     public void checkHasAccessTo(User user, IrisChatSession session) {
-        if (isExerciseSession(session)) {
-            // TODO: überprüfen, ob exercise so gefunden werden kann
+        // LLM opt-in required for lecture and course chats, but not for exercise chats
+        if (session.getExerciseId() == null) {
+            user.hasOptedIntoLLMUsageElseThrow();
+        }
+
+        // Session ownership check (uniform across all contexts)
+        if (!Objects.equals(session.getUserId(), user.getId())) {
+            throw new AccessForbiddenException("Iris Session", session.getId());
+        }
+
+        // Role check — branching required because authCheckService has separate methods per scope
+        if (session.getExerciseId() != null) {
             var exercise = exerciseRepository.findByIdElseThrow(session.getExerciseId());
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-            if (!Objects.equals(session.getUserId(), user.getId())) {
-                throw new AccessForbiddenException("Iris Session", session.getId());
-            }
         }
-        else if (isLectureSession(session)) {
-            user.hasOptedIntoLLMUsageElseThrow();
-            if (session.getUserId() != user.getId()) {
-                throw new AccessForbiddenException("Iris Lecture chat Session", session.getId());
-            }
+        else if (session.getLectureId() != null) {
             var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(session.getLectureId());
             authCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
         }
         else {
-            user.hasOptedIntoLLMUsageElseThrow();
             var course = courseRepository.findByIdElseThrow(session.getCourseId());
             authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
-            if (!Objects.equals(session.getUserId(), user.getId())) {
-                throw new AccessForbiddenException("Iris Session", session.getId());
-            }
         }
     }
 
@@ -292,74 +321,81 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
     }
 
     // -------------------------------------------------------------------------
-    // Pipeline execution
+    // Pipeline DTO construction
     // -------------------------------------------------------------------------
 
-    private void executeProgrammingExercisePipeline(IrisChatSession session, Optional<String> event, Optional<IrisCourseSettings> settings,
-            Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles) {
-        var exercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+    /**
+     * Builds the {@link PyrisChatPipelineExecutionDTO} for the given chat context.
+     * Uses a single switch to collect context-specific data and populate the appropriate fields.
+     */
+    @SuppressWarnings("unchecked")
+    private PyrisChatPipelineExecutionDTO buildChatDTO(ChatContext context, IrisChatSession session, PyrisPipelineExecutionDTO executionDto, String customInstructions,
+            Course course, Optional<ProgrammingSubmission> latestSubmission, Map<String, String> uncommittedFiles, Object eventObject) {
+        var user = userRepository.findByIdElseThrow(session.getUserId());
+        var messages = pyrisDTOService.toPyrisMessageDTOList(session.getMessages());
+
+        // Context-specific fields (default: null)
+        PyrisCourseDTO courseDto = null;
+        Object exercise = null;
+        PyrisLectureDTO lectureDto = null;
+        PyrisSubmissionDTO progSubmission = null;
+        String textSubmission = null;
+        StudentMetricsDTO metrics = null;
+        PyrisEventDTO<?> eventPayload = null;
+
+        switch (context) {
+            case EXERCISE -> {
+                var progExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(session.getExerciseId());
+                exercise = pyrisDTOService.toPyrisProgrammingExerciseDTO(progExercise);
+                var actualSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(progExercise, user));
+                progSubmission = actualSubmission.map(s -> pyrisDTOService.toPyrisSubmissionDTO(s, uncommittedFiles)).orElse(null);
+                courseDto = new PyrisCourseDTO(course);
+            }
+            case TEXT_EXERCISE -> {
+                var textExercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getExerciseId());
+                exercise = PyrisTextExerciseDTO.of(textExercise);
+                var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(textExercise.getId(), user.getLogin());
+                var latest = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
+                textSubmission = latest instanceof TextSubmission ts ? ts.getText() : null;
+            }
+            case LECTURE -> {
+                var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
+                var lecture = api.findByIdWithLectureUnitsElseThrow(session.getLectureId());
+                Long courseId = course.getId();
+                List<PyrisLectureUnitDTO> lectureUnits = lecture.getLectureUnits() == null ? List.of() : lecture.getLectureUnits().stream().map(unit -> {
+                    Integer attachmentVersion = null;
+                    if (unit instanceof AttachmentVideoUnit attachmentUnit && attachmentUnit.getAttachment() != null && attachmentUnit.getAttachment().getVersion() != null) {
+                        attachmentVersion = attachmentUnit.getAttachment().getVersion();
+                    }
+                    return new PyrisLectureUnitDTO(unit.getId(), courseId, lecture.getId(), toInstant(unit.getReleaseDate()), unit.getName(), attachmentVersion);
+                }).toList();
+                lectureDto = new PyrisLectureDTO(lecture.getId(), lecture.getTitle(), lecture.getDescription(), lecture.getStartDate(), lecture.getEndDate(), lectureUnits);
+                courseDto = new PyrisCourseDTO(course);
+            }
+            case COURSE -> {
+                var fullCourse = pyrisPipelineService.loadCourseWithParticipationOfStudent(course.getId(), session.getUserId());
+                courseDto = PyrisCourseDTO.of(fullCourse);
+                metrics = learningMetricsApi.map(api -> api.getStudentCourseMetrics(session.getUserId(), course.getId())).orElse(null);
+                eventPayload = resolveEventPayload(eventObject);
+            }
         }
 
-        var actualSettings = settings.orElseGet(() -> {
-            var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-            return irisSettingsService.getSettingsForCourse(course);
-        });
-        if (!actualSettings.enabled()) {
-            throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
-        }
-
-        var actualUser = latestSubmission.flatMap(s -> ((ProgrammingExerciseStudentParticipation) s.getParticipation()).getStudent())
-                .orElseGet(() -> userRepository.findByIdElseThrow(session.getUserId()));
-        var actualLatestSubmission = latestSubmission.or(() -> getLatestSubmissionIfExists(exercise, actualUser));
-
-        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        pyrisPipelineService.executeChatPipeline(actualSettings.variant().jsonValue(), actualSettings.customInstructions(), actualLatestSubmission, exercise, chatSession, event,
-                uncommittedFiles);
+        return new PyrisChatPipelineExecutionDTO(context, session.getTitle(), messages, new PyrisUserDTO(user), executionDto.settings(), executionDto.initialStages(),
+                customInstructions, courseDto, exercise, lectureDto, null, progSubmission, textSubmission, metrics, eventPayload);
     }
 
-    private void executeTextExercisePipeline(IrisChatSession session) {
-        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        var exercise = textRepositoryApi.orElseThrow(() -> new TextApiNotPresentException(TextApi.class)).findByIdElseThrow(session.getExerciseId());
-        if (exercise.isExamExercise()) {
-            throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
+    /**
+     * Resolves an event object into a {@link PyrisEventDTO} for the course chat pipeline.
+     */
+    private PyrisEventDTO<?> resolveEventPayload(Object eventObject) {
+        if (eventObject == null) {
+            return null;
         }
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled()) {
-            throw new ConflictException("Iris is not enabled for this exercise", "Iris", "irisDisabled");
-        }
-        var user = userRepository.findByIdElseThrow(chatSession.getUserId());
-        var participation = studentParticipationRepository.findWithEagerSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-        var latestSubmission = participation.flatMap(p -> p.getSubmissions().stream().max(Comparator.comparingLong(Submission::getId))).orElse(null);
-        String latestSubmissionText = latestSubmission instanceof TextSubmission textSubmission ? textSubmission.getText() : null;
-        pyrisPipelineService.executeChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), exercise, latestSubmissionText, chatSession);
-    }
-
-    private void executeLecturePipeline(IrisChatSession session) {
-        var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        var lecture = api.findByIdWithLectureUnitsElseThrow(chatSession.getLectureId());
-        var course = lecture.getCourse();
-        if (course == null) {
-            throw new ConflictException("Lecture does not belong to a course", "Iris", "lectureNoCourse");
-        }
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled()) {
-            throw new ConflictException("Iris is not enabled for this lecture", "Iris", "irisDisabled");
-        }
-        pyrisPipelineService.executeChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, lecture);
-    }
-
-    private void executeCoursePipeline(IrisChatSession session, Object eventObject) {
-        var chatSession = (IrisChatSession) irisSessionRepository.findByIdWithMessagesAndContents(session.getId());
-        var course = courseRepository.findByIdElseThrow(chatSession.getCourseId());
-        var settings = irisSettingsService.getSettingsForCourse(course);
-        if (!settings.enabled()) {
-            throw new ConflictException("Iris is not enabled for this course", "Iris", "irisDisabled");
-        }
-        pyrisPipelineService.executeChatPipeline(settings.variant().jsonValue(), settings.customInstructions(), chatSession, eventObject);
+        return switch (eventObject) {
+            case CompetencyJol jol -> pyrisPipelineService.generateEventPayloadFromObjectType(CompetencyJolDTO.class, jol);
+            case Exercise ex -> pyrisPipelineService.generateEventPayloadFromObjectType(PyrisExerciseWithStudentSubmissionsDTO.class, ex);
+            default -> throw new UnsupportedOperationException("Unsupported Pyris event payload type: " + eventObject);
+        };
     }
 
     // -------------------------------------------------------------------------
@@ -400,7 +436,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         }
 
         var user = studentParticipation.getStudent().orElseThrow();
-        var session = getCurrentSessionOrCreateIfNotExistsForExercise(studentParticipation.getProgrammingExercise(), user);
+        var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user);
         rateLimitService.checkRateLimitElseThrow(session, user);
         log.info("Build failed for user {}", user.getName());
         CompletableFuture
@@ -429,7 +465,7 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             if (needsIntervention) {
                 log.info("Scores in the last 3 submissions did not improve for user {}", studentParticipation.getParticipant().getName());
                 var user = studentParticipation.getStudent().orElseThrow();
-                var session = getCurrentSessionOrCreateIfNotExistsForExercise(studentParticipation.getProgrammingExercise(), user);
+                var session = findOrCreateExerciseSession(studentParticipation.getProgrammingExercise(), user);
                 rateLimitService.checkRateLimitElseThrow(session, user);
                 try {
                     CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of(IrisEventType.PROGRESS_STALLED.name().toLowerCase()), Optional.of(settings),
@@ -485,54 +521,109 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
             return;
         }
 
-        var session = getCurrentSessionOrCreateIfNotExistsForCourse(course, user);
+        var session = findOrCreateCourseSession(course, user);
         rateLimitService.checkRateLimitElseThrow(session, user);
 
-        // TODO: ÜBERARBEITEN !!!
-
-        CompletableFuture.runAsync(() -> executeCoursePipeline(session, competencyJol));
+        CompletableFuture.runAsync(() -> requestAndHandleResponse(session, Optional.of("jol"), Optional.of(settings), Optional.empty(), Map.of(), competencyJol));
     }
 
     // -------------------------------------------------------------------------
-    // Session creation / retrieval — programming exercise
+    // Session creation / retrieval — unified public API
     // -------------------------------------------------------------------------
 
-    private IrisChatSession getCurrentSessionOrCreateIfNotExistsForExercise(Exercise exercise, User user) {
+    /**
+     * Gets or creates the current Iris chat session for the given context.
+     * Exactly one of exerciseId or lectureId should be set, or both null for a course chat.
+     *
+     * @param courseId   the course ID
+     * @param exerciseId optional exercise ID (null for course/lecture chats)
+     * @param lectureId  optional lecture ID (null for course/exercise chats)
+     * @param user       the user
+     * @return the current (or newly created) Iris session
+     */
+    public IrisChatSession getCurrentSessionOrCreateIfNotExists(long courseId, Long exerciseId, Long lectureId, User user) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+
+        if (exerciseId != null) {
+            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            return findOrCreateExerciseSession(exercise, user);
+        }
+        if (lectureId != null) {
+            var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(lectureId);
+            return findOrCreateLectureSession(lecture, user);
+        }
+        return findOrCreateCourseSession(course, user);
+    }
+
+    /**
+     * Creates a new Iris chat session for the given context.
+     *
+     * @param courseId   the course ID
+     * @param exerciseId optional exercise ID
+     * @param lectureId  optional lecture ID
+     * @param user       the user
+     * @return the newly created session
+     */
+    public IrisChatSession createSession(long courseId, Long exerciseId, Long lectureId, User user) {
+        var course = courseRepository.findByIdElseThrow(courseId);
+        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+
+        if (exerciseId != null) {
+            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            return createExerciseSessionInternal(exercise, user);
+        }
+        if (lectureId != null) {
+            var lecture = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class)).findByIdElseThrow(lectureId);
+            return createLectureSessionInternal(lecture, user);
+        }
+        return createCourseSessionInternal(course, user);
+    }
+
+    /**
+     * Gets all sessions for the given context.
+     *
+     * @param courseId   the course ID
+     * @param exerciseId optional exercise ID
+     * @param lectureId  optional lecture ID
+     * @param user       the user
+     * @return list of sessions
+     */
+    public List<IrisChatSession> getAllSessions(long courseId, Long exerciseId, Long lectureId, User user) {
+        if (exerciseId != null) {
+            return irisChatSessionRepository.findByExerciseIdAndUserIdOrderByCreationDateDesc(exerciseId, user.getId(), Pageable.unpaged());
+        }
+        if (lectureId != null) {
+            return irisChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lectureId, user.getId(), Pageable.unpaged());
+        }
+        return irisChatSessionRepository.findByCourseIdAndExerciseIdIsNullAndLectureIdIsNullAndUserIdOrderByCreationDateDesc(courseId, user.getId(), Pageable.unpaged());
+    }
+
+    // -------------------------------------------------------------------------
+    // Session creation / retrieval — private helpers
+    // -------------------------------------------------------------------------
+
+    private IrisChatSession findOrCreateExerciseSession(Exercise exercise, User user) {
         return irisChatSessionRepository.findLatestByExerciseIdAndUserIdWithMessages(exercise.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
                 .orElseGet(() -> createExerciseSessionInternal(exercise, user));
     }
 
-    /**
-     * Gets or creates the current Iris session for the given exercise and user.
-     *
-     * @param exercise The exercise
-     * @param user     The user
-     * @return The current (or newly created) Iris session
-     */
-    public IrisChatSession getCurrentSessionOrCreateIfNotExists(Exercise exercise, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course != null) {
-            irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
+    private IrisChatSession findOrCreateCourseSession(Course course, User user) {
+        var sessionOptional = irisChatSessionRepository.findLatestCourseChatSessionsByUserIdWithMessages(course.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst();
+        if (sessionOptional.isPresent()) {
+            var session = sessionOptional.get();
+            // Course sessions are reused if created today; otherwise a new one is created
+            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
+                checkHasAccessTo(user, session);
+                return session;
+            }
         }
-        return getCurrentSessionOrCreateIfNotExistsForExercise(exercise, user);
+        return createCourseSessionInternal(course, user);
     }
 
-    /**
-     * Creates a new Iris session for the given exercise (any type) and user.
-     *
-     * @param exercise The exercise
-     * @param user     The user
-     * @return The created session
-     */
-    public IrisChatSession createSession(Exercise exercise, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        if (course != null) {
-            irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-        }
-        return createExerciseSessionInternal(exercise, user);
+    private IrisChatSession findOrCreateLectureSession(Lecture lecture, User user) {
+        return irisChatSessionRepository.findLatestByLectureIdAndUserIdWithMessages(lecture.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
+                .orElseGet(() -> createLectureSessionInternal(lecture, user));
     }
 
     private IrisChatSession createExerciseSessionInternal(Exercise exercise, User user) {
@@ -544,93 +635,10 @@ public class IrisChatSessionService extends AbstractIrisChatSessionService<IrisC
         return irisChatSessionRepository.save(session);
     }
 
-    // -------------------------------------------------------------------------
-    // Session creation / retrieval — course
-    // -------------------------------------------------------------------------
-
-    /**
-     * Gets or creates the current Iris course chat session for the given course and user.
-     * If the last session is from a different day, a new one is created.
-     *
-     * @param course The course
-     * @param user   The user
-     * @return The current (or newly created) Iris session
-     */
-    public IrisChatSession getCurrentSessionOrCreateIfNotExists(Course course, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-        return getCurrentSessionOrCreateIfNotExistsForCourse(course, user);
-    }
-
-    private IrisChatSession getCurrentSessionOrCreateIfNotExistsForCourse(Course course, User user) {
-        var sessionOptional = irisChatSessionRepository.findLatestCourseChatSessionsByUserIdWithMessages(course.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst();
-        if (sessionOptional.isPresent()) {
-            var session = sessionOptional.get();
-
-            // if session is of today we can continue it; otherwise create a new one
-            if (session.getCreationDate().withZoneSameInstant(ZoneId.systemDefault()).toLocalDate().isEqual(LocalDate.now(ZoneId.systemDefault()))) {
-                checkHasAccessTo(user, session);
-                return session;
-            }
-        }
-        return createCourseSessionInternal(course, user);
-    }
-
-    /**
-     * Creates a new Iris course chat session for the given course and user.
-     *
-     * @param course The course
-     * @param user   The user
-     * @return The created session
-     */
-    // TODO: Nicht genutzt ?
-    public IrisChatSession createSession(Course course, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(course);
-        return createCourseSessionInternal(course, user);
-    }
-
     private IrisChatSession createCourseSessionInternal(Course course, User user) {
         var session = new IrisChatSession(course, user);
         session.setTitle(AbstractIrisChatSessionService.getLocalizedNewChatTitle(user.getLangKey(), messageSource));
         return irisChatSessionRepository.save(session);
-    }
-
-    // -------------------------------------------------------------------------
-    // Session creation / retrieval — lecture
-    // -------------------------------------------------------------------------
-
-    /**
-     * Gets or creates the current Iris lecture chat session for the given lecture and user.
-     *
-     * @param lecture The lecture
-     * @param user    The user
-     * @return The current (or newly created) Iris session
-     */
-    public IrisChatSession getCurrentSessionOrCreateIfNotExists(Lecture lecture, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-        var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(api.findByIdElseThrow(lecture.getId()).getCourse());
-        return getCurrentSessionOrCreateIfNotExistsForLecture(lecture, user);
-    }
-
-    private IrisChatSession getCurrentSessionOrCreateIfNotExistsForLecture(Lecture lecture, User user) {
-        return irisChatSessionRepository.findLatestByLectureIdAndUserIdWithMessages(lecture.getId(), user.getId(), Pageable.ofSize(1)).stream().findFirst()
-                .orElseGet(() -> createLectureSessionInternal(lecture, user));
-    }
-
-    /**
-     * Creates a new Iris lecture chat session for the given lecture and user.
-     *
-     * @param lecture The lecture
-     * @param user    The user
-     * @return The created session
-     */
-    public IrisChatSession createSession(Lecture lecture, User user) {
-        user.hasOptedIntoLLMUsageElseThrow();
-        var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-        irisSettingsService.ensureEnabledForCourseOrElseThrow(api.findByIdElseThrow(lecture.getId()).getCourse());
-        return createLectureSessionInternal(lecture, user);
     }
 
     private IrisChatSession createLectureSessionInternal(Lecture lecture, User user) {

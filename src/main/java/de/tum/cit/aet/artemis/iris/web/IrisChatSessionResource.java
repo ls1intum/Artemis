@@ -3,14 +3,12 @@ package de.tum.cit.aet.artemis.iris.web;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,16 +22,12 @@ import de.tum.cit.aet.artemis.core.config.Constants;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.exception.AccessForbiddenAlertException;
-import de.tum.cit.aet.artemis.core.exception.ConflictException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.CourseRepository;
 import de.tum.cit.aet.artemis.core.repository.CustomAuditEventRepository;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
-import de.tum.cit.aet.artemis.core.security.Role;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastStudentInCourse;
-import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
@@ -45,8 +39,6 @@ import de.tum.cit.aet.artemis.iris.service.IrisCitationService;
 import de.tum.cit.aet.artemis.iris.service.IrisSessionService;
 import de.tum.cit.aet.artemis.iris.service.session.IrisChatSessionService;
 import de.tum.cit.aet.artemis.iris.service.settings.IrisSettingsService;
-import de.tum.cit.aet.artemis.lecture.api.LectureRepositoryApi;
-import de.tum.cit.aet.artemis.lecture.config.LectureApiNotPresentException;
 
 /**
  * REST controller for managing {@link IrisChatSession}.
@@ -78,16 +70,9 @@ public class IrisChatSessionResource {
 
     private final IrisChatSessionService irisChatSessionService;
 
-    private final ExerciseRepository exerciseRepository;
-
-    private final Optional<LectureRepositoryApi> lectureRepositoryApi;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
     public IrisChatSessionResource(UserRepository userRepository, CourseRepository courseRepository, IrisSessionService irisSessionService, IrisSettingsService irisSettingsService,
             IrisSessionRepository irisSessionRepository, IrisCitationService irisCitationService, IrisChatSessionRepository irisChatSessionRepository,
-            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService, ExerciseRepository exerciseRepository,
-            Optional<LectureRepositoryApi> lectureRepositoryApi, AuthorizationCheckService authorizationCheckService) {
+            CustomAuditEventRepository auditEventRepository, IrisChatSessionService irisChatSessionService) {
         this.userRepository = userRepository;
         this.irisSessionService = irisSessionService;
         this.irisSettingsService = irisSettingsService;
@@ -97,9 +82,6 @@ public class IrisChatSessionResource {
         this.irisChatSessionRepository = irisChatSessionRepository;
         this.auditEventRepository = auditEventRepository;
         this.irisChatSessionService = irisChatSessionService;
-        this.exerciseRepository = exerciseRepository;
-        this.lectureRepositoryApi = lectureRepositoryApi;
-        this.authorizationCheckService = authorizationCheckService;
     }
 
     // -------------------------------------------------------------------------
@@ -117,30 +99,10 @@ public class IrisChatSessionResource {
     @PostMapping("{courseId}/sessions/current")
     @EnforceAtLeastStudentInCourse
     public ResponseEntity<IrisChatSession> getCurrentSessionOrCreateIfNotExists(@PathVariable Long courseId, @RequestParam(required = false) Long exerciseId,
-            @RequestParam(required = false) Long lectureId) throws URISyntaxException {
+            @RequestParam(required = false) Long lectureId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
-
-        IrisChatSession session;
-        if (exerciseId != null) {
-            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-            if (exercise.isExamExercise()) {
-                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-            }
-            session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(exercise, user);
-        }
-        else if (lectureId != null) {
-            var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-            var lecture = api.findByIdElseThrow(lectureId);
-            authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
-            session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(lecture, user);
-        }
-        else {
-            var course = courseRepository.findByIdElseThrow(courseId);
-            session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(course, user);
-        }
-
+        var session = irisChatSessionService.getCurrentSessionOrCreateIfNotExists(courseId, exerciseId, lectureId, user);
         irisCitationService.enrichSessionWithCitationInfo(session);
         return ResponseEntity.ok(session);
     }
@@ -159,27 +121,7 @@ public class IrisChatSessionResource {
             @RequestParam(required = false) Long lectureId) throws URISyntaxException {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
-
-        IrisChatSession session;
-        if (exerciseId != null) {
-            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-            if (exercise.isExamExercise()) {
-                throw new ConflictException("Iris is not supported for exam exercises", "Iris", "irisExamExercise");
-            }
-            session = irisChatSessionService.createSession(exercise, user);
-        }
-        else if (lectureId != null) {
-            var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-            var lecture = api.findByIdElseThrow(lectureId);
-            authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
-            session = irisChatSessionService.createSession(lecture, user);
-        }
-        else {
-            var course = courseRepository.findByIdElseThrow(courseId);
-            session = irisChatSessionService.createSession(course, user);
-        }
-
+        var session = irisChatSessionService.createSession(courseId, exerciseId, lectureId, user);
         var uriString = "/api/iris/sessions/" + session.getId();
         return ResponseEntity.created(new URI(uriString)).body(session);
     }
@@ -198,23 +140,7 @@ public class IrisChatSessionResource {
             @RequestParam(required = false) Long lectureId) {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         user.hasOptedIntoLLMUsageElseThrow();
-
-        List<IrisChatSession> sessions;
-        if (exerciseId != null) {
-            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-            authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
-            sessions = irisChatSessionRepository.findByExerciseIdAndUserIdOrderByCreationDateDesc(exerciseId, user.getId(), Pageable.unpaged());
-        }
-        else if (lectureId != null) {
-            var api = lectureRepositoryApi.orElseThrow(() -> new LectureApiNotPresentException(LectureRepositoryApi.class));
-            var lecture = api.findByIdElseThrow(lectureId);
-            authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.STUDENT, lecture, user);
-            sessions = irisChatSessionRepository.findByLectureIdAndUserIdOrderByCreationDateDesc(lectureId, user.getId(), Pageable.unpaged());
-        }
-        else {
-            sessions = irisChatSessionRepository.findByCourseIdAndExerciseIdIsNullAndLectureIdIsNullAndUserIdOrderByCreationDateDesc(courseId, user.getId(), Pageable.unpaged());
-        }
-
+        var sessions = irisChatSessionService.getAllSessions(courseId, exerciseId, lectureId, user);
         sessions.forEach(s -> irisSessionService.checkHasAccessToIrisSession(s, user));
         return ResponseEntity.ok(sessions);
     }

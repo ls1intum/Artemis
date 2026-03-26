@@ -4,7 +4,7 @@ import { IrisErrorMessageKey } from 'app/iris/shared/entities/iris-errors.model'
 import { IrisAssistantMessage, IrisMessage, IrisSender, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { BehaviorSubject, Observable, Subscription, catchError, map, of, tap, throwError } from 'rxjs';
 import { IrisChatHttpService } from 'app/iris/overview/services/iris-chat-http.service';
-import { IrisExerciseChatSession } from 'app/iris/shared/entities/iris-exercise-chat-session.model';
+import { IrisChatContext } from 'app/iris/shared/entities/iris-chat-context.model';
 import { IrisStageDTO } from 'app/iris/shared/entities/iris-stage-dto.model';
 import { IrisWebsocketService } from 'app/iris/overview/services/iris-websocket.service';
 import { IrisChatWebsocketDTO, IrisChatWebsocketPayloadType } from 'app/iris/shared/entities/iris-chat-websocket-dto.model';
@@ -31,21 +31,14 @@ export enum ChatServiceMode {
     TUTOR_SUGGESTION = 'TUTOR_SUGGESTION',
 }
 
-export function chatModeToUrlComponent(mode: ChatServiceMode): string | undefined {
-    switch (mode) {
-        case ChatServiceMode.COURSE:
-            return 'course-chat';
-        case ChatServiceMode.LECTURE:
-            return 'lecture-chat';
-        case ChatServiceMode.PROGRAMMING_EXERCISE:
-            return 'programming-exercise-chat';
-        case ChatServiceMode.TEXT_EXERCISE:
-            return 'text-exercise-chat';
-        case ChatServiceMode.TUTOR_SUGGESTION:
-            return 'tutor-suggestion';
-        default:
-            return undefined;
+function deriveChatServiceMode(ctx: IrisChatContext): ChatServiceMode {
+    if (ctx.exerciseId != null) {
+        return ChatServiceMode.PROGRAMMING_EXERCISE;
     }
+    if (ctx.lectureId != null) {
+        return ChatServiceMode.LECTURE;
+    }
+    return ChatServiceMode.COURSE;
 }
 
 /**
@@ -99,7 +92,7 @@ export class IrisChatService implements OnDestroy {
     private chatSessionSubscription?: Subscription;
     private chatSessionByIdSubscription?: Subscription;
 
-    private sessionCreationIdentifier?: string;
+    private sessionContext?: IrisChatContext;
 
     private shouldReopenChatSubject = new BehaviorSubject<boolean>(false);
     public shouldReopenChat$ = this.shouldReopenChatSubject.asObservable();
@@ -171,9 +164,7 @@ export class IrisChatService implements OnDestroy {
     }
 
     protected start() {
-        const requiresAcceptance = this.sessionCreationIdentifier
-            ? this.modeRequiresLLMAcceptance.get(Object.values(ChatServiceMode).find((mode) => this.sessionCreationIdentifier?.includes(mode)) as ChatServiceMode)
-            : true;
+        const requiresAcceptance = this.sessionContext ? (this.modeRequiresLLMAcceptance.get(this.currentChatModeSubject.value as ChatServiceMode) ?? true) : true;
         if (
             requiresAcceptance === false ||
             this.accountService.userIdentity()?.selectedLLMUsage === LLMSelectionDecision.LOCAL_AI ||
@@ -368,16 +359,15 @@ export class IrisChatService implements OnDestroy {
      */
     private addLatestEmptySessionToChatSessions(newIrisSession: IrisSession) {
         const currentSessions = this.chatSessions.getValue();
-
-        /** When a chat from a programming exercise is started {@link newIrisSession} does not have the property `chatMode` but `mode` instead */
-        const chatMode = newIrisSession.chatMode ?? (newIrisSession as any).mode ?? ChatServiceMode.COURSE;
         const newIrisSessionDTO: IrisSessionDTO = {
             id: newIrisSession.id,
             creationDate: newIrisSession.creationDate,
-            chatMode: chatMode,
-            entityId: newIrisSession.entityId,
+            chatMode: this.currentChatModeSubject.value ?? ChatServiceMode.COURSE,
+            entityId: newIrisSession.exerciseId ?? newIrisSession.lectureId ?? newIrisSession.courseId ?? 0,
             entityName: '',
             title: newIrisSession.title,
+            exerciseId: newIrisSession.exerciseId,
+            lectureId: newIrisSession.lectureId,
         };
 
         if (!this.isLatestSessionIncludedInHistory(newIrisSessionDTO, currentSessions)) {
@@ -490,13 +480,13 @@ export class IrisChatService implements OnDestroy {
     /**
      * Retrieves the current session or creates a new one if it doesn't exist.
      */
-    private getCurrentSessionOrCreate(): Observable<IrisExerciseChatSession> {
-        if (!this.sessionCreationIdentifier) {
-            throw new Error('Session creation identifier not set');
+    private getCurrentSessionOrCreate(): Observable<IrisSession> {
+        if (!this.sessionContext) {
+            throw new Error('Session context not set');
         }
 
-        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(this.sessionCreationIdentifier).pipe(
-            map((response: HttpResponse<IrisExerciseChatSession>) => {
+        return this.irisChatHttpService.getCurrentSessionOrCreateIfNotExists(this.sessionContext).pipe(
+            map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {
@@ -525,7 +515,7 @@ export class IrisChatService implements OnDestroy {
                 extra: {
                     currentUrl: this.router.url,
                     userId: this.accountService.userIdentity()?.id,
-                    sessionCreationIdentifier: this.sessionCreationIdentifier,
+                    sessionContext: this.sessionContext,
                 },
                 tags: {
                     category: 'Iris',
@@ -538,12 +528,12 @@ export class IrisChatService implements OnDestroy {
     /**
      * Creates a new session
      */
-    private createNewSession(): Observable<IrisExerciseChatSession> {
-        if (!this.sessionCreationIdentifier) {
-            throw new Error('Session creation identifier not set');
+    private createNewSession(): Observable<IrisSession> {
+        if (!this.sessionContext) {
+            throw new Error('Session context not set');
         }
-        return this.irisChatHttpService.createSession(this.sessionCreationIdentifier).pipe(
-            map((response: HttpResponse<IrisExerciseChatSession>) => {
+        return this.irisChatHttpService.createSession(this.sessionContext).pipe(
+            map((response: HttpResponse<IrisSession>) => {
                 if (response.body) {
                     return response.body;
                 } else {
@@ -555,10 +545,31 @@ export class IrisChatService implements OnDestroy {
     }
 
     switchTo(mode: ChatServiceMode, id?: number): void {
-        const modeUrl = chatModeToUrlComponent(mode);
-        const newIdentifier = modeUrl && id ? modeUrl + '/' + id : undefined;
-        const isDifferent = this.sessionCreationIdentifier !== newIdentifier;
-        this.sessionCreationIdentifier = newIdentifier;
+        const courseId = this.getCourseId();
+        let newContext: IrisChatContext | undefined;
+        if (id !== undefined && courseId) {
+            switch (mode) {
+                case ChatServiceMode.COURSE:
+                    newContext = { courseId: id };
+                    break;
+                case ChatServiceMode.PROGRAMMING_EXERCISE:
+                case ChatServiceMode.TEXT_EXERCISE:
+                    newContext = { courseId, exerciseId: id };
+                    break;
+                case ChatServiceMode.LECTURE:
+                    newContext = { courseId, lectureId: id };
+                    break;
+                default:
+                    newContext = { courseId };
+            }
+        }
+        const isDifferent =
+            this.sessionContext?.courseId !== newContext?.courseId ||
+            this.sessionContext?.exerciseId !== newContext?.exerciseId ||
+            this.sessionContext?.lectureId !== newContext?.lectureId;
+        this.sessionContext = newContext;
+        this.currentChatModeSubject.next(mode);
+        this.currentRelatedEntityIdSubject.next(id);
         if (isDifferent) {
             this.closeAndStart();
         }
@@ -572,14 +583,15 @@ export class IrisChatService implements OnDestroy {
         this.close();
 
         const courseId = this.getCourseId();
-        const entityId = session.entityId;
-        const chatMode = session.chatMode;
         if (courseId) {
+            const chatMode = deriveChatServiceMode({ courseId, exerciseId: session.exerciseId, lectureId: session.lectureId });
+            const entityId = session.exerciseId ?? session.lectureId ?? courseId;
+            this.sessionContext = { courseId, exerciseId: session.exerciseId, lectureId: session.lectureId };
             this.chatSessionByIdSubscription?.unsubscribe();
-            this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((session) => {
+            this.chatSessionByIdSubscription = this.irisChatHttpService.getChatSessionById(courseId, session.id).subscribe((loadedSession) => {
                 this.currentChatModeSubject.next(chatMode);
                 this.currentRelatedEntityIdSubject.next(entityId);
-                this.handleNewSession().next(session);
+                this.handleNewSession().next(loadedSession);
             });
         } else {
             captureException(new Error('Could not switch session, courseId is not set.'), {
@@ -587,7 +599,6 @@ export class IrisChatService implements OnDestroy {
                     currentUrl: this.router.url,
                     userId: this.accountService.userIdentity()?.id,
                     sessionId: this.sessionId,
-                    sessionCreationIdentifier: this.sessionCreationIdentifier,
                 },
                 tags: {
                     category: 'Iris',
@@ -598,7 +609,7 @@ export class IrisChatService implements OnDestroy {
 
     private closeAndStart() {
         this.close();
-        if (this.sessionCreationIdentifier) {
+        if (this.sessionContext) {
             this.start();
         }
     }

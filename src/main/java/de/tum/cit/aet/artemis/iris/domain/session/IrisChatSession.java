@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.iris.domain.session;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.core.domain.Course;
@@ -16,16 +15,10 @@ import de.tum.cit.aet.artemis.lecture.domain.Lecture;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class IrisChatSession extends IrisSession {
 
-    // TODO: JsonIgnore entfernen ?
-    @JsonIgnore
     private long courseId;
 
-    // Nullable
-    @JsonIgnore
     private Long exerciseId;
 
-    // Nullable
-    @JsonIgnore
     private Long lectureId;
 
     public IrisChatSession() {

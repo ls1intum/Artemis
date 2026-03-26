@@ -7,7 +7,6 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { Menu, MenuModule } from 'primeng/menu';
 import { MenuItem } from 'primeng/api';
 
@@ -71,24 +70,22 @@ export class ChatHistoryItemComponent {
     }
 
     private computeIcon(session: IrisSessionDTO): IconProp | undefined {
-        switch (session.chatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return faKeyboard;
-            case ChatServiceMode.LECTURE:
-                return faChalkboardUser;
-            default:
-                return undefined;
+        if (session.exerciseId != null) {
+            return faKeyboard;
         }
+        if (session.lectureId != null) {
+            return faChalkboardUser;
+        }
+        return undefined;
     }
 
     private computeTooltipKey(session: IrisSessionDTO): string | undefined {
-        switch (session.chatMode) {
-            case ChatServiceMode.PROGRAMMING_EXERCISE:
-                return 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
-            case ChatServiceMode.LECTURE:
-                return 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
-            default:
-                return undefined;
+        if (session.exerciseId != null) {
+            return 'artemisApp.iris.chatHistory.relatedEntityTooltip.programmingExercise';
         }
+        if (session.lectureId != null) {
+            return 'artemisApp.iris.chatHistory.relatedEntityTooltip.lecture';
+        }
+        return undefined;
     }
 }

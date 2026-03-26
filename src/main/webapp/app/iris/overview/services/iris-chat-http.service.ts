@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { IrisAssistantMessage, IrisMessage, IrisUserMessage } from 'app/iris/shared/entities/iris-message.model';
 import { convertDateFromServer } from 'app/shared/util/date.utils';
@@ -8,6 +8,7 @@ import { IrisSession } from 'app/iris/shared/entities/iris-session.model';
 import { IrisSessionDTO } from 'app/iris/shared/entities/iris-session-dto.model';
 import { IrisMessageRequestDTO } from 'app/iris/shared/entities/iris-message-request-dto.model';
 import { randomInt } from 'app/shared/util/utils';
+import { IrisChatContext } from 'app/iris/shared/entities/iris-chat-context.model';
 
 export type Response<T> = Observable<HttpResponse<T>>;
 
@@ -97,20 +98,32 @@ export class IrisChatHttpService {
         return this.httpClient.put<IrisMessage>(`${this.apiPrefix}/sessions/${sessionId}/messages/${messageId}/helpful`, helpful, { observe: 'response' });
     }
 
-    getCurrentSessionOrCreateIfNotExists<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions/current`, null, { observe: 'response' });
+    private buildContextParams(ctx: IrisChatContext): HttpParams {
+        let params = new HttpParams();
+        if (ctx.exerciseId != null) {
+            params = params.set('exerciseId', ctx.exerciseId.toString());
+        } else if (ctx.lectureId != null) {
+            params = params.set('lectureId', ctx.lectureId.toString());
+        }
+        return params;
     }
 
-    createSession<T extends IrisSession>(identifier: string): Response<T> {
-        return this.httpClient.post<T>(`${this.apiPrefix}/${identifier}/sessions`, null, { observe: 'response' });
+    getCurrentSessionOrCreateIfNotExists(ctx: IrisChatContext): Response<IrisSession> {
+        const params = this.buildContextParams(ctx);
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${ctx.courseId}/sessions/current`, null, { observe: 'response', params });
+    }
+
+    createSession(ctx: IrisChatContext): Response<IrisSession> {
+        const params = this.buildContextParams(ctx);
+        return this.httpClient.post<IrisSession>(`${this.apiPrefix}/chat/${ctx.courseId}/sessions`, null, { observe: 'response', params });
     }
 
     getChatSessions(courseId: number): Observable<IrisSessionDTO[]> {
-        return this.httpClient.get<any[]>(`${this.apiPrefix}/chat-history/${courseId}/sessions`).pipe();
+        return this.httpClient.get<IrisSessionDTO[]>(`${this.apiPrefix}/chat/${courseId}/sessions/overview`);
     }
 
     getChatSessionById(courseId: number, sessionId: number): Observable<IrisSession> {
-        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat-history/${courseId}/session/${sessionId}`).pipe();
+        return this.httpClient.get<IrisSession>(`${this.apiPrefix}/chat/${courseId}/session/${sessionId}`);
     }
 
     /**
@@ -119,7 +132,7 @@ export class IrisChatHttpService {
      */
     getSessionAndMessageCount(): Observable<{ sessions: number; messages: number }> {
         return this.httpClient
-            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat-history/sessions/count`)
+            .get<{ sessions?: number; messages?: number }>(`${this.apiPrefix}/chat/sessions/count`)
             .pipe(map((counts) => ({ sessions: counts.sessions ?? 0, messages: counts.messages ?? 0 })));
     }
 
@@ -128,7 +141,7 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteAllSessions(): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions`, { observe: 'response' });
     }
 
     /**
@@ -137,6 +150,6 @@ export class IrisChatHttpService {
      * @return Observable of the HTTP response
      */
     deleteSession(sessionId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.apiPrefix}/chat-history/sessions/${sessionId}`, { observe: 'response' });
+        return this.httpClient.delete<void>(`${this.apiPrefix}/chat/sessions/${sessionId}`, { observe: 'response' });
     }
 }
