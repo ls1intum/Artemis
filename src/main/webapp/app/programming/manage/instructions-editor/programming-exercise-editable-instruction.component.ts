@@ -549,6 +549,10 @@ export class ProgrammingExerciseEditableInstructionComponent implements AfterVie
         );
         this.problemStatementStateReplacementSubscription = this.problemStatementSyncService.stateReplaced$.subscribe((syncState) => {
             this.problemStatementSyncState = syncState;
+            // Detach the old binding before mutating the model so that the setValue does not
+            // propagate as a spurious delete+insert through the old Y.Doc to peers.
+            this.problemStatementBinding?.destroy();
+            this.problemStatementBinding = undefined;
             // Force model content to the replacement Yjs state to avoid merge/appending when rebinding.
             this.suppressUnsavedForNextProblemStatementChange = true;
             // Late leader replacement can carry content originally seeded from Windows peers.

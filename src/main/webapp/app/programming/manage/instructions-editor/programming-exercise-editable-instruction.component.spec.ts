@@ -796,5 +796,43 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
             fixture.destroy();
             flush();
         }));
+
+        it('should destroy old binding before calling setValue during state replacement', fakeAsync(() => {
+            const exerciseWithStatement = { id: 30, templateParticipation, problemStatement: 'initial' } as ProgrammingExercise;
+            setRequiredInputs(fixture, exerciseWithStatement);
+            fixture.detectChanges();
+
+            const { setValueSpy } = setupSyncTest();
+            comp.ngAfterViewInit();
+            tick();
+
+            setValueSpy.mockClear();
+
+            // Track call order: the binding's destroy wrapper must fire before setValue.
+            // createProblemStatementBinding wraps the mock's destroy with a guard, so we
+            // intercept the wrapper directly on the live binding reference.
+            const callOrder: string[] = [];
+            const currentBinding = (comp as any).problemStatementBinding;
+            const originalWrappedDestroy = currentBinding.destroy;
+            currentBinding.destroy = () => {
+                callOrder.push('destroy');
+                originalWrappedDestroy();
+            };
+            setValueSpy.mockImplementation(() => callOrder.push('setValue'));
+
+            const replacementDoc = new Y.Doc();
+            const replacementText = replacementDoc.getText('problem-statement');
+            replacementText.insert(0, 'new content');
+            const replacementAwareness = {} as any;
+
+            stateReplaced$.next({ doc: replacementDoc, text: replacementText, awareness: replacementAwareness });
+
+            // Old binding must be detached before mutating the model to prevent
+            // spurious delete+insert propagation through the stale Y.Doc to peers.
+            expect(callOrder).toEqual(['destroy', 'setValue']);
+
+            fixture.destroy();
+            flush();
+        }));
     });
 });
