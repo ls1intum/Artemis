@@ -7,7 +7,7 @@ import { TutorialCreateOrEditComponent, UpdateTutorialGroupEvent } from 'app/tut
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { AlertService } from 'app/shared/service/alert.service';
 import { TutorialGroupTutorsService } from 'app/tutorialgroup/manage/service/tutorial-group-tutors.service';
-import { TutorialGroupSharedStateService } from 'app/tutorialgroup/shared/service/tutorial-group-shared-state.service';
+import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 
 @Component({
@@ -20,7 +20,7 @@ export class TutorialEditContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
-    private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
+    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);

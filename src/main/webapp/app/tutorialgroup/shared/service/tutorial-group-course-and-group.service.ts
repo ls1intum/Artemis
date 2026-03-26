@@ -9,7 +9,7 @@ import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.servic
 @Injectable({
     providedIn: 'root',
 })
-export class TutorialGroupSharedStateService {
+export class TutorialGroupCourseAndGroupService {
     private tutorialGroupApiService = inject(TutorialGroupApiService);
     private courseManagementService = inject(CourseManagementService);
     private alertService = inject(AlertService);

@@ -2,7 +2,7 @@ import { Component, computed, effect, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { TutorialGroupDetailAccessLevel, TutorialGroupDetailComponent } from 'app/tutorialgroup/shared/tutorial-group-detail/tutorial-group-detail.component';
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
-import { TutorialGroupSharedStateService } from 'app/tutorialgroup/shared/service/tutorial-group-shared-state.service';
+import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model';
 
@@ -14,15 +14,23 @@ import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model
 export class CourseTutorialGroupDetailContainerComponent {
     protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
     private route = inject(ActivatedRoute);
-    private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
+    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
+    private course = this.tutorialGroupSharedStateService.course;
 
-    isLoading = this.tutorialGroupSharedStateService.isTutorialGroupLoading;
-    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
     courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
-    isMessagingEnabled = computed(() => this.computeIfMessagingEnabled());
+    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    isMessagingEnabled = computed(() => isMessagingEnabled(this.course()));
+    isLoading = computed(() => this.tutorialGroupSharedStateService.isTutorialGroupLoading() || this.tutorialGroupSharedStateService.isCourseLoading());
 
     constructor() {
+        effect(() => {
+            const courseId = this.courseId();
+            if (courseId) {
+                this.tutorialGroupSharedStateService.fetchCourse(courseId);
+            }
+        });
+
         effect(() => {
             const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
@@ -30,10 +38,5 @@ export class CourseTutorialGroupDetailContainerComponent {
                 this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
             }
         });
-    }
-
-    private computeIfMessagingEnabled(): boolean | undefined {
-        const course = this.tutorialGroupSharedStateService.course();
-        return isMessagingEnabled(course);
     }
 }

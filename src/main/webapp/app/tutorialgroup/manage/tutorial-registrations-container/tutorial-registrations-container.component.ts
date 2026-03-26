@@ -4,7 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { TutorialRegistrationsComponent } from 'app/tutorialgroup/manage/tutorial-registrations/tutorial-registrations.component';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
 import { TutorialGroupRegisteredStudentsService } from 'app/tutorialgroup/manage/service/tutorial-group-registered-students.service';
-import { TutorialGroupSharedStateService } from 'app/tutorialgroup/shared/service/tutorial-group-shared-state.service';
+import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
 import { AccountService } from 'app/core/auth/account.service';
 
 @Component({
@@ -14,24 +14,29 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class TutorialRegistrationsContainerComponent {
     private activatedRoute = inject(ActivatedRoute);
-    private tutorialGroupSharedStateService = inject(TutorialGroupSharedStateService);
+    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
     private accountService = inject(AccountService);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
+    private tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    private isTutorialGroupLoading = this.tutorialGroupSharedStateService.isTutorialGroupLoading;
+    private course = this.tutorialGroupSharedStateService.course;
+    private isCourseLoading = this.tutorialGroupSharedStateService.isCourseLoading;
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
-    isLoading = this.tutorialGroupRegisteredStudentsService.isLoading;
     registeredStudents = this.tutorialGroupRegisteredStudentsService.registeredStudents;
+    isRegisteredStudentsLoading = this.tutorialGroupRegisteredStudentsService.isLoading;
     loggedInUserIsAtLeastTutorOfGroup = computed(() => this.computeIfLoggedInUserIsAtLeastTutorOfGroup());
     loggedInUserIsAtLeastInstructorInCourse = computed(() => this.computeIfLoggedInUserIsAtLeastInstructorInCourse());
+    isLoading = computed(() => this.isTutorialGroupLoading() || this.isCourseLoading() || this.isRegisteredStudentsLoading());
 
     constructor() {
         effect(() => {
             const courseId = this.courseId();
-            const tutorialGroupsId = this.tutorialGroupId();
-            if (courseId && tutorialGroupsId) {
-                this.tutorialGroupRegisteredStudentsService.fetchRegisteredStudents(courseId, tutorialGroupsId);
-                this.fetchTutorialGroupIfNecessary(courseId, tutorialGroupsId);
+            const tutorialGroupId = this.tutorialGroupId();
+            if (courseId && tutorialGroupId) {
+                this.tutorialGroupRegisteredStudentsService.fetchRegisteredStudents(courseId, tutorialGroupId);
+                this.fetchTutorialGroupIfNecessary(courseId, tutorialGroupId);
             }
         });
 
@@ -44,26 +49,26 @@ export class TutorialRegistrationsContainerComponent {
     }
 
     private computeIfLoggedInUserIsAtLeastTutorOfGroup(): boolean | undefined {
-        const tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup();
-        const course = this.tutorialGroupSharedStateService.course();
+        const tutorialGroup = this.tutorialGroup();
+        const course = this.course();
         if (!tutorialGroup || !course) return undefined;
         return tutorialGroup.tutorLogin === this.accountService.userIdentity()?.login || this.accountService.isAtLeastEditorInCourse(course);
     }
 
     private computeIfLoggedInUserIsAtLeastInstructorInCourse(): boolean | undefined {
-        const course = this.tutorialGroupSharedStateService.course();
+        const course = this.course();
         if (!course) return undefined;
         return this.accountService.isAtLeastInstructorInCourse(course);
     }
 
     private fetchCourseIfNecessary(courseId: number) {
-        if (!this.tutorialGroupSharedStateService.course()) {
+        if (!this.course()) {
             this.tutorialGroupSharedStateService.fetchCourse(courseId);
         }
     }
 
     private fetchTutorialGroupIfNecessary(courseId: number, tutorialGroupId: number) {
-        if (!this.tutorialGroupSharedStateService.tutorialGroup()) {
+        if (!this.tutorialGroup()) {
             this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
         }
     }
