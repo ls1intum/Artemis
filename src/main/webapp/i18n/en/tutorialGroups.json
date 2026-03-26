@@ -329,7 +329,7 @@
             }
         },
         "services": {
-            "tutorialGroupSharedStateService": {
+            "tutorialGroupCourseAndGroupService": {
                 "networkError": {
                     "fetchGroup": "Something went wrong while refreshing the state of the tutorial group. Please try again by refreshing the page.",
                     "fetchCourse": "Something went wrong while refreshing the state of the course. Please try again by refreshing the page."

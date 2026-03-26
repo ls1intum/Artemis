@@ -20,7 +20,7 @@ export class TutorialEditContainerComponent {
     private destroyRef = inject(DestroyRef);
     private activatedRoute = inject(ActivatedRoute);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
-    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
+    private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
     private alertService = inject(AlertService);
     private tutorialGroupTutorService = inject(TutorialGroupTutorsService);
     private router = inject(Router);
@@ -29,8 +29,8 @@ export class TutorialEditContainerComponent {
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
     isTutorsLoading = this.tutorialGroupTutorService.isLoading;
     tutors = this.tutorialGroupTutorService.tutors;
-    isTutorialGroupLoading = this.tutorialGroupSharedStateService.isTutorialGroupLoading;
-    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    isTutorialGroupLoading = this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading;
+    tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
     isScheduleLoading = signal(false);
     schedule = signal<TutorialGroupScheduleDTO | undefined>(undefined);
     isLoading = computed<boolean>(() => this.isTutorsLoading() || this.isTutorialGroupLoading() || this.isScheduleLoading());
@@ -63,7 +63,7 @@ export class TutorialEditContainerComponent {
             .subscribe({
                 next: () => {
                     this.isTutorialGroupLoading.set(false);
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.router.navigate(['..'], { relativeTo: this.activatedRoute });
                 },
                 error: () => {
@@ -90,7 +90,7 @@ export class TutorialEditContainerComponent {
     private loadGroupIfNecessary(courseId: number, tutorialGroupId: number) {
         const tutorialGroup = this.tutorialGroup();
         if (!tutorialGroup) {
-            this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+            this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
         }
     }
 }

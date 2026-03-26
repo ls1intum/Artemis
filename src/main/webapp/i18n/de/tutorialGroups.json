@@ -328,7 +328,7 @@
             }
         },
         "services": {
-            "tutorialGroupSharedStateService": {
+            "tutorialGroupCourseAndGroupService": {
                 "networkError": {
                     "fetchGroup": "Beim Aktualisieren der Daten der Tutorial Gruppe ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst.",
                     "fetchCourse": "Beim Aktualisieren der Daten des Kurses ist etwas schief gegangen. Bitte versuche es erneut, indem du die Seite neu lädst."

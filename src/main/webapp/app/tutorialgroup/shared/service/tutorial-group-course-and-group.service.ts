@@ -40,7 +40,7 @@ export class TutorialGroupCourseAndGroupService {
                     this.isTutorialGroupLoading.set(false);
                 },
                 error: () => {
-                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkError.fetchGroup');
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupCourseAndGroupService.networkError.fetchGroup');
                     this.isTutorialGroupLoading.set(false);
                 },
             });
@@ -54,12 +54,12 @@ export class TutorialGroupCourseAndGroupService {
                 if (course) {
                     this.course.set(course);
                 } else {
-                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkError.fetchCourse');
+                    this.alertService.addErrorAlert('artemisApp.services.tutorialGroupCourseAndGroupService.networkError.fetchCourse');
                 }
                 this.isCourseLoading.set(false);
             },
             error: () => {
-                this.alertService.addErrorAlert('artemisApp.services.tutorialGroupSharedStateService.networkError.fetchCourse');
+                this.alertService.addErrorAlert('artemisApp.services.tutorialGroupCourseAndGroupService.networkError.fetchCourse');
                 this.isCourseLoading.set(false);
             },
         });

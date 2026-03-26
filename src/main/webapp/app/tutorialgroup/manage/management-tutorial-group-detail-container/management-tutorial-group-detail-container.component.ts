@@ -32,7 +32,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
     private destroyRef = inject(DestroyRef);
     private router = inject(Router);
     private route = inject(ActivatedRoute);
-    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
+    private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
     private tutorialGroupSessionService = inject(TutorialGroupSessionService);
@@ -40,22 +40,23 @@ export class ManagementTutorialGroupDetailContainerComponent {
     private accountService = inject(AccountService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
     private isActionLoading = signal(false);
+    private course = this.tutorialGroupCourseAndGroupService.course;
 
-    isLoading = computed(() => this.tutorialGroupSharedStateService.isTutorialGroupLoading() || this.isActionLoading());
-    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    isLoading = computed(() => this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading() || this.isActionLoading());
+    tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
     courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
-    isMessagingEnabled = computed(() => this.computeIfMessagingEnabled());
+    isMessagingEnabled = computed(() => isMessagingEnabled(this.course()));
     loggedInUserTutorialGroupDetailAccessLevel = computed(() => this.computeLoggedInUserTutorialGroupDetailAccessLevel());
 
     constructor() {
         const course = getRouteData<Course>(this.route, 'course');
-        this.tutorialGroupSharedStateService.course.set(course);
+        this.tutorialGroupCourseAndGroupService.course.set(course);
 
         effect(() => {
             const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
             if (courseId && tutorialGroupId) {
-                this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+                this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
             }
         });
     }
@@ -95,7 +96,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.toggleCancellationStatusOfSession(tutorialGroupSessionId);
+                    this.tutorialGroupCourseAndGroupService.toggleCancellationStatusOfSession(tutorialGroupSessionId);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -115,7 +116,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.toggleCancellationStatusOfSession(tutorialGroupSessionId);
+                    this.tutorialGroupCourseAndGroupService.toggleCancellationStatusOfSession(tutorialGroupSessionId);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -136,7 +137,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -156,7 +157,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
-                    this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.isActionLoading.set(false);
                 },
                 error: () => {
@@ -184,13 +185,8 @@ export class ManagementTutorialGroupDetailContainerComponent {
             });
     }
 
-    private computeIfMessagingEnabled(): boolean | undefined {
-        const course = this.tutorialGroupSharedStateService.course();
-        return isMessagingEnabled(course);
-    }
-
     private computeLoggedInUserTutorialGroupDetailAccessLevel(): TutorialGroupDetailAccessLevel | undefined {
-        const course = this.tutorialGroupSharedStateService.course();
+        const course = this.course();
         if (!course) return undefined;
         if (this.accountService.isAtLeastInstructorInCourse(course)) {
             return TutorialGroupDetailAccessLevel.INSTRUCTOR_OF_GROUP_OR_ADMIN;
@@ -198,7 +194,7 @@ export class ManagementTutorialGroupDetailContainerComponent {
         if (this.accountService.isAtLeastEditorInCourse(course)) {
             return TutorialGroupDetailAccessLevel.EDITOR_OF_GROUP;
         }
-        const tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup();
+        const tutorialGroup = this.tutorialGroup();
         if (tutorialGroup && tutorialGroup.tutorLogin === this.accountService.userIdentity()?.login) {
             return TutorialGroupDetailAccessLevel.TUTOR_OF_GROUP;
         }

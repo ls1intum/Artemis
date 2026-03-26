@@ -14,20 +14,20 @@ import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model
 export class CourseTutorialGroupDetailContainerComponent {
     protected readonly TutorialGroupDetailManagementAccessLevel = TutorialGroupDetailAccessLevel;
     private route = inject(ActivatedRoute);
-    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
+    private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
-    private course = this.tutorialGroupSharedStateService.course;
+    private course = this.tutorialGroupCourseAndGroupService.course;
 
     courseId = getNumericPathVariableSignal(this.route, 'courseId', 2);
-    tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
+    tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
     isMessagingEnabled = computed(() => isMessagingEnabled(this.course()));
-    isLoading = computed(() => this.tutorialGroupSharedStateService.isTutorialGroupLoading() || this.tutorialGroupSharedStateService.isCourseLoading());
+    isLoading = computed(() => this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading() || this.tutorialGroupCourseAndGroupService.isCourseLoading());
 
     constructor() {
         effect(() => {
             const courseId = this.courseId();
             if (courseId) {
-                this.tutorialGroupSharedStateService.fetchCourse(courseId);
+                this.tutorialGroupCourseAndGroupService.fetchCourse(courseId);
             }
         });
 
@@ -35,7 +35,7 @@ export class CourseTutorialGroupDetailContainerComponent {
             const courseId = this.courseId();
             const tutorialGroupId = this.tutorialGroupId();
             if (courseId && tutorialGroupId) {
-                this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+                this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
             }
         });
     }

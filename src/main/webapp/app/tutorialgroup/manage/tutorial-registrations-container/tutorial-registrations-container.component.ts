@@ -14,13 +14,13 @@ import { AccountService } from 'app/core/auth/account.service';
 })
 export class TutorialRegistrationsContainerComponent {
     private activatedRoute = inject(ActivatedRoute);
-    private tutorialGroupSharedStateService = inject(TutorialGroupCourseAndGroupService);
+    private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
     private accountService = inject(AccountService);
     private tutorialGroupRegisteredStudentsService = inject(TutorialGroupRegisteredStudentsService);
-    private tutorialGroup = this.tutorialGroupSharedStateService.tutorialGroup;
-    private isTutorialGroupLoading = this.tutorialGroupSharedStateService.isTutorialGroupLoading;
-    private course = this.tutorialGroupSharedStateService.course;
-    private isCourseLoading = this.tutorialGroupSharedStateService.isCourseLoading;
+    private tutorialGroup = this.tutorialGroupCourseAndGroupService.tutorialGroup;
+    private isTutorialGroupLoading = this.tutorialGroupCourseAndGroupService.isTutorialGroupLoading;
+    private course = this.tutorialGroupCourseAndGroupService.course;
+    private isCourseLoading = this.tutorialGroupCourseAndGroupService.isCourseLoading;
 
     courseId = getNumericPathVariableSignal(this.activatedRoute, 'courseId');
     tutorialGroupId = getNumericPathVariableSignal(this.activatedRoute, 'tutorialGroupId');
@@ -63,13 +63,13 @@ export class TutorialRegistrationsContainerComponent {
 
     private fetchCourseIfNecessary(courseId: number) {
         if (!this.course()) {
-            this.tutorialGroupSharedStateService.fetchCourse(courseId);
+            this.tutorialGroupCourseAndGroupService.fetchCourse(courseId);
         }
     }
 
     private fetchTutorialGroupIfNecessary(courseId: number, tutorialGroupId: number) {
         if (!this.tutorialGroup()) {
-            this.tutorialGroupSharedStateService.fetchTutorialGroup(courseId, tutorialGroupId);
+            this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
         }
     }
 }
