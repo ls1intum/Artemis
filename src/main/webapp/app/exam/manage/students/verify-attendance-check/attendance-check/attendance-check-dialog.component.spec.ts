@@ -1,3 +1,4 @@
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AttendanceCheckDialogComponent } from './attendance-check-dialog.component';
 import { MockProvider } from 'ng-mocks';
@@ -12,6 +13,8 @@ import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamUserAttendanceCheckDTO } from 'app/exam/shared/entities/exam-users-attendance-check-dto.model';
 
 describe('AttendanceCheckDialogComponent', () => {
+    setupTestBed({ zoneless: true });
+
     let component: AttendanceCheckDialogComponent;
     let fixture: ComponentFixture<AttendanceCheckDialogComponent>;
 
@@ -57,8 +60,7 @@ describe('AttendanceCheckDialogComponent', () => {
     });
 
     afterEach(() => {
-        jest.restoreAllMocks();
-        fixture.destroy();
+        vi.restoreAllMocks();
     });
 
     it('should open dialog and clone exam user attendance check', () => {
@@ -70,7 +72,7 @@ describe('AttendanceCheckDialogComponent', () => {
     });
 
     it('should emit save event and close dialog on save success', () => {
-        const emitSpy = jest.spyOn(component.save, 'emit');
+        const emitSpy = vi.spyOn(component.save, 'emit');
 
         component.openDialog(examUserAttendanceCheck);
         component.onSaveSuccess();
@@ -81,7 +83,7 @@ describe('AttendanceCheckDialogComponent', () => {
     });
 
     it('should show alert on save error', () => {
-        const alertSpy = jest.spyOn(alertService, 'error');
+        const alertSpy = vi.spyOn(alertService, 'error');
 
         component.onSaveError();
 
@@ -98,8 +100,8 @@ describe('AttendanceCheckDialogComponent', () => {
         } as ExamUserAttendanceCheckDTO;
 
         const expectedPayload = { ...examUserAttendanceCheck };
-        const updateExamUserSpy = jest.spyOn(examManagementService, 'updateExamUser').mockReturnValue(of(new HttpResponse({ body: updatedExamUserAttendanceCheck })));
-        const saveSuccessSpy = jest.spyOn(component, 'onSaveSuccess');
+        const updateExamUserSpy = vi.spyOn(examManagementService, 'updateExamUser').mockReturnValue(of(new HttpResponse({ body: updatedExamUserAttendanceCheck })));
+        const saveSuccessSpy = vi.spyOn(component, 'onSaveSuccess');
 
         component.openDialog(examUserAttendanceCheck);
         component.saveChanges();
@@ -115,8 +117,8 @@ describe('AttendanceCheckDialogComponent', () => {
     });
 
     it('should handle error on saveChanges', () => {
-        jest.spyOn(examManagementService, 'updateExamUser').mockReturnValue(throwError(() => new Error('Save failed')));
-        const saveErrorSpy = jest.spyOn(component, 'onSaveError');
+        vi.spyOn(examManagementService, 'updateExamUser').mockReturnValue(throwError(() => new Error('Save failed')));
+        const saveErrorSpy = vi.spyOn(component, 'onSaveError');
 
         component.openDialog(examUserAttendanceCheck);
         component.saveChanges();
@@ -128,27 +130,27 @@ describe('AttendanceCheckDialogComponent', () => {
         fixture.componentRef.setInput('exam', { id: 2 } as Exam);
         fixture.detectChanges();
 
-        expect(component['isWithinTwoHoursAfterExamEnd']()).toBeFalse();
+        expect(component['isBeforeExamEndPlusTwoHours']()).toBeFalse();
     });
 
-    it('should return true if within two hours after exam end', () => {
+    it('should return true if before exam end plus two hours', () => {
         fixture.componentRef.setInput('exam', {
             id: 2,
             endDate: dayjs().add(1, 'hour'),
         } as Exam);
         fixture.detectChanges();
 
-        expect(component['isWithinTwoHoursAfterExamEnd']()).toBeTrue();
+        expect(component['isBeforeExamEndPlusTwoHours']()).toBeTrue();
     });
 
-    it('should return false if more than two hours after exam end', () => {
+    it('should return false if after exam end plus two hours', () => {
         fixture.componentRef.setInput('exam', {
             id: 2,
             endDate: dayjs().subtract(3, 'hour'),
         } as Exam);
         fixture.detectChanges();
 
-        expect(component['isWithinTwoHoursAfterExamEnd']()).toBeFalse();
+        expect(component['isBeforeExamEndPlusTwoHours']()).toBeFalse();
     });
 
     it('should return trimmed full name', () => {

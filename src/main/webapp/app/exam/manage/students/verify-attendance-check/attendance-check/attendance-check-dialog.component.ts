@@ -61,7 +61,7 @@ export class AttendanceCheckDialogComponent {
         });
     }
 
-    protected isWithinTwoHoursAfterExamEnd(): boolean {
+    protected isBeforeExamEndPlusTwoHours(): boolean {
         const endDate = this.exam().endDate;
 
         if (!endDate) {
