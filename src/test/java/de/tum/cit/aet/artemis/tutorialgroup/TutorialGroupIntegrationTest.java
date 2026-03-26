@@ -26,7 +26,6 @@ import de.tum.cit.aet.artemis.communication.test_repository.OneToOneChatTestRepo
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
-import de.tum.cit.aet.artemis.core.user.util.UserFactory;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
@@ -39,6 +38,26 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     private static final String TEST_PREFIX = "tutorialgroup";
+
+    private static final String FIRST_COURSE_PREFIX = TEST_PREFIX + "firstcourse";
+
+    private static final String SECOND_COURSE_PREFIX = TEST_PREFIX + "secondcourse";
+
+    private static final String FIRST_COURSE_INSTRUCTOR1_LOGIN = TEST_PREFIX + "firstcourseinstructor1";
+
+    private static final String FIRST_COURSE_TUTOR1_LOGIN = TEST_PREFIX + "firstcoursetutor1";
+
+    private static final String FIRST_COURSE_TUTOR2_LOGIN = TEST_PREFIX + "firstcoursetutor2";
+
+    private static final String FIRST_COURSE_STUDENT1_LOGIN = TEST_PREFIX + "firstcoursestudent1";
+
+    private static final String FIRST_COURSE_STUDENT2_LOGIN = TEST_PREFIX + "firstcoursestudent2";
+
+    private static final String FIRST_COURSE_STUDENT3_LOGIN = TEST_PREFIX + "firstcoursestudent3";
+
+    private static final String FIRST_COURSE_STUDENT4_LOGIN = TEST_PREFIX + "firstcoursestudent4";
+
+    private static final String SECOND_COURSE_EDITOR1_LOGIN = TEST_PREFIX + "secondcourseeditor1";
 
     private User firstCourseInstructor1;
 
@@ -78,27 +97,32 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Override
     void setupTestScenario() {
         super.setupTestScenario();
-        userUtilService.addUsers(this.testPrefix, 4, 2, 1, 1);
-        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
-        }
-        firstCourseInstructor1 = userRepository.findOneByLogin(testPrefix + "instructor1").orElseThrow();
-        firstCourseTutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
-        firstCourseTutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
-        firstCourseStudent1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
-        firstCourseStudent2 = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow();
-        firstCourseStudent3 = userRepository.findOneByLogin(testPrefix + "student3").orElseThrow();
-        firstCourseStudent4 = userRepository.findOneByLogin(testPrefix + "student4").orElseThrow();
+        Course course = courseUtilService.createCourseWithUserPrefix(FIRST_COURSE_PREFIX);
+        course.setTimeZone(timeZone);
+        courseRepository.save(course);
+        courseId = course.getId();
+
+        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
+        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
+        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
+        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
+        userUtilService.addTeachingAssistant(course.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
+        userUtilService.addTeachingAssistant(course.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
+        userUtilService.addEditor(course.getEditorGroupName(), testPrefix + "editor1");
+        userUtilService.addInstructor(course.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+
+        firstCourseInstructor1 = userRepository.findOneByLogin(FIRST_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
+        firstCourseTutor1 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR1_LOGIN).orElseThrow();
+        firstCourseTutor2 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR2_LOGIN).orElseThrow();
+        firstCourseStudent1 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT1_LOGIN).orElseThrow();
+        firstCourseStudent2 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT2_LOGIN).orElseThrow();
+        firstCourseStudent3 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT3_LOGIN).orElseThrow();
+        firstCourseStudent4 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT4_LOGIN).orElseThrow();
 
         firstCourseStudent3.setRegistrationNumber("3");
         userRepository.save(firstCourseStudent3);
         firstCourseStudent4.setRegistrationNumber("4");
         userRepository.save(firstCourseStudent4);
-
-        Course course = courseUtilService.createCourse();
-        course.setTimeZone(timeZone);
-        courseRepository.save(course);
-        courseId = course.getId();
 
         configurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
@@ -113,12 +137,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                 firstCourseTutor2, Set.of(firstCourseStudent2));
         firstCourseChannel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup2);
 
-        var secondCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
+        var secondCourse = courseUtilService.createCourseWithUserPrefix(SECOND_COURSE_PREFIX);
         secondCourse.setTimeZone(timeZone);
         secondCourse = courseRepository.save(secondCourse);
         secondCourseId = secondCourse.getId();
-        userUtilService.addEditor(secondCourse.getEditorGroupName(), TEST_PREFIX + "othercourseeditor1");
-        secondCourseEditor1 = userRepository.findOneByLogin(TEST_PREFIX + "othercourseeditor1").orElseThrow();
+        userUtilService.addEditor(secondCourse.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
+        secondCourseEditor1 = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();
     }
 
     @Override
@@ -127,21 +151,21 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
     void getTitle_asUser_shouldReturnTitle() throws Exception {
         var tutorialGroupTitle = request.get("/api/tutorialgroup/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(tutorialGroupTitle).isEqualTo(firstCourseTutorialGroup1.getTitle());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
     void getUniqueLanguageValues_TwoUniqueValues_ShouldReturnBoth() throws Exception {
         var languageValues = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/language-values", HttpStatus.OK, String.class);
         assertThat(languageValues).containsExactlyInAnyOrder(Language.ENGLISH.name(), Language.GERMAN.name());
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
     void getUniqueLanguageValues_asTutor_shouldReturnForbidden() throws Exception {
         request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/language-values", HttpStatus.FORBIDDEN, String.class);
     }
@@ -150,7 +174,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     class GetTutorialGroupsTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void getTutorialGroupsForCourse_asStudent_shouldHidePrivateInformation() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
@@ -172,7 +196,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void getTutorialGroupsForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
             assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
@@ -187,7 +211,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void getTutorialGroupsForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
             assertThat(tutorialGroupsOfCourse).hasSize(2);
@@ -217,7 +241,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     class GetTutorialGroupTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
             String nonExistentCourseId = "-1";
             String url = "/api/tutorialgroup/courses/" + nonExistentCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId();
@@ -225,14 +249,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "INSTRUCTOR")
         void shouldReturnForbiddenIfUserNotInCourse() throws Exception {
             String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId();
             request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnInternalServerErrorIfCourseHasNoTimezone() throws Exception {
             Course course = courseRepository.findById(courseId).orElseThrow();
             course.setTimeZone(null);
@@ -242,7 +266,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnNotFoundIfTutorialGroupDoesNotExist() throws Exception {
             String nonExistentTutorialGroupId = "-1";
             String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + nonExistentTutorialGroupId;
@@ -250,7 +274,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnCorrectGroupWithCorrectSessions() throws Exception {
             TutorialGroupSession cancelledSession = firstCourseTutorialGroupSessions1.getFirst();
             TutorialGroupSession relocatedSession = firstCourseTutorialGroupSessions1.get(1);
@@ -294,9 +318,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnResponseWithoutTutorChatIdIfNoChatExists() throws Exception {
-            TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("firstcoursetutor1");
             tutorialGroupTestRepository.save(group);
             TutorialGroupSchedule schedule = buildExampleSchedule(AUGUST_FIRST_MONDAY_00_00.toLocalDate(), AUGUST_SECOND_MONDAY_00_00.toLocalDate());
             schedule.setTutorialGroup(group);
@@ -308,9 +332,9 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        @WithMockUser(username = FIRST_COURSE_STUDENT1_LOGIN, roles = "USER")
         void shouldReturnResponseWithTutorChatIdIfChatExists() throws Exception {
-            TutorialGroup group = buildTutorialGroupWithoutSchedule("tutor1");
+            TutorialGroup group = buildTutorialGroupWithoutSchedule("firstcoursetutor1");
             tutorialGroupTestRepository.save(group);
             TutorialGroupSchedule schedule = buildExampleSchedule(AUGUST_FIRST_MONDAY_00_00.toLocalDate(), AUGUST_SECOND_MONDAY_00_00.toLocalDate());
             schedule.setTutorialGroup(group);
@@ -355,18 +379,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void getTutorialGroupSchedule_wrongCourse_shouldReturnNotFound() throws Exception {
-            var otherCourse = courseUtilService.createCourse();
-            otherCourse.setTimeZone(timeZone);
-            courseRepository.save(otherCourse);
-
-            request.get("/api/tutorialgroup/courses/" + otherCourse.getId() + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.NOT_FOUND,
-                    String.class);
+            request.get("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.NOT_FOUND, String.class);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void getTutorialGroupSchedule_asEditorNotInCourse_shouldReturnForbidden() throws Exception {
             request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.FORBIDDEN, String.class);
         }
@@ -448,7 +467,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void create_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
                     "Garching", 10, "Bring you machine.", null);
@@ -564,7 +583,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_asEditorWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
                     "Garching", 15, "Updated information.", null);
@@ -596,7 +615,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "othercourseeditor1", roles = "EDITOR")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void update_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
                     "Garching", 15, "Updated information.", null);
@@ -678,25 +697,25 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     class DeleteTutorialGroupTests {
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
         void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
         void delete_asInstructorWithNonExistingGroup_shouldReturnNotFound() throws Exception {
 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
         void delete_asInstructorWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "EDITOR")
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "EDITOR")
         void delete_asInstructorOfOtherCourse_shouldReturnForbidden() throws Exception {
 
         }
@@ -734,11 +753,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         /*
          * @Test
-         * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
          * void testCSVContentWithSampleData() throws Exception {
          * // given
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1));
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2));
+         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
+         * Set.of(firstCourseStudent1));
+         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
+         * Set.of(firstCourseStudent2));
          * // when
          * var params = new LinkedMultiValueMap<String, String>();
          * params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
@@ -750,7 +771,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
          * assertThat(csvContent).contains("SampleTitle2,SampleInfo2,GERMAN,20");
          * }
          * @Test
-         * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
          * void testExportTutorialGroupsToJSON() throws Exception {
          * // when
          * var params = new LinkedMultiValueMap<String, String>();
@@ -766,7 +787,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
          * assertThat(jsonResponse).contains("LoremIpsum2");
          * }
          * @Test
-         * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
          * void testExportTutorialGroupsToCSVWithAllFields() throws Exception {
          * // when
          * var params = new LinkedMultiValueMap<String, String>();
@@ -780,11 +801,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
          * assertThat(csvContent).contains("LoremIpsum2");
          * }
          * @Test
-         * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
          * void testJSONContentWithSampleData() throws Exception {
          * // given
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1));
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2));
+         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
+         * Set.of(firstCourseStudent1));
+         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
+         * Set.of(firstCourseStudent2));
          * // when
          * var params = new LinkedMultiValueMap<String, String>();
          * params.add("fields", "ID,Title,Campus,Language,Capacity,Is Online");
@@ -807,7 +830,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
          * assertThat(jsonResponse).contains("20");
          * }
          * @Test
-         * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
          * void testExportTutorialGroupsToJSONWithAllFields() throws Exception {
          * // when
          * var params = new LinkedMultiValueMap<String, String>();
@@ -831,11 +854,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
          * assertThat(jsonResponse).contains("LoremIpsum2");
          * }
          * @Test
-         * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
          * void testJSONContentWithSampleDataIncludingOptionalFields() throws Exception {
          * // given
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", tutor1, Set.of(student1));
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", tutor1, Set.of(student2));
+         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
+         * Set.of(firstCourseStudent1));
+         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
+         * Set.of(firstCourseStudent2));
          * // when
          * var params = new LinkedMultiValueMap<String, String>();
          * params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
@@ -870,31 +895,31 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     /*
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_NoSessions_AverageNull(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{}, null, useSingleEndpoint);
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_NoSessionWithAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{null}, null, useSingleEndpoint);
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, null, null}, 99, useSingleEndpoint);
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_OneSession_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{8}, 8, useSingleEndpoint);
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, null, null}, 69, useSingleEndpoint);
      * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, 8, null}, 69, useSingleEndpoint);
@@ -902,13 +927,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_TwoSessions_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{8, 5}, 7, useSingleEndpoint);
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, 8, 5}, 37, useSingleEndpoint);
      * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, null, 5}, 37, useSingleEndpoint);
@@ -916,13 +941,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_ThreeSessions_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{8, 5, 3}, 5, useSingleEndpoint);
      * }
      * @ParameterizedTest
      * @ValueSource(booleans = {true, false})
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_MoreThanThreeSessions_AverageIsArithmeticMeanOfLastThree(boolean useSingleEndpoint) throws Exception {
      * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, 5, 3}, 5, useSingleEndpoint);
      * }
@@ -935,7 +960,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * void averageAttendanceTestScaffold(Integer[] attendance, Integer expectedAverage, boolean useSingleEndpoint) throws Exception {
      * // given
      * var tutorialGroupId = tutorialGroupUtilService
-     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of()).getId();
+     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), firstCourseTutor1, Set.of()).getId();
      * var sessionToSave = new ArrayList<TutorialGroupSession>();
      * var date = FIRST_AUGUST_MONDAY_00_00;
      * for (Integer att : attendance) {
@@ -961,24 +986,25 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * tutorialGroupTestRepository.deleteById(tutorialGroupId);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
      * courseUtilService.enableMessagingForCourse(courseRepository.findByIdElseThrow(exampleCourseId));
      * // given
-     * var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("tutor1"), TutorialGroup.class,
+     * var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(exampleCourseId), buildTutorialGroupDTOWithoutSchedule("firstCourseTutor1"),
+     * TutorialGroup.class,
      * HttpStatus.CREATED);
      * assertThat(persistedTutorialGroup.getId()).isNotNull();
      * var channel = asserTutorialGroupChannelIsCorrectlyConfigured(persistedTutorialGroup);
-     * var user = userUtilService.getUserByLogin(testPrefix + "tutor1");
+     * var user = userUtilService.getUserByLogin(testPrefix + "firstCourseTutor1");
      * // create test post in the channel of the tutorial group
      * Post post = new Post();
      * post.setAuthor(user);
      * post.setDisplayPriority(DisplayPriority.NONE);
      * post.setConversation(channel);
-     * userUtilService.changeUser(testPrefix + "tutor1");
+     * userUtilService.changeUser(testPrefix + "firstCourseTutor1");
      * Post createdPost = request.postWithResponseBody("/api/communication/courses/" + exampleCourseId + "/messages", post, Post.class, HttpStatus.CREATED);
      * assertThat(createdPost.getConversation().getId()).isEqualTo(channel.getId());
-     * userUtilService.changeUser(testPrefix + "instructor1");
+     * userUtilService.changeUser(testPrefix + "firstCourseInstructor1");
      * request.delete(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NO_CONTENT);
      * // then
      * request.get(getTutorialGroupsPath(exampleCourseId, persistedTutorialGroup.getId()), HttpStatus.NOT_FOUND, TutorialGroup.class);
@@ -987,7 +1013,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * .sendMessage(eq("/topic/user/" + registration.getStudent().getId() + "/notifications/tutorial-groups"), any()));
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void update_asInstructor_shouldUpdateTutorialGroup() throws Exception {
      * // given
      * var existingTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
@@ -1001,26 +1027,26 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void updateAssignedTeachingAssistant_asInstructor_shouldUpdateTutorialGroupAndChannel() throws Exception {
      * // given
      * var existingTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
-     * existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "tutor2"));
+     * existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "firstCourseTutor2"));
      * // when
      * var updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
      * new TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
      * // then
-     * assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor2");
+     * assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "firstCourseTutor2");
      * asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
      * // reset teaching assistant to tutor 1
-     * existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "tutor1"));
+     * existingTutorialGroup.setTeachingAssistant(userUtilService.getUserByLogin(testPrefix + "firstCourseTutor1"));
      * updatedTutorialGroup = request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId),
      * new TutorialGroupUpdateDTO(existingTutorialGroup, "Lorem Ipsum", true), TutorialGroup.class, HttpStatus.OK);
-     * assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "tutor1");
+     * assertThat(updatedTutorialGroup.getTeachingAssistant().getLogin()).isEqualTo(testPrefix + "firstCourseTutor1");
      * asserTutorialGroupChannelIsCorrectlyConfigured(updatedTutorialGroup);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void update_withTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
      * // given
      * var existingTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
@@ -1036,24 +1062,24 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * asserTutorialGroupChannelIsCorrectlyConfigured(existingTutorialGroup);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void update_withoutId_shouldReturnBadRequest() throws Exception {
      * // then
-     * request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), buildTutorialGroupWithoutSchedule("tutor1"), TutorialGroup.class,
+     * request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId), buildTutorialGroupWithoutSchedule("firstCourseTutor1"), TutorialGroup.class,
      * HttpStatus.BAD_REQUEST);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseTutor1", roles = "TA")
      * void registerStudent_asTutorOfGroup_shouldAllowRegistration() throws Exception {
      * this.registerStudentAllowedTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseTutor2", roles = "TA")
      * void registerStudent_asNotTutorOfGroup_shouldForbidRegistration() throws Exception {
      * this.registerStudentForbiddenTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseStudent1", roles = "USER")
      * void registerStudent_asStudent_shouldForbidRegistration() throws Exception {
      * this.registerStudentForbiddenTest();
      * }
@@ -1063,44 +1089,44 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * this.registerStudentForbiddenTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void registerStudent_asInstructor_shouldAllowRegistration() throws Exception {
      * this.registerStudentAllowedTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void registerStudent_studentNotFound_shouldReturnNotFound() throws Exception {
      * // then
      * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + "studentXX", HttpStatus.NOT_FOUND,
      * new LinkedMultiValueMap<>());
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void registerStudent_studentRegistered_shouldReturnNoContent() throws Exception {
      * // when
-     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student1.getLogin(), HttpStatus.NO_CONTENT,
+     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + firstCourseStudent1.getLogin(), HttpStatus.NO_CONTENT,
      * new LinkedMultiValueMap<>());
      * // then
      * var tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
-     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student1);
+     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(firstCourseStudent1);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseTutor1", roles = "TA")
      * void deregisterStudent_asTutorOfGroup_shouldAllowDeregistration() throws Exception {
      * this.deregisterStudentAllowedTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void deregisterStudent_asInstructor_shouldAllowDeregistration() throws Exception {
      * this.deregisterStudentAllowedTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseTutor2", roles = "TA")
      * void deregisterStudent_asNotTutorOfGroup_shouldForbidDeregistration() throws Exception {
      * this.deregisterStudentForbiddenTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseStudent1", roles = "USER")
      * void deregisterStudent_asStudent_shouldForbidDeregistration() throws Exception {
      * this.deregisterStudentForbiddenTest();
      * }
@@ -1110,29 +1136,29 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * this.deregisterStudentForbiddenTest();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void deregisterStudent_studentNotRegistered_shouldReturnNoContent() throws Exception {
      * // when
-     * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student3.getLogin(), HttpStatus.NO_CONTENT,
+     * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + firstCourseStudent3.getLogin(), HttpStatus.NO_CONTENT,
      * new LinkedMultiValueMap<>());
      * // then
      * TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
-     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student3);
+     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(firstCourseStudent3);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void deregisterStudent_studentNotFound_shouldReturnNotFound() throws Exception {
      * // then
      * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + "studentXX", HttpStatus.NOT_FOUND);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void registerMultipleStudents_asInstructor_shouldRegisterStudents() throws Exception {
      * // given
-     * student3.setRegistrationNumber("number3");
-     * userRepository.saveAndFlush(student3);
+     * firstCourseStudent3.setRegistrationNumber("number3");
+     * userRepository.saveAndFlush(firstCourseStudent3);
      * var studentsToAdd = new ArrayList<StudentDTO>();
-     * var studentInCourse = new StudentDTO(student3.getLogin(), null, null, student3.getRegistrationNumber(), null);
+     * var studentInCourse = new StudentDTO(firstCourseStudent3.getLogin(), null, null, firstCourseStudent3.getRegistrationNumber(), null);
      * var studentNotInCourse = new StudentDTO(TEST_PREFIX + "studentXX", null, null, "numberXX", null);
      * studentsToAdd.add(studentInCourse);
      * studentsToAdd.add(studentNotInCourse);
@@ -1141,17 +1167,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * studentsToAdd, StudentDTO.class, HttpStatus.OK);
      * // then
      * var tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
-     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
+     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(firstCourseStudent3);
      * assertThat(notFoundStudents).containsExactly(studentNotInCourse);
      * asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
      * // remove registration of student 6 again
      * // remove registration again
-     * var registration = tutorialGroupRegistrationTestRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup, student3, INSTRUCTOR_REGISTRATION)
+     * var registration = tutorialGroupRegistrationTestRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup, firstCourseStudent3,
+     * INSTRUCTOR_REGISTRATION)
      * .orElseThrow();
      * tutorialGroupRegistrationTestRepository.delete(registration);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void importRegistrations_justTutorialGroupTitle_shouldCreateTutorialGroups() throws Exception {
      * // given
      * var freshTitleOne = "freshTitleOne";
@@ -1175,43 +1202,47 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(importResult).hasSize(4);
      * var regBlankExpected = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(null, null, null, null, null), null, null, null, null, null);
      * assertThat(importResult.stream()).containsExactlyInAnyOrder(regNullStudent, regBlankExpected, regExistingTutorialGroup, regStudentPropertiesNull);
-     * assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), instructor1);
-     * assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>(), instructor1);
+     * assertImportedTutorialGroupWithTitleInDB(freshTitleOne, new HashSet<>(), firstCourseInstructor1);
+     * assertImportedTutorialGroupWithTitleInDB(freshTitleTwo, new HashSet<>(), firstCourseInstructor1);
      * assertTutorialGroupWithTitleExistsInDb(existingTitle);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void importRegistrations_tutorialGroupTitleAndStudents_shouldCreateTutorialAndRegisterStudents() throws Exception {
      * // given
      * var group1Id = tutorialGroupUtilService
-     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
+     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), firstCourseTutor1,
+     * Set.of(firstCourseStudent1)).getId();
      * var group2Id = tutorialGroupUtilService
-     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student2)).getId();
+     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), firstCourseTutor1,
+     * Set.of(firstCourseStudent2)).getId();
      * var group1 = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).orElseThrow();
      * var group2 = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).orElseThrow();
-     * // we test with student1 that the student will be deregistered from the old tutorial group
-     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
-     * // we test with student3 that a previously unregistered student will be registered to an existing tutorial group
-     * assertUserIsNotRegisteredInATutorialGroup(student3);
-     * // we test with student4 that a previously unregistered student will be registered to a fresh tutorial group
+     * // we test with firstCourseStudent1 that the student will be deregistered from the old tutorial group
+     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), firstCourseStudent1);
+     * // we test with firstCourseStudent3 that a previously unregistered student will be registered to an existing tutorial group
+     * assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent3);
+     * // we test with firstCourseStudent4 that a previously unregistered student will be registered to a fresh tutorial group
      * var freshTitle = "freshTitle";
      * assertTutorialWithTitleDoesNotExistInDb(freshTitle);
-     * assertUserIsNotRegisteredInATutorialGroup(student4);
-     * // we test with student2 that a previously registered student will be registered to a fresh tutorial group
-     * assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student2);
+     * assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent4);
+     * // we test with firstCourseStudent2 that a previously registered student will be registered to a fresh tutorial group
+     * assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), firstCourseStudent2);
      * // student 1 from existing group1 to existing group 2
      * // + test if identifying just with login works
-     * var student1Reg = new TutorialGroupImportDTO(group2.getTitle(), new StudentDTO(student1.getLogin(), student1.getFirstName(), student1.getLastName(), "", ""), null, null,
+     * var student1Reg = new TutorialGroupImportDTO(group2.getTitle(), new StudentDTO(firstCourseStudent1.getLogin(), firstCourseStudent1.getFirstName(),
+     * firstCourseStudent1.getLastName(), "", ""), null, null,
      * null, null, null);
      * // student 3 to existing group 1
      * // + test if identifying just with registration number works
      * var student3Reg = new TutorialGroupImportDTO(group1.getTitle(),
-     * new StudentDTO("", student3.getFirstName(), student3.getLastName(), student3.getRegistrationNumber(), student3.getEmail()), null, null, null, null, null);
+     * new StudentDTO("", firstCourseStudent3.getFirstName(), firstCourseStudent3.getLastName(), firstCourseStudent3.getRegistrationNumber(), firstCourseStudent3.getEmail()), null,
+     * null, null, null, null);
      * // student 4 to fresh tutorial group
      * // + test if identifying with both login and registration number works
-     * var student4Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student4), null, null, null, null, null);
+     * var student4Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(firstCourseStudent4), null, null, null, null, null);
      * // student 2 to fresh tutorial group
-     * var student2Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student2), null, null, null, null, null);
+     * var student2Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(firstCourseStudent2), null, null, null, null, null);
      * var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
      * tutorialGroupRegistrations.add(student1Reg);
      * tutorialGroupRegistrations.add(student3Reg);
@@ -1224,21 +1255,22 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(importResult.stream().map(TutorialGroupImportDTO::importSuccessful)).allMatch(status -> status.equals(true));
      * assertThat(importResult.stream().map(TutorialGroupImportDTO::error)).allMatch(Objects::isNull);
      * assertThat(importResult.stream()).containsExactlyInAnyOrder(student1Reg, student3Reg, student4Reg, student2Reg);
-     * assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), student1);
-     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student3);
-     * assertImportedTutorialGroupWithTitleInDB(freshTitle, Set.of(student4, student2), instructor1);
+     * assertUserIsRegisteredInTutorialWithTitle(group2.getTitle(), firstCourseStudent1);
+     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), firstCourseStudent3);
+     * assertImportedTutorialGroupWithTitleInDB(freshTitle, Set.of(firstCourseStudent4, firstCourseStudent2), firstCourseInstructor1);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void importRegistrations_withoutTitle_shouldNotCreateTutorialGroup() throws Exception {
      * // given
      * var group1Id = tutorialGroupUtilService
-     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
+     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), firstCourseTutor1,
+     * Set.of(firstCourseStudent1)).getId();
      * var group1 = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).orElseThrow();
-     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
+     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), firstCourseStudent1);
      * // given
      * var emptyTitle = "";
-     * var reg = new TutorialGroupImportDTO(emptyTitle, new StudentDTO(student1), null, null, null, null, null);
+     * var reg = new TutorialGroupImportDTO(emptyTitle, new StudentDTO(firstCourseStudent1), null, null, null, null, null);
      * assertTutorialWithTitleDoesNotExistInDb(emptyTitle);
      * var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
      * tutorialGroupRegistrations.add(reg);
@@ -1250,11 +1282,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * var importResultDTO = importResult.getFirst();
      * assertThat(importResultDTO.importSuccessful()).isFalse();
      * assertThat(importResultDTO.error()).isEqualTo(TutorialGroupImportErrors.NO_TITLE);
-     * // student1 should still be registered in the old tutorial group
-     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
+     * // firstCourseStudent1 should still be registered in the old tutorial group
+     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), firstCourseStudent1);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void importRegistrations_titleButNonExistingStudent_shouldStillCreateTutorialGroupButNoRegistration() throws Exception {
      * // given
      * var freshTitle = generateRandomTitle();
@@ -1265,35 +1297,37 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * // when
      * var importResult = sendImportRequest(tutorialGroupRegistrations);
      * // then
-     * assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
+     * assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), firstCourseInstructor1);
      * assertThat(importResult).hasSize(1);
      * var importResultDTO = importResult.getFirst();
      * assertThat(importResultDTO.importSuccessful()).isFalse();
      * assertThat(importResultDTO.error()).isEqualTo(TutorialGroupImportErrors.NO_USER_FOUND);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void importRegistrations_titleButSameStudentToMultipleGroups_shouldStillCreateTutorialGroupsButNoRegistration() throws Exception {
      * // given
      * var freshTitle = generateRandomTitle();
      * var freshTitleTwo = generateRandomTitle();
      * // given
      * var group1Id = tutorialGroupUtilService
-     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
+     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), firstCourseTutor1,
+     * Set.of(firstCourseStudent1)).getId();
      * var group2Id = tutorialGroupUtilService
-     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), tutor1, Set.of(student2)).getId();
+     * .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(), firstCourseTutor1,
+     * Set.of(firstCourseStudent2)).getId();
      * var group1 = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group1Id).orElseThrow();
-     * tutorialGroupRegistrationTestRepository.deleteAllByStudent(student3);
-     * tutorialGroupRegistrationTestRepository.deleteAllByStudent(student4);
+     * tutorialGroupRegistrationTestRepository.deleteAllByStudent(firstCourseStudent3);
+     * tutorialGroupRegistrationTestRepository.deleteAllByStudent(firstCourseStudent4);
      * var group2 = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(group2Id).orElseThrow();
      * tutorialGroupChannelManagementService.createChannelForTutorialGroup(group1);
      * tutorialGroupChannelManagementService.createChannelForTutorialGroup(group2);
-     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
-     * assertUserIsNotRegisteredInATutorialGroup(student3);
-     * var reg1 = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student1), null, null, null, null, null);
-     * var reg2 = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(student1), null, null, null, null, null);
-     * var reg3 = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student3), null, null, null, null, null);
-     * var reg4 = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(student3), null, null, null, null, null);
+     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), firstCourseStudent1);
+     * assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent3);
+     * var reg1 = new TutorialGroupImportDTO(freshTitle, new StudentDTO(firstCourseStudent1), null, null, null, null, null);
+     * var reg2 = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(firstCourseStudent1), null, null, null, null, null);
+     * var reg3 = new TutorialGroupImportDTO(freshTitle, new StudentDTO(firstCourseStudent3), null, null, null, null, null);
+     * var reg4 = new TutorialGroupImportDTO(freshTitleTwo, new StudentDTO(firstCourseStudent3), null, null, null, null, null);
      * assertTutorialWithTitleDoesNotExistInDb(freshTitle);
      * assertTutorialWithTitleDoesNotExistInDb(freshTitleTwo);
      * var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
@@ -1304,14 +1338,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * // when
      * var importResult = sendImportRequest(tutorialGroupRegistrations);
      * // then
-     * assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), instructor1);
+     * assertImportedTutorialGroupWithTitleInDB(freshTitle, new HashSet<>(), firstCourseInstructor1);
      * assertThat(importResult).hasSize(4);
      * assertThat(importResult.stream().map(TutorialGroupImportDTO::importSuccessful)).allMatch(status -> status.equals(false));
      * assertThat(importResult.stream().map(TutorialGroupImportDTO::error)).allMatch(TutorialGroupImportErrors.MULTIPLE_REGISTRATIONS::equals);
      * assertThat(importResult.stream()).containsExactlyInAnyOrder(reg1, reg2, reg3, reg4);
      * // should still be registered in the old tutorial group
-     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), student1);
-     * assertUserIsNotRegisteredInATutorialGroup(student3);
+     * assertUserIsRegisteredInTutorialWithTitle(group1.getTitle(), firstCourseStudent1);
+     * assertUserIsNotRegisteredInATutorialGroup(firstCourseStudent3);
      * asserTutorialGroupChannelIsCorrectlyConfigured(group1);
      * asserTutorialGroupChannelIsCorrectlyConfigured(group2);
      * }
@@ -1319,7 +1353,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * @WithMockUser(username = "admin", roles = "ADMIN")
      * void testDeleteCourseWithTutorialGroups() throws Exception {
      * var channel = tutorialGroupTestRepository.getTutorialGroupChannel(exampleOneTutorialGroupId).orElseThrow();
-     * var post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "student1", channel);
+     * var post = conversationUtilService.addMessageToConversation(TEST_PREFIX + "firstCourseStudent1", channel);
      * request.delete("/api/core/admin/courses/" + exampleCourseId, HttpStatus.OK);
      * assertThat(courseRepository.findById(exampleCourseId)).isEmpty();
      * assertThat(tutorialGroupTestRepository.findAllByCourseId(exampleCourseId)).isEmpty();
@@ -1332,7 +1366,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * @WithMockUser(username = "admin", roles = "ADMIN")
      * void testDeleteCourseWithTutorialGroupsAndSessions() throws Exception {
      * // Create a tutorial group with sessions via schedule
-     * var tutorialGroupWithSessions = setUpTutorialGroupWithSchedule(exampleCourseId, "tutor1");
+     * var tutorialGroupWithSessions = setUpTutorialGroupWithSchedule(exampleCourseId, "firstCourseTutor1");
      * var tutorialGroupId = tutorialGroupWithSessions.getId();
      * // Verify sessions exist before deletion
      * var sessionsBeforeDeletion = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId);
@@ -1346,10 +1380,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(exampleCourseId)).isEmpty();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void testDeleteTutorialGroupWithSessions() throws Exception {
      * // Create a tutorial group with sessions via schedule
-     * var tutorialGroupWithSessions = setUpTutorialGroupWithSchedule(exampleCourseId, "tutor1");
+     * var tutorialGroupWithSessions = setUpTutorialGroupWithSchedule(exampleCourseId, "firstCourseTutor1");
      * var tutorialGroupId = tutorialGroupWithSessions.getId();
      * // Verify sessions exist before deletion
      * var sessionsBeforeDeletion = tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId);
@@ -1361,10 +1395,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId)).isEmpty();
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void importRegistrations_withAdditionalHeaders_shouldCreateTutorialGroupWithDetails() throws Exception {
      * var freshTitle = "freshTitle";
-     * var student1Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(student1), "Main Campus", 30, "German", "Some info", true);
+     * var student1Reg = new TutorialGroupImportDTO(freshTitle, new StudentDTO(firstCourseStudent1), "Main Campus", 30, "German", "Some info", true);
      * assertTutorialWithTitleDoesNotExistInDb(freshTitle);
      * var tutorialGroupRegistrations = new ArrayList<TutorialGroupImportDTO>();
      * tutorialGroupRegistrations.add(student1Reg);
@@ -1372,7 +1406,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(importResult).hasSize(1);
      * assertThat(importResult.getFirst().importSuccessful()).isTrue();
      * assertThat(importResult.getFirst().error()).isNull();
-     * assertTutorialGroupWithTitleInDB(freshTitle, Set.of(student1), true, "Some info", 30, "Main Campus", "German", instructor1);
+     * assertTutorialGroupWithTitleInDB(freshTitle, Set.of(firstCourseStudent1), true, "Some info", 30, "Main Campus", "German", firstCourseInstructor1);
      * }
      * private List<TutorialGroupImportDTO> sendImportRequest(List<TutorialGroupImportDTO> tutorialGroupRegistrations) throws Exception {
      * return request.postListWithResponseBody(getTutorialGroupsPath(exampleCourseId) + "/import", tutorialGroupRegistrations, TutorialGroupImportDTO.class, HttpStatus.OK);
@@ -1431,37 +1465,38 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * }
      * }
      * private void registerStudentAllowedTest() throws Exception {
-     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student3.getLogin(), HttpStatus.NO_CONTENT,
+     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + firstCourseStudent3.getLogin(), HttpStatus.NO_CONTENT,
      * new LinkedMultiValueMap<>());
      * var tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
-     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student3);
+     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(firstCourseStudent3);
      * asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
      * // remove registration again
-     * var registration = tutorialGroupRegistrationTestRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup, student3, INSTRUCTOR_REGISTRATION)
+     * var registration = tutorialGroupRegistrationTestRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup, firstCourseStudent3,
+     * INSTRUCTOR_REGISTRATION)
      * .orElseThrow();
      * tutorialGroupRegistrationTestRepository.delete(registration);
      * }
      * private void registerStudentForbiddenTest() throws Exception {
-     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + student3.getLogin(), HttpStatus.FORBIDDEN,
+     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/register/" + firstCourseStudent3.getLogin(), HttpStatus.FORBIDDEN,
      * new LinkedMultiValueMap<>());
      * }
      * private void deregisterStudentAllowedTest() throws Exception {
-     * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
+     * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + firstCourseStudent1.getLogin(), HttpStatus.NO_CONTENT);
      * TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).orElseThrow();
-     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
+     * assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(firstCourseStudent1);
      * asserTutorialGroupChannelIsCorrectlyConfigured(tutorialGroup);
      * // reset registration
      * var registration = new TutorialGroupRegistration();
-     * registration.setStudent(student1);
+     * registration.setStudent(firstCourseStudent1);
      * registration.setTutorialGroup(tutorialGroup);
      * registration.setType(INSTRUCTOR_REGISTRATION);
      * tutorialGroupRegistrationTestRepository.save(registration);
      * }
      * private void deregisterStudentForbiddenTest() throws Exception {
-     * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + student2.getLogin(), HttpStatus.FORBIDDEN);
+     * request.delete(getTutorialGroupsPath(exampleCourseId, exampleOneTutorialGroupId) + "/deregister/" + firstCourseStudent2.getLogin(), HttpStatus.FORBIDDEN);
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void testExportTutorialGroupsToCSV() throws Exception {
      * // when
      * var params = new LinkedMultiValueMap<String, String>();
@@ -1474,12 +1509,12 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(csvContent).contains("LoremIpsum2");
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void shouldSendTutorialGroupAssignedNotificationWhenTutorIsAssignedAndFeatureEnabled() throws Exception {
-     * User tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
+     * User firstCourseTutor2 = userRepository.findOneByLogin(testPrefix + "firstCourseTutor2").orElseThrow();
      * TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
-     * Language.ENGLISH.name(), tutor2, Set.of());
-     * final var updatedTutorialGroup = copyTutorialGroup(tutorialGroup, tutor1);
+     * Language.ENGLISH.name(), firstCourseTutor2, Set.of());
+     * final var updatedTutorialGroup = copyTutorialGroup(tutorialGroup, firstCourseTutor1);
      * TutorialGroupUpdateDTO updateDTO = new TutorialGroupUpdateDTO(updatedTutorialGroup, "Update notification text", true);
      * request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), updateDTO, TutorialGroup.class, HttpStatus.OK);
      * await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
@@ -1489,11 +1524,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * assertThat(hasTutorialGroupAssignedNotification).isTrue();
      * });
      * }
-     * private @NonNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User tutor1) {
+     * private @NonNull TutorialGroup copyTutorialGroup(TutorialGroup tutorialGroup, User firstCourseTutor1) {
      * TutorialGroup updatedTutorialGroup = new TutorialGroup();
      * updatedTutorialGroup.setId(tutorialGroup.getId());
      * updatedTutorialGroup.setTitle(tutorialGroup.getTitle());
-     * updatedTutorialGroup.setTeachingAssistant(tutor1);
+     * updatedTutorialGroup.setTeachingAssistant(firstCourseTutor1);
      * updatedTutorialGroup.setCapacity(tutorialGroup.getCapacity());
      * updatedTutorialGroup.setCampus(tutorialGroup.getCampus());
      * updatedTutorialGroup.setIsOnline(tutorialGroup.getIsOnline());
@@ -1501,10 +1536,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * return updatedTutorialGroup;
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void shouldSendTutorialGroupUnassignedNotificationWhenTutorIsUnassignedAndFeatureEnabled() throws Exception {
      * TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
-     * Language.ENGLISH.name(), tutor1, Set.of());
+     * Language.ENGLISH.name(), firstCourseTutor1, Set.of());
      * final var updatedTutorialGroup = copyTutorialGroup(tutorialGroup, null);
      * TutorialGroupUpdateDTO updateDTO = new TutorialGroupUpdateDTO(updatedTutorialGroup, "Update notification text", true);
      * request.putWithResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), updateDTO, TutorialGroup.class, HttpStatus.OK);
@@ -1516,11 +1551,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * });
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void shouldSendRegisteredToTutorialGroupNotificationWhenStudentIsRegisteredAndFeatureEnabled() throws Exception {
      * TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
-     * Language.ENGLISH.name(), tutor1, Set.of());
-     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()) + "/register/" + student3.getLogin(), HttpStatus.NO_CONTENT,
+     * Language.ENGLISH.name(), firstCourseTutor1, Set.of());
+     * request.postWithoutResponseBody(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()) + "/register/" + firstCourseStudent3.getLogin(), HttpStatus.NO_CONTENT,
      * new LinkedMultiValueMap<>());
      * await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
      * List<CourseNotification> notifications = courseNotificationRepository.findAll();
@@ -1530,10 +1565,10 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * });
      * }
      * @Test
-     * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+     * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
      * void shouldSendTutorialGroupDeletedNotificationWhenTutorialGroupIsDeletedAndFeatureEnabled() throws Exception {
      * TutorialGroup tutorialGroup = tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "Campus", 10, false, "Test location",
-     * Language.ENGLISH.name(), tutor1, Set.of(student1, student2));
+     * Language.ENGLISH.name(), firstCourseTutor1, Set.of(firstCourseStudent1, firstCourseStudent2));
      * request.delete(getTutorialGroupsPath(exampleCourseId, tutorialGroup.getId()), HttpStatus.NO_CONTENT);
      * await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
      * List<CourseNotification> notifications = courseNotificationRepository.findAll();
