@@ -33,17 +33,19 @@ export class TutorialGroup implements BaseEntity {
     public averageAttendance?: number;
 }
 
-export class TutorialGroupDetailGroupDTO {
+export class TutorialGroupDetailDTO {
     id: number;
     title: string;
     language: string;
     isOnline: boolean;
     sessions: TutorialGroupDetailSessionDTO[];
-    teachingAssistantName: string;
-    teachingAssistantLogin: string;
+    tutorName: string;
+    tutorLogin: string;
+    tutorId: number;
     teachingAssistantImageUrl?: string;
     capacity?: number;
     campus?: string;
+    additionalInformation?: string;
     groupChannelId?: number;
     tutorChatId?: number;
 
@@ -53,8 +55,9 @@ export class TutorialGroupDetailGroupDTO {
         this.language = rawDto.language;
         this.isOnline = rawDto.isOnline;
         this.sessions = (rawDto.sessions ?? []).map((rawSessionDto) => new TutorialGroupDetailSessionDTO(rawSessionDto));
-        this.teachingAssistantName = rawDto.teachingAssistantName;
-        this.teachingAssistantLogin = rawDto.teachingAssistantLogin;
+        this.tutorName = rawDto.teachingAssistantName;
+        this.tutorLogin = rawDto.teachingAssistantLogin;
+        this.tutorId = 1; // temporary compatibility solution -> does not break anything, will fix on main PR
         this.teachingAssistantImageUrl = rawDto.teachingAssistantImageUrl;
         this.capacity = rawDto.capacity;
         this.campus = rawDto.campus;

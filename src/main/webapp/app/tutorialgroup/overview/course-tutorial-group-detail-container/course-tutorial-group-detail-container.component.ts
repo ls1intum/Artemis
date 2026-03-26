@@ -1,5 +1,5 @@
 import { Component, OnDestroy, OnInit, inject } from '@angular/core';
-import { TutorialGroupDetailGroupDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
+import { TutorialGroupDetailDTO } from 'app/tutorialgroup/shared/entities/tutorial-group.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/shared/service/alert.service';
@@ -24,7 +24,7 @@ export class CourseTutorialGroupDetailContainerComponent implements OnInit, OnDe
     private courseManagementService = inject(CourseManagementService);
 
     isLoading = new BehaviorSubject<boolean>(false);
-    tutorialGroup?: TutorialGroupDetailGroupDTO;
+    tutorialGroup?: TutorialGroupDetailDTO;
     course?: Course;
     private paramsSubscription: Subscription;
 
