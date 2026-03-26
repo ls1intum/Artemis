@@ -18,8 +18,10 @@
                     }
                 </div>
                 <div class="section-body d-flex flex-column flex-xl-row">
-                    <jhi-quick-actions #quickActions [course]="course()!" class="mb-3 mb-xl-0 me-xl-3" />
-                    <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
+                    <jhi-quick-actions #quickActions [course]="course()!" class="mb-3 mb-xl-0" [class.me-xl-3]="course()!.isAtLeastInstructor && irisEnabled()" />
+                    @if (course()!.isAtLeastInstructor && irisEnabled()) {
+                        <jhi-control-center [course]="course()!" [irisEnabled]="irisEnabled()" />
+                    }
                 </div>
             </div>
         </div>

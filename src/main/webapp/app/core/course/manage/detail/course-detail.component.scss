@@ -98,6 +98,11 @@ jhi-image {
     --section-bg-start: rgba(59, 130, 246, 0.06);
 }
 
+.section-card--explore {
+    --section-color: #10b981;
+    --section-bg-start: rgba(16, 185, 129, 0.06);
+}
+
 .explore-animate {
     animation: exploreSlideIn 0.6s ease-out both;
 }

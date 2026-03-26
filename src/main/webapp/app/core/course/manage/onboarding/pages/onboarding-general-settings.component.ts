@@ -8,6 +8,9 @@ import { ProgrammingLanguage } from 'app/programming/shared/entities/programming
 import { getSemesters } from 'app/shared/util/semester-utils';
 import { ARTEMIS_DEFAULT_COLOR, MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { deepClone } from 'app/shared/util/deep-clone.util';
+import { AlertService } from 'app/shared/service/alert.service';
+import { HttpErrorResponse } from '@angular/common/http';
+import { onError } from 'app/shared/util/global.utils';
 import { KeyValuePipe, NgClass, NgStyle } from '@angular/common';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -42,6 +45,7 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
     protected readonly IrisLogoSize = IrisLogoSize;
     private profileService = inject(ProfileService);
     private irisSettingsService = inject(IrisSettingsService);
+    private alertService = inject(AlertService);
     private dialogService = inject(DialogService);
     private aboutIrisDialogRef: DynamicDialogRef<AboutIrisModalComponent> | undefined;
 
@@ -97,8 +101,9 @@ export class OnboardingGeneralSettingsComponent implements OnInit {
                     this.irisSettings.set(response.body.settings);
                 }
             },
-            error: () => {
+            error: (error: HttpErrorResponse) => {
                 this.irisSettings.set(currentSettings);
+                onError(this.alertService, error);
             },
         });
     }
