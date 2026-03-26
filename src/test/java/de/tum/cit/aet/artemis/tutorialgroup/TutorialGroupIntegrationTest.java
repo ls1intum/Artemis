@@ -372,7 +372,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     HttpStatus.OK);
 
             TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroupId);
-            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO);
+            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 0);
 
             TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
             assertTutorialGroupScheduleHasExpectedProperties(tutorialGroupSchedule, tutorialGroupScheduleDTO);
@@ -381,7 +381,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertTutorialGroupSessionsHaveExpectedProperties(sessions, tutorialGroup, tutorialGroupScheduleDTO);
 
             Channel channel = tutorialGroup.getTutorialGroupChannel();
-            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup);
+            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, tutor1);
         }
 
         @Test
@@ -394,7 +394,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     HttpStatus.OK);
 
             TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroupId);
-            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO);
+            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 0);
 
             TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
             assertThat(tutorialGroupSchedule).isNull();
@@ -403,7 +403,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertThat(sessions).isEmpty();
 
             Channel channel = tutorialGroup.getTutorialGroupChannel();
-            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup);
+            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, tutor1);
         }
 
         @Test
@@ -444,66 +444,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, HttpStatus.FORBIDDEN);
         }
 
-        private void assertTutorialGroupHasExpectedProperties(TutorialGroup tutorialGroup, CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO) {
-            assertThat(tutorialGroup.getCourse().getId()).isEqualTo(courseId);
-            assertThat(tutorialGroup.getTitle()).isEqualTo(createAndUpdateTutorialGroupDTO.title());
-            assertThat(tutorialGroup.getAdditionalInformation()).isEqualTo(createAndUpdateTutorialGroupDTO.additionalInformation());
-            assertThat(tutorialGroup.getCapacity()).isEqualTo(createAndUpdateTutorialGroupDTO.capacity());
-            assertThat(tutorialGroup.getIsOnline()).isEqualTo(createAndUpdateTutorialGroupDTO.isOnline());
-            assertThat(tutorialGroup.getCampus()).isEqualTo(createAndUpdateTutorialGroupDTO.campus());
-            assertThat(tutorialGroup.getLanguage()).isEqualTo(createAndUpdateTutorialGroupDTO.language());
-            assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(tutor1);
-            assertThat(tutorialGroup.getRegistrations()).isEmpty();
-        }
-
-        private void assertTutorialGroupScheduleHasExpectedProperties(TutorialGroupSchedule tutorialGroupSchedule, TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
-            assertThat(tutorialGroupSchedule.getDayOfWeek()).isEqualTo(tutorialGroupScheduleDTO.firstSessionStart().getDayOfWeek().getValue());
-            assertThat(LocalTime.parse(tutorialGroupSchedule.getStartTime())).isEqualTo(tutorialGroupScheduleDTO.firstSessionStart().toLocalTime());
-            assertThat(LocalTime.parse(tutorialGroupSchedule.getEndTime())).isEqualTo(tutorialGroupScheduleDTO.firstSessionEnd().toLocalTime());
-            assertThat(tutorialGroupSchedule.getRepetitionFrequency()).isEqualTo(tutorialGroupScheduleDTO.repetitionFrequency());
-            assertThat(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive())).isEqualTo(tutorialGroupScheduleDTO.firstSessionStart().toLocalDate());
-            assertThat(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive())).isEqualTo(tutorialGroupScheduleDTO.tutorialPeriodEnd());
-            assertThat(tutorialGroupSchedule.getLocation()).isEqualTo(tutorialGroupScheduleDTO.location());
-        }
-
-        private void assertTutorialGroupSessionsHaveExpectedProperties(List<TutorialGroupSession> sessions, TutorialGroup tutorialGroup,
-                TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
-            var courseTimeZone = ZoneId.of(tutorialGroup.getCourse().getTimeZone());
-            var expectedSessionStart = ZonedDateTime.of(tutorialGroupScheduleDTO.firstSessionStart(), courseTimeZone);
-            var expectedSessionEnd = ZonedDateTime.of(tutorialGroupScheduleDTO.firstSessionEnd(), courseTimeZone);
-            var tutorialPeriodEnd = tutorialGroupScheduleDTO.tutorialPeriodEnd();
-            var repetitionFrequency = tutorialGroupScheduleDTO.repetitionFrequency();
-            var expectedNumberOfSessions = 0;
-            var nextSessionDate = tutorialGroupScheduleDTO.firstSessionStart().toLocalDate();
-            while (!nextSessionDate.isAfter(tutorialPeriodEnd)) {
-                expectedNumberOfSessions++;
-                nextSessionDate = nextSessionDate.plusWeeks(repetitionFrequency);
-            }
-
-            assertThat(sessions).hasSize(expectedNumberOfSessions);
-            for (var session : sessions) {
-                assertThat(session.getStart()).isEqualTo(expectedSessionStart);
-                assertThat(session.getEnd()).isEqualTo(expectedSessionEnd);
-                assertThat(session.getLocation()).isEqualTo(tutorialGroupScheduleDTO.location());
-                assertThat(session.getAttendanceCount()).isNull();
-                expectedSessionStart = expectedSessionStart.plusWeeks(repetitionFrequency);
-                expectedSessionEnd = expectedSessionEnd.plusWeeks(repetitionFrequency);
-            }
-        }
-
-        private void assertTutorialGroupChannelHasExpectedProperties(Channel channel, TutorialGroup tutorialGroup) {
-            var cleanedTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
-            var expectedChannelName = "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
-            assertThat(channel).isNotNull();
-            assertThat(channel.getName()).isEqualTo(expectedChannelName);
-            assertThat(channel.getIsPublic()).isTrue();
-            assertThat(channel.getIsAnnouncementChannel()).isFalse();
-            assertThat(channel.getIsArchived()).isFalse();
-            assertThat(channel.getIsCourseWide()).isFalse();
-            assertThat(channel.getCourse()).isEqualTo(tutorialGroup.getCourse());
-            assertThat(channel.getCreator()).isNull();
-        }
-
         // TODO: check notifications in tests
     }
 
@@ -515,13 +455,24 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         void update_asEditorWithOldAndNewSchedule_shouldUpdateTutorialGroup() throws Exception {
             TutorialGroupScheduleDTO tutorialGroupScheduleDTO = new TutorialGroupScheduleDTO(AUGUST_FIRST_MONDAY_10_00, AUGUST_FIRST_MONDAY_12_00, 1, AUGUST_FOURTH_MONDAY,
                     "01.03.12");
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 13", tutor1.getId(), "English", false, "Garching", 10,
-                    "Bring you machine.", tutorialGroupScheduleDTO);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10 Updated", tutor2.getId(), "English", false, "Garching",
+                    10, "Bring your machine.", tutorialGroupScheduleDTO);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, HttpStatus.NO_CONTENT);
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.NO_CONTENT);
 
-            // TODO: verify data in DB (check group, schedule, sessions, channel name)
-            // TODO: instead of redirecting to tutorial groups list, redirect to management detail page after creation
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup1.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor2, 1);
+
+            TutorialGroupSchedule updatedTutorialGroupSchedule = updatedTutorialGroup.getTutorialGroupSchedule();
+            assertTutorialGroupScheduleHasExpectedProperties(updatedTutorialGroupSchedule, tutorialGroupScheduleDTO);
+
+            List<TutorialGroupSession> updatedSessions = updatedTutorialGroup.getTutorialGroupSessions().stream().sorted(Comparator.comparing(TutorialGroupSession::getStart))
+                    .toList();
+            assertTutorialGroupSessionsHaveExpectedProperties(updatedSessions, updatedTutorialGroup, tutorialGroupScheduleDTO);
+
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup1.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor2);
         }
 
         @Test
@@ -588,6 +539,71 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         // TODO: check what happens if channels were enabled once but are then disabled
     }
 
+    private void assertTutorialGroupHasExpectedProperties(TutorialGroup tutorialGroup, CreateAndUpdateTutorialGroupDTO tutorialGroupDTO, User expectedTutor,
+            int expectedRegistrationCount) {
+        assertThat(tutorialGroup.getCourse().getId()).isEqualTo(courseId);
+        assertThat(tutorialGroup.getTitle()).isEqualTo(tutorialGroupDTO.title());
+        assertThat(tutorialGroup.getAdditionalInformation()).isEqualTo(tutorialGroupDTO.additionalInformation());
+        assertThat(tutorialGroup.getCapacity()).isEqualTo(tutorialGroupDTO.capacity());
+        assertThat(tutorialGroup.getIsOnline()).isEqualTo(tutorialGroupDTO.isOnline());
+        assertThat(tutorialGroup.getCampus()).isEqualTo(tutorialGroupDTO.campus());
+        assertThat(tutorialGroup.getLanguage()).isEqualTo(tutorialGroupDTO.language());
+        assertThat(tutorialGroup.getTeachingAssistant()).isEqualTo(expectedTutor);
+        assertThat(tutorialGroup.getRegistrations()).hasSize(expectedRegistrationCount);
+    }
+
+    private void assertTutorialGroupScheduleHasExpectedProperties(TutorialGroupSchedule tutorialGroupSchedule, TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
+        assertThat(tutorialGroupSchedule.getDayOfWeek()).isEqualTo(tutorialGroupScheduleDTO.firstSessionStart().getDayOfWeek().getValue());
+        assertThat(LocalTime.parse(tutorialGroupSchedule.getStartTime())).isEqualTo(tutorialGroupScheduleDTO.firstSessionStart().toLocalTime());
+        assertThat(LocalTime.parse(tutorialGroupSchedule.getEndTime())).isEqualTo(tutorialGroupScheduleDTO.firstSessionEnd().toLocalTime());
+        assertThat(tutorialGroupSchedule.getRepetitionFrequency()).isEqualTo(tutorialGroupScheduleDTO.repetitionFrequency());
+        assertThat(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive())).isEqualTo(tutorialGroupScheduleDTO.firstSessionStart().toLocalDate());
+        assertThat(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive())).isEqualTo(tutorialGroupScheduleDTO.tutorialPeriodEnd());
+        assertThat(tutorialGroupSchedule.getLocation()).isEqualTo(tutorialGroupScheduleDTO.location());
+    }
+
+    private void assertTutorialGroupSessionsHaveExpectedProperties(List<TutorialGroupSession> sessions, TutorialGroup tutorialGroup,
+            TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
+        var courseTimeZone = ZoneId.of(tutorialGroup.getCourse().getTimeZone());
+        var expectedSessionStart = ZonedDateTime.of(tutorialGroupScheduleDTO.firstSessionStart(), courseTimeZone);
+        var expectedSessionEnd = ZonedDateTime.of(tutorialGroupScheduleDTO.firstSessionEnd(), courseTimeZone);
+        var tutorialPeriodEnd = tutorialGroupScheduleDTO.tutorialPeriodEnd();
+        var repetitionFrequency = tutorialGroupScheduleDTO.repetitionFrequency();
+        var expectedNumberOfSessions = 0;
+        var nextSessionDate = tutorialGroupScheduleDTO.firstSessionStart().toLocalDate();
+        while (!nextSessionDate.isAfter(tutorialPeriodEnd)) {
+            expectedNumberOfSessions++;
+            nextSessionDate = nextSessionDate.plusWeeks(repetitionFrequency);
+        }
+
+        assertThat(sessions).hasSize(expectedNumberOfSessions);
+        for (var session : sessions) {
+            assertThat(session.getStart()).isEqualTo(expectedSessionStart);
+            assertThat(session.getEnd()).isEqualTo(expectedSessionEnd);
+            assertThat(session.getLocation()).isEqualTo(tutorialGroupScheduleDTO.location());
+            assertThat(session.getAttendanceCount()).isNull();
+            expectedSessionStart = expectedSessionStart.plusWeeks(repetitionFrequency);
+            expectedSessionEnd = expectedSessionEnd.plusWeeks(repetitionFrequency);
+        }
+    }
+
+    private void assertTutorialGroupChannelHasExpectedProperties(Channel channel, TutorialGroup tutorialGroup, User currentTutor) {
+        var cleanedTitle = tutorialGroup.getTitle().replaceAll("\\s", "-").toLowerCase();
+        var expectedChannelName = "tutorgroup-" + cleanedTitle.substring(0, Math.min(cleanedTitle.length(), 18));
+        assertThat(channel).isNotNull();
+        assertThat(channel.getName()).isEqualTo(expectedChannelName);
+        assertThat(channel.getIsPublic()).isTrue();
+        assertThat(channel.getIsAnnouncementChannel()).isFalse();
+        assertThat(channel.getIsArchived()).isFalse();
+        assertThat(channel.getIsCourseWide()).isFalse();
+        assertThat(channel.getCourse()).isEqualTo(tutorialGroup.getCourse());
+        assertThat(channel.getCreator()).isNull();
+
+        var participants = conversationParticipantRepository.findConversationParticipantsByConversationId(channel.getId());
+        assertThat(participants).filteredOn(participant -> Boolean.TRUE.equals(participant.getIsModerator())).singleElement()
+                .satisfies(participant -> assertThat(participant.getUser()).isEqualTo(currentTutor));
+    }
+
     @Nested
     class DeleteTutorialGroupTests {
 
@@ -645,6 +661,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     @Nested
     class ImportAndExportTutorialGroupsTests {
+
         /*
          * @Test
          * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -777,66 +794,67 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
          * assertThat(jsonResponse).contains("20");
          * }
          */
+
     }
 
     /*
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_NoSessions_AverageNull(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] {}, null, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{}, null, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_NoSessionWithAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { null }, null, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{null}, null, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_lastThreeSessionsWithoutAttendanceData_AverageNull(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, null }, 99, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, null, null}, 99, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_OneSession_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 8 }, 8, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{8}, 8, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_OneSessionOfTheLastThreeHasAttendanceData_AverageIsAttendanceOfSession(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, null }, 69, useSingleEndpoint);
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, null }, 69, useSingleEndpoint);
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, null, 8 }, 69, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, null, null}, 69, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, 8, null}, 69, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, null, 8}, 69, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_TwoSessions_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 8, 5 }, 7, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{8, 5}, 7, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_TwoSessionsOfTheLastThreeHaveAttendanceData_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, null, 8, 5 }, 37, useSingleEndpoint);
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, null, 5 }, 37, useSingleEndpoint);
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, null }, 37, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, null, 8, 5}, 37, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, null, 5}, 37, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, 5, null}, 37, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_ThreeSessions_AverageIsArithmeticMean(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 8, 5, 3 }, 5, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{8, 5, 3}, 5, useSingleEndpoint);
      * }
      * @ParameterizedTest
-     * @ValueSource(booleans = { true, false })
+     * @ValueSource(booleans = {true, false})
      * @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
      * void averageAttendanceCalculationTest_MoreThanThreeSessions_AverageIsArithmeticMeanOfLastThree(boolean useSingleEndpoint) throws Exception {
-     * this.averageAttendanceTestScaffold(new Integer[] { 99, 99, 8, 5, 3 }, 5, useSingleEndpoint);
+     * this.averageAttendanceTestScaffold(new Integer[]{99, 99, 8, 5, 3}, 5, useSingleEndpoint);
      * }
      * // Attendance Test Scaffold
      * //
@@ -862,8 +880,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * TutorialGroup tutorialGroup;
      * if (useSingleEndpoint) {
      * tutorialGroup = request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.OK, TutorialGroup.class);
-     * }
-     * else {
+     * } else {
      * tutorialGroup = request.getList("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class).stream()
      * .filter(tg -> tg.getId().equals(tutorialGroupId)).findFirst().orElseThrow();
      * }
@@ -1339,8 +1356,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * var user = userRepository.findOneByLogin(userLogin).orElseThrow();
      * var course = courseRepository.findById(exampleCourseId).orElseThrow();
      * return tutorialGroupService.getOneOfCourse(course, exampleOneTutorialGroupId, user, isAdminOrInstructor);
-     * }
-     * else {
+     * } else {
      * return request.get("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
      * }
      * }
@@ -1457,4 +1473,5 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
      * });
      * }
      */
+
 }

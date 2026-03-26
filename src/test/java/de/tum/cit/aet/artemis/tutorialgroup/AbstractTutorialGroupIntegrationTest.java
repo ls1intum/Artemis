@@ -137,6 +137,8 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDate SEPTEMBER_FIRST_MONDAY = LocalDate.of(2022, 9, 5);
 
+    static final LocalDate SEPTEMBER_FOURTH_MONDAY = LocalDate.of(2022, 9, 26);
+
     static final LocalDateTime AUGUST_FIRST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
 
     static final LocalDateTime AUGUST_FIRST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
@@ -168,6 +170,10 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     static final LocalDateTime AUGUST_FIFTH__MONDAY_00_00 = LocalDateTime.of(2022, 8, 29, 0, 0);
 
     static final LocalDateTime SEPTEMBER_FIRST_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
+
+    static final LocalDateTime SEPTEMBER_FIRST_MONDAY_10_00 = LocalDateTime.of(2022, 9, 5, 10, 0);
+
+    static final LocalDateTime SEPTEMBER_FIRST_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
 
     @BeforeEach
     void setupTestScenario() {
