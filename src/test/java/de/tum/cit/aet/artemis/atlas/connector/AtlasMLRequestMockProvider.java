@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.test.web.client.ExpectedCount;
@@ -31,6 +32,14 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.SuggestCompetencyResponseDTO;
 @Conditional(AtlasMLEnabled.class)
 @Lazy
 public class AtlasMLRequestMockProvider {
+
+    private static final String HEALTHY_ATLASML_RESPONSE = """
+            {"status":"ok","components":{"api":{"status":"ok"},"weaviate":{"status":"ok","collections":{"Exercise":{"status":"ok"},"Competency":{"status":"ok"},"SemanticCluster":{"status":"ok"}}}}}
+            """;
+
+    private static final String UNHEALTHY_ATLASML_RESPONSE = """
+            {"status":"error","components":{"api":{"status":"ok"},"weaviate":{"status":"error","message":"Weaviate is unreachable"}}}
+            """;
 
     private final RestTemplate atlasmlRestTemplate;
 
@@ -81,7 +90,8 @@ public class AtlasMLRequestMockProvider {
     public void mockHealth(boolean healthy) {
         var url = URI.create(config.getAtlasmlBaseUrl() + "/api/v1/health/");
         shortTimeoutMockServer.expect(MockRestRequestMatchers.requestTo(url))
-                .andRespond(healthy ? MockRestResponseCreators.withSuccess("[]", MediaType.APPLICATION_JSON) : MockRestResponseCreators.withServerError());
+                .andRespond(healthy ? MockRestResponseCreators.withSuccess(HEALTHY_ATLASML_RESPONSE, MediaType.APPLICATION_JSON)
+                        : MockRestResponseCreators.withStatus(HttpStatus.SERVICE_UNAVAILABLE).contentType(MediaType.APPLICATION_JSON).body(UNHEALTHY_ATLASML_RESPONSE));
     }
 
     public void mockSuggestCompetencies(SuggestCompetencyRequestDTO request, SuggestCompetencyResponseDTO response) throws Exception {
