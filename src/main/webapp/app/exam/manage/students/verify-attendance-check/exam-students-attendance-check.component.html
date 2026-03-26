@@ -84,7 +84,7 @@
                                     <img class="img-fluid" width="60" [src]="addPublicFilePrefix(examUser.signingImagePath)" />
                                 } @else {
                                     <div class="d-flex align-items-center gap-2">
-                                        @if (examUser.didCheckImage && examUser.didCheckName) {
+                                        @if (examUser.studentImagePath ? examUser.didCheckImage && examUser.didCheckName : examUser.didCheckName) {
                                             <div title="{{ 'artemisApp.exam.examUsers.attendanceCheckPartial' | artemisTranslate }}">
                                                 <fa-icon [icon]="faCheck" class="fa-2x text-warning" />
                                             </div>
