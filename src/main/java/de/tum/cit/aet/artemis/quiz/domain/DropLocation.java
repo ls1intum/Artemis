@@ -17,6 +17,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
 /**
  * A DropLocation.
  */
@@ -24,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "drop_location")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class DropLocation extends TempIdObject implements QuizQuestionComponent<DragAndDropQuestion> {
+public class DropLocation extends DomainObject implements QuizQuestionComponent<DragAndDropQuestion> {
 
     @Column(name = "pos_x")
     private Double posX;

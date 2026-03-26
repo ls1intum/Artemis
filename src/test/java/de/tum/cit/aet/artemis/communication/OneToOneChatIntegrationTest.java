@@ -38,7 +38,11 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
 
     @AfterEach
     void tearDown() {
-        conversationMessageRepository.deleteAll();
+        // Do not use conversationMessageRepository.deleteAll() here:
+        // In Hibernate 6.6, loading all Post entities and removing them directly causes
+        // TransientObjectException during flush, because the parent Conversation entities
+        // remain managed in the session with stale lazy 'posts' collection references.
+        // Instead, rely on cascade = CascadeType.REMOVE from Conversation -> Post.
         conversationRepository.deleteAllByCourseId(exampleCourseId);
     }
 

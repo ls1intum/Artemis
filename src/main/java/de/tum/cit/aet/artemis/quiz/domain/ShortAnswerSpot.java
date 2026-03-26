@@ -17,6 +17,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.cit.aet.artemis.core.domain.DomainObject;
+
 /**
  * A ShortAnswerSpot.
  */
@@ -24,7 +26,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @Table(name = "short_answer_spot")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ShortAnswerSpot extends TempIdObject implements QuizQuestionComponent<ShortAnswerQuestion> {
+public class ShortAnswerSpot extends DomainObject implements QuizQuestionComponent<ShortAnswerQuestion> {
 
     @Column(name = "spotNr")
     private Integer spotNr;
