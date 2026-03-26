@@ -478,43 +478,93 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithOldWithoutNewSchedule_shouldUpdateTutorialGroup() throws Exception {
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 13 Updated", tutor2.getId(), "English", true, "Munich", 12,
+                    "Updated information.", null);
 
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.NO_CONTENT);
+
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup1.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor2, 1);
+
+            assertThat(updatedTutorialGroup.getTutorialGroupSchedule()).isNull();
+            assertThat(updatedTutorialGroup.getTutorialGroupSessions()).isEmpty();
+
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup1.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor2);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutOldWithNewSchedule_shouldUpdateTutorialGroup() throws Exception {
+            TutorialGroupScheduleDTO tutorialGroupScheduleDTO = new TutorialGroupScheduleDTO(AUGUST_FIRST_MONDAY_10_00, AUGUST_FIRST_MONDAY_12_00, 1, AUGUST_FOURTH_MONDAY,
+                    "01.03.12");
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Tue 13 Updated", tutor1.getId(), "English", false, "Garching",
+                    25, "Bring your machine.", tutorialGroupScheduleDTO);
 
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup2.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.NO_CONTENT);
+
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup2.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 1);
+
+            TutorialGroupSchedule updatedTutorialGroupSchedule = updatedTutorialGroup.getTutorialGroupSchedule();
+            assertTutorialGroupScheduleHasExpectedProperties(updatedTutorialGroupSchedule, tutorialGroupScheduleDTO);
+
+            List<TutorialGroupSession> updatedSessions = updatedTutorialGroup.getTutorialGroupSessions().stream().sorted(Comparator.comparing(TutorialGroupSession::getStart))
+                    .toList();
+            assertTutorialGroupSessionsHaveExpectedProperties(updatedSessions, updatedTutorialGroup, tutorialGroupScheduleDTO);
+
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup2.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor1);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutOldAndNewSchedule_shouldUpdateTutorialGroup() throws Exception {
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Tue 15", tutor1.getId(), "English", false, "Garching", 15,
+                    "Updated information without schedule.", null);
 
-        }
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup2.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.NO_CONTENT);
 
-        @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-        void update_asEditorWithoutChannelsEnabled_shouldUpdateChannelName() throws Exception {
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup2.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 1);
 
+            assertThat(updatedTutorialGroup.getTutorialGroupSchedule()).isNull();
+            assertThat(updatedTutorialGroup.getTutorialGroupSessions()).isEmpty();
+
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup2.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor1);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutOldTutorialGroup_shouldReturnNotFound() throws Exception {
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", tutor1.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
 
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/-1", createAndUpdateTutorialGroupDTO, HttpStatus.NOT_FOUND);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", tutor1.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
 
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + -1 + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithNonExistingNewTutor_shouldReturnNotFound() throws Exception {
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", -1L, "English", false, "Garching", 15,
+                    "Updated information.", null);
 
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.NOT_FOUND);
         }
 
         @Test
@@ -530,13 +580,20 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = TEST_PREFIX + "editor41", roles = "EDITOR")
         void update_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
+            var otherCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
+            userUtilService.addEditor(otherCourse.getEditorGroupName(), TEST_PREFIX + "editor41");
 
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", tutor1.getId(), "English", false, "Garching", 15,
+                    "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+                    HttpStatus.FORBIDDEN);
         }
 
         // TODO: add notification cases
-        // TODO: check what happens if channels were enabled once but are then disabled
+        // TODO: check what happens if channels enabled changes -> is the logic in create/update implemented correctly for all scenarios?
     }
 
     private void assertTutorialGroupHasExpectedProperties(TutorialGroup tutorialGroup, CreateAndUpdateTutorialGroupDTO tutorialGroupDTO, User expectedTutor,
