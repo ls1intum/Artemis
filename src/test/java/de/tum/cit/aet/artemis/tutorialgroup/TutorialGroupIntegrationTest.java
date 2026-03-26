@@ -40,29 +40,31 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private static final String TEST_PREFIX = "tutorialgroup";
 
-    private User instructor1;
+    private static final String OTHER_COURSE_EDITOR_LOGIN = TEST_PREFIX + "othercourseeditor1";
 
-    private User tutor1;
+    private User firstCourseInstructor1;
 
-    private User tutor2;
+    private User firstCourseTutor1;
 
-    private User student1;
+    private User firstCourseTutor2;
 
-    private User student2;
+    private User firstCourseStudent1;
 
-    private User student3;
+    private User firstCourseStudent2;
 
-    private User student4;
+    private User firstCourseStudent3;
 
-    private TutorialGroup tutorialGroup1;
+    private User firstCourseStudent4;
 
-    private TutorialGroup tutorialGroup2;
+    private TutorialGroup firstCourseTutorialGroup1;
 
-    private Channel channel1;
+    private TutorialGroup firstCourseTutorialGroup2;
 
-    private Channel channel2;
+    private Channel firstCourseChannel1;
 
-    private List<TutorialGroupSession> tutorialGroupSessions1;
+    private Channel firstCourseChannel2;
+
+    private List<TutorialGroupSession> firstCourseTutorialGroupSessions1;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -78,19 +80,18 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
             userRepository.save(UserFactory.generateActivatedUser(testPrefix + "instructor42"));
         }
+        firstCourseInstructor1 = userRepository.findOneByLogin(testPrefix + "instructor1").orElseThrow();
+        firstCourseTutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
+        firstCourseTutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
+        firstCourseStudent1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
+        firstCourseStudent2 = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow();
+        firstCourseStudent3 = userRepository.findOneByLogin(testPrefix + "student3").orElseThrow();
+        firstCourseStudent4 = userRepository.findOneByLogin(testPrefix + "student4").orElseThrow();
 
-        instructor1 = userRepository.findOneByLogin(testPrefix + "instructor1").orElseThrow();
-        tutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
-        tutor2 = userRepository.findOneByLogin(testPrefix + "tutor2").orElseThrow();
-        student1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
-        student2 = userRepository.findOneByLogin(testPrefix + "student2").orElseThrow();
-        student3 = userRepository.findOneByLogin(testPrefix + "student3").orElseThrow();
-        student4 = userRepository.findOneByLogin(testPrefix + "student4").orElseThrow();
-
-        student3.setRegistrationNumber("3");
-        userRepository.save(student3);
-        student4.setRegistrationNumber("4");
-        userRepository.save(student4);
+        firstCourseStudent3.setRegistrationNumber("3");
+        userRepository.save(firstCourseStudent3);
+        firstCourseStudent4.setRegistrationNumber("4");
+        userRepository.save(firstCourseStudent4);
 
         Course course = courseUtilService.createCourse();
         course.setTimeZone(timeZone);
@@ -99,15 +100,16 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         configurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
-        tutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Mo 13", null, 10, false, "Garching", Language.ENGLISH.name(), tutor1,
-                Set.of(student1));
-        TutorialGroupSchedule tutorialGroupSchedule1 = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup1, 1, "13:00:00", "14:00:00", 1,
+        firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Mo 13", null, 10, false, "Garching", Language.ENGLISH.name(),
+                firstCourseTutor1, Set.of(firstCourseStudent1));
+        TutorialGroupSchedule tutorialGroupSchedule1 = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(firstCourseTutorialGroup1, 1, "13:00:00", "14:00:00", 1,
                 AUGUST_FIRST_MONDAY.toString(), AUGUST_FIFTH_MONDAY.toString(), "01.05.13");
-        tutorialGroupSessions1 = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(course, tutorialGroup1, tutorialGroupSchedule1);
-        channel1 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup1);
+        firstCourseTutorialGroupSessions1 = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(course, firstCourseTutorialGroup1, tutorialGroupSchedule1);
+        firstCourseChannel1 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup1);
 
-        tutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Tue 13", null, 20, true, null, Language.GERMAN.name(), tutor2, Set.of(student2));
-        channel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup2);
+        firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Tue 13", null, 20, true, null, Language.GERMAN.name(),
+                firstCourseTutor2, Set.of(firstCourseStudent2));
+        firstCourseChannel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup2);
     }
 
     @Override
@@ -115,11 +117,17 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         return TEST_PREFIX;
     }
 
+    private Course createOtherCourseWithEditor() {
+        var otherCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
+        userUtilService.addEditor(otherCourse.getEditorGroupName(), OTHER_COURSE_EDITOR_LOGIN);
+        return otherCourse;
+    }
+
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTitle_asUser_shouldReturnTitle() throws Exception {
-        var tutorialGroupTitle = request.get("/api/tutorialgroup/tutorial-groups/" + tutorialGroup1.getId() + "/title", HttpStatus.OK, String.class);
-        assertThat(tutorialGroupTitle).isEqualTo(tutorialGroup1.getTitle());
+        var tutorialGroupTitle = request.get("/api/tutorialgroup/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/title", HttpStatus.OK, String.class);
+        assertThat(tutorialGroupTitle).isEqualTo(firstCourseTutorialGroup1.getTitle());
     }
 
     @Test
@@ -142,7 +150,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void getTutorialGroupsForCourse_asStudent_shouldHidePrivateInformation() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
-            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(tutorialGroup1.getId(), tutorialGroup2.getId());
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+                    firstCourseTutorialGroup2.getId());
             for (TutorialGroup tutorialGroup : tutorialGroupsOfCourse) {
                 verifyPrivateInformationIsHidden(tutorialGroup);
             }
@@ -152,7 +161,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void getTutorialGroupsForCourse_asEditor_shouldHidePrivateInformation() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
-            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(tutorialGroup1.getId(), tutorialGroup2.getId());
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+                    firstCourseTutorialGroup2.getId());
             for (var tutorialGroup : tutorialGroupsOfCourse) { // private information hidden
                 verifyPrivateInformationIsHidden(tutorialGroup);
             }
@@ -162,11 +172,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
         void getTutorialGroupsForCourse_asTutorOfOneGroup_shouldShowPrivateInformationForOwnGroup() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
-            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(tutorialGroup1.getId(), tutorialGroup2.getId());
-            var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(tutorialGroup1.getId())).findFirst().orElseThrow();
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+                    firstCourseTutorialGroup2.getId());
+            var groupWhereTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup1.getId())).findFirst()
+                    .orElseThrow();
             verifyPrivateInformationIsShown(groupWhereTutor);
 
-            var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(tutorialGroup2.getId())).findFirst().orElseThrow();
+            var groupWhereNotTutor = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup2.getId())).findFirst()
+                    .orElseThrow();
             verifyPrivateInformationIsHidden(groupWhereNotTutor);
         }
 
@@ -175,10 +188,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         void getTutorialGroupsForCourse_asInstructorOfCourse_shouldShowPrivateInformation() throws Exception {
             var tutorialGroupsOfCourse = request.getList("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
             assertThat(tutorialGroupsOfCourse).hasSize(2);
-            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(tutorialGroup1.getId(), tutorialGroup2.getId());
-            var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(tutorialGroup1.getId())).findFirst().orElseThrow();
+            assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(Collectors.toSet())).contains(firstCourseTutorialGroup1.getId(),
+                    firstCourseTutorialGroup2.getId());
+            var group1 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup1.getId())).findFirst().orElseThrow();
             verifyPrivateInformationIsShown(group1);
-            var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(tutorialGroup2.getId())).findFirst().orElseThrow();
+            var group2 = tutorialGroupsOfCourse.stream().filter(tutorialGroup -> tutorialGroup.getId().equals(firstCourseTutorialGroup2.getId())).findFirst().orElseThrow();
             verifyPrivateInformationIsShown(group2);
         }
 
@@ -203,14 +217,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnForbiddenIfCourseDoesNotExist() throws Exception {
             String nonExistentCourseId = "-1";
-            String url = "/api/tutorialgroup/courses/" + nonExistentCourseId + "/tutorial-groups/" + tutorialGroup1.getId();
+            String url = "/api/tutorialgroup/courses/" + nonExistentCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId();
             request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
         void shouldReturnForbiddenIfUserNotInCourse() throws Exception {
-            String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId();
+            String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId();
             request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
 
@@ -220,7 +234,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             Course course = courseRepository.findById(courseId).orElseThrow();
             course.setTimeZone(null);
             courseRepository.save(course);
-            String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId();
+            String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId();
             request.get(url, HttpStatus.INTERNAL_SERVER_ERROR, String.class);
         }
 
@@ -235,23 +249,23 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
         void shouldReturnCorrectGroupWithCorrectSessions() throws Exception {
-            TutorialGroupSession cancelledSession = tutorialGroupSessions1.getFirst();
-            TutorialGroupSession relocatedSession = tutorialGroupSessions1.get(1);
-            TutorialGroupSession changedTimeSession = tutorialGroupSessions1.get(2);
-            TutorialGroupSession changedDateSession = tutorialGroupSessions1.get(3);
-            TutorialGroupSession attendanceCountSession = tutorialGroupSessions1.get(4);
+            TutorialGroupSession cancelledSession = firstCourseTutorialGroupSessions1.getFirst();
+            TutorialGroupSession relocatedSession = firstCourseTutorialGroupSessions1.get(1);
+            TutorialGroupSession changedTimeSession = firstCourseTutorialGroupSessions1.get(2);
+            TutorialGroupSession changedDateSession = firstCourseTutorialGroupSessions1.get(3);
+            TutorialGroupSession attendanceCountSession = firstCourseTutorialGroupSessions1.get(4);
 
-            String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId();
+            String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId();
             TutorialGroupDetailDTO groupDTO = request.get(url, HttpStatus.OK, TutorialGroupDetailDTO.class);
-            assertThat(groupDTO.id()).isEqualTo(tutorialGroup1.getId());
-            assertThat(groupDTO.title()).isEqualTo(tutorialGroup1.getTitle());
-            assertThat(groupDTO.language()).isEqualTo(tutorialGroup1.getLanguage());
-            assertThat(groupDTO.isOnline()).isEqualTo(tutorialGroup1.getIsOnline());
-            assertThat(groupDTO.tutorName()).isEqualTo(tutor1.getName());
-            assertThat(groupDTO.tutorLogin()).isEqualTo(tutor1.getLogin());
-            assertThat(groupDTO.capacity()).isEqualTo(tutorialGroup1.getCapacity());
-            assertThat(groupDTO.campus()).isEqualTo(tutorialGroup1.getCampus());
-            assertThat(groupDTO.groupChannelId()).isEqualTo(channel1.getId());
+            assertThat(groupDTO.id()).isEqualTo(firstCourseTutorialGroup1.getId());
+            assertThat(groupDTO.title()).isEqualTo(firstCourseTutorialGroup1.getTitle());
+            assertThat(groupDTO.language()).isEqualTo(firstCourseTutorialGroup1.getLanguage());
+            assertThat(groupDTO.isOnline()).isEqualTo(firstCourseTutorialGroup1.getIsOnline());
+            assertThat(groupDTO.tutorName()).isEqualTo(firstCourseTutor1.getName());
+            assertThat(groupDTO.tutorLogin()).isEqualTo(firstCourseTutor1.getLogin());
+            assertThat(groupDTO.capacity()).isEqualTo(firstCourseTutorialGroup1.getCapacity());
+            assertThat(groupDTO.campus()).isEqualTo(firstCourseTutorialGroup1.getCampus());
+            assertThat(groupDTO.groupChannelId()).isEqualTo(firstCourseChannel1.getId());
 
             List<TutorialGroupSessionDTO> sessionDTOs = groupDTO.sessions();
             assertThat(sessionDTOs).hasSize(5);
@@ -302,11 +316,11 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             Course course = courseRepository.findById(courseId).orElseThrow();
             var oneToOneChat = new OneToOneChat();
             oneToOneChat.setCourse(course);
-            oneToOneChat.setCreator(student1);
+            oneToOneChat.setCreator(firstCourseStudent1);
             oneToOneChatRepository.save(oneToOneChat);
 
-            ConversationParticipant participationOfUserA = ConversationParticipant.createWithDefaultValues(student1, oneToOneChat);
-            ConversationParticipant participationOfUserB = ConversationParticipant.createWithDefaultValues(tutor1, oneToOneChat);
+            ConversationParticipant participationOfUserA = ConversationParticipant.createWithDefaultValues(firstCourseStudent1, oneToOneChat);
+            ConversationParticipant participationOfUserB = ConversationParticipant.createWithDefaultValues(firstCourseTutor1, oneToOneChat);
             conversationParticipantRepository.saveAll(List.of(participationOfUserA, participationOfUserB));
 
             String url = "/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + group.getId();
@@ -321,7 +335,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void getTutorialGroupSchedule_withSchedule_shouldReturnSchedule() throws Exception {
-            var response = request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId() + "/schedule", HttpStatus.OK,
+            var response = request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.OK,
                     TutorialGroupScheduleDTO.class);
 
             assertThat(response.firstSessionStart()).isEqualTo(AUGUST_FIRST_MONDAY_13_00);
@@ -334,7 +348,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void getTutorialGroupSchedule_withoutSchedule_shouldReturnNoContent() throws Exception {
-            request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup2.getId() + "/schedule", HttpStatus.NO_CONTENT, String.class);
+            request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup2.getId() + "/schedule", HttpStatus.NO_CONTENT, String.class);
         }
 
         @Test
@@ -344,16 +358,16 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             otherCourse.setTimeZone(timeZone);
             courseRepository.save(otherCourse);
 
-            request.get("/api/tutorialgroup/courses/" + otherCourse.getId() + "/tutorial-groups/" + tutorialGroup1.getId() + "/schedule", HttpStatus.NOT_FOUND, String.class);
+            request.get("/api/tutorialgroup/courses/" + otherCourse.getId() + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.NOT_FOUND,
+                    String.class);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
+        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
         void getTutorialGroupSchedule_asEditorNotInCourse_shouldReturnForbidden() throws Exception {
-            var otherCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
-            userUtilService.addEditor(otherCourse.getEditorGroupName(), TEST_PREFIX + "editor42");
+            createOtherCourseWithEditor();
 
-            request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId() + "/schedule", HttpStatus.FORBIDDEN, String.class);
+            request.get("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.FORBIDDEN, String.class);
         }
     }
 
@@ -365,14 +379,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         void create_asEditorWithScheduleSet_shouldCreateTutorialGroup() throws Exception {
             TutorialGroupScheduleDTO tutorialGroupScheduleDTO = new TutorialGroupScheduleDTO(AUGUST_FIRST_MONDAY_10_00, AUGUST_FIRST_MONDAY_12_00, 1, AUGUST_FOURTH_MONDAY,
                     "01.03.12");
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", tutor1.getId(), "English", false, "Garching", 10,
-                    "Bring you machine.", tutorialGroupScheduleDTO);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "Bring you machine.", tutorialGroupScheduleDTO);
 
             Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, Long.class,
                     HttpStatus.OK);
 
             TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroupId);
-            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 0);
+            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor1, 0);
 
             TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
             assertTutorialGroupScheduleHasExpectedProperties(tutorialGroupSchedule, tutorialGroupScheduleDTO);
@@ -381,20 +395,20 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertTutorialGroupSessionsHaveExpectedProperties(sessions, tutorialGroup, tutorialGroupScheduleDTO);
 
             Channel channel = tutorialGroup.getTutorialGroupChannel();
-            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, tutor1);
+            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, firstCourseTutor1);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void create_asEditorWithoutScheduleSet_shouldCreateTutorialGroup() throws Exception {
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", tutor1.getId(), "English", false, "Garching", 10,
-                    "Bring you machine.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "Bring you machine.", null);
 
             Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, Long.class,
                     HttpStatus.OK);
 
             TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroupId);
-            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 0);
+            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor1, 0);
 
             TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
             assertThat(tutorialGroupSchedule).isNull();
@@ -403,15 +417,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             assertThat(sessions).isEmpty();
 
             Channel channel = tutorialGroup.getTutorialGroupChannel();
-            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, tutor1);
+            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, firstCourseTutor1);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void create_asEditorWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
-            var existingTitle = tutorialGroupTestRepository.findById(tutorialGroup1.getId()).orElseThrow().getTitle();
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO(existingTitle, tutor1.getId(), "English", false, "Garching", 10,
-                    "Bring you machine.", null);
+            var existingTitle = tutorialGroupTestRepository.findById(firstCourseTutorialGroup1.getId()).orElseThrow().getTitle();
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO(existingTitle, firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "Bring you machine.", null);
 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, HttpStatus.BAD_REQUEST);
         }
@@ -426,20 +440,19 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             courseRepository.save(course);
             tutorialGroupsConfigurationRepository.delete(configuration);
 
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", tutor1.getId(), "English", false, "Garching", 10,
-                    "Bring you machine.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "Bring you machine.", null);
 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor42", roles = "EDITOR")
+        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
         void create_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
-            var otherCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
-            userUtilService.addEditor(otherCourse.getEditorGroupName(), TEST_PREFIX + "editor42");
+            createOtherCourseWithEditor();
 
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", tutor1.getId(), "English", false, "Garching", 10,
-                    "Bring you machine.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "Bring you machine.", null);
 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, HttpStatus.FORBIDDEN);
         }
@@ -455,14 +468,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         void update_asEditorWithOldAndNewSchedule_shouldUpdateTutorialGroup() throws Exception {
             TutorialGroupScheduleDTO tutorialGroupScheduleDTO = new TutorialGroupScheduleDTO(AUGUST_FIRST_MONDAY_10_00, AUGUST_FIRST_MONDAY_12_00, 1, AUGUST_FOURTH_MONDAY,
                     "01.03.12");
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10 Updated", tutor2.getId(), "English", false, "Garching",
-                    10, "Bring your machine.", tutorialGroupScheduleDTO);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10 Updated", firstCourseTutor2.getId(), "English", false,
+                    "Garching", 10, "Bring your machine.", tutorialGroupScheduleDTO);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
                     HttpStatus.NO_CONTENT);
 
-            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup1.getId());
-            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor2, 1);
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository
+                    .findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(firstCourseTutorialGroup1.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor2, 1);
 
             TutorialGroupSchedule updatedTutorialGroupSchedule = updatedTutorialGroup.getTutorialGroupSchedule();
             assertTutorialGroupScheduleHasExpectedProperties(updatedTutorialGroupSchedule, tutorialGroupScheduleDTO);
@@ -471,27 +485,28 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     .toList();
             assertTutorialGroupSessionsHaveExpectedProperties(updatedSessions, updatedTutorialGroup, tutorialGroupScheduleDTO);
 
-            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup1.getId()).orElseThrow();
-            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor2);
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, firstCourseTutor2);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithOldWithoutNewSchedule_shouldUpdateTutorialGroup() throws Exception {
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 13 Updated", tutor2.getId(), "English", true, "Munich", 12,
-                    "Updated information.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 13 Updated", firstCourseTutor2.getId(), "English", true,
+                    "Munich", 12, "Updated information.", null);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
                     HttpStatus.NO_CONTENT);
 
-            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup1.getId());
-            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor2, 1);
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository
+                    .findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(firstCourseTutorialGroup1.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor2, 1);
 
             assertThat(updatedTutorialGroup.getTutorialGroupSchedule()).isNull();
             assertThat(updatedTutorialGroup.getTutorialGroupSessions()).isEmpty();
 
-            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup1.getId()).orElseThrow();
-            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor2);
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup1.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, firstCourseTutor2);
         }
 
         @Test
@@ -499,14 +514,15 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         void update_asEditorWithoutOldWithNewSchedule_shouldUpdateTutorialGroup() throws Exception {
             TutorialGroupScheduleDTO tutorialGroupScheduleDTO = new TutorialGroupScheduleDTO(AUGUST_FIRST_MONDAY_10_00, AUGUST_FIRST_MONDAY_12_00, 1, AUGUST_FOURTH_MONDAY,
                     "01.03.12");
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Tue 13 Updated", tutor1.getId(), "English", false, "Garching",
-                    25, "Bring your machine.", tutorialGroupScheduleDTO);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Tue 13 Updated", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 25, "Bring your machine.", tutorialGroupScheduleDTO);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup2.getId(), createAndUpdateTutorialGroupDTO,
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup2.getId(), createAndUpdateTutorialGroupDTO,
                     HttpStatus.NO_CONTENT);
 
-            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup2.getId());
-            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 1);
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository
+                    .findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(firstCourseTutorialGroup2.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor1, 1);
 
             TutorialGroupSchedule updatedTutorialGroupSchedule = updatedTutorialGroup.getTutorialGroupSchedule();
             assertTutorialGroupScheduleHasExpectedProperties(updatedTutorialGroupSchedule, tutorialGroupScheduleDTO);
@@ -515,46 +531,49 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     .toList();
             assertTutorialGroupSessionsHaveExpectedProperties(updatedSessions, updatedTutorialGroup, tutorialGroupScheduleDTO);
 
-            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup2.getId()).orElseThrow();
-            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor1);
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup2.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, firstCourseTutor1);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutOldAndNewSchedule_shouldUpdateTutorialGroup() throws Exception {
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Tue 15", tutor1.getId(), "English", false, "Garching", 15,
-                    "Updated information without schedule.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Tue 15", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 15, "Updated information without schedule.", null);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup2.getId(), createAndUpdateTutorialGroupDTO,
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup2.getId(), createAndUpdateTutorialGroupDTO,
                     HttpStatus.NO_CONTENT);
 
-            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroup2.getId());
-            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, tutor1, 1);
+            TutorialGroup updatedTutorialGroup = tutorialGroupTestRepository
+                    .findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(firstCourseTutorialGroup2.getId());
+            assertTutorialGroupHasExpectedProperties(updatedTutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor1, 1);
 
             assertThat(updatedTutorialGroup.getTutorialGroupSchedule()).isNull();
             assertThat(updatedTutorialGroup.getTutorialGroupSessions()).isEmpty();
 
-            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroup2.getId()).orElseThrow();
-            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, tutor1);
+            Channel updatedChannel = tutorialGroupTestRepository.getTutorialGroupChannel(firstCourseTutorialGroup2.getId()).orElseThrow();
+            assertTutorialGroupChannelHasExpectedProperties(updatedChannel, updatedTutorialGroup, firstCourseTutor1);
         }
 
         @Test
         @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
         void update_asEditorWithoutOldTutorialGroup_shouldReturnNotFound() throws Exception {
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", tutor1.getId(), "English", false, "Garching", 15,
-                    "Updated information.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 15, "Updated information.", null);
 
             request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/-1", createAndUpdateTutorialGroupDTO, HttpStatus.NOT_FOUND);
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
         void update_asEditorWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", tutor1.getId(), "English", false, "Garching", 15,
-                    "Updated information.", null);
+            var otherCourse = createOtherCourseWithEditor();
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + -1 + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
-                    HttpStatus.BAD_REQUEST);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 15, "Updated information.", null);
+
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + otherCourse.getId() + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
+                    createAndUpdateTutorialGroupDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
@@ -563,7 +582,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", -1L, "English", false, "Garching", 15,
                     "Updated information.", null);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
                     HttpStatus.NOT_FOUND);
         }
 
@@ -580,15 +599,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         @Test
-        @WithMockUser(username = TEST_PREFIX + "editor41", roles = "EDITOR")
+        @WithMockUser(username = OTHER_COURSE_EDITOR_LOGIN, roles = "EDITOR")
         void update_asEditorOfOtherCourse_shouldReturnForbidden() throws Exception {
-            var otherCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "other");
-            userUtilService.addEditor(otherCourse.getEditorGroupName(), TEST_PREFIX + "editor41");
+            createOtherCourseWithEditor();
 
-            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", tutor1.getId(), "English", false, "Garching", 15,
-                    "Updated information.", null);
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 15, "Updated information.", null);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + tutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), createAndUpdateTutorialGroupDTO,
                     HttpStatus.FORBIDDEN);
         }
 
