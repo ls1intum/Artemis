@@ -126,6 +126,7 @@ Organized by feature module:
 - Package-by-feature organization
 - 4-space indentation
 - Avoid `@Transactional` scope
+- Do not inject `EntityManager` or `EntityManagerFactory` directly into services or controllers; all persistence operations must go through Spring Data repositories
 - Use DTOs (Java records) for REST endpoints
 - Prefer constructor injection for Spring beans
 - Use Java 25 features (records, sealed classes, pattern matching)
