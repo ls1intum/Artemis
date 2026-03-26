@@ -43,7 +43,6 @@ export class PdfViewerIframeWrapperComponent {
     readonly iframeReady = signal(false);
 
     readonly iframeSrc = computed(() => {
-        // Use path-based URL for Angular routing within iframe
         return '/pdf-viewer-iframe';
     });
 
@@ -68,7 +67,6 @@ export class PdfViewerIframeWrapperComponent {
             }
         });
 
-        // Setup message listener with automatic cleanup
         const messageHandler = (event: MessageEvent<IframeMessage>) => {
             this.handleIframeMessage(event);
         };
@@ -117,19 +115,11 @@ export class PdfViewerIframeWrapperComponent {
 
         const { type } = event.data;
 
-        switch (type) {
-            case 'ready':
-                // Iframe signals it's ready to receive messages.
-                // Setting this triggers the effect which calls loadPdfInIframe().
-                this.clearIframeLoadTimeout();
-                this.iframeReady.set(true);
-                break;
-            case 'pageChange':
-                // Handle page change notifications from iframe if needed
-                break;
-            case 'pagesLoaded':
-                // Handle pages loaded notifications from iframe if needed
-                break;
+        if (type === 'ready') {
+            // Iframe signals it's ready to receive messages.
+            // Setting this triggers the effect which calls loadPdfInIframe().
+            this.clearIframeLoadTimeout();
+            this.iframeReady.set(true);
         }
     };
 

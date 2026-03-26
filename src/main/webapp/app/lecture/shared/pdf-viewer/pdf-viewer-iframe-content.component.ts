@@ -66,7 +66,6 @@ export class PdfViewerIframeContentComponent implements OnInit {
             return;
         }
 
-        // Then validate message structure
         if (!event.data || typeof event.data !== 'object') {
             return;
         }
