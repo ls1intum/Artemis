@@ -3,7 +3,6 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
-import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { convertTutorialGroupSessionDatesFromServer } from 'app/tutorialgroup/shared/util/convertTutorialGroupEntityDates';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
@@ -11,7 +10,6 @@ type EntityResponseType = HttpResponse<TutorialGroupSession>;
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
     private httpClient = inject(HttpClient);
-    private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
 
     private resourceURL = 'api/tutorialgroup';
 
@@ -21,10 +19,6 @@ export class TutorialGroupSessionService {
 
     create(courseId: number, tutorialGroupId: number, createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO): Observable<TutorialGroupSessionDTO> {
         return this.httpClient.post<TutorialGroupSessionDTO>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, createTutorialGroupSessionDTO);
-    }
-
-    delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
-        return this.tutorialGroupSessionApiService.deleteSession(courseId, tutorialGroupId, sessionId, 'response');
     }
 
     cancel(courseId: number, tutorialGroupId: number, sessionId: number, explanation?: string): Observable<EntityResponseType> {
