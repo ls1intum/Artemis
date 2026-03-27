@@ -25,6 +25,8 @@ import de.tum.cit.aet.artemis.hyperion.dto.GeneratedQuizQuestionDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationRequestDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionGenerationType;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementRequestDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.QuizQuestionRefinementResponseDTO;
 import io.micrometer.observation.annotation.Observed;
 
 /**
@@ -40,6 +42,10 @@ public class HyperionQuizQuestionGenerationService {
     private static final String PROMPT_GENERATE_QUIZ_QUESTIONS_SYSTEM = "/prompts/hyperion/generate_quiz_questions_system.st";
 
     private static final String PROMPT_GENERATE_QUIZ_QUESTIONS_USER = "/prompts/hyperion/generate_quiz_questions_user.st";
+
+    private static final String PROMPT_REFINE_QUIZ_QUESTION_SYSTEM = "/prompts/hyperion/refine_quiz_question_system.st";
+
+    private static final String PROMPT_REFINE_QUIZ_QUESTION_USER = "/prompts/hyperion/refine_quiz_question_user.st";
 
     private static final int MAX_QUESTION_TEXT_LENGTH = 2_000;
 
@@ -96,6 +102,55 @@ public class HyperionQuizQuestionGenerationService {
         return new QuizQuestionGenerationResponseDTO(questions);
     }
 
+    /**
+     * Refine an existing quiz question based on user instructions.
+     *
+     * @param course  the course context
+     * @param request the refinement request containing the original question and user instructions
+     * @return the refined question and an explanation of the changes
+     */
+    @Observed(name = "hyperion.quiz.refine", contextualName = "quiz question refinement", lowCardinalityKeyValues = { "ai.span", "true" })
+    public QuizQuestionRefinementResponseDTO refineQuizQuestion(Course course, QuizQuestionRefinementRequestDTO request) {
+        log.debug("Refining quiz question for course [{}]", course.getId());
+
+        if (chatClient == null) {
+            throw new InternalServerErrorAlertException("AI chat client is not configured", "QuizQuestionRefinement", "QuizQuestionRefinement.chatClientNotConfigured");
+        }
+
+        String refinementPrompt = sanitizeInput(request.refinementPrompt());
+        GeneratedQuizQuestionDTO originalQuestion = request.question();
+
+        String answerOptionsText = originalQuestion.options().stream().map(opt -> "- [" + (opt.correct() ? "correct" : "wrong") + "] " + sanitizeInput(opt.text()))
+                .collect(Collectors.joining("\n"));
+
+        var outputConverter = new BeanOutputConverter<>(RefinedQuestionWithExplanationOutput.class);
+        String systemPrompt = templateService.render(PROMPT_REFINE_QUIZ_QUESTION_SYSTEM, Map.of());
+        String userPrompt = templateService.renderObject(PROMPT_REFINE_QUIZ_QUESTION_USER, Map.of("courseTitle", getSanitizedCourseTitle(course), "courseDescription",
+                getSanitizedCourseDescription(course), "questionType", originalQuestion.type().getValue(), "questionTitle", sanitizeInput(originalQuestion.title()), "questionText",
+                sanitizeInput(originalQuestion.questionText()), "answerOptions", answerOptionsText, "refinementPrompt", refinementPrompt, "format", outputConverter.getFormat()));
+
+        RefinedQuestionWithExplanationOutput output;
+        try {
+            output = chatClient.prompt().system(systemPrompt).user(userPrompt).call().entity(outputConverter);
+        }
+        catch (Exception e) {
+            log.error("Failed to refine quiz question for course [{}]", course.getId(), e);
+            throw new InternalServerErrorAlertException("Failed to refine quiz question", "QuizQuestionRefinement", "QuizQuestionRefinement.refinementFailed");
+        }
+
+        if (output == null || output.question() == null) {
+            throw new InternalServerErrorAlertException("Refined quiz question is empty", "QuizQuestionRefinement", "QuizQuestionRefinement.emptyResponse");
+        }
+
+        GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
+        String explanation = sanitizeInput(output.explanation());
+        if (explanation.isBlank()) {
+            explanation = "The question was refined according to your instructions.";
+        }
+
+        return new QuizQuestionRefinementResponseDTO(refinedQuestion, explanation);
+    }
+
     private List<GeneratedQuizQuestionDTO> mapAndValidateGeneratedQuestions(@Nullable GeneratedQuestionsOutput generatedQuestions) {
         if (generatedQuestions == null || generatedQuestions.questions() == null || generatedQuestions.questions().isEmpty()) {
             throw new InternalServerErrorAlertException("Generated quiz questions are empty", "QuizQuestionGeneration", "QuizQuestionGeneration.emptyResponse");
@@ -134,7 +189,9 @@ public class HyperionQuizQuestionGenerationService {
         List<GeneratedQuizAnswerOptionDTO> options = generatedQuestion.options().stream().map(this::mapAndValidateOption).toList();
         validateCorrectOptionCount(questionType, options);
 
-        return new GeneratedQuizQuestionDTO(questionType, questionTitle, questionText, options);
+        String questionHint = generatedQuestion.hint() != null ? sanitizeInput(generatedQuestion.hint()) : null;
+
+        return new GeneratedQuizQuestionDTO(questionType, questionTitle, questionText, options, questionHint);
     }
 
     private GeneratedQuizAnswerOptionDTO mapAndValidateOption(@Nullable GeneratedOptionOutput generatedOption) {
@@ -148,7 +205,9 @@ public class HyperionQuizQuestionGenerationService {
         }
 
         boolean isCorrect = generatedOption.correct() != null && generatedOption.correct();
-        return new GeneratedQuizAnswerOptionDTO(optionText, isCorrect);
+        String optionHint = generatedOption.hint() != null ? sanitizeInput(generatedOption.hint()) : null;
+        String optionExplanation = generatedOption.explanation() != null ? sanitizeInput(generatedOption.explanation()) : null;
+        return new GeneratedQuizAnswerOptionDTO(optionText, isCorrect, optionHint, optionExplanation);
     }
 
     private static void validateCorrectOptionCount(QuizQuestionGenerationType questionType, List<GeneratedQuizAnswerOptionDTO> options) {
@@ -180,9 +239,12 @@ public class HyperionQuizQuestionGenerationService {
     private record GeneratedQuestionsOutput(List<GeneratedQuestionOutput> questions) {
     }
 
-    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options) {
+    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options, String hint) {
     }
 
-    private record GeneratedOptionOutput(String text, Boolean correct) {
+    private record GeneratedOptionOutput(String text, Boolean correct, String hint, String explanation) {
+    }
+
+    private record RefinedQuestionWithExplanationOutput(GeneratedQuestionOutput question, String explanation) {
     }
 }

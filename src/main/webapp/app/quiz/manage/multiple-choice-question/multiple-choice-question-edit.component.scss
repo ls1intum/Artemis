@@ -56,6 +56,20 @@
             overflow: hidden;
         }
 
+        .question-action-buttons {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .refine-button {
+            cursor: pointer;
+        }
+
+        .refine-button:hover {
+            color: var(--bs-primary);
+        }
+
         .delete-button {
             cursor: pointer;
         }

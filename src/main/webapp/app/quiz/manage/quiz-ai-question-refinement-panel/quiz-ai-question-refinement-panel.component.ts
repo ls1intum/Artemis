@@ -1,0 +1,90 @@
+import { Component, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
+import { ButtonModule } from 'primeng/button';
+import { TextareaModule } from 'primeng/textarea';
+import { faCircleNotch, faPaperPlane, faWandMagicSparkles } from '@fortawesome/free-solid-svg-icons';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { AlertService } from 'app/shared/service/alert.service';
+import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
+import { MODULE_FEATURE_HYPERION } from 'app/app.constants';
+import { QuizQuestion } from 'app/quiz/shared/entities/quiz-question.model';
+import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { QuizAiGenerationService } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.service';
+import { TranslateService } from '@ngx-translate/core';
+import { Subscription } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+
+@Component({
+    selector: 'jhi-quiz-ai-question-refinement-panel',
+    templateUrl: './quiz-ai-question-refinement-panel.component.html',
+    styleUrl: './quiz-ai-question-refinement-panel.component.scss',
+    encapsulation: ViewEncapsulation.None,
+    imports: [FormsModule, ButtonModule, TextareaModule, TranslateDirective, FaIconComponent],
+})
+export class QuizAiQuestionRefinementPanelComponent {
+    private alertService = inject(AlertService);
+    private quizAiGenerationService = inject(QuizAiGenerationService);
+    private profileService = inject(ProfileService);
+    private translateService = inject(TranslateService);
+
+    protected readonly faCircleNotch = faCircleNotch;
+    protected readonly faPaperPlane = faPaperPlane;
+    protected readonly faWandMagicSparkles = faWandMagicSparkles;
+    readonly hyperionEnabled: boolean = this.profileService.isModuleFeatureActive(MODULE_FEATURE_HYPERION);
+
+    question = input.required<QuizQuestion>();
+    courseId = input.required<number>();
+    isOpen = input(false);
+    isCollapsed = input(false);
+
+    questionRefined = output<MultipleChoiceQuestion>();
+
+    refinePrompt = signal('');
+    isRefining = signal(false);
+    refinementExplanation = signal<string | undefined>(undefined);
+    promptPlaceholder = signal(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.promptPlaceholder'));
+
+    private refineSubscription?: Subscription;
+
+    constructor() {
+        this.translateService.onLangChange.pipe(takeUntilDestroyed()).subscribe(() => {
+            this.promptPlaceholder.set(this.translateService.instant('artemisApp.quizExercise.aiGeneration.refinement.promptPlaceholder'));
+        });
+
+        effect(() => {
+            if (!this.isOpen()) {
+                this.refinePrompt.set('');
+                this.refinementExplanation.set(undefined);
+                this.refineSubscription?.unsubscribe();
+                this.isRefining.set(false);
+            }
+        });
+    }
+
+    submitRefinement(): void {
+        const prompt = this.refinePrompt().trim();
+        if (!prompt || this.isRefining()) {
+            return;
+        }
+
+        this.isRefining.set(true);
+        this.refineSubscription = this.quizAiGenerationService
+            .refineMultipleChoiceQuestion(this.courseId(), this.question() as MultipleChoiceQuestion, prompt)
+            .pipe(
+                takeUntilDestroyed(),
+                finalize(() => this.isRefining.set(false)),
+            )
+            .subscribe({
+                next: (result) => {
+                    this.refinementExplanation.set(result.explanation);
+                    this.refinePrompt.set('');
+                    this.questionRefined.emit(result.refinedQuestion);
+                },
+                error: () => {
+                    this.alertService.error('artemisApp.quizExercise.aiGeneration.refinement.errors.failed');
+                },
+            });
+    }
+}

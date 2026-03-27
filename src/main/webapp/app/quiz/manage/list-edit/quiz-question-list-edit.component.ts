@@ -15,6 +15,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgClass } from '@angular/common';
 import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/quiz-question-list-edit-existing.component';
+import { QuizAiQuestionRefinementPanelComponent } from 'app/quiz/manage/quiz-ai-question-refinement-panel/quiz-ai-question-refinement-panel.component';
 
 @Component({
     selector: 'jhi-quiz-question-list-edit',
@@ -30,6 +31,7 @@ import { QuizQuestionListEditExistingComponent } from '../list-edit-existing/qui
         FaIconComponent,
         NgClass,
         QuizQuestionListEditExistingComponent,
+        QuizAiQuestionRefinementPanelComponent,
     ],
 })
 export class QuizQuestionListEditComponent {
@@ -55,6 +57,11 @@ export class QuizQuestionListEditComponent {
 
     faPlus = faPlus;
 
+    /** Indices of questions whose AI refinement panel is currently open. Empty = all panels closed. */
+    openRefinementIndices = signal(new Set<number>());
+    /** Indices of questions whose editor card is currently collapsed. Empty = all cards expanded. */
+    collapsedQuestionIndices = signal(new Set<number>());
+
     showExistingQuestions = false;
 
     fileMap = new Map<string, { path?: string; file: File }>();
@@ -63,6 +70,53 @@ export class QuizQuestionListEditComponent {
      * Emit onQuestionUpdated if there is an update of the question.
      */
     handleQuestionUpdated() {
+        this.onQuestionUpdated.emit();
+    }
+
+    /**
+     * Toggle the AI refinement panel for the question at the given index.
+     *
+     * @param index the index of the question of whose refinement panel to toggle
+     */
+    toggleRefinement(index: number): void {
+        const updated = new Set(this.openRefinementIndices());
+        if (updated.has(index)) {
+            updated.delete(index);
+        } else {
+            updated.add(index);
+        }
+        this.openRefinementIndices.set(updated);
+    }
+
+    /**
+     * Track collapsed state of a question so the AI refinement panel hides while collapsed
+     * but its open state is preserved for when the question is expanded again.
+     *
+     * @param index the index of the question
+     * @param collapsed whether the question is now collapsed
+     */
+    handleCollapseChanged(index: number, collapsed: boolean): void {
+        const updated = new Set(this.collapsedQuestionIndices());
+        if (collapsed) {
+            updated.add(index);
+        } else {
+            updated.delete(index);
+        }
+        this.collapsedQuestionIndices.set(updated);
+    }
+
+    /**
+     * Refresh the edit component after the question object at the given index was mutated in-place by AI refinement.
+     *
+     * @param index the index of the refined question in quizQuestions
+     * @param _refinedQuestion the refined Question
+     */
+    handleQuestionRefined(index: number, _refinedQuestion: MultipleChoiceQuestion) {
+        // The question object was mutated in-place; find the corresponding MC edit component and reload its editor.
+        const mcIndex = this.quizQuestions()
+            .slice(0, index)
+            .filter((q) => q.type === this.MULTIPLE_CHOICE).length;
+        this.editMultipleChoiceQuestionComponents()[mcIndex]?.reloadFromQuestion();
         this.onQuestionUpdated.emit();
     }
 

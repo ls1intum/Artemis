@@ -15,6 +15,6 @@ Rules:
 - For `single-choice`: exactly one option must be correct.
 - For `multiple-choice`: at least one option must be correct.
 - For `true-false`: provide exactly two options where exactly one is correct.
-- Do not include explanations or additional metadata.
+- Only include `hint` or `explanation` fields if the user explicitly requests them.
 - Use basic Markdown (bold, italic, inline code, code blocks, tables, and lists) in question text and answer options to structure the information and improve clarity. Avoid over-formatting.
 - Return only data matching the required output format.

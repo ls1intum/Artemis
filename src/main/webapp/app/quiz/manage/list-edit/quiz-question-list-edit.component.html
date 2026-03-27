@@ -5,7 +5,7 @@
         </h4>
     </div>
     <div class="row mt-1">
-        @for (quizQuestion of quizQuestions(); track quizQuestion; let i = $index) {
+        @for (quizQuestion of quizQuestions(); track $index; let i = $index) {
             <div class="question card">
                 @if (quizQuestion.type === MULTIPLE_CHOICE) {
                     <div>
@@ -15,8 +15,17 @@
                             [questionIndex]="i + 1"
                             (questionUpdated)="handleQuestionUpdated()"
                             (questionDeleted)="handleQuestionDeleted(i)"
+                            (refineRequested)="toggleRefinement(i)"
+                            (collapseChanged)="handleCollapseChanged(i, $event)"
                         />
                     </div>
+                    <jhi-quiz-ai-question-refinement-panel
+                        [question]="quizQuestion"
+                        [courseId]="courseId()"
+                        [isOpen]="openRefinementIndices().has(i)"
+                        [isCollapsed]="collapsedQuestionIndices().has(i)"
+                        (questionRefined)="handleQuestionRefined(i, $event)"
+                    />
                 }
                 @if (quizQuestion.type === DRAG_AND_DROP) {
                     <div>

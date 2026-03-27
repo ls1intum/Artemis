@@ -57,6 +57,13 @@
                     "invalidConfiguration": "Please provide a topic and select at least one question type.",
                     "generationFailed": "Failed to generate quiz questions. Please try again."
                 },
+                "refinement": {
+                    "promptPlaceholder": "Describe how to refine this question...",
+                    "changesLabel": "Changes made",
+                    "errors": {
+                        "failed": "Failed to refine the question. Please try again."
+                    }
+                },
                 "preview": {
                     "title": "Preview Results",
                     "emptyTitle": "No questions generated yet",

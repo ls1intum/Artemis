@@ -21,5 +21,13 @@ export interface GeneratedQuizAnswerOption {
      * Whether this option is correct
      */
     correct?: boolean;
+    /**
+     * Optional hint
+     */
+    hint?: string;
+    /**
+     * Optional explanation
+     */
+    explanation?: string;
 }
 

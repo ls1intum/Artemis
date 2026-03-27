@@ -30,6 +30,10 @@ export interface GeneratedQuizQuestion {
      * Answer options
      */
     options: Array<GeneratedQuizAnswerOption>;
+    /**
+     * Optional hint for the overall question
+     */
+    hint?: string;
 }
 export namespace GeneratedQuizQuestion {
     export const TypeEnum = {
