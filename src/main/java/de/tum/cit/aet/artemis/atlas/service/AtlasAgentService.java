@@ -3,7 +3,6 @@ package de.tum.cit.aet.artemis.atlas.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Matcher;
@@ -13,16 +12,11 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.azure.openai.AzureOpenAiChatOptions;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.ChatClient.ChatClientRequestSpec;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.chat.messages.Message;
 import org.springframework.ai.chat.messages.MessageType;
-import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -67,21 +61,11 @@ public class AtlasAgentService {
 
     private final ChatClient chatClient;
 
-    private final AtlasPromptTemplateService templateService;
-
-    private final ToolCallbackProvider mainAgentToolCallbackProvider;
-
-    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
-
-    private final ToolCallbackProvider competencyMapperToolCallbackProvider;
-
-    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
-
     private final ChatMemory chatMemory;
 
-    private final String deploymentName;
+    private final AtlasAgentDelegationService delegationService;
 
-    private final double temperature;
+    private final ToolCallbackProvider mainAgentToolCallbackProvider;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -97,20 +81,13 @@ public class AtlasAgentService {
 
     private final AtlasAgentPreviewService previewService;
 
-    public AtlasAgentService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ToolCallbackProvider mainAgentToolCallbackProvider,
-            @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider, @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider, @Nullable ChatMemory chatMemory, @Value("${atlas.chat-model:gpt-4o}") String deploymentName,
-            @Value("${atlas.chat-temperature:0.2}") double temperature, ExecutionPlanStateManagerService executionPlanStateManagerService,
+    public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
+            @Nullable ToolCallbackProvider mainAgentToolCallbackProvider, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
-        this.templateService = templateService;
-        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
-        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
-        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
-        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
         this.chatMemory = chatMemory;
-        this.deploymentName = deploymentName;
-        this.temperature = temperature;
+        this.delegationService = delegationService;
+        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
         this.previewService = previewService;
@@ -241,42 +218,19 @@ public class AtlasAgentService {
      * @return the agent's response
      */
     String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId, boolean saveToMemory) {
-        String resourcePath = switch (agentType) {
+        if (agentType == AgentType.MAIN_AGENT) {
+            return delegationService.delegateToAgent(getPromptResourcePath(agentType), message, courseId, sessionId, saveToMemory, mainAgentToolCallbackProvider);
+        }
+        return delegationService.delegateToSubAgent(agentType, message, courseId, sessionId, saveToMemory);
+    }
+
+    static String getPromptResourcePath(AgentType agentType) {
+        return switch (agentType) {
             case MAIN_AGENT -> "/prompts/atlas/agent_system_prompt.st";
             case COMPETENCY_EXPERT -> "/prompts/atlas/competency_expert_system_prompt.st";
             case COMPETENCY_MAPPER -> "/prompts/atlas/competency_mapper_system_prompt.st";
             case EXERCISE_MAPPER -> "/prompts/atlas/exercise_mapper_system_prompt.st";
         };
-        Map<String, String> variables = Map.of();
-        String systemPrompt = templateService.render(resourcePath, variables);
-
-        // Append courseId to system prompt in order for the sub-agents to have course context (invisible to conversation history)
-        String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
-
-        // Build chat client with memory advisor for this specific session
-        ChatClient.Builder clientBuilder = chatClient.mutate();
-        // Add memory advisor only for Atlas with conversation-specific session ID
-        if (chatMemory != null && saveToMemory) {
-            clientBuilder.defaultAdvisors(MessageChatMemoryAdvisor.builder(chatMemory).conversationId(sessionId).build());
-        }
-        ChatClient sessionClient = clientBuilder.build();
-
-        ToolCallingChatOptions options = AzureOpenAiChatOptions.builder().deploymentName(deploymentName).temperature(temperature).build();
-
-        ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
-
-        ToolCallbackProvider toolCallbackProvider = switch (agentType) {
-            case MAIN_AGENT -> mainAgentToolCallbackProvider;
-            case COMPETENCY_EXPERT -> competencyExpertToolCallbackProvider;
-            case COMPETENCY_MAPPER -> competencyMapperToolCallbackProvider;
-            case EXERCISE_MAPPER -> exerciseMapperToolCallbackProvider;
-        };
-        if (toolCallbackProvider != null) {
-            promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
-        }
-
-        // Execute the chat
-        return promptSpec.call().content();
     }
 
     /**

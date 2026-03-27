@@ -20,26 +20,26 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.cit.aet.artemis.core.repository.CourseRepository;
-import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
+import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.exercise.repository.ExerciseTestRepository;
 
 @ExtendWith(MockitoExtension.class)
 class AtlasAgentToolsServiceTest {
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseTestRepository courseRepository;
 
     @Mock
-    private ExerciseRepository exerciseRepository;
+    private ExerciseTestRepository exerciseRepository;
 
     @Mock
-    private AtlasAgentService atlasAgentService;
+    private AtlasAgentDelegationService delegationService;
 
     private AtlasAgentToolsService toolsService;
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, atlasAgentService);
+        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService);
     }
 
     @AfterEach
@@ -57,7 +57,7 @@ class AtlasAgentToolsServiceTest {
 
             assertThat(result).contains("\"error\"");
             assertThat(result).contains("missing request context");
-            verify(atlasAgentService, never()).delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
+            verify(delegationService, never()).delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
         }
 
         @Test
@@ -66,7 +66,7 @@ class AtlasAgentToolsServiceTest {
 
             assertThat(result).contains("\"error\"");
             assertThat(result).contains("missing request context");
-            verify(atlasAgentService, never()).delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
+            verify(delegationService, never()).delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
         }
 
         @Test
@@ -75,7 +75,7 @@ class AtlasAgentToolsServiceTest {
 
             assertThat(result).contains("\"error\"");
             assertThat(result).contains("missing request context");
-            verify(atlasAgentService, never()).delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
+            verify(delegationService, never()).delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
         }
 
         @Test
@@ -85,7 +85,7 @@ class AtlasAgentToolsServiceTest {
             String result = toolsService.delegateToCompetencyExpert("topic", "req", "con", "ctx");
 
             assertThat(result).contains("\"error\"");
-            verify(atlasAgentService, never()).delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
+            verify(delegationService, never()).delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
         }
 
         @Test
@@ -95,7 +95,7 @@ class AtlasAgentToolsServiceTest {
             String result = toolsService.delegateToCompetencyExpert("topic", "req", "con", "ctx");
 
             assertThat(result).contains("\"error\"");
-            verify(atlasAgentService, never()).delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
+            verify(delegationService, never()).delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean());
         }
     }
 
@@ -110,21 +110,21 @@ class AtlasAgentToolsServiceTest {
 
         @Test
         void shouldFormatCompetencyExpertBriefCorrectly() {
-            when(atlasAgentService.delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("ok");
+            when(delegationService.delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("ok");
 
             toolsService.delegateToCompetencyExpert("Recursion", "Create competency", "None", "Algorithms course");
 
-            verify(atlasAgentService).delegateToAgent(eq(AtlasAgentService.AgentType.COMPETENCY_EXPERT),
+            verify(delegationService).delegateToSubAgent(eq(AtlasAgentService.AgentType.COMPETENCY_EXPERT),
                     eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false));
         }
 
         @Test
         void shouldFormatExerciseMapperBriefCorrectly() {
-            when(atlasAgentService.delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("ok");
+            when(delegationService.delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("ok");
 
             toolsService.delegateToExerciseMapper(5L, "Bubble Sort", "Map to competencies", "Student selected");
 
-            verify(atlasAgentService).delegateToAgent(eq(AtlasAgentService.AgentType.EXERCISE_MAPPER),
+            verify(delegationService).delegateToSubAgent(eq(AtlasAgentService.AgentType.EXERCISE_MAPPER),
                     eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false));
         }
     }
@@ -140,7 +140,8 @@ class AtlasAgentToolsServiceTest {
 
         @Test
         void shouldStripReturnToMainAgentMarker() {
-            when(atlasAgentService.delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("Response text %%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
+            when(delegationService.delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean()))
+                    .thenReturn("Response text %%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
 
             String result = toolsService.delegateToCompetencyExpert("t", "r", "c", "x");
 
@@ -149,7 +150,7 @@ class AtlasAgentToolsServiceTest {
 
         @Test
         void shouldReturnUnchangedWhenNoMarkerPresent() {
-            when(atlasAgentService.delegateToAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("Clean response");
+            when(delegationService.delegateToSubAgent(any(), anyString(), anyLong(), anyString(), anyBoolean())).thenReturn("Clean response");
 
             String result = toolsService.delegateToCompetencyMapper("t", "r", "c", "x");
 

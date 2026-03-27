@@ -54,13 +54,14 @@ public class AtlasAgentToolsService {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final AtlasAgentService atlasAgentService;
+    private final AtlasAgentDelegationService delegationService;
 
-    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository, @Lazy AtlasAgentService atlasAgentService) {
+    public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
+            AtlasAgentDelegationService delegationService) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-        this.atlasAgentService = atlasAgentService;
+        this.delegationService = delegationService;
     }
 
     public static void setCurrentCourseId(Long courseId) {
@@ -137,7 +138,7 @@ public class AtlasAgentToolsService {
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyExpertToolsService.setCurrentSessionId(sessionId);
-        String response = atlasAgentService.delegateToAgent(AtlasAgentService.AgentType.COMPETENCY_EXPERT, brief, courseId, sessionId, false);
+        String response = delegationService.delegateToSubAgent(AtlasAgentService.AgentType.COMPETENCY_EXPERT, brief, courseId, sessionId, false);
         return stripReturnMarker(response);
     }
 
@@ -164,7 +165,7 @@ public class AtlasAgentToolsService {
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyMappingToolsService.setCurrentSessionId(sessionId);
-        String response = atlasAgentService.delegateToAgent(AtlasAgentService.AgentType.COMPETENCY_MAPPER, brief, courseId, sessionId, false);
+        String response = delegationService.delegateToSubAgent(AtlasAgentService.AgentType.COMPETENCY_MAPPER, brief, courseId, sessionId, false);
         return stripReturnMarker(response);
     }
 
@@ -191,7 +192,7 @@ public class AtlasAgentToolsService {
         String brief = "EXERCISE_ID: " + exerciseId + "\nEXERCISE_TITLE: " + exerciseTitle + "\nREQUIREMENTS: " + requirements + "\nCONTEXT: " + context;
 
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
-        String response = atlasAgentService.delegateToAgent(AtlasAgentService.AgentType.EXERCISE_MAPPER, brief, courseId, sessionId, false);
+        String response = delegationService.delegateToSubAgent(AtlasAgentService.AgentType.EXERCISE_MAPPER, brief, courseId, sessionId, false);
         return stripReturnMarker(response);
     }
 
