@@ -79,6 +79,12 @@ public class HyperionCodeGenerationExecutionService {
     private record BuildResultOutcome(Result result, BuildResultState state) {
     }
 
+    private record GenerationExecutionResult(Result result, BuildResultOutcome buildResultOutcome, String lastCommitHash, int attemptsUsed, boolean generatedFilesCommitted) {
+    }
+
+    private record GenerationAttemptResult(String commitHash, BuildResultOutcome buildResultOutcome) {
+    }
+
     private final String defaultBranch;
 
     private final GitService gitService;
@@ -306,50 +312,10 @@ public class HyperionCodeGenerationExecutionService {
         log.info("Setup Repo success");
 
         LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
-        String lastBuildLogs = null;
-        Result result = null;
-        BuildResultOutcome buildResultOutcome = new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
-        String lastCommitHash = null;
-        int attemptsUsed = 0;
-        String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
-        boolean generatedFilesCommitted = false;
+        GenerationExecutionResult executionResult = new GenerationExecutionResult(null, new BuildResultOutcome(null, BuildResultState.TIMED_OUT), null, 0, false);
 
         try {
-            HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
-            for (int i = 0; i < MAX_ITERATIONS; i++) {
-                attemptsUsed = i + 1;
-                String repositoryStructure = repositoryStructureService.getRepositoryStructure(setupResult.repository());
-                List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
-
-                if (generatedFiles != null && !generatedFiles.isEmpty()) {
-
-                    for (GeneratedFileDTO file : generatedFiles) {
-                        boolean existed = gitService.getFileByName(setupResult.repository(), file.path()).isPresent();
-                        updateSingleFile(setupResult.repository(), file, exercise);
-                        if (existed) {
-                            publisher.fileUpdated(file.path(), repositoryType);
-                        }
-                        else {
-                            publisher.newFile(file.path(), repositoryType);
-                        }
-                    }
-
-                    String newCommitHash = commitAndGetHash(setupResult.repository(), user, repositoryUri, exercise, repositoryType);
-                    lastCommitHash = newCommitHash;
-                    generatedFilesCommitted = true;
-                    buildResultOutcome = waitForBuildResult(exercise, newCommitHash, repositoryType);
-                    result = buildResultOutcome.result();
-                }
-
-                publisher.progress(i + 1);
-
-                if (result != null && result.isSuccessful()) {
-                    break;
-                }
-
-                lastBuildLogs = extractBuildLogs(result);
-            }
-
+            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, publisher, setupResult.repository(), repositoryUri);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -364,62 +330,118 @@ public class HyperionCodeGenerationExecutionService {
 
         // Ensure the remote reflects the last pushed commit before signaling DONE
         try {
-            if (lastCommitHash != null) {
-                waitUntilRemoteHasCommit(repositoryUri, lastCommitHash, 3000);
+            if (executionResult.lastCommitHash != null) {
+                waitUntilRemoteHasCommit(repositoryUri, executionResult.lastCommitHash, 3000);
             }
         }
         catch (InterruptedException ignored) {
         }
 
-        if (lastCommitHash != null && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
+        if (executionResult.lastCommitHash != null && exerciseVersionService.isRepositoryTypeVersionable(repositoryType)) {
             exerciseVersionService.createExerciseVersion(exercise, user);
         }
 
-        boolean success = generatedFilesCommitted;
-        int reportedAttempts = attemptsUsed == 0 ? MAX_ITERATIONS : attemptsUsed;
-        String completionMessage = buildCompletionMessage(repositoryType, generatedFilesCommitted, buildResultOutcome);
+        boolean success = executionResult.generatedFilesCommitted;
+        int reportedAttempts = executionResult.attemptsUsed == 0 ? MAX_ITERATIONS : executionResult.attemptsUsed;
+        String completionMessage = buildCompletionMessage(repositoryType, executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
         publisher.done(success, reportedAttempts, completionMessage);
 
-        return result;
+        return executionResult.result;
+    }
+
+    private GenerationExecutionResult executeGenerationAttempts(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType,
+            HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri) throws Exception {
+        HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
+        String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
+        String lastBuildLogs = null;
+        Result result = null;
+        BuildResultOutcome buildResultOutcome = new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
+        String lastCommitHash = null;
+        int attemptsUsed = 0;
+        boolean generatedFilesCommitted = false;
+
+        for (int attempt = 0; attempt < MAX_ITERATIONS; attempt++) {
+            attemptsUsed = attempt + 1;
+            GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
+                    lastBuildLogs, consistencyIssues);
+            if (attemptResult != null) {
+                lastCommitHash = attemptResult.commitHash();
+                generatedFilesCommitted = true;
+                buildResultOutcome = attemptResult.buildResultOutcome();
+                result = buildResultOutcome.result();
+            }
+            publisher.progress(attempt + 1);
+
+            if (result != null && result.isSuccessful()) {
+                break;
+            }
+
+            lastBuildLogs = extractBuildLogs(result);
+        }
+
+        return new GenerationExecutionResult(result, buildResultOutcome, lastCommitHash, attemptsUsed, generatedFilesCommitted);
+    }
+
+    private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,
+            RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
+            String consistencyIssues) throws Exception {
+        String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
+        List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
+        if (generatedFiles == null || generatedFiles.isEmpty()) {
+            return null;
+        }
+
+        publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher);
+        String commitHash = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
+        return new GenerationAttemptResult(commitHash, waitForBuildResult(exercise, commitHash, repositoryType));
+    }
+
+    private void publishGeneratedFiles(Repository repository, List<GeneratedFileDTO> generatedFiles, ProgrammingExercise exercise, RepositoryType repositoryType,
+            HyperionCodeGenerationEventPublisher publisher) throws IOException {
+        for (GeneratedFileDTO file : generatedFiles) {
+            boolean existed = gitService.getFileByName(repository, file.path()).isPresent();
+            updateSingleFile(repository, file, exercise);
+            if (existed) {
+                publisher.fileUpdated(file.path(), repositoryType);
+            }
+            else {
+                publisher.newFile(file.path(), repositoryType);
+            }
+        }
     }
 
     private String buildCompletionMessage(RepositoryType repositoryType, boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
         if (!generatedFilesCommitted) {
-            return switch (repositoryType) {
-                case TEMPLATE -> "Template generation did not produce any committed files.";
-                case SOLUTION -> "Solution generation did not produce any committed files.";
-                case TESTS -> "Test generation did not produce any committed files.";
-                default -> "Code generation did not produce any committed files.";
-            };
+            return repositoryGenerationLabel(repositoryType) + " did not produce any committed files.";
         }
 
-        return switch (buildResultOutcome.state()) {
-            case SUCCESS -> switch (repositoryType) {
-                case TEMPLATE -> "Template files were generated and committed to the template repository.";
-                case SOLUTION -> "Solution files were generated and committed to the solution repository.";
-                case TESTS -> "Test files were generated and committed to the test repository.";
-                default -> "Files were generated and committed.";
-            };
-            case FAILED -> switch (repositoryType) {
-                case TEMPLATE -> "Template files were generated and committed to the template repository, but the build failed.";
-                case SOLUTION -> "Solution files were generated and committed to the solution repository, but the build failed.";
-                case TESTS -> "Test files were generated and committed to the test repository, but the build failed.";
-                default -> "Files were generated and committed, but the build failed.";
-            };
-            case TIMED_OUT -> switch (repositoryType) {
-                case TEMPLATE -> "Template files were generated and committed to the template repository, but the build result is not available yet because polling timed out.";
-                case SOLUTION -> "Solution files were generated and committed to the solution repository, but the build result is not available yet because polling timed out.";
-                case TESTS -> "Test files were generated and committed to the test repository, but the build result is not available yet because polling timed out.";
-                default -> "Files were generated and committed, but the build result is not available yet because polling timed out.";
-            };
-            case PARTICIPATION_NOT_FOUND -> switch (repositoryType) {
-                case TEMPLATE ->
-                    "Template files were generated and committed to the template repository, but Hyperion could not resolve the participation needed to read the build result.";
-                case SOLUTION ->
-                    "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.";
-                case TESTS -> "Test files were generated and committed to the test repository, but Hyperion could not resolve the participation needed to read the build result.";
-                default -> "Files were generated and committed, but Hyperion could not resolve the participation needed to read the build result.";
-            };
+        return committedFilesMessagePrefix(repositoryType) + buildResultMessageSuffix(buildResultOutcome.state());
+    }
+
+    private String repositoryGenerationLabel(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> "Template generation";
+            case SOLUTION -> "Solution generation";
+            case TESTS -> "Test generation";
+            default -> "Code generation";
+        };
+    }
+
+    private String committedFilesMessagePrefix(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> "Template files were generated and committed to the template repository";
+            case SOLUTION -> "Solution files were generated and committed to the solution repository";
+            case TESTS -> "Test files were generated and committed to the test repository";
+            default -> "Files were generated and committed";
+        };
+    }
+
+    private String buildResultMessageSuffix(BuildResultState buildResultState) {
+        return switch (buildResultState) {
+            case SUCCESS -> ".";
+            case FAILED -> ", but the build failed.";
+            case TIMED_OUT -> ", but the build result is not available yet because polling timed out.";
+            case PARTICIPATION_NOT_FOUND -> ", but Hyperion could not resolve the participation needed to read the build result.";
         };
     }
 

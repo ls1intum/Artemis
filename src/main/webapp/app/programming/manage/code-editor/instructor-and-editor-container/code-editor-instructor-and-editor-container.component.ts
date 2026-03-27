@@ -84,6 +84,23 @@ const CODE_GENERATION_STATUS_POPOVER_CENTER_OFFSET_PX = -10;
 type SupportedCodeGenerationRepositoryType = (typeof SUPPORTED_CODE_GENERATION_REPOSITORIES)[number];
 type CodeGenerationExecutionState = 'idle' | 'queued' | 'running' | 'success' | 'error' | 'skipped';
 type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE';
+type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.codeGeneration.repositories.${Lowercase<SupportedCodeGenerationRepositoryType>}`;
+type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
+type CodeGenerationFileActionTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${'fileCreated' | 'fileUpdated'}`;
+
+const CODE_GENERATION_STATE_CLASSES: Record<CodeGenerationExecutionState, string> = {
+    idle: 'text-body-secondary',
+    queued: 'text-warning',
+    running: 'text-primary',
+    success: 'text-success',
+    error: 'text-danger',
+    skipped: 'text-muted',
+};
+
+const CODE_GENERATION_FILE_ACTION_TRANSLATION_KEYS: Record<CodeGenerationFileEventType, CodeGenerationFileActionTranslationKey> = {
+    FILE_UPDATED: 'artemisApp.programmingExercise.codeGeneration.status.fileUpdated',
+    NEW_FILE: 'artemisApp.programmingExercise.codeGeneration.status.fileCreated',
+};
 
 interface CodeGenerationFileActivity {
     repositoryType: SupportedCodeGenerationRepositoryType;
@@ -625,15 +642,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType repository to translate
      * @returns translation key for the repository label
      */
-    getCodeGenerationRepositoryTranslationKey(repositoryType: SupportedCodeGenerationRepositoryType): string {
-        switch (repositoryType) {
-            case RepositoryType.TEMPLATE:
-                return 'artemisApp.programmingExercise.codeGeneration.repositories.template';
-            case RepositoryType.SOLUTION:
-                return 'artemisApp.programmingExercise.codeGeneration.repositories.solution';
-            case RepositoryType.TESTS:
-                return 'artemisApp.programmingExercise.codeGeneration.repositories.tests';
-        }
+    getCodeGenerationRepositoryTranslationKey(repositoryType: SupportedCodeGenerationRepositoryType): CodeGenerationRepositoryTranslationKey {
+        return `artemisApp.programmingExercise.codeGeneration.repositories.${repositoryType.toLowerCase() as Lowercase<SupportedCodeGenerationRepositoryType>}`;
     }
 
     /**
@@ -641,21 +651,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param state repository generation state
      * @returns translation key for the state label
      */
-    getCodeGenerationStateTranslationKey(state: CodeGenerationExecutionState): string {
-        switch (state) {
-            case 'queued':
-                return 'artemisApp.programmingExercise.codeGeneration.status.queued';
-            case 'running':
-                return 'artemisApp.programmingExercise.codeGeneration.status.running';
-            case 'success':
-                return 'artemisApp.programmingExercise.codeGeneration.status.success';
-            case 'error':
-                return 'artemisApp.programmingExercise.codeGeneration.status.error';
-            case 'skipped':
-                return 'artemisApp.programmingExercise.codeGeneration.status.skipped';
-            default:
-                return 'artemisApp.programmingExercise.codeGeneration.status.idle';
-        }
+    getCodeGenerationStateTranslationKey(state: CodeGenerationExecutionState): CodeGenerationStateTranslationKey {
+        return `artemisApp.programmingExercise.codeGeneration.status.${state}`;
     }
 
     /**
@@ -664,20 +661,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @returns Bootstrap text color class used in the status popover
      */
     getCodeGenerationStateClass(state: CodeGenerationExecutionState): string {
-        switch (state) {
-            case 'success':
-                return 'text-success';
-            case 'queued':
-                return 'text-warning';
-            case 'error':
-                return 'text-danger';
-            case 'running':
-                return 'text-primary';
-            case 'skipped':
-                return 'text-muted';
-            default:
-                return 'text-body-secondary';
-        }
+        return CODE_GENERATION_STATE_CLASSES[state];
     }
 
     /**
@@ -685,8 +669,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param eventType file activity event type
      * @returns translation key describing the file activity
      */
-    getCodeGenerationFileActionTranslationKey(eventType: CodeGenerationFileEventType): string {
-        return eventType === 'NEW_FILE' ? 'artemisApp.programmingExercise.codeGeneration.status.fileCreated' : 'artemisApp.programmingExercise.codeGeneration.status.fileUpdated';
+    getCodeGenerationFileActionTranslationKey(eventType: CodeGenerationFileEventType): CodeGenerationFileActionTranslationKey {
+        return CODE_GENERATION_FILE_ACTION_TRANSLATION_KEYS[eventType];
     }
 
     /**
@@ -716,39 +700,32 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param event websocket event emitted by Hyperion
      */
     private handleCodeGenerationJobEvent(repositoryType: SupportedCodeGenerationRepositoryType, event: HyperionEvent) {
-        switch (event.type) {
-            case 'STARTED':
-            case 'PROGRESS':
-                break;
+        if (event.type === 'FILE_UPDATED' || event.type === 'NEW_FILE') {
+            this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path);
+            this.scheduleCodeGenerationRepositoryPull(repositoryType);
+            return;
+        }
 
-            case 'FILE_UPDATED':
-            case 'NEW_FILE':
-                this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path);
-                this.scheduleCodeGenerationRepositoryPull(repositoryType);
-                break;
+        if (event.type === 'DONE') {
+            this.flushCodeGenerationRepositoryPull(repositoryType);
+            this.codeEditorContainer?.actions?.executeRefresh();
+            this.updateCodeGenerationStatus(repositoryType, (status) => ({
+                ...status,
+                state: event.success ? 'success' : 'error',
+                attempts: event.attempts,
+                message: event.message,
+            }));
+            this.codeGenAlertService.addAlert({
+                type: AlertType.SUCCESS,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
+                translationParams: { repositoryType },
+            });
+            this.finishCurrentCodeGeneration(event.success || this.queuedCodeGenerationRepositories.length > 0);
+            return;
+        }
 
-            case 'DONE':
-                this.flushCodeGenerationRepositoryPull(repositoryType);
-                this.codeEditorContainer?.actions?.executeRefresh();
-                this.updateCodeGenerationStatus(repositoryType, (status) => ({
-                    ...status,
-                    state: event.success ? 'success' : 'error',
-                    attempts: event.attempts,
-                    message: event.message,
-                }));
-                this.codeGenAlertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
-                    translationParams: { repositoryType },
-                });
-                this.finishCurrentCodeGeneration(event.success || this.queuedCodeGenerationRepositories.length > 0);
-                break;
-
-            case 'ERROR':
-                this.stopCodeGenerationQueue(repositoryType, event.message, 'artemisApp.programmingExercise.codeGeneration.error');
-                break;
-
-            default:
+        if (event.type === 'ERROR') {
+            this.stopCodeGenerationQueue(repositoryType, event.message, 'artemisApp.programmingExercise.codeGeneration.error');
         }
     }
 
@@ -868,25 +845,36 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param repositoryType repository to refresh
      */
     private flushCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType) {
+        this.clearScheduledCodeGenerationRepositoryPull(repositoryType);
+        if (!this.canStartCodeGenerationRepositoryPull(repositoryType)) {
+            return;
+        }
+
+        this.startCodeGenerationRepositoryPull(repositoryType);
+    }
+
+    private clearScheduledCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType) {
         const existingTimeoutHandle = this.codeGenerationPullTimeoutHandles.get(repositoryType);
         if (existingTimeoutHandle) {
             clearTimeout(existingTimeoutHandle);
             this.codeGenerationPullTimeoutHandles.delete(repositoryType);
         }
+    }
 
+    private canStartCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType): boolean {
         if (!this.repositoriesWithPendingCodeGenerationPull.has(repositoryType)) {
-            return;
+            return false;
         }
 
         if (this.selectedRepository !== repositoryType) {
             this.repositoriesWithPendingCodeGenerationPull.delete(repositoryType);
-            return;
+            return false;
         }
 
-        if (this.repositoriesWithInFlightCodeGenerationPull.has(repositoryType)) {
-            return;
-        }
+        return !this.repositoriesWithInFlightCodeGenerationPull.has(repositoryType);
+    }
 
+    private startCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType) {
         this.repositoriesWithPendingCodeGenerationPull.delete(repositoryType);
         this.repositoriesWithInFlightCodeGenerationPull.add(repositoryType);
         this.codeGenerationPullSubscriptions.get(repositoryType)?.unsubscribe();
@@ -899,15 +887,17 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
                 }),
             )
             .subscribe({
-                complete: () => {
-                    this.codeGenerationPullSubscriptions.delete(repositoryType);
-                    this.repositoriesWithInFlightCodeGenerationPull.delete(repositoryType);
-                    if (this.repositoriesWithPendingCodeGenerationPull.has(repositoryType)) {
-                        this.flushCodeGenerationRepositoryPull(repositoryType);
-                    }
-                },
+                complete: () => this.handleCompletedCodeGenerationRepositoryPull(repositoryType),
             });
         this.codeGenerationPullSubscriptions.set(repositoryType, pullSubscription);
+    }
+
+    private handleCompletedCodeGenerationRepositoryPull(repositoryType: SupportedCodeGenerationRepositoryType) {
+        this.codeGenerationPullSubscriptions.delete(repositoryType);
+        this.repositoriesWithInFlightCodeGenerationPull.delete(repositoryType);
+        if (this.repositoriesWithPendingCodeGenerationPull.has(repositoryType)) {
+            this.flushCodeGenerationRepositoryPull(repositoryType);
+        }
     }
 
     /**
@@ -1045,9 +1035,9 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /**
      * Polls the backend until the previous exercise-level generation slot has been released.
-     * @param attempt current poll attempt index
+     * @param attempt current poll attempt number, starting at 1
      */
-    private waitForCodeGenerationSlotRelease(attempt = 0) {
+    private waitForCodeGenerationSlotRelease(attempt = 1) {
         if (!this.exercise?.id) {
             this.clearJobSubscription(true);
             return;
@@ -1073,10 +1063,10 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     /**
      * Schedules the next slot-release poll attempt or fails the queue after the retry limit.
-     * @param attempt current poll attempt index
+     * @param attempt current poll attempt number, starting at 1
      */
     private scheduleNextSlotReleasePoll(attempt: number) {
-        if (attempt + 1 >= CODE_GENERATION_SLOT_RELEASE_MAX_POLLS) {
+        if (attempt >= CODE_GENERATION_SLOT_RELEASE_MAX_POLLS) {
             const nextRepository = this.queuedCodeGenerationRepositories[0];
             if (nextRepository) {
                 this.stopCodeGenerationQueue(

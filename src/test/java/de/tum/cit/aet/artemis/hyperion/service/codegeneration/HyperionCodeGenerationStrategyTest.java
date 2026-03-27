@@ -259,7 +259,7 @@ class HyperionCodeGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenReturn(createChatResponse(invalidJsonResponse, modelName, 11, 7));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class)
-                .hasMessageContaining("AI response processing failed. Please retry.");
+                .hasMessageContaining("AI response processing failed due to illegal argument. Please retry.");
         verifyNoInteractions(llmTokenUsageService);
     }
 
@@ -337,7 +337,7 @@ class HyperionCodeGenerationServiceTest {
         when(chatModel.call(any(Prompt.class))).thenThrow(new RuntimeException(new TimeoutException("Channel response timed out after 60000 milliseconds.")));
 
         assertThatThrownBy(() -> strategy.testCallChatClient(user, exercise, "test-template", templateVariables)).isInstanceOf(NetworkingException.class).hasMessageContaining(
-                "The AI took too long to respond and this generation request timed out after 60 seconds. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
+                "The AI took too long to respond and this generation request timed out after 5 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.");
     }
 
     private void setupMockTemplateAndChatResponses(String finalResponse) {

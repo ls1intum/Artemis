@@ -53,9 +53,9 @@ public abstract class HyperionCodeGenerationService {
 
     private static final Pattern JSON_CODE_BLOCK_PATTERN = Pattern.compile("```(?:json)?\\s*(\\{.*})\\s*```", Pattern.DOTALL);
 
-    private static final String CHANNEL_TIMEOUT_MESSAGE = "Channel response timed out after 60000 milliseconds";
+    private static final Pattern CHANNEL_TIMEOUT_MESSAGE_PATTERN = Pattern.compile("Channel response timed out after \\d+ milliseconds");
 
-    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 60 seconds. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
+    private static final String USER_FRIENDLY_CHANNEL_TIMEOUT_MESSAGE = "The AI took too long to respond and this generation request timed out after 5 minutes. Please refresh first to check whether any files were already created or updated. If nothing changed, start the generation again.";
 
     /**
      * Maximum number of characters kept when passing consistency issues into AI prompts.
@@ -190,7 +190,7 @@ public abstract class HyperionCodeGenerationService {
             throw new NetworkingException("AI request failed due to configuration or input. Check model and request.", e);
         }
         catch (IllegalArgumentException e) {
-            throw new NetworkingException("AI response processing failed. Please retry.", e);
+            throw new NetworkingException("AI response processing failed due to illegal argument. Please retry.", e);
         }
         catch (RuntimeException e) {
             if (isResponseProcessingException(e)) {
@@ -215,14 +215,17 @@ public abstract class HyperionCodeGenerationService {
         }
 
         String trimmed = responseText.trim();
-        for (String candidate : extractJsonCandidates(trimmed)) {
+        List<String> candidates = extractJsonCandidates(trimmed);
+        for (int index = 0; index < candidates.size(); index++) {
+            String candidate = candidates.get(index);
             try {
                 CodeGenerationResponseDTO response = OBJECT_MAPPER.readValue(candidate, CodeGenerationResponseDTO.class);
                 if (response != null) {
                     return response;
                 }
             }
-            catch (JsonProcessingException ignored) {
+            catch (JsonProcessingException e) {
+                log.debug("Failed to parse AI response candidate {}/{} as code generation JSON", index + 1, candidates.size(), e);
                 // Try the next candidate.
             }
         }
@@ -233,7 +236,8 @@ public abstract class HyperionCodeGenerationService {
      * Extracts likely JSON payload candidates from raw LLM output.
      *
      * @param responseText raw LLM output
-     * @return ordered JSON candidates to try parsing, from most specific to fallback
+     * @return ordered immutable JSON candidates to try parsing, from most specific to fallback;
+     *         callers must treat the returned list as read-only
      */
     private List<String> extractJsonCandidates(String responseText) {
         Matcher codeBlockMatcher = JSON_CODE_BLOCK_PATTERN.matcher(responseText);
@@ -271,7 +275,7 @@ public abstract class HyperionCodeGenerationService {
     }
 
     /**
-     * Detects the 60-second channel timeout surfaced by the Spring AI client.
+     * Detects a channel timeout surfaced by the Spring AI client.
      *
      * @param throwable exception to inspect
      * @return true if the causal chain indicates the channel response timed out
@@ -283,7 +287,7 @@ public abstract class HyperionCodeGenerationService {
                 return true;
             }
             String message = current.getMessage();
-            if (message != null && message.contains(CHANNEL_TIMEOUT_MESSAGE)) {
+            if (message != null && CHANNEL_TIMEOUT_MESSAGE_PATTERN.matcher(message).find()) {
                 return true;
             }
             current = current.getCause();
