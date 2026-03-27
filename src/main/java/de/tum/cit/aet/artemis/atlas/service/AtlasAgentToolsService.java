@@ -194,8 +194,8 @@ public class AtlasAgentToolsService {
         String brief = "EXERCISE_ID: " + exerciseId + "\nEXERCISE_TITLE: " + exerciseTitle + "\nREQUIREMENTS: " + requirements + "\nCONTEXT: " + context;
 
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId,
-                false, exerciseMapperToolCallbackProvider);
+        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId, false,
+                exerciseMapperToolCallbackProvider);
         return stripReturnMarker(response);
     }
 

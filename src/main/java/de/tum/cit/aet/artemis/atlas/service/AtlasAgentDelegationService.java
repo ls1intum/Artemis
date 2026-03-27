@@ -57,8 +57,7 @@ public class AtlasAgentDelegationService {
      * @param toolCallbackProvider the tool callback provider for this agent (may be null)
      * @return the agent's response
      */
-    String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory,
-            @Nullable ToolCallbackProvider toolCallbackProvider) {
+    String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory, @Nullable ToolCallbackProvider toolCallbackProvider) {
         String systemPrompt = templateService.render(promptResourcePath, Map.of());
 
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
