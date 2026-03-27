@@ -73,7 +73,7 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private enum BuildResultState {
-        SUCCESS, FAILED, TIMED_OUT, PARTICIPATION_NOT_FOUND,
+        SUCCESS, FAILED, TIMED_OUT, PARTICIPATION_NOT_FOUND, CI_TRIGGER_FAILED,
     }
 
     private record BuildResultOutcome(Result result, BuildResultState state) {
@@ -83,6 +83,26 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private record GenerationAttemptResult(String commitHash, BuildResultOutcome buildResultOutcome) {
+    }
+
+    private record CommitTriggerResult(String commitHash, boolean buildTriggered) {
+    }
+
+    private static final class GenerationExecutionProgress {
+
+        private Result result;
+
+        private BuildResultOutcome buildResultOutcome = new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
+
+        private String lastCommitHash;
+
+        private int attemptsUsed;
+
+        private boolean generatedFilesCommitted;
+
+        private GenerationExecutionResult snapshot() {
+            return new GenerationExecutionResult(result, buildResultOutcome, lastCommitHash, attemptsUsed, generatedFilesCommitted);
+        }
     }
 
     private final String defaultBranch;
@@ -225,19 +245,20 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     /**
-     * Commits changes, triggers CI build, and returns the new commit hash.
+     * Commits changes, triggers CI build, and returns the new commit hash together with trigger status.
      *
      * @param repository    the repository
      * @param user          the user making the commit
      * @param repositoryUri the repository URI
      * @param exercise      the programming exercise (needed for triggering CI build)
-     * @return the new commit hash
+     * @return commit metadata including the new commit hash and whether CI accepted the build trigger
      * @throws GitAPIException if git operations fail
      */
-    private String commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise, RepositoryType repositoryType)
+    private CommitTriggerResult commitAndGetHash(Repository repository, User user, LocalVCRepositoryUri repositoryUri, ProgrammingExercise exercise, RepositoryType repositoryType)
             throws GitAPIException {
         repositoryService.commitChanges(repository, user);
         String newCommitHash = gitService.getLastCommitHash(repositoryUri);
+        boolean buildTriggered = true;
         ProgrammingExerciseParticipation exerciseParticipation = switch (repositoryType) {
             case TEMPLATE -> programmingExerciseParticipationService.findTemplateParticipationByProgrammingExerciseId(exercise.getId());
             case SOLUTION -> programmingExerciseParticipationService.retrieveSolutionParticipation(exercise);
@@ -258,8 +279,9 @@ public class HyperionCodeGenerationExecutionService {
         }
         catch (ContinuousIntegrationException e) {
             log.warn("Failed to trigger CI build for commit {} in exercise {}: {}", newCommitHash, exercise.getId(), e.getMessage());
+            buildTriggered = false;
         }
-        return newCommitHash;
+        return new CommitTriggerResult(newCommitHash, buildTriggered);
     }
 
     /**
@@ -312,17 +334,20 @@ public class HyperionCodeGenerationExecutionService {
         log.info("Setup Repo success");
 
         LocalVCRepositoryUri repositoryUri = exercise.getRepositoryURI(repositoryType);
-        GenerationExecutionResult executionResult = new GenerationExecutionResult(null, new BuildResultOutcome(null, BuildResultState.TIMED_OUT), null, 0, false);
+        GenerationExecutionProgress executionProgress = new GenerationExecutionProgress();
+        GenerationExecutionResult executionResult;
 
         try {
-            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, publisher, setupResult.repository(), repositoryUri);
+            executionResult = executeGenerationAttempts(exercise, user, courseId, repositoryType, publisher, setupResult.repository(), repositoryUri, executionProgress);
         }
         catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             publisher.error(e.getMessage());
+            executionResult = executionProgress.snapshot();
         }
         catch (Exception e) {
             publisher.error(e.getMessage());
+            executionResult = executionProgress.snapshot();
         }
         finally {
             cleanupRepository(setupResult.repository(), setupResult.originalCommitHash());
@@ -342,7 +367,7 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         boolean success = executionResult.generatedFilesCommitted;
-        int reportedAttempts = executionResult.attemptsUsed == 0 ? MAX_ITERATIONS : executionResult.attemptsUsed;
+        int reportedAttempts = executionResult.attemptsUsed;
         String completionMessage = buildCompletionMessage(repositoryType, executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
         publisher.done(success, reportedAttempts, completionMessage);
 
@@ -350,41 +375,35 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private GenerationExecutionResult executeGenerationAttempts(ProgrammingExercise exercise, User user, Long courseId, RepositoryType repositoryType,
-            HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri) throws Exception {
+            HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, GenerationExecutionProgress executionProgress)
+            throws Exception {
         HyperionCodeGenerationService strategy = resolveStrategy(repositoryType);
         String consistencyIssues = buildConsistencyIssuesPrompt(exercise);
         String lastBuildLogs = null;
-        Result result = null;
-        BuildResultOutcome buildResultOutcome = new BuildResultOutcome(null, BuildResultState.TIMED_OUT);
-        String lastCommitHash = null;
-        int attemptsUsed = 0;
-        boolean generatedFilesCommitted = false;
 
         for (int attempt = 0; attempt < MAX_ITERATIONS; attempt++) {
-            attemptsUsed = attempt + 1;
+            executionProgress.attemptsUsed = attempt + 1;
             GenerationAttemptResult attemptResult = executeGenerationAttempt(strategy, exercise, user, courseId, repositoryType, publisher, repository, repositoryUri,
-                    lastBuildLogs, consistencyIssues);
+                    lastBuildLogs, consistencyIssues, executionProgress);
             if (attemptResult != null) {
-                lastCommitHash = attemptResult.commitHash();
-                generatedFilesCommitted = true;
-                buildResultOutcome = attemptResult.buildResultOutcome();
-                result = buildResultOutcome.result();
+                executionProgress.buildResultOutcome = attemptResult.buildResultOutcome();
+                executionProgress.result = executionProgress.buildResultOutcome.result();
             }
             publisher.progress(attempt + 1);
 
-            if (result != null && result.isSuccessful()) {
+            if (executionProgress.buildResultOutcome.state() != BuildResultState.FAILED) {
                 break;
             }
 
-            lastBuildLogs = extractBuildLogs(result);
+            lastBuildLogs = extractBuildLogs(executionProgress.result);
         }
 
-        return new GenerationExecutionResult(result, buildResultOutcome, lastCommitHash, attemptsUsed, generatedFilesCommitted);
+        return executionProgress.snapshot();
     }
 
     private GenerationAttemptResult executeGenerationAttempt(HyperionCodeGenerationService strategy, ProgrammingExercise exercise, User user, Long courseId,
             RepositoryType repositoryType, HyperionCodeGenerationEventPublisher publisher, Repository repository, LocalVCRepositoryUri repositoryUri, String lastBuildLogs,
-            String consistencyIssues) throws Exception {
+            String consistencyIssues, GenerationExecutionProgress executionProgress) throws Exception {
         String repositoryStructure = repositoryStructureService.getRepositoryStructure(repository);
         List<GeneratedFileDTO> generatedFiles = strategy.generateCode(user, exercise, courseId, lastBuildLogs, repositoryStructure, consistencyIssues);
         if (generatedFiles == null || generatedFiles.isEmpty()) {
@@ -392,7 +411,13 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher);
-        String commitHash = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
+        CommitTriggerResult commitTriggerResult = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
+        String commitHash = commitTriggerResult.commitHash();
+        executionProgress.lastCommitHash = commitHash;
+        executionProgress.generatedFilesCommitted = true;
+        if (!commitTriggerResult.buildTriggered()) {
+            return new GenerationAttemptResult(commitHash, new BuildResultOutcome(null, BuildResultState.CI_TRIGGER_FAILED));
+        }
         return new GenerationAttemptResult(commitHash, waitForBuildResult(exercise, commitHash, repositoryType));
     }
 
@@ -442,6 +467,7 @@ public class HyperionCodeGenerationExecutionService {
             case FAILED -> ", but the build failed.";
             case TIMED_OUT -> ", but the build result is not available yet because polling timed out.";
             case PARTICIPATION_NOT_FOUND -> ", but Hyperion could not resolve the participation needed to read the build result.";
+            case CI_TRIGGER_FAILED -> ", but Hyperion could not trigger the CI build.";
         };
     }
 

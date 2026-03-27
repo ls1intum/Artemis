@@ -250,7 +250,7 @@ public abstract class HyperionCodeGenerationService {
         if (firstBrace >= 0 && lastBrace > firstBrace) {
             String embeddedJson = responseText.substring(firstBrace, lastBrace + 1).trim();
             if (!embeddedJson.equals(responseText)) {
-                return List.of(responseText, embeddedJson);
+                return List.of(embeddedJson, responseText);
             }
         }
 

@@ -3,6 +3,7 @@ package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -233,6 +234,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
 
         assertThat(result).isEqualTo(buildResult);
+        verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
         verify(publisher).done(true, 2, "Solution files were generated and committed to the solution repository, but the build failed.");
     }
 
@@ -263,8 +265,83 @@ class HyperionCodeGenerationExecutionServiceTest {
         Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
 
         assertThat(result).isNull();
-        verify(publisher).done(true, 2,
+        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
+        verify(publisher).done(true, 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
+    }
+
+    @Test
+    void generateAndCompileCode_withInterruptedBuildPolling_preservesCommittedPartialState() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        doNothing().when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
+        when(programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(eq(99L), eq("new-hash"))).thenReturn(null);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
+
+        try {
+            Thread.currentThread().interrupt();
+
+            Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+
+            assertThat(result).isNull();
+            verify(publisher).error("sleep interrupted");
+            verify(publisher).done(true, 1,
+                    "Solution files were generated and committed to the solution repository, but the build result is not available yet because polling timed out.");
+            verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        }
+        finally {
+            Thread.interrupted();
+        }
+    }
+
+    @Test
+    void generateAndCompileCode_withCiTriggerFailure_skipsPollingAndReportsTriggerFailure() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        String newCommitId = "new-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId, newCommitId, newCommitId);
+        when(gitService.getFileByName(repository, "Test.java")).thenReturn(Optional.empty());
+        doNothing().when(repositoryService).createFile(eq(repository), eq("Test.java"), any());
+        doNothing().when(repositoryService).commitChanges(repository, user);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
+        doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+
+        assertThat(result).isNull();
+        verify(programmingSubmissionRepository, never()).findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(anyLong(), anyString());
+        verify(resultRepository, never()).findLatestResultWithFeedbacksAndTestcasesForSubmission(anyLong());
+        verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
+        verify(publisher).done(true, 1, "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
+        verify(exerciseVersionService).createExerciseVersion(exercise, user);
     }
 
     @Test
@@ -388,14 +465,15 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
 
-        String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
+        Object result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
 
-        assertThat(result).isEqualTo("new-commit-hash");
+        assertThat(ReflectionTestUtils.getField(result, "commitHash")).isEqualTo("new-commit-hash");
+        assertThat(ReflectionTestUtils.getField(result, "buildTriggered")).isEqualTo(true);
         verify(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash", RepositoryType.SOLUTION);
     }
 
     @Test
-    void commitAndGetHash_withCIException_stillReturnsHash() throws Exception {
+    void commitAndGetHash_withCIException_returnsHashAndFailedTriggerState() throws Exception {
         Repository mockRepository = mock(Repository.class);
         LocalVCRepositoryUri repositoryUri = mock(LocalVCRepositoryUri.class);
         SolutionProgrammingExerciseParticipation mockParticipation = mock(SolutionProgrammingExerciseParticipation.class);
@@ -406,9 +484,10 @@ class HyperionCodeGenerationExecutionServiceTest {
         doThrow(new ContinuousIntegrationException("CI error")).when(continuousIntegrationTriggerService).triggerBuild(mockParticipation, "new-commit-hash",
                 RepositoryType.SOLUTION);
 
-        String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
+        Object result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.SOLUTION);
 
-        assertThat(result).isEqualTo("new-commit-hash");
+        assertThat(ReflectionTestUtils.getField(result, "commitHash")).isEqualTo("new-commit-hash");
+        assertThat(ReflectionTestUtils.getField(result, "buildTriggered")).isEqualTo(false);
     }
 
     @Test
@@ -421,9 +500,10 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(gitService.getLastCommitHash(repositoryUri)).thenReturn("commit-tests");
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(mockParticipation);
 
-        String result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.TESTS);
+        Object result = ReflectionTestUtils.invokeMethod(service, "commitAndGetHash", mockRepository, user, repositoryUri, exercise, RepositoryType.TESTS);
 
-        assertThat(result).isEqualTo("commit-tests");
+        assertThat(ReflectionTestUtils.getField(result, "commitHash")).isEqualTo("commit-tests");
+        assertThat(ReflectionTestUtils.getField(result, "buildTriggered")).isEqualTo(true);
         verify(programmingSubmissionService, times(1)).createSolutionParticipationSubmissionWithTypeTest(exercise.getId(), "commit-tests");
         verify(continuousIntegrationTriggerService, times(1)).triggerBuild(mockParticipation, "commit-tests", RepositoryType.TESTS);
     }
