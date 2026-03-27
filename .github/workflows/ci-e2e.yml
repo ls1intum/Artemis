@@ -1,0 +1,272 @@
+name: E2E Tests
+
+on:
+  workflow_call:
+    inputs:
+      branch_name:
+        required: true
+        type: string
+      commit_sha:
+        required: true
+        type: string
+      base_branch:
+        required: true
+        type: string
+      is_pr:
+        required: true
+        type: boolean
+      pr_number:
+        required: false
+        default: 0
+        type: number
+
+concurrency:
+  group: e2e-${{ inputs.is_pr && format('pr-{0}', inputs.pr_number) || inputs.branch_name }}
+  cancel-in-progress: true
+
+env:
+  STATUS_CONTEXT: "End-to-End (E2E) Tests"
+  STATUSES_REQUEST_URL: "https://api.github.com/repos/${{ github.repository }}/statuses/${{ inputs.commit_sha }}"
+  TARGET_URL: "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+jobs:
+  determine-tests:
+    name: Determine Relevant Tests
+    if: inputs.is_pr
+    runs-on: ubuntu-latest
+    outputs:
+      run_all_tests: ${{ steps.determine.outputs.RUN_ALL_TESTS }}
+      relevant_tests: ${{ steps.determine.outputs.RELEVANT_TESTS }}
+      remaining_tests: ${{ steps.determine.outputs.REMAINING_TESTS }}
+      relevant_count: ${{ steps.determine.outputs.RELEVANT_COUNT }}
+      remaining_count: ${{ steps.determine.outputs.REMAINING_COUNT }}
+    steps:
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 0
+
+      - name: Fetch base branch
+        run: |
+          git fetch origin "${{ inputs.base_branch }}":base_branch
+
+      - name: Determine relevant tests
+        id: determine
+        run: |
+          chmod +x .ci/E2E-tests/determine-relevant-tests.sh
+          .ci/E2E-tests/determine-relevant-tests.sh base_branch
+
+  run-e2e-relevant:
+    name: "Phase 1: Relevant E2E Tests"
+    needs: determine-tests
+    if: inputs.is_pr && needs.determine-tests.outputs.run_all_tests != 'true' && needs.determine-tests.outputs.relevant_tests != ''
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    steps:
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 1: Running relevant tests...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          workflow-head-branch: ${{ inputs.branch_name }}
+          workflow-head-sha: ${{ inputs.commit_sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name-suffix: phase1
+          test-notice: "Running Phase 1 with relevant tests: ${{ needs.determine-tests.outputs.relevant_tests }}"
+
+      - name: Run E2E Playwright tests (Phase 1 - Relevant Tests)
+        id: run-tests-phase1
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.relevant_tests }}"
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: E2E Teardown
+        if: success() || failure()
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: Phase 1
+          require-tests: error
+
+      - name: E2E Test Report
+        if: success() || failure()
+        uses: ./.github/actions/e2e-test-report
+        with:
+          artifact-name: "JUnit Test Results Phase 1"
+          download-path: "phase1-test-results"
+          check-name: "Phase 1: E2E Test Report"
+          commit-sha: ${{ inputs.commit_sha }}
+
+  run-e2e-remaining:
+    name: "Phase 2: Remaining E2E Tests"
+    needs: [determine-tests, run-e2e-relevant]
+    if: inputs.is_pr && needs.determine-tests.outputs.run_all_tests != 'true' && needs.determine-tests.outputs.remaining_tests != ''
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 120
+    environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    steps:
+      - name: Update status to Phase 2
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Phase 2: Running remaining tests...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          workflow-head-branch: ${{ inputs.branch_name }}
+          workflow-head-sha: ${{ inputs.commit_sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name-suffix: phase2
+          test-notice: "Running Phase 2 with remaining tests: ${{ needs.determine-tests.outputs.remaining_tests }}"
+
+      - name: Run E2E Playwright tests (Phase 2 - Remaining Tests)
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright "${{ needs.determine-tests.outputs.remaining_tests }}"
+        env:
+          FAST_TEST_TIMEOUT_SECONDS: 60
+
+      - name: E2E Teardown
+        if: success() || failure()
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: Phase 2
+          require-tests: error
+
+      - name: E2E Test Report
+        if: success() || failure()
+        uses: ./.github/actions/e2e-test-report
+        with:
+          artifact-name: "JUnit Test Results Phase 2"
+          download-path: "phase2-test-results"
+          check-name: "Phase 2: E2E Test Report"
+          commit-sha: ${{ inputs.commit_sha }}
+
+  run-e2e-all:
+    name: Run All E2E Tests
+    needs: determine-tests
+    if: ${{ !inputs.is_pr || needs.determine-tests.outputs.run_all_tests == 'true' || needs.determine-tests.result == 'skipped' }}
+    runs-on: [self-hosted, e2e-test]
+    timeout-minutes: 180
+    environment: playwright-e2e-tests
+    env:
+      ARTEMIS_ADMIN_PASSWORD: ${{ secrets.ARTEMIS_ADMIN_PASSWORD }}
+      ARTEMIS_ADMIN_USERNAME: ${{ secrets.ARTEMIS_ADMIN_USERNAME }}
+      PLAYWRIGHT_CREATE_USERS: ${{ vars.PLAYWRIGHT_CREATE_USERS }}
+      PLAYWRIGHT_PASSWORD_TEMPLATE: ${{ vars.PLAYWRIGHT_PASSWORD_TEMPLATE }}
+      PLAYWRIGHT_USERNAME_TEMPLATE: ${{ vars.PLAYWRIGHT_USERNAME_TEMPLATE }}
+      SLOW_TEST_TIMEOUT_SECONDS: ${{ vars.SLOW_TEST_TIMEOUT_SECONDS }}
+      TEST_RETRIES: ${{ vars.TEST_RETRIES }}
+      TEST_TIMEOUT_SECONDS: ${{ vars.TEST_TIMEOUT_SECONDS }}
+      TEST_WORKER_PROCESSES: ${{ vars.TEST_WORKER_PROCESSES }}
+    steps:
+      - name: Create pending status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"pending","context":"${{ env.STATUS_CONTEXT }}","description":"Running all E2E tests...","target_url":"${{ env.TARGET_URL }}"}'
+
+      - name: Checkout repository for local actions
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.commit_sha }}
+          fetch-depth: 1
+
+      - name: E2E Setup
+        uses: ./.github/actions/e2e-setup
+        with:
+          workflow-run-id: ${{ github.run_id }}
+          workflow-head-branch: ${{ inputs.branch_name }}
+          workflow-head-sha: ${{ inputs.commit_sha }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-name-suffix: all
+
+      - name: Run E2E Playwright tests
+        run: .ci/E2E-tests/execute.sh postgres-localci playwright
+
+      - name: E2E Teardown
+        if: success() || failure()
+        uses: ./.github/actions/e2e-teardown
+        with:
+          artifact-name-suffix: All
+          require-tests: error
+
+      - name: E2E Test Report
+        if: success() || failure()
+        uses: ./.github/actions/e2e-test-report
+        with:
+          artifact-name: "JUnit Test Results"
+          download-path: "all-test-results"
+          check-name: "All E2E Tests Report"
+          commit-sha: ${{ inputs.commit_sha }}
+
+  report-results:
+    name: Report E2E Overall Status
+    if: always()
+    needs: [run-e2e-relevant, run-e2e-remaining, run-e2e-all]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine overall status
+        id: result
+        run: |
+          if [[ "${{ needs.run-e2e-relevant.result }}" == "failure" || \
+                "${{ needs.run-e2e-remaining.result }}" == "failure" || \
+                "${{ needs.run-e2e-all.result }}" == "failure" ]]; then
+            echo "state=failure" >> "$GITHUB_OUTPUT"
+            echo "description=E2E tests failed" >> "$GITHUB_OUTPUT"
+          else
+            echo "state=success" >> "$GITHUB_OUTPUT"
+            echo "description=E2E tests passed" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update final status
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3+json" \
+            "${{ env.STATUSES_REQUEST_URL }}" \
+            -d '{"state":"${{ steps.result.outputs.state }}","context":"${{ env.STATUS_CONTEXT }}","description":"${{ steps.result.outputs.description }}","target_url":"${{ env.TARGET_URL }}"}'

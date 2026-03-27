@@ -1,12 +1,7 @@
 name: Check if German and English translations are consistent
 
 on:
-  pull_request:
-    paths:
-      - 'src/main/webapp/i18n/**'
-  push:
-    paths:
-      - 'src/main/webapp/i18n/**'
+  workflow_call:
 
 jobs:
   build:
