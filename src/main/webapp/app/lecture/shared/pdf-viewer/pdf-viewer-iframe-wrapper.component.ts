@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -46,7 +46,6 @@ export class PdfViewerIframeWrapperComponent {
         return '/pdf-viewer-iframe';
     });
 
-    private iframeLoadTimeoutId?: number;
     private readonly themeService = inject(ThemeService);
 
     constructor() {
@@ -74,30 +73,12 @@ export class PdfViewerIframeWrapperComponent {
         window.addEventListener('message', messageHandler);
         destroyRef.onDestroy(() => {
             window.removeEventListener('message', messageHandler);
-            this.clearIframeLoadTimeout();
         });
-    }
-
-    /** Sets a safety timeout if iframe doesn't send "ready" within 10s. */
-    onIframeLoad(): void {
-        this.iframeLoadTimeoutId = window.setTimeout(() => {
-            if (!this.iframeReady()) {
-                this.iframeReady.set(true);
-            }
-        }, 10000);
-    }
-
-    /** Clears the iframe load timeout. */
-    private clearIframeLoadTimeout(): void {
-        if (this.iframeLoadTimeoutId !== undefined) {
-            window.clearTimeout(this.iframeLoadTimeoutId);
-            this.iframeLoadTimeoutId = undefined;
-        }
     }
 
     /** Sends a loadPDF message to the iframe with current URL and theme. */
     private loadPdfInIframe(): void {
-        const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
+        const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
         const url = this.pdfUrl();
         this.postMessageToIframe('loadPDF', {
             url: url,
@@ -113,11 +94,19 @@ export class PdfViewerIframeWrapperComponent {
             return;
         }
 
+        if (!event.data || typeof event.data !== 'object') {
+            return;
+        }
+
         const { type } = event.data;
 
         if (type === 'ready') {
-            this.clearIframeLoadTimeout();
             this.iframeReady.set(true);
+            window.dispatchEvent(
+                new CustomEvent('pdf-viewer-ready', {
+                    detail: { pdfUrl: this.pdfUrl() },
+                }),
+            );
         } else if (type === 'pdfLoadError') {
             window.dispatchEvent(
                 new CustomEvent('pdf-load-error', {

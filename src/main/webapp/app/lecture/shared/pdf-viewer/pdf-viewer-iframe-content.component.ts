@@ -75,18 +75,18 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
         switch (type) {
             case 'loadPDF':
-                if (data?.url) {
+                if (data?.url && data.url !== this.pdfUrl()) {
                     this.pdfUrl.set(data.url);
                     const pageToLoad = data.initialPage ?? 1;
                     this.initialPage.set(pageToLoad);
                     this.currentPage.set(pageToLoad);
                 }
-                if (data?.isDarkMode !== undefined) {
+                if (data?.isDarkMode !== undefined && data.isDarkMode !== this.isDarkMode()) {
                     this.isDarkMode.set(data.isDarkMode);
                 }
                 break;
             case 'themeChange':
-                if (data?.isDarkMode !== undefined) {
+                if (data?.isDarkMode !== undefined && data.isDarkMode !== this.isDarkMode()) {
                     this.isDarkMode.set(data.isDarkMode);
                 }
                 break;

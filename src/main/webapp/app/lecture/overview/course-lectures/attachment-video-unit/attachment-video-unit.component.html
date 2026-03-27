@@ -68,13 +68,7 @@
         @if (lectureUnit()?.description || !!videoUrl()) {
             <hr />
         }
-        @if (isPdfLoading()) {
-            <div class="d-flex justify-content-center p-3">
-                <div class="spinner-border" role="status">
-                    <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
-                </div>
-            </div>
-        } @else if (pdfLoadError()) {
+        @if (pdfLoadError()) {
             <p-message severity="error" styleClass="m-3">
                 <div class="d-flex align-items-start gap-2">
                     <fa-icon [icon]="faFileLines" />
@@ -86,6 +80,13 @@
             </p-message>
         } @else if (pdfUrl()) {
             <div class="pdf-viewer-spacing">
+                @if (isPdfLoading()) {
+                    <div class="d-flex justify-content-center p-3">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden" jhiTranslate="artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf"></span>
+                        </div>
+                    </div>
+                }
                 <jhi-lecture-pdf-viewer-iframe
                     [pdfUrl]="pdfUrl()!"
                     [uploadDate]="lectureUnit().attachment?.uploadDate"

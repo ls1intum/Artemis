@@ -91,16 +91,34 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         const pdfErrorHandler = (event: Event) => {
             const customEvent = event as CustomEvent<{ pdfUrl: string }>;
             const failedUrl = customEvent.detail?.pdfUrl;
-            const currentLink = this.getAttachmentLink();
+            const directPdfUrl = this.getAttachmentLink();
+            const activePdfUrl = this.pdfUrl();
 
-            if (failedUrl === currentLink) {
-                this.loadPdfAsBlob();
+            if (!failedUrl || !directPdfUrl || failedUrl !== directPdfUrl || failedUrl !== activePdfUrl) {
+                return;
             }
+
+            this.loadPdfAsBlob();
+        };
+
+        // Listen for iframe readiness to stop loading spinner
+        const pdfReadyHandler = (event: Event) => {
+            const customEvent = event as CustomEvent<{ pdfUrl: string }>;
+            const readyUrl = customEvent.detail?.pdfUrl;
+            const activePdfUrl = this.pdfUrl();
+
+            if (!readyUrl || !activePdfUrl || readyUrl !== activePdfUrl) {
+                return;
+            }
+
+            this.isPdfLoading.set(false);
         };
 
         window.addEventListener('pdf-load-error', pdfErrorHandler);
+        window.addEventListener('pdf-viewer-ready', pdfReadyHandler);
         destroyRef.onDestroy(() => {
             window.removeEventListener('pdf-load-error', pdfErrorHandler);
+            window.removeEventListener('pdf-viewer-ready', pdfReadyHandler);
         });
     }
 
@@ -232,7 +250,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
 
         this.pdfUrl.set(link);
-        this.isPdfLoading.set(false);
     }
 
     /** Blob fallback for PDF loading. Called when iframe signals load error. */

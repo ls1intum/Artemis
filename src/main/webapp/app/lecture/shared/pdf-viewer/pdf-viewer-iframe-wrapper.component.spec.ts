@@ -43,33 +43,17 @@ describe('PdfViewerIframeWrapperComponent', () => {
         expect(component.iframeSrc()).toBe('/pdf-viewer-iframe');
     });
 
-    it('should set timeout on iframe load and handle ready message', () => {
-        const setTimeoutSpy = vi.spyOn(window, 'setTimeout');
-        const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
-
+    it('should handle ready message and dispatch pdf-viewer-ready event', () => {
+        const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
-
-        component.onIframeLoad();
-        expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 10000);
 
         const iframe = component.pdfIframe()?.nativeElement;
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: iframe?.contentWindow }));
         fixture.detectChanges();
 
         expect(component.iframeReady()).toBe(true);
-        expect(clearTimeoutSpy).toHaveBeenCalled();
-    });
-
-    it('should set iframeReady after timeout', () => {
-        vi.useFakeTimers();
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
-
-        component.onIframeLoad();
-        vi.advanceTimersByTime(10000);
-        expect(component.iframeReady()).toBe(true);
-        vi.useRealTimers();
+        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'pdf-viewer-ready', detail: { pdfUrl: 'test.pdf' } }));
     });
 
     it('should reject messages from wrong origin or source', () => {
@@ -155,14 +139,11 @@ describe('PdfViewerIframeWrapperComponent', () => {
 
     it('should cleanup on destroy', () => {
         const removeSpy = vi.spyOn(window, 'removeEventListener');
-        const clearTimeoutSpy = vi.spyOn(window, 'clearTimeout');
 
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
-        component.onIframeLoad();
         fixture.destroy();
 
         expect(removeSpy).toHaveBeenCalledWith('message', expect.any(Function));
-        expect(clearTimeoutSpy).toHaveBeenCalled();
     });
 });

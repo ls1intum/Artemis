@@ -481,8 +481,16 @@ describe('AttachmentVideoUnitComponent', () => {
             await fixture.whenStable();
 
             // New behavior: PDF is loaded directly via URL, no HTTP request for blob
-            expect(component.isPdfLoading()).toBe(false);
+            expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
+
+            window.dispatchEvent(
+                new CustomEvent('pdf-viewer-ready', {
+                    detail: { pdfUrl: 'api/core/files//path/to/file/test.pdf' },
+                }),
+            );
+
+            expect(component.isPdfLoading()).toBe(false);
 
             // Verify no blob request was made
             httpMock.verify();
