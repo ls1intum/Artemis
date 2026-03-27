@@ -110,7 +110,7 @@
         font-weight: 500;
         font-size: 0.9rem;
         border: none;
-        background: var(--bs-body-bg);
+        background: var(--overview-card-nested-bg, var(--bs-body-bg));
         color: var(--bs-secondary-color);
         cursor: pointer;
         transition: all 0.2s ease;

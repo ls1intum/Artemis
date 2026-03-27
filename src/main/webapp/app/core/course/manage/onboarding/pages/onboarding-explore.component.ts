@@ -39,7 +39,7 @@ import { MODULE_FEATURE_ATLAS, MODULE_FEATURE_EXAM, MODULE_FEATURE_LECTURE, MODU
                 text-decoration: none;
                 color: inherit;
                 cursor: pointer;
-                background: var(--bs-body-bg);
+                background: var(--overview-card-nested-bg, var(--bs-body-bg));
 
                 &::before {
                     content: '';

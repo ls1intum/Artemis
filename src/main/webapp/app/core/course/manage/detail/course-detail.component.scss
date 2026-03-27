@@ -25,7 +25,7 @@ jhi-image {
     border: 1px solid var(--bs-border-color);
     border-radius: 0.75rem;
     overflow: hidden;
-    background: var(--brighter-body-bg);
+    background: var(--overview-card-bg, var(--brighter-body-bg));
 }
 
 .section-header {
@@ -44,7 +44,7 @@ jhi-image {
     padding: 0.4rem 0.85rem;
     border: 1px solid var(--bs-border-color);
     border-radius: 0.5rem;
-    background: var(--bs-body-bg);
+    background: var(--overview-card-nested-bg, var(--bs-body-bg));
     color: var(--bs-body-color);
     font-weight: 500;
     font-size: 0.8rem;
