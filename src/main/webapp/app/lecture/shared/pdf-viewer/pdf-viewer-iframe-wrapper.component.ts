@@ -78,12 +78,8 @@ export class PdfViewerIframeWrapperComponent {
         });
     }
 
-    /**
-     * Called when the iframe finishes loading.
-     * Sets a safety timeout in case the iframe doesn't send the "ready" message.
-     */
+    /** Sets a safety timeout if iframe doesn't send "ready" within 10s. */
     onIframeLoad(): void {
-        // Safety timeout: if iframe doesn't send "ready" within 10s, proceed anyway
         this.iframeLoadTimeoutId = window.setTimeout(() => {
             if (!this.iframeReady()) {
                 this.iframeReady.set(true);
@@ -91,9 +87,7 @@ export class PdfViewerIframeWrapperComponent {
         }, 10000);
     }
 
-    /**
-     * Clears the iframe load timeout if it exists.
-     */
+    /** Clears the iframe load timeout. */
     private clearIframeLoadTimeout(): void {
         if (this.iframeLoadTimeoutId !== undefined) {
             window.clearTimeout(this.iframeLoadTimeoutId);
@@ -101,13 +95,8 @@ export class PdfViewerIframeWrapperComponent {
         }
     }
 
-    /**
-     * Sends a message to the iframe to load the PDF with the current URL and settings.
-     * Only called when the iframe is ready to receive messages.
-     */
+    /** Sends a loadPDF message to the iframe with current URL and theme. */
     private loadPdfInIframe(): void {
-        // Send immediately - this only gets called when iframeReady is true,
-        // which means we received the "ready" message and the listener is registered.
         const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
         const url = this.pdfUrl();
         this.postMessageToIframe('loadPDF', {
@@ -117,15 +106,9 @@ export class PdfViewerIframeWrapperComponent {
         });
     }
 
-    /**
-     * Handles messages received from the PDF viewer iframe.
-     * Validates the message origin and source for security, then processes ready and error events.
-     *
-     * @param event - The message event from the iframe
-     */
+    /** Handles messages from the iframe, validating origin for security. */
     private readonly handleIframeMessage = (event: MessageEvent<IframeMessage>): void => {
         const iframe = this.pdfIframe()?.nativeElement;
-        // Validate both origin AND source for security
         if (!iframe || event.origin !== window.location.origin || event.source !== iframe.contentWindow) {
             return;
         }
@@ -133,12 +116,9 @@ export class PdfViewerIframeWrapperComponent {
         const { type } = event.data;
 
         if (type === 'ready') {
-            // Iframe signals it's ready to receive messages.
-            // Setting this triggers the effect which calls loadPdfInIframe().
             this.clearIframeLoadTimeout();
             this.iframeReady.set(true);
         } else if (type === 'pdfLoadError') {
-            // Notify parent component to try blob approach
             window.dispatchEvent(
                 new CustomEvent('pdf-load-error', {
                     detail: { pdfUrl: this.pdfUrl() },
@@ -147,12 +127,7 @@ export class PdfViewerIframeWrapperComponent {
         }
     };
 
-    /**
-     * Sends a message to the iframe content window.
-     *
-     * @param type - The type of message to send
-     * @param data - The message data payload
-     */
+    /** Posts a message to the iframe content window. */
     private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {
         const iframe = this.pdfIframe()?.nativeElement;
         if (iframe?.contentWindow) {

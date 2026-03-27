@@ -1,7 +1,6 @@
 jhi-lecture-pdf-viewer-iframe {
     display: block;
-    margin-top: 1.5rem;
-    margin-bottom: 1rem;
+    margin: 1.5rem 0 1rem;
 }
 
 .pdf-iframe-wrapper {
@@ -27,12 +26,10 @@ jhi-lecture-pdf-viewer-iframe {
     align-items: center;
     justify-content: center;
     padding: 0.25rem 0.75rem;
-    box-sizing: border-box;
     text-align: center;
     font-size: 0.65rem;
     line-height: 1;
     color: var(--body-color);
-    margin-top: 0;
     white-space: nowrap;
     border-top: 1px solid var(--card-border-color);
     background-color: var(--card-bg);

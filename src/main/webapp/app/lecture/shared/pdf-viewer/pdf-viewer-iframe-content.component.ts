@@ -47,9 +47,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
     protected readonly faMagnifyingGlassMinus = faMagnifyingGlassMinus;
     protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
 
-    /**
-     * Initializes the component by setting up message listeners and notifying the parent that the iframe is ready.
-     */
+    /** Sets up message listeners and notifies parent that iframe is ready. */
     ngOnInit(): void {
         const messageHandler = (event: MessageEvent) => {
             this.handleParentMessage(event);
@@ -60,18 +58,11 @@ export class PdfViewerIframeContentComponent implements OnInit {
             window.removeEventListener('message', messageHandler);
         });
 
-        // Notify parent that iframe is ready
         this.postMessageToParent('ready', {});
     }
 
-    /**
-     * Handles messages received from the parent window.
-     * Validates the message origin for security, then processes loadPDF and themeChange events.
-     *
-     * @param event - The message event from the parent window
-     */
+    /** Handles messages from parent window, validating origin for security. */
     private readonly handleParentMessage = (event: MessageEvent<IframeMessage>): void => {
-        // Validate origin FIRST (security-critical)
         if (event.origin !== window.location.origin) {
             return;
         }
@@ -102,56 +93,34 @@ export class PdfViewerIframeContentComponent implements OnInit {
         }
     };
 
-    /**
-     * Called when the user navigates to a different page in the PDF.
-     * Updates the current page and notifies the parent window.
-     *
-     * @param page - The new page number
-     */
+    /** Updates current page and notifies parent. */
     onPageChange(page: number): void {
         this.currentPage.set(page);
         this.postMessageToParent('pageChange', { page });
     }
 
-    /**
-     * Called when the PDF finishes loading.
-     * Updates the total page count and notifies the parent window.
-     *
-     * @param event - The pages loaded event containing the total page count
-     */
+    /** Updates total page count and notifies parent. */
     onPagesLoaded(event: PagesLoadedEvent): void {
         this.totalPages.set(event.pagesCount ?? 0);
         this.postMessageToParent('pagesLoaded', { pagesCount: event.pagesCount ?? 0 });
     }
 
-    /**
-     * Called when the PDF fails to load.
-     * Notifies the parent window to trigger the blob fallback mechanism.
-     */
+    /** Notifies parent of load failure to trigger blob fallback. */
     onPdfLoadingFailed(): void {
-        // Notify parent about load failure to trigger blob fallback
         this.postMessageToParent('pdfLoadError', {});
     }
 
-    /**
-     * Zooms in on the PDF by dispatching a zoom-in event to the PDF viewer.
-     */
+    /** Zooms in on the PDF. */
     zoomIn(): void {
         this.dispatchZoomEvent('zoomin');
     }
 
-    /**
-     * Zooms out on the PDF by dispatching a zoom-out event to the PDF viewer.
-     */
+    /** Zooms out on the PDF. */
     zoomOut(): void {
         this.dispatchZoomEvent('zoomout');
     }
 
-    /**
-     * Dispatches a zoom event to the PDF.js event bus.
-     *
-     * @param eventName - The zoom event name ('zoomin' or 'zoomout')
-     */
+    /** Dispatches a zoom event to the PDF.js event bus. */
     private dispatchZoomEvent(eventName: 'zoomin' | 'zoomout'): void {
         const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal();
         if (!pdfViewerApplication?.eventBus) {
@@ -160,12 +129,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
         pdfViewerApplication.eventBus.dispatch(eventName);
     }
 
-    /**
-     * Sends a message to the parent window.
-     *
-     * @param type - The type of message to send
-     * @param data - The message data payload
-     */
+    /** Posts a message to the parent window. */
     private postMessageToParent(type: IframeMessageType, data: IframeMessageData): void {
         window.parent.postMessage({ type, data }, window.location.origin);
     }

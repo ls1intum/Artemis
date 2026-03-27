@@ -25,10 +25,7 @@
     height: 100%;
 }
 
-.iframe-pdf-container #viewerContainer {
-    background-color: var(--pdf-viewer-bg) !important;
-}
-
+.iframe-pdf-container #viewerContainer,
 .iframe-pdf-container .pdfViewer,
 .iframe-pdf-container #viewer,
 .iframe-pdf-container .viewer,
@@ -71,17 +68,10 @@
     color: var(--body-color);
     cursor: pointer;
     transition: color 0.2s ease;
-
-    &:hover {
-        color: var(--body-color);
-        opacity: 0.8;
-    }
-
+    &:hover,
     &:active {
-        color: var(--body-color);
         opacity: 0.8;
     }
-
     fa-icon {
         font-size: 1rem;
     }
@@ -109,7 +99,6 @@
     border: none !important;
     outline: none;
     margin: 0 auto 0 !important;
-
     &:not(:last-child) {
         margin-bottom: 0.5rem !important;
     }

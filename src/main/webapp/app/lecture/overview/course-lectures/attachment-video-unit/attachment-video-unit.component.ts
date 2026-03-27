@@ -208,11 +208,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             });
     }
 
-    /**
-     * Loads the PDF using a direct URL approach for better performance.
-     * This enables streaming, HTTP caching, and reduces memory consumption.
-     * If this fails, the iframe will signal an error and trigger the blob fallback.
-     */
+    /** Loads PDF via direct URL for streaming and HTTP caching. Falls back to blob on error. */
     private loadPdf(): void {
         this.isPdfLoading.set(true);
         this.pdfLoadError.set(false);
@@ -225,15 +221,11 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        // Use direct API URL for better performance (enables streaming, HTTP caching, lower memory)
         this.pdfUrl.set(link);
         this.isPdfLoading.set(false);
     }
 
-    /**
-     * Fallback method that loads PDF as blob if direct URL approach fails.
-     * Only called when iframe signals a load error via window event.
-     */
+    /** Blob fallback for PDF loading. Called when iframe signals load error. */
     private loadPdfAsBlob(): void {
         this.isPdfLoading.set(true);
 
