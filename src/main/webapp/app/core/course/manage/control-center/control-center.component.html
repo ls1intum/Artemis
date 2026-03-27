@@ -1,11 +1,13 @@
-@if (course().isAtLeastInstructor && this.irisEnabled()) {
-    <div class="card mb-3 w-100" style="max-width: 50rem; min-height: 90%">
-        <h5 class="card-header mb-3 d-flex align-items-center">
-            <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
-            <span jhiTranslate="artemisApp.iris.settings.button.course.title" class="ms-2 flex-grow-1"></span>
-            <jhi-help-icon text="artemisApp.iris.controlCenter.tooltip" class="ms-2" />
-        </h5>
-        <div class="card-body">
+@if (course().isAtLeastInstructor && irisEnabled()) {
+    <div class="iris-panel">
+        <div class="iris-header">
+            <div class="iris-title">
+                <jhi-iris-logo [size]="IrisLogoSize.TEXT" />
+                <span jhiTranslate="artemisApp.course.onboarding.generalSettings.irisTitle"></span>
+                <a class="iris-learn-more" (click)="openAboutIrisModal()" jhiTranslate="artemisApp.iris.aboutIrisModal.learnMore"></a>
+            </div>
+        </div>
+        <div class="iris-toggle">
             <jhi-iris-enabled [course]="course()" />
         </div>
     </div>
