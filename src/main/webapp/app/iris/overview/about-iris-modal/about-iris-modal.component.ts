@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogConfig, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import type { IconDefinition } from '@fortawesome/free-solid-svg-icons';
 import { faBook, faBrain, faCompass, faLightbulb, faShieldHalved, faThumbsUp, faUser, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -26,8 +26,11 @@ interface FeatureCard {
 })
 export class AboutIrisModalComponent {
     private readonly dialogRef = inject(DynamicDialogRef);
+    private readonly dialogConfig = inject(DynamicDialogConfig);
     private readonly chatService = inject(IrisChatService);
     private readonly accountService = inject(AccountService);
+
+    readonly hideTryButton = this.dialogConfig.data?.hideTryButton === true;
 
     protected readonly IrisLogoSize = IrisLogoSize;
     protected readonly faXmark = faXmark;

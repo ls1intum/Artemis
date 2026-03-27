@@ -2,25 +2,25 @@ import { Injectable } from '@angular/core';
 import { SidebarItem } from 'app/core/course/shared/course-sidebar/course-sidebar.component';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import {
+    faBullseye,
     faCalendarDays,
-    faChalkboardUser,
+    faChalkboardTeacher,
     faChartBar,
     faChartColumn,
+    faCode,
     faCog,
     faComments,
     faDumbbell,
-    faFlag,
-    faGraduationCap,
+    faFileAlt,
     faList,
-    faListAlt,
     faNetworkWired,
-    faPersonChalkboard,
     faPuzzlePiece,
     faQuestion,
     faRobot,
     faTable,
     faTableCells,
     faUserCheck,
+    faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 
 /**
@@ -31,32 +31,40 @@ import {
 })
 export class CourseSidebarItemService {
     getManagementDefaultItems(courseId: number): SidebarItem[] {
-        const overviewItem: SidebarItem = {
-            routerLink: courseId ? `${courseId}` : '',
-            icon: faTableCells,
-            title: 'Overview',
-            translation: 'artemisApp.course.overview',
-            hidden: false,
-            isPrefix: true,
-        };
+        return [
+            {
+                routerLink: courseId ? `${courseId}` : '',
+                icon: faTableCells,
+                title: 'Overview',
+                translation: 'artemisApp.course.overview',
+                hidden: false,
+                isPrefix: true,
+            },
+            this.getExamsItem(courseId),
+            this.getExercisesItem(courseId),
+            this.getStatisticsItem(courseId),
+        ];
+    }
 
-        const exercisesItem: SidebarItem = {
+    getExercisesItem(courseId?: number): SidebarItem {
+        return {
             routerLink: courseId ? `${courseId}/exercises` : 'exercises',
-            icon: faListAlt,
+            icon: faCode,
+            iconColor: '#6366f1',
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
         };
+    }
 
-        const statisticsItem: SidebarItem = {
+    getStatisticsItem(courseId?: number): SidebarItem {
+        return {
             routerLink: courseId ? `${courseId}/course-statistics` : 'course-statistics',
             icon: faChartColumn,
             title: 'Statistics',
             translation: 'artemisApp.courseOverview.menu.statistics',
             hidden: false,
         };
-
-        return [overviewItem, this.getExamsItem(courseId), exercisesItem, statisticsItem];
     }
 
     getStudentDefaultItems(hasDashboard = false, questionsAvailable = false): SidebarItem[] {
@@ -69,7 +77,8 @@ export class CourseSidebarItemService {
 
         const exercisesItem: SidebarItem = {
             routerLink: 'exercises',
-            icon: faListAlt,
+            icon: faCode,
+            iconColor: '#6366f1',
             title: 'Exercises',
             translation: 'artemisApp.courseOverview.menu.exercises',
             hidden: false,
@@ -111,7 +120,8 @@ export class CourseSidebarItemService {
     getExamsItem(courseId?: number): SidebarItem {
         return {
             routerLink: courseId ? `${courseId}/exams` : 'exams',
-            icon: faGraduationCap,
+            icon: faFileAlt,
+            iconColor: '#f59e0b',
             title: 'Exams',
             testId: 'exam-tab',
             translation: 'artemisApp.courseOverview.menu.exams',
@@ -122,7 +132,8 @@ export class CourseSidebarItemService {
     getLecturesItem(courseId?: number): SidebarItem {
         return {
             routerLink: courseId ? `${courseId}/lectures` : 'lectures',
-            icon: faChalkboardUser,
+            icon: faChalkboardTeacher,
+            iconColor: '#0ea5e9',
             title: 'Lectures',
             translation: 'artemisApp.courseOverview.menu.lectures',
             testId: 'lectures',
@@ -143,7 +154,8 @@ export class CourseSidebarItemService {
     getTutorialGroupsItem(courseId?: number): SidebarItem {
         return {
             routerLink: courseId ? `${courseId}/tutorial-groups` : 'tutorial-groups',
-            icon: faPersonChalkboard,
+            icon: faUsers,
+            iconColor: '#8b5cf6',
             title: 'Tutorials',
             translation: 'artemisApp.courseOverview.menu.tutorialGroups',
             hidden: false,
@@ -153,7 +165,8 @@ export class CourseSidebarItemService {
     getCompetenciesManagementItem(courseId: number): SidebarItem {
         return {
             routerLink: courseId ? `${courseId}/competency-management` : 'competency-management',
-            icon: faFlag,
+            icon: faBullseye,
+            iconColor: '#10b981',
             title: 'Competency Management',
             translation: 'artemisApp.courseOverview.menu.competencies',
             hidden: false,
@@ -162,7 +175,8 @@ export class CourseSidebarItemService {
     getCompetenciesItem(): SidebarItem {
         return {
             routerLink: 'competencies',
-            icon: faFlag,
+            icon: faBullseye,
+            iconColor: '#10b981',
             title: 'Competencies',
             translation: 'artemisApp.courseOverview.menu.competencies',
             hidden: false,
@@ -215,6 +229,7 @@ export class CourseSidebarItemService {
         return {
             routerLink: `${courseId}/faqs`,
             icon: faQuestion,
+            iconColor: '#ec4899',
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
             hidden: false,
@@ -225,6 +240,7 @@ export class CourseSidebarItemService {
         return {
             routerLink: 'faq',
             icon: faQuestion,
+            iconColor: '#ec4899',
             title: 'FAQs',
             translation: 'artemisApp.courseOverview.menu.faq',
             hidden: false,
