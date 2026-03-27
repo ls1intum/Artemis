@@ -65,13 +65,7 @@ public class AtlasAgentService {
 
     private final AtlasAgentDelegationService delegationService;
 
-    private final ToolCallbackProvider mainAgentToolCallbackProvider;
-
-    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
-
-    private final ToolCallbackProvider competencyMapperToolCallbackProvider;
-
-    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
+    private final AtlasAgentToolCallbackFactory toolCallbackFactory;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -88,17 +82,12 @@ public class AtlasAgentService {
     private final AtlasAgentPreviewService previewService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
-            @Nullable ToolCallbackProvider mainAgentToolCallbackProvider, @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider, @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider,
-            ExecutionPlanStateManagerService executionPlanStateManagerService, AtlasAgentSessionCacheService atlasAgentSessionCacheService,
-            AtlasAgentPreviewService previewService) {
+            AtlasAgentToolCallbackFactory toolCallbackFactory, ExecutionPlanStateManagerService executionPlanStateManagerService,
+            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.chatMemory = chatMemory;
         this.delegationService = delegationService;
-        this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
-        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
-        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
-        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
+        this.toolCallbackFactory = toolCallbackFactory;
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
         this.previewService = previewService;
@@ -141,7 +130,7 @@ public class AtlasAgentService {
                 return handleExerciseMappingApproval(sessionId, courseId, message);
             }
 
-            // Single main agent call — delegation to sub-agents happens via tool calls inside this invocation
+            // Call main agent — it may invoke delegation tools (delegateToCompetencyExpert, etc.) during response generation
             String response = delegateToAgent(AgentType.MAIN_AGENT, message, courseId, sessionId);
 
             // Detect and initialize plan if orchestrator output a plan marker
@@ -236,10 +225,10 @@ public class AtlasAgentService {
 
     private ToolCallbackProvider getToolCallbackProvider(AgentType agentType) {
         return switch (agentType) {
-            case MAIN_AGENT -> mainAgentToolCallbackProvider;
-            case COMPETENCY_EXPERT -> competencyExpertToolCallbackProvider;
-            case COMPETENCY_MAPPER -> competencyMapperToolCallbackProvider;
-            case EXERCISE_MAPPER -> exerciseMapperToolCallbackProvider;
+            case MAIN_AGENT -> toolCallbackFactory.createMainAgentProvider();
+            case COMPETENCY_EXPERT -> toolCallbackFactory.createCompetencyExpertProvider();
+            case COMPETENCY_MAPPER -> toolCallbackFactory.createCompetencyMapperProvider();
+            case EXERCISE_MAPPER -> toolCallbackFactory.createExerciseMapperProvider();
         };
     }
 

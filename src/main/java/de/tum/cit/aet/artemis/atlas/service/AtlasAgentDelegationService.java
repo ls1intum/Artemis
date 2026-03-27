@@ -58,6 +58,10 @@ public class AtlasAgentDelegationService {
      * @return the agent's response
      */
     String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory, @Nullable ToolCallbackProvider toolCallbackProvider) {
+        if (chatClient == null) {
+            throw new IllegalStateException("ChatClient is not configured. Atlas Agent delegation is unavailable.");
+        }
+
         String systemPrompt = templateService.render(promptResourcePath, Map.of());
 
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;
@@ -76,6 +80,7 @@ public class AtlasAgentDelegationService {
             promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
         }
 
-        return promptSpec.call().content();
+        String content = promptSpec.call().content();
+        return content != null ? content : "";
     }
 }

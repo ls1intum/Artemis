@@ -49,6 +49,13 @@ class AtlasAgentServiceTest {
     @Mock
     private AtlasAgentSessionCacheService atlasAgentSessionCacheService;
 
+    @Mock
+    private AtlasAgentToolCallbackFactory toolCallbackFactory;
+
+    private static final String TEST_DEPLOYMENT_NAME = "gpt-4o";
+
+    private static final double TEST_TEMPERATURE = 0.2;
+
     private AtlasAgentPreviewService previewService;
 
     private AtlasAgentService atlasAgentService;
@@ -57,9 +64,9 @@ class AtlasAgentServiceTest {
     void setUp() {
         ChatClient chatClient = ChatClient.create(chatModel);
         previewService = new AtlasAgentPreviewService(chatMemory);
-        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, templateService, chatMemory, "gpt-4o", 0.2);
-        atlasAgentService = new AtlasAgentService(chatClient, chatMemory, delegationService, null, null, null, null, executionPlanStateManagerService,
-                atlasAgentSessionCacheService, previewService);
+        AtlasAgentDelegationService delegationService = new AtlasAgentDelegationService(chatClient, templateService, chatMemory, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE);
+        atlasAgentService = new AtlasAgentService(chatClient, chatMemory, delegationService, toolCallbackFactory, executionPlanStateManagerService, atlasAgentSessionCacheService,
+                previewService);
     }
 
     @Test
@@ -156,8 +163,8 @@ class AtlasAgentServiceTest {
     void testGetConversationHistoryAsDTO_NullChatMemory() {
         String sessionId = "course_456_user_789";
         AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), null,
-                new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, "gpt-4o", 0.2), null, null, null, null, executionPlanStateManagerService,
-                atlasAgentSessionCacheService, previewService);
+                new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory,
+                executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
 
         List<AtlasAgentHistoryMessageDTO> result = serviceWithNullMemory.getConversationHistoryAsDTO(sessionId);
 
@@ -259,8 +266,8 @@ class AtlasAgentServiceTest {
         @Test
         void shouldHandleCompetencyExpertToolsServiceNull() {
             AtlasAgentService serviceWithoutTools = new AtlasAgentService(ChatClient.create(chatModel), null,
-                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, "gpt-4o", 0.2), null, null, null, null, executionPlanStateManagerService,
-                    atlasAgentSessionCacheService, previewService);
+                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
 
             String testMessage = "Test message";
             Long courseId = 123L;
@@ -640,8 +647,9 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldReturnUnavailableMessageWhenChatClientIsNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory, new AtlasAgentDelegationService(null, templateService, chatMemory, "gpt-4o", 0.2),
-                    null, null, null, null, executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
+            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory,
+                    new AtlasAgentDelegationService(null, templateService, chatMemory, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
 
             AtlasAgentChatResponseDTO result = serviceWithNullClient.processChatMessage("Test message", 123L, "test_session");
 
@@ -661,16 +669,17 @@ class AtlasAgentServiceTest {
 
         @Test
         void shouldReturnFalseWhenChatClientNull() {
-            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory, new AtlasAgentDelegationService(null, templateService, chatMemory, "gpt-4o", 0.2),
-                    null, null, null, null, executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
+            AtlasAgentService serviceWithNullClient = new AtlasAgentService(null, chatMemory,
+                    new AtlasAgentDelegationService(null, templateService, chatMemory, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
             assertThat(serviceWithNullClient.isAvailable()).isFalse();
         }
 
         @Test
         void shouldReturnFalseWhenChatMemoryNull() {
             AtlasAgentService serviceWithNullMemory = new AtlasAgentService(ChatClient.create(chatModel), null,
-                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, "gpt-4o", 0.2), null, null, null, null, executionPlanStateManagerService,
-                    atlasAgentSessionCacheService, previewService);
+                    new AtlasAgentDelegationService(ChatClient.create(chatModel), templateService, null, TEST_DEPLOYMENT_NAME, TEST_TEMPERATURE), toolCallbackFactory,
+                    executionPlanStateManagerService, atlasAgentSessionCacheService, previewService);
             assertThat(serviceWithNullMemory.isAvailable()).isFalse();
         }
 

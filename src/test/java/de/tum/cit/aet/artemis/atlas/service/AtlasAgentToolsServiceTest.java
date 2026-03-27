@@ -36,11 +36,14 @@ class AtlasAgentToolsServiceTest {
     @Mock
     private AtlasAgentDelegationService delegationService;
 
+    @Mock
+    private AtlasAgentToolCallbackFactory toolCallbackFactory;
+
     private AtlasAgentToolsService toolsService;
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, null, null, null);
+        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, toolCallbackFactory);
     }
 
     @AfterEach
@@ -117,6 +120,16 @@ class AtlasAgentToolsServiceTest {
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT)),
                     eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false), isNull());
+        }
+
+        @Test
+        void shouldFormatCompetencyMapperBriefCorrectly() {
+            when(delegationService.delegateToAgent(anyString(), anyString(), anyLong(), anyString(), anyBoolean(), any())).thenReturn("ok");
+
+            toolsService.delegateToCompetencyMapper("A extends B", "Create EXTENDS relation", "None", "A builds on B");
+
+            verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER)),
+                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false), isNull());
         }
 
         @Test
