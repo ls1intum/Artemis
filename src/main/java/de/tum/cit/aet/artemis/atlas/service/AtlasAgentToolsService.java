@@ -5,9 +5,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -64,8 +64,8 @@ public class AtlasAgentToolsService {
     private final ExerciseMappingToolsService exerciseMappingToolsService;
 
     public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
-            AtlasAgentDelegationService delegationService, CompetencyExpertToolsService competencyExpertToolsService,
-            CompetencyMappingToolsService competencyMappingToolsService, ExerciseMappingToolsService exerciseMappingToolsService) {
+            AtlasAgentDelegationService delegationService, CompetencyExpertToolsService competencyExpertToolsService, CompetencyMappingToolsService competencyMappingToolsService,
+            ExerciseMappingToolsService exerciseMappingToolsService) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;

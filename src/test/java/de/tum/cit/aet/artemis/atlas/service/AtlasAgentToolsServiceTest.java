@@ -145,8 +145,7 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToExerciseMapper(5L, "Bubble Sort", "Map to competencies", "Student selected");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER)),
-                    eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false),
-                    any());
+                    eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false), any());
         }
     }
 
