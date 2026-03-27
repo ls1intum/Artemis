@@ -20,7 +20,6 @@ import java.util.regex.PatternSyntaxException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.sshd.server.session.ServerSession;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -53,6 +52,7 @@ import de.tum.cit.aet.artemis.core.exception.localvc.LocalVCInternalException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
 import de.tum.cit.aet.artemis.core.security.RateLimitType;
 import de.tum.cit.aet.artemis.core.security.SecurityUtils;
+import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.RateLimitService;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 import de.tum.cit.aet.artemis.exercise.domain.Exercise;
@@ -118,6 +118,8 @@ public class LocalVCServletService {
 
     private final ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     private final RateLimitService rateLimitService;
 
     private final ExerciseVersionService exerciseVersionService;
@@ -140,8 +142,8 @@ public class LocalVCServletService {
             RepositoryAccessService repositoryAccessService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, ContinuousIntegrationTriggerService ciTriggerService, ProgrammingSubmissionService programmingSubmissionService,
             ProgrammingSubmissionMessagingService programmingSubmissionMessagingService, ProgrammingExerciseTestCaseChangedService programmingExerciseTestCaseChangedService,
-            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService, RateLimitService rateLimitService,
-            ExerciseVersionService exerciseVersionService) {
+            ParticipationVCSAccessTokenRepository participationVCSAccessTokenRepository, Optional<VcsAccessLogService> vcsAccessLogService,
+            AuthorizationCheckService authorizationCheckService, RateLimitService rateLimitService, ExerciseVersionService exerciseVersionService) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -154,6 +156,7 @@ public class LocalVCServletService {
         this.programmingExerciseTestCaseChangedService = programmingExerciseTestCaseChangedService;
         this.participationVCSAccessTokenRepository = participationVCSAccessTokenRepository;
         this.vcsAccessLogService = vcsAccessLogService;
+        this.authorizationCheckService = authorizationCheckService;
         this.rateLimitService = rateLimitService;
         this.exerciseVersionService = exerciseVersionService;
     }
@@ -250,18 +253,14 @@ public class LocalVCServletService {
             }
         }
 
-        // Optimization.
-        // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
-        // The URLs of the first two requests end on '[repository URI]/info/refs'. The third one ends on '[repository URI]/git-receive-pack' (for push) and '[repository
-        // URL]/git-upload-pack' (for fetch).
-        // The following checks will only be conducted for the second request, so we do not have to access the database too often.
-        if (!request.getRequestURI().endsWith("/info/refs")) {
-            return;
+        // Only count rate limit on /info/refs (the initial handshake request per git operation).
+        // The data transfer requests (git-upload-pack, git-receive-pack) reuse the same credentials
+        // and should not consume additional rate limit budget.
+        if (request.getRequestURI().endsWith("/info/refs")) {
+            String ipString = getIpStringFromRequest(request);
+            final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
+            rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
         }
-
-        String ipString = getIpStringFromRequest(request);
-        final IPAddress ipAddress = new IPAddressString(ipString).getAddress();
-        rateLimitService.enforcePerMinute(ipAddress, RateLimitType.AUTHENTICATION);
 
         LocalVCRepositoryUri localVCRepositoryUri = parseRepositoryUri(request);
         log.debug("Parsed repository URI from request: {}", localVCRepositoryUri);
@@ -282,7 +281,12 @@ public class LocalVCServletService {
 
         try {
             var optionalParticipation = authorizeUser(repositoryTypeOrUserName, user, exercise, repositoryAction, localVCRepositoryUri, false);
-            savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+            // Only create the preliminary access log on /info/refs requests.
+            // The data transfer requests (git-upload-pack, git-receive-pack) will update this log entry
+            // via PreUploadHook / processNewPush rather than creating a duplicate.
+            if (request.getRequestURI().endsWith("/info/refs")) {
+                savePreliminaryVcsAccessLogForHTTPs(request, localVCRepositoryUri, user, repositoryAction, optionalParticipation);
+            }
         }
         catch (LocalVCForbiddenException e) {
             log.error("User {} does not have access to the repository {}", user.getLogin(), localVCRepositoryUri);
@@ -328,12 +332,17 @@ public class LocalVCServletService {
      */
     public void saveFailedAccessVcsAccessLog(AuthenticationContext context, String repositoryTypeOrUserName, Exercise exercise, LocalVCRepositoryUri localVCRepositoryUri,
             User user, RepositoryActionType repositoryAction) {
-        var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
-        var commitHash = getCommitHash(localVCRepositoryUri);
-        var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
-        var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
-        var ipAddress = context.getIpAddress();
-        vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+        try {
+            var participation = tryToLoadParticipation(false, repositoryTypeOrUserName, localVCRepositoryUri, (ProgrammingExercise) exercise);
+            var commitHash = getCommitHash(localVCRepositoryUri);
+            var authenticationMechanism = resolveAuthenticationMechanismFromSessionOrRequest(context, user);
+            var action = repositoryAction == RepositoryActionType.WRITE ? RepositoryActionType.PUSH_FAIL : RepositoryActionType.CLONE_FAIL;
+            var ipAddress = context.getIpAddress();
+            vcsAccessLogService.ifPresent(service -> service.saveAccessLog(user, participation, action, authenticationMechanism, commitHash, ipAddress));
+        }
+        catch (Exception e) {
+            log.warn("Failed to save VCS access log for failed access attempt by user {} to repository {}: {}", user.getLogin(), localVCRepositoryUri, e.getMessage());
+        }
     }
 
     /**
@@ -434,9 +443,7 @@ public class LocalVCServletService {
             SecurityUtils.checkUsernameAndPasswordValidity(username, passwordOrToken);
         }
         catch (AccessForbiddenException | AuthenticationException e) {
-            if (StringUtils.isNotEmpty(passwordOrToken)) {
-                log.warn("Failed login attempt for user {} with password {} due to issue: {}", username, passwordOrToken, e.getMessage());
-            }
+            log.warn("Failed login attempt for user {} due to issue: {}", username, e.getMessage());
             throw new LocalVCAuthException(e.getMessage());
         }
 
@@ -599,17 +606,23 @@ public class LocalVCServletService {
         }
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 
-        if (!("Basic".equals(basicAuthCredentialsEncoded[0]))) {
-            throw new LocalVCAuthException("Non basic authorization header provided");
+        if (basicAuthCredentialsEncoded.length < 2 || !("Basic".equals(basicAuthCredentialsEncoded[0]))) {
+            throw new LocalVCAuthException("Invalid authorization header format");
         }
 
-        // Return decoded basic auth credentials which contain the username and the password.
-        String basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+        // Decode the Base64-encoded credentials (username:password).
+        String basicAuthCredentials;
+        try {
+            basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
+        }
+        catch (IllegalArgumentException e) {
+            throw new LocalVCAuthException("Invalid Base64 encoding in authorization header");
+        }
 
         int separatorIndex = basicAuthCredentials.indexOf(":");
 
         if (separatorIndex == -1) {
-            throw new LocalVCAuthException();
+            throw new LocalVCAuthException("Missing colon separator in Basic auth credentials");
         }
         String username = basicAuthCredentials.substring(0, separatorIndex);
         String password = basicAuthCredentials.substring(separatorIndex + 1);
@@ -632,7 +645,19 @@ public class LocalVCServletService {
     public Optional<ProgrammingExerciseParticipation> authorizeUser(String repositoryTypeOrUserName, User user, ProgrammingExercise exercise,
             RepositoryActionType repositoryActionType, LocalVCRepositoryUri localVCRepositoryUri, boolean usingSSH) throws LocalVCForbiddenException {
 
-        if (checkIfRepositoryIsAuxiliaryOrTestRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
+        if (checkAccessToStaffRepository(exercise, repositoryTypeOrUserName, repositoryActionType, user)) {
+            // For tests and auxiliary repos, no participation is needed (they don't have dedicated participations).
+            // For template and solution repos, load the participation so callers can use it for access logging.
+            if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+                try {
+                    return Optional.of(tryToLoadParticipation(usingSSH, repositoryTypeOrUserName, localVCRepositoryUri, exercise));
+                }
+                catch (LocalVCInternalException e) {
+                    log.warn("Missing participation for staff repository {} in exercise {}. Continuing without participation-based logging.", localVCRepositoryUri,
+                            exercise.getId(), e);
+                    return Optional.empty();
+                }
+            }
             return Optional.empty();
         }
 
@@ -700,51 +725,60 @@ public class LocalVCServletService {
     }
 
     /**
-     * Checks if the provided repository is an auxiliary or test repository.
-     * But: for students it only checks for test repository, and assumes the requested repository is not an auxiliary repository.
-     * This avoids an unnecessary database call, and postpones the actual check to
-     * {@link LocalVCServletService#tryToLoadParticipation(boolean, String, LocalVCRepositoryUri, ProgrammingExercise)}
-     * and only checks it if it is really needed.
+     * Checks if the repository is a staff-only repository (template, solution, tests, or auxiliary) and whether the user has access.
+     * <p>
+     * Students are denied access to template, solution, tests, and auxiliary repositories.
+     * TAs can read but not write to these repositories. Editors and above have full access.
+     * <p>
+     * For auxiliary repositories, the check is only performed for users who are at least TA,
+     * to avoid an unnecessary database query for students (since loading auxiliary repositories requires a DB call).
+     * If a student requests an auxiliary repository, this method returns {@code false} and the check is deferred to
+     * {@link LocalVCServletService#tryToLoadParticipation(boolean, String, LocalVCRepositoryUri, ProgrammingExercise)}.
      *
-     * @param exercise                 the exercise, where the repository belongs to
-     * @param repositoryTypeOrUserName the type or username of the repository
-     * @param repositoryActionType     the action that should be performed on of the repository
-     * @param user                     the user who tries to access the repository
-     * @return true if the repository is an Auxiliary or Test repository, and the user has access to it.
-     *         false for students if the repository is possibly an auxiliary repository, or
-     *         false for TAs if the repository is neither auxiliary nor test
-     * @throws LocalVCForbiddenException if the user has no access rights for the requested repository
+     * @param exercise                 the exercise the repository belongs to
+     * @param repositoryTypeOrUserName the repository type name (e.g. "exercise", "solution", "tests") or the username for student repos
+     * @param repositoryActionType     the action to be performed (READ or WRITE)
+     * @param user                     the user requesting access
+     * @return {@code true} if the repository is a staff-only repository and the user has access (caller can skip further checks).
+     *         {@code false} if the repository is not a known staff-only type (caller should proceed with student participation checks).
+     * @throws LocalVCForbiddenException if the user does not have the required permissions for the requested repository
      */
-    private boolean checkIfRepositoryIsAuxiliaryOrTestRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, RepositoryActionType repositoryActionType,
-            User user) throws LocalVCForbiddenException {
+    private boolean checkAccessToStaffRepository(ProgrammingExercise exercise, String repositoryTypeOrUserName, RepositoryActionType repositoryActionType, User user)
+            throws LocalVCForbiddenException {
 
-        // Students are not able to access Test or Aux repositories.
-        // To save on db queries we do not check whether it is an Aux repo here, as we would need to fetch them first.
-        try {
-            repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(false, exercise, user, repositoryTypeOrUserName);
-        }
-        catch (AccessForbiddenException e) {
-            if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-                throw new LocalVCForbiddenException(e);
+        boolean isTemplateOrSolutionOrTestsRepo = repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())
+                || repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString()) || repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString());
+
+        var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+
+        if (isTemplateOrSolutionOrTestsRepo) {
+            // For WRITE operations, check editor permission first (avoids a second role check later)
+            if (repositoryActionType == RepositoryActionType.WRITE) {
+                if (!authorizationCheckService.isAtLeastEditorInCourse(course, user)) {
+                    throw new LocalVCForbiddenException("You are not allowed to push to the " + repositoryTypeOrUserName + " repository of this programming exercise.");
+                }
             }
-            // The user is a student, and the repository is not a test repository
+            else if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+                throw new LocalVCForbiddenException("You are not allowed to access the " + repositoryTypeOrUserName + " repository of this programming exercise.");
+            }
+            return true;
+        }
+
+        // For auxiliary repositories, only check if the user is at least TA (avoids unnecessary DB query for students)
+        boolean isAtLeastTA = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean isAuxiliaryRepo = isAtLeastTA && auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise);
+
+        if (!isAuxiliaryRepo) {
+            // Not a staff-only repository — proceed with student participation checks
             return false;
         }
 
-        // Here we only check if the repository is an auxiliary repository if the user is at least TA.
-        // Why? If the requested repository is not an auxiliary repo, we do not need to load auxiliary repositories
-        if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise) || repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
-            try {
-                repositoryAccessService.checkAccessTestOrAuxRepositoryElseThrow(repositoryActionType == RepositoryActionType.WRITE, exercise, user, repositoryTypeOrUserName);
-            }
-            catch (AccessForbiddenException e) {
-                throw new LocalVCForbiddenException(e);
-            }
-            // The user is at least TA, it is either an Auxiliary repository or a Test repository, and the user has access to it
-            return true;
+        // Auxiliary repository: TAs can read; writing requires at least editor permissions.
+        if (repositoryActionType == RepositoryActionType.WRITE && !authorizationCheckService.isAtLeastEditorInCourse(course, user)) {
+            throw new LocalVCForbiddenException("You are not allowed to push to the " + repositoryTypeOrUserName + " repository of this programming exercise.");
         }
-        // The repository is neither an Auxiliary repository nor a Test repository
-        return false;
+
+        return true;
     }
 
     /**
@@ -971,13 +1005,13 @@ public class LocalVCServletService {
     }
 
     private RepositoryType getRepositoryType(String repositoryTypeOrUserName, ProgrammingExercise exercise) {
-        if (repositoryTypeOrUserName.equals("exercise")) {
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
             return RepositoryType.TEMPLATE;
         }
-        else if (repositoryTypeOrUserName.equals("solution")) {
+        else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
             return RepositoryType.SOLUTION;
         }
-        else if (repositoryTypeOrUserName.equals("tests")) {
+        else if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
             return RepositoryType.TESTS;
         }
         else if (auxiliaryRepositoryService.isAuxiliaryRepositoryOfExercise(repositoryTypeOrUserName, exercise)) {
@@ -989,12 +1023,16 @@ public class LocalVCServletService {
     }
 
     private RepositoryType getRepositoryTypeWithoutAuxiliary(String repositoryTypeOrUserName) {
-        return switch (repositoryTypeOrUserName) {
-            case "exercise" -> RepositoryType.TEMPLATE;
-            case "solution" -> RepositoryType.SOLUTION;
-            case "tests" -> RepositoryType.TESTS;
-            default -> RepositoryType.USER;
-        };
+        if (repositoryTypeOrUserName.equals(RepositoryType.TEMPLATE.toString())) {
+            return RepositoryType.TEMPLATE;
+        }
+        else if (repositoryTypeOrUserName.equals(RepositoryType.SOLUTION.toString())) {
+            return RepositoryType.SOLUTION;
+        }
+        else if (repositoryTypeOrUserName.equals(RepositoryType.TESTS.toString())) {
+            return RepositoryType.TESTS;
+        }
+        return RepositoryType.USER;
     }
 
     /**
@@ -1080,7 +1118,8 @@ public class LocalVCServletService {
 
             vcsAccessLogService.ifPresent(service -> service.updateRepositoryActionType(localVCRepositoryUri, repositoryActionType));
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+            log.debug("Could not update VCS access log for HTTPS clone/pull: {}", e.getMessage());
         }
     }
 
@@ -1105,7 +1144,8 @@ public class LocalVCServletService {
             accessLog.setRepositoryActionType(repositoryActionType);
             vcsAccessLogService.ifPresent(service -> service.saveVcsAccesslog(accessLog));
         }
-        catch (Exception ignored) {
+        catch (Exception e) {
+            log.debug("Could not update VCS access log for SSH clone/pull: {}", e.getMessage());
         }
     }
 

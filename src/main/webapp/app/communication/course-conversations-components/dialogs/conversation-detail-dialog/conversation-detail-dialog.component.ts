@@ -1,4 +1,4 @@
-import { Component, Input, inject, output } from '@angular/core';
+import { Component, inject, output, signal } from '@angular/core';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
@@ -27,6 +27,7 @@ export enum ConversationDetailTabs {
 @Component({
     selector: 'jhi-conversation-detail-dialog',
     templateUrl: './conversation-detail-dialog.component.html',
+    styleUrls: ['./conversation-detail-dialog.component.scss'],
     imports: [
         ChannelIconComponent,
         FaIconComponent,
@@ -41,9 +42,9 @@ export enum ConversationDetailTabs {
 export class ConversationDetailDialogComponent extends AbstractDialogComponent {
     conversationService = inject(ConversationService);
 
-    @Input() public activeConversation: ConversationDTO;
-    @Input() course: Course;
-    @Input() selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
+    activeConversation = signal<ConversationDTO | undefined>(undefined);
+    course = signal<Course | undefined>(undefined);
+    selectedTab: ConversationDetailTabs = ConversationDetailTabs.MEMBERS;
 
     isInitialized = false;
     isOneToOneChat = false;
@@ -53,8 +54,9 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     initialize() {
         super.initialize(['course', 'activeConversation', 'selectedTab']);
-        if (this.activeConversation) {
-            const conversation = getAsOneToOneChatDTO(this.activeConversation);
+        const activeConversation = this.activeConversation();
+        if (activeConversation) {
+            const conversation = getAsOneToOneChatDTO(activeConversation);
             if (conversation) {
                 this.isOneToOneChat = true;
                 this.otherUser = conversation.members?.find((user) => !user.isRequestingUser);
@@ -71,7 +73,7 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
 
     clear() {
         if (this.changesWerePerformed) {
-            this.close();
+            this.close(true);
         } else {
             this.dismiss();
         }
@@ -106,6 +108,11 @@ export class ConversationDetailDialogComponent extends AbstractDialogComponent {
      */
     onUserNameClicked(userId: number) {
         this.userNameClicked.emit(userId);
+        // Also invoke callback passed via dialog data (for DynamicDialog callers)
+        const callback = this.dialogConfig?.data?.onUserNameClicked;
+        if (callback) {
+            callback(userId);
+        }
     }
 
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
