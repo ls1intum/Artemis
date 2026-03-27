@@ -6,7 +6,7 @@
         background 0.15s;
 
     &:hover,
-    &:focus {
+    &:focus-visible {
         color: var(--bs-body-color);
         background: var(--bs-secondary-bg);
         text-decoration: none;
@@ -72,6 +72,8 @@
 
 .lecture-card-title {
     font-size: 0.875rem;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .lecture-skeleton-card {
