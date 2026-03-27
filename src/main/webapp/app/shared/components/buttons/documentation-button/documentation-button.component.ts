@@ -26,8 +26,9 @@ const DocumentationLinks = {
     PlagiarismChecks: 'instructor/plagiarism-check',
     Grading: 'instructor/grading',
     Units: 'instructor/lectures#lecture-units',
-    Assessment: 'instructor/assessment',
-    Statistics: 'instructor/learning-analytics',
+    Assessment: 'instructor/assessment-grading/assessment',
+    Statistics: 'instructor/analytics/learning-analytics',
+    StudentStatistics: 'student/progress-analytics/learning-analytics',
     SuspiciousBehavior: 'instructor/exams/exam-timeline#33-suspicious-behavior-detection',
 };
 
