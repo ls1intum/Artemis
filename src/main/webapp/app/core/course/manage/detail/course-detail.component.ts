@@ -356,7 +356,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
      * Subscribe to changes in courses and reload the course after a change.
      */
     registerChangeInCourses(courseId: number) {
-        this.eventManager.destroy(this.eventSubscription);
+        if (this.eventSubscription) {
+            this.eventManager.destroy(this.eventSubscription);
+        }
         this.eventSubscription = this.eventManager.subscribe('courseListModification', () => {
             this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course.set(courseResponse.body!);
@@ -373,7 +375,9 @@ export class CourseDetailComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.paramSub) {
             this.paramSub.unsubscribe();
         }
-        this.eventManager?.destroy(this.eventSubscription);
+        if (this.eventSubscription) {
+            this.eventManager?.destroy(this.eventSubscription);
+        }
     }
 
     /**

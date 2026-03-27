@@ -134,7 +134,10 @@ describe('Course Management Detail Component', () => {
         expect(registerSpy).toHaveBeenCalledOnce();
     });
 
-    it('should destroy event subscriber onDestroy', () => {
+    it('should destroy event subscriber onDestroy', async () => {
+        const mockSubscription = {} as any;
+        vi.spyOn(eventManager, 'subscribe').mockReturnValue(mockSubscription);
+        await component.ngOnInit();
         const destroySpy = vi.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
         expect(destroySpy).toHaveBeenCalledOnce();

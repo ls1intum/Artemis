@@ -93,6 +93,28 @@
 // ── Step page form body ───────────────────────────────
 .step-body {
     padding: 1.5rem 2rem 2rem;
+
+    // Direct selector for same-component controls
+    .form-control,
+    .form-select {
+        background-color: var(--onboarding-input-bg, #fff);
+    }
+
+    // ::ng-deep needed to reach form controls inside child components (e.g. date-time-picker, markdown editor)
+    // stylelint-disable-next-line no-descending-specificity
+    ::ng-deep .form-control,
+    ::ng-deep .form-select {
+        background-color: var(--onboarding-input-bg, #fff);
+    }
+
+    // Override markdown editor CSS variables so they cascade into child components
+    --md-editor-background: var(--onboarding-input-bg, #fff);
+    --md-tab-list-bg: var(--onboarding-input-bg, #fff);
+
+    ::ng-deep .markdown-preview,
+    ::ng-deep .background-editor-high {
+        background-color: var(--onboarding-input-bg, #fff);
+    }
 }
 
 // ── Feature toggle buttons (green/red with icons) ────
