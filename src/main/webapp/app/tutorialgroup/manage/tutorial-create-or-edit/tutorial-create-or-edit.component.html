@@ -3,13 +3,14 @@
         <h3 jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.sectionTitle.generalInformation"></h3>
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate }} *</label>
+                <label for="title-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate }} *</label>
                 <p-inputgroup>
                     @let titleValidation = titleValidationResult();
                     <p-inputgroup-addon>
                         <i class="pi pi-language"></i>
                     </p-inputgroup-addon>
                     <input
+                        id="title-input"
                         pInputText
                         [(ngModel)]="title"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.title' | artemisTranslate"
@@ -26,10 +27,11 @@
 
             <div class="label-and-input">
                 @let tutorValidation = tutorValidationResult();
-                <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate }} *</label>
+                <label for="tutor-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutor' | artemisTranslate }} *</label>
                 <p-inputgroup class="field-control right-control">
                     <p-inputgroup-addon><i class="pi pi-user"></i></p-inputgroup-addon>
                     <p-select
+                        inputId="tutor-input"
                         optionLabel="nameAndLogin"
                         optionValue="id"
                         filterBy="nameAndLogin"
@@ -53,23 +55,29 @@
             <jhi-tutorial-edit-languages-input [alreadyUsedLanguages]="alreadyUsedLanguages()" [(language)]="selectedLanguage" />
 
             <div class="label-and-input">
-                <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate }} *</label>
+                <label for="mode-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate }} *</label>
                 <p-inputgroup>
                     <p-inputgroup-addon><i class="pi pi-compass"></i></p-inputgroup-addon>
-                    <p-select [options]="modes" [(ngModel)]="selectedMode" [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate" />
+                    <p-select
+                        inputId="mode-input"
+                        [options]="modes"
+                        [(ngModel)]="selectedMode"
+                        [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.mode' | artemisTranslate"
+                    />
                 </p-inputgroup>
             </div>
         </div>
 
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus"></label>
+                <label for="campus-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus"></label>
                 <p-inputgroup>
                     @let campusValidation = campusValidationResult();
                     <p-inputgroup-addon>
                         <i class="pi pi-building"></i>
                     </p-inputgroup-addon>
                     <input
+                        id="campus-input"
                         pInputText
                         [(ngModel)]="campus"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.campus' | artemisTranslate"
@@ -84,10 +92,11 @@
             </div>
 
             <div class="label-and-input">
-                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
+                <label for="capacity-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity"></label>
                 <p-inputgroup>
                     <p-inputgroup-addon><i class="pi pi-hashtag"></i></p-inputgroup-addon>
                     <p-inputnumber
+                        inputId="capacity-input"
                         [(ngModel)]="capacity"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.capacity' | artemisTranslate"
                         [min]="1"
@@ -99,9 +108,10 @@
 
         <div class="label-and-input-row">
             <div class="label-and-input">
-                <label jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation"></label>
+                <label for="additional-information-input" jhiTranslate="artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation"></label>
                 <p-inputgroup>
                     <input
+                        id="additional-information-input"
                         type="text"
                         [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.additionalInformation' | artemisTranslate"
                         pInputText
@@ -122,10 +132,11 @@
         @if (configureSessionPlan()) {
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate }} *</label>
+                    <label for="first-session-start-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate }} *</label>
                     <p-inputgroup>
                         @let firstSessionStartValidation = firstSessionStartValidationResult();
                         <p-datepicker
+                            inputId="first-session-start-input"
                             hourFormat="24"
                             [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionStart' | artemisTranslate"
                             [(ngModel)]="firstSessionStart"
@@ -142,10 +153,11 @@
                 </div>
 
                 <div class="label-and-input">
-                    <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate }} *</label>
+                    <label for="first-session-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate }} *</label>
                     <p-inputgroup>
                         @let firstSessionEndValidation = firstSessionEndValidationResult();
                         <p-datepicker
+                            inputId="first-session-end-input"
                             hourFormat="24"
                             [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.firstSessionEnd' | artemisTranslate"
                             [(ngModel)]="firstSessionEnd"
@@ -164,9 +176,10 @@
 
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }} *</label>
+                    <label for="repetition-frequency-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequency' | artemisTranslate }} *</label>
                     <p-inputgroup>
                         <p-inputnumber
+                            inputId="repetition-frequency-input"
                             [(ngModel)]="repetitionFrequency"
                             [prefix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencyPrefix' | artemisTranslate"
                             [suffix]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.repetitionFrequencySuffix' | artemisTranslate"
@@ -177,10 +190,11 @@
                 </div>
 
                 <div class="label-and-input">
-                    <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate }} *</label>
+                    <label for="tutorial-period-end-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate }} *</label>
                     <p-inputgroup>
                         @let tutorialPeriodEndValidation = tutorialPeriodEndValidationResult();
                         <p-datepicker
+                            inputId="tutorial-period-end-input"
                             hourFormat="24"
                             [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.tutorialPeriodEnd' | artemisTranslate"
                             [(ngModel)]="tutorialPeriodEnd"
@@ -199,10 +213,11 @@
 
             <div class="label-and-input-row">
                 <div class="label-and-input">
-                    <label>{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate }} *</label>
+                    <label for="location-input">{{ 'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate }} *</label>
                     <p-inputgroup>
                         @let locationValidation = locationValidationResult();
                         <input
+                            id="location-input"
                             type="text"
                             pInputText
                             [placeholder]="'artemisApp.pages.createOrEditTutorialGroup.inputLabel.location' | artemisTranslate"

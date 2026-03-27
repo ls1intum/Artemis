@@ -347,7 +347,7 @@ export class TutorialCreateOrEditComponent {
         const titleChanged = this.title() !== tutorialGroup.title;
         const tutorChanged = this.selectedTutorId() !== tutorialGroup.tutorId;
         const languageChanged = this.selectedLanguage() !== tutorialGroup.language;
-        const modeChanged = this.selectedMode() === Mode.OFFLINE && tutorialGroup.isOnline;
+        const modeChanged = (this.selectedMode() === Mode.OFFLINE && tutorialGroup.isOnline) || (this.selectedMode() === Mode.ONLINE && !tutorialGroup.isOnline);
         const campusChanged = this.campus() !== (tutorialGroup.campus ?? '');
         const capacityChanged = this.capacity() !== tutorialGroup.capacity;
         const additionalInformationChanged = this.additionalInformation() !== (tutorialGroup.additionalInformation ?? '');
