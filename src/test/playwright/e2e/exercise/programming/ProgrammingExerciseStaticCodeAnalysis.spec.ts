@@ -4,7 +4,7 @@ import { admin, studentOne } from '../../../support/users';
 import { test } from '../../../support/fixtures';
 import { SEED_COURSES } from '../../../support/seedData';
 import { Commands } from '../../../support/commands';
-import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
+import { BUILD_RESULT_TIMEOUT } from 'src/test/playwright/support/timeouts';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
 
 const course = { id: SEED_COURSES.exerciseManagement.id } as any;
