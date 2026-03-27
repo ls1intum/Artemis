@@ -280,6 +280,9 @@
                     "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
                 }
             }
+        },
+        "pyrisSearchAskRequest": {
+            "limit": "Limit"
         }
     }
 }
