@@ -240,8 +240,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         this.metisService.setPageType(PageType.OVERVIEW);
         const course = this.course();
         this.metisService.setCourse(course);
-        if (course?.faqEnabled) {
-            this.faqService.findAllByCourseIdAndState(course.id!, FaqState.ACCEPTED).subscribe({
+        if (course?.id) {
+            this.faqService.findAllByCourseIdAndState(course.id, FaqState.ACCEPTED).subscribe({
                 next: (res) => {
                     this.metisService.setFaqs(res.body ?? []);
                 },
