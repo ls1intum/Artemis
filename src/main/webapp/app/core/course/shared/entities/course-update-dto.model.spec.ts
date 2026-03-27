@@ -38,7 +38,7 @@ describe('Course Update DTO Model', () => {
         enrollmentConfirmationMessage: 'Welcome!',
         unenrollmentEnabled: true,
         courseInformationSharingMessagingCodeOfConduct: 'Be nice',
-        faqEnabled: true,
+        onboardingDone: true,
         learningPathsEnabled: true,
         studentCourseAnalyticsDashboardEnabled: true,
         presentationScore: 10,
@@ -80,7 +80,6 @@ describe('Course Update DTO Model', () => {
             expect(dto.enrollmentEnabled).toBe(true);
             expect(dto.enrollmentConfirmationMessage).toBe('Welcome!');
             expect(dto.unenrollmentEnabled).toBe(true);
-            expect(dto.faqEnabled).toBe(true);
             expect(dto.learningPathsEnabled).toBe(true);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(true);
             expect(dto.presentationScore).toBe(10);
@@ -104,7 +103,6 @@ describe('Course Update DTO Model', () => {
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
@@ -160,7 +158,7 @@ describe('Course Update DTO Model', () => {
             expect(dto.enrollmentConfirmationMessage).toBe('Welcome!');
             expect(dto.unenrollmentEnabled).toBe(true);
             expect(dto.courseInformationSharingMessagingCodeOfConduct).toBe('Be nice');
-            expect(dto.faqEnabled).toBe(true);
+            expect(dto.onboardingDone).toBe(true);
             expect(dto.learningPathsEnabled).toBe(true);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(true);
             expect(dto.presentationScore).toBe(10);
@@ -186,7 +184,7 @@ describe('Course Update DTO Model', () => {
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
+            expect(dto.onboardingDone).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
