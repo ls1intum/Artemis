@@ -39,7 +39,6 @@ export class PdfViewerIframeContentComponent implements OnInit {
     private readonly destroyRef = inject(DestroyRef);
 
     readonly pdfUrl = signal<string>('');
-    readonly initialPage = signal<number>(1);
     readonly currentPage = signal<number>(1);
     readonly totalPages = signal<number>(0);
     readonly isDarkMode = signal<boolean>(false);
@@ -75,11 +74,16 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
         switch (type) {
             case 'loadPDF':
-                if (data?.url && data.url !== this.pdfUrl()) {
-                    this.pdfUrl.set(data.url);
-                    const pageToLoad = data.initialPage ?? 1;
-                    this.initialPage.set(pageToLoad);
-                    this.currentPage.set(pageToLoad);
+                if (data?.url) {
+                    const urlChanged = data.url !== this.pdfUrl();
+                    if (urlChanged) {
+                        this.pdfUrl.set(data.url);
+                    }
+                    if (data.initialPage !== undefined) {
+                        this.currentPage.set(data.initialPage);
+                    } else if (urlChanged) {
+                        this.currentPage.set(1);
+                    }
                 }
                 if (data?.isDarkMode !== undefined && data.isDarkMode !== this.isDarkMode()) {
                     this.isDarkMode.set(data.isDarkMode);

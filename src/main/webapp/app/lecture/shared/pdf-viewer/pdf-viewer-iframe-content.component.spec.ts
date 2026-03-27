@@ -43,7 +43,6 @@ describe('PdfViewerIframeContentComponent', () => {
     it('should create and initialize with defaults', () => {
         expect(component).toBeTruthy();
         expect(component.pdfUrl()).toBe('');
-        expect(component.initialPage()).toBe(1);
         expect(component.isDarkMode()).toBe(false);
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'ready', data: {} }, window.location.origin);
     });
@@ -62,14 +61,48 @@ describe('PdfViewerIframeContentComponent', () => {
         );
         fixture.detectChanges();
         expect(component.pdfUrl()).toBe('doc.pdf');
-        expect(component.initialPage()).toBe(5);
         expect(component.currentPage()).toBe(5);
         expect(component.isDarkMode()).toBe(true);
     });
 
+    it('should update initialPage even when URL is unchanged', () => {
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 2 } },
+                origin: window.location.origin,
+            }),
+        );
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 7 } },
+                origin: window.location.origin,
+            }),
+        );
+
+        expect(component.pdfUrl()).toBe('doc.pdf');
+        expect(component.currentPage()).toBe(7);
+    });
+
+    it('should not reset page when URL is unchanged and initialPage is missing', () => {
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 4 } },
+                origin: window.location.origin,
+            }),
+        );
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: { type: 'loadPDF', data: { url: 'doc.pdf' } },
+                origin: window.location.origin,
+            }),
+        );
+
+        expect(component.currentPage()).toBe(4);
+    });
+
     it('should use default initialPage if not provided', () => {
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'loadPDF', data: { url: 'doc.pdf' } }, origin: window.location.origin }));
-        expect(component.initialPage()).toBe(1);
+        expect(component.currentPage()).toBe(1);
     });
 
     it('should handle themeChange message', () => {

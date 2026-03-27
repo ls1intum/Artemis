@@ -1,5 +1,5 @@
 <div class="pdf-iframe-wrapper">
-    <iframe #pdfIframe [src]="iframeSrc() | safeResourceUrl" class="pdf-iframe" title="PDF Viewer"></iframe>
+    <iframe #pdfIframe [src]="iframeSrc() | safeResourceUrl" class="pdf-iframe" [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"></iframe>
     @if (uploadDate() || version()) {
         <div class="pdf-viewer-footer">
             @if (uploadDate()) {

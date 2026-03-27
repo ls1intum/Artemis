@@ -82,46 +82,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         return page && page > 0 ? page : undefined;
     });
 
-    constructor() {
-        super();
-
-        const destroyRef = this.destroyRef;
-
-        // Listen for PDF load errors from iframe to trigger blob fallback
-        const pdfErrorHandler = (event: Event) => {
-            const customEvent = event as CustomEvent<{ pdfUrl: string }>;
-            const failedUrl = customEvent.detail?.pdfUrl;
-            const directPdfUrl = this.getAttachmentLink();
-            const activePdfUrl = this.pdfUrl();
-
-            if (!failedUrl || !directPdfUrl || failedUrl !== directPdfUrl || failedUrl !== activePdfUrl) {
-                return;
-            }
-
-            this.loadPdfAsBlob();
-        };
-
-        // Listen for iframe readiness to stop loading spinner
-        const pdfReadyHandler = (event: Event) => {
-            const customEvent = event as CustomEvent<{ pdfUrl: string }>;
-            const readyUrl = customEvent.detail?.pdfUrl;
-            const activePdfUrl = this.pdfUrl();
-
-            if (!readyUrl || !activePdfUrl || readyUrl !== activePdfUrl) {
-                return;
-            }
-
-            this.isPdfLoading.set(false);
-        };
-
-        window.addEventListener('pdf-load-error', pdfErrorHandler);
-        window.addEventListener('pdf-viewer-ready', pdfReadyHandler);
-        destroyRef.onDestroy(() => {
-            window.removeEventListener('pdf-load-error', pdfErrorHandler);
-            window.removeEventListener('pdf-viewer-ready', pdfReadyHandler);
-        });
-    }
-
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
     readonly hasPdf = computed(() => {
@@ -159,6 +119,29 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         }
         return undefined;
+    }
+
+    protected onPdfLoadError(event: { pdfUrl: string }): void {
+        const failedUrl = event.pdfUrl;
+        const directPdfUrl = this.getAttachmentLink();
+        const activePdfUrl = this.pdfUrl();
+
+        if (!failedUrl || !directPdfUrl || failedUrl !== directPdfUrl || failedUrl !== activePdfUrl) {
+            return;
+        }
+
+        this.loadPdfAsBlob();
+    }
+
+    protected onPdfReady(event: { pdfUrl: string }): void {
+        const readyUrl = event.pdfUrl;
+        const activePdfUrl = this.pdfUrl();
+
+        if (!readyUrl || !activePdfUrl || readyUrl !== activePdfUrl) {
+            return;
+        }
+
+        this.isPdfLoading.set(false);
     }
 
     override toggleCollapse(isCollapsed: boolean): void {

@@ -484,11 +484,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
 
-            window.dispatchEvent(
-                new CustomEvent('pdf-viewer-ready', {
-                    detail: { pdfUrl: 'api/core/files//path/to/file/test.pdf' },
-                }),
-            );
+            component['onPdfReady']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
 
             expect(component.isPdfLoading()).toBe(false);
 
@@ -510,12 +506,8 @@ describe('AttachmentVideoUnitComponent', () => {
 
             expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
 
-            // Simulate PDF load error by dispatching the custom event
-            window.dispatchEvent(
-                new CustomEvent('pdf-load-error', {
-                    detail: { pdfUrl: 'api/core/files//path/to/file/test.pdf' },
-                }),
-            );
+            // Simulate PDF load error from viewer component
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
 
             // Now the blob fallback should trigger an HTTP request
             const req = httpMock.expectOne((request) => request.url.includes('test.pdf') && request.responseType === 'blob');

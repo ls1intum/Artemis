@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
@@ -28,7 +29,7 @@ interface IframeMessage {
 @Component({
     selector: 'jhi-lecture-pdf-viewer-iframe',
     standalone: true,
-    imports: [ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe],
+    imports: [ArtemisDatePipe, ArtemisTranslatePipe, TranslateDirective, SafeResourceUrlPipe],
     templateUrl: './pdf-viewer-iframe-wrapper.component.html',
     styleUrls: ['./pdf-viewer-iframe-wrapper.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +42,8 @@ export class PdfViewerIframeWrapperComponent {
 
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
     readonly iframeReady = signal(false);
+    readonly ready = output<{ pdfUrl: string }>();
+    readonly loadError = output<{ pdfUrl: string }>();
 
     readonly iframeSrc = computed(() => {
         return '/pdf-viewer-iframe';
@@ -53,8 +56,9 @@ export class PdfViewerIframeWrapperComponent {
 
         // Effect to load PDF when iframe is ready and URL changes
         effect(() => {
+            const initialPage = this.initialPage();
             if (this.iframeReady() && this.pdfUrl()) {
-                this.loadPdfInIframe();
+                this.loadPdfInIframe(initialPage);
             }
         });
 
@@ -77,12 +81,12 @@ export class PdfViewerIframeWrapperComponent {
     }
 
     /** Sends a loadPDF message to the iframe with current URL and theme. */
-    private loadPdfInIframe(): void {
+    private loadPdfInIframe(initialPage?: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
         const url = this.pdfUrl();
         this.postMessageToIframe('loadPDF', {
             url: url,
-            initialPage: this.initialPage() ?? 1,
+            initialPage: initialPage ?? 1,
             isDarkMode,
         });
     }
@@ -102,17 +106,9 @@ export class PdfViewerIframeWrapperComponent {
 
         if (type === 'ready') {
             this.iframeReady.set(true);
-            window.dispatchEvent(
-                new CustomEvent('pdf-viewer-ready', {
-                    detail: { pdfUrl: this.pdfUrl() },
-                }),
-            );
+            this.ready.emit({ pdfUrl: this.pdfUrl() });
         } else if (type === 'pdfLoadError') {
-            window.dispatchEvent(
-                new CustomEvent('pdf-load-error', {
-                    detail: { pdfUrl: this.pdfUrl() },
-                }),
-            );
+            this.loadError.emit({ pdfUrl: this.pdfUrl() });
         }
     };
 

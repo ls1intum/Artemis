@@ -92,6 +92,8 @@
                     [uploadDate]="lectureUnit().attachment?.uploadDate"
                     [version]="lectureUnit().attachment?.version"
                     [initialPage]="validatedPdfPage()"
+                    (ready)="onPdfReady($event)"
+                    (loadError)="onPdfLoadError($event)"
                 />
             </div>
         }

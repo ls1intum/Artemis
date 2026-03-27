@@ -2,7 +2,7 @@
     <ngx-extended-pdf-viewer
         class="iframe-pdf-viewer"
         [src]="pdfUrl()"
-        [page]="initialPage()"
+        [page]="currentPage()"
         [customToolbar]="customToolbar"
         (pageChange)="onPageChange($event)"
         (pagesLoaded)="onPagesLoaded($event)"

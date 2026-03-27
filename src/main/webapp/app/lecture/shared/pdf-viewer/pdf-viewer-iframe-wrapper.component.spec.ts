@@ -43,8 +43,9 @@ describe('PdfViewerIframeWrapperComponent', () => {
         expect(component.iframeSrc()).toBe('/pdf-viewer-iframe');
     });
 
-    it('should handle ready message and dispatch pdf-viewer-ready event', () => {
-        const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    it('should handle ready message and emit ready event', () => {
+        const readySpy = vi.fn();
+        const readySubscription = component.ready.subscribe(readySpy);
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
 
@@ -53,7 +54,8 @@ describe('PdfViewerIframeWrapperComponent', () => {
         fixture.detectChanges();
 
         expect(component.iframeReady()).toBe(true);
-        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'pdf-viewer-ready', detail: { pdfUrl: 'test.pdf' } }));
+        expect(readySpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf' });
+        readySubscription.unsubscribe();
     });
 
     it('should reject messages from wrong origin or source', () => {
@@ -67,15 +69,17 @@ describe('PdfViewerIframeWrapperComponent', () => {
         expect(component.iframeReady()).toBe(false);
     });
 
-    it('should dispatch pdfLoadError custom event', () => {
-        const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
+    it('should emit loadError event', () => {
+        const loadErrorSpy = vi.fn();
+        const loadErrorSubscription = component.loadError.subscribe(loadErrorSpy);
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
 
         const iframe = component.pdfIframe()?.nativeElement;
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'pdfLoadError' }, origin: window.location.origin, source: iframe?.contentWindow }));
 
-        expect(dispatchSpy).toHaveBeenCalledWith(expect.objectContaining({ type: 'pdf-load-error', detail: { pdfUrl: 'test.pdf' } }));
+        expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf' });
+        loadErrorSubscription.unsubscribe();
     });
 
     it('should load PDF when iframe ready', async () => {
@@ -91,6 +95,27 @@ describe('PdfViewerIframeWrapperComponent', () => {
         await fixture.whenStable();
 
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'loadPDF', data: { url: 'test.pdf', initialPage: 5, isDarkMode: false } }, window.location.origin);
+    });
+
+    it('should reload PDF when initialPage changes', async () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.componentRef.setInput('initialPage', 1);
+        fixture.detectChanges();
+
+        const iframe = component.pdfIframe()?.nativeElement;
+        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
+
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: iframe?.contentWindow }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        postMessageSpy.mockClear();
+
+        fixture.componentRef.setInput('initialPage', 7);
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'loadPDF', data: { url: 'test.pdf', initialPage: 7, isDarkMode: false } }, window.location.origin);
     });
 
     it('should notify iframe on theme change', async () => {
