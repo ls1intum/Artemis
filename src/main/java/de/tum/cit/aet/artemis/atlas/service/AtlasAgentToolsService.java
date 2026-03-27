@@ -131,6 +131,9 @@ public class AtlasAgentToolsService {
             @ToolParam(description = "Course context and background") String context) {
         Long courseId = currentCourseId.get();
         String sessionId = currentSessionId.get();
+        if (courseId == null || sessionId == null) {
+            return "{\"error\": \"Internal error: missing request context\"}";
+        }
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyExpertToolsService.setCurrentSessionId(sessionId);
@@ -155,6 +158,9 @@ public class AtlasAgentToolsService {
             @ToolParam(description = "Why this relation makes sense") String context) {
         Long courseId = currentCourseId.get();
         String sessionId = currentSessionId.get();
+        if (courseId == null || sessionId == null) {
+            return "{\"error\": \"Internal error: missing request context\"}";
+        }
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyMappingToolsService.setCurrentSessionId(sessionId);
@@ -179,6 +185,9 @@ public class AtlasAgentToolsService {
             @ToolParam(description = "Additional context") String context) {
         Long courseId = currentCourseId.get();
         String sessionId = currentSessionId.get();
+        if (courseId == null || sessionId == null) {
+            return "{\"error\": \"Internal error: missing request context\"}";
+        }
         String brief = "EXERCISE_ID: " + exerciseId + "\nEXERCISE_TITLE: " + exerciseTitle + "\nREQUIREMENTS: " + requirements + "\nCONTEXT: " + context;
 
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);

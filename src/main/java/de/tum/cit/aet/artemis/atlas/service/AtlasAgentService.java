@@ -188,10 +188,11 @@ public class AtlasAgentService {
             }
 
             List<CompetencyRelationPreviewDTO> relationPreviews = previewService.convertToRelationPreviewsList(singleRelationPreview, batchRelationPreview);
+            RelationGraphPreviewDTO graphForDto = (singleRelationPreview != null || batchRelationPreview != null) ? relationGraphPreview : null;
 
             return new AtlasAgentChatResponseDTO(response, ZonedDateTime.now(), competencyModifiedInCurrentRequest.get(),
                     competencyPreviews != null && !competencyPreviews.isEmpty() ? competencyPreviews : null,
-                    relationPreviews != null && !relationPreviews.isEmpty() ? relationPreviews : null, relationGraphPreview, exerciseMappingPreview);
+                    relationPreviews != null && !relationPreviews.isEmpty() ? relationPreviews : null, graphForDto, exerciseMappingPreview);
         }
         catch (Exception e) {
             log.error("Error processing chat message for session {}", sessionId, e);
@@ -240,22 +241,12 @@ public class AtlasAgentService {
      * @return the agent's response
      */
     String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId, boolean saveToMemory) {
-        String resourcePath;
-        if (agentType.equals(AgentType.MAIN_AGENT)) {
-            resourcePath = "/prompts/atlas/agent_system_prompt.st";
-        }
-        else if (agentType.equals(AgentType.COMPETENCY_EXPERT)) {
-            resourcePath = "/prompts/atlas/competency_expert_system_prompt.st";
-        }
-        else if (agentType.equals(AgentType.COMPETENCY_MAPPER)) {
-            resourcePath = "/prompts/atlas/competency_mapper_system_prompt.st";
-        }
-        else if (agentType.equals(AgentType.EXERCISE_MAPPER)) {
-            resourcePath = "/prompts/atlas/exercise_mapper_system_prompt.st";
-        }
-        else {
-            resourcePath = "/prompts/atlas/agent_system_prompt.st";
-        }
+        String resourcePath = switch (agentType) {
+            case MAIN_AGENT -> "/prompts/atlas/agent_system_prompt.st";
+            case COMPETENCY_EXPERT -> "/prompts/atlas/competency_expert_system_prompt.st";
+            case COMPETENCY_MAPPER -> "/prompts/atlas/competency_mapper_system_prompt.st";
+            case EXERCISE_MAPPER -> "/prompts/atlas/exercise_mapper_system_prompt.st";
+        };
         Map<String, String> variables = Map.of();
         String systemPrompt = templateService.render(resourcePath, variables);
 
@@ -274,25 +265,14 @@ public class AtlasAgentService {
 
         ChatClientRequestSpec promptSpec = sessionClient.prompt().system(systemPromptWithContext).user(message).options(options);
 
-        if (agentType.equals(AgentType.MAIN_AGENT)) {
-            if (mainAgentToolCallbackProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(mainAgentToolCallbackProvider);
-            }
-        }
-        else if (agentType.equals(AgentType.COMPETENCY_EXPERT)) {
-            if (competencyExpertToolCallbackProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(competencyExpertToolCallbackProvider);
-            }
-        }
-        else if (agentType.equals(AgentType.COMPETENCY_MAPPER)) {
-            if (competencyMapperToolCallbackProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(competencyMapperToolCallbackProvider);
-            }
-        }
-        else if (agentType.equals(AgentType.EXERCISE_MAPPER)) {
-            if (exerciseMapperToolCallbackProvider != null) {
-                promptSpec = promptSpec.toolCallbacks(exerciseMapperToolCallbackProvider);
-            }
+        ToolCallbackProvider toolCallbackProvider = switch (agentType) {
+            case MAIN_AGENT -> mainAgentToolCallbackProvider;
+            case COMPETENCY_EXPERT -> competencyExpertToolCallbackProvider;
+            case COMPETENCY_MAPPER -> competencyMapperToolCallbackProvider;
+            case EXERCISE_MAPPER -> exerciseMapperToolCallbackProvider;
+        };
+        if (toolCallbackProvider != null) {
+            promptSpec = promptSpec.toolCallbacks(toolCallbackProvider);
         }
 
         // Execute the chat

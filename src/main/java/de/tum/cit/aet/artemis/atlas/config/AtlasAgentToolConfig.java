@@ -20,7 +20,7 @@ public class AtlasAgentToolConfig {
 
     /**
      * Registers the tools for the Main Agent (Requirements Engineer/Orchestrator).
-     * This agent has access to information retrieval tools only.
+     * This agent has access to information retrieval and delegation tools.
      *
      * @param toolsService the service containing @Tool-annotated methods for the Main Agent
      * @return ToolCallbackProvider that exposes the Main Agent tools to Spring AI
