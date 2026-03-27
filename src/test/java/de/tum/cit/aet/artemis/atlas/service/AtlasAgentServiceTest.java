@@ -236,25 +236,22 @@ class AtlasAgentServiceTest {
         }
 
         @Test
-        void shouldHandleDelegationMarkerInResponse() {
-            String testMessage = "Create a new competency";
+        void shouldReturnNullPreviewsWhenNoToolDelegationOccurred() {
+            String testMessage = "Create a competency for OOP";
             Long courseId = 123L;
-            String sessionId = "delegation_test";
-            String responseWithDelegationMarker = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:Create OOP competency";
+            String sessionId = "preview_collection_test";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            // First call returns delegation marker, second call (from competency expert) returns clean response
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithDelegationMarker)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("{\"preview\": true}")))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Here is your competency preview")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-
-            // The response should be processed and replaced with clean JSON from competency expert
-            assertThat(result.message()).isNotNull();
-            // At minimum, the raw delegation marker should be sanitized
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%:");
+            assertThat(result.message()).isEqualTo("Here is your competency preview");
+            // No delegation tools were invoked, so no preview data should be present
+            assertThat(result.competencyPreviews()).isNull();
+            assertThat(result.relationPreviews()).isNull();
+            assertThat(result.exerciseMappingPreview()).isNull();
         }
 
         @Test
@@ -306,58 +303,22 @@ class AtlasAgentServiceTest {
     class ErrorHandlingAndEdgeCases {
 
         @Test
-        void shouldHandleMultipleDelegationMarkersGracefully() {
-            String testMessage = "Test multiple delegations";
+        void shouldReturnResponseWithNullPreviewsWhenNoSubAgentInvoked() {
+            String testMessage = "Hello, what can you do?";
             Long courseId = 123L;
-            String sessionId = "multi_delegation_test";
-            String responseWithMultipleMarkers = "First %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%{\"brief\": \"test\"} Second %%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%{\"brief\": \"test2\"}";
+            String sessionId = "no_delegation_test";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMultipleMarkers)))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("I can help you manage competencies.")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-
-            // Should handle multiple markers without crashing
-            assertThat(result.message()).isNotNull();
-        }
-
-        @Test
-        void shouldHandleEmptyDelegationBrief() {
-            String testMessage = "Test empty brief";
-            Long courseId = 123L;
-            String sessionId = "empty_brief_test";
-            String responseWithEmptyBrief = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_EXPERT%%";
-
-            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithEmptyBrief)))));
-
-            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-            assertThat(result).isNotNull();
-
-            // Should handle empty brief gracefully
-            assertThat(result.message()).isNotNull();
-        }
-
-        @Test
-        void shouldHandleReturnToMainAgentMarker() {
-            String testMessage = "Test return marker";
-            Long courseId = 123L;
-            String sessionId = "return_marker_test";
-            String responseWithReturnMarker = "Task complete %%ARTEMIS_RETURN_TO_MAIN_AGENT%%";
-
-            when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithReturnMarker)))));
-
-            AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
-
-            assertThat(result).isNotNull();
-
-            // The marker should be removed from the response
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_RETURN_TO_MAIN_AGENT%%");
-            assertThat(result.message()).isEqualTo("Task complete");
+            assertThat(result.message()).isEqualTo("I can help you manage competencies.");
+            assertThat(result.competencyPreviews()).isNull();
+            assertThat(result.relationPreviews()).isNull();
+            assertThat(result.relationGraphPreview()).isNull();
+            assertThat(result.exerciseMappingPreview()).isNull();
         }
 
         @Test
@@ -611,20 +572,19 @@ class AtlasAgentServiceTest {
     class RelationPreviewHandling {
 
         @Test
-        void shouldHandleDelegationToCompetencyMapper() {
+        void shouldReturnRelationPreviewsWhenMapperSetsThreadLocal() {
             String testMessage = "Map competencies in this course";
             Long courseId = 123L;
             String sessionId = "mapper_test";
-            String responseWithMapperDelegation = "%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%:Map OOP to Design Patterns";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithMapperDelegation)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Relation preview generated")))));
+            // Simulate main agent call where delegation tool internally invoked the mapper
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Relation preview generated")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_COMPETENCY_MAPPER%%");
+            assertThat(result.message()).isEqualTo("Relation preview generated");
         }
 
         @Test
@@ -786,20 +746,18 @@ class AtlasAgentServiceTest {
     class ExerciseMappingDelegation {
 
         @Test
-        void shouldHandleDelegationToExerciseMapper() {
+        void shouldReturnExerciseMappingPreviewWhenMapperSetsThreadLocal() {
             String testMessage = "Map exercises in this course";
             Long courseId = 123L;
             String sessionId = "exercise_mapper_test";
-            String responseWithExerciseMapperDelegation = "%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%:Map OOP competency to Java exercise";
 
             when(templateService.render(anyString(), anyMap())).thenReturn("Test system prompt");
-            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage(responseWithExerciseMapperDelegation)))))
-                    .thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Exercise mapping preview generated")))));
+            when(chatModel.call(any(Prompt.class))).thenReturn(new ChatResponse(List.of(new Generation(new AssistantMessage("Exercise mapping preview generated")))));
 
             AtlasAgentChatResponseDTO result = atlasAgentService.processChatMessage(testMessage, courseId, sessionId);
 
             assertThat(result).isNotNull();
-            assertThat(result.message()).doesNotContain("%%ARTEMIS_DELEGATE_TO_EXERCISE_MAPPER%%");
+            assertThat(result.message()).isEqualTo("Exercise mapping preview generated");
         }
 
         @Test
