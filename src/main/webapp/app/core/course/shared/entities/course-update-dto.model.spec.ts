@@ -38,7 +38,6 @@ describe('CourseUpdateDTO mapping', () => {
             course.color = '#00ff00';
             course.enrollmentEnabled = true;
             course.unenrollmentEnabled = false;
-            course.faqEnabled = true;
             course.learningPathsEnabled = false;
             course.studentCourseAnalyticsDashboardEnabled = false;
             course.restrictedAthenaModulesAccess = false;
@@ -59,7 +58,6 @@ describe('CourseUpdateDTO mapping', () => {
             expect(dto.color).toBe('#00ff00');
             expect(dto.enrollmentEnabled).toBe(true);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(true);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
             expect(dto.courseInformationSharingConfiguration).toBe(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
@@ -81,7 +79,6 @@ describe('CourseUpdateDTO mapping', () => {
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
@@ -107,7 +104,6 @@ describe('CourseUpdateDTO mapping', () => {
             course.maxComplaintTextLimit = 1500;
             course.maxComplaintResponseTextLimit = 1500;
             course.unenrollmentEnabled = true;
-            course.faqEnabled = true;
             course.learningPathsEnabled = true;
             course.studentCourseAnalyticsDashboardEnabled = true;
             course.restrictedAthenaModulesAccess = true;
@@ -124,7 +120,6 @@ describe('CourseUpdateDTO mapping', () => {
             expect(dto.testCourse).toBe(true);
             expect(dto.maxComplaintTimeDays).toBe(10);
             expect(dto.unenrollmentEnabled).toBe(true);
-            expect(dto.faqEnabled).toBe(true);
             expect(dto.learningPathsEnabled).toBe(true);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(true);
             expect(dto.restrictedAthenaModulesAccess).toBe(true);
@@ -149,7 +144,6 @@ describe('CourseUpdateDTO mapping', () => {
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
