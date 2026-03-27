@@ -106,7 +106,7 @@ public interface TextExerciseRepository extends ArtemisJpaRepository<TextExercis
      * @param exerciseId the id of the exercise to fetch
      * @return {@link TextExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
     Optional<TextExercise> findForVersioningById(long exerciseId);
 
     /**

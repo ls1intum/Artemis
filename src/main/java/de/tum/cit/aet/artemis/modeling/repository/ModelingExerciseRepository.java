@@ -95,7 +95,7 @@ public interface ModelingExerciseRepository extends ArtemisJpaRepository<Modelin
      * @param exerciseId the id of the exercise to fetch
      * @return {@link ModelingExercise}
      */
-    @EntityGraph(type = LOAD, attributePaths = { "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
+    @EntityGraph(type = LOAD, attributePaths = { "course", "competencyLinks", "categories", "teamAssignmentConfig", "gradingCriteria", "plagiarismDetectionConfig" })
     Optional<ModelingExercise> findForVersioningById(long exerciseId);
 
     /**
