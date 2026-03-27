@@ -1,8 +1,6 @@
-import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, ParamMap, convertToParamMap } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
-import { describe, expect, it } from 'vitest';
 
 import { getNumericPathVariableSignal } from 'app/shared/route/getPathVariable';
 
@@ -24,7 +22,9 @@ function createActivatedRoute(params: Record<string, string>, parent?: Activated
 }
 
 describe('getNumericPathVariableSignal', () => {
-    setupTestBed({ zoneless: true });
+    beforeEach(() => {
+        TestBed.configureTestingModule({});
+    });
 
     it('should return the numeric path variable from the current route', () => {
         const route = createActivatedRoute({ courseId: '42' });

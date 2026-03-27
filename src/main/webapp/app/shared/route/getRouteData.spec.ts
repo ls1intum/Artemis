@@ -1,5 +1,4 @@
 import { ActivatedRoute, ActivatedRouteSnapshot, Data } from '@angular/router';
-import { describe, expect, it } from 'vitest';
 
 import { getRouteData } from 'app/shared/route/getRouteData';
 
