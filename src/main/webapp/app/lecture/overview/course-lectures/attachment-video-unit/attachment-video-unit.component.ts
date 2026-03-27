@@ -36,9 +36,19 @@ import { TranscriptSegment } from 'app/lecture/shared/models/transcript-segment.
 import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { MessageModule } from 'primeng/message';
 @Component({
     selector: 'jhi-attachment-video-unit',
-    imports: [LectureUnitComponent, ArtemisDatePipe, TranslateDirective, SafeResourceUrlPipe, VideoPlayerComponent, PdfViewerIframeWrapperComponent, FaIconComponent],
+    imports: [
+        LectureUnitComponent,
+        ArtemisDatePipe,
+        TranslateDirective,
+        SafeResourceUrlPipe,
+        VideoPlayerComponent,
+        PdfViewerIframeWrapperComponent,
+        FaIconComponent,
+        MessageModule,
+    ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
 })
