@@ -3,6 +3,7 @@ export interface SpotlightStep {
     descriptionKey: string;
     imageSrc: string;
     videoSrc?: string;
+    noFrame?: boolean;
 }
 
 export interface FeatureCard {
@@ -10,9 +11,7 @@ export interface FeatureCard {
     descriptionKey: string;
     imageSrc: string;
     imageAlt: string;
-    imageStyle?: Record<string, string>;
     secondaryImageSrc?: string;
-    secondaryImageStyle?: Record<string, string>;
 }
 
 export interface FaqItem {
@@ -38,6 +37,7 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
         descriptionKey: 'landing.spotlight.steps.feedback.description',
         imageSrc: 'content/images/landing/iris-logo.png',
         videoSrc: 'content/images/landing/demo-videos/interactive-exercise.webm',
+        noFrame: true,
     },
     {
         titleKey: 'landing.spotlight.steps.tutor.title',
@@ -154,14 +154,6 @@ export const UNIVERSITY_LOGOS: UniversityLogo[] = [
 
 export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
     {
-        titleKey: 'landing.footer.links.pages.title',
-        links: [
-            { labelKey: 'landing.footer.links.pages.home', routerLink: '/' },
-            { labelKey: 'landing.footer.links.pages.contact', href: 'mailto:contact@artemis.cit.tum.de' },
-            { labelKey: 'landing.footer.links.pages.releases', href: 'https://github.com/ls1intum/Artemis/releases' },
-        ],
-    },
-    {
         titleKey: 'landing.footer.links.features.title',
         links: [
             { labelKey: 'landing.footer.links.features.exercises', href: 'https://docs.artemis.cit.tum.de/user/exercises/' },
@@ -184,7 +176,7 @@ export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
         titleKey: 'landing.footer.links.resources.title',
         links: [
             { labelKey: 'landing.footer.links.resources.documentation', href: 'https://docs.artemis.cit.tum.de' },
-            { labelKey: 'landing.footer.links.resources.publication', href: 'https://github.com/ls1intum/Artemis' },
+            { labelKey: 'landing.footer.links.resources.publication', href: 'https://docs.artemis.tum.de/publications' },
         ],
     },
 ];

@@ -59,15 +59,14 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
         }
 
         .card-category {
-            font-size: 16px;
-            font-weight: 400;
+            font-size: 14px;
             color: var(--text-body-secondary);
             line-height: 1.6;
             margin: 0;
         }
 
         .card-description {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 500;
             color: var(--body-color);
             line-height: 1.6;
@@ -86,13 +85,6 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
         .card-image {
             border-radius: 8px;
             object-fit: contain;
-            width: 100%;
-            flex: 1;
-        }
-
-        .card-image-no-border {
-            border-radius: 8px;
-            object-fit: cover;
             width: 100%;
             flex: 1;
         }

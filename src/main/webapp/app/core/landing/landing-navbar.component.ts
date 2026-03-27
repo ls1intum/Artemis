@@ -1,31 +1,36 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faBars, faMoon, faSun, faXmark } from '@fortawesome/free-solid-svg-icons';
-import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
+import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
+import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
+import { LANGUAGES } from 'app/core/language/shared/language.constants';
 
 @Component({
     selector: 'jhi-landing-navbar',
     standalone: true,
-    imports: [FaIconComponent, ArtemisTranslatePipe],
+    imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, FindLanguageFromKeyPipe, ActiveMenuDirective],
     styles: `
         :host {
             display: block;
             position: sticky;
             top: 0;
             z-index: 1000;
+            background-color: var(--artemis-dark);
         }
 
         .landing-navbar {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 12px 160px;
-            background: color-mix(in srgb, var(--iris-primary-background) 85%, transparent);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            padding: 8px 80px;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
         }
 
         .logo {
@@ -37,38 +42,14 @@ import { TranslateService } from '@ngx-translate/core';
         }
 
         .logo img {
-            height: 36px;
-            width: 42px;
+            height: 30px;
+            width: 32px;
         }
 
         .logo-text {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            color: var(--text-body-secondary);
-            line-height: 1.5;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 40px;
-            align-items: center;
-        }
-
-        .nav-link {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--body-color);
-            text-decoration: none;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            line-height: 1.6;
-            transition: color 0.2s;
-        }
-
-        .nav-link:hover {
-            color: var(--primary);
+            color: var(--navbar-foreground);
         }
 
         .right-section {
@@ -81,38 +62,48 @@ import { TranslateService } from '@ngx-translate/core';
             background: none;
             border: none;
             cursor: pointer;
-            color: var(--body-color);
+            color: var(--navbar-dark-color);
             padding: 4px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
+            font-size: 14px;
             transition: color 0.2s;
         }
 
         .icon-btn:hover {
-            color: var(--primary);
+            color: var(--navbar-foreground);
         }
 
-        .lang-btn {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--body-color);
-            background: none;
-            border: none;
-            cursor: pointer;
+        .lang-dropdown {
+            display: flex;
+            align-items: center;
+        }
+
+        .lang-dropdown .nav-link {
+            color: var(--navbar-dark-color);
             padding: 0;
-            line-height: 1.6;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+
+        .lang-dropdown .nav-link:hover {
+            color: var(--navbar-foreground);
+        }
+
+        .lang-dropdown .dropdown-menu {
+            min-width: auto;
         }
 
         .login-btn {
             background: var(--primary);
-            color: var(--iris-primary-background);
+            color: #fff;
             border: none;
-            padding: 8px 24px;
+            padding: 6px 16px;
             border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
+            font-size: 14px;
             cursor: pointer;
             line-height: 1.6;
             transition: opacity 0.2s;
@@ -141,12 +132,8 @@ import { TranslateService } from '@ngx-translate/core';
                 padding: 12px 20px;
             }
 
-            .nav-links {
-                display: none;
-            }
-
-            .right-section .lang-btn,
-            .right-section .icon-btn:first-child {
+            .right-section .lang-dropdown,
+            .right-section jhi-theme-switch {
                 display: none;
             }
 
@@ -159,13 +146,13 @@ import { TranslateService } from '@ngx-translate/core';
                 flex-direction: column;
                 gap: 16px;
                 padding: 16px 20px;
-                background: var(--iris-primary-background);
-                border-top: 1px solid var(--gray-300);
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
             }
 
-            .mobile-nav .nav-link {
-                font-size: 18px;
-                padding: 8px 0;
+            .mobile-nav .mobile-controls {
+                display: flex;
+                align-items: center;
+                gap: 16px;
             }
         }
     `,
@@ -176,18 +163,21 @@ import { TranslateService } from '@ngx-translate/core';
                 <span class="logo-text">Artemis</span>
             </div>
 
-            <div class="nav-links">
-                <button class="nav-link" (click)="scrollTo('hero')">{{ 'landing.navbar.home' | artemisTranslate }}</button>
-                <button class="nav-link" (click)="scrollTo('features')">{{ 'landing.navbar.features' | artemisTranslate }}</button>
-                <button class="nav-link" (click)="scrollTo('faq')">{{ 'landing.navbar.resources' | artemisTranslate }}</button>
-                <button class="nav-link" (click)="scrollTo('footer')">{{ 'landing.navbar.contact' | artemisTranslate }}</button>
-            </div>
-
             <div class="right-section">
-                <button class="icon-btn" (click)="toggleTheme()" [attr.aria-label]="themeAriaLabel()">
-                    <fa-icon [icon]="isDark() ? faSun : faMoon" />
-                </button>
-                <button class="lang-btn" (click)="toggleLanguage()">{{ currentLang().toUpperCase() }}</button>
+                <jhi-theme-switch [popoverPlacement]="'bottom-right'" />
+                <div ngbDropdown class="lang-dropdown" display="dynamic">
+                    <a class="nav-link dropdown-toggle" ngbDropdownToggle>
+                        <fa-icon [icon]="faFlag" />
+                        <span>{{ 'global.menu.language' | artemisTranslate }}</span>
+                    </a>
+                    <ul class="dropdown-menu" ngbDropdownMenu>
+                        @for (language of languages; track language) {
+                            <li>
+                                <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language)">{{ language | findLanguageFromKey }}</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
                 <button class="login-btn" (click)="navigateToLogin()">{{ 'landing.navbar.logIn' | artemisTranslate }}</button>
                 <button class="icon-btn mobile-menu-btn" (click)="toggleMobileMenu()" [attr.aria-expanded]="mobileMenuOpen()" aria-label="Toggle menu">
                     <fa-icon [icon]="mobileMenuOpen() ? faXmark : faBars" />
@@ -197,42 +187,41 @@ import { TranslateService } from '@ngx-translate/core';
 
         @if (mobileMenuOpen()) {
             <div class="mobile-nav">
-                <button class="nav-link" (click)="scrollTo('hero'); toggleMobileMenu()">{{ 'landing.navbar.home' | artemisTranslate }}</button>
-                <button class="nav-link" (click)="scrollTo('features'); toggleMobileMenu()">{{ 'landing.navbar.features' | artemisTranslate }}</button>
-                <button class="nav-link" (click)="scrollTo('faq'); toggleMobileMenu()">{{ 'landing.navbar.resources' | artemisTranslate }}</button>
-                <button class="nav-link" (click)="scrollTo('footer'); toggleMobileMenu()">{{ 'landing.navbar.contact' | artemisTranslate }}</button>
-                <button class="icon-btn" (click)="toggleTheme()" [attr.aria-label]="themeAriaLabel()">
-                    <fa-icon [icon]="isDark() ? faSun : faMoon" />
-                </button>
-                <button class="lang-btn" (click)="toggleLanguage()">{{ currentLang().toUpperCase() }}</button>
+                <div class="mobile-controls">
+                    <jhi-theme-switch [popoverPlacement]="'bottom'" />
+                    <div ngbDropdown class="lang-dropdown" display="dynamic">
+                        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
+                            <fa-icon [icon]="faFlag" />
+                            <span>{{ 'global.menu.language' | artemisTranslate }}</span>
+                        </a>
+                        <ul class="dropdown-menu" ngbDropdownMenu>
+                            @for (language of languages; track language) {
+                                <li>
+                                    <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); toggleMobileMenu()">{{
+                                        language | findLanguageFromKey
+                                    }}</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                </div>
             </div>
         }
     `,
 })
 export class LandingNavbarComponent {
-    protected readonly faSun = faSun;
-    protected readonly faMoon = faMoon;
     protected readonly faBars = faBars;
     protected readonly faXmark = faXmark;
+    protected readonly faFlag = faFlag;
 
-    private themeService = inject(ThemeService);
     private translateService = inject(TranslateService);
     private router = inject(Router);
 
+    languages = LANGUAGES;
     mobileMenuOpen = signal(false);
-    currentLang = signal(this.translateService.getCurrentLang() || 'en');
-    isDark = computed(() => this.themeService.currentTheme() === Theme.DARK);
-    themeAriaLabel = computed(() => (this.isDark() ? 'Switch to light mode' : 'Switch to dark mode'));
 
-    toggleTheme(): void {
-        const newTheme = this.isDark() ? Theme.LIGHT : Theme.DARK;
-        this.themeService.applyThemePreference(newTheme);
-    }
-
-    toggleLanguage(): void {
-        const newLang = this.currentLang() === 'en' ? 'de' : 'en';
-        this.translateService.use(newLang);
-        this.currentLang.set(newLang);
+    changeLanguage(languageKey: string): void {
+        this.translateService.use(languageKey);
     }
 
     toggleMobileMenu(): void {
@@ -241,10 +230,6 @@ export class LandingNavbarComponent {
 
     navigateToLogin(): void {
         this.router.navigateByUrl('/sign-in');
-    }
-
-    scrollTo(sectionId: string): void {
-        document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' });
     }
 
     scrollToTop(): void {

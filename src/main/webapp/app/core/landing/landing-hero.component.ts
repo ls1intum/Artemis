@@ -38,11 +38,10 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
             justify-content: center;
             padding: 8px 16px;
             border-radius: 24px;
-            background: color-mix(in srgb, var(--primary) 5%, transparent);
+            background: color-mix(in srgb, var(--primary) 8%, transparent);
             color: var(--primary);
-            font-size: 16px;
-            font-weight: 500;
-            line-height: 1.6;
+            font-size: 14px;
+            line-height: 1.5;
         }
 
         .hero-title {

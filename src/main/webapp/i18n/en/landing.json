@@ -2,14 +2,10 @@
     "landing": {
         "pageTitle": "Artemis - Interactive Learning Platform",
         "navbar": {
-            "home": "Home",
-            "features": "Features",
-            "resources": "Resources",
-            "contact": "Contact",
             "logIn": "Log in"
         },
         "hero": {
-            "tagline": "For universities & technical institutions",
+            "tagline": "For Universities & Technical Institutions",
             "title": "A learning platform built for university education.",
             "subtitle": "Artemis is an open-source learning platform built for university education — instant feedback on programming exercises, smart quizzes, and collaborative tools that keep both students and instructors in sync."
         },
@@ -101,7 +97,7 @@
                 },
                 "docs": {
                     "question": "Where can I find the full documentation?",
-                    "answer": "Full documentation is available at docs.artemis.tum.de, including setup guides, feature references, and developer docs."
+                    "answer": "Full documentation is available at docs.artemis.cit.tum.de, including setup guides, feature references, and developer docs."
                 }
             }
         },
@@ -111,12 +107,6 @@
             "getStarted": "Get Started",
             "description": "A learning platform built for university education.",
             "links": {
-                "pages": {
-                    "title": "Pages",
-                    "home": "Home",
-                    "contact": "Contact",
-                    "releases": "Releases"
-                },
                 "features": {
                     "title": "Features",
                     "exercises": "Interactive Exercises",
@@ -139,6 +129,8 @@
                 }
             },
             "imprint": {
+                "about": "About",
+                "releases": "Releases",
                 "feedback": "Feedback",
                 "privacy": "Privacy",
                 "imprint": "Imprint"

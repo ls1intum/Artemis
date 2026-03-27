@@ -173,7 +173,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                 @if (currentStep().videoSrc; as videoSrc) {
                     <video
                         class="spotlight-media"
-                        [class.no-frame]="currentStep().titleKey === 'landing.spotlight.steps.feedback.title'"
+                        [class.no-frame]="currentStep().noFrame"
                         [src]="videoSrc"
                         [autoplay]="true"
                         [muted]="true"

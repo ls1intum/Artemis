@@ -91,7 +91,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
                     @for (logo of logos; track logo.name) {
                         <img class="logo-item" [class.light-mode-black]="logo.isWhiteLogo" [src]="logo.file" [alt]="logo.name" [style.width.px]="logo.width" />
                     }
-                    @for (logo of logos; track logo.name) {
+                    @for (logo of logos; track $index) {
                         <img class="logo-item" [class.light-mode-black]="logo.isWhiteLogo" [src]="logo.file" [alt]="logo.name" [style.width.px]="logo.width" />
                     }
                 </div>

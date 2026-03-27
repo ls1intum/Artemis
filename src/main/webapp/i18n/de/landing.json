@@ -2,10 +2,6 @@
     "landing": {
         "pageTitle": "Artemis - Interaktive Lernplattform",
         "navbar": {
-            "home": "Startseite",
-            "features": "Funktionen",
-            "resources": "Ressourcen",
-            "contact": "Kontakt",
             "logIn": "Anmelden"
         },
         "hero": {
@@ -18,20 +14,20 @@
             "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme — basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell.",
             "steps": {
                 "tutor": {
-                    "title": "AI that teaches, not just answers",
-                    "description": "Iris, Artemis's built-in AI tutor, guides students through problems with hints and leading questions — drawing on course-specific content to stay relevant. For instructors, it surfaces patterns across student questions and keeps FAQs up to date automatically."
+                    "title": "KI, die lehrt — nicht nur antwortet",
+                    "description": "Iris, der integrierte KI-Tutor von Artemis, führt Studierende mit Hinweisen und Leitfragen durch Probleme — basierend auf kursspezifischen Inhalten. Für Lehrende erkennt er Muster in Studierendenfragen und hält FAQs automatisch aktuell."
                 },
                 "feedback": {
-                    "title": "Instant feedback, every submission",
-                    "description": "Submit code, a quiz, or a modeling task — and get structured, individual feedback within seconds. Artemis automatically runs test cases, static analysis, and grading criteria so students always know exactly where they stand, without waiting for a tutor."
+                    "title": "Sofortiges Feedback bei jeder Abgabe",
+                    "description": "Code, Quiz oder Modellierungsaufgabe einreichen — und innerhalb von Sekunden strukturiertes, individuelles Feedback erhalten. Artemis führt automatisch Testfälle, statische Analyse und Bewertungskriterien aus, sodass Studierende immer wissen, wo sie stehen."
                 },
                 "faq": {
-                    "title": "Lectures that keep working after class",
-                    "description": "Upload lecture videos and Artemis automatically generates searchable transcriptions. Students revisit specific moments, Iris draws on the content to answer questions, and instructors can link units directly to learning objectives."
+                    "title": "Vorlesungen, die nach dem Unterricht weiterarbeiten",
+                    "description": "Vorlesungsvideos hochladen und Artemis generiert automatisch durchsuchbare Transkriptionen. Studierende können bestimmte Stellen erneut ansehen, Iris nutzt die Inhalte zur Beantwortung von Fragen, und Lehrende können Einheiten direkt mit Lernzielen verknüpfen."
                 },
                 "insights": {
-                    "title": "Learning paths that adapt to every student",
-                    "description": "Define competencies, map them to lectures and exercises, and let Artemis build personalized learning paths based on each student's progress — giving struggling students targeted support and advanced learners room to move ahead."
+                    "title": "Lernpfade, die sich an jeden Studierenden anpassen",
+                    "description": "Kompetenzen definieren, mit Vorlesungen und Übungen verknüpfen und Artemis personalisierte Lernpfade basierend auf dem Fortschritt jedes Studierenden erstellen lassen — gezielte Unterstützung für Schwächere und Freiraum für Fortgeschrittene."
                 }
             }
         },
@@ -111,12 +107,6 @@
             "getStarted": "Loslegen",
             "description": "Eine Lernplattform für die universitäre Lehre.",
             "links": {
-                "pages": {
-                    "title": "Seiten",
-                    "home": "Startseite",
-                    "contact": "Kontakt",
-                    "releases": "Releases"
-                },
                 "features": {
                     "title": "Funktionen",
                     "exercises": "Interaktive Übungen",
@@ -139,6 +129,8 @@
                 }
             },
             "imprint": {
+                "about": "Über uns",
+                "releases": "Releases",
                 "feedback": "Feedback",
                 "privacy": "Datenschutz",
                 "imprint": "Impressum"

@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faGlobe } from '@fortawesome/free-solid-svg-icons';
+import { faLink } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
 
@@ -15,7 +15,7 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         }
 
         .footer {
-            background: var(--iris-secondary-background);
+            background: var(--artemis-dark);
             display: flex;
             flex-direction: column;
             gap: 0;
@@ -28,8 +28,10 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
             display: flex;
             align-items: flex-end;
             justify-content: space-between;
-            padding: 40px 160px;
+            padding: 40px 80px;
+            max-width: 1600px;
             width: 100%;
+            margin: 0 auto;
         }
 
         .footer-tagline-section {
@@ -41,28 +43,27 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         .footer-tagline {
             font-size: 48px;
             font-weight: 700;
-            color: var(--body-color);
+            color: var(--white);
             line-height: 1.5;
             max-width: 768px;
             margin: 0;
         }
 
         .footer-subtitle {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 400;
-            color: var(--text-body-secondary);
+            color: var(--navbar-dark-color);
             line-height: 1.6;
             margin: 0;
         }
 
         .cta-btn {
             background: var(--primary);
-            color: var(--iris-primary-background);
+            color: #fff;
             border: none;
-            padding: 8px 24px;
+            padding: 8px 16px;
             border-radius: 8px;
-            font-size: 16px;
-            font-weight: 500;
+            font-size: 14px;
             cursor: pointer;
             line-height: 1.6;
             white-space: nowrap;
@@ -77,8 +78,10 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
             display: flex;
             align-items: flex-start;
             justify-content: space-between;
-            padding: 40px 160px;
+            padding: 40px 80px;
+            max-width: 1600px;
             width: 100%;
+            margin: 0 auto;
         }
 
         .footer-logo-section {
@@ -95,22 +98,20 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         }
 
         .footer-logo img {
-            height: 36px;
-            width: 42px;
+            height: 30px;
+            width: 32px;
         }
 
         .footer-logo-text {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            color: var(--text-body-secondary);
-            line-height: 1.5;
+            color: var(--navbar-foreground);
         }
 
         .footer-description {
             font-size: 14px;
             font-weight: 400;
-            color: var(--text-body-secondary);
-            line-height: 1.6;
+            color: var(--navbar-dark-color);
             max-width: 320px;
             margin: 0;
         }
@@ -123,22 +124,22 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         }
 
         .social-link {
-            color: var(--text-body-secondary);
-            font-size: 20px;
+            color: var(--navbar-foreground);
+            font-size: 16px;
             transition: color 0.2s;
             text-decoration: none;
             display: flex;
             align-items: center;
         }
 
-        .social-link:hover {
-            color: var(--primary);
+        .social-icon {
+            width: 1em;
+            height: 1em;
+            fill: currentColor;
         }
 
-        .social-link svg {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
+        .social-link:hover {
+            color: var(--primary);
         }
 
         .link-columns {
@@ -154,9 +155,9 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         }
 
         .link-group-title {
-            font-size: 16px;
+            font-size: 14px;
             font-weight: 500;
-            color: var(--body-color);
+            color: var(--navbar-foreground);
             line-height: 1.6;
             margin: 0;
         }
@@ -170,7 +171,7 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         .link-item {
             font-size: 14px;
             font-weight: 400;
-            color: var(--text-body-secondary);
+            color: var(--navbar-dark-color);
             text-decoration: none;
             line-height: 1.6;
             transition: color 0.2s;
@@ -184,8 +185,10 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 24px 160px;
+            padding: 16px 80px;
+            max-width: 1600px;
             width: 100%;
+            margin: 0 auto;
         }
 
         .bottom-links {
@@ -197,9 +200,8 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         .bottom-link {
             font-size: 14px;
             font-weight: 400;
-            color: var(--text-body-secondary);
+            color: var(--navbar-foreground);
             text-decoration: none;
-            line-height: 1.6;
             transition: color 0.2s;
         }
 
@@ -210,18 +212,9 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
         .copyright {
             font-size: 14px;
             font-weight: 400;
-            color: var(--text-body-secondary);
+            color: var(--navbar-foreground);
             line-height: 1.6;
             margin: 0;
-        }
-
-        @media (max-width: 1200px) {
-            .footer-top,
-            .footer-links,
-            .footer-bottom {
-                padding-left: 40px;
-                padding-right: 40px;
-            }
         }
 
         @media (max-width: 768px) {
@@ -272,19 +265,19 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
                     <p class="footer-description">{{ 'landing.footer.description' | artemisTranslate }}</p>
                     <div class="social-links">
                         <a class="social-link" href="https://artemis.cit.tum.de" target="_blank" rel="noopener" aria-label="Website">
-                            <fa-icon [icon]="faGlobe" />
+                            <fa-icon [icon]="faLink" />
                         </a>
-                        <a class="social-link" href="https://www.linkedin.com/company/Artemis-Platform" target="_blank" rel="noopener" aria-label="LinkedIn">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                        <a class="social-link" href="https://www.linkedin.com/company/tumaet" target="_blank" rel="noopener" aria-label="LinkedIn">
+                            <svg class="social-icon" viewBox="0 0 448 512" aria-hidden="true">
                                 <path
-                                    d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"
+                                    d="M100.28 448H7.4V148.9h92.88zM53.79 108.1C24.09 108.1 0 83.5 0 53.8a53.79 53.79 0 0 1 107.58 0c0 29.7-24.1 54.3-53.79 54.3zM447.9 448h-92.68V302.4c0-34.7-.7-79.2-48.29-79.2-48.3 0-55.69 37.7-55.69 76.7V448h-92.78V148.9h89.08v40.8h1.3c12.4-23.5 42.69-48.3 87.88-48.3 94 0 111.28 61.9 111.28 142.3V448z"
                                 />
                             </svg>
                         </a>
-                        <a class="social-link" href="https://www.instagram.com/Artemis_edu" target="_blank" rel="noopener" aria-label="Instagram">
-                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512">
+                        <a class="social-link" href="https://www.instagram.com/tum.aet" target="_blank" rel="noopener" aria-label="Instagram">
+                            <svg class="social-icon" viewBox="0 0 448 512" aria-hidden="true">
                                 <path
-                                    d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z"
+                                    d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141m0 189.6c-41.3 0-74.7-33.4-74.7-74.7s33.4-74.7 74.7-74.7 74.7 33.4 74.7 74.7-33.5 74.7-74.7 74.7M370.5 136.7c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8 0-14.9 12-26.8 26.8-26.8 14.8 0 26.8 12 26.8 26.8m76.1 27.2c-1.7-35.3-9.7-66.6-35.6-92.4S354.2 37.5 318.9 35.8c-35.4-2-141.5-2-176.9 0-35.3 1.7-66.6 9.7-92.4 35.6S11.8 128.2 10.1 163.5c-2 35.4-2 141.5 0 176.9 1.7 35.3 9.7 66.6 35.6 92.4s57.1 33.9 92.4 35.6c35.4 2 141.5 2 176.9 0 35.3-1.7 66.6-9.7 92.4-35.6s33.9-57.1 35.6-92.4c2-35.4 2-141.4 0-176.9m-47.8 214.5c-1.5 31.5-7.3 48.6-18.3 59.6s-28.1 16.8-59.6 18.3c-31.8 1.8-127.2 1.8-159 0-31.5-1.5-48.6-7.3-59.6-18.3s-16.8-28.1-18.3-59.6c-1.8-31.8-1.8-127.2 0-159 1.5-31.5 7.3-48.6 18.3-59.6s28.1-16.8 59.6-18.3c31.8-1.8 127.2-1.8 159 0 31.5 1.5 48.6 7.3 59.6 18.3s16.8 28.1 18.3 59.6c1.8 31.8 1.8 127.1 0 159"
                                 />
                             </svg>
                         </a>
@@ -311,7 +304,13 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
 
             <div class="footer-bottom">
                 <div class="bottom-links">
-                    <a class="bottom-link" href="mailto:feedback&#64;artemis.cit.tum.de">{{ 'landing.footer.imprint.feedback' | artemisTranslate }}</a>
+                    <a class="bottom-link" routerLink="/about">{{ 'landing.footer.imprint.about' | artemisTranslate }}</a>
+                    <a class="bottom-link" href="https://github.com/ls1intum/Artemis/releases" target="_blank" rel="noopener">{{
+                        'landing.footer.imprint.releases' | artemisTranslate
+                    }}</a>
+                    <a class="bottom-link" href="https://github.com/ls1intum/Artemis/issues/new/choose" target="_blank" rel="noopener">{{
+                        'landing.footer.imprint.feedback' | artemisTranslate
+                    }}</a>
                     <a class="bottom-link" routerLink="/privacy">{{ 'landing.footer.imprint.privacy' | artemisTranslate }}</a>
                     <a class="bottom-link" routerLink="/imprint">{{ 'landing.footer.imprint.imprint' | artemisTranslate }}</a>
                 </div>
@@ -321,7 +320,7 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
     `,
 })
 export class LandingFooterComponent {
-    protected readonly faGlobe = faGlobe;
+    protected readonly faLink = faLink;
 
     private router = inject(Router);
     linkGroups = FOOTER_LINK_GROUPS;

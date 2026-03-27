@@ -58,20 +58,20 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
         }
 
         :host ::ng-deep .p-accordionpanel {
-            border: 1px solid var(--gray-300);
+            border: 0.75px solid var(--iris-accent-background);
             border-radius: 8px;
-            background: color-mix(in srgb, var(--primary) 5%, transparent);
+            background: var(--iris-secondary-background);
             overflow: hidden;
         }
 
         :host ::ng-deep .p-accordionpanel-active {
             border-color: var(--primary);
-            background: var(--iris-primary-background);
+            color: var(--body-color);
         }
 
         :host ::ng-deep .p-accordionheader {
             padding: 16px;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 500;
             color: var(--body-color);
             background: transparent;
@@ -82,13 +82,17 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
             padding: 0 16px 16px;
             font-size: 16px;
             font-weight: 400;
-            color: var(--body-color);
+            color: var(--text-body-secondary);
             line-height: 1.6;
             font-family: inherit;
         }
 
         :host ::ng-deep .p-accordioncontent .p-motion.p-collapsible-enter-active .p-accordioncontent-content {
             animation: faq-slide-down 220ms ease-out;
+        }
+
+        :host ::ng-deep .p-accordionpanel-active .p-accordionheader {
+            color: var(--body-color) !important;
         }
 
         .faq-answer {
@@ -99,11 +103,9 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
         @keyframes faq-slide-down {
             from {
                 opacity: 0;
-                transform: translateY(-10px);
             }
             to {
                 opacity: 1;
-                transform: translateY(0);
             }
         }
 
