@@ -23,11 +23,12 @@ const DocumentationLinks = {
     GenerateCompetencies: 'instructor/analytics/adaptive-learning#generate-competencies',
     Communications: 'student/communication-support/communication',
     Exams: 'instructor/exams/intro',
-    PlagiarismChecks: 'instructor/assessment-grading/plagiarism-check',
-    Grading: 'instructor/assessment-grading/grading',
-    Units: 'instructor/lectures/lectures',
+    PlagiarismChecks: 'instructor/plagiarism-check',
+    Grading: 'instructor/grading',
+    Units: 'instructor/lectures#lecture-units',
     Assessment: 'instructor/assessment-grading/assessment',
     Statistics: 'instructor/analytics/learning-analytics',
+    StudentStatistics: 'student/progress-analytics/learning-analytics',
     SuspiciousBehavior: 'instructor/exams/exam-timeline#33-suspicious-behavior-detection',
 };
 
