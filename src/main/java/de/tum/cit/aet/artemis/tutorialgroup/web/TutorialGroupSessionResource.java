@@ -102,7 +102,7 @@ public class TutorialGroupSessionResource {
      */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> updateSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<TutorialGroupSessionDTO> updateSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -141,7 +141,7 @@ public class TutorialGroupSessionResource {
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.from(result, result.getTutorialGroupSchedule()));
     }
 
     /**
@@ -219,7 +219,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> cancelSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+    public ResponseEntity<TutorialGroupSessionDTO> cancelSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
             @RequestBody TutorialGroupCancelExplanationDTO tutorialGroupCancelExplanationDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -242,7 +242,7 @@ public class TutorialGroupSessionResource {
             sessionToCancel.setStatusExplanation(tutorialGroupCancelExplanationDTO.status_explanation().trim());
         }
         sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
-        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToCancel));
+        return ResponseEntity.ok().body(TutorialGroupSessionDTO.from(sessionToCancel, sessionToCancel.getTutorialGroupSchedule()));
     }
 
     /**
@@ -255,7 +255,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSession> activateSession(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId)
+    public ResponseEntity<TutorialGroupSessionDTO> activateSession(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId)
             throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -275,7 +275,7 @@ public class TutorialGroupSessionResource {
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
         sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
-        return ResponseEntity.ok().body(TutorialGroupSession.preventCircularJsonConversion(sessionToActivate));
+        return ResponseEntity.ok().body(TutorialGroupSessionDTO.from(sessionToActivate, sessionToActivate.getTutorialGroupSchedule()));
     }
 
     private void checkIfSessionMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {
