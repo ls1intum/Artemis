@@ -87,7 +87,7 @@ public class ProblemStatementRenderingService {
     // @formatter:off
     private static final String DARK_MODE_CSS = """
             <style>
-            :root,.artemis-problem-statement{--body-color:#e0e0e0;--border-color:#444;--link-color:#58a6ff;--body-bg:#1e1e1e;--artemis-pre-background:#2d2d2d;--artemis-pre-color:#e0e0e0;--artemis-pre-border:#444;--markdown-preview-blockquote:#999;--markdown-preview-blockquote-border:#555;--success:#28a745;--danger:#dc3545;--secondary:#999;--info:#58a6ff}
+            .artemis-problem-statement{--body-color:#e0e0e0;--border-color:#444;--link-color:#58a6ff;--body-bg:#1e1e1e;--artemis-pre-background:#2d2d2d;--artemis-pre-color:#e0e0e0;--artemis-pre-border:#444;--markdown-preview-blockquote:#999;--markdown-preview-blockquote-border:#555;--success:#28a745;--danger:#dc3545;--secondary:#999;--info:#58a6ff}
             .artemis-problem-statement{color:#e0e0e0}
             .artemis-problem-statement :not(pre)>code{background:#2d2d2d}
             </style>
@@ -107,7 +107,14 @@ public class ProblemStatementRenderingService {
             @Nullable String assessmentType) {
     }
 
-    private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([^@]*)@enduml");
+    private static final String CODE_BLOCK_PLACEHOLDER_PREFIX = "\u0000CODE_BLOCK_";
+
+    private static final String CODE_BLOCK_PLACEHOLDER_SUFFIX = "\u0000";
+
+    /** Fenced code blocks (```...```) and inline code (`...`). */
+    private static final Pattern CODE_BLOCK_PATTERN = Pattern.compile("```[\\s\\S]*?```|`[^`\n]+`");
+
+    private static final Pattern PLANTUML_PATTERN = Pattern.compile("@startuml([\\s\\S]*?)@enduml");
 
     private static final Pattern TASK_PATTERN = Pattern
             .compile("\\[task]\\[(?<name>[^\\[\\]]+)]\\((?<tests>(?:[^(),]+(?:\\([^()]*\\)[^(),]*)?(?:,[^(),]+(?:\\([^()]*\\)[^(),]*)?)*)?)\\)");
@@ -161,12 +168,19 @@ public class ProblemStatementRenderingService {
 
         String processedMarkdown = markdown;
 
+        // Step 0: Mask code blocks to prevent task/PlantUML extraction inside them
+        List<String> codeBlocks = new ArrayList<>();
+        processedMarkdown = maskCodeBlocks(processedMarkdown, codeBlocks);
+
         // Step 1: Extract PlantUML diagrams (max 10)
         List<String> inlineSvgs = new ArrayList<>();
         processedMarkdown = extractPlantUmlDiagrams(processedMarkdown, inlineSvgs, testResults, darkMode);
 
         // Step 2: Extract tasks
         processedMarkdown = extractTasks(processedMarkdown, testResults, locale);
+
+        // Step 2.5: Restore masked code blocks
+        processedMarkdown = restoreCodeBlocks(processedMarkdown, codeBlocks);
 
         // Step 3: CommonMark → HTML
         String html = renderWithCommonMark(processedMarkdown);
@@ -411,6 +425,30 @@ public class ProblemStatementRenderingService {
                 .build();
         String html = renderer.render(parser.parse(markdown));
         return Jsoup.clean(html, HTML_SAFELIST);
+    }
+
+    /**
+     * Replace fenced code blocks and inline code with placeholders so that
+     * task/PlantUML extraction does not process content inside them.
+     */
+    private static String maskCodeBlocks(String markdown, List<String> codeBlocks) {
+        Matcher matcher = CODE_BLOCK_PATTERN.matcher(markdown);
+        StringBuilder sb = new StringBuilder();
+        while (matcher.find()) {
+            int index = codeBlocks.size();
+            codeBlocks.add(matcher.group());
+            matcher.appendReplacement(sb, Matcher.quoteReplacement(CODE_BLOCK_PLACEHOLDER_PREFIX + index + CODE_BLOCK_PLACEHOLDER_SUFFIX));
+        }
+        matcher.appendTail(sb);
+        return sb.toString();
+    }
+
+    private static String restoreCodeBlocks(String markdown, List<String> codeBlocks) {
+        String result = markdown;
+        for (int i = 0; i < codeBlocks.size(); i++) {
+            result = result.replace(CODE_BLOCK_PLACEHOLDER_PREFIX + i + CODE_BLOCK_PLACEHOLDER_SUFFIX, codeBlocks.get(i));
+        }
+        return result;
     }
 
     private static Safelist buildSafelist() {

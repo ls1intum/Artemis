@@ -13,9 +13,10 @@
         + '<circle cx="8" cy="8" r="7.5" fill="#dc3545"/>'
         + '<path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>';
 
-    // Read CSS variable or return fallback
+    // Read CSS variable from the problem statement container (not :root, to avoid leaking into host page)
     function cssVar(name, fallback) {
-        var val = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        var el = document.querySelector('.artemis-problem-statement') || document.documentElement;
+        var val = getComputedStyle(el).getPropertyValue(name).trim();
         return val || fallback;
     }
 
@@ -383,17 +384,26 @@
     }
 
     function isDarkBackground(bgColor) {
-        // Simple heuristic: parse hex color and check luminance
-        var hex = bgColor.replace('#', '');
-        if (hex.length === 3) {
-            hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+        var r, g, b;
+        // Try rgb(r, g, b) or rgba(r, g, b, a)
+        var rgbMatch = bgColor.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/);
+        if (rgbMatch) {
+            r = parseInt(rgbMatch[1], 10);
+            g = parseInt(rgbMatch[2], 10);
+            b = parseInt(rgbMatch[3], 10);
+        } else {
+            // Try hex
+            var hex = bgColor.replace('#', '');
+            if (hex.length === 3) {
+                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+            }
+            if (hex.length !== 6) {
+                return false;
+            }
+            r = parseInt(hex.substring(0, 2), 16);
+            g = parseInt(hex.substring(2, 4), 16);
+            b = parseInt(hex.substring(4, 6), 16);
         }
-        if (hex.length !== 6) {
-            return false;
-        }
-        var r = parseInt(hex.substring(0, 2), 16);
-        var g = parseInt(hex.substring(2, 4), 16);
-        var b = parseInt(hex.substring(4, 6), 16);
         var luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
         return luminance < 0.5;
     }

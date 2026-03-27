@@ -60,6 +60,9 @@ public class ProblemStatementRenderingResource {
         if (renderRequest.testResults() != null && !renderRequest.testResults().isEmpty()) {
             testResults = new HashMap<>();
             for (TestFeedbackInput input : renderRequest.testResults()) {
+                if (testResults.containsKey(input.testId())) {
+                    return ResponseEntity.badRequest().build();
+                }
                 testResults.put(input.testId(),
                         new ProblemStatementRenderingService.TestFeedbackDetail(input.testId(), input.testName(), input.passed(), input.message(), input.credits()));
             }
