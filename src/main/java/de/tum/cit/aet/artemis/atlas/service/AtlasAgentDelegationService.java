@@ -10,7 +10,6 @@ import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
 import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.ai.model.tool.ToolCallingChatOptions;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -22,7 +21,6 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
  * Service for delegating messages to AI agents.
  * Extracted from {@link AtlasAgentService} to break the circular dependency between
  * {@link AtlasAgentService} and {@link AtlasAgentToolsService}.
- * Holds the sub-agent tool callback providers so they don't need to be duplicated across callers.
  */
 @Lazy
 @Service
@@ -39,48 +37,13 @@ public class AtlasAgentDelegationService {
 
     private final double temperature;
 
-    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
-
-    private final ToolCallbackProvider competencyMapperToolCallbackProvider;
-
-    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
-
     public AtlasAgentDelegationService(@Nullable ChatClient chatClient, AtlasPromptTemplateService templateService, @Nullable ChatMemory chatMemory,
-            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature,
-            @Nullable @Qualifier("competencyExpertToolCallbackProvider") ToolCallbackProvider competencyExpertToolCallbackProvider,
-            @Nullable @Qualifier("competencyMapperToolCallbackProvider") ToolCallbackProvider competencyMapperToolCallbackProvider,
-            @Nullable @Qualifier("exerciseMapperToolCallbackProvider") ToolCallbackProvider exerciseMapperToolCallbackProvider) {
+            @Value("${atlas.chat-model:gpt-4o}") String deploymentName, @Value("${atlas.chat-temperature:0.2}") double temperature) {
         this.chatClient = chatClient;
         this.templateService = templateService;
         this.chatMemory = chatMemory;
         this.deploymentName = deploymentName;
         this.temperature = temperature;
-        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
-        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
-        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
-    }
-
-    ToolCallbackProvider getSubAgentToolCallbackProvider(AtlasAgentService.AgentType agentType) {
-        return switch (agentType) {
-            case COMPETENCY_EXPERT -> competencyExpertToolCallbackProvider;
-            case COMPETENCY_MAPPER -> competencyMapperToolCallbackProvider;
-            case EXERCISE_MAPPER -> exerciseMapperToolCallbackProvider;
-            case MAIN_AGENT -> throw new IllegalArgumentException("Main agent provider is not managed by the delegation service");
-        };
-    }
-
-    /**
-     * Delegate message processing to a sub-agent identified by its type.
-     *
-     * @param agentType    the sub-agent type (must not be MAIN_AGENT)
-     * @param message      the user's message
-     * @param courseId     the course ID for context
-     * @param sessionId    the session ID for chat memory
-     * @param saveToMemory whether to add message to chat memory
-     * @return the agent's response
-     */
-    String delegateToSubAgent(AtlasAgentService.AgentType agentType, String message, Long courseId, String sessionId, boolean saveToMemory) {
-        return delegateToAgent(AtlasAgentService.getPromptResourcePath(agentType), message, courseId, sessionId, saveToMemory, getSubAgentToolCallbackProvider(agentType));
     }
 
     /**
@@ -94,7 +57,8 @@ public class AtlasAgentDelegationService {
      * @param toolCallbackProvider the tool callback provider for this agent (may be null)
      * @return the agent's response
      */
-    String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory, @Nullable ToolCallbackProvider toolCallbackProvider) {
+    String delegateToAgent(String promptResourcePath, String message, Long courseId, String sessionId, boolean saveToMemory,
+            @Nullable ToolCallbackProvider toolCallbackProvider) {
         String systemPrompt = templateService.render(promptResourcePath, Map.of());
 
         String systemPromptWithContext = systemPrompt + "\n\nCONTEXT FOR THIS REQUEST:\nCourse ID: " + courseId;

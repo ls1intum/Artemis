@@ -5,8 +5,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.ai.tool.ToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -56,12 +59,23 @@ public class AtlasAgentToolsService {
 
     private final AtlasAgentDelegationService delegationService;
 
+    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
+
+    private final ToolCallbackProvider competencyMapperToolCallbackProvider;
+
+    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
+
     public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
-            AtlasAgentDelegationService delegationService) {
+            AtlasAgentDelegationService delegationService, @Nullable @Qualifier("competencyExpertToolCallbackProvider") ToolCallbackProvider competencyExpertToolCallbackProvider,
+            @Nullable @Qualifier("competencyMapperToolCallbackProvider") ToolCallbackProvider competencyMapperToolCallbackProvider,
+            @Nullable @Qualifier("exerciseMapperToolCallbackProvider") ToolCallbackProvider exerciseMapperToolCallbackProvider) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.delegationService = delegationService;
+        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
+        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
+        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
     }
 
     public static void setCurrentCourseId(Long courseId) {
@@ -81,8 +95,6 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Tool for getting course description.
-     *
      * @param courseId ID of the course
      * @return course description or empty string if not found
      */
@@ -92,9 +104,6 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Lists all exercises for a given course.
-     * The LLM can use this to reason about course structure and existing learning material.
-     *
      * @param courseId ID of the course
      * @return JSON containing exercises or an error message if course not found
      */
@@ -117,9 +126,6 @@ public class AtlasAgentToolsService {
     }
 
     /**
-     * Delegates to the Competency Expert sub-agent for creating, updating, viewing, or refining competencies.
-     * The sub-agent executes autonomously using its own tools and returns its response.
-     *
      * @param topic        what competency topic(s) to work on
      * @param requirements what the instructor wants done
      * @param constraints  any limitations or preferences
@@ -138,14 +144,12 @@ public class AtlasAgentToolsService {
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyExpertToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToSubAgent(AtlasAgentService.AgentType.COMPETENCY_EXPERT, brief, courseId, sessionId, false);
+        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT), brief, courseId, sessionId,
+                false, competencyExpertToolCallbackProvider);
         return stripReturnMarker(response);
     }
 
     /**
-     * Delegates to the Competency Mapper sub-agent for creating competency relations (ASSUMES, EXTENDS, MATCHES)
-     * or viewing the competency relation graph.
-     *
      * @param topic        what competencies to map or relate
      * @param requirements what relation type and mapping to create
      * @param constraints  any limitations
@@ -165,14 +169,12 @@ public class AtlasAgentToolsService {
         String brief = formatBrief("TOPIC", topic, requirements, constraints, context);
 
         CompetencyMappingToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToSubAgent(AtlasAgentService.AgentType.COMPETENCY_MAPPER, brief, courseId, sessionId, false);
+        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER), brief, courseId, sessionId,
+                false, competencyMapperToolCallbackProvider);
         return stripReturnMarker(response);
     }
 
     /**
-     * Delegates to the Exercise Mapper sub-agent for mapping exercises to competencies.
-     * Always call getExercisesListed first to obtain the exercise ID and title.
-     *
      * @param exerciseId    the numeric exercise ID from getExercisesListed
      * @param exerciseTitle the exercise title
      * @param requirements  what mapping to create
@@ -192,7 +194,8 @@ public class AtlasAgentToolsService {
         String brief = "EXERCISE_ID: " + exerciseId + "\nEXERCISE_TITLE: " + exerciseTitle + "\nREQUIREMENTS: " + requirements + "\nCONTEXT: " + context;
 
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
-        String response = delegationService.delegateToSubAgent(AtlasAgentService.AgentType.EXERCISE_MAPPER, brief, courseId, sessionId, false);
+        String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId,
+                false, exerciseMapperToolCallbackProvider);
         return stripReturnMarker(response);
     }
 
@@ -204,12 +207,6 @@ public class AtlasAgentToolsService {
         return response.replace(RETURN_TO_MAIN_AGENT_MARKER, "").trim();
     }
 
-    /**
-     * Convert object to JSON using Jackson ObjectMapper.
-     *
-     * @param object the object to serialize
-     * @return JSON string representation
-     */
     private String toJson(Object object) {
         try {
             return objectMapper.writeValueAsString(object);

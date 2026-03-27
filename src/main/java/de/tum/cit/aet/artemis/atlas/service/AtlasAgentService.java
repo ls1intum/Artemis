@@ -67,6 +67,12 @@ public class AtlasAgentService {
 
     private final ToolCallbackProvider mainAgentToolCallbackProvider;
 
+    private final ToolCallbackProvider competencyExpertToolCallbackProvider;
+
+    private final ToolCallbackProvider competencyMapperToolCallbackProvider;
+
+    private final ToolCallbackProvider exerciseMapperToolCallbackProvider;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     public Boolean getCompetencyModifiedInCurrentRequest() {
@@ -82,12 +88,17 @@ public class AtlasAgentService {
     private final AtlasAgentPreviewService previewService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
-            @Nullable ToolCallbackProvider mainAgentToolCallbackProvider, ExecutionPlanStateManagerService executionPlanStateManagerService,
-            AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
+            @Nullable ToolCallbackProvider mainAgentToolCallbackProvider, @Nullable ToolCallbackProvider competencyExpertToolCallbackProvider,
+            @Nullable ToolCallbackProvider competencyMapperToolCallbackProvider, @Nullable ToolCallbackProvider exerciseMapperToolCallbackProvider,
+            ExecutionPlanStateManagerService executionPlanStateManagerService, AtlasAgentSessionCacheService atlasAgentSessionCacheService,
+            AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.chatMemory = chatMemory;
         this.delegationService = delegationService;
         this.mainAgentToolCallbackProvider = mainAgentToolCallbackProvider;
+        this.competencyExpertToolCallbackProvider = competencyExpertToolCallbackProvider;
+        this.competencyMapperToolCallbackProvider = competencyMapperToolCallbackProvider;
+        this.exerciseMapperToolCallbackProvider = exerciseMapperToolCallbackProvider;
         this.executionPlanStateManagerService = executionPlanStateManagerService;
         this.atlasAgentSessionCacheService = atlasAgentSessionCacheService;
         this.previewService = previewService;
@@ -218,10 +229,18 @@ public class AtlasAgentService {
      * @return the agent's response
      */
     String delegateToAgent(AgentType agentType, String message, Long courseId, String sessionId, boolean saveToMemory) {
-        if (agentType == AgentType.MAIN_AGENT) {
-            return delegationService.delegateToAgent(getPromptResourcePath(agentType), message, courseId, sessionId, saveToMemory, mainAgentToolCallbackProvider);
-        }
-        return delegationService.delegateToSubAgent(agentType, message, courseId, sessionId, saveToMemory);
+        String resourcePath = getPromptResourcePath(agentType);
+        ToolCallbackProvider toolCallbackProvider = getToolCallbackProvider(agentType);
+        return delegationService.delegateToAgent(resourcePath, message, courseId, sessionId, saveToMemory, toolCallbackProvider);
+    }
+
+    private ToolCallbackProvider getToolCallbackProvider(AgentType agentType) {
+        return switch (agentType) {
+            case MAIN_AGENT -> mainAgentToolCallbackProvider;
+            case COMPETENCY_EXPERT -> competencyExpertToolCallbackProvider;
+            case COMPETENCY_MAPPER -> competencyMapperToolCallbackProvider;
+            case EXERCISE_MAPPER -> exerciseMapperToolCallbackProvider;
+        };
     }
 
     static String getPromptResourcePath(AgentType agentType) {
