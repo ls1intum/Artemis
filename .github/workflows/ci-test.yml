@@ -39,7 +39,7 @@ jobs:
             ${{ env.java }}
           cache: 'gradle'
       - name: Java Tests (module-affected)
-        if: ${{ !env.RUN_ALL_TESTS }}
+        if: ${{ !inputs.run_all_tests }}
         run: |
           set -o pipefail
 
@@ -61,7 +61,7 @@ jobs:
           echo "Executing all tests"
           ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
       - name: Java Tests (All)
-        if: ${{ env.RUN_ALL_TESTS }}
+        if: ${{ inputs.run_all_tests }}
         run: |
           set -o pipefail
           ./gradlew --console=plain test jacocoTestReport -x webapp -x jacocoTestCoverageVerification 2>&1 | tee tests.log
@@ -83,7 +83,7 @@ jobs:
           fi
       - name: JaCoCo Coverage Verification
         id: jacoco-verification
-        if: ${{ env.RUN_ALL_TESTS }}
+        if: ${{ inputs.run_all_tests }}
         continue-on-error: true
         run: |
           set -o pipefail
