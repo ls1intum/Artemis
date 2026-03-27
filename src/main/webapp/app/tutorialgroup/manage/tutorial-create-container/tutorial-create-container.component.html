@@ -1,7 +1,9 @@
 <div>
     @let courseIdToPass = courseId();
     @if (courseIdToPass) {
-        <jhi-tutorial-edit [courseId]="courseIdToPass" [tutors]="tutors()" (onCreate)="createTutorialGroup($event)" />
+        <div class="form-container">
+            <jhi-tutorial-edit [courseId]="courseIdToPass" [tutors]="tutors()" (onCreate)="createTutorialGroup($event)" />
+        </div>
     }
     @if (isLoading()) {
         <jhi-loading-indicator-overlay />
