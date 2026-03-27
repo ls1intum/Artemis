@@ -1463,3 +1463,25 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     min-width: 200px;
     white-space: pre-line;
 }
+
+// Compact metadata layout for the narrow left panel in Iris split view
+.iris-split-left .result-metadata {
+    flex-wrap: wrap;
+
+    > span:not([class]) {
+        display: none;
+    }
+}
+
+// Global search modal sizing
+.global-search-dialog {
+    width: 100%;
+    max-width: 700px;
+    height: 60vh;
+    max-height: 600px;
+    // !important overrides PrimeNG's own margin: 0 rule on .p-dialog when position="top"
+    margin-top: 15vh !important;
+    overflow: hidden;
+    background: var(--module-bg);
+    transition: max-width 250ms ease-out;
+}
