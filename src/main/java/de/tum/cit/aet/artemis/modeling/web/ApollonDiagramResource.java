@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Objects;
 
+import jakarta.validation.Valid;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
@@ -30,6 +32,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastTutor;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.modeling.config.ModelingEnabled;
 import de.tum.cit.aet.artemis.modeling.domain.ApollonDiagram;
+import de.tum.cit.aet.artemis.modeling.dto.ApollonDiagramUpdateDTO;
 import de.tum.cit.aet.artemis.modeling.repository.ApollonDiagramRepository;
 
 /**
@@ -60,27 +63,28 @@ public class ApollonDiagramResource {
     /**
      * POST /course/{courseId}/apollon-diagrams : Create a new apollonDiagram.
      *
-     * @param apollonDiagram the apollonDiagram to create
-     * @param courseId       the id of the current course
+     * @param dto      the apollonDiagram DTO to create
+     * @param courseId the id of the current course
      * @return the ResponseEntity with status 201 (Created) and with body the new apollonDiagram, or with status 400 (Bad Request) if the apollonDiagram has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
-    public ResponseEntity<ApollonDiagram> createApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
-        log.debug("REST request to save ApollonDiagram : {}", apollonDiagram);
+    public ResponseEntity<ApollonDiagram> createApollonDiagram(@Valid @RequestBody ApollonDiagramUpdateDTO dto, @PathVariable Long courseId) throws URISyntaxException {
+        log.debug("REST request to save ApollonDiagram for course: {}", courseId);
 
-        if (apollonDiagram.getId() != null) {
+        if (dto.id() != null) {
             throw new BadRequestAlertException("A new apollonDiagram cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
-        if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
+        if (!Objects.equals(dto.courseId(), courseId)) {
             throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
 
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
+        ApollonDiagram apollonDiagram = dto.toEntity();
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
         return ResponseEntity.created(new URI("/api/modeling/apollon-diagrams/" + result.getId())).body(result);
     }
@@ -88,28 +92,34 @@ public class ApollonDiagramResource {
     /**
      * PUT /course/{courseId}/apollon-diagrams : Updates an existing apollonDiagram.
      *
-     * @param apollonDiagram the apollonDiagram to update
-     * @param courseId       the id of the current course
-     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram, or with status 201 (CREATED) if the apollonDiagram has not been created before, or
-     *         with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
-     * @throws URISyntaxException if the Location URI syntax is incorrect
+     * @param diagramUpdateDTO the apollonDiagram update DTO containing the new values
+     * @param courseId         the id of the current course
+     * @return the ResponseEntity with status 200 (OK) and with body the updated apollonDiagram,
+     *         or with status 500 (Internal Server Error) if the apollonDiagram couldn't be updated
      */
     @PutMapping("course/{courseId}/apollon-diagrams")
     @EnforceAtLeastTutor
-    public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagram apollonDiagram, @PathVariable Long courseId) throws URISyntaxException {
-        log.debug("REST request to update ApollonDiagram : {}", apollonDiagram);
+    public ResponseEntity<ApollonDiagram> updateApollonDiagram(@RequestBody ApollonDiagramUpdateDTO diagramUpdateDTO, @PathVariable Long courseId) {
+        log.debug("REST request to update ApollonDiagram : {}", diagramUpdateDTO);
 
-        if (apollonDiagram.getId() == null) {
-            return createApollonDiagram(apollonDiagram, courseId);
+        if (diagramUpdateDTO.id() == null) {
+            throw new BadRequestAlertException("An apollonDiagram update must have an ID", ENTITY_NAME, "idMissing");
         }
 
-        if (!Objects.equals(apollonDiagram.getCourseId(), courseId)) {
+        if (!Objects.equals(diagramUpdateDTO.courseId(), courseId)) {
             throw new ConflictException("Specified course id does not match request payload", "ApollonDiagram", "courseMismatch");
         }
+
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
-        ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
+        // Fetch the existing diagram from the database (this is the managed entity)
+        ApollonDiagram existingDiagram = apollonDiagramRepository.findByIdElseThrow(diagramUpdateDTO.id());
+
+        // Apply DTO values to the managed entity
+        diagramUpdateDTO.applyTo(existingDiagram);
+
+        ApollonDiagram result = apollonDiagramRepository.save(existingDiagram);
         return ResponseEntity.ok(result);
     }
 

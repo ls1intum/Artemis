@@ -10,7 +10,7 @@
             <form (ngSubmit)="onSubmit()" [formGroup]="form">
                 <jhi-course-users-selector
                     formControlName="selectedUsers"
-                    [courseId]="course.id!"
+                    [courseId]="course()!.id!"
                     [label]="'artemisApp.dialogs.createGroupChat.userSelectorLabel' | artemisTranslate"
                 />
                 @if (selectedUsersControl?.invalid && (selectedUsersControl?.dirty || selectedUsersControl?.touched)) {

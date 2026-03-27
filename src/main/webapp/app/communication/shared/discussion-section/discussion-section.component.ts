@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, viewChild, viewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, OnDestroy, effect, inject, input, untracked, viewChild, viewChildren } from '@angular/core';
 import interact from 'interactjs';
 import { Exercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Lecture } from 'app/lecture/shared/entities/lecture.model';
@@ -89,7 +89,11 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
 
     constructor() {
         super();
-        effect(() => this.loadData(this.exercise(), this.lecture()));
+        effect(() => {
+            const exerciseValue = this.exercise();
+            const lectureValue = this.lecture();
+            untracked(() => this.loadData(exerciseValue, lectureValue));
+        });
     }
 
     loadData(exercise?: Exercise, lecture?: Lecture): void {
@@ -146,7 +150,8 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
      */
     ngOnDestroy(): void {
         super.onDestroy();
-        this.postCreateEditModal()?.modalRef?.close();
+        this.postCreateEditModal()?.close();
+        this.interactable?.unset();
     }
 
     /**
@@ -213,11 +218,13 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
     }
 
+    private interactable: ReturnType<typeof interact> | undefined;
+
     /**
      * makes discussion section expandable by configuring 'interact'
      */
     ngAfterViewInit(): void {
-        interact('.expanded-discussion')
+        this.interactable = interact('.expanded-discussion')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
