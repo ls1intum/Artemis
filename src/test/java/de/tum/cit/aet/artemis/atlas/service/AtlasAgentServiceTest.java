@@ -50,7 +50,7 @@ class AtlasAgentServiceTest {
     private AtlasAgentSessionCacheService atlasAgentSessionCacheService;
 
     @Mock
-    private AtlasAgentToolCallbackFactory toolCallbackFactory;
+    private AtlasAgentToolCallbackService toolCallbackFactory;
 
     private static final String TEST_DEPLOYMENT_NAME = "gpt-4o";
 

@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.ai.tool.method.MethodToolCallbackProvider;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Conditional;
@@ -56,15 +57,22 @@ public class AtlasAgentToolsService {
 
     private final AtlasAgentDelegationService delegationService;
 
-    private final AtlasAgentToolCallbackFactory toolCallbackFactory;
+    private final CompetencyExpertToolsService competencyExpertToolsService;
+
+    private final CompetencyMappingToolsService competencyMappingToolsService;
+
+    private final ExerciseMappingToolsService exerciseMappingToolsService;
 
     public AtlasAgentToolsService(ObjectMapper objectMapper, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
-            AtlasAgentDelegationService delegationService, AtlasAgentToolCallbackFactory toolCallbackFactory) {
+            AtlasAgentDelegationService delegationService, CompetencyExpertToolsService competencyExpertToolsService,
+            CompetencyMappingToolsService competencyMappingToolsService, ExerciseMappingToolsService exerciseMappingToolsService) {
         this.objectMapper = objectMapper;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.delegationService = delegationService;
-        this.toolCallbackFactory = toolCallbackFactory;
+        this.competencyExpertToolsService = competencyExpertToolsService;
+        this.competencyMappingToolsService = competencyMappingToolsService;
+        this.exerciseMappingToolsService = exerciseMappingToolsService;
     }
 
     public static void setCurrentCourseId(Long courseId) {
@@ -134,7 +142,7 @@ public class AtlasAgentToolsService {
 
         CompetencyExpertToolsService.setCurrentSessionId(sessionId);
         String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT), brief, courseId, sessionId,
-                false, toolCallbackFactory.createCompetencyExpertProvider());
+                false, MethodToolCallbackProvider.builder().toolObjects(competencyExpertToolsService).build());
         return stripReturnMarker(response);
     }
 
@@ -159,7 +167,7 @@ public class AtlasAgentToolsService {
 
         CompetencyMappingToolsService.setCurrentSessionId(sessionId);
         String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER), brief, courseId, sessionId,
-                false, toolCallbackFactory.createCompetencyMapperProvider());
+                false, MethodToolCallbackProvider.builder().toolObjects(competencyMappingToolsService).build());
         return stripReturnMarker(response);
     }
 
@@ -184,7 +192,7 @@ public class AtlasAgentToolsService {
 
         ExerciseMappingToolsService.setCurrentSessionId(sessionId);
         String response = delegationService.delegateToAgent(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER), brief, courseId, sessionId, false,
-                toolCallbackFactory.createExerciseMapperProvider());
+                MethodToolCallbackProvider.builder().toolObjects(exerciseMappingToolsService).build());
         return stripReturnMarker(response);
     }
 

@@ -65,7 +65,7 @@ public class AtlasAgentService {
 
     private final AtlasAgentDelegationService delegationService;
 
-    private final AtlasAgentToolCallbackFactory toolCallbackFactory;
+    private final AtlasAgentToolCallbackService toolCallbackFactory;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -82,7 +82,7 @@ public class AtlasAgentService {
     private final AtlasAgentPreviewService previewService;
 
     public AtlasAgentService(@Nullable ChatClient chatClient, @Nullable ChatMemory chatMemory, AtlasAgentDelegationService delegationService,
-            AtlasAgentToolCallbackFactory toolCallbackFactory, ExecutionPlanStateManagerService executionPlanStateManagerService,
+            AtlasAgentToolCallbackService toolCallbackFactory, ExecutionPlanStateManagerService executionPlanStateManagerService,
             AtlasAgentSessionCacheService atlasAgentSessionCacheService, AtlasAgentPreviewService previewService) {
         this.chatClient = chatClient;
         this.chatMemory = chatMemory;

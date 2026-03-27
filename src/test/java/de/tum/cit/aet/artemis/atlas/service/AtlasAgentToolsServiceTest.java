@@ -6,7 +6,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,13 +36,20 @@ class AtlasAgentToolsServiceTest {
     private AtlasAgentDelegationService delegationService;
 
     @Mock
-    private AtlasAgentToolCallbackFactory toolCallbackFactory;
+    private CompetencyExpertToolsService competencyExpertToolsService;
+
+    @Mock
+    private CompetencyMappingToolsService competencyMappingToolsService;
+
+    @Mock
+    private ExerciseMappingToolsService exerciseMappingToolsService;
 
     private AtlasAgentToolsService toolsService;
 
     @BeforeEach
     void setUp() {
-        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, toolCallbackFactory);
+        toolsService = new AtlasAgentToolsService(new ObjectMapper(), courseRepository, exerciseRepository, delegationService, competencyExpertToolsService,
+                competencyMappingToolsService, exerciseMappingToolsService);
     }
 
     @AfterEach
@@ -119,7 +125,7 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToCompetencyExpert("Recursion", "Create competency", "None", "Algorithms course");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_EXPERT)),
-                    eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false), isNull());
+                    eq("TOPIC: Recursion\nREQUIREMENTS: Create competency\nCONSTRAINTS: None\nCONTEXT: Algorithms course"), eq(42L), eq("test-session"), eq(false), any());
         }
 
         @Test
@@ -129,7 +135,7 @@ class AtlasAgentToolsServiceTest {
             toolsService.delegateToCompetencyMapper("A extends B", "Create EXTENDS relation", "None", "A builds on B");
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.COMPETENCY_MAPPER)),
-                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false), isNull());
+                    eq("TOPIC: A extends B\nREQUIREMENTS: Create EXTENDS relation\nCONSTRAINTS: None\nCONTEXT: A builds on B"), eq(42L), eq("test-session"), eq(false), any());
         }
 
         @Test
@@ -140,7 +146,7 @@ class AtlasAgentToolsServiceTest {
 
             verify(delegationService).delegateToAgent(eq(AtlasAgentService.getPromptResourcePath(AtlasAgentService.AgentType.EXERCISE_MAPPER)),
                     eq("EXERCISE_ID: 5\nEXERCISE_TITLE: Bubble Sort\nREQUIREMENTS: Map to competencies\nCONTEXT: Student selected"), eq(42L), eq("test-session"), eq(false),
-                    isNull());
+                    any());
         }
     }
 

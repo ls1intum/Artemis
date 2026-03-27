@@ -20,7 +20,7 @@ import de.tum.cit.aet.artemis.atlas.config.AtlasEnabled;
 @Lazy
 @Service
 @Conditional(AtlasEnabled.class)
-public class AtlasAgentToolCallbackFactory {
+public class AtlasAgentToolCallbackService {
 
     private final AtlasAgentToolsService toolsService;
 
@@ -30,7 +30,7 @@ public class AtlasAgentToolCallbackFactory {
 
     private final ExerciseMappingToolsService exerciseMapperToolsService;
 
-    public AtlasAgentToolCallbackFactory(AtlasAgentToolsService toolsService, CompetencyExpertToolsService expertToolsService, CompetencyMappingToolsService mapperToolsService,
+    public AtlasAgentToolCallbackService(AtlasAgentToolsService toolsService, CompetencyExpertToolsService expertToolsService, CompetencyMappingToolsService mapperToolsService,
             ExerciseMappingToolsService exerciseMapperToolsService) {
         this.toolsService = toolsService;
         this.expertToolsService = expertToolsService;
