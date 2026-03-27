@@ -37,7 +37,6 @@ describe('CourseUpdateDTO', () => {
         color: '#1e88e5',
         enrollmentEnabled: true,
         unenrollmentEnabled: false,
-        faqEnabled: true,
         learningPathsEnabled: false,
         studentCourseAnalyticsDashboardEnabled: true,
         maxPoints: 100,
@@ -67,7 +66,6 @@ describe('CourseUpdateDTO', () => {
             expect(dto.color).toBe('#1e88e5');
             expect(dto.enrollmentEnabled).toBe(true);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(true);
             expect(dto.startDate).toBe(startDate.toJSON());
             expect(dto.endDate).toBe(endDate.toJSON());
         });
@@ -78,7 +76,6 @@ describe('CourseUpdateDTO', () => {
 
             expect(dto.testCourse).toBe(false);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
@@ -108,7 +105,6 @@ describe('CourseUpdateDTO', () => {
             expect(dto.id).toBe(2);
             expect(dto.testCourse).toBe(false);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
         });
