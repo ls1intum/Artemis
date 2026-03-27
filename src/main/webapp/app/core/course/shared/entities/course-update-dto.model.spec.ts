@@ -36,7 +36,6 @@ describe('Course Update DTO', () => {
         course.enrollmentEnabled = true;
         course.enrollmentConfirmationMessage = 'Welcome!';
         course.unenrollmentEnabled = true;
-        course.faqEnabled = true;
         course.learningPathsEnabled = true;
         course.studentCourseAnalyticsDashboardEnabled = true;
         course.presentationScore = 10;
@@ -81,7 +80,6 @@ describe('Course Update DTO', () => {
             expect(dto.enrollmentEnabled).toBe(true);
             expect(dto.enrollmentConfirmationMessage).toBe('Welcome!');
             expect(dto.unenrollmentEnabled).toBe(true);
-            expect(dto.faqEnabled).toBe(true);
             expect(dto.learningPathsEnabled).toBe(true);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(true);
             expect(dto.presentationScore).toBe(10);
@@ -105,7 +103,6 @@ describe('Course Update DTO', () => {
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
@@ -146,7 +143,6 @@ describe('Course Update DTO', () => {
             expect(dto.courseInformationSharingMessagingCodeOfConduct).toBe('Be nice');
             expect(dto.testCourse).toBe(false);
             expect(dto.unenrollmentEnabled).toBe(true);
-            expect(dto.faqEnabled).toBe(true);
         });
 
         it('should apply defaults for undefined fields', () => {
@@ -164,7 +160,6 @@ describe('Course Update DTO', () => {
             expect(dto.maxComplaintTextLimit).toBe(2000);
             expect(dto.maxComplaintResponseTextLimit).toBe(2000);
             expect(dto.unenrollmentEnabled).toBe(false);
-            expect(dto.faqEnabled).toBe(false);
             expect(dto.learningPathsEnabled).toBe(false);
             expect(dto.studentCourseAnalyticsDashboardEnabled).toBe(false);
             expect(dto.restrictedAthenaModulesAccess).toBe(false);
