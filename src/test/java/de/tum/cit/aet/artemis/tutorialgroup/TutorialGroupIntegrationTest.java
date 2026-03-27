@@ -18,6 +18,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import de.tum.cit.aet.artemis.communication.domain.ConversationParticipant;
 import de.tum.cit.aet.artemis.communication.domain.conversation.Channel;
@@ -136,14 +138,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         configurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
-        firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Mo 13", null, 10, false, "Garching", Language.ENGLISH.name(),
+        firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
                 firstCourseTutor1, Set.of(firstCourseStudent1));
         TutorialGroupSchedule tutorialGroupSchedule1 = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(firstCourseTutorialGroup1, 1, "13:00:00", "14:00:00", 1,
                 AUGUST_FIRST_MONDAY.toString(), AUGUST_FIFTH_MONDAY.toString(), "01.05.13");
         firstCourseTutorialGroupSessions1 = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(course, firstCourseTutorialGroup1, tutorialGroupSchedule1);
         firstCourseChannel1 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup1);
 
-        firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Tue 13", null, 20, true, null, Language.GERMAN.name(),
+        firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(),
                 firstCourseTutor2, Set.of(firstCourseStudent2));
         firstCourseChannel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup2);
 
@@ -1018,145 +1020,151 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Nested
     class ImportAndExportTutorialGroupsTests {
 
-        /*
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
-         * void testCSVContentWithSampleData() throws Exception {
-         * // given
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
-         * Set.of(firstCourseStudent1));
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
-         * Set.of(firstCourseStudent2));
-         * // when
-         * var params = new LinkedMultiValueMap<String, String>();
-         * params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
-         * String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
-         * String csvContent = request.get(url, HttpStatus.OK, String.class);
-         * // then
-         * assertThat(csvContent).contains("ID,Title,Campus,Language,Capacity,IsOnline");
-         * assertThat(csvContent).contains("SampleTitle1,SampleInfo1,ENGLISH,10");
-         * assertThat(csvContent).contains("SampleTitle2,SampleInfo2,GERMAN,20");
-         * }
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
-         * void testExportTutorialGroupsToJSON() throws Exception {
-         * // when
-         * var params = new LinkedMultiValueMap<String, String>();
-         * params.add("fields", "ID,Title,Campus,Language");
-         * String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
-         * String jsonResponse = request.get(url, HttpStatus.OK, String.class);
-         * // then
-         * assertThat(jsonResponse).contains("id");
-         * assertThat(jsonResponse).contains("title");
-         * assertThat(jsonResponse).contains("campus");
-         * assertThat(jsonResponse).contains("language");
-         * assertThat(jsonResponse).contains("LoremIpsum1");
-         * assertThat(jsonResponse).contains("LoremIpsum2");
-         * }
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
-         * void testExportTutorialGroupsToCSVWithAllFields() throws Exception {
-         * // when
-         * var params = new LinkedMultiValueMap<String, String>();
-         * params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
-         * String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
-         * String csvContent = request.get(url, HttpStatus.OK, String.class);
-         * // then
-         * assertThat(csvContent)
-         * .contains("ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Registration Number,First Name,Last Name");
-         * assertThat(csvContent).contains("LoremIpsum1");
-         * assertThat(csvContent).contains("LoremIpsum2");
-         * }
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
-         * void testJSONContentWithSampleData() throws Exception {
-         * // given
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
-         * Set.of(firstCourseStudent1));
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
-         * Set.of(firstCourseStudent2));
-         * // when
-         * var params = new LinkedMultiValueMap<String, String>();
-         * params.add("fields", "ID,Title,Campus,Language,Capacity,Is Online");
-         * String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
-         * String jsonResponse = request.get(url, HttpStatus.OK, String.class);
-         * // then
-         * assertThat(jsonResponse).contains("id");
-         * assertThat(jsonResponse).contains("title");
-         * assertThat(jsonResponse).contains("campus");
-         * assertThat(jsonResponse).contains("language");
-         * assertThat(jsonResponse).contains("capacity");
-         * assertThat(jsonResponse).contains("isOnline");
-         * assertThat(jsonResponse).contains("SampleTitle1");
-         * assertThat(jsonResponse).contains("SampleInfo1");
-         * assertThat(jsonResponse).contains("ENGLISH");
-         * assertThat(jsonResponse).contains("10");
-         * assertThat(jsonResponse).contains("SampleTitle2");
-         * assertThat(jsonResponse).contains("SampleInfo2");
-         * assertThat(jsonResponse).contains("GERMAN");
-         * assertThat(jsonResponse).contains("20");
-         * }
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
-         * void testExportTutorialGroupsToJSONWithAllFields() throws Exception {
-         * // when
-         * var params = new LinkedMultiValueMap<String, String>();
-         * params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
-         * String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
-         * String jsonResponse = request.get(url, HttpStatus.OK, String.class);
-         * // then
-         * assertThat(jsonResponse).contains("id");
-         * assertThat(jsonResponse).contains("title");
-         * assertThat(jsonResponse).contains("campus");
-         * assertThat(jsonResponse).contains("language");
-         * assertThat(jsonResponse).contains("additionalInformation");
-         * assertThat(jsonResponse).contains("capacity");
-         * assertThat(jsonResponse).contains("isOnline");
-         * assertThat(jsonResponse).contains("dayOfWeek");
-         * assertThat(jsonResponse).doesNotContain("startTime"); // value is not defined
-         * assertThat(jsonResponse).doesNotContain("endTime"); // value is not defined
-         * assertThat(jsonResponse).doesNotContain("location"); // value is not defined
-         * assertThat(jsonResponse).contains("students");
-         * assertThat(jsonResponse).contains("LoremIpsum1");
-         * assertThat(jsonResponse).contains("LoremIpsum2");
-         * }
-         * @Test
-         * @WithMockUser(username = TEST_PREFIX + "firstCourseInstructor1", roles = "INSTRUCTOR")
-         * void testJSONContentWithSampleDataIncludingOptionalFields() throws Exception {
-         * // given
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
-         * Set.of(firstCourseStudent1));
-         * tutorialGroupUtilService.createTutorialGroup(exampleCourseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
-         * Set.of(firstCourseStudent2));
-         * // when
-         * var params = new LinkedMultiValueMap<String, String>();
-         * params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
-         * String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
-         * String jsonResponse = request.get(url, HttpStatus.OK, String.class);
-         * // then
-         * assertThat(jsonResponse).contains("id");
-         * assertThat(jsonResponse).contains("title");
-         * assertThat(jsonResponse).contains("campus");
-         * assertThat(jsonResponse).contains("language");
-         * assertThat(jsonResponse).contains("additionalInformation");
-         * assertThat(jsonResponse).contains("capacity");
-         * assertThat(jsonResponse).contains("isOnline");
-         * assertThat(jsonResponse).contains("dayOfWeek");
-         * assertThat(jsonResponse).doesNotContain("startTime"); // value is not defined
-         * assertThat(jsonResponse).doesNotContain("endTime"); // value is not defined
-         * assertThat(jsonResponse).doesNotContain("location"); // value is not defined
-         * assertThat(jsonResponse).contains("students");
-         * assertThat(jsonResponse).contains("SampleTitle1");
-         * assertThat(jsonResponse).contains("SampleInfo1");
-         * assertThat(jsonResponse).contains("ENGLISH");
-         * assertThat(jsonResponse).contains("10");
-         * assertThat(jsonResponse).contains("SampleTitle2");
-         * assertThat(jsonResponse).contains("SampleInfo2");
-         * assertThat(jsonResponse).contains("GERMAN");
-         * assertThat(jsonResponse).contains("20");
-         * }
-         */
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void testCSVContentWithSampleData() throws Exception {
+            tutorialGroupUtilService.createTutorialGroup(courseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
+                    Set.of(firstCourseStudent1));
+            tutorialGroupUtilService.createTutorialGroup(courseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
+                    Set.of(firstCourseStudent2));
 
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("fields", "ID,Title,Campus,Language,Capacity,IsOnline");
+            String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+            String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+            assertThat(csvContent).contains("ID,Title,Campus,Language,Capacity,IsOnline");
+            assertThat(csvContent).contains("SampleTitle1,SampleInfo1,ENGLISH,10");
+            assertThat(csvContent).contains("SampleTitle2,SampleInfo2,GERMAN,20");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void testExportTutorialGroupsToJSON() throws Exception {
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("fields", "ID,Title,Campus,Language");
+            String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+            String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+            assertThat(jsonResponse).contains("id");
+            assertThat(jsonResponse).contains("title");
+            assertThat(jsonResponse).contains("campus");
+            assertThat(jsonResponse).contains("language");
+            assertThat(jsonResponse).contains("TG Mo 13");
+            assertThat(jsonResponse).contains("TG Tue 13");
+            assertThat(jsonResponse).contains("Garching");
+            assertThat(jsonResponse).contains("ENGLISH");
+            assertThat(jsonResponse).contains("GERMAN");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void testExportTutorialGroupsToCSVWithAllFields() throws Exception {
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
+            String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/export/csv").queryParams(params).toUriString();
+            String csvContent = request.get(url, HttpStatus.OK, String.class);
+
+            assertThat(csvContent).contains(
+                    "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Registration Number,First Name,Last Name");
+            assertThat(csvContent).contains("TG Mo 13");
+            assertThat(csvContent).contains("TG Tue 13");
+            assertThat(csvContent).contains("Garching");
+            assertThat(csvContent).contains("ENGLISH");
+            assertThat(csvContent).contains("GERMAN");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void testJSONContentWithSampleData() throws Exception {
+            tutorialGroupUtilService.createTutorialGroup(courseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
+                    Set.of(firstCourseStudent1));
+            tutorialGroupUtilService.createTutorialGroup(courseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
+                    Set.of(firstCourseStudent2));
+
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("fields", "ID,Title,Campus,Language,Capacity,Is Online");
+            String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+            String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+            assertThat(jsonResponse).contains("id");
+            assertThat(jsonResponse).contains("title");
+            assertThat(jsonResponse).contains("campus");
+            assertThat(jsonResponse).contains("language");
+            assertThat(jsonResponse).contains("capacity");
+            assertThat(jsonResponse).contains("isOnline");
+            assertThat(jsonResponse).contains("SampleTitle1");
+            assertThat(jsonResponse).contains("SampleInfo1");
+            assertThat(jsonResponse).contains("ENGLISH");
+            assertThat(jsonResponse).contains("10");
+            assertThat(jsonResponse).contains("SampleTitle2");
+            assertThat(jsonResponse).contains("SampleInfo2");
+            assertThat(jsonResponse).contains("GERMAN");
+            assertThat(jsonResponse).contains("20");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void testExportTutorialGroupsToJSONWithAllFields() throws Exception {
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
+            String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+            String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+            assertThat(jsonResponse).contains("id");
+            assertThat(jsonResponse).contains("title");
+            assertThat(jsonResponse).contains("campus");
+            assertThat(jsonResponse).contains("language");
+            assertThat(jsonResponse).contains("additionalInformation");
+            assertThat(jsonResponse).contains("capacity");
+            assertThat(jsonResponse).contains("isOnline");
+            assertThat(jsonResponse).contains("dayOfWeek");
+            assertThat(jsonResponse).contains("startTime");
+            assertThat(jsonResponse).contains("endTime");
+            assertThat(jsonResponse).contains("location");
+            assertThat(jsonResponse).contains("students");
+            assertThat(jsonResponse).contains("TG Mo 13");
+            assertThat(jsonResponse).contains("TG Tue 13");
+            assertThat(jsonResponse).contains("Garching");
+            assertThat(jsonResponse).contains("ENGLISH");
+            assertThat(jsonResponse).contains("GERMAN");
+            assertThat(jsonResponse).contains("SampleInfo1");
+            assertThat(jsonResponse).contains("SampleInfo2");
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
+        void testJSONContentWithSampleDataIncludingOptionalFields() throws Exception {
+            tutorialGroupUtilService.createTutorialGroup(courseId, "SampleTitle1", "SampleCampus1", 10, false, "SampleInfo1", "ENGLISH", firstCourseTutor1,
+                    Set.of(firstCourseStudent1));
+            tutorialGroupUtilService.createTutorialGroup(courseId, "SampleTitle2", "SampleCampus2", 20, true, "SampleInfo2", "GERMAN", firstCourseTutor1,
+                    Set.of(firstCourseStudent2));
+
+            var params = new LinkedMultiValueMap<String, String>();
+            params.add("fields", "ID,Title,Campus,Language,Additional Information,Capacity,Is Online,Day of Week,Start Time,End Time,Location,Students");
+            String url = UriComponentsBuilder.fromPath("/api/tutorialgroup/courses/" + courseId + "/tutorial-groups/export/json").queryParams(params).toUriString();
+            String jsonResponse = request.get(url, HttpStatus.OK, String.class);
+
+            assertThat(jsonResponse).contains("id");
+            assertThat(jsonResponse).contains("title");
+            assertThat(jsonResponse).contains("campus");
+            assertThat(jsonResponse).contains("language");
+            assertThat(jsonResponse).contains("additionalInformation");
+            assertThat(jsonResponse).contains("capacity");
+            assertThat(jsonResponse).contains("isOnline");
+            assertThat(jsonResponse).contains("dayOfWeek");
+            assertThat(jsonResponse).contains("\"dayOfWeek\" : \"None\"");
+            assertThat(jsonResponse).contains("students");
+            assertThat(jsonResponse).contains("SampleTitle1");
+            assertThat(jsonResponse).contains("SampleInfo1");
+            assertThat(jsonResponse).contains("ENGLISH");
+            assertThat(jsonResponse).contains("10");
+            assertThat(jsonResponse).contains("SampleTitle2");
+            assertThat(jsonResponse).contains("SampleInfo2");
+            assertThat(jsonResponse).contains("GERMAN");
+            assertThat(jsonResponse).contains("20");
+        }
+
+        // TODO: inspect if coverage is good/makes sense
     }
-
 }
