@@ -144,7 +144,7 @@
                 "phaseNameDuplicate": "Phasennamen müssen eindeutig sein",
                 "invalidPhaseNames": "Build-Phasennamen sind ungültig. Verwende nur Buchstaben, Zahlen und '_', beginne mit einem Buchstaben oder '_' und stelle sicher, dass Namen eindeutig sind.",
                 "condition": "Inklusionsbedingung",
-                "forceRun": "Ausführung erzwingen",
+                "forceRun": "Trotz vorheriger Fehler ausführen",
                 "forceRunHelp": "Wenn aktiviert, wird diese Phase am Ende des Builds ausgeführt, selbst wenn vorherige Phasen fehlschlagen.",
                 "script": "Skript",
                 "scriptHelp": "Gib die Befehle ein, die in dieser Phase des Builds ausgeführt werden sollen.",

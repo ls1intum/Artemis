@@ -157,7 +157,7 @@
                 "phaseNameDuplicate": "Phase name must be unique",
                 "invalidPhaseNames": "Build phase names are invalid. Use only letters, numbers and '_', start with a letter or '_', and ensure names are unique.",
                 "condition": "Inclusion condition",
-                "forceRun": "Force run",
+                "forceRun": "Execute regardless of previous failures",
                 "forceRunHelp": "If enabled, this phase runs at the end of the build even when earlier phases fail.",
                 "script": "Script",
                 "scriptHelp": "Enter the commands to execute in this phase of the build.",
