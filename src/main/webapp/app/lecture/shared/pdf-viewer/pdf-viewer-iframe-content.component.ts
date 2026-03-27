@@ -122,11 +122,30 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
     /** Dispatches a zoom event to the PDF.js event bus. */
     private dispatchZoomEvent(eventName: 'zoomin' | 'zoomout'): void {
-        const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal();
-        if (!pdfViewerApplication?.eventBus) {
+        const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal() as any;
+        const eventBus = pdfViewerApplication?.eventBus;
+        if (!eventBus) {
             return;
         }
-        pdfViewerApplication.eventBus.dispatch(eventName);
+
+        const container = pdfViewerApplication?.appConfig?.mainContainer ?? pdfViewerApplication?.pdfViewer?.container ?? document.getElementById('viewerContainer');
+        const currentScale = pdfViewerApplication?.pdfViewer?.currentScale;
+
+        if (!container || !currentScale || !container.clientWidth || !container.clientHeight) {
+            eventBus.dispatch(eventName);
+            return;
+        }
+
+        const centerX = container.scrollLeft + container.clientWidth / 2;
+        const centerY = container.scrollTop + container.clientHeight / 2;
+
+        eventBus.dispatch(eventName);
+        requestAnimationFrame(() => {
+            const nextScale = pdfViewerApplication?.pdfViewer?.currentScale ?? currentScale;
+            const scaleFactor = nextScale / currentScale;
+            container.scrollLeft = Math.max(0, centerX * scaleFactor - container.clientWidth / 2);
+            container.scrollTop = Math.max(0, centerY * scaleFactor - container.clientHeight / 2);
+        });
     }
 
     /** Posts a message to the parent window. */
