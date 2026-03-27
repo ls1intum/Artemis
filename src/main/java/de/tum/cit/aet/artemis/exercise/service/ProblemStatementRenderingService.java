@@ -148,11 +148,12 @@ public class ProblemStatementRenderingService {
      * @param resultSummary client-provided result summary (score, commit hash, etc.), or null
      * @param locale        the locale for i18n of user-visible text
      * @param darkMode      if true, PlantUML diagrams use the Artemis dark theme
-     * @param interactive   if true, includes vanilla JS for task feedback modal
+     * @param includeJs     if true, includes vanilla JS for task feedback modal
+     * @param includeCss    if true, prepends embedded CSS to the HTML output
      * @return the rendered problem statement DTO
      */
     public RenderedProblemStatementDTO render(String markdown, @Nullable Map<Long, TestFeedbackDetail> testResults, @Nullable ResultSummary resultSummary, Locale locale,
-            boolean darkMode, boolean interactive) {
+            boolean darkMode, boolean includeJs, boolean includeCss) {
 
         if (markdown == null || markdown.isBlank()) {
             return new RenderedProblemStatementDTO("", computeHash(""), RENDERER_VERSION, null);
@@ -183,10 +184,12 @@ public class ProblemStatementRenderingService {
         html = html.replace("<testid>", "").replace("</testid>", "");
 
         // Step 7: Prepend embedded CSS (+ dark mode overrides if needed)
-        html = EMBEDDED_CSS + (darkMode ? DARK_MODE_CSS : "") + html;
+        if (includeCss) {
+            html = EMBEDDED_CSS + (darkMode ? DARK_MODE_CSS : "") + html;
+        }
 
         // Step 8: Content hash (covers HTML + JS)
-        String interactiveScript = interactive ? buildLocalizedScript(locale) : null;
+        String interactiveScript = includeJs ? buildLocalizedScript(locale) : null;
         String contentHash = computeHash(html + (interactiveScript != null ? interactiveScript : ""));
 
         return new RenderedProblemStatementDTO(html, contentHash, RENDERER_VERSION, interactiveScript);

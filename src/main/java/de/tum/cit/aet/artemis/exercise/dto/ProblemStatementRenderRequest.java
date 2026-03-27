@@ -12,5 +12,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ProblemStatementRenderRequest(@NotNull @Size(max = 100_000) String markdown, @Nullable @Size(max = 100) List<@NotNull @Valid TestFeedbackInput> testResults,
-        @Nullable @Valid ResultSummaryInput resultSummary, @Nullable @Size(max = 10) String locale, boolean darkMode, boolean interactive) {
+        @Nullable @Valid ResultSummaryInput resultSummary, @Nullable @Size(max = 10) String locale, boolean darkMode, boolean includeJs, @Nullable Boolean includeCss) {
+
+    /** Whether to include embedded CSS in the response. Defaults to true if not specified. */
+    public boolean shouldIncludeCss() {
+        return includeCss == null || includeCss;
+    }
 }
