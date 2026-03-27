@@ -157,7 +157,7 @@
 
 // ── Content area ──────────────────────────────────────
 .onboarding-content {
-    background: var(--onboarding-content-bg, #fff);
+    background: var(--bs-body-bg);
     border: 1px solid var(--bs-border-color);
     border-radius: 1rem;
     padding: 0;
