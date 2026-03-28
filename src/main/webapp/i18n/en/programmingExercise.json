@@ -22,20 +22,11 @@
             "updated": "Updated Programming Exercise with title {{ param }}",
             "deleted": "Deleted Programming Exercise with title {{ param }}",
             "delete": {
-                "summary": {
-                    "title": "Programming Exercise Summary",
-                    "numberOfStudentParticipations": "Number of Student Participations",
-                    "numberOfBuilds": "Number of Builds",
-                    "numberOfCommunicationPosts": "Number of Communication Posts",
-                    "numberOfAnswerPosts": "Number of Answer Posts"
-                },
                 "question": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?",
                 "questionLocalVC": {
                     "single": "Are you sure you want to delete the Programming Exercise <strong>{{ title }}</strong> of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!",
                     "multiple": "Are you sure you want to delete selected programming exercises of the <strong class=\"text-danger\">{{ courseType }}</strong> <strong>{{ courseTitle }}</strong>?<br>All student, template, solution, test, and auxiliary repositories and build plans will be deleted.<br>Be careful: this can <strong class='text-danger'>NOT</strong> be undone!<br>Before you activate this option, we recommend that you archive the repositories and build plans first!"
                 },
-                "testCourse": "test course",
-                "realCourse": "real course",
                 "studentReposBuildPlans": "Additionally delete all student repositories and student build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "studentRepos": "Additionally delete all student repositories (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you archive the repositories and build plans first!",
                 "baseReposBuildPlans": "Additionally delete template, solution, test, and auxiliary repos and build plans (Be careful: this can NOT be undone!). Before you activate this option, we recommend that you back up these build plans and repos first!"
@@ -59,6 +50,23 @@
                 "title": "Programming Exercise",
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
+            },
+            "versionHistory": {
+                "snapshot": {
+                    "programmingTitle": "Programming Exercise Metadata",
+                    "noProgrammingData": "This version does not contain programming-specific metadata.",
+                    "emptyValueHint": "Not available in this snapshot",
+                    "branch": "Branch",
+                    "dockerFlags": "Docker Flags",
+                    "theiaImage": "Online IDE Image",
+                    "postDueDateHandling": "Post Due Date Handling",
+                    "assignmentCheckoutPath": "Assignment Checkout Path",
+                    "solutionCheckoutPath": "Solution Checkout Path",
+                    "testsCheckoutPath": "Tests Checkout Path",
+                    "buildPlanConfiguration": "Build Plan Configuration (JSON)",
+                    "noBuildPlanConfiguration": "No build plan configuration in this snapshot",
+                    "noBuildScript": "No build script in this snapshot"
+                }
             },
             "importFromFile": {
                 "title": "Import Programming Exercise from File",
@@ -217,8 +225,12 @@
             },
             "programmingLanguage": "Programming Language",
             "projectType": "Project Type",
+            "projectKey": "Project Key",
             "testRepositoryProjectType": "Test Repository Project Type",
             "packageName": "Package Name",
+            "testsCommitId": "Tests Commit Id",
+            "templateCommitId": "Template Commit Id",
+            "solutionCommitId": "Solution Commit Id",
             "theiaImage": {
                 "title": "Configuration for Online IDE",
                 "noImageAvailable": "The Online IDE is not yet available for this programming language.",
@@ -285,6 +297,7 @@
             "codeGeneration": {
                 "creationAssistance": "Creation Assistance",
                 "generateCode": "Generate Code",
+                "generateWithAi": "Generate with AI",
                 "generating": "Generating...",
                 "runningTitle": "Code generation in progress",
                 "runningText": "Code generation is currently running for this exercise by another user. Please try again later.",
@@ -819,6 +832,64 @@
                 "error": {
                     "export": "Unable to export programming exercise: {{ message }}"
                 }
+            },
+            "instructorChecklist": {
+                "title": "Instructor Checklist",
+                "analyze": "Analyze Problem Statement",
+                "analyzing": "Analyzing...",
+                "defaultMessage": "Click \"Analyze Problem Statement\" to check for competencies, difficulty, and quality issues.",
+                "competencies": {
+                    "title": "Estimated Learning Goals",
+                    "empty": "No competencies inferred.",
+                    "primary": "Primary",
+                    "evidence": "Evidence:",
+                    "relatedTasks": "Related tasks:",
+                    "linked": "Linked",
+                    "applyCompetencies": "Apply Competencies",
+                    "applyHint": "Links matching course competencies and creates new ones for unmatched learning goals.",
+                    "syncSuccess": "Competencies applied to the exercise successfully.",
+                    "allLinked": "All inferred competencies are already linked.",
+                    "syncError": "Failed to apply competencies. Please try again.",
+                    "showDetails": "Details",
+                    "hideDetails": "Hide"
+                },
+                "difficulty": {
+                    "title": "Difficulty Assessment",
+                    "suggested": "Suggested:",
+                    "vsDeclared": "vs. Declared:",
+                    "tasks": "Tasks:",
+                    "tests": "Tests:",
+                    "harderThanDeclared": "Harder than declared",
+                    "easierThanDeclared": "Easier than declared",
+                    "matchesDeclared": "Matches declared",
+                    "unknown": "Unknown"
+                },
+                "quality": {
+                    "title": "Quality Assessment",
+                    "empty": "No quality issues found.",
+                    "fix": "Fix",
+                    "fixSelected": "Fix Selected",
+                    "suggestedFix": "Suggested fix:",
+                    "fixAll": "Fix All Issues",
+                    "fixIssue": "Apply AI fix for this issue",
+                    "discardIssue": "Dismiss this issue",
+                    "discarded": "Issue dismissed.",
+                    "discardSelected": "Dismiss Selected",
+                    "discardedMultiple": "Selected issues dismissed.",
+                    "selectAll": "Select All",
+                    "deselectAll": "Deselect All",
+                    "radarChartLabel": "Quality scores radar chart"
+                },
+                "actions": {
+                    "success": "Problem statement updated successfully.",
+                    "error": "Failed to apply the action. Please try again.",
+                    "noChanges": "No changes were needed for this action.",
+                    "adaptTo": "Adapt to:",
+                    "current": "(current)",
+                    "adaptedReasoning": "Adapted to {{ difficulty }}. Re-analyze for an updated assessment."
+                },
+                "outdated": "Outdated",
+                "reanalyze": "Re-analyze"
             }
         },
         "error": {

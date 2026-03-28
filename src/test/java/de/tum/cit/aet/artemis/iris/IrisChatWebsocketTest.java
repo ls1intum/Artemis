@@ -22,6 +22,7 @@ import de.tum.cit.aet.artemis.iris.domain.message.IrisMessage;
 import de.tum.cit.aet.artemis.iris.domain.message.IrisTextMessageContent;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisProgrammingExerciseChatSession;
 import de.tum.cit.aet.artemis.iris.dto.IrisChatWebsocketDTO;
+import de.tum.cit.aet.artemis.iris.dto.IrisMessageResponseDTO;
 import de.tum.cit.aet.artemis.iris.service.IrisRateLimitService;
 import de.tum.cit.aet.artemis.iris.service.websocket.IrisChatWebsocketService;
 import de.tum.cit.aet.artemis.iris.util.IrisChatSessionUtilService;
@@ -71,7 +72,7 @@ class IrisChatWebsocketTest extends AbstractIrisIntegrationTest {
 
         var expectedRateLimitInfo = irisRateLimitService.getRateLimitInformation(irisSession, user);
         verify(websocketMessagingService, times(1)).sendMessageToUser(eq(TEST_PREFIX + "student1"), eq("/topic/iris/" + irisSession.getId()),
-                eq(new IrisChatWebsocketDTO(message, expectedRateLimitInfo, List.of(), null, null, null, null)));
+                eq(new IrisChatWebsocketDTO(IrisMessageResponseDTO.of(message), expectedRateLimitInfo, List.of(), null, null, null, null)));
     }
 
     private IrisTextMessageContent createMockContent() {

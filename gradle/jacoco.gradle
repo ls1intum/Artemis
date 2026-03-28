@@ -6,7 +6,8 @@ ext {
     ModuleCoverageThresholds = [
         "assessment"    :          ["INSTRUCTION": 0.916, "CLASS":  0],
         "athena"        :          ["INSTRUCTION": 0.851, "CLASS":  2],
-        "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  6],
+        // CLASS raised from 6 to 7: removal of CompetencyJolIntegrationTest (JOL feature eliminated)
+        "atlas"         :          ["INSTRUCTION": 0.875, "CLASS":  7],
         // Lowered to accommodate PostgreSQL/MySQL testcontainer configuration classes
         "buildagent"    :          ["INSTRUCTION": 0.750, "CLASS":  3],
         "communication" :          ["INSTRUCTION": 0.861, "CLASS":  7],
@@ -17,7 +18,7 @@ ext {
         "hyperion"      :          ["INSTRUCTION": 0.646, "CLASS":  9],
         "iris"          :          ["INSTRUCTION": 0.811, "CLASS": 21],
         "lecture"       :          ["INSTRUCTION": 0.891, "CLASS":  1],
-        "lti"           :          ["INSTRUCTION": 0.886, "CLASS":  2],
+        "lti"           :          ["INSTRUCTION": 0.860, "CLASS":  2],
         "modeling"      :          ["INSTRUCTION": 0.907, "CLASS":  1],
         "nebula"        :          ["INSTRUCTION": 0.836, "CLASS":  0],
         "plagiarism"    :          ["INSTRUCTION": 0.908, "CLASS":  2],

@@ -5,6 +5,7 @@ import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Lazy;
@@ -102,11 +103,11 @@ public class ProgrammingExerciseBuildPlanService {
      * This method updates the build plan for the given programming exercise.
      * If LocalCI is not active, it deletes the old build plan and creates a new one if the build plan configuration has changed.
      *
-     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     * @param originalBuildPlanConfiguration the build plan configuration before the update
+     * @param updatedProgrammingExercise     the changed programming exercise with its new values
      */
-    public void updateBuildPlanForExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
-        if (Objects.equals(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration(), updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
+    public void updateBuildPlanForExercise(@Nullable String originalBuildPlanConfiguration, ProgrammingExercise updatedProgrammingExercise) throws JsonProcessingException {
+        if (Objects.equals(originalBuildPlanConfiguration, updatedProgrammingExercise.getBuildConfig().getBuildPlanConfiguration())) {
             return;
         }
         // we only update the build plan configuration if it has changed and is not null, otherwise we
@@ -125,7 +126,7 @@ public class ProgrammingExerciseBuildPlanService {
         }
         else {
             // if the user does not change the build plan configuration, we have to set the old one again
-            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(programmingExerciseBeforeUpdate.getBuildConfig().getBuildPlanConfiguration());
+            updatedProgrammingExercise.getBuildConfig().setBuildPlanConfiguration(originalBuildPlanConfiguration);
         }
     }
 
