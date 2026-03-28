@@ -89,7 +89,9 @@ export class ComplaintResponseService {
         complaintResponse.submittedTime = convertDateFromServer(dto.submittedTime);
         complaintResponse.isCurrentlyLocked = dto.isCurrentlyLocked;
         complaintResponse.lockEndDate = convertDateFromServer(dto.lockEndDate);
-        complaintResponse.reviewer = new User(dto.reviewer.id, dto.reviewer.login);
+        if (dto.reviewer) {
+            complaintResponse.reviewer = new User(dto.reviewer.id, dto.reviewer.login);
+        }
         return complaintResponse;
     }
 }
