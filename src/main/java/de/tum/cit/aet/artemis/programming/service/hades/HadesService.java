@@ -158,8 +158,6 @@ public class HadesService implements StatelessCIService {
         var metadata = new HashMap<String, String>();
         var steps = new ArrayList<HadesBuildStepDTO>();
 
-        metadata.put("JOB_NAME", String.valueOf(buildTriggerRequestDTO.participationId()));
-
         // Create Clone Step
         var cloneMetadata = new HashMap<String, String>();
         cloneMetadata.put("REPOSITORY_DIR", repositoryDir);
