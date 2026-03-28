@@ -92,6 +92,43 @@ public class TutorialGroupSessionResource {
     }
 
     /**
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
+     *
+     * @param courseId                the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
+     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
+     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
+     */
+    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
+    @EnforceAtLeastTutor
+    public ResponseEntity<TutorialGroupSessionDTO> createSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
+        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
+        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
+        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
+        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
+            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can create sessions.");
+        }
+
+        tutorialGroupSessionDTO.validityCheck();
+
+        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
+        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
+        newSession.setTutorialGroup(tutorialGroup);
+        checkIfSessionMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
+        checkForOverlapWithOtherSessions(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
+
+        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
+                newSession.getStart(), newSession.getEnd());
+        updateStatusAndFreePeriod(newSession, overlappingPeriodOptional);
+        newSession = tutorialGroupSessionRepository.save(newSession);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(TutorialGroupSessionDTO.from(newSession, tutorialGroup.getTutorialGroupSchedule()));
+    }
+
+    /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : Updates an existing tutorial group session
      *
      * @param courseId                the id of the course to which the tutorial group belongs to
@@ -142,43 +179,6 @@ public class TutorialGroupSessionResource {
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
         return ResponseEntity.ok(TutorialGroupSessionDTO.from(result, result.getTutorialGroupSchedule()));
-    }
-
-    /**
-     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
-     *
-     * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
-     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
-     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
-     */
-    @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
-    @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSessionDTO> createSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody @Valid CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO) {
-        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
-        boolean userIsTutorOfGroup = tutorialGroup.getTeachingAssistant().equals(user);
-        boolean userIsAtLeastEditorInCourse = authorizationCheckService.isAtLeastEditorInCourse(user.getLogin(), courseId);
-        if (!userIsTutorOfGroup && !userIsAtLeastEditorInCourse) {
-            throw new AccessForbiddenException("Only the tutor of a tutorial group or a user that is at least editor in the course can create sessions.");
-        }
-
-        tutorialGroupSessionDTO.validityCheck();
-
-        TutorialGroupsConfiguration configuration = validateTutorialGroupConfiguration(courseId);
-        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
-        newSession.setTutorialGroup(tutorialGroup);
-        checkIfSessionMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
-        checkForOverlapWithOtherSessions(newSession, ZoneId.of(configuration.getCourse().getTimeZone()));
-
-        Optional<TutorialGroupFreePeriod> overlappingPeriodOptional = tutorialGroupFreePeriodRepository.findFirstOverlappingInSameCourse(tutorialGroup.getCourse(),
-                newSession.getStart(), newSession.getEnd());
-        updateStatusAndFreePeriod(newSession, overlappingPeriodOptional);
-        newSession = tutorialGroupSessionRepository.save(newSession);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(TutorialGroupSessionDTO.from(newSession, tutorialGroup.getTutorialGroupSchedule()));
     }
 
     /**
