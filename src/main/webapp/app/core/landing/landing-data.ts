@@ -3,7 +3,6 @@ export interface SpotlightStep {
     descriptionKey: string;
     imageSrc: string;
     videoSrc?: string;
-    noFrame?: boolean;
 }
 
 export interface FeatureCard {
@@ -11,7 +10,6 @@ export interface FeatureCard {
     descriptionKey: string;
     imageSrc: string;
     imageAlt: string;
-    secondaryImageSrc?: string;
 }
 
 export interface FaqItem {
@@ -37,7 +35,6 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
         descriptionKey: 'landing.spotlight.steps.feedback.description',
         imageSrc: 'content/images/landing/iris-logo.png',
         videoSrc: 'content/images/landing/demo-videos/interactive-exercise.webm',
-        noFrame: true,
     },
     {
         titleKey: 'landing.spotlight.steps.tutor.title',
@@ -46,9 +43,10 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
         videoSrc: 'content/images/landing/demo-videos/iris-demo.webm',
     },
     {
-        titleKey: 'landing.spotlight.steps.faq.title',
-        descriptionKey: 'landing.spotlight.steps.faq.description',
+        titleKey: 'landing.spotlight.steps.transcribedLecture.title',
+        descriptionKey: 'landing.spotlight.steps.transcribedLecture.description',
         imageSrc: 'content/images/landing/iris-logo.png',
+        videoSrc: 'content/images/landing/demo-videos/transcribed-lecture.webm',
     },
     {
         titleKey: 'landing.spotlight.steps.insights.title',
@@ -156,20 +154,20 @@ export const FOOTER_LINK_GROUPS: FooterLinkGroup[] = [
     {
         titleKey: 'landing.footer.links.features.title',
         links: [
-            { labelKey: 'landing.footer.links.features.exercises', href: 'https://docs.artemis.cit.tum.de/user/exercises/' },
-            { labelKey: 'landing.footer.links.features.lectures', href: 'https://docs.artemis.cit.tum.de/user/lectures/' },
-            { labelKey: 'landing.footer.links.features.communication', href: 'https://docs.artemis.cit.tum.de/user/communication/' },
-            { labelKey: 'landing.footer.links.features.adaptiveLearning', href: 'https://docs.artemis.cit.tum.de/user/adaptive-learning/' },
-            { labelKey: 'landing.footer.links.features.iris', href: 'https://docs.artemis.cit.tum.de/user/iris/' },
+            { labelKey: 'landing.footer.links.features.exercises', href: 'https://docs.artemis.tum.de/instructor/exercises/intro' },
+            { labelKey: 'landing.footer.links.features.lectures', href: 'https://docs.artemis.tum.de/student/learning-content/lectures' },
+            { labelKey: 'landing.footer.links.features.communication', href: 'https://docs.artemis.tum.de/student/communication-support/communication' },
+            { labelKey: 'landing.footer.links.features.adaptiveLearning', href: 'https://docs.artemis.tum.de/student/progress-analytics/adaptive-learning' },
+            { labelKey: 'landing.footer.links.features.iris', href: 'https://docs.artemis.tum.de/student/learning-content/iris' },
         ],
     },
     {
         titleKey: 'landing.footer.links.instructors.title',
         links: [
-            { labelKey: 'landing.footer.links.instructors.examMode', href: 'https://docs.artemis.cit.tum.de/user/exam_mode/' },
-            { labelKey: 'landing.footer.links.instructors.assessment', href: 'https://docs.artemis.cit.tum.de/user/grading/' },
-            { labelKey: 'landing.footer.links.instructors.tutorials', href: 'https://docs.artemis.cit.tum.de/user/tutorial-groups/' },
-            { labelKey: 'landing.footer.links.instructors.faq', href: 'https://docs.artemis.cit.tum.de/user/faq/' },
+            { labelKey: 'landing.footer.links.instructors.examMode', href: 'https://docs.artemis.tum.de/instructor/exams/participation-checker' },
+            { labelKey: 'landing.footer.links.instructors.assessment', href: 'https://docs.artemis.tum.de/instructor/assessment-grading/assessment' },
+            { labelKey: 'landing.footer.links.instructors.tutorials', href: 'https://docs.artemis.tum.de/instructor/communication-support/tutorial-groups' },
+            { labelKey: 'landing.footer.links.instructors.faq', href: 'https://docs.artemis.tum.de/instructor/communication-support/faq' },
         ],
     },
     {

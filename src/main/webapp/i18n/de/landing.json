@@ -21,7 +21,7 @@
                     "title": "Sofortiges Feedback bei jeder Abgabe",
                     "description": "Code, Quiz oder Modellierungsaufgabe einreichen — und innerhalb von Sekunden strukturiertes, individuelles Feedback erhalten. Artemis führt automatisch Testfälle, statische Analyse und Bewertungskriterien aus, sodass Studierende immer wissen, wo sie stehen."
                 },
-                "faq": {
+                "transcribedLecture": {
                     "title": "Vorlesungen, die nach dem Unterricht weiterarbeiten",
                     "description": "Vorlesungsvideos hochladen und Artemis generiert automatisch durchsuchbare Transkriptionen. Studierende können bestimmte Stellen erneut ansehen, Iris nutzt die Inhalte zur Beantwortung von Fragen, und Lehrende können Einheiten direkt mit Lernzielen verknüpfen."
                 },
@@ -109,8 +109,8 @@
             "links": {
                 "features": {
                     "title": "Funktionen",
-                    "exercises": "Interaktive Übungen",
-                    "lectures": "Vorlesungen transkribieren",
+                    "exercises": "Übungen",
+                    "lectures": "Vorlesungen",
                     "communication": "Kommunikation",
                     "adaptiveLearning": "Adaptives Lernen",
                     "iris": "Iris - KI-Tutor"

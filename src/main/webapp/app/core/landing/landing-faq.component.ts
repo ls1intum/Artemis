@@ -61,7 +61,7 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
             border: 0.75px solid var(--iris-accent-background);
             border-radius: 8px;
             background: var(--iris-secondary-background);
-            overflow: hidden;
+            overflow: clip;
         }
 
         :host ::ng-deep .p-accordionpanel-active {
@@ -87,8 +87,13 @@ import { FAQ_ITEMS } from 'app/core/landing/landing-data';
             font-family: inherit;
         }
 
+        :host ::ng-deep .p-collapsible-enter-active {
+            animation-delay: 0.2s !important;
+            animation-fill-mode: both !important;
+        }
+
         :host ::ng-deep .p-accordioncontent .p-motion.p-collapsible-enter-active .p-accordioncontent-content {
-            animation: faq-slide-down 220ms ease-out;
+            animation: faq-slide-down 220ms ease-out 0.2s both;
         }
 
         :host ::ng-deep .p-accordionpanel-active .p-accordionheader {

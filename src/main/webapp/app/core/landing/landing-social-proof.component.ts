@@ -22,7 +22,7 @@ import { UNIVERSITY_LOGOS } from 'app/core/landing/landing-data';
         .social-proof-title {
             font-size: 16px;
             font-weight: 500;
-            color: var(--body-color);
+            color: var(--text-body-secondary);
             line-height: 1.6;
             text-align: center;
         }

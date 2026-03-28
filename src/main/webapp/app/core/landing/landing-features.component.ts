@@ -75,7 +75,7 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
 
         .card-assets {
             flex: 1;
-            max-height: 400px;
+            max-height: 540px;
             overflow: hidden;
             display: flex;
             flex-direction: column;
@@ -87,31 +87,6 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
             object-fit: contain;
             width: 100%;
             flex: 1;
-        }
-
-        .card-assets-dual {
-            flex: 1;
-            min-height: 200px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .card-assets-dual .primary-image {
-            border-radius: 8px;
-            object-fit: cover;
-            height: 100%;
-            position: absolute;
-            left: 0;
-            top: 0;
-        }
-
-        .card-assets-dual .secondary-image {
-            border-radius: 8px;
-            object-fit: cover;
-            height: 90%;
-            position: absolute;
-            right: 0;
-            top: 10%;
         }
 
         @media (max-width: 1200px) {
@@ -152,16 +127,9 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
                             <p class="card-category">{{ card.categoryKey | artemisTranslate }}</p>
                             <p class="card-description">{{ card.descriptionKey | artemisTranslate }}</p>
                         </div>
-                        @if (card.secondaryImageSrc) {
-                            <div class="card-assets-dual">
-                                <img class="primary-image" [src]="card.imageSrc" [alt]="card.imageAlt" />
-                                <img class="secondary-image" [src]="card.secondaryImageSrc" [alt]="card.imageAlt" />
-                            </div>
-                        } @else {
-                            <div class="card-assets">
-                                <img class="card-image" [src]="card.imageSrc" [alt]="card.imageAlt" />
-                            </div>
-                        }
+                        <div class="card-assets">
+                            <img class="card-image" [src]="card.imageSrc" [alt]="card.imageAlt" />
+                        </div>
                     </div>
                 }
             </div>

@@ -15,12 +15,11 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
 
         .spotlight {
             display: grid;
-            grid-template-columns: 480px 1fr;
+            grid-template-columns: 400px 1fr;
             gap: 40px;
             padding: 40px 160px 40px;
             align-items: center;
-            min-height: 412px;
-            background: var(--iris-primary-background);
+            min-height: 450px;
         }
 
         .spotlight-left {
@@ -31,9 +30,22 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
         }
 
         .spotlight-text {
+            display: grid;
+        }
+
+        .spotlight-text > * {
+            grid-area: 1 / 1;
             display: flex;
             flex-direction: column;
             gap: 24px;
+            transition: opacity 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spotlight-text > .active {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         .spotlight-title {
@@ -105,24 +117,21 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             justify-content: center;
             height: 100%;
             overflow: hidden;
-            border-radius: 16px;
+            transition: opacity 0.3s ease;
+        }
+
+        .spotlight-right.fading {
+            opacity: 0;
         }
 
         .spotlight-media {
             width: 100%;
             height: 100%;
-            max-height: 540px;
             object-fit: cover;
-            border-radius: 16px;
-            background: var(--iris-secondary-background);
-            min-height: 300px;
+            border-radius: 8px;
+            min-height: 400px;
             border: 0;
             box-shadow: none;
-        }
-
-        .spotlight-media.no-frame {
-            border-radius: 0;
-            background: transparent;
         }
 
         @media (max-width: 1024px) {
@@ -146,8 +155,12 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
         <section class="spotlight">
             <div class="spotlight-left">
                 <div class="spotlight-text">
-                    <h2 class="spotlight-title">{{ currentStep().titleKey | artemisTranslate }}</h2>
-                    <p class="spotlight-description">{{ currentStep().descriptionKey | artemisTranslate }}</p>
+                    @for (step of steps; track step.titleKey; let i = $index) {
+                        <div [class.active]="i === activeIndex()">
+                            <h2 class="spotlight-title">{{ step.titleKey | artemisTranslate }}</h2>
+                            <p class="spotlight-description">{{ step.descriptionKey | artemisTranslate }}</p>
+                        </div>
+                    }
                 </div>
                 <div class="stepper-nav">
                     <button class="stepper-btn" (click)="prev()" aria-label="Previous slide">
@@ -169,11 +182,10 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                     </button>
                 </div>
             </div>
-            <div class="spotlight-right">
+            <div class="spotlight-right" [class.fading]="fading()">
                 @if (currentStep().videoSrc; as videoSrc) {
                     <video
                         class="spotlight-media"
-                        [class.no-frame]="currentStep().noFrame"
                         [src]="videoSrc"
                         [autoplay]="true"
                         [muted]="true"
@@ -194,18 +206,24 @@ export class LandingSpotlightComponent implements OnInit {
     protected readonly faChevronLeft = faChevronLeft;
     protected readonly faChevronRight = faChevronRight;
     private static readonly imageStepDurationMs = 5000;
+    private static readonly fadeDurationMs = 300;
 
     private destroyRef = inject(DestroyRef);
 
     steps = SPOTLIGHT_STEPS;
     activeIndex = signal(0);
     currentStep = computed(() => this.steps[this.activeIndex()]);
+    fading = signal(false);
 
     private autoAdvanceTimeoutId: ReturnType<typeof setTimeout> | undefined;
+    private fadeTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
     ngOnInit(): void {
         this.scheduleAutoAdvance();
-        this.destroyRef.onDestroy(() => this.clearAutoAdvanceTimeout());
+        this.destroyRef.onDestroy(() => {
+            this.clearAutoAdvanceTimeout();
+            clearTimeout(this.fadeTimeoutId);
+        });
     }
 
     next(): void {
@@ -240,8 +258,16 @@ export class LandingSpotlightComponent implements OnInit {
 
     private advanceTo(index: number): void {
         const normalizedIndex = ((index % this.steps.length) + this.steps.length) % this.steps.length;
-        this.activeIndex.set(normalizedIndex);
-        this.scheduleAutoAdvance();
+        if (normalizedIndex === this.activeIndex()) {
+            return;
+        }
+
+        this.fading.set(true);
+        this.fadeTimeoutId = setTimeout(() => {
+            this.activeIndex.set(normalizedIndex);
+            this.fading.set(false);
+            this.scheduleAutoAdvance();
+        }, LandingSpotlightComponent.fadeDurationMs);
     }
 
     private scheduleAutoAdvance(): void {

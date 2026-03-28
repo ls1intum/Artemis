@@ -21,7 +21,7 @@
                     "title": "Instant feedback, every submission",
                     "description": "Submit code, a quiz, or a modeling task — and get structured, individual feedback within seconds. Artemis automatically runs test cases, static analysis, and grading criteria so students always know exactly where they stand, without waiting for a tutor."
                 },
-                "faq": {
+                "transcribedLecture": {
                     "title": "Lectures that keep working after class",
                     "description": "Upload lecture videos and Artemis automatically generates searchable transcriptions. Students revisit specific moments, Iris draws on the content to answer questions, and instructors can link units directly to learning objectives."
                 },
@@ -109,8 +109,8 @@
             "links": {
                 "features": {
                     "title": "Features",
-                    "exercises": "Interactive Exercises",
-                    "lectures": "Transcribe Lectures",
+                    "exercises": "Exercises",
+                    "lectures": "Lectures",
                     "communication": "Communication",
                     "adaptiveLearning": "Adaptive Learning",
                     "iris": "Iris - AI Tutor"
