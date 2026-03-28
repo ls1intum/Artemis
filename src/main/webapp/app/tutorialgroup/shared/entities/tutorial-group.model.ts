@@ -2,7 +2,7 @@ import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupSchedule } from 'app/tutorialgroup/shared/entities/tutorial-group-schedule.model';
-import { TutorialGroupSession, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { LegacyTutorialGroupSession, TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { TutorialGroupRegistration } from 'app/tutorialgroup/shared/entities/tutorial-group-registration.model';
 import { ChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { TutorialGroupDetail } from 'app/openapi/model/tutorialGroupDetail';
@@ -18,7 +18,7 @@ export class TutorialGroup implements BaseEntity {
     public isOnline?: boolean;
     public teachingAssistant?: User;
     public tutorialGroupSchedule?: TutorialGroupSchedule;
-    public tutorialGroupSessions?: TutorialGroupSession[];
+    public tutorialGroupSessions?: LegacyTutorialGroupSession[];
     public registrations?: TutorialGroupRegistration[];
     public channel?: ChannelDTO;
 
@@ -30,7 +30,7 @@ export class TutorialGroup implements BaseEntity {
     public teachingAssistantId?: number;
     public teachingAssistantImageUrl?: string;
     public courseTitle?: string;
-    public nextSession?: TutorialGroupSession;
+    public nextSession?: LegacyTutorialGroupSession;
     public averageAttendance?: number;
 }
 
@@ -39,7 +39,7 @@ export class TutorialGroupDetailDTO {
     title: string;
     language: string;
     isOnline: boolean;
-    sessions: TutorialGroupSessionDTO[];
+    sessions: TutorialGroupSession[];
     tutorName: string;
     tutorLogin: string;
     tutorId: number;
@@ -55,7 +55,7 @@ export class TutorialGroupDetailDTO {
         this.title = tutorialGroupDetail.title;
         this.language = tutorialGroupDetail.language;
         this.isOnline = tutorialGroupDetail.isOnline;
-        this.sessions = (tutorialGroupDetail.sessions ?? []).map((rawSessionDto) => new TutorialGroupSessionDTO(rawSessionDto));
+        this.sessions = (tutorialGroupDetail.sessions ?? []).map((rawSessionDto) => new TutorialGroupSession(rawSessionDto));
         this.tutorName = tutorialGroupDetail.tutorName;
         this.tutorLogin = tutorialGroupDetail.tutorLogin;
         this.tutorId = tutorialGroupDetail.tutorId;

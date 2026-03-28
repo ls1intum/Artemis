@@ -127,10 +127,10 @@ export class TutorialGroupApiService extends BaseService {
      * @param reportProgress flag to report request and response progress.
      * @param options additional options
      */
-    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any>;
-    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<any>>;
-    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<any>>;
-    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: undefined, context?: HttpContext, transferCache?: boolean}): Observable<any> {
+    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe?: 'body', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<number>;
+    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe?: 'response', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpResponse<number>>;
+    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe?: 'events', reportProgress?: boolean, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<HttpEvent<number>>;
+    public createTutorialGroup(courseId: number, createAndUpdateTutorialGroup: CreateAndUpdateTutorialGroup, observe: any = 'body', reportProgress: boolean = false, options?: {httpHeaderAccept?: 'application/json', context?: HttpContext, transferCache?: boolean}): Observable<any> {
         if (courseId === null || courseId === undefined) {
             throw new Error('Required parameter courseId was null or undefined when calling createTutorialGroup.');
         }
@@ -141,6 +141,7 @@ export class TutorialGroupApiService extends BaseService {
         let localVarHeaders = this.defaultHeaders;
 
         const localVarHttpHeaderAcceptSelected: string | undefined = options?.httpHeaderAccept ?? this.configuration.selectHeaderAccept([
+            'application/json'
         ]);
         if (localVarHttpHeaderAcceptSelected !== undefined) {
             localVarHeaders = localVarHeaders.set('Accept', localVarHttpHeaderAcceptSelected);
@@ -173,7 +174,7 @@ export class TutorialGroupApiService extends BaseService {
 
         let localVarPath = `/api/tutorialgroup/courses/${this.configuration.encodeParam({name: "courseId", value: courseId, in: "path", style: "simple", explode: false, dataType: "number", dataFormat: "int64"})}/tutorial-groups`;
         const { basePath, withCredentials } = this.configuration;
-        return this.httpClient.request<any>('post', `${basePath}${localVarPath}`,
+        return this.httpClient.request<number>('post', `${basePath}${localVarPath}`,
             {
                 context: localVarHttpContext,
                 body: createAndUpdateTutorialGroup,

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.cit.aet.artemis.core.domain.User;
@@ -38,7 +39,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
-import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupCancelExplanationDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.exception.SessionOverlapsWithSessionException;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
@@ -211,16 +211,16 @@ public class TutorialGroupSessionResource {
     /**
      * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/cancel : cancel a tutorial group session.
      *
-     * @param courseId                          the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId                   the id of the tutorial group to which the session belongs to
-     * @param sessionId                         the id of the session to cancel
-     * @param tutorialGroupCancelExplanationDTO DTO containing the explanation for the cancellation
+     * @param courseId        the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId the id of the tutorial group to which the session belongs to
+     * @param sessionId       the id of the session to cancel
+     * @param explanation     the explanation for the cancellation
      * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSessionDTO> cancelSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
-            @RequestBody TutorialGroupCancelExplanationDTO tutorialGroupCancelExplanationDTO) throws URISyntaxException {
+    public ResponseEntity<Void> cancelSession(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+            @RequestParam(required = false) String explanation) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
@@ -237,12 +237,11 @@ public class TutorialGroupSessionResource {
         checkIfSessionMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
 
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
-        if (tutorialGroupCancelExplanationDTO != null && tutorialGroupCancelExplanationDTO.status_explanation() != null
-                && !tutorialGroupCancelExplanationDTO.status_explanation().trim().isEmpty()) {
-            sessionToCancel.setStatusExplanation(tutorialGroupCancelExplanationDTO.status_explanation().trim());
+        if (explanation != null && explanation.trim().isEmpty()) {
+            sessionToCancel.setStatusExplanation(explanation.trim());
         }
-        sessionToCancel = tutorialGroupSessionRepository.save(sessionToCancel);
-        return ResponseEntity.ok().body(TutorialGroupSessionDTO.from(sessionToCancel, sessionToCancel.getTutorialGroupSchedule()));
+        tutorialGroupSessionRepository.save(sessionToCancel);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -255,8 +254,7 @@ public class TutorialGroupSessionResource {
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @EnforceAtLeastTutor
-    public ResponseEntity<TutorialGroupSessionDTO> activateSession(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId)
-            throws URISyntaxException {
+    public ResponseEntity<Void> activateSession(@PathVariable long courseId, @PathVariable long tutorialGroupId, @PathVariable long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithSessionsAndScheduleElseThrow(tutorialGroupId);
@@ -274,8 +272,8 @@ public class TutorialGroupSessionResource {
 
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);
-        sessionToActivate = tutorialGroupSessionRepository.save(sessionToActivate);
-        return ResponseEntity.ok().body(TutorialGroupSessionDTO.from(sessionToActivate, sessionToActivate.getTutorialGroupSchedule()));
+        tutorialGroupSessionRepository.save(sessionToActivate);
+        return ResponseEntity.noContent().build();
     }
 
     private void checkIfSessionMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {

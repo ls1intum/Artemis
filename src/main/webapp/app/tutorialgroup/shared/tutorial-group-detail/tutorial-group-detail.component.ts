@@ -22,7 +22,7 @@ import {
     faUsers,
 } from '@fortawesome/free-solid-svg-icons';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { CreateOrUpdateTutorialGroupSessionDTO, TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { SelectButton } from 'primeng/selectbutton';
 import { FormsModule } from '@angular/forms';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -44,6 +44,7 @@ import {
     UpdateTutorialGroupSessionData,
 } from 'app/tutorialgroup/manage/tutorial-group-session-create-or-edit-modal/tutorial-session-create-or-edit-modal.component';
 import { TooltipModule } from 'primeng/tooltip';
+import { CreateOrUpdateTutorialGroupSession } from 'app/openapi/model/createOrUpdateTutorialGroupSession';
 
 interface TutorialGroupDetailSession {
     id: number;
@@ -67,13 +68,13 @@ export interface UpdateTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
     tutorialGroupSessionId: number;
-    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO;
+    updateTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession;
 }
 
 export interface CreateTutorialGroupSessionEvent {
     courseId: number;
     tutorialGroupId: number;
-    createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO;
+    createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSession;
 }
 
 export interface DeleteTutorialGroupEvent {
@@ -294,14 +295,14 @@ export class TutorialGroupDetailComponent {
         this.onUpdateSession.emit(updateTutorialGroupSessionEvent);
     }
 
-    createTutorialGroupSession(createTutorialGroupSessionDTO: CreateOrUpdateTutorialGroupSessionDTO) {
+    createTutorialGroupSession(createTutorialGroupSession: CreateOrUpdateTutorialGroupSession) {
         const courseId = this.courseId();
         if (!courseId) return;
         const tutorialGroupId = this.tutorialGroup().id;
         const createTutorialGroupSessionEvent: CreateTutorialGroupSessionEvent = {
             courseId: courseId,
             tutorialGroupId: tutorialGroupId,
-            createTutorialGroupSessionDTO: createTutorialGroupSessionDTO,
+            createTutorialGroupSessionDTO: createTutorialGroupSession,
         };
         this.onCreateSession.emit(createTutorialGroupSessionEvent);
     }
@@ -344,7 +345,7 @@ export class TutorialGroupDetailComponent {
             .map((session) => this.computeSessionDataFrom(session, capacity));
     }
 
-    private computeAverageAttendanceRatio(sessions: TutorialGroupSessionDTO[], capacity: number | undefined): number | undefined {
+    private computeAverageAttendanceRatio(sessions: TutorialGroupSession[], capacity: number | undefined): number | undefined {
         if (capacity === undefined) return undefined;
         const sessionsWithAttendance = sessions.filter((session) => session.attendance !== undefined && session.attendance !== null);
         if (sessionsWithAttendance.length === 0) return undefined;
@@ -443,7 +444,7 @@ export class TutorialGroupDetailComponent {
         return undefined;
     }
 
-    private computeSessionDataFrom(session: TutorialGroupSessionDTO, capacity: number | undefined): TutorialGroupDetailSession {
+    private computeSessionDataFrom(session: TutorialGroupSession, capacity: number | undefined): TutorialGroupDetailSession {
         const id = session.id;
         const weekdayStringKey = this.computeWeekdayStringKeyUsing(session.start);
         const weekday = this.translateService.instant(weekdayStringKey);

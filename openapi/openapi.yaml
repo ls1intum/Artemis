@@ -225,7 +225,11 @@ paths:
             schema: {$ref: '#/components/schemas/CreateAndUpdateTutorialGroup'}
         required: true
       responses:
-        '200': {description: OK}
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {type: integer, format: int64}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions:
     post:
       tags: [tutorial-group-session]
@@ -267,17 +271,12 @@ paths:
         in: path
         required: true
         schema: {type: integer, format: int64}
-      requestBody:
-        content:
-          application/json:
-            schema: {$ref: '#/components/schemas/TutorialGroupCancelExplanation'}
-        required: true
+      - name: explanation
+        in: query
+        required: false
+        schema: {type: string}
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate:
     post:
       tags: [tutorial-group-session]
@@ -296,11 +295,7 @@ paths:
         required: true
         schema: {type: integer, format: int64}
       responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/TutorialGroupSession'}
+        '200': {description: OK}
   /api/tutorialgroup/courses/{courseId}/tutorial-groups/{tutorialGroupId}/import-registrations:
     post:
       tags: [tutorial-group]
@@ -434,21 +429,6 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/TutorialGroupFreePeriod'}
-  /api/hyperion/programming-exercises/{programmingExerciseId}/consistency-check:
-    post:
-      tags: [hyperion-problem-statement]
-      operationId: checkExerciseConsistency
-      parameters:
-      - name: programmingExerciseId
-        in: path
-        required: true
-        schema: {type: integer, format: int64}
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
   /api/hyperion/programming-exercises/{exerciseId}/generate-code:
     post:
       tags: [hyperion-code-generation]
@@ -469,6 +449,25 @@ paths:
           content:
             application/json:
               schema: {$ref: '#/components/schemas/CodeGenerationJobStart'}
+  /api/hyperion/programming-exercises/{exerciseId}/consistency-check:
+    post:
+      tags: [hyperion-problem-statement]
+      operationId: checkExerciseConsistency
+      parameters:
+      - name: exerciseId
+        in: path
+        required: true
+        schema: {type: integer, format: int64}
+      - name: skipThreadContext
+        in: query
+        required: false
+        schema: {type: boolean, default: false}
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/ConsistencyCheckResponse'}
   /api/hyperion/courses/{courseId}/quiz-exercises/generate-questions:
     post:
       tags: [hyperion-quiz-question-generation]
@@ -827,10 +826,6 @@ paths:
         '200': {description: OK}
 components:
   schemas:
-    TutorialGroupCancelExplanation:
-      type: object
-      properties:
-        status_explanation: {type: string}
     DifficultyAssessment:
       type: object
       properties:
@@ -850,11 +845,11 @@ components:
       description: Response containing consistency check costs
       properties:
         promptEur: {type: number, format: double, description: Prompt costs in EUR,
-          example: 0.011224}
+          example: '0.011224'}
         completionEur: {type: number, format: double, description: Completion costs
-            in EUR, example: 0.016513}
+            in EUR, example: '0.016513'}
         totalEur: {type: number, format: double, description: Total costs in EUR,
-          example: 0.027738}
+          example: '0.027738'}
     TutorialGroupDetail:
       type: object
       properties:
@@ -1058,7 +1053,7 @@ components:
         endTime: {type: string}
         location: {type: string, maxLength: 2000, minLength: 1}
         attendance: {type: integer, format: int32}
-      required: [date, endTime, startTime]
+      required: [date, endTime, location, startTime]
     ConsistencyIssue:
       type: object
       description: Individual consistency issue details
@@ -1365,7 +1360,7 @@ components:
         startTime: {type: string, description: Starting time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
         endTime: {type: string, description: Ending time, example: !!timestamp '2025-07-27T07:17:05.500Z'}
         durationS: {type: number, format: double, description: Duration of consistency
-            check, example: 27.765}
+            check, example: '27.765'}
     RewriteFaqRequest:
       type: object
       description: Request to rewrite a FAQ

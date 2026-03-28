@@ -13,7 +13,7 @@ export interface CreateOrUpdateTutorialGroupSession {
     date: string;
     startTime: string;
     endTime: string;
-    location?: string;
+    location: string;
     attendance?: number;
 }
 

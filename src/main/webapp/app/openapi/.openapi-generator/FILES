@@ -47,7 +47,6 @@ model/student.ts
 model/studentExport.ts
 model/timing.ts
 model/tokens.ts
-model/tutorialGroupCancelExplanation.ts
 model/tutorialGroupConfiguration.ts
 model/tutorialGroupDetail.ts
 model/tutorialGroupExport.ts

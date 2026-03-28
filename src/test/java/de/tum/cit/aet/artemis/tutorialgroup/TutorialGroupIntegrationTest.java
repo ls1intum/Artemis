@@ -109,10 +109,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     @Override
     void setupTestScenario() {
         super.setupTestScenario();
-        Course course = courseUtilService.createCourseWithUserPrefix(FIRST_COURSE_PREFIX);
-        course.setTimeZone(timeZone);
-        courseRepository.save(course);
-        courseId = course.getId();
 
         userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
         userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
@@ -135,8 +131,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         userRepository.save(firstCourseStudent3);
         firstCourseStudent4.setRegistrationNumber("4");
         userRepository.save(firstCourseStudent4);
-
-        configurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
         firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
                 firstCourseTutor1, Set.of(firstCourseStudent1));

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
+import de.tum.cit.aet.artemis.core.util.DateUtil;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupFreePeriod;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupRegistration;
@@ -190,6 +191,28 @@ public class TutorialGroupUtilService {
         TutorialGroupSession attendanceCountSession = createTutorialGroupSession(firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4), tutorialGroupSchedule.getLocation(),
                 10, TutorialGroupSessionStatus.ACTIVE, tutorialGroupSchedule, tutorialGroup);
         sessions.add(attendanceCountSession);
+
+        tutorialGroupSessionRepository.saveAllAndFlush(sessions);
+
+        return sessions;
+    }
+
+    public List<TutorialGroupSession> createAndSaveRegularSessionsFromTutorialGroupSchedule(Course course, TutorialGroup tutorialGroup,
+            TutorialGroupSchedule tutorialGroupSchedule) {
+        List<TutorialGroupSession> sessions = new ArrayList<>();
+        ZonedDateTime sessionStart = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), LocalTime.parse(tutorialGroupSchedule.getStartTime()),
+                ZoneId.of(course.getTimeZone()));
+        ZonedDateTime sessionEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), LocalTime.parse(tutorialGroupSchedule.getEndTime()),
+                ZoneId.of(course.getTimeZone()));
+        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), DateUtil.END_OF_DAY, ZoneId.of(course.getTimeZone()));
+
+        while (sessionEnd.isBefore(periodEnd) || sessionEnd.isEqual(periodEnd)) {
+            TutorialGroupSession session = createTutorialGroupSession(sessionStart, sessionEnd, tutorialGroupSchedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE,
+                    tutorialGroupSchedule, tutorialGroup);
+            sessions.add(session);
+            sessionStart = sessionStart.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());
+            sessionEnd = sessionEnd.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());
+        }
 
         tutorialGroupSessionRepository.saveAllAndFlush(sessions);
 

@@ -7,7 +7,7 @@ import { DialogModule } from 'primeng/dialog';
 import dayjs from 'dayjs/esm';
 import { MockTranslateService } from 'src/test/javascript/spec/helpers/mocks/service/mock-translate.service';
 import { PrimeNgDialogStubComponent } from 'src/test/javascript/spec/helpers/stubs/tutorialgroup/prime-ng-dialog-stub.component';
-import { TutorialGroupSessionDTO } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/tutorialgroup/shared/entities/tutorial-group-session.model';
 import { ValidationStatus } from 'app/shared/util/validation';
 import { TutorialSessionCreateOrEditModalComponent } from './tutorial-session-create-or-edit-modal.component';
 
@@ -17,7 +17,7 @@ describe('TutorialSessionCreateOrEditModalComponent', () => {
     let component: TutorialSessionCreateOrEditModalComponent;
     let fixture: ComponentFixture<TutorialSessionCreateOrEditModalComponent>;
 
-    const existingSession = new TutorialGroupSessionDTO({
+    const existingSession = new TutorialGroupSession({
         id: 17,
         start: dayjs('2026-04-20T10:15:00').toISOString(),
         end: dayjs('2026-04-20T11:45:00').toISOString(),

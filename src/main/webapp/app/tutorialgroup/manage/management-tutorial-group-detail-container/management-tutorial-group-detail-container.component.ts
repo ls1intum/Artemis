@@ -15,7 +15,6 @@ import {
 import { TutorialGroupSessionApiService } from 'app/openapi/api/tutorialGroupSessionApi.service';
 import { TutorialGroupApiService } from 'app/openapi/api/tutorialGroupApi.service';
 import { LoadingIndicatorOverlayComponent } from 'app/shared/loading-indicator-overlay/loading-indicator-overlay.component';
-import { TutorialGroupSessionService } from 'app/tutorialgroup/manage/service/tutorial-group-session.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getRouteData } from 'app/shared/route/getRouteData';
 import { TutorialGroupCourseAndGroupService } from 'app/tutorialgroup/shared/service/tutorial-group-course-and-group.service';
@@ -35,7 +34,6 @@ export class ManagementTutorialGroupDetailContainerComponent {
     private tutorialGroupCourseAndGroupService = inject(TutorialGroupCourseAndGroupService);
     private tutorialGroupSessionApiService = inject(TutorialGroupSessionApiService);
     private tutorialGroupApiService = inject(TutorialGroupApiService);
-    private tutorialGroupSessionService = inject(TutorialGroupSessionService);
     private alertService = inject(AlertService);
     private accountService = inject(AccountService);
     private tutorialGroupId = getNumericPathVariableSignal(this.route, 'tutorialGroupId');
@@ -91,8 +89,8 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const courseId = cancellationEvent.courseId;
         const tutorialGroupId = cancellationEvent.tutorialGroupId;
         const tutorialGroupSessionId = cancellationEvent.tutorialGroupSessionId;
-        this.tutorialGroupSessionService
-            .cancel(courseId, tutorialGroupId, tutorialGroupSessionId)
+        this.tutorialGroupSessionApiService
+            .cancelSession(courseId, tutorialGroupId, tutorialGroupSessionId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
@@ -111,8 +109,8 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const courseId = cancellationEvent.courseId;
         const tutorialGroupId = cancellationEvent.tutorialGroupId;
         const tutorialGroupSessionId = cancellationEvent.tutorialGroupSessionId;
-        this.tutorialGroupSessionService
-            .activate(courseId, tutorialGroupId, tutorialGroupSessionId)
+        this.tutorialGroupSessionApiService
+            .activateSession(courseId, tutorialGroupId, tutorialGroupSessionId)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
@@ -132,11 +130,12 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const tutorialGroupId = updateEvent.tutorialGroupId;
         const tutorialGroupSessionId = updateEvent.tutorialGroupSessionId;
         const updateTutorialGroupSessionDTO = updateEvent.updateTutorialGroupSessionDTO;
-        this.tutorialGroupSessionService
-            .update(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionDTO)
+        this.tutorialGroupSessionApiService
+            .updateSession(courseId, tutorialGroupId, tutorialGroupSessionId, updateTutorialGroupSessionDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
+                    // TODO: use response
                     this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.isActionLoading.set(false);
                 },
@@ -152,11 +151,12 @@ export class ManagementTutorialGroupDetailContainerComponent {
         const courseId = createEvent.courseId;
         const tutorialGroupId = createEvent.tutorialGroupId;
         const createTutorialGroupSessionDTO = createEvent.createTutorialGroupSessionDTO;
-        this.tutorialGroupSessionService
-            .create(courseId, tutorialGroupId, createTutorialGroupSessionDTO)
+        this.tutorialGroupSessionApiService
+            .createSession(courseId, tutorialGroupId, createTutorialGroupSessionDTO)
             .pipe(takeUntilDestroyed(this.destroyRef))
             .subscribe({
                 next: () => {
+                    // TODO: use response
                     this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.isActionLoading.set(false);
                 },

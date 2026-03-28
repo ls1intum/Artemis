@@ -26,6 +26,7 @@ import de.tum.cit.aet.artemis.communication.repository.conversation.ChannelRepos
 import de.tum.cit.aet.artemis.communication.test_repository.ConversationParticipantTestRepository;
 import de.tum.cit.aet.artemis.communication.test_repository.PostTestRepository;
 import de.tum.cit.aet.artemis.communication.util.ConversationUtilService;
+import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.test_repository.CourseTestRepository;
@@ -113,18 +114,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected CourseTestService courseTestService;
 
-    Long courseId;
-
-    Long configurationId;
-
-    String timeZone = "Europe/Bucharest";
-
-    String testPrefix = "";
-
-    Integer defaultSessionStartHour = 10;
-
-    Integer defaultSessionEndHour = 12;
-
     static final LocalDate AUGUST_FIRST_MONDAY = LocalDate.of(2022, 8, 1);
 
     static final LocalDate AUGUST_SECOND_MONDAY = LocalDate.of(2022, 8, 8);
@@ -175,12 +164,26 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime SEPTEMBER_FIRST_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
 
+    Course course;
+
+    Long courseId;
+
+    Long configurationId;
+
+    String timeZone = "Europe/Bucharest";
+
+    String testPrefix = "";
+
+    Integer defaultSessionStartHour = 10;
+
+    Integer defaultSessionEndHour = 12;
+
     @BeforeEach
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
         var course = courseUtilService.createCourse();
         course.setTimeZone(timeZone);
-        courseRepository.save(course);
+        this.course = courseRepository.save(course);
         courseId = course.getId();
         configurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
     }
@@ -274,42 +277,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return tutorialGroup;
     }
 
-    /**
-     * Builds a TutorialGroupDTO for API requests (without schedule).
-     * Uses the same structure as the entity but only includes required fields.
-     */
-    /*
-     * OldCreateTutorialGroupDTO buildTutorialGroupDTOWithoutSchedule(String tutorLogin) {
-     * return new OldCreateTutorialGroupDTO(null, // id
-     * generateRandomTitle(), new OldCreateTutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, // additionalInformation
-     * 15, // capacity
-     * false, // isOnline
-     * Language.ENGLISH.name(), // language
-     * "Garching" // campus
-     * );
-     * }
-     */
-
-    /**
-     * Builds a TutorialGroupDTO with an ID set (for testing creation with ID should fail).
-     */
-    /*
-     * OldCreateTutorialGroupDTO buildTutorialGroupDTOWithId(Long id, String tutorLogin) {
-     * return new OldCreateTutorialGroupDTO(id, generateRandomTitle(), new OldCreateTutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false,
-     * Language.ENGLISH.name(), "Garching");
-     * }
-     */
-
-    /**
-     * Builds a TutorialGroupDTO with a specific title.
-     */
-    /*
-     * OldCreateTutorialGroupDTO buildTutorialGroupDTOWithTitle(String title, String tutorLogin) {
-     * return new OldCreateTutorialGroupDTO(null, title, new OldCreateTutorialGroupDTO.TeachingAssistantDTO(testPrefix + tutorLogin), null, 15, false, Language.ENGLISH.name(),
-     * "Garching");
-     * }
-     */
-
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
         var course = courseRepository.findByIdElseThrow(courseId);
         var newTutorialGroup = new TutorialGroup();
@@ -322,22 +289,16 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return newTutorialGroup;
     }
 
-    /*
-     * TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
-     * // First create the tutorial group using DTO (create endpoint doesn't support schedules)
-     * var tutorialGroupDTO = buildTutorialGroupDTOWithoutSchedule(tutorLogin);
-     * var persistedTutorialGroup = request.postWithResponseBody(getTutorialGroupsPath(courseId), tutorialGroupDTO, TutorialGroup.class, HttpStatus.CREATED);
-     * var persistedTutorialGroupId = persistedTutorialGroup.getId();
-     * // Then update the tutorial group to add the schedule
-     * var scheduleToCreate = this.buildExampleSchedule(FIRST_AUGUST_MONDAY_00_00.toLocalDate(), SECOND_AUGUST_MONDAY_00_00.toLocalDate());
-     * persistedTutorialGroup.setTutorialGroupSchedule(scheduleToCreate);
-     * var updateDTO = new TutorialGroupUpdateDTO(persistedTutorialGroup, null, false);
-     * request.putWithResponseBody(getTutorialGroupsPath(courseId, persistedTutorialGroupId), updateDTO, TutorialGroup.class, HttpStatus.OK);
-     * var newTutorialGroup = tutorialGroupTestRepository.findByIdElseThrow(persistedTutorialGroupId);
-     * this.assertTutorialGroupPersistedWithSchedule(newTutorialGroup, scheduleToCreate);
-     * return newTutorialGroup;
-     * }
-     */
+    TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
+        var tutor = userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow();
+        var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(courseId, "TG Mo 13", "SampleInfo1", 15, false, "Garching", Language.ENGLISH.name(), tutor,
+                Set.of());
+        TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "10:00:00", "12:00:00", 1, AUGUST_FIRST_MONDAY.toString(),
+                AUGUST_SECOND_MONDAY.toString(), "LoremIpsum");
+        tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(course, tutorialGroup, schedule);
+        this.assertTutorialGroupPersistedWithSchedule(tutorialGroup, schedule);
+        return tutorialGroup;
+    }
 
     List<TutorialGroupSession> getTutorialGroupSessionsAscending(Long tutorialGroupId) {
         var sessions = new ArrayList<>(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId).stream().toList());
