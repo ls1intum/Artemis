@@ -3,6 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -24,6 +25,7 @@ import {
     faPlus,
     faThLarge,
     faTimes,
+    faUpload,
     faUserSlash,
     faUserTimes,
     faUsersGear,
@@ -32,7 +34,7 @@ import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { UsersImportDialogComponent } from 'app/shared/user-import/dialog/users-import-dialog.component';
-import { StudentsUploadImagesButtonComponent } from './upload-images/students-upload-images-button.component';
+import { StudentsUploadImagesDialogComponent } from './upload-images/students-upload-images-dialog.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { NgxDatatableModule } from '@siemens/ngx-datatable';
@@ -61,7 +63,6 @@ const cssClasses = {
         TranslateDirective,
         UsersImportDialogComponent,
         StudentsExportDialogComponent,
-        StudentsUploadImagesButtonComponent,
         StudentsRoomDistributionDialogComponent,
         FaIconComponent,
         RouterLink,
@@ -87,10 +88,12 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
     private deleteDialogService = inject(DeleteDialogService);
+    private modalService = inject(NgbModal);
 
     dataTable = viewChild.required(DataTableComponent);
-    usersImportDialog = viewChild<UsersImportDialogComponent>('usersImportDialog');
-    studentsExportDialog = viewChild<StudentsExportDialogComponent>('studentsExportDialog');
+    usersImportDialog = viewChild.required(UsersImportDialogComponent);
+    studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
+    studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
 
     courseId: number;
     exam: Exam;
@@ -121,21 +124,23 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faThLarge = faThLarge;
+    protected readonly faUpload = faUpload;
     protected readonly faChair = faChair;
     protected readonly faFileExport = faFileExport;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faUsersGear = faUsersGear;
 
     manageStudentsMenuActions: MenuItem[] = [
-        {
-            items: [
-                { label: 'Add students', faIcon: faPlus },
-                { label: 'Import users', faIcon: faFileImport, command: () => this.openImportUsersDialog() },
-                { label: 'Export users', faIcon: faFileExport, command: () => this.openExportUsersDialog() },
-                { label: 'Register course students', faIcon: faUsersGear, command: () => this.registerAllStudentsFromCourse() },
-                { label: 'Remove all students', faIcon: faUserSlash, command: () => this.openRemoveAllStudentsDialog() },
-            ],
-        },
+        { label: 'Add students', faIcon: faPlus },
+        { label: 'Import users', faIcon: faFileImport, command: () => this.openImportUsersDialog() },
+        { label: 'Export users', faIcon: faFileExport, command: () => this.openExportUsersDialog() },
+        { label: 'Register course students', faIcon: faPlus, command: () => this.registerAllStudentsFromCourse() },
+        { label: 'Remove all students', faIcon: faUserSlash, styleClass: 'text-danger', command: () => this.openRemoveAllStudentsDialog() },
+    ];
+
+    examLogisticsMenuActions: MenuItem[] = [
+        { label: 'Upload images', faIcon: faUpload, command: () => this.openUploadImagesDialog() },
+        { label: 'Distribute', faIcon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
     ];
 
     openImportUsersDialog() {
@@ -164,6 +169,16 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
             dialogError: this.dialogError$,
             requireConfirmationOnlyForAdditionalChecks: false,
         });
+    }
+
+    openUploadImagesDialog() {
+        const modalRef: NgbModalRef = this.modalService.open(StudentsUploadImagesDialogComponent, { keyboard: true, size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.exam = this.exam;
+        modalRef.result.then(
+            () => this.reloadExamWithRegisteredUsers(),
+            () => {},
+        );
     }
 
     ngOnInit() {

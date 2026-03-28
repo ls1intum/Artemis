@@ -15,13 +15,6 @@
                     )
                 </span>
             }
-            @if (!isTestExam) {
-                <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
-                <button class="btn btn-primary ms-auto" (click)="studentsRoomDistributionDialog.openDialog()">
-                    <fa-icon [icon]="faThLarge" />
-                    <span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
-                </button>
-            }
             @if (!isTestExam && hasExamStarted) {
                 <a
                     [routerLink]="['/course-management', courseId, 'exams', exam.id, 'students', 'verify-attendance']"
@@ -39,17 +32,33 @@
         <ng-template #start>
             <p-menu #menu [model]="manageStudentsMenuActions" [popup]="true" appendTo="body">
                 <ng-template #item let-item>
-                    <a class="p-menu-item-link">
+                    <span class="p-menu-item-link" [class]="item.styleClass || ''">
                         @if (item.faIcon) {
-                            <fa-icon [icon]="item.faIcon" class="me-2" />
+                            <fa-icon [icon]="item.faIcon" class="me-1" />
                         }
                         <span class="p-menu-item-label">{{ item.label }}</span>
-                    </a>
+                    </span>
                 </ng-template>
             </p-menu>
-            <button pButton [disabled]="isTestExam" size="small" (click)="menu.toggle($event)">
+            <button pButton [disabled]="isTestExam" class="me-2" size="small" (click)="menu.toggle($event)">
                 <fa-icon [icon]="faUsersGear" />
                 Manage students
+                <fa-icon [icon]="faChevronDown" />
+            </button>
+
+            <p-menu #logisticsMenu [model]="examLogisticsMenuActions" [popup]="true" appendTo="body">
+                <ng-template #item let-item>
+                    <span class="p-menu-item-link" [class]="item.styleClass || ''">
+                        @if (item.faIcon) {
+                            <fa-icon [icon]="item.faIcon" class="me-1" />
+                        }
+                        <span class="p-menu-item-label">{{ item.label }}</span>
+                    </span>
+                </ng-template>
+            </p-menu>
+            <button pButton [disabled]="isTestExam" size="small" (click)="logisticsMenu.toggle($event)">
+                <fa-icon [icon]="faThLarge" />
+                Exam logistics
                 <fa-icon [icon]="faChevronDown" />
             </button>
         </ng-template>
@@ -273,12 +282,7 @@
     </jhi-data-table>
 </div>
 
-<jhi-students-room-distribution-dialog
-    [courseId]="courseId"
-    [exam]="exam"
-    (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()"
-    #studentsRoomDistributionDialog
-/>
-<jhi-users-import-dialog #usersImportDialog [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importCompleted)="reloadExamWithRegisteredUsers()" />
-<jhi-students-export-dialog #studentsExportDialog [courseId]="courseId" [exam]="exam" />
+<jhi-students-room-distribution-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" />
+<jhi-users-import-dialog [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importCompleted)="reloadExamWithRegisteredUsers()" />
+<jhi-students-export-dialog [courseId]="courseId" [exam]="exam" />
 <jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
