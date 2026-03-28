@@ -1477,7 +1477,3 @@ Note: This class assumes that the scrollbar is already present (e.g. overflow-y 
     background: var(--module-bg);
     transition: max-width 250ms ease-out;
 }
-
-html {
-    scroll-behavior: smooth;
-}

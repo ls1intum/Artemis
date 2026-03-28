@@ -195,6 +195,7 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
 
         .bottom-links {
             display: flex;
+            flex-wrap: wrap;
             gap: 40px;
             align-items: center;
         }
@@ -241,6 +242,11 @@ import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-da
             .link-columns {
                 flex-wrap: wrap;
                 gap: 24px;
+            }
+
+            .bottom-links {
+                gap: 16px;
+                justify-content: center;
             }
 
             .footer-bottom {

@@ -98,7 +98,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
 
     redirectUserToLoginThenTargetLink(error: any): void {
         // Redirect the user to the login page
-        this.router.navigate(['/']).then(() => {
+        this.router.navigate(['/sign-in']).then(() => {
             // After navigating to the login page, set up a listener for when the user logs in
             this.accountService.getAuthenticationState().subscribe((user) => {
                 if (user) {
