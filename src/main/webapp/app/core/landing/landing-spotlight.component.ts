@@ -115,6 +115,7 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 8px;
             height: 100%;
             overflow: hidden;
             transition: opacity 0.3s ease;
@@ -127,9 +128,8 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
         .spotlight-media {
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            border-radius: 8px;
-            min-height: 400px;
+            object-fit: contain;
+            min-height: 25rem;
             border: 0;
             box-shadow: none;
         }
@@ -156,14 +156,14 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
             <div class="spotlight-left">
                 <div class="spotlight-text">
                     @for (step of steps; track step.titleKey; let i = $index) {
-                        <div [class.active]="i === activeIndex()">
+                        <div [class.active]="i === activeIndex()" [attr.aria-hidden]="i !== activeIndex() ? true : null" [attr.tabindex]="i === activeIndex() ? 0 : -1">
                             <h2 class="spotlight-title">{{ step.titleKey | artemisTranslate }}</h2>
                             <p class="spotlight-description">{{ step.descriptionKey | artemisTranslate }}</p>
                         </div>
                     }
                 </div>
                 <div class="stepper-nav">
-                    <button class="stepper-btn" (click)="prev()" aria-label="Previous slide">
+                    <button class="stepper-btn" (click)="prev()" [attr.aria-label]="'landing.spotlight.carousel.previous' | artemisTranslate">
                         <fa-icon [icon]="faChevronLeft" />
                     </button>
                     <div class="stepper-dots">
@@ -172,12 +172,12 @@ import { SPOTLIGHT_STEPS } from 'app/core/landing/landing-data';
                                 class="dot"
                                 [class.active]="i === activeIndex()"
                                 (click)="goTo(i)"
-                                [attr.aria-label]="'Slide ' + (i + 1)"
+                                [attr.aria-label]="'landing.spotlight.carousel.slide' | artemisTranslate: { n: i + 1 }"
                                 [attr.aria-current]="i === activeIndex() ? 'step' : undefined"
                             ></button>
                         }
                     </div>
-                    <button class="stepper-btn" (click)="next()" aria-label="Next slide">
+                    <button class="stepper-btn" (click)="next()" [attr.aria-label]="'landing.spotlight.carousel.next' | artemisTranslate">
                         <fa-icon [icon]="faChevronRight" />
                     </button>
                 </div>
@@ -239,6 +239,9 @@ export class LandingSpotlightComponent implements OnInit {
     }
 
     onVideoEnded(): void {
+        if (this.fading()) {
+            return;
+        }
         if (!this.currentStep().videoSrc) {
             return;
         }

@@ -29,6 +29,11 @@
                     "title": "Lernpfade, die sich an jeden Studierenden anpassen",
                     "description": "Kompetenzen definieren, mit Vorlesungen und Übungen verknüpfen und Artemis personalisierte Lernpfade basierend auf dem Fortschritt jedes Studierenden erstellen lassen — gezielte Unterstützung für Schwächere und Freiraum für Fortgeschrittene."
                 }
+            },
+            "carousel": {
+                "previous": "Vorherige Folie",
+                "next": "Nächste Folie",
+                "slide": "Folie {{ n }}"
             }
         },
         "socialProof": {

@@ -2,8 +2,9 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faLink } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
+import { FOOTER_LINK_GROUPS, FooterLinkGroup } from 'app/core/landing/landing-data';
 
 @Component({
     selector: 'jhi-landing-footer',
@@ -333,11 +334,11 @@ import { FOOTER_LINK_GROUPS } from 'app/core/landing/landing-data';
     `,
 })
 export class LandingFooterComponent {
-    protected readonly faLink = faLink;
+    protected readonly faLink: IconDefinition = faLink;
 
-    private router = inject(Router);
-    linkGroups = FOOTER_LINK_GROUPS;
-    currentYear = new Date().getFullYear();
+    private router: Router = inject(Router);
+    linkGroups: FooterLinkGroup[] = FOOTER_LINK_GROUPS;
+    currentYear: number = new Date().getFullYear();
 
     navigateToLogin(): void {
         this.router.navigateByUrl('/sign-in');
