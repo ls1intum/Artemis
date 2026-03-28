@@ -1,0 +1,16 @@
+jhi-exam-students-v1 {
+    .v1-search-wrapper {
+        .already-registered {
+            opacity: 0.65;
+        }
+
+        .search-info {
+            display: none;
+            margin-top: 0.25rem;
+
+            &.active {
+                display: block;
+            }
+        }
+    }
+}

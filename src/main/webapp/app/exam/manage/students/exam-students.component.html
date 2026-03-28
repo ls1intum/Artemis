@@ -69,6 +69,18 @@
             }
         </div>
     </div>
+
+    <p-toolbar class="mb-3">
+        <ng-template #start>
+            <p-menu #menu [model]="manageStudentsMenuActions" [popup]="true" appendTo="body" />
+            <button pButton size="small" (click)="menu.toggle($event)">
+                <fa-icon [icon]="faUsersGear" />
+                Manage students
+                <fa-icon [icon]="faChevronDown" />
+            </button>
+        </ng-template>
+    </p-toolbar>
+
     <jhi-data-table
         [isLoading]="isLoading"
         [isSearching]="isSearching"

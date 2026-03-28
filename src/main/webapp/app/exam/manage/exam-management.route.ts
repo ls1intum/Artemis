@@ -153,6 +153,21 @@ export const examManagementRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/students-v1',
+        loadComponent: () => import('app/exam/manage/students-v1/exam-students-v1.component').then((m) => m.ExamStudentsV1Component),
+        resolve: {
+            exam: ExamResolve,
+        },
+        data: {
+            authorities: IS_AT_LEAST_INSTRUCTOR,
+            pageTitle: 'artemisApp.examManagement.title',
+            requestOptions: {
+                withStudents: true,
+            },
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/students/verify-attendance',
         loadComponent: () =>
             import('app/exam/manage/students/verify-attendance-check/exam-students-attendance-check.component').then((m) => m.ExamStudentsAttendanceCheckComponent),
