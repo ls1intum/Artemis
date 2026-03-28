@@ -15,7 +15,6 @@ import { Conversation } from 'app/communication/shared/entities/conversation/con
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-
 const TITLE_MAX_LENGTH = 200;
 
 export interface ContextSelectorOption {
@@ -90,9 +89,10 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     resetFormGroup(): void {
         this.pageType = this.metisService.getPageType();
         this.similarPosts = [];
-        const posting = this.posting()!;
-        posting.title = posting.title ?? '';
-        this.posting.set(posting);
+        const posting = this.posting();
+        if (posting) {
+            posting.title = posting.title ?? '';
+        }
         this.resetCurrentContextSelectorOption();
         this.formGroup = this.formBuilder.group(this.postValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {

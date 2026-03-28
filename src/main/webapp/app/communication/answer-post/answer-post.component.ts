@@ -28,6 +28,7 @@ import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { EmojiPickerComponent } from '../emoji/emoji-picker.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { captureException } from '@sentry/angular';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 import { PostingReactionsBarComponent } from 'app/communication/posting-reactions-bar/posting-reactions-bar.component';
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { PostingContentComponent } from 'app/communication/posting-content/posting-content.components';
@@ -109,7 +110,13 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
     }
 
     onReactionsUpdated(updatedReactions: Reaction[]) {
-        this.posting.set({ ...this.posting()!, reactions: updatedReactions });
+        const current = this.posting();
+        if (!current) {
+            return;
+        }
+        const updated = deepClone(current);
+        updated.reactions = updatedReactions;
+        this.posting.set(updated);
     }
 
     /**

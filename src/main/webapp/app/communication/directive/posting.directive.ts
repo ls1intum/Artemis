@@ -8,6 +8,7 @@ import { isMessagingEnabled } from 'app/core/course/shared/entities/course.model
 import { OneToOneChatService } from 'app/communication/conversations/service/one-to-one-chat.service';
 import { MetisConversationService } from 'app/communication/service/metis-conversation.service';
 import { Router } from '@angular/router';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Directive()
 export abstract class PostingDirective<T extends Posting> implements OnInit, OnDestroy {
@@ -160,15 +161,20 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
 
     protected toggleSavePost() {
         const posting = this.posting();
-        if (posting) {
-            if (posting.isSaved) {
-                this.metisService.removeSavedPost(posting);
-                posting.isSaved = false;
-            } else {
-                this.metisService.savePost(posting);
-                posting.isSaved = true;
-            }
-            this.posting.set(posting);
+        if (!posting) {
+            return;
+        }
+
+        if (posting.isSaved) {
+            this.metisService.removeSavedPost(posting);
+            const updated = deepClone(posting);
+            updated.isSaved = false;
+            this.posting.set(updated);
+        } else {
+            this.metisService.savePost(posting);
+            const updated = deepClone(posting);
+            updated.isSaved = true;
+            this.posting.set(updated);
         }
     }
 

@@ -95,10 +95,11 @@ describe('AnswerPostCreateEditModalComponent', () => {
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
-        component.posting.set(metisResolvingAnswerPostUser1);
+        const createPostingMock = vi.spyOn(component, 'createPosting');
+        component.posting.set(metisAnswerPostToCreateUser1);
         fixture.detectChanges();
         component.confirm();
-        expect(updatePostingMock).toHaveBeenCalledOnce();
+        expect(createPostingMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service with created answer post', () => {

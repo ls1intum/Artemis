@@ -16,15 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ProfilePictureComponent } from 'app/shared/profile-picture/profile-picture.component';
 
 @Component({
-    template: `
-        <jhi-course-users-selector
-            [disabled]="disabled"
-            [courseId]="courseId"
-            [rolesToAllowSearchingIn]="rolesToAllowSearchingIn"
-            [multiSelect]="multiSelect"
-            [showUserList]="showUserList"
-        />
-    `,
+    template: ` <jhi-course-users-selector [courseId]="courseId" [rolesToAllowSearchingIn]="rolesToAllowSearchingIn" [multiSelect]="multiSelect" [showUserList]="showUserList" />`,
     imports: [CourseUsersSelectorComponent],
 })
 class WrapperComponent {

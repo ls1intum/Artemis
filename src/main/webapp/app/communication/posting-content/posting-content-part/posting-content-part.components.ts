@@ -88,15 +88,22 @@ export class PostingContentPartComponent implements OnInit {
     processedContentBeforeReference: string;
     processedContentAfterReference: string;
 
+    private initialized = false;
+
     constructor() {
         effect(() => {
             this.postingContentPart();
-            untracked(() => this.processContent());
+            untracked(() => {
+                if (this.initialized) {
+                    this.processContent();
+                }
+            });
         });
     }
 
     ngOnInit() {
         this.processContent();
+        this.initialized = true;
     }
 
     /**

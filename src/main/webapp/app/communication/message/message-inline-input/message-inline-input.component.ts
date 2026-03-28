@@ -86,7 +86,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
     createPosting(): void {
         // Wait for the markdown editor's 200ms textChangedEmitDelay to complete
         setTimeout(() => {
-            const posting = this.posting()!;
+            const posting = this.posting();
+            if (!posting) {
+                this.isLoading = false;
+                return;
+            }
             posting.content = this.formGroup.get('content')?.value;
             this.metisService.createPost(posting).subscribe({
                 next: (post: Post) => {
@@ -106,7 +110,11 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        const posting = this.posting()!;
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
         posting.content = this.formGroup.get('content')?.value;
         this.isModalOpen.emit();
         this.metisService.updatePost(posting).subscribe({

@@ -380,7 +380,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, Aft
             this.sortedAnswerPosts = [];
             return;
         }
-        this.sortedAnswerPosts = posting.answers.sort(
+        this.sortedAnswerPosts = [...posting.answers].sort(
             (answerPostA, answerPostB) =>
                 Number(answerPostB.resolvesPost) - Number(answerPostA.resolvesPost) || answerPostA.creationDate!.valueOf() - answerPostB.creationDate!.valueOf(),
         );

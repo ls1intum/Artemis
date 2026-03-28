@@ -61,7 +61,6 @@ describe('PostCreateEditModalComponent', () => {
     it('should init modal with correct context, title and content for post without id', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting.set({ ...metisPostToCreateUser1 });
-        component.ngOnInit();
         fixture.detectChanges();
         expect(component.pageType).toEqual(PageType.OVERVIEW);
         expect(component.modalTitle).toBe('artemisApp.metis.createModalTitlePost');
@@ -78,8 +77,10 @@ describe('PostCreateEditModalComponent', () => {
     it('should reset context selection on changes', () => {
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting.set({ ...metisPostTechSupport });
-        component.ngOnInit();
+        fixture.detectChanges();
         component.currentContextSelectorOption.conversation = { id: 1 } as Channel;
+        // Trigger a posting change to reset context
+        component.posting.set({ ...metisPostTechSupport });
         fixture.detectChanges();
         // change to Organization as course-wide topic should be reset to Tech Support
         expect(component.currentContextSelectorOption).toEqual({ conversation: metisPostTechSupport.conversation });
@@ -117,7 +118,6 @@ describe('PostCreateEditModalComponent', () => {
         metisServiceIsAtLeastInstructorStub.mockReturnValue(true);
         metisServiceGetPageTypeMock.mockReturnValue(PageType.OVERVIEW);
         component.posting.set(metisPostToCreateUser1);
-        component.ngOnInit();
         fixture.detectChanges();
         const newContent = 'New Content';
         const newTitle = 'New Title';

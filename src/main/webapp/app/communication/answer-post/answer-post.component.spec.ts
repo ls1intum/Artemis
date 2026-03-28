@@ -204,6 +204,7 @@ describe('AnswerPostComponent', () => {
     });
 
     it('should update reactions when onReactionsUpdated is called', () => {
+        component.posting.set(metisResolvingAnswerPostUser1);
         const updatedReactions = [{ id: 1, emojiId: 'smile', userId: 2 } as Reaction];
         component.onReactionsUpdated(updatedReactions);
 

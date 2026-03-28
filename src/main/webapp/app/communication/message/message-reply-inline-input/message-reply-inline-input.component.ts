@@ -70,7 +70,10 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      */
     resetFormGroup(content: string | undefined = undefined): void {
         this.draftMessageSubscription?.unsubscribe();
-        const posting = this.posting()!;
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
 
         if (content !== undefined) {
             posting.content = content;
@@ -96,7 +99,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        const posting = this.posting()!;
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
         posting.content = this.formGroup.get('content')?.value;
         this.metisService.createAnswerPost(posting).subscribe({
             next: (answerPost: AnswerPost) => {
@@ -116,7 +123,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        const posting = this.posting()!;
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
         posting.content = this.formGroup.get('content')?.value;
         this.metisService.updateAnswerPost(posting).subscribe({
             next: () => {
