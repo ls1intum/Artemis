@@ -16,24 +16,10 @@
                 </span>
             }
             @if (!isTestExam) {
-                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importDone)="reloadExamWithRegisteredUsers()" />
-                <button class="btn btn-primary ms-auto" (click)="studentsExportDialog.openDialog()">
-                    <fa-icon [icon]="faFileExport" />
-                    <span jhiTranslate="artemisApp.exam.examUsers.export.buttonTitle"></span>
-                </button>
                 <jhi-student-upload-images-button [courseId]="courseId" [exam]="exam" (uploadDone)="reloadExamWithRegisteredUsers()" />
                 <button class="btn btn-primary ms-auto" (click)="studentsRoomDistributionDialog.openDialog()">
                     <fa-icon [icon]="faThLarge" />
                     <span jhiTranslate="artemisApp.exam.examUsers.roomDistribute"></span>
-                </button>
-                <button
-                    class="btn btn-primary ms-auto"
-                    id="register-course-students"
-                    (click)="registerAllStudentsFromCourse()"
-                    title="{{ 'artemisApp.examManagement.examStudents.registerAllFromCourseTooltip' | artemisTranslate }}"
-                >
-                    <fa-icon [icon]="faPlus" [fixedWidth]="true" />&nbsp;
-                    <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
                 </button>
             }
             @if (!isTestExam && hasExamStarted) {
@@ -46,34 +32,22 @@
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></span>
                 </a>
             }
-            @if (!isTestExam) {
-                <button
-                    [disabled]="isLoading"
-                    [actionType]="ActionType.Remove"
-                    [entityTitle]="exam.title || ''"
-                    [renderButtonText]="false"
-                    [buttonSize]="ButtonSize.MEDIUM"
-                    jhiDeleteButton
-                    class="btn btn-primary ms-auto"
-                    deleteQuestion="artemisApp.studentExams.removeAllStudents.question"
-                    (delete)="removeAllStudents($event)"
-                    [dialogError]="dialogError$"
-                    [additionalChecks]="{
-                        deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
-                    }"
-                    deleteConfirmationText="artemisApp.studentExams.removeAllStudents.confirmationText"
-                >
-                    <span jhiTranslate="artemisApp.studentExams.removeAllStudents.title"></span>
-                    <fa-icon [icon]="faUserSlash" />
-                </button>
-            }
         </div>
     </div>
 
     <p-toolbar class="mb-3">
         <ng-template #start>
-            <p-menu #menu [model]="manageStudentsMenuActions" [popup]="true" appendTo="body" />
-            <button pButton size="small" (click)="menu.toggle($event)">
+            <p-menu #menu [model]="manageStudentsMenuActions" [popup]="true" appendTo="body">
+                <ng-template #item let-item>
+                    <a class="p-menu-item-link">
+                        @if (item.faIcon) {
+                            <fa-icon [icon]="item.faIcon" class="me-2" />
+                        }
+                        <span class="p-menu-item-label">{{ item.label }}</span>
+                    </a>
+                </ng-template>
+            </p-menu>
+            <button pButton [disabled]="isTestExam" size="small" (click)="menu.toggle($event)">
                 <fa-icon [icon]="faUsersGear" />
                 Manage students
                 <fa-icon [icon]="faChevronDown" />
@@ -305,5 +279,6 @@
     (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()"
     #studentsRoomDistributionDialog
 />
-<jhi-students-export-dialog [courseId]="courseId" [exam]="exam" #studentsExportDialog />
+<jhi-users-import-dialog #usersImportDialog [courseId]="courseId" [exam]="exam" [examUserMode]="true" (importCompleted)="reloadExamWithRegisteredUsers()" />
+<jhi-students-export-dialog #studentsExportDialog [courseId]="courseId" [exam]="exam" />
 <jhi-students-reseating-dialog [courseId]="courseId" [exam]="exam" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />

@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
@@ -11,7 +11,7 @@ import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/shared/util/icons.utils';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
-import { ButtonSize, ButtonType } from 'app/shared/components/buttons/button/button.component';
+import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
 import {
@@ -19,11 +19,11 @@ import {
     faCheck,
     faChevronDown,
     faFileExport,
+    faFileImport,
     faInfoCircle,
     faPlus,
     faThLarge,
     faTimes,
-    faUpload,
     faUserSlash,
     faUserTimes,
     faUsersGear,
@@ -31,7 +31,7 @@ import {
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
-import { UsersImportButtonComponent } from 'app/shared/user-import/button/users-import-button.component';
+import { UsersImportDialogComponent } from 'app/shared/user-import/dialog/users-import-dialog.component';
 import { StudentsUploadImagesButtonComponent } from './upload-images/students-upload-images-button.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
@@ -45,6 +45,7 @@ import { Toolbar } from 'primeng/toolbar';
 import { Menu } from 'primeng/menu';
 import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
+import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -58,7 +59,7 @@ const cssClasses = {
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,
-        UsersImportButtonComponent,
+        UsersImportDialogComponent,
         StudentsExportDialogComponent,
         StudentsUploadImagesButtonComponent,
         StudentsRoomDistributionDialogComponent,
@@ -75,8 +76,6 @@ const cssClasses = {
     ],
 })
 export class ExamStudentsComponent implements OnInit, OnDestroy {
-    protected readonly ButtonType = ButtonType;
-    protected readonly ButtonSize = ButtonSize;
     protected readonly ActionType = ActionType;
     protected readonly missingImage = '/content/images/missing_image.png';
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
@@ -87,31 +86,11 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private userService = inject(UserService);
     private accountService = inject(AccountService);
     private studentExamService = inject(StudentExamService);
+    private deleteDialogService = inject(DeleteDialogService);
 
     dataTable = viewChild.required(DataTableComponent);
-
-    readonly manageStudentsMenuActions: MenuItem[] = [
-        {
-            label: 'test',
-            items: [
-                {
-                    label: 'Add students',
-                },
-                {
-                    label: 'Import users',
-                },
-                {
-                    label: 'Export users',
-                },
-                {
-                    label: 'Register course students',
-                },
-                {
-                    label: 'Remove all students',
-                },
-            ],
-        },
-    ];
+    usersImportDialog = viewChild<UsersImportDialogComponent>('usersImportDialog');
+    studentsExportDialog = viewChild<StudentsExportDialogComponent>('studentsExportDialog');
 
     courseId: number;
     exam: Exam;
@@ -139,7 +118,6 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faUserSlash = faUserSlash;
     protected readonly faUserTimes = faUserTimes;
     protected readonly faInfoCircle = faInfoCircle;
-    protected readonly faUpload = faUpload;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
     protected readonly faThLarge = faThLarge;
@@ -147,6 +125,46 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faFileExport = faFileExport;
     protected readonly faChevronDown = faChevronDown;
     protected readonly faUsersGear = faUsersGear;
+
+    manageStudentsMenuActions: MenuItem[] = [
+        {
+            items: [
+                { label: 'Add students', faIcon: faPlus },
+                { label: 'Import users', faIcon: faFileImport, command: () => this.openImportUsersDialog() },
+                { label: 'Export users', faIcon: faFileExport, command: () => this.openExportUsersDialog() },
+                { label: 'Register course students', faIcon: faUsersGear, command: () => this.registerAllStudentsFromCourse() },
+                { label: 'Remove all students', faIcon: faUserSlash, command: () => this.openRemoveAllStudentsDialog() },
+            ],
+        },
+    ];
+
+    openImportUsersDialog() {
+        this.usersImportDialog()?.open();
+    }
+
+    openExportUsersDialog() {
+        this.studentsExportDialog()?.openDialog();
+    }
+
+    openRemoveAllStudentsDialog() {
+        const removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
+        removeAllStudentsEmitter.subscribe((event) => this.removeAllStudents(event));
+
+        this.deleteDialogService.openDeleteDialog({
+            entityTitle: this.exam.title || '',
+            deleteQuestion: 'artemisApp.studentExams.removeAllStudents.question',
+            translateValues: {},
+            deleteConfirmationText: 'artemisApp.studentExams.removeAllStudents.confirmationText',
+            additionalChecks: {
+                deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission',
+            },
+            actionType: ActionType.Remove,
+            buttonType: ButtonType.ERROR,
+            delete: removeAllStudentsEmitter,
+            dialogError: this.dialogError$,
+            requireConfirmationOnlyForAdditionalChecks: false,
+        });
+    }
 
     ngOnInit() {
         this.isLoading = true;
