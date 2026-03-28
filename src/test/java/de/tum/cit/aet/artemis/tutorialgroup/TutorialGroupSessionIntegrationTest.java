@@ -1,103 +1,193 @@
 package de.tum.cit.aet.artemis.tutorialgroup;
 
-import java.util.Set;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalTime;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.cit.aet.artemis.core.domain.Language;
+import de.tum.cit.aet.artemis.core.domain.Course;
+import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
+import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 
 class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
-    Long exampleTutorialGroupId;
-
-    @BeforeEach
-    @Override
-    void setupTestScenario() {
-        super.setupTestScenario();
-        userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
-        var tutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
-        var student1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
-        exampleTutorialGroupId = tutorialGroupUtilService
-                .createAndSaveTutorialGroup(exampleCourseId, "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
-    }
-
     private static final String TEST_PREFIX = "tutorialgroupsession";
+
+    private static final LocalTime SESSION_START = LocalTime.of(10, 0);
+
+    private static final LocalTime SESSION_END = LocalTime.of(12, 0);
+
+    private static final String SESSION_LOCATION = "01.05.12";
 
     @Override
     String getTestPrefix() {
         return TEST_PREFIX;
     }
 
+    private User firstCourseTutor1;
+
+    private User firstCourseTutor2;
+
+    private TutorialGroup firstCourseTutorialGroup1;
+
+    private User secondCourseTutor1;
+
+    private TutorialGroup secondCourseTutorialGroup1;
+
+    @BeforeEach
+    @Override
+    void setupTestScenario() {
+        super.setupTestScenario();
+
+        TestCourseOneUsers testCourseOneUsers = createAndSaveTestCourseOneUsers();
+        firstCourseTutor1 = testCourseOneUsers.tutor1();
+        firstCourseTutor2 = testCourseOneUsers.tutor2();
+        var firstCourseStudent1 = testCourseOneUsers.student1();
+        var firstCourseStudent2 = testCourseOneUsers.student2();
+
+        TestTutorialGroupOneData testTutorialGroupOneData = createAndSaveTestTutorialGroupOneData(firstCourseTutor1, firstCourseStudent1);
+        firstCourseTutorialGroup1 = testTutorialGroupOneData.group();
+        TestTutorialGroupTwoData testTutorialGroupTwoData = createAndSaveTestTutorialGroupTwoData(firstCourseTutor2, firstCourseStudent2);
+
+        TestCourseTwoUsers testCourseTwoUsers = createAndSaveTestCourseTwoUsers();
+        secondCourseTutor1 = testCourseTwoUsers.tutor();
+
+        secondCourseTutorialGroup1 = createAndSaveTestTutorialGroupThreeData(secondCourseTutor1);
+    }
+
     @Nested
     class CreateSessionTests {
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutExistingGroup_shouldReturnNotFound() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/-1/sessions", tutorialGroupSessionDTO, HttpStatus.NOT_FOUND);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR2_LOGIN, roles = "TA")
         void createSession_asTutorOfOtherGroup_shouldReturnAccessForbidden() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.FORBIDDEN);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void createSession_asEditorOfOtherCourse_shouldReturnAccessForbidden() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.FORBIDDEN);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithSessionWithStartNotBeforeEnd_shouldReturnBadRequest() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_END, SESSION_START,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutConfiguration_shouldReturnBadRequest() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutTimeZone_shouldReturnBadRequest() throws Exception {
+            Course course = courseRepository.findByIdElseThrow(exampleCourseId);
+            course.setTimeZone(null);
+            courseRepository.save(course);
 
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithOtherCourse_shouldReturnBadRequest() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithOtherTutorialGroup_shouldReturnBadRequest() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithOverlappingSession_shouldReturnBadRequest() throws Exception {
-
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_AUGUST_MONDAY, LocalTime.of(13, 30),
+                    LocalTime.of(14, 30), SESSION_LOCATION, null);
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions",
+                    tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
         @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
-        void createSession_asTutorOfGroupWithOverlappingFreePeriod_shouldReturnCreated() throws Exception {
-
-        }
-
-        @Test
-        @WithMockUser(username = "someLogin", roles = "TA")
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void createSession_asTutorOfGroupWithoutOverlappingFreePeriod_shouldReturnCreated() throws Exception {
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            TutorialGroupSessionDTO sessionDTO = request.postWithResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions", tutorialGroupSessionDTO,
+                    TutorialGroupSessionDTO.class, HttpStatus.CREATED);
 
+            assertThat(sessionDTO.id()).isNotNull();
+            assertThat(sessionDTO.start()).isEqualTo(getExampleSessionStartOnDate(FIRST_SEPTEMBER_MONDAY));
+            assertThat(sessionDTO.end()).isEqualTo(getExampleSessionEndOnDate(FIRST_SEPTEMBER_MONDAY));
+            assertThat(sessionDTO.location()).isEqualTo(SESSION_LOCATION);
+            assertThat(sessionDTO.isCancelled()).isFalse();
+            assertThat(sessionDTO.locationChanged()).isTrue();
+            assertThat(sessionDTO.timeChanged()).isTrue();
+            assertThat(sessionDTO.dateChanged()).isTrue();
+            assertThat(sessionDTO.attendanceCount()).isNull();
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void createSession_asTutorOfGroupWithOverlappingFreePeriod_shouldReturnCreated() throws Exception {
+            tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_SEPTEMBER_MONDAY_10_00, FIRST_SEPTEMBER_MONDAY_12_00, "Holiday");
+            CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START, SESSION_END,
+                    SESSION_LOCATION, null);
+            TutorialGroupSessionDTO sessionDTO = request.postWithResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions", tutorialGroupSessionDTO,
+                    TutorialGroupSessionDTO.class, HttpStatus.CREATED);
+
+            assertThat(sessionDTO.id()).isNotNull();
+            assertThat(sessionDTO.start()).isEqualTo(getExampleSessionStartOnDate(FIRST_SEPTEMBER_MONDAY));
+            assertThat(sessionDTO.end()).isEqualTo(getExampleSessionEndOnDate(FIRST_SEPTEMBER_MONDAY));
+            assertThat(sessionDTO.location()).isEqualTo(SESSION_LOCATION);
+            assertThat(sessionDTO.isCancelled()).isTrue();
+            assertThat(sessionDTO.locationChanged()).isTrue();
+            assertThat(sessionDTO.timeChanged()).isTrue();
+            assertThat(sessionDTO.dateChanged()).isTrue();
+            assertThat(sessionDTO.attendanceCount()).isNull();
         }
     }
 

@@ -286,6 +286,11 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return new TestTutorialGroupTwoData(tutorialGroup, channel);
     }
 
+    TutorialGroup createAndSaveTestTutorialGroupThreeData(User tutor) {
+        return tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse2.getId(), "TG Wed 10", "SampleInfo3", 15, false, "01.05.12", Language.ENGLISH.name(), tutor,
+                Set.of());
+    }
+
     // === Abstract Methods ===
     abstract String getTestPrefix();
 
