@@ -162,7 +162,8 @@ export class AppComponent implements OnInit, OnDestroy {
     private shouldShowSkeleton(url: string): boolean {
         const isStandaloneProblemStatement = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/problem-statement(\\/\\d*)?(\\/)?');
         const isStandaloneFeedback = url.match('\\/courses\\/\\d+\\/exercises\\/\\d+\\/participations\\/\\d+\\/results\\/\\d+\\/feedback(\\/)?');
-        return !isStandaloneProblemStatement && !isStandaloneFeedback;
+        const isLandingPage = url === '/';
+        return !isStandaloneProblemStatement && !isStandaloneFeedback && !isLandingPage;
     }
 
     private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {

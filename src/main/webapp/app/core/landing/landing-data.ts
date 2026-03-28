@@ -33,25 +33,25 @@ export const SPOTLIGHT_STEPS: SpotlightStep[] = [
     {
         titleKey: 'landing.spotlight.steps.feedback.title',
         descriptionKey: 'landing.spotlight.steps.feedback.description',
-        imageSrc: 'content/images/landing/iris-logo.png',
+        imageSrc: 'content/images/landing/iris.png',
         videoSrc: 'content/images/landing/demo-videos/interactive-exercise.webm',
     },
     {
         titleKey: 'landing.spotlight.steps.tutor.title',
         descriptionKey: 'landing.spotlight.steps.tutor.description',
-        imageSrc: 'content/images/landing/iris-logo.png',
+        imageSrc: 'content/images/landing/iris.png',
         videoSrc: 'content/images/landing/demo-videos/iris-demo.webm',
     },
     {
         titleKey: 'landing.spotlight.steps.transcribedLecture.title',
         descriptionKey: 'landing.spotlight.steps.transcribedLecture.description',
-        imageSrc: 'content/images/landing/iris-logo.png',
+        imageSrc: 'content/images/landing/iris.png',
         videoSrc: 'content/images/landing/demo-videos/transcribed-lecture.webm',
     },
     {
         titleKey: 'landing.spotlight.steps.insights.title',
         descriptionKey: 'landing.spotlight.steps.insights.description',
-        imageSrc: 'content/images/landing/iris-logo.png',
+        imageSrc: 'content/images/landing/iris.png',
         videoSrc: 'content/images/landing/demo-videos/adaptive-learning.webm',
     },
 ];
