@@ -61,7 +61,7 @@ public class HyperionCodeGenerationExecutionService {
 
     private static final Logger log = LoggerFactory.getLogger(HyperionCodeGenerationExecutionService.class);
 
-    private static final int MAX_ITERATIONS = 1;
+    private static final int MAX_ITERATIONS = 2;
 
     private static final long TIMEOUT = 180_000; // 3 minutes
 
