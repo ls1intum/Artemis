@@ -114,63 +114,63 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected CourseTestService courseTestService;
 
-    static final LocalDate AUGUST_FIRST_MONDAY = LocalDate.of(2022, 8, 1);
+    static final LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
-    static final LocalDate AUGUST_SECOND_MONDAY = LocalDate.of(2022, 8, 8);
+    static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
 
-    static final LocalDate AUGUST_THIRD_MONDAY = LocalDate.of(2022, 8, 15);
+    static final LocalDate THIRD_AUGUST_MONDAY = LocalDate.of(2022, 8, 15);
 
-    static final LocalDate AUGUST_FOURTH_MONDAY = LocalDate.of(2022, 8, 22);
+    static final LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
 
-    static final LocalDate AUGUST_FIFTH_MONDAY = LocalDate.of(2022, 8, 29);
+    static final LocalDate FIFTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 29);
 
-    static final LocalDate SEPTEMBER_FIRST_MONDAY = LocalDate.of(2022, 9, 5);
+    static final LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
 
-    static final LocalDate SEPTEMBER_FOURTH_MONDAY = LocalDate.of(2022, 9, 26);
+    static final LocalDate FOURTH_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 26);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_10_00 = LocalDateTime.of(2022, 8, 1, 10, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_10_00 = LocalDateTime.of(2022, 8, 1, 10, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_11_00 = LocalDateTime.of(2022, 8, 1, 11, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_11_00 = LocalDateTime.of(2022, 8, 1, 11, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_12_00 = LocalDateTime.of(2022, 8, 1, 12, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_12_00 = LocalDateTime.of(2022, 8, 1, 12, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_13_00 = LocalDateTime.of(2022, 8, 1, 13, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_14_00 = LocalDateTime.of(2022, 8, 1, 14, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_14_00 = LocalDateTime.of(2022, 8, 1, 14, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 0);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_18_00 = LocalDateTime.of(2022, 8, 1, 18, 0);
 
-    static final LocalDateTime AUGUST_FIRST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
+    static final LocalDateTime FIRST_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 1, 23, 59);
 
-    static final LocalDateTime AUGUST_SECOND_MONDAY_00_00 = LocalDateTime.of(2022, 8, 8, 0, 0);
+    static final LocalDateTime SECOND_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 8, 0, 0);
 
-    static final LocalDateTime AUGUST_SECOND_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
+    static final LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
 
-    static final LocalDateTime AUGUST_THIRD_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
+    static final LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
 
-    static final LocalDateTime AUGUST_THIRD_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
+    static final LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
 
-    static final LocalDateTime AUGUST_FOURTH_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
+    static final LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
 
-    static final LocalDateTime AUGUST_FIFTH__MONDAY_00_00 = LocalDateTime.of(2022, 8, 29, 0, 0);
+    static final LocalDateTime FIFTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 29, 0, 0);
 
-    static final LocalDateTime SEPTEMBER_FIRST_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
+    static final LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
 
-    static final LocalDateTime SEPTEMBER_FIRST_MONDAY_10_00 = LocalDateTime.of(2022, 9, 5, 10, 0);
+    static final LocalDateTime FIRST_SEPTEMBER_MONDAY_10_00 = LocalDateTime.of(2022, 9, 5, 10, 0);
 
-    static final LocalDateTime SEPTEMBER_FIRST_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
+    static final LocalDateTime FIRST_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
 
     Course course;
 
-    Long courseId;
+    Long exampleCourseId;
 
-    Long configurationId;
+    Long exampleConfigurationId;
 
-    String timeZone = "Europe/Bucharest";
+    String exampleTimeZone = "Europe/Bucharest";
 
     String testPrefix = "";
 
@@ -182,10 +182,10 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
         var course = courseUtilService.createCourse();
-        course.setTimeZone(timeZone);
+        course.setTimeZone(exampleTimeZone);
         this.course = courseRepository.save(course);
-        courseId = course.getId();
-        configurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(courseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
+        exampleCourseId = course.getId();
+        exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
     }
 
     // === Abstract Methods ===
@@ -209,7 +209,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     String getTutorialGroupFreePeriodsPath() {
-        return this.getTutorialGroupsConfigurationPath(courseId, configurationId) + "/tutorial-free-periods";
+        return this.getTutorialGroupsConfigurationPath(exampleCourseId, exampleConfigurationId) + "/tutorial-free-periods";
     }
 
     String getTutorialGroupFreePeriodsPath(Long freePeriodId) {
@@ -217,7 +217,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
-        return this.getTutorialGroupsPath(this.courseId, tutorialGroupId) + "/sessions";
+        return this.getTutorialGroupsPath(this.exampleCourseId, tutorialGroupId) + "/sessions";
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId, Long sessionId) {
@@ -238,8 +238,8 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     TutorialGroupsConfiguration buildExampleConfiguration(Long courseId) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setCourse(courseRepository.findById(courseId).orElseThrow());
-        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(AUGUST_FIRST_MONDAY_00_00.toLocalDate().toString());
-        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(SEPTEMBER_FIRST_MONDAY_00_00.toLocalDate().toString());
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(FIRST_AUGUST_MONDAY_00_00.toLocalDate().toString());
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(FIRST_SEPTEMBER_MONDAY_00_00.toLocalDate().toString());
         tutorialGroupsConfiguration.setUseTutorialGroupChannels(true);
         tutorialGroupsConfiguration.setUsePublicTutorialGroupChannels(true);
         return tutorialGroupsConfiguration;
@@ -262,12 +262,12 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         if (studentLogins != null) {
             students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).orElseThrow()).collect(Collectors.toSet());
         }
-        return tutorialGroupUtilService.createTutorialGroup(courseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
+        return tutorialGroupUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH.name(),
                 userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow(), students);
     }
 
     TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
-        var course = courseRepository.findByIdElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
@@ -278,7 +278,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
-        var course = courseRepository.findByIdElseThrow(courseId);
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
         var newTutorialGroup = new TutorialGroup();
         newTutorialGroup.setCourse(course);
         newTutorialGroup.setTitle(generateRandomTitle());
@@ -293,8 +293,8 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         var tutor = userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow();
         var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(courseId, "TG Mo 13", "SampleInfo1", 15, false, "Garching", Language.ENGLISH.name(), tutor,
                 Set.of());
-        TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "10:00:00", "12:00:00", 1, AUGUST_FIRST_MONDAY.toString(),
-                AUGUST_SECOND_MONDAY.toString(), "LoremIpsum");
+        TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "10:00:00", "12:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
+                SECOND_AUGUST_MONDAY.toString(), "LoremIpsum");
         tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(course, tutorialGroup, schedule);
         this.assertTutorialGroupPersistedWithSchedule(tutorialGroup, schedule);
         return tutorialGroup;
@@ -315,7 +315,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     }
 
     ZonedDateTime getDateTimeInExampleTimeZone(LocalDate date, int hour) {
-        return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of(this.timeZone));
+        return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of(this.exampleTimeZone));
     }
 
     ZonedDateTime getDateTimeInBerlinTimeZone(LocalDate date, int hour) {
