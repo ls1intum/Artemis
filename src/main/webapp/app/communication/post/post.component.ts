@@ -149,6 +149,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, Aft
         // Track posting signal changes (replaces ngOnChanges)
         effect(() => {
             this.posting();
+            this.searchConfig();
             untracked(() => {
                 const posting = this.posting();
                 if (!posting) return;

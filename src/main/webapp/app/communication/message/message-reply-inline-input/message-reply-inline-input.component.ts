@@ -46,12 +46,12 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
     }
 
     protected override onPostingChanged(): void {
-        const p = this.posting();
-        if (this.formGroup && p) {
-            if (this.previousPostingPostId !== undefined && this.previousPostingPostId === p.post?.id) {
-                p.content = this.formGroup.get('content')?.value;
-            }
-            this.previousPostingPostId = p.post?.id;
+        const posting = this.posting();
+        const previousPostingPostId = this.previousPostingPostId;
+        this.previousPostingPostId = posting?.post?.id;
+
+        if (this.formGroup && posting && previousPostingPostId === posting.post?.id) {
+            posting.content = this.formGroup.get('content')?.value;
         }
         super.onPostingChanged();
         this.loadDraft();
