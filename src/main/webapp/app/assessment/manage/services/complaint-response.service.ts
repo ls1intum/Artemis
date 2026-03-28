@@ -71,7 +71,7 @@ export class ComplaintResponseService {
     }
 
     public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): HttpResponse<ComplaintResponse> {
-        return res.clone({ body: this.convertComplaintResponseFromServer(res.body!) });
+        return res.clone({ body: res.body ? this.convertComplaintResponseFromServer(res.body) : undefined });
     }
 
     public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
