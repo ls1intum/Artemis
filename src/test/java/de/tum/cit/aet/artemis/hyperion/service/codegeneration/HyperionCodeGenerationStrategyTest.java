@@ -84,7 +84,7 @@ class HyperionCodeGenerationServiceTest {
 
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, "build logs", "repo structure", "consistency issues", "{\"threads\":[]}");
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).path()).isEqualTo("Sort.java");
@@ -101,7 +101,7 @@ class HyperionCodeGenerationServiceTest {
         String coreLogicJson = "{\"solutionPlan\":\"plan\",\"files\":[{\"path\":\"Test.java\",\"content\":\"class Test {}\"}]}";
         setupMockTemplateAndChatResponses(coreLogicJson);
 
-        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues");
+        List<GeneratedFileDTO> result = strategy.generateCode(user, exercise, 1L, null, "repo structure", "consistency issues", "{\"threads\":[]}");
 
         assertThat(result).hasSize(1);
         verify(chatModel, times(2)).call(any(Prompt.class));
@@ -109,13 +109,13 @@ class HyperionCodeGenerationServiceTest {
 
     @Test
     void generateCode_withNullRepositoryStructure_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues")).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", null, "consistency issues", "{\"threads\":[]}")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("repositoryStructure must not be null");
     }
 
     @Test
     void generateCode_withNullConsistencyIssues_throwsIllegalArgumentException() {
-        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null)).isInstanceOf(IllegalArgumentException.class)
+        assertThatThrownBy(() -> strategy.generateCode(user, exercise, 1L, "logs", "repo structure", null, "{\"threads\":[]}")).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("consistencyIssues must not be null");
     }
 
@@ -324,28 +324,28 @@ class HyperionCodeGenerationServiceTest {
 
         @Override
         protected CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "plan");
             return callChatClient(user, exercise, courseId, "test-plan-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "structure");
             return callChatClient(user, exercise, courseId, "test-structure-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "headers");
             return callChatClient(user, exercise, courseId, "test-headers-template", variables);
         }
 
         @Override
         protected CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-                String consistencyIssues) throws NetworkingException {
+                String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
             Map<String, Object> variables = Map.of("test", "logic");
             return callChatClient(user, exercise, courseId, "test-logic-template", variables);
         }

@@ -25,6 +25,8 @@
             "threadLocationWarning": "Comments may be not in the correct location. Submit changes to update the comment.",
             "resolveThread": "Resolve",
             "unresolveThread": "Unresolve",
+            "addToFixBatch": "Add to Fix Batch",
+            "removeFromFixBatch": "Remove from Fix Batch",
             "resolveFailed": "Could not update the thread status.",
             "threadResolved": "Resolved",
             "threadOutdated": "Outdated",

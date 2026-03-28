@@ -13,6 +13,11 @@ Based on the following template plan and programming language, determine the nec
 **Consistency Check Issues (if any):**
 {{consistencyIssues}}
 
+**Selected Fix Batch Review Threads (JSON payload, if any):**
+{{fixBatchReviewThreads}}
+
+If the selected fix batch payload contains threads, treat those threads as requested changes only when they are relevant to this repository, consistent with the problem statement and exercise preconditions, and appropriate for the exercise. If a selected thread conflicts with the problem statement, explicit constraints, or repository conventions, do not implement that request and prefer the safer behavior.
+
 If there are no issues listed above, skip the following steps.
 Treat the issues above as hard constraints. Be critical and explicit:
 1. Identify which files, packages, and repository artifacts each issue touches.

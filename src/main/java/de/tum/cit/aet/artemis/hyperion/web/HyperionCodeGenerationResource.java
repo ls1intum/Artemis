@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.hyperion.web;
 
+import java.util.List;
+
 import jakarta.validation.Valid;
 
 import org.slf4j.Logger;
@@ -87,7 +89,7 @@ public class HyperionCodeGenerationResource {
                     .orElseGet(() -> ResponseEntity.noContent().build());
         }
         Long courseId = resolveCourseId(exercise);
-        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType());
+        String jobId = codeGenerationJobService.startJob(user, exercise, courseId, request.repositoryType(), request.hyperionFixBatchThreadIds());
         log.info("Started code generation job [{}] for exercise [{}]", jobId, exerciseId);
         return ResponseEntity.ok(new CodeGenerationJobStartDTO(jobId));
     }
@@ -102,6 +104,7 @@ public class HyperionCodeGenerationResource {
     private void validateGenerationRequest(long exerciseId, CodeGenerationRequestDTO request) {
         validateExerciseId(exerciseId);
         validateRepositoryType(request.repositoryType());
+        validateFixBatchThreadIds(request.hyperionFixBatchThreadIds());
     }
 
     private void validateExerciseId(long exerciseId) {
@@ -116,6 +119,16 @@ public class HyperionCodeGenerationResource {
         }
         if (!isSupportedRepositoryType(repositoryType)) {
             throw new BadRequestAlertException("Repository type not supported for code generation: " + repositoryType, ENTITY_NAME, "unsupportedRepositoryType");
+        }
+    }
+
+    private void validateFixBatchThreadIds(List<Long> hyperionFixBatchThreadIds) {
+        if (hyperionFixBatchThreadIds == null) {
+            return;
+        }
+        boolean hasInvalidThreadId = hyperionFixBatchThreadIds.stream().anyMatch(threadId -> threadId == null || threadId <= 0);
+        if (hasInvalidThreadId) {
+            throw new BadRequestAlertException("Fix-batch thread ids must be positive", ENTITY_NAME, "invalidFixBatchThreadIds");
         }
     }
 

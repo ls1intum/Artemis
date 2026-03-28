@@ -129,7 +129,9 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
     let profileService: ProfileService;
     let artemisIntelligenceService: ArtemisIntelligenceService;
     let consistencyCheckService: ConsistencyCheckService;
-    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads'>> & { threads: WritableSignal<any[]> };
+    let reviewCommentService: jest.Mocked<Pick<ExerciseReviewCommentService, 'setExercise' | 'reloadThreads' | 'getFixBatchThreadIdsForRepository'>> & {
+        threads: WritableSignal<any[]>;
+    };
 
     const mockIssues: ConsistencyIssue[] = [
         {
@@ -279,6 +281,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
         reviewCommentService = {
             setExercise: jest.fn(),
             reloadThreads: jest.fn(),
+            getFixBatchThreadIdsForRepository: jest.fn().mockReturnValue([]),
             threads: signal([]),
         } as any;
         (reviewCommentService.reloadThreads as jest.Mock).mockImplementation((onLoaded?: () => void) => onLoaded?.());
@@ -556,6 +559,24 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(comp.isGeneratingCode()).toBeFalse();
             expect(addAlertSpy).toHaveBeenCalledWith(expect.objectContaining({ type: AlertType.DANGER, translationKey: 'artemisApp.programmingExercise.codeGeneration.error' }));
+        });
+
+        it('should include selected fix-batch thread ids in the generation request', async () => {
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            reviewCommentService.getFixBatchThreadIdsForRepository.mockReturnValue([11, 17]);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-batch' }));
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            expect(reviewCommentService.getFixBatchThreadIdsForRepository).toHaveBeenCalledWith(RepositoryType.SOLUTION, undefined);
+            expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, {
+                repositoryType: RepositoryType.SOLUTION,
+                checkOnly: false,
+                hyperionFixBatchThreadIds: [11, 17],
+            });
         });
 
         it('should show timeout warning and cleanup when generation exceeds time limit', async () => {

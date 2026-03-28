@@ -878,6 +878,9 @@ components:
           type: string
           enum: [exercise, solution, tests, auxiliary, user]
         checkOnly: {type: boolean}
+        hyperionFixBatchThreadIds:
+          type: array
+          items: {type: integer, format: int64}
     TutorialGroupDetailSession:
       type: object
       properties:

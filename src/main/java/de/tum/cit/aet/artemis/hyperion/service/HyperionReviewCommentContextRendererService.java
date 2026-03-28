@@ -1,10 +1,12 @@
 package de.tum.cit.aet.artemis.hyperion.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -19,12 +21,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.cit.aet.artemis.exercise.domain.review.Comment;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThread;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadGroup;
+import de.tum.cit.aet.artemis.exercise.domain.review.CommentThreadLocationType;
 import de.tum.cit.aet.artemis.exercise.domain.review.CommentType;
 import de.tum.cit.aet.artemis.exercise.dto.review.CommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.ConsistencyIssueCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.dto.review.UserCommentContentDTO;
 import de.tum.cit.aet.artemis.exercise.repository.review.CommentThreadRepository;
 import de.tum.cit.aet.artemis.hyperion.config.HyperionEnabled;
+import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 /**
  * Renders existing consistency-check review-thread context into deterministic JSON for Hyperion prompts.
@@ -42,6 +46,9 @@ public class HyperionReviewCommentContextRendererService {
 
     /** Maximum number of serialized comments included in prompt context. */
     private static final int MAX_SERIALIZED_COMMENTS = 100;
+
+    /** Maximum number of selected fix-batch threads included in prompt context. */
+    private static final int MAX_SELECTED_FIX_BATCH_THREADS = 25;
 
     /** Suffix appended when serialized comment text is truncated. */
     private static final String TRUNCATED_SUFFIX = "... (truncated)";
@@ -122,6 +129,50 @@ public class HyperionReviewCommentContextRendererService {
     }
 
     /**
+     * Serializes explicitly selected review threads into a stable JSON payload for Hyperion code generation prompts.
+     * Only active threads that belong to the selected repository type are included.
+     *
+     * @param exerciseId     the exercise id
+     * @param repositoryType the repository currently being generated
+     * @param threadIds      the explicitly selected review-thread ids
+     * @return JSON payload containing the selected fix-batch threads
+     */
+    public String renderCodeGenerationFixBatch(long exerciseId, RepositoryType repositoryType, Collection<Long> threadIds) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("repositoryType", repositoryType != null ? repositoryType.name() : null);
+
+        if (repositoryType == null || threadIds == null || threadIds.isEmpty()) {
+            payload.put("threads", List.of());
+            return serializePayload(payload, exerciseId);
+        }
+
+        CommentThreadLocationType targetType = mapRepositoryTypeToThreadLocationType(repositoryType);
+        if (targetType == null) {
+            payload.put("threads", List.of());
+            return serializePayload(payload, exerciseId);
+        }
+
+        List<Long> orderedThreadIds = threadIds.stream().filter(Objects::nonNull).distinct().toList();
+        if (orderedThreadIds.isEmpty()) {
+            payload.put("threads", List.of());
+            return serializePayload(payload, exerciseId);
+        }
+
+        Map<Long, Integer> threadOrder = new LinkedHashMap<>();
+        for (int index = 0; index < orderedThreadIds.size(); index++) {
+            threadOrder.put(orderedThreadIds.get(index), index);
+        }
+
+        List<Map<String, Object>> serializedThreads = commentThreadRepository.findWithCommentsByExerciseIdAndIdIn(exerciseId, orderedThreadIds).stream()
+                .filter(thread -> thread.getTargetType() == targetType && !thread.isResolved() && !thread.isOutdated())
+                .sorted(Comparator.comparing(thread -> threadOrder.getOrDefault(thread.getId(), Integer.MAX_VALUE))).limit(MAX_SELECTED_FIX_BATCH_THREADS)
+                .map(this::serializeSelectedFixBatchThread).filter(Objects::nonNull).toList();
+
+        payload.put("threads", serializedThreads);
+        return serializePayload(payload, exerciseId);
+    }
+
+    /**
      * Extracts the prompt-relevant text from a polymorphic review comment content DTO.
      *
      * @param content review comment content
@@ -141,6 +192,52 @@ public class HyperionReviewCommentContextRendererService {
             return truncateText(prefix + sanitizeAndNormalizeText(consistencyContent.text()));
         }
         return truncateText(sanitizeAndNormalizeText(content.toString()));
+    }
+
+    private Map<String, Object> serializeSelectedFixBatchThread(CommentThread thread) {
+        if (thread == null || thread.getComments() == null || thread.getComments().isEmpty()) {
+            return null;
+        }
+
+        List<Map<String, Object>> serializedComments = thread.getComments().stream().sorted(Comparator
+                .comparing(Comment::getCreatedDate, Comparator.nullsLast(Comparator.naturalOrder())).thenComparing(Comment::getId, Comparator.nullsLast(Comparator.naturalOrder())))
+                .limit(MAX_SERIALIZED_COMMENTS).map(comment -> {
+                    Map<String, Object> serializedComment = new LinkedHashMap<>();
+                    serializedComment.put("type", comment.getType() != null ? comment.getType().name() : null);
+                    serializedComment.put("text", extractCommentText(comment.getContent()));
+                    return serializedComment;
+                }).toList();
+
+        if (serializedComments.isEmpty()) {
+            return null;
+        }
+
+        Map<String, Object> serializedThread = new LinkedHashMap<>();
+        serializedThread.put("id", thread.getId());
+        serializedThread.put("targetType", thread.getTargetType() != null ? thread.getTargetType().name() : null);
+        serializedThread.put("filePath", thread.getFilePath() != null ? thread.getFilePath() : thread.getInitialFilePath());
+        serializedThread.put("lineNumber", thread.getLineNumber() != null ? thread.getLineNumber() : thread.getInitialLineNumber());
+        serializedThread.put("comments", serializedComments);
+        return serializedThread;
+    }
+
+    private CommentThreadLocationType mapRepositoryTypeToThreadLocationType(RepositoryType repositoryType) {
+        return switch (repositoryType) {
+            case TEMPLATE -> CommentThreadLocationType.TEMPLATE_REPO;
+            case SOLUTION -> CommentThreadLocationType.SOLUTION_REPO;
+            case TESTS -> CommentThreadLocationType.TEST_REPO;
+            default -> null;
+        };
+    }
+
+    private String serializePayload(Map<String, Object> payload, long exerciseId) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        }
+        catch (JsonProcessingException e) {
+            log.warn("Failed to serialize review-thread prompt context for exercise {}", exerciseId, e);
+            return "{\"threads\":[]}";
+        }
     }
 
     /**

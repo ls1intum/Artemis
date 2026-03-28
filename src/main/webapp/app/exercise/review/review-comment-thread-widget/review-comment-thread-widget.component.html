@@ -176,6 +176,15 @@
                         {{ 'artemisApp.review.resolveThread' | artemisTranslate }}
                     }
                 </button>
+                @if (showFixBatchAction() && !thread().outdated && (!thread().resolved || isInFixBatch())) {
+                    <button pButton type="button" severity="secondary" size="small" (click)="toggleFixBatch()">
+                        @if (isInFixBatch()) {
+                            {{ 'artemisApp.review.removeFromFixBatch' | artemisTranslate }}
+                        } @else {
+                            {{ 'artemisApp.review.addToFixBatch' | artemisTranslate }}
+                        }
+                    </button>
+                }
                 <button pButton type="button" size="small" (click)="submitReply()">
                     {{ 'artemisApp.review.replySubmit' | artemisTranslate }}
                 </button>

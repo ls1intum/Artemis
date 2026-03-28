@@ -3,6 +3,8 @@ import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { Comment, CreateComment, UpdateCommentContent } from 'app/exercise/shared/entities/review/comment.model';
 import { CommentThread, CreateCommentThread, UpdateThreadResolvedState } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
+import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
 import { AlertService } from 'app/shared/service/alert.service';
 
 type CommentThreadArrayResponseType = HttpResponse<CommentThread[]>;
@@ -25,6 +27,12 @@ export class ExerciseReviewCommentService {
     readonly threads = signal<CommentThread[]>([]);
 
     /**
+     * Local-only selection of review threads that should be forwarded to Hyperion code generation.
+     * This state is scoped to the active exercise/editor session and is never persisted independently.
+     */
+    readonly fixBatchThreadIds = signal<number[]>([]);
+
+    /**
      * Sets the active exercise context and clears thread state when it changes.
      *
      * @param exerciseId The currently active exercise id.
@@ -35,7 +43,7 @@ export class ExerciseReviewCommentService {
             return false;
         }
         this.activeExerciseId = exerciseId;
-        this.threads.set([]);
+        this.setThreads([]);
         return true;
     }
 
@@ -47,7 +55,7 @@ export class ExerciseReviewCommentService {
     reloadThreads(onLoaded?: () => void): void {
         const exerciseId = this.activeExerciseId;
         if (!exerciseId) {
-            this.threads.set([]);
+            this.setThreads([]);
             return;
         }
         this.loadThreads(exerciseId).subscribe({
@@ -55,17 +63,57 @@ export class ExerciseReviewCommentService {
                 if (this.activeExerciseId !== exerciseId) {
                     return;
                 }
-                this.threads.set(threads);
+                this.setThreads(threads);
                 onLoaded?.();
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {
                     return;
                 }
-                this.threads.set([]);
+                this.setThreads([]);
                 this.alertService.error('artemisApp.review.loadFailed');
             },
         });
+    }
+
+    /**
+     * Toggles whether a thread should be included in the next Hyperion fix batch.
+     *
+     * @param threadId The thread id to toggle.
+     */
+    toggleThreadInFixBatch(threadId: number): void {
+        this.fixBatchThreadIds.update((threadIds) => {
+            if (threadIds.includes(threadId)) {
+                return threadIds.filter((existingThreadId) => existingThreadId !== threadId);
+            }
+            return [...threadIds, threadId];
+        });
+    }
+
+    /**
+     * Checks whether a thread is currently selected for Hyperion code generation.
+     *
+     * @param threadId The thread id to inspect.
+     * @returns True if the thread is part of the local fix batch.
+     */
+    isThreadInFixBatch(threadId: number): boolean {
+        return this.fixBatchThreadIds().includes(threadId);
+    }
+
+    /**
+     * Returns currently selected fix-batch thread ids that still belong to the active repository context.
+     *
+     * @param repositoryType The repository currently selected in the code editor.
+     * @param auxiliaryRepositoryId The selected auxiliary repository id, if applicable.
+     * @returns The filtered thread ids in user selection order.
+     */
+    getFixBatchThreadIdsForRepository(repositoryType?: RepositoryType, auxiliaryRepositoryId?: number): number[] {
+        const matchingThreadIds = new Set(
+            this.threads()
+                .filter((thread) => !thread.resolved && !thread.outdated && matchesSelectedRepository(thread, repositoryType, auxiliaryRepositoryId))
+                .map((thread) => thread.id),
+        );
+        return this.fixBatchThreadIds().filter((threadId) => matchingThreadIds.has(threadId));
     }
 
     /**
@@ -89,7 +137,7 @@ export class ExerciseReviewCommentService {
                     return;
                 }
                 const normalizedThread: CommentThread = createdThread.comments ? createdThread : Object.assign({}, createdThread, { comments: [] });
-                this.threads.update((threads) => this.appendThreadToThreads(threads, normalizedThread));
+                this.updateThreads((threads) => this.appendThreadToThreads(threads, normalizedThread));
                 onSuccess?.();
             },
             error: () => {
@@ -116,7 +164,7 @@ export class ExerciseReviewCommentService {
                 if (this.activeExerciseId !== exerciseId) {
                     return;
                 }
-                this.threads.update((threads) => this.removeCommentFromThreads(threads, commentId));
+                this.updateThreads((threads) => this.removeCommentFromThreads(threads, commentId));
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {
@@ -148,7 +196,7 @@ export class ExerciseReviewCommentService {
                 if (!createdComment) {
                     return;
                 }
-                this.threads.update((threads) => this.appendCommentToThreads(threads, createdComment));
+                this.updateThreads((threads) => this.appendCommentToThreads(threads, createdComment));
                 onSuccess?.();
             },
             error: () => {
@@ -181,7 +229,7 @@ export class ExerciseReviewCommentService {
                 if (!updatedComment) {
                     return;
                 }
-                this.threads.update((threads) => this.updateCommentInThreads(threads, updatedComment));
+                this.updateThreads((threads) => this.updateCommentInThreads(threads, updatedComment));
                 onSuccess?.();
             },
             error: () => {
@@ -213,7 +261,7 @@ export class ExerciseReviewCommentService {
                 if (!updatedThread?.id) {
                     return;
                 }
-                this.threads.update((threads) => this.replaceThreadInThreads(threads, updatedThread));
+                this.updateThreads((threads) => this.replaceThreadInThreads(threads, updatedThread));
             },
             error: () => {
                 if (this.activeExerciseId !== exerciseId) {
@@ -301,6 +349,20 @@ export class ExerciseReviewCommentService {
      */
     deleteComment(exerciseId: number, commentId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/review-comments/${commentId}`, { observe: 'response' });
+    }
+
+    private setThreads(threads: CommentThread[]): void {
+        this.threads.set(threads);
+        this.reconcileFixBatchThreadIds(threads);
+    }
+
+    private updateThreads(updater: (threads: CommentThread[]) => CommentThread[]): void {
+        this.setThreads(updater(this.threads()));
+    }
+
+    private reconcileFixBatchThreadIds(threads: CommentThread[]): void {
+        const validThreadIds = new Set(threads.filter((thread) => !thread.resolved && !thread.outdated).map((thread) => thread.id));
+        this.fixBatchThreadIds.update((threadIds) => threadIds.filter((threadId) => validThreadIds.has(threadId)));
     }
 
     /**

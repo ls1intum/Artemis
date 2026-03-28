@@ -965,6 +965,7 @@ export class MarkdownEditorMonacoComponent implements AfterContentInit, AfterVie
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.showLocationWarning(),
+                showFixBatchAction: () => false,
             });
         }
         return this.reviewCommentManager;

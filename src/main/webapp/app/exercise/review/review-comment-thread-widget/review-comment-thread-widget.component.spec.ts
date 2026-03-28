@@ -24,6 +24,8 @@ describe('ReviewCommentThreadWidgetComponent', () => {
             createReplyInContext: vi.fn(),
             updateCommentInContext: vi.fn(),
             toggleResolvedInContext: vi.fn(),
+            toggleThreadInFixBatch: vi.fn(),
+            isThreadInFixBatch: vi.fn().mockReturnValue(false),
             threads: signal([]),
         };
 
@@ -177,6 +179,24 @@ describe('ReviewCommentThreadWidgetComponent', () => {
 
         expect(comp.showThreadBody()).toBe(false);
         expect(collapseSpy).toHaveBeenCalledWith(true);
+    });
+
+    it('should toggle fix-batch membership when enabled', () => {
+        fixture.componentRef.setInput('showFixBatchAction', true);
+
+        comp.toggleFixBatch();
+
+        expect(reviewCommentService.toggleThreadInFixBatch).toHaveBeenCalledWith(1);
+    });
+
+    it('should hide the fix-batch action for outdated threads', () => {
+        fixture.componentRef.setInput('showFixBatchAction', true);
+        fixture.componentRef.setInput('thread', { id: 1, resolved: false, outdated: true, comments: [] } as any);
+
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.addToFixBatch');
+        expect(fixture.nativeElement.textContent).not.toContain('artemisApp.review.removeFromFixBatch');
     });
 
     it('should detect edited comments', () => {

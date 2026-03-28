@@ -403,7 +403,19 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
 
     private createCodeGenerationRequest(repositoryType: RepositoryType, checkOnly = false): CodeGenerationRequest {
         // Runtime contract: backend expects RepositoryType enum names (e.g. TEMPLATE), while generated OpenAPI type currently exposes repository names (e.g. exercise).
-        return { repositoryType, checkOnly } as unknown as CodeGenerationRequest;
+        const request: CodeGenerationRequest & { hyperionFixBatchThreadIds?: number[] } = { repositoryType, checkOnly } as unknown as CodeGenerationRequest & {
+            hyperionFixBatchThreadIds?: number[];
+        };
+        if (!checkOnly) {
+            const selectedFixBatchThreadIds = this.exerciseReviewCommentService.getFixBatchThreadIdsForRepository(
+                this.selectedRepository,
+                this.selectedRepository === RepositoryType.AUXILIARY ? this.selectedRepositoryId : undefined,
+            );
+            if (selectedFixBatchThreadIds.length > 0) {
+                request.hyperionFixBatchThreadIds = selectedFixBatchThreadIds;
+            }
+        }
+        return request;
     }
 
     /**

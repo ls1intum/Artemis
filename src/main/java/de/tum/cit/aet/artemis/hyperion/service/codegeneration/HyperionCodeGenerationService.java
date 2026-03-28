@@ -51,11 +51,15 @@ public abstract class HyperionCodeGenerationService {
      */
     private static final int MAX_CONSISTENCY_ISSUES_LENGTH = 10000;
 
+    private static final int MAX_FIX_BATCH_REVIEW_THREADS_LENGTH = 12000;
+
     /**
      * Regex that matches control characters except carriage return, line feed, and tab.
      * Used to sanitize consistency issue text before prompt rendering.
      */
     private static final String CONTROL_CHARS_PATTERN = "[\\p{Cntrl}&&[^\r\n\t]]";
+
+    private static final String FIX_BATCH_REVIEW_THREADS_TEMPLATE_VARIABLE = "fixBatchReviewThreads";
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -77,17 +81,18 @@ public abstract class HyperionCodeGenerationService {
      * Generates code files using the 4-step AI generation pipeline.
      * Orchestrates solution planning, file structure definition, header generation, and core logic implementation.
      *
-     * @param user                the user requesting code generation
-     * @param exercise            the programming exercise to generate code for
-     * @param courseId            the resolved course id for telemetry attribution
-     * @param previousBuildLogs   build failure logs from previous attempts for iterative improvement
-     * @param repositoryStructure tree-format representation of current repository structure
-     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
+     * @param user                  the user requesting code generation
+     * @param exercise              the programming exercise to generate code for
+     * @param courseId              the resolved course id for telemetry attribution
+     * @param previousBuildLogs     build failure logs from previous attempts for iterative improvement
+     * @param repositoryStructure   tree-format representation of current repository structure
+     * @param consistencyIssues     formatted consistency issues to inform the generation prompts
+     * @param fixBatchReviewThreads selected review-thread payload to inform the generation prompts
      * @return list of generated code files
      * @throws NetworkingException if AI service communication fails
      */
     public List<GeneratedFileDTO> generateCode(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException {
+            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException {
         if (user == null) {
             throw new IllegalArgumentException("user must not be null");
         }
@@ -98,9 +103,11 @@ public abstract class HyperionCodeGenerationService {
             throw new IllegalArgumentException("repositoryStructure must not be null");
         }
         String normalizedConsistencyIssues = normalizeConsistencyIssues(consistencyIssues);
-        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues);
+        String normalizedFixBatchReviewThreads = normalizeFixBatchReviewThreads(fixBatchReviewThreads);
+        CodeGenerationResponseDTO solutionPlanResponse = generateSolutionPlan(user, exercise, courseId, previousBuildLogs, repositoryStructure, normalizedConsistencyIssues,
+                normalizedFixBatchReviewThreads);
         CodeGenerationResponseDTO coreLogicResponse = generateCoreLogic(user, exercise, courseId, solutionPlanResponse.getSolutionPlan(), repositoryStructure,
-                normalizedConsistencyIssues);
+                normalizedConsistencyIssues, normalizedFixBatchReviewThreads);
 
         return coreLogicResponse.getFiles();
     }
@@ -120,7 +127,22 @@ public abstract class HyperionCodeGenerationService {
         return sanitized;
     }
 
-    protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues) {
+    private String normalizeFixBatchReviewThreads(String fixBatchReviewThreads) {
+        if (fixBatchReviewThreads == null) {
+            throw new IllegalArgumentException("fixBatchReviewThreads must not be null");
+        }
+        String trimmed = fixBatchReviewThreads.trim();
+        if (trimmed.isEmpty()) {
+            return "{\"threads\":[]}";
+        }
+        String sanitized = trimmed.replaceAll(CONTROL_CHARS_PATTERN, "").trim();
+        if (sanitized.length() > MAX_FIX_BATCH_REVIEW_THREADS_LENGTH) {
+            return sanitized.substring(0, MAX_FIX_BATCH_REVIEW_THREADS_LENGTH);
+        }
+        return sanitized;
+    }
+
+    protected Map<String, Object> baseTemplateVariables(ProgrammingExercise exercise, String repositoryStructure, String consistencyIssues, String fixBatchReviewThreads) {
         if (exercise == null) {
             throw new IllegalArgumentException("exercise must not be null");
         }
@@ -130,10 +152,14 @@ public abstract class HyperionCodeGenerationService {
         if (consistencyIssues == null) {
             throw new IllegalArgumentException("consistencyIssues must not be null");
         }
+        if (fixBatchReviewThreads == null) {
+            throw new IllegalArgumentException("fixBatchReviewThreads must not be null");
+        }
         Map<String, Object> variables = new HashMap<>();
         variables.put("programmingLanguage", exercise.getProgrammingLanguage());
         variables.put("repositoryStructure", repositoryStructure);
         variables.put("consistencyIssues", consistencyIssues);
+        variables.put(FIX_BATCH_REVIEW_THREADS_TEMPLATE_VARIABLE, fixBatchReviewThreads);
         return variables;
     }
 
@@ -257,65 +283,69 @@ public abstract class HyperionCodeGenerationService {
      * Generates a high-level solution plan for the programming exercise.
      * First step in the 4-step generation pipeline.
      *
-     * @param user                the user requesting code generation
-     * @param exercise            the programming exercise to analyze
-     * @param courseId            the resolved course id for telemetry attribution
-     * @param previousBuildLogs   build failure logs from previous attempts for correction
-     * @param repositoryStructure tree-format representation of current repository structure
-     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
+     * @param user                  the user requesting code generation
+     * @param exercise              the programming exercise to analyze
+     * @param courseId              the resolved course id for telemetry attribution
+     * @param previousBuildLogs     build failure logs from previous attempts for correction
+     * @param repositoryStructure   tree-format representation of current repository structure
+     * @param consistencyIssues     formatted consistency issues to inform the generation prompts
+     * @param fixBatchReviewThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing the solution plan
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO generateSolutionPlan(User user, ProgrammingExercise exercise, Long courseId, String previousBuildLogs, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException;
+            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException;
 
     /**
      * Defines the file structure and organization for the solution.
      * Second step in the 4-step generation pipeline.
      *
-     * @param user                the user requesting code generation
-     * @param exercise            the programming exercise to structure
-     * @param courseId            the resolved course id for telemetry attribution
-     * @param solutionPlan        the high-level solution plan from step 1
-     * @param repositoryStructure tree-format representation of current repository structure
-     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
+     * @param user                  the user requesting code generation
+     * @param exercise              the programming exercise to structure
+     * @param courseId              the resolved course id for telemetry attribution
+     * @param solutionPlan          the high-level solution plan from step 1
+     * @param repositoryStructure   tree-format representation of current repository structure
+     * @param consistencyIssues     formatted consistency issues to inform the generation prompts
+     * @param fixBatchReviewThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing file structure definitions
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO defineFileStructure(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException;
+            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException;
 
     /**
      * Generates class definitions and method signatures.
      * Third step in the 4-step generation pipeline.
      *
-     * @param user                the user requesting code generation
-     * @param exercise            the programming exercise to create headers for
-     * @param courseId            the resolved course id for telemetry attribution
-     * @param solutionPlan        the high-level solution plan from step 1
-     * @param repositoryStructure tree-format representation of current repository structure
-     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
+     * @param user                  the user requesting code generation
+     * @param exercise              the programming exercise to create headers for
+     * @param courseId              the resolved course id for telemetry attribution
+     * @param solutionPlan          the high-level solution plan from step 1
+     * @param repositoryStructure   tree-format representation of current repository structure
+     * @param consistencyIssues     formatted consistency issues to inform the generation prompts
+     * @param fixBatchReviewThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing class and method headers
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO generateClassAndMethodHeaders(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan,
-            String repositoryStructure, String consistencyIssues) throws NetworkingException;
+            String repositoryStructure, String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException;
 
     /**
      * Generates the core implementation logic for the solution.
      * Fourth and final step in the 4-step generation pipeline.
      *
-     * @param user                the user requesting code generation
-     * @param exercise            the programming exercise to implement
-     * @param courseId            the resolved course id for telemetry attribution
-     * @param solutionPlan        the high-level solution plan from step 1
-     * @param repositoryStructure tree-format representation of current repository structure
-     * @param consistencyIssues   formatted consistency issues to inform the generation prompts
+     * @param user                  the user requesting code generation
+     * @param exercise              the programming exercise to implement
+     * @param courseId              the resolved course id for telemetry attribution
+     * @param solutionPlan          the high-level solution plan from step 1
+     * @param repositoryStructure   tree-format representation of current repository structure
+     * @param consistencyIssues     formatted consistency issues to inform the generation prompts
+     * @param fixBatchReviewThreads selected review-thread payload to inform the generation prompts
      * @return AI response containing complete implementation with generated files
      * @throws NetworkingException if AI service communication fails
      */
     protected abstract CodeGenerationResponseDTO generateCoreLogic(User user, ProgrammingExercise exercise, Long courseId, String solutionPlan, String repositoryStructure,
-            String consistencyIssues) throws NetworkingException;
+            String consistencyIssues, String fixBatchReviewThreads) throws NetworkingException;
 
     /**
      * Returns the repository type that this strategy generates code for.

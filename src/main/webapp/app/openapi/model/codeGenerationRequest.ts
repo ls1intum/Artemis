@@ -12,6 +12,7 @@
 export interface CodeGenerationRequest { 
     repositoryType?: CodeGenerationRequest.RepositoryTypeEnum;
     checkOnly?: boolean;
+    hyperionFixBatchThreadIds?: Array<number>;
 }
 export namespace CodeGenerationRequest {
     export const RepositoryTypeEnum = {

@@ -38,6 +38,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
+import de.tum.cit.aet.artemis.hyperion.service.HyperionReviewCommentContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.File;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingLanguage;
@@ -101,6 +102,9 @@ class HyperionCodeGenerationExecutionServiceTest {
     private HyperionConsistencyCheckService consistencyCheckService;
 
     @Mock
+    private HyperionReviewCommentContextRendererService reviewCommentContextRendererService;
+
+    @Mock
     private ExerciseVersionService exerciseVersionService;
 
     private HyperionCodeGenerationExecutionService service;
@@ -115,7 +119,7 @@ class HyperionCodeGenerationExecutionServiceTest {
         this.service = new HyperionCodeGenerationExecutionService("main", gitService, repositoryService, solutionProgrammingExerciseParticipationRepository,
                 templateProgrammingExerciseParticipationRepository, programmingSubmissionRepository, resultRepository, continuousIntegrationTriggerService,
                 programmingExerciseParticipationService, repositoryStructureService, solutionStrategy, templateStrategy, testStrategy, programmingSubmissionService,
-                consistencyCheckService, exerciseVersionService);
+                consistencyCheckService, reviewCommentContextRendererService, exerciseVersionService);
 
         this.user = new User();
         user.setLogin("testuser");
@@ -157,7 +161,7 @@ class HyperionCodeGenerationExecutionServiceTest {
     void generateAndCompileCode_withNullRepositoryUri_returnsNull() {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, null, publisher);
 
         assertThat(result).isNull();
         verify(publisher, times(1)).error(anyString());
@@ -181,7 +185,10 @@ class HyperionCodeGenerationExecutionServiceTest {
         doNothing().when(repositoryService).commitChanges(repository, user);
         doNothing().when(gitService).resetToOriginHead(repository);
         when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
-        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
+        when(reviewCommentContextRendererService.renderCodeGenerationFixBatch(exercise.getId(), RepositoryType.SOLUTION, List.of(5L)))
+                .thenReturn("{\"repositoryType\":\"SOLUTION\",\"threads\":[]}");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any(), any()))
+                .thenReturn(List.of(new GeneratedFileDTO("Test.java", "public class Test {}")));
         when(programmingExerciseParticipationService.retrieveSolutionParticipation(exercise)).thenReturn(solutionParticipation);
         doNothing().when(continuousIntegrationTriggerService).triggerBuild(solutionParticipation, "new-hash", RepositoryType.SOLUTION);
         when(solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId())).thenReturn(Optional.of(solutionParticipation));
@@ -193,10 +200,11 @@ class HyperionCodeGenerationExecutionServiceTest {
         when(buildResult.isSuccessful()).thenReturn(true);
         when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(true);
 
-        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, List.of(5L), publisher);
 
         assertThat(result).isEqualTo(buildResult);
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
+        verify(reviewCommentContextRendererService).renderCodeGenerationFixBatch(exercise.getId(), RepositoryType.SOLUTION, List.of(5L));
     }
 
     @Test

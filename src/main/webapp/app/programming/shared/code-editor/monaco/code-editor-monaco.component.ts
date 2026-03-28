@@ -38,7 +38,7 @@ import { CommitState, CreateFileChange, DeleteFileChange, EditorState, FileChang
 import { CodeEditorFileService } from 'app/programming/shared/code-editor/services/code-editor-file.service';
 import { ReviewCommentWidgetManager } from 'app/exercise/review/review-comment-widget-manager';
 import { ExerciseReviewCommentService } from 'app/exercise/review/exercise-review-comment.service';
-import { CommentThread, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
+import { CommentThread, CommentThreadLocationType, ReviewThreadLocation } from 'app/exercise/shared/entities/review/comment-thread.model';
 import { isReviewCommentsSupportedRepository, mapRepositoryToThreadLocationType, matchesSelectedRepository } from 'app/exercise/review/review-comment-utils';
 import { CodeEditorFileSyncService } from 'app/exercise/synchronization/services/code-editor-file-sync.service';
 
@@ -730,6 +730,10 @@ export class CodeEditorMonacoComponent implements OnChanges, OnDestroy {
                 onAdd: (payload) => this.onAddReviewComment.emit(payload),
                 onNavigateToLocation: (location) => this.onNavigateToReviewCommentLocation.emit(location),
                 showLocationWarning: () => this.commitState() === CommitState.UNCOMMITTED_CHANGES,
+                showFixBatchAction: (thread) =>
+                    thread.targetType === CommentThreadLocationType.TEMPLATE_REPO ||
+                    thread.targetType === CommentThreadLocationType.SOLUTION_REPO ||
+                    thread.targetType === CommentThreadLocationType.TEST_REPO,
             });
         }
         return this.reviewCommentManager;
