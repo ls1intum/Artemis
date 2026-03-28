@@ -296,6 +296,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "10:00:00", "12:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
                 SECOND_AUGUST_MONDAY.toString(), "LoremIpsum");
         tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(course, tutorialGroup, schedule);
+        tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
         this.assertTutorialGroupPersistedWithSchedule(tutorialGroup, schedule);
         return tutorialGroup;
     }
