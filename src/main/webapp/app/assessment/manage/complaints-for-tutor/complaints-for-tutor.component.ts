@@ -96,7 +96,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             )
             .subscribe({
                 next: (response) => {
-                    this.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(response.body!);
+                    this.complaintResponse = response.body!;
                     this.complaintResponse.complaint = this.complaint();
                     this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                     this.complaint.set(this.complaintResponse.complaint!);
@@ -127,7 +127,7 @@ export class ComplaintsForTutorComponent implements OnInit {
                 )
                 .subscribe({
                     next: (response) => {
-                        this.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(response.body!);
+                        this.complaintResponse = response.body!;
                         this.complaintResponse.complaint = this.complaint();
                         this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
                         this.complaint.set(this.complaintResponse.complaint!);
@@ -221,11 +221,11 @@ export class ComplaintsForTutorComponent implements OnInit {
                     } else {
                         this.alertService.success('artemisApp.complaintResponse.created');
                     }
-                    this.complaintResponse = this.complaintResponseService.convertComplaintResponseFromServer(response.body!);
+                    this.complaintResponse = response.body!;
                     this.complaintResponse.complaint = this.complaint();
                     this.complaintResponse.complaint!.complaintResponse = this.complaintResponse;
+                    this.complaintResponse.complaint!.accepted = this.complaintResponseUpdate.complaintIsAccepted;
                     this.complaint.set(this.complaintResponse.complaint!);
-                    this.complaint().accepted = this.complaintResponseUpdate.complaintIsAccepted;
                     this.isLockedForLoggedInUser = false;
                     this.showLockDuration = false;
                     this.lockedByCurrentUser = false;

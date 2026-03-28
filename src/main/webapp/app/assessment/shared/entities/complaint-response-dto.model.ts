@@ -1,4 +1,5 @@
 import dayjs from 'dayjs/esm';
+import { UserIdAndLoginDTO } from 'app/core/user/user.model';
 
 export enum ComplaintAction {
     REFRESH_LOCK = 'REFRESH_LOCK',
@@ -19,5 +20,5 @@ export class ComplaintResponseDTO {
     public lockEndDate?: dayjs.Dayjs;
     public complaintIsAccepted?: boolean;
     public complaintId: number;
-    public reviewerLogin: string;
+    public reviewer: UserIdAndLoginDTO;
 }

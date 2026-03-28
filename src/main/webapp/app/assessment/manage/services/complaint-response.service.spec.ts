@@ -11,14 +11,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { User } from 'app/core/user/user.model';
 import { TextExercise } from 'app/text/shared/entities/text-exercise.model';
-import { ComplaintAction, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
+import { ComplaintAction, ComplaintResponseDTO, ComplaintResponseUpdateDTO } from 'app/assessment/shared/entities/complaint-response-dto.model';
 import { MockAccountService } from 'test/helpers/mocks/service/mock-account.service';
 
 describe('ComplaintResponseService', () => {
     setupTestBed({ zoneless: true });
     let complaintResponseService: ComplaintResponseService;
     let httpTestingController: HttpTestingController;
-    let defaultComplaintResponse: ComplaintResponse;
+    let defaultComplaintResponse: ComplaintResponseDTO;
+    let defaultComplaint: Complaint;
     let complaintResponseResolve: ComplaintResponseUpdateDTO;
     let complaintResponseRefresh: ComplaintResponseUpdateDTO;
     let accountService: AccountService;
@@ -35,13 +36,17 @@ describe('ComplaintResponseService', () => {
                 httpTestingController = TestBed.inject(HttpTestingController);
                 accountService = TestBed.inject(AccountService);
 
-                defaultComplaintResponse = new ComplaintResponse();
+                defaultComplaintResponse = new ComplaintResponseDTO();
                 defaultComplaintResponse.id = 1;
                 defaultComplaintResponse.lockEndDate = dayjs();
                 defaultComplaintResponse.submittedTime = dayjs();
-                defaultComplaintResponse.complaint = new Complaint();
-                defaultComplaintResponse.complaint.id = 1;
-
+                defaultComplaint = new Complaint();
+                defaultComplaint.id = 1;
+                defaultComplaintResponse.complaintId = defaultComplaint.id;
+                defaultComplaintResponse.reviewer = {
+                    id: 2,
+                    login: 'reviewer1',
+                };
                 complaintResponseResolve = new ComplaintResponseUpdateDTO();
                 complaintResponseResolve.action = ComplaintAction.RESOLVE_COMPLAINT;
                 complaintResponseResolve.responseText = 'response_text';
@@ -66,7 +71,6 @@ describe('ComplaintResponseService', () => {
         const reviewer = new User();
         reviewer.login = loginOfReviewer;
         lockedComplaintResponse.reviewer = reviewer;
-        lockedComplaintResponse.reviewerLogin = reviewer.login;
         return lockedComplaintResponse;
     }
 
@@ -92,7 +96,11 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(complaintResponseResolve);
+        expect(expectedComplaintResponse.body).toBeDefined();
+        expect(expectedComplaintResponse.body!.id).toBe(1);
+        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(true);
+        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
+        expect(dayjs.isDayjs(expectedComplaintResponse.body!.lockEndDate)).toBe(true);
     });
 
     it('should call removeLock', async () => {
@@ -113,7 +121,13 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(defaultComplaintResponse);
+        expect(expectedComplaintResponse.body).toBeDefined();
+        expect(expectedComplaintResponse.body!.id).toBe(1);
+        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(true);
+        expect(expectedComplaintResponse.body!.responseText).toBe('response_text');
+        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
+        expect(dayjs.isDayjs(expectedComplaintResponse.body!.submittedTime)).toBe(true);
+        expect(dayjs.isDayjs(expectedComplaintResponse.body!.lockEndDate)).toBe(true);
     });
 
     it('should call resolveComplaint', async () => {
@@ -124,6 +138,10 @@ describe('ComplaintResponseService', () => {
             .subscribe((resp) => (expectedComplaintResponse = resp));
         const req = httpTestingController.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
-        expect(expectedComplaintResponse.body).toEqual(complaintResponseRefresh);
+        expect(expectedComplaintResponse.body).toBeDefined();
+        expect(expectedComplaintResponse.body!.id).toBe(1);
+        expect(expectedComplaintResponse.body!.responseText).toBe('resolved response');
+        expect(expectedComplaintResponse.body!.isCurrentlyLocked).toBe(false);
+        expect(expectedComplaintResponse.body!.reviewer?.login).toBe('reviewer1');
     });
 });

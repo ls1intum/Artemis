@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
+import de.tum.cit.aet.artemis.core.dto.UserWithIdAndLoginDTO;
 
 /**
  * DTO for a complaint response.
@@ -24,11 +25,11 @@ import de.tum.cit.aet.artemis.assessment.domain.ComplaintResponse;
  * @param lockEndDate         the time when the lock will end (can be {@code null} if the lock has already ended or if the response is not a lock response)
  * @param complaintIsAccepted whether the complaint was accepted
  * @param complaintId         the ID of the associated complaint
- * @param reviewerLogin       the login of the reviewer
+ * @param reviewer            the name and login of the reviewer who submitted the response
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedDateTime submittedTime, Boolean isCurrentlyLocked, ZonedDateTime lockEndDate,
-        Boolean complaintIsAccepted, @NotNull Long complaintId, @NotNull String reviewerLogin) {
+        Boolean complaintIsAccepted, @NotNull Long complaintId, @NotNull UserWithIdAndLoginDTO reviewer) {
 
     /**
      * Creates a {@link ComplaintResponseDTO} from a {@link ComplaintResponse} entity.
@@ -38,13 +39,13 @@ public record ComplaintResponseDTO(@NotNull Long id, String responseText, ZonedD
      * @throws NullPointerException if required fields are missing
      */
     public static ComplaintResponseDTO of(ComplaintResponse entity) {
-        Objects.requireNonNull(entity, "ComplaintResponse must be set");
-        Objects.requireNonNull(entity.getComplaint(), "Complaint must exist");
+        Objects.requireNonNull(entity, "The complaint response must be set");
+        Objects.requireNonNull(entity.getComplaint(), "The associated complaint must exist");
         Objects.requireNonNull(entity.getReviewer(), "Reviewer must exist");
         String reviewerLogin = entity.getReviewer().getLogin();
         Objects.requireNonNull(reviewerLogin, "Reviewer login must exist");
 
         return new ComplaintResponseDTO(entity.getId(), entity.getResponseText(), entity.getSubmittedTime(), entity.isCurrentlyLocked(), entity.lockEndDate(),
-                entity.getComplaint().isAccepted(), entity.getComplaint().getId(), reviewerLogin);
+                entity.getComplaint().isAccepted(), entity.getComplaint().getId(), new UserWithIdAndLoginDTO(entity.getReviewer().getId(), reviewerLogin));
     }
 }
