@@ -39,35 +39,43 @@
             "cards": {
                 "assessment": {
                     "category": "Bewertung",
-                    "description": "Von anonymer, kriterienbasierter manueller Bewertung und KI-gestützten Korrekturvorschlägen bis zur vollautomatischen Auswertung von Quizzen und Programmieraufgaben."
+                    "description": "Von anonymer, kriterienbasierter manueller Bewertung und KI-gestützten Korrekturvorschlägen bis zur vollautomatischen Auswertung von Quizzen und Programmieraufgaben.",
+                    "imageAlt": "Bewertungsübersicht"
                 },
                 "tutorials": {
                     "category": "Tutorien",
-                    "description": "Strukturierte Kleingruppenarbeit mit Übungsaufgaben, Anwesenheitsverfolgung und Tutor-Werkzeugen für große Kohorten."
+                    "description": "Strukturierte Kleingruppenarbeit mit Übungsaufgaben, Anwesenheitsverfolgung und Tutor-Werkzeugen für große Kohorten.",
+                    "imageAlt": "Tutoriengruppen"
                 },
                 "lectures": {
                     "category": "Vorlesungen",
-                    "description": "Folien hochladen, Videos einbetten und Inhalte in strukturierte Einheiten aufteilen — direkt verknüpft mit Lernzielen."
+                    "description": "Folien hochladen, Videos einbetten und Inhalte in strukturierte Einheiten aufteilen — direkt verknüpft mit Lernzielen.",
+                    "imageAlt": "Vorlesungsinhalte"
                 },
                 "examMode": {
                     "category": "Prüfungsmodus",
-                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien."
+                    "description": "Online-Prüfungen mit randomisierten Varianten, Plagiatserkennung und strukturierten Bewertungskriterien.",
+                    "imageAlt": "Prüfungsmodus"
                 },
                 "communication": {
                     "category": "Kommunikation",
-                    "description": "Kursweite Ankündigungen, Diskussionsfäden und private Nachrichten."
+                    "description": "Kursweite Ankündigungen, Diskussionsfäden und private Nachrichten.",
+                    "imageAlt": "Kommunikationswerkzeuge"
                 },
                 "faq": {
                     "category": "FAQ",
-                    "description": "Durchsuchbare FAQ-Bibliothek auf Kursebene, die repetitive Anfragen reduziert und direkt in Iris für intelligentere KI-Antworten einfließt."
+                    "description": "Durchsuchbare FAQ-Bibliothek auf Kursebene, die repetitive Anfragen reduziert und direkt in Iris für intelligentere KI-Antworten einfließt.",
+                    "imageAlt": "FAQ-Verwaltung"
                 },
                 "iris": {
                     "category": "Iris - KI-Tutor",
-                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt Antworten anleitet."
+                    "description": "Ein KI-gestützter Tutor, der Studierende mit Hinweisen und Fragen statt Antworten anleitet.",
+                    "imageAlt": "Iris KI-Tutor"
                 },
                 "mobileApps": {
                     "category": "Mobile Apps",
-                    "description": "Zugriff auf Kurse, Übungen, Vorlesungen und Diskussionen von unterwegs."
+                    "description": "Zugriff auf Kurse, Übungen, Vorlesungen und Diskussionen von unterwegs.",
+                    "imageAlt": "Mobile Apps"
                 }
             }
         },
@@ -77,7 +85,7 @@
             "items": {
                 "free": {
                     "question": "Ist Artemis kostenlos?",
-                    "answer": "Ja — Artemis ist vollständig Open Source unter der MIT-Lizenz. Sie können es selbst hosten oder die von der TU München bereitgestellte Version für Partnerinstitutionen nutzen."
+                    "answer": "Ja — Artemis ist vollständig Open Source unter der MIT-Lizenz. Du kannst es selbst hosten oder die von der TU München bereitgestellte Version für Partnerinstitutionen nutzen."
                 },
                 "languages": {
                     "question": "Welche Programmiersprachen unterstützt Artemis?",
@@ -97,7 +105,7 @@
                 },
                 "docs": {
                     "question": "Wo finde ich die vollständige Dokumentation?",
-                    "answer": "Besuchen Sie docs.artemis.cit.tum.de für umfassende Dokumentation zu Einrichtung, Konfiguration und Nutzung für Studierende, Tutoren und Lehrende."
+                    "answer": "Besuche docs.artemis.cit.tum.de für umfassende Dokumentation zu Einrichtung, Konfiguration und Nutzung für Studierende, Tutoren und Lehrende."
                 }
             }
         },
@@ -128,6 +136,9 @@
                     "publication": "Publikation"
                 }
             },
+            "website": "Webseite",
+            "linkedin": "LinkedIn",
+            "instagram": "Instagram",
             "imprint": {
                 "about": "Über uns",
                 "releases": "Releases",
@@ -135,7 +146,7 @@
                 "privacy": "Datenschutz",
                 "imprint": "Impressum"
             },
-            "copyright": "© 2026 Technische Universität München. Alle Rechte vorbehalten."
+            "copyright": "© {{year}} Technische Universität München. Alle Rechte vorbehalten."
         }
     }
 }

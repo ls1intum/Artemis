@@ -119,12 +119,14 @@ export class AppComponent implements OnInit, OnDestroy {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
                 this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
                 const showSkeletonFromRoute = this.getDeepestShowSkeleton(this.router.routerState.snapshot.root);
-                if (!showSkeletonFromRoute && this.showSkeleton) {
-                    this.showSkeleton = false;
-                    this.renderer.addClass(this.document.body, 'transparent-background');
-                } else if (showSkeletonFromRoute && !this.showSkeleton) {
-                    this.showSkeleton = true;
-                    this.renderer.removeClass(this.document.body, 'transparent-background');
+                if (showSkeletonFromRoute !== undefined) {
+                    if (!showSkeletonFromRoute && this.showSkeleton) {
+                        this.showSkeleton = false;
+                        this.renderer.addClass(this.document.body, 'transparent-background');
+                    } else if (showSkeletonFromRoute && !this.showSkeleton) {
+                        this.showSkeleton = true;
+                        this.renderer.removeClass(this.document.body, 'transparent-background');
+                    }
                 }
             }
             if (event instanceof NavigationError && event.error.status === 404) {
@@ -163,8 +165,8 @@ export class AppComponent implements OnInit, OnDestroy {
         return !isStandaloneProblemStatement && !isStandaloneFeedback;
     }
 
-    private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean {
-        return this.getDeepestSnapshot(root).data?.['showSkeleton'] ?? true;
+    private getDeepestShowSkeleton(root: ActivatedRouteSnapshot): boolean | undefined {
+        return this.getDeepestSnapshot(root).data?.['showSkeleton'];
     }
 
     ngOnDestroy(): void {

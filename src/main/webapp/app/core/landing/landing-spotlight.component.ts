@@ -263,7 +263,9 @@ export class LandingSpotlightComponent implements OnInit {
         }
 
         this.fading.set(true);
+        clearTimeout(this.fadeTimeoutId);
         this.fadeTimeoutId = setTimeout(() => {
+            this.fadeTimeoutId = undefined;
             this.activeIndex.set(normalizedIndex);
             this.fading.set(false);
             this.scheduleAutoAdvance();

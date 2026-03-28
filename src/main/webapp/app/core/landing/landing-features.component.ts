@@ -128,7 +128,7 @@ import { FEATURE_CARDS } from 'app/core/landing/landing-data';
                             <p class="card-description">{{ card.descriptionKey | artemisTranslate }}</p>
                         </div>
                         <div class="card-assets">
-                            <img class="card-image" [src]="card.imageSrc" [alt]="card.imageAlt" />
+                            <img class="card-image" [src]="card.imageSrc" [alt]="card.imageAltKey | artemisTranslate" />
                         </div>
                     </div>
                 }

@@ -5,15 +5,15 @@ import { faBars, faFlag, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateService } from '@ngx-translate/core';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { MenuModule } from 'primeng/menu';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { ActiveMenuDirective } from 'app/core/navbar/active-menu.directive';
 import { LANGUAGES } from 'app/core/language/shared/language.constants';
+import { MenuItem } from 'primeng/api';
 
 @Component({
     selector: 'jhi-landing-navbar',
     standalone: true,
-    imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, FindLanguageFromKeyPipe, ActiveMenuDirective],
+    imports: [FaIconComponent, ArtemisTranslatePipe, ThemeSwitchComponent, MenuModule],
     styles: `
         :host {
             display: block;
@@ -93,13 +93,9 @@ import { LANGUAGES } from 'app/core/language/shared/language.constants';
             color: var(--navbar-foreground);
         }
 
-        .lang-dropdown .dropdown-menu {
-            min-width: auto;
-        }
-
         .login-btn {
             background: var(--primary);
-            color: #fff;
+            color: var(--white);
             border: none;
             padding: 6px 16px;
             border-radius: 8px;
@@ -165,18 +161,12 @@ import { LANGUAGES } from 'app/core/language/shared/language.constants';
 
             <div class="right-section">
                 <jhi-theme-switch [popoverPlacement]="'bottom-right'" />
-                <div ngbDropdown class="lang-dropdown" display="dynamic">
-                    <a class="nav-link dropdown-toggle" ngbDropdownToggle>
+                <div class="lang-dropdown">
+                    <a class="nav-link" (click)="langMenu.toggle($event)">
                         <fa-icon [icon]="faFlag" />
                         <span>{{ 'global.menu.language' | artemisTranslate }}</span>
                     </a>
-                    <ul class="dropdown-menu" ngbDropdownMenu>
-                        @for (language of languages; track language) {
-                            <li>
-                                <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language)">{{ language | findLanguageFromKey }}</a>
-                            </li>
-                        }
-                    </ul>
+                    <p-menu #langMenu [model]="languageMenuItems" [popup]="true" />
                 </div>
                 <button class="login-btn" (click)="navigateToLogin()">{{ 'landing.navbar.logIn' | artemisTranslate }}</button>
                 <button class="icon-btn mobile-menu-btn" (click)="toggleMobileMenu()" [attr.aria-expanded]="mobileMenuOpen()" aria-label="Toggle menu">
@@ -189,20 +179,12 @@ import { LANGUAGES } from 'app/core/language/shared/language.constants';
             <div class="mobile-nav">
                 <div class="mobile-controls">
                     <jhi-theme-switch [popoverPlacement]="'bottom'" />
-                    <div ngbDropdown class="lang-dropdown" display="dynamic">
-                        <a class="nav-link dropdown-toggle" ngbDropdownToggle>
+                    <div class="lang-dropdown">
+                        <a class="nav-link" (click)="mobileLangMenu.toggle($event)">
                             <fa-icon [icon]="faFlag" />
                             <span>{{ 'global.menu.language' | artemisTranslate }}</span>
                         </a>
-                        <ul class="dropdown-menu" ngbDropdownMenu>
-                            @for (language of languages; track language) {
-                                <li>
-                                    <a class="dropdown-item" [jhiActiveMenu]="language" (click)="changeLanguage(language); toggleMobileMenu()">{{
-                                        language | findLanguageFromKey
-                                    }}</a>
-                                </li>
-                            }
-                        </ul>
+                        <p-menu #mobileLangMenu [model]="mobileLanguageMenuItems" [popup]="true" />
                     </div>
                 </div>
             </div>
@@ -215,10 +197,24 @@ export class LandingNavbarComponent {
     protected readonly faFlag = faFlag;
 
     private translateService = inject(TranslateService);
+    private findLanguagePipe = new FindLanguageFromKeyPipe();
     private router = inject(Router);
 
     languages = LANGUAGES;
     mobileMenuOpen = signal(false);
+
+    languageMenuItems: MenuItem[] = this.languages.map((lang) => ({
+        label: this.findLanguagePipe.transform(lang),
+        command: () => this.changeLanguage(lang),
+    }));
+
+    mobileLanguageMenuItems: MenuItem[] = this.languages.map((lang) => ({
+        label: this.findLanguagePipe.transform(lang),
+        command: () => {
+            this.changeLanguage(lang);
+            this.toggleMobileMenu();
+        },
+    }));
 
     changeLanguage(languageKey: string): void {
         this.translateService.use(languageKey);

@@ -9,7 +9,7 @@ export interface FeatureCard {
     categoryKey: string;
     descriptionKey: string;
     imageSrc: string;
-    imageAlt: string;
+    imageAltKey: string;
 }
 
 export interface FaqItem {
@@ -61,49 +61,49 @@ export const FEATURE_CARDS: FeatureCard[] = [
         categoryKey: 'landing.features.cards.assessment.category',
         descriptionKey: 'landing.features.cards.assessment.description',
         imageSrc: 'content/images/landing/assessment.png',
-        imageAlt: 'Assessment dashboard',
+        imageAltKey: 'landing.features.cards.assessment.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.tutorials.category',
         descriptionKey: 'landing.features.cards.tutorials.description',
         imageSrc: 'content/images/landing/tutorials.png',
-        imageAlt: 'Tutorial groups',
+        imageAltKey: 'landing.features.cards.tutorials.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.lectures.category',
         descriptionKey: 'landing.features.cards.lectures.description',
         imageSrc: 'content/images/landing/lectures.png',
-        imageAlt: 'Lecture content',
+        imageAltKey: 'landing.features.cards.lectures.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.examMode.category',
         descriptionKey: 'landing.features.cards.examMode.description',
         imageSrc: 'content/images/landing/exam-mode.png',
-        imageAlt: 'Exam mode',
+        imageAltKey: 'landing.features.cards.examMode.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.communication.category',
         descriptionKey: 'landing.features.cards.communication.description',
         imageSrc: 'content/images/landing/communication.png',
-        imageAlt: 'Communication tools',
+        imageAltKey: 'landing.features.cards.communication.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.faq.category',
         descriptionKey: 'landing.features.cards.faq.description',
         imageSrc: 'content/images/landing/faq-feature.png',
-        imageAlt: 'FAQ management',
+        imageAltKey: 'landing.features.cards.faq.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.iris.category',
         descriptionKey: 'landing.features.cards.iris.description',
         imageSrc: 'content/images/landing/iris.png',
-        imageAlt: 'Iris AI Tutor',
+        imageAltKey: 'landing.features.cards.iris.imageAlt',
     },
     {
         categoryKey: 'landing.features.cards.mobileApps.category',
         descriptionKey: 'landing.features.cards.mobileApps.description',
         imageSrc: 'content/images/landing/mobile-phone.png',
-        imageAlt: 'Mobile apps',
+        imageAltKey: 'landing.features.cards.mobileApps.imageAlt',
     },
 ];
 

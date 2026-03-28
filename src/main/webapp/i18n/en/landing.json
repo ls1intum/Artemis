@@ -39,35 +39,43 @@
             "cards": {
                 "assessment": {
                     "category": "Assessment",
-                    "description": "From anonymous, rubric-based manual grading and AI-assisted correction suggestions, to fully automatic evaluation of quizzes and programming submissions."
+                    "description": "From anonymous, rubric-based manual grading and AI-assisted correction suggestions, to fully automatic evaluation of quizzes and programming submissions.",
+                    "imageAlt": "Assessment dashboard"
                 },
                 "tutorials": {
                     "category": "Tutorials",
-                    "description": "Structured small-group sessions with exercise assignments, attendance tracking, and tutor tooling designed to scale across large cohorts."
+                    "description": "Structured small-group sessions with exercise assignments, attendance tracking, and tutor tooling designed to scale across large cohorts.",
+                    "imageAlt": "Tutorial groups"
                 },
                 "lectures": {
                     "category": "Lectures",
-                    "description": "Upload slides, embed videos, and divide content into structured units, all linked directly to learning objectives."
+                    "description": "Upload slides, embed videos, and divide content into structured units, all linked directly to learning objectives.",
+                    "imageAlt": "Lecture content"
                 },
                 "examMode": {
                     "category": "Exam Mode",
-                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria."
+                    "description": "Online exams with randomized variants, plagiarism detection, and structured grading criteria.",
+                    "imageAlt": "Exam mode"
                 },
                 "communication": {
                     "category": "Communication",
-                    "description": "Course-wide announcements, discussion threads, and private messaging."
+                    "description": "Course-wide announcements, discussion threads, and private messaging.",
+                    "imageAlt": "Communication tools"
                 },
                 "faq": {
                     "category": "FAQ",
-                    "description": "Searchable, course-level FAQ library that reduces repetitive queries and feeds directly into Iris for smarter AI responses."
+                    "description": "Searchable, course-level FAQ library that reduces repetitive queries and feeds directly into Iris for smarter AI responses.",
+                    "imageAlt": "FAQ management"
                 },
                 "iris": {
                     "category": "Iris - AI Tutor",
-                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers."
+                    "description": "An AI-powered tutor that guides students with hints and questions rather than answers.",
+                    "imageAlt": "Iris AI Tutor"
                 },
                 "mobileApps": {
                     "category": "Mobile Apps",
-                    "description": "Access courses, exercises, lectures, and discussions on the go."
+                    "description": "Access courses, exercises, lectures, and discussions on the go.",
+                    "imageAlt": "Mobile apps"
                 }
             }
         },
@@ -128,6 +136,9 @@
                     "publication": "Publication"
                 }
             },
+            "website": "Website",
+            "linkedin": "LinkedIn",
+            "instagram": "Instagram",
             "imprint": {
                 "about": "About",
                 "releases": "Releases",
@@ -135,7 +146,7 @@
                 "privacy": "Privacy",
                 "imprint": "Imprint"
             },
-            "copyright": "© 2026 Technical University of Munich. All rights reserved."
+            "copyright": "© {{year}} Technical University of Munich. All rights reserved."
         }
     }
 }
