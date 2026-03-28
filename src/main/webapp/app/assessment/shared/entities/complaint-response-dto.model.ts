@@ -12,6 +12,9 @@ export class ComplaintResponseUpdateDTO {
     public action?: ComplaintAction;
 }
 
+/**
+ * DTO representing a complaint response returned by the server.
+ */
 export class ComplaintResponseDTO {
     public id: number;
     public responseText?: string;
