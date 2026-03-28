@@ -164,7 +164,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime FIRST_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
 
-    Course course;
+    Course exampleCourse;
 
     Long exampleCourseId;
 
@@ -183,7 +183,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         this.testPrefix = getTestPrefix();
         var course = courseUtilService.createCourse();
         course.setTimeZone(exampleTimeZone);
-        this.course = courseRepository.save(course);
+        this.exampleCourse = courseRepository.save(course);
         exampleCourseId = course.getId();
         exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
     }
@@ -295,7 +295,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
                 Set.of());
         TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "10:00:00", "12:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
                 SECOND_AUGUST_MONDAY.toString(), "LoremIpsum");
-        tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(course, tutorialGroup, schedule);
+        tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(exampleCourse, tutorialGroup, schedule);
         tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
         this.assertTutorialGroupPersistedWithSchedule(tutorialGroup, schedule);
         return tutorialGroup;

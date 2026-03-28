@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.tutorialgroup;
 
-import static de.tum.cit.aet.artemis.tutorialgroup.AbstractTutorialGroupIntegrationTest.RandomTutorialGroupGenerator.generateRandomTitle;
-
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.cit.aet.artemis.core.domain.Language;
 
@@ -18,11 +18,10 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     void setupTestScenario() {
         super.setupTestScenario();
         userUtilService.addUsers(this.testPrefix, 1, 2, 1, 1);
+        var tutor1 = userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow();
+        var student1 = userRepository.findOneByLogin(testPrefix + "student1").orElseThrow();
         exampleTutorialGroupId = tutorialGroupUtilService
-                .createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH.name(),
-                        userRepository.findOneByLogin(testPrefix + "tutor1").orElseThrow(), Set.of(userRepository.findOneByLogin(testPrefix + "student1").orElseThrow()))
-                .getId();
-
+                .createAndSaveTutorialGroup(exampleCourseId, "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(), tutor1, Set.of(student1)).getId();
     }
 
     private static final String TEST_PREFIX = "tutorialgroupsession";
@@ -33,12 +32,77 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Nested
-    class UpdateSessionTests {
+    class CreateSessionTests {
 
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithoutExistingGroup_shouldReturnNotFound() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfOtherGroup_shouldReturnAccessForbidden() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asEditorOfOtherCourse_shouldReturnAccessForbidden() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithSessionWithStartNotBeforeEnd_shouldReturnBadRequest() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithoutConfiguration_shouldReturnBadRequest() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithoutTimeZone_shouldReturnBadRequest() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithOtherCourse_shouldReturnBadRequest() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithOtherTutorialGroup_shouldReturnBadRequest() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithOverlappingSession_shouldReturnBadRequest() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithOverlappingFreePeriod_shouldReturnCreated() throws Exception {
+
+        }
+
+        @Test
+        @WithMockUser(username = "someLogin", roles = "TA")
+        void createSession_asTutorOfGroupWithoutOverlappingFreePeriod_shouldReturnCreated() throws Exception {
+
+        }
     }
 
     @Nested
-    class CreateSessionTests {
+    class UpdateSessionTests {
 
     }
 

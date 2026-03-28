@@ -110,14 +110,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void setupTestScenario() {
         super.setupTestScenario();
 
-        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
-        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
-        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
-        userUtilService.addStudent(course.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
-        userUtilService.addTeachingAssistant(course.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
-        userUtilService.addTeachingAssistant(course.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
-        userUtilService.addEditor(course.getEditorGroupName(), FIRST_COURSE_EDITOR1_LOGIN);
-        userUtilService.addInstructor(course.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
+        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
+        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
+        userUtilService.addEditor(exampleCourse.getEditorGroupName(), FIRST_COURSE_EDITOR1_LOGIN);
+        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
 
         firstCourseInstructor1 = userRepository.findOneByLogin(FIRST_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
         firstCourseTutor1 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR1_LOGIN).orElseThrow();
@@ -132,14 +132,14 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         firstCourseStudent4.setRegistrationNumber("4");
         userRepository.save(firstCourseStudent4);
 
-        firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
-                firstCourseTutor1, Set.of(firstCourseStudent1));
+        firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching",
+                Language.ENGLISH.name(), firstCourseTutor1, Set.of(firstCourseStudent1));
         TutorialGroupSchedule tutorialGroupSchedule1 = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(firstCourseTutorialGroup1, 1, "13:00:00", "14:00:00", 1,
                 FIRST_AUGUST_MONDAY.toString(), FIFTH_AUGUST_MONDAY.toString(), "01.05.13");
-        firstCourseTutorialGroupSessions1 = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(course, firstCourseTutorialGroup1, tutorialGroupSchedule1);
+        firstCourseTutorialGroupSessions1 = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(exampleCourse, firstCourseTutorialGroup1, tutorialGroupSchedule1);
         firstCourseChannel1 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup1);
 
-        firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(course.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(),
+        firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(),
                 firstCourseTutor2, Set.of(firstCourseStudent2));
         firstCourseChannel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup2);
 

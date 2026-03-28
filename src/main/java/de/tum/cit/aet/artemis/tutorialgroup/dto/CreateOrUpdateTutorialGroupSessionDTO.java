@@ -24,7 +24,7 @@ public record CreateOrUpdateTutorialGroupSessionDTO(@NotNull LocalDate date, @No
         @NotNull @Size(min = 1, max = 2000) String location, @Nullable Integer attendance) {
 
     public void validityCheck() {
-        if (startTime.isAfter(endTime)) {
+        if (!startTime.isBefore(endTime)) {
             throw new BadRequestAlertException("The start time must be before the end time", "tutorialGroupSession", "startTimeAfterEndTime");
         }
     }
