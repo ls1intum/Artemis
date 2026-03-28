@@ -45,34 +45,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private static final String TEST_PREFIX = "tutorialgroup";
 
-    private static final String FIRST_COURSE_PREFIX = TEST_PREFIX + "firstcourse";
-
-    private static final String SECOND_COURSE_PREFIX = TEST_PREFIX + "secondcourse";
-
-    private static final String FIRST_COURSE_INSTRUCTOR1_LOGIN = TEST_PREFIX + "firstcourseinstructor1";
-
-    private static final String FIRST_COURSE_EDITOR1_LOGIN = TEST_PREFIX + "firstcourseeditor1";
-
-    private static final String FIRST_COURSE_TUTOR1_LOGIN = TEST_PREFIX + "firstcoursetutor1";
-
-    private static final String FIRST_COURSE_TUTOR2_LOGIN = TEST_PREFIX + "firstcoursetutor2";
-
-    private static final String FIRST_COURSE_STUDENT1_LOGIN = TEST_PREFIX + "firstcoursestudent1";
-
-    private static final String FIRST_COURSE_STUDENT2_LOGIN = TEST_PREFIX + "firstcoursestudent2";
-
-    private static final String FIRST_COURSE_STUDENT3_LOGIN = TEST_PREFIX + "firstcoursestudent3";
-
-    private static final String FIRST_COURSE_STUDENT4_LOGIN = TEST_PREFIX + "firstcoursestudent4";
-
-    private static final String SECOND_COURSE_EDITOR1_LOGIN = TEST_PREFIX + "secondcourseeditor1";
-
-    private static final String SECOND_COURSE_TUTOR1_LOGIN = TEST_PREFIX + "secondcoursetutor1";
-
-    private static final String SECOND_COURSE_INSTRUCTOR1_LOGIN = TEST_PREFIX + "secondcourseinstructor1";
-
-    private User firstCourseInstructor1;
-
     private User firstCourseTutor1;
 
     private User firstCourseTutor2;
@@ -85,19 +57,17 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private User firstCourseStudent4;
 
-    private Long secondCourseId;
-
-    private User secondCourseEditor1;
-
     private TutorialGroup firstCourseTutorialGroup1;
-
-    private TutorialGroup firstCourseTutorialGroup2;
 
     private Channel firstCourseChannel1;
 
+    private List<TutorialGroupSession> firstCourseTutorialGroupSessions1;
+
+    private TutorialGroup firstCourseTutorialGroup2;
+
     private Channel firstCourseChannel2;
 
-    private List<TutorialGroupSession> firstCourseTutorialGroupSessions1;
+    private User secondCourseEditor1;
 
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
@@ -110,47 +80,25 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
     void setupTestScenario() {
         super.setupTestScenario();
 
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
-        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
-        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
-        userUtilService.addEditor(exampleCourse.getEditorGroupName(), FIRST_COURSE_EDITOR1_LOGIN);
-        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+        TestCourseOneUsers testCourseOneUsers = createAndSaveTestCourseOneUsers();
+        firstCourseTutor1 = testCourseOneUsers.tutor1();
+        firstCourseTutor2 = testCourseOneUsers.tutor2();
+        firstCourseStudent1 = testCourseOneUsers.student1();
+        firstCourseStudent2 = testCourseOneUsers.student2();
+        firstCourseStudent3 = testCourseOneUsers.student3();
+        firstCourseStudent4 = testCourseOneUsers.student4();
 
-        firstCourseInstructor1 = userRepository.findOneByLogin(FIRST_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
-        firstCourseTutor1 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR1_LOGIN).orElseThrow();
-        firstCourseTutor2 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR2_LOGIN).orElseThrow();
-        firstCourseStudent1 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT1_LOGIN).orElseThrow();
-        firstCourseStudent2 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT2_LOGIN).orElseThrow();
-        firstCourseStudent3 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT3_LOGIN).orElseThrow();
-        firstCourseStudent4 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT4_LOGIN).orElseThrow();
+        TestTutorialGroupOneData testTutorialGroupOneData = createAndSaveTestTutorialGroupOneData(firstCourseTutor1, firstCourseStudent1);
+        firstCourseTutorialGroup1 = testTutorialGroupOneData.group();
+        firstCourseChannel1 = testTutorialGroupOneData.channel();
+        firstCourseTutorialGroupSessions1 = testTutorialGroupOneData.sessions();
 
-        firstCourseStudent3.setRegistrationNumber("3");
-        userRepository.save(firstCourseStudent3);
-        firstCourseStudent4.setRegistrationNumber("4");
-        userRepository.save(firstCourseStudent4);
+        TestTutorialGroupTwoData testTutorialGroupTwoData = createAndSaveTestTutorialGroupTwoData(firstCourseTutor2, firstCourseStudent2);
+        firstCourseTutorialGroup2 = testTutorialGroupTwoData.group();
+        firstCourseChannel2 = testTutorialGroupTwoData.channel();
 
-        firstCourseTutorialGroup1 = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching",
-                Language.ENGLISH.name(), firstCourseTutor1, Set.of(firstCourseStudent1));
-        TutorialGroupSchedule tutorialGroupSchedule1 = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(firstCourseTutorialGroup1, 1, "13:00:00", "14:00:00", 1,
-                FIRST_AUGUST_MONDAY.toString(), FIFTH_AUGUST_MONDAY.toString(), "01.05.13");
-        firstCourseTutorialGroupSessions1 = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(exampleCourse, firstCourseTutorialGroup1, tutorialGroupSchedule1);
-        firstCourseChannel1 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup1);
-
-        firstCourseTutorialGroup2 = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(),
-                firstCourseTutor2, Set.of(firstCourseStudent2));
-        firstCourseChannel2 = tutorialGroupChannelManagementService.createChannelForTutorialGroup(firstCourseTutorialGroup2);
-
-        var secondCourse = courseUtilService.createCourseWithUserPrefix(SECOND_COURSE_PREFIX);
-        secondCourse.setTimeZone(exampleTimeZone);
-        secondCourse = courseRepository.save(secondCourse);
-        secondCourseId = secondCourse.getId();
-        userUtilService.addTeachingAssistant(secondCourse.getTeachingAssistantGroupName(), SECOND_COURSE_TUTOR1_LOGIN);
-        userUtilService.addEditor(secondCourse.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
-        userUtilService.addInstructor(secondCourse.getInstructorGroupName(), SECOND_COURSE_INSTRUCTOR1_LOGIN);
-        secondCourseEditor1 = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();
+        TestCourseTwoUsers testCourseTwoUsers = createAndSaveTestCourseTwoUsers();
+        secondCourseEditor1 = testCourseTwoUsers.editor();
     }
 
     @Override
@@ -390,7 +338,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void getTutorialGroupSchedule_wrongCourse_shouldReturnNotFound() throws Exception {
-            request.get("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.NOT_FOUND, String.class);
+            request.get("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/schedule", HttpStatus.NOT_FOUND,
+                    String.class);
         }
 
         @Test
@@ -598,7 +547,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mon 15", firstCourseTutor1.getId(), "English", false,
                     "Garching", 15, "Updated information.", null);
 
-            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
+            request.putWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(),
                     createAndUpdateTutorialGroupDTO, HttpStatus.BAD_REQUEST);
         }
 
@@ -747,13 +696,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = SECOND_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructorWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
-            request.delete("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.BAD_REQUEST);
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.BAD_REQUEST);
         }
 
         @Test
         @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructorOfOtherCourse_shouldReturnForbidden() throws Exception {
-            request.delete("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.FORBIDDEN);
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.FORBIDDEN);
         }
 
         // TODO: add notification case
@@ -828,7 +777,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void batchRegister_asTutorWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
-            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/batch-register",
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/batch-register",
                     List.of(FIRST_COURSE_STUDENT3_LOGIN, FIRST_COURSE_STUDENT4_LOGIN), HttpStatus.BAD_REQUEST);
         }
         // TODO: add notification cases
@@ -896,7 +845,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void deregisterStudent_asTutorWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
-            request.delete("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/deregister/" + FIRST_COURSE_STUDENT1_LOGIN,
+            request.delete(
+                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/deregister/" + FIRST_COURSE_STUDENT1_LOGIN,
                     HttpStatus.BAD_REQUEST);
         }
 
@@ -909,7 +859,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void searchUnregisteredStudents_asTutorOfGroupWithoutMatchingCourse_shouldReturnNotFound() throws Exception {
-            request.getList("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId()
+            request.getList("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId()
                     + "/unregistered-students?loginOrName=student&pageIndex=0&pageSize=10", HttpStatus.NOT_FOUND, TutorialGroupStudentDTO.class);
         }
 
@@ -946,8 +896,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void getRegisteredStudents_asEditorOfCourseWithoutMatchingCourse_shouldReturnNotFound() throws Exception {
-            request.getSet("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/registered-students", HttpStatus.NOT_FOUND,
-                    TutorialGroupStudentDTO.class);
+            request.getSet("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/registered-students",
+                    HttpStatus.NOT_FOUND, TutorialGroupStudentDTO.class);
         }
 
         @Test
@@ -982,7 +932,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @Test
         @WithMockUser(username = SECOND_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void importRegistrations_asInstructorOfCourseWithoutMatchingCourse_shouldReturnBadRequest() throws Exception {
-            request.postListWithResponseBody("/api/tutorialgroup/courses/" + secondCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/import-registrations",
+            request.postListWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/import-registrations",
                     List.of(new TutorialGroupRegistrationsImportDTO(FIRST_COURSE_STUDENT3_LOGIN, null)), TutorialGroupRegistrationsImportDTO.class, HttpStatus.BAD_REQUEST);
         }
 

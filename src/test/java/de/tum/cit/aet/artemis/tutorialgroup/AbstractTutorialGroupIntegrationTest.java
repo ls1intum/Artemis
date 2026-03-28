@@ -114,6 +114,18 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected CourseTestService courseTestService;
 
+    protected record TestCourseOneUsers(User instructor, User tutor1, User tutor2, User student1, User student2, User student3, User student4) {
+    };
+
+    protected record TestCourseTwoUsers(User instructor, User editor, User tutor) {
+    };
+
+    protected record TestTutorialGroupOneData(TutorialGroup group, TutorialGroupSchedule schedule, List<TutorialGroupSession> sessions, Channel channel) {
+    };
+
+    protected record TestTutorialGroupTwoData(TutorialGroup group, Channel channel) {
+    };
+
     static final LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
     static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
@@ -164,11 +176,37 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime FIRST_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
 
+    protected static final String FIRST_COURSE_INSTRUCTOR1_LOGIN = "firstcourseinstructor1";
+
+    protected static final String FIRST_COURSE_EDITOR1_LOGIN = "firstcourseeditor1";
+
+    protected static final String FIRST_COURSE_TUTOR1_LOGIN = "firstcoursetutor1";
+
+    protected static final String FIRST_COURSE_TUTOR2_LOGIN = "firstcoursetutor2";
+
+    protected static final String FIRST_COURSE_STUDENT1_LOGIN = "firstcoursestudent1";
+
+    protected static final String FIRST_COURSE_STUDENT2_LOGIN = "firstcoursestudent2";
+
+    protected static final String FIRST_COURSE_STUDENT3_LOGIN = "firstcoursestudent3";
+
+    protected static final String FIRST_COURSE_STUDENT4_LOGIN = "firstcoursestudent4";
+
+    protected static final String SECOND_COURSE_EDITOR1_LOGIN = "secondcourseeditor1";
+
+    protected static final String SECOND_COURSE_TUTOR1_LOGIN = "secondcoursetutor1";
+
+    protected static final String SECOND_COURSE_INSTRUCTOR1_LOGIN = "secondcourseinstructor1";
+
     Course exampleCourse;
 
     Long exampleCourseId;
 
     Long exampleConfigurationId;
+
+    Course exampleCourse2;
+
+    Long exampleCourseId2;
 
     String exampleTimeZone = "Europe/Bucharest";
 
@@ -181,11 +219,71 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @BeforeEach
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
-        var course = courseUtilService.createCourse();
-        course.setTimeZone(exampleTimeZone);
-        this.exampleCourse = courseRepository.save(course);
-        exampleCourseId = course.getId();
+        var firstCourse = courseUtilService.createCourseWithUserPrefix("firstCourse");
+        firstCourse.setTimeZone(exampleTimeZone);
+        this.exampleCourse = courseRepository.save(firstCourse);
+        exampleCourseId = firstCourse.getId();
         exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
+
+        var secondCourse = courseUtilService.createCourseWithUserPrefix("secondCourse");
+        secondCourse.setTimeZone(exampleTimeZone);
+        this.exampleCourse2 = courseRepository.save(secondCourse);
+        exampleCourseId2 = secondCourse.getId();
+    }
+
+    TestCourseOneUsers createAndSaveTestCourseOneUsers() {
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
+        userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT4_LOGIN);
+        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR1_LOGIN);
+        userUtilService.addTeachingAssistant(exampleCourse.getTeachingAssistantGroupName(), FIRST_COURSE_TUTOR2_LOGIN);
+        userUtilService.addEditor(exampleCourse.getEditorGroupName(), FIRST_COURSE_EDITOR1_LOGIN);
+        userUtilService.addInstructor(exampleCourse.getInstructorGroupName(), FIRST_COURSE_INSTRUCTOR1_LOGIN);
+
+        var instructor = userRepository.findOneByLogin(FIRST_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
+        var tutor1 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR1_LOGIN).orElseThrow();
+        var tutor2 = userRepository.findOneByLogin(FIRST_COURSE_TUTOR2_LOGIN).orElseThrow();
+        var student1 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT1_LOGIN).orElseThrow();
+        var student2 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT2_LOGIN).orElseThrow();
+        var student3 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT3_LOGIN).orElseThrow();
+        var student4 = userRepository.findOneByLogin(FIRST_COURSE_STUDENT4_LOGIN).orElseThrow();
+
+        student3.setRegistrationNumber("3");
+        userRepository.save(student3);
+        student4.setRegistrationNumber("4");
+        userRepository.save(student4);
+
+        return new TestCourseOneUsers(instructor, tutor1, tutor2, student1, student2, student3, student4);
+    }
+
+    TestCourseTwoUsers createAndSaveTestCourseTwoUsers() {
+        userUtilService.addTeachingAssistant(exampleCourse2.getTeachingAssistantGroupName(), SECOND_COURSE_TUTOR1_LOGIN);
+        userUtilService.addEditor(exampleCourse2.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
+        userUtilService.addInstructor(exampleCourse2.getInstructorGroupName(), SECOND_COURSE_INSTRUCTOR1_LOGIN);
+
+        var instructor = userRepository.findOneByLogin(SECOND_COURSE_INSTRUCTOR1_LOGIN).orElseThrow();
+        var editor = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();
+        var tutor = userRepository.findOneByLogin(SECOND_COURSE_TUTOR1_LOGIN).orElseThrow();
+
+        return new TestCourseTwoUsers(instructor, editor, tutor);
+    }
+
+    TestTutorialGroupOneData createAndSaveTestTutorialGroupOneData(User tutor, User student) {
+        var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
+                tutor, Set.of(student));
+        TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "13:00:00", "14:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
+                FIFTH_AUGUST_MONDAY.toString(), "01.05.13");
+        var sessions = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(exampleCourse, tutorialGroup, schedule);
+        var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+        return new TestTutorialGroupOneData(tutorialGroup, schedule, sessions, channel);
+    }
+
+    TestTutorialGroupTwoData createAndSaveTestTutorialGroupTwoData(User tutor, User student) {
+        var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(), tutor,
+                Set.of(student));
+        var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+        return new TestTutorialGroupTwoData(tutorialGroup, channel);
     }
 
     // === Abstract Methods ===
@@ -271,7 +369,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
-        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).orElseThrow());
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(tutorLogin).orElseThrow());
         tutorialGroup.setCapacity(15);
         tutorialGroup.setCampus("Garching");
         return tutorialGroup;
