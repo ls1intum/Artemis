@@ -309,7 +309,6 @@ public class CourseRequestService {
         course.setStudentCourseAnalyticsDashboardEnabled(false);
         course.setRestrictedAthenaModulesAccess(false);
         course.setAccuracyOfScores(1);
-        course.setFaqEnabled(true);
         course.setCourseInformationSharingConfiguration(CourseInformationSharingConfiguration.COMMUNICATION_AND_MESSAGING);
 
         var templatePath = Path.of("templates", "codeofconduct", "README.md");
