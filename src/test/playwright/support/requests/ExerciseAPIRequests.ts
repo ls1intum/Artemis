@@ -514,6 +514,7 @@ export class ExerciseAPIRequests {
         startOfWorkingTime?: dayjs.Dayjs;
         duration?: number;
         quizMode?: QuizMode;
+        competencyLinks?: { competency: { id: number }; weight: number }[];
     }): Promise<QuizExercise> {
         const {
             body,
@@ -523,6 +524,7 @@ export class ExerciseAPIRequests {
             startOfWorkingTime,
             duration = 600,
             quizMode = QuizMode.SYNCHRONIZED,
+            competencyLinks,
         } = options;
 
         const quizExercise: any = {
@@ -551,6 +553,9 @@ export class ExerciseAPIRequests {
             newQuizExercise = { ...quizExercise, ...body };
         }
 
+        if (competencyLinks) {
+            newQuizExercise.competencyLinks = competencyLinks;
+        }
         const quizExerciseDTO = convertQuizExerciseToCreationDTO(newQuizExercise);
         const multipartData = {
             exercise: {
@@ -811,12 +816,13 @@ export class ExerciseAPIRequests {
      */
     async createTeam(exerciseId: number, students: any[], tutor: any) {
         const teamId = generateUUID();
-        const team: Team = {
+        // The server expects TeamInputDTO with user IDs, not full User objects
+        const teamDTO = {
             name: `Team ${teamId}`,
             shortName: `team${teamId}`,
-            students,
-            owner: tutor,
+            students: students.map((s: any) => s.id),
+            ownerId: tutor.id,
         };
-        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: team });
+        return await this.page.request.post(`api/exercise/exercises/${exerciseId}/teams`, { data: teamDTO });
     }
 }

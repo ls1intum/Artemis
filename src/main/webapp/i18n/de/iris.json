@@ -217,6 +217,7 @@
                 "switchSession": "Chat-Sitzung wechseln"
             },
             "aboutIrisModal": {
+                "learnMore": "Mehr erfahren",
                 "meetIris": "Lern Iris kennen",
                 "subtitle": "Dein KI-Tutor, direkt in Artemis integriert.",
                 "description": "Als Teil der EduTelligence-Suite von KI-Funktionen in Artemis hilft Iris bei kursbezogenen Programmierfragen und Vorlesungsinhalten unter Verwendung deines aktuellen Kontexts.",
@@ -284,6 +285,9 @@
                     "detailsLoadFailed": "Fehler beim Laden der Erinnerungsdetails."
                 }
             }
+        },
+        "pyrisSearchAskRequest": {
+            "limit": "Limit"
         }
     }
 }
