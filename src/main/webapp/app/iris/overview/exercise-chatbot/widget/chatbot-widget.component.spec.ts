@@ -5,6 +5,7 @@ vi.mock('interactjs', () => {
         return {
             resizable: vi.fn().mockReturnThis(),
             draggable: vi.fn().mockReturnThis(),
+            unset: vi.fn(),
         };
     });
 

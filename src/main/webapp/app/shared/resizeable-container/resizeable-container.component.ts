@@ -1,5 +1,6 @@
-import { AfterViewInit, Component, HostBinding, HostListener, Input } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, HostListener, Input, OnDestroy } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { Interactable } from '@interactjs/core/Interactable';
 import interact from 'interactjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgTemplateOutlet } from '@angular/common';
@@ -21,7 +22,7 @@ import { NgTemplateOutlet } from '@angular/common';
     styleUrls: ['./resizeable-container.component.scss'],
     imports: [FaIconComponent, NgTemplateOutlet],
 })
-export class ResizeableContainerComponent implements AfterViewInit {
+export class ResizeableContainerComponent implements AfterViewInit, OnDestroy {
     @HostBinding('class.flex-grow-1') flexGrow1 = true;
     @Input() collapsed = false;
     @Input() isExerciseParticipation = false;
@@ -41,17 +42,23 @@ export class ResizeableContainerComponent implements AfterViewInit {
      */
     @Input() expandProblemStatement = false;
 
+    interactResizable: Interactable | undefined;
+
     // Icons
     faChevronRight = faChevronRight;
     faChevronLeft = faChevronLeft;
     faGripLinesVertical = faGripLinesVertical;
+
+    ngOnDestroy(): void {
+        this.interactResizable?.unset();
+    }
 
     /**
      * Performed after full initialization of the view.
      * Handles the resizable layout with collapsible panel on the right-hand side.
      */
     ngAfterViewInit() {
-        interact('.expanded')
+        this.interactResizable = interact('.expanded')
             .resizable({
                 edges: { left: '.draggable-left', right: false, bottom: false, top: false },
                 modifiers: [
