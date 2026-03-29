@@ -36,6 +36,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/toolbar-menu-button/exam-students-menu-button.component';
 import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
+import { TableModule } from 'primeng/table';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -62,6 +63,7 @@ const cssClasses = {
         Toolbar,
         ExamStudentsMenuButtonComponent,
         ExamAddStudentsDialogComponent,
+        TableModule,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -459,5 +461,9 @@ export class ExamStudentsComponent implements OnDestroy {
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
         }
+    }
+
+    asExamUser(value) {
+        return value as ExamUser | undefined;
     }
 }

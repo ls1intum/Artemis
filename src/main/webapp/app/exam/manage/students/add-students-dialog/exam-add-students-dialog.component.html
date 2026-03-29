@@ -27,7 +27,7 @@
             />
         </p-iconfield>
 
-        <div class="border rounded-2 overflow-y-auto overflow-x-hidden" style="max-height: 24rem">
+        <div class="border rounded-2 overflow-y-auto overflow-x-hidden" style="height: 24rem">
             @if (isLoading()) {
                 <div class="d-flex align-items-center justify-content-center p-4 text-body-secondary">
                     <i class="pi pi-spin pi-spinner me-2"></i>
@@ -46,15 +46,21 @@
                             <span class="text-body-secondary text-truncate">{{ student.login }}</span>
                         </div>
 
-                        <button pButton type="button" class="p-button-sm" [disabled]="isRegistering(student) || isAlreadyRegistered(student)" (click)="registerStudent(student)">
+                        <button
+                            pButton
+                            type="button"
+                            class="p-button-sm align-items-center"
+                            [disabled]="isRegistering(student) || isAlreadyRegistered(student)"
+                            (click)="registerStudent(student)"
+                        >
                             @if (isRegistering(student)) {
-                                <i class="pi pi-spin pi-spinner me-1"></i>
+                                <i class="pi pi-spin pi-spinner"></i>
                                 <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.registering"></span>
                             } @else if (isAlreadyRegistered(student)) {
-                                <i class="pi pi-check-circle me-1"></i>
+                                <i class="pi pi-check-circle"></i>
                                 <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.registered"></span>
                             } @else {
-                                <i class="pi pi-plus me-1"></i>
+                                <i class="pi pi-plus"></i>
                                 <span jhiTranslate="artemisApp.examManagement.examStudents.addDialog.register"></span>
                             }
                         </button>
