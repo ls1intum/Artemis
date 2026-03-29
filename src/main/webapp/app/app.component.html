@@ -6,7 +6,7 @@
     [ngStyle]="{ 'overflow-y': !isTestRunExam && isExamStarted ? 'hidden' : 'auto' }"
     cdkScrollable
 >
-    @if (!hidePageRibbon) {
+    @if (showPageRibbon) {
         <jhi-page-ribbon />
     }
     @if (showSkeleton && !isShownViaLti) {

@@ -65,7 +65,7 @@ export class AppComponent implements OnInit, OnDestroy {
     isTestRunExam = false;
     isShownViaLti = false;
     usesModuleBackground = false;
-    hidePageRibbon = false;
+    showPageRibbon = true;
 
     constructor() {
         this.setupErrorHandling().then(undefined);
@@ -98,7 +98,7 @@ export class AppComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
-        this.hidePageRibbon = this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+        this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
 
         this.router.events.subscribe((event) => {
             if (event instanceof NavigationStart) {
@@ -125,7 +125,7 @@ export class AppComponent implements OnInit, OnDestroy {
             if (event instanceof NavigationEnd) {
                 this.jhiLanguageHelper.updateTitle(this.getPageTitle(this.router.routerState.snapshot.root));
                 this.usesModuleBackground = this.getDeepestUsesModuleBackground(this.router.routerState.snapshot.root);
-                this.hidePageRibbon = this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
+                this.showPageRibbon = !this.getDeepestHidePageRibbon(this.router.routerState.snapshot.root);
             }
             if (event instanceof NavigationError && event.error.status === 404) {
                 // noinspection JSIgnoredPromiseFromCall
