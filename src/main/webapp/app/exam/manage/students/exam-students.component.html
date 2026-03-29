@@ -253,3 +253,4 @@
 <jhi-users-import-dialog [courseId]="courseId()" [exam]="exam()" [examUserMode]="true" (importCompleted)="reloadExamWithRegisteredUsers()" />
 <jhi-students-export-dialog [courseId]="courseId()" [exam]="exam()" />
 <jhi-students-reseating-dialog [courseId]="courseId()" [exam]="exam()" (onSave)="reloadExamWithRegisteredUsers(); reseatingDialog.updateRoomsUsedInExam()" #reseatingDialog />
+<jhi-exam-add-students-dialog [courseId]="courseId()" [exam]="exam()" (studentsChanged)="reloadExamWithRegisteredUsers()" />

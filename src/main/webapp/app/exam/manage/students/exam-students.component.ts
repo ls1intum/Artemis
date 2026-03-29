@@ -34,6 +34,8 @@ import { MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/toolbar-menu-button/exam-students-menu-button.component';
+import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
+import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -59,6 +61,7 @@ const cssClasses = {
         StudentsReseatingDialogComponent,
         Toolbar,
         ExamStudentsMenuButtonComponent,
+        ExamAddStudentsDialogComponent,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -80,14 +83,38 @@ export class ExamStudentsComponent implements OnDestroy {
     usersImportDialog = viewChild.required(UsersImportDialogComponent);
     studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
+    addStudentsDialog = viewChild.required(ExamAddStudentsDialogComponent);
 
     private routeData = toSignal(this.route.data, {
         initialValue: { exam: undefined as Exam | undefined },
     });
 
     readonly courseId = signal<number>(0);
+
     readonly exam = signal<Exam>(new Exam());
-    readonly allRegisteredUsers = signal<ExamUser[]>([]);
+    readonly studentExams = signal<StudentExam[]>([]);
+    readonly allRegisteredUsers = computed<ExamUser[]>(() => {
+        const exam = this.exam();
+        const studentExams = this.studentExams();
+        const hasExamEnded = this.hasExamEnded();
+
+        if (!exam?.examUsers) {
+            return [];
+        }
+
+        if (hasExamEnded) {
+            return exam.examUsers?.map((examUser) => {
+                const studentExam = studentExams?.find((studentExam) => studentExam.user?.id === examUser.user!.id);
+                return {
+                    ...examUser.user!,
+                    ...examUser,
+                    didExamUserAttendExam: !!studentExam?.started,
+                };
+            });
+        } else {
+            return exam.examUsers?.map((examUser) => ({ ...examUser.user!, ...examUser }));
+        }
+    });
 
     readonly filteredUsersSize = signal(0);
     readonly rowClass = signal<string | undefined>(undefined);
@@ -114,7 +141,7 @@ export class ExamStudentsComponent implements OnDestroy {
     protected readonly faChair = faChair;
 
     readonly manageStudentsMenuActions = signal<MenuItem[]>([
-        { label: 'Add students', icon: 'pi pi-plus' },
+        { label: 'Add students', icon: 'pi pi-plus', command: () => this.openAddStudentsDialog() },
         { label: 'Import users', icon: 'pi pi-file-import', command: () => this.openImportUsersDialog() },
         { label: 'Export users', icon: 'pi pi-file-export', command: () => this.openExportUsersDialog() },
         { label: 'Register course students', icon: 'pi pi-plus', command: () => this.registerAllStudentsFromCourse() },
@@ -147,6 +174,10 @@ export class ExamStudentsComponent implements OnDestroy {
 
     openImportUsersDialog() {
         this.usersImportDialog()?.open();
+    }
+
+    openAddStudentsDialog() {
+        this.addStudentsDialog()?.openDialog();
     }
 
     openExportUsersDialog() {
@@ -214,29 +245,13 @@ export class ExamStudentsComponent implements OnDestroy {
 
         if (hasExamEnded) {
             this.studentExamService.findAllForExam(this.courseId(), exam.id!).subscribe((res) => {
-                const studentExams = res.body;
-                const allRegisteredUsers =
-                    exam.examUsers?.map((examUser) => {
-                        const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
-                        return {
-                            ...examUser.user!,
-                            ...examUser,
-                            didExamUserAttendExam: !!studentExam?.started,
-                        };
-                    }) || [];
-                this.allRegisteredUsers.set(allRegisteredUsers);
+                this.studentExams.set(res.body || []);
+                this.isLoading.set(false);
             });
         } else {
-            const allRegisteredUsers =
-                exam.examUsers?.map((examUser) => {
-                    return {
-                        ...examUser.user!,
-                        ...examUser,
-                    };
-                }) || [];
-            this.allRegisteredUsers.set(allRegisteredUsers);
+            this.studentExams.set([]); // Reset it just in case
+            this.isLoading.set(false);
         }
-        this.isLoading.set(false);
     }
 
     ngOnDestroy() {
@@ -349,7 +364,10 @@ export class ExamStudentsComponent implements OnDestroy {
 
         this.examManagementService.removeStudentFromExam(this.courseId(), examId, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers.update((prevAllRegisteredUsers) => prevAllRegisteredUsers.filter((eu) => eu.user!.login !== examUser.user!.login));
+                this.exam.update((prevExam) => {
+                    const updatedExamUsers = prevExam.examUsers?.filter((eu) => eu.user!.login !== examUser.user!.login);
+                    return Object.assign(new Exam(), prevExam, { examUsers: updatedExamUsers });
+                });
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -367,7 +385,7 @@ export class ExamStudentsComponent implements OnDestroy {
 
         this.examManagementService.removeAllStudentsFromExam(this.courseId(), examId, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers.set([]);
+                this.exam.update((prevExam) => Object.assign(new Exam(), prevExam, { examUsers: [] }));
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),

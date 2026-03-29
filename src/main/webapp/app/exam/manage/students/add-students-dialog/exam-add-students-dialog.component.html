@@ -1,0 +1,60 @@
+<p-dialog
+    [(visible)]="dialogVisible"
+    [modal]="true"
+    [closable]="true"
+    [dismissableMask]="true"
+    (onHide)="closeDialog()"
+    [style]="{ width: '50rem', maxWidth: '95vw' }"
+    [draggable]="false"
+    appendTo="body"
+>
+    <ng-template pTemplate="header">
+        <h4 class="m-0">Add students</h4>
+    </ng-template>
+
+    <div class="d-flex flex-column gap-3">
+        <p class="m-0 text-body-secondary">Search for course students by login or name. Already registered students are marked and cannot be registered again.</p>
+
+        <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input pInputText class="w-100" type="text" placeholder="Search students" [ngModel]="searchText()" (ngModelChange)="searchText.set($event)" />
+        </p-iconfield>
+
+        <div class="border rounded-2 overflow-y-auto overflow-x-hidden" style="max-height: 24rem">
+            @if (isLoading()) {
+                <div class="d-flex align-items-center justify-content-center p-4 text-body-secondary">
+                    <i class="pi pi-spin pi-spinner me-2"></i>
+                    <span>Loading students...</span>
+                </div>
+            } @else if (noSearchResults()) {
+                <div class="d-flex align-items-center justify-content-center p-4 text-body-secondary">No unregistered students found.</div>
+            } @else {
+                @for (student of userSearchResults(); track student.id) {
+                    <div class="d-flex align-items-center justify-content-between gap-3 p-2 border-bottom">
+                        <div class="d-flex flex-column min-w-0">
+                            <span class="fw-semibold text-truncate">{{ student.name || student.login }}</span>
+                            <span class="text-body-secondary text-truncate">{{ student.login }}</span>
+                        </div>
+
+                        <button pButton type="button" class="p-button-sm" [disabled]="isRegistering(student) || isAlreadyRegistered(student)" (click)="registerStudent(student)">
+                            @if (isRegistering(student)) {
+                                <i class="pi pi-spin pi-spinner me-1"></i>
+                                Registering
+                            } @else if (isAlreadyRegistered(student)) {
+                                <i class="pi pi-check-circle me-1"></i>
+                                Registered
+                            } @else {
+                                <i class="pi pi-plus me-1"></i>
+                                Register
+                            }
+                        </button>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <button pButton type="button" class="p-button-secondary" (click)="closeDialog()">Close</button>
+    </ng-template>
+</p-dialog>
