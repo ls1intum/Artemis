@@ -23,6 +23,11 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 
 class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
+    @Override
+    String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     private static final String TEST_PREFIX = "tutorialgroupsession";
 
     private static final LocalTime SESSION_START_10_00 = LocalTime.of(10, 0);
@@ -31,20 +36,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
     private static final String SESSION_LOCATION = "01.05.12";
 
-    @Override
-    String getTestPrefix() {
-        return TEST_PREFIX;
-    }
-
-    private User firstCourseTutor1;
-
-    private User firstCourseTutor2;
-
     private TutorialGroup firstCourseTutorialGroup1;
 
     private List<TutorialGroupSession> firstCourseTutorialGroup1Sessions;
-
-    private User secondCourseTutor1;
 
     private TutorialGroup secondCourseTutorialGroup1;
 
@@ -55,23 +49,20 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     void setupTestScenario() {
         super.setupTestScenario();
 
-        TestCourseOneUsers testCourseOneUsers = createAndSaveTestCourseOneUsers();
-        firstCourseTutor1 = testCourseOneUsers.tutor1();
-        firstCourseTutor2 = testCourseOneUsers.tutor2();
-        var firstCourseStudent1 = testCourseOneUsers.student1();
-        var firstCourseStudent2 = testCourseOneUsers.student2();
+        UsersInCourseOne usersInCourseOne = createAndSaveUsersInCourseOneData();
+        var firstCourseTutor1 = usersInCourseOne.tutor1();
+        var firstCourseStudent1 = usersInCourseOne.student1();
 
-        TestTutorialGroupOneData testTutorialGroupOneData = createAndSaveTestTutorialGroupOneData(firstCourseTutor1, firstCourseStudent1);
-        firstCourseTutorialGroup1 = testTutorialGroupOneData.group();
-        firstCourseTutorialGroup1Sessions = testTutorialGroupOneData.sessions();
-        TestTutorialGroupTwoData testTutorialGroupTwoData = createAndSaveTestTutorialGroupTwoData(firstCourseTutor2, firstCourseStudent2);
+        TutorialGroupOneInCourseOneData tutorialGroupOneInCourseOneData = createAndSaveTutorialGroupOneInCourseOneData(firstCourseTutor1, firstCourseStudent1);
+        firstCourseTutorialGroup1 = tutorialGroupOneInCourseOneData.group();
+        firstCourseTutorialGroup1Sessions = tutorialGroupOneInCourseOneData.sessions();
 
-        TestCourseTwoUsers testCourseTwoUsers = createAndSaveTestCourseTwoUsers();
-        secondCourseTutor1 = testCourseTwoUsers.tutor();
+        UsersInCourseTwo usersInCourseTwo = createAndSaveUsersInCourseTwoData();
+        User secondCourseTutor1 = usersInCourseTwo.tutor();
 
-        TestTutorialGroupThreeData testTutorialGroupThreeData = createAndSaveTestTutorialGroupThreeData(secondCourseTutor1);
-        secondCourseTutorialGroup1 = testTutorialGroupThreeData.group();
-        secondCourseTutorialGroup1Sessions = testTutorialGroupThreeData.sessions();
+        TutorialGroupOneInCourseTwoData tutorialGroupOneInCourseTwoData = createAndSaveTutorialGroupOneInCourseTwoData(secondCourseTutor1);
+        secondCourseTutorialGroup1 = tutorialGroupOneInCourseTwoData.group();
+        secondCourseTutorialGroup1Sessions = tutorialGroupOneInCourseTwoData.sessions();
     }
 
     @Nested
@@ -117,7 +108,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void createSession_asTutorOfGroupWithoutConfiguration_shouldReturnBadRequest() throws Exception {
             CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
-            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
+            request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions",
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
@@ -254,7 +245,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
@@ -265,7 +256,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_SEPTEMBER_MONDAY, SESSION_START_10_00,
                     SESSION_END_12_00, SESSION_LOCATION, null);
             request.putWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
@@ -276,7 +267,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             CreateOrUpdateTutorialGroupSessionDTO tutorialGroupSessionDTO = new CreateOrUpdateTutorialGroupSessionDTO(FIRST_AUGUST_MONDAY, SESSION_START_10_00, SESSION_END_12_00,
                     SESSION_LOCATION, null);
             request.putWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
                     tutorialGroupSessionDTO, HttpStatus.BAD_REQUEST);
         }
 
@@ -389,7 +380,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void deleteSession_asTutorOfGroupWithNonMatchingGroup_shouldReturnBadRequest() throws Exception {
             var session = secondCourseTutorialGroup1Sessions.getFirst();
-            request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+            request.delete("/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
                     HttpStatus.BAD_REQUEST);
         }
 
@@ -397,7 +388,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
         void deleteSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
-            request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+            request.delete("/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
                     HttpStatus.BAD_REQUEST);
         }
 
@@ -464,7 +455,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void cancelSession_asTutorOfGroupWithNonMatchingGroup_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             request.patchWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
                     HttpStatus.BAD_REQUEST);
         }
 
@@ -473,7 +464,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void cancelSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             request.patchWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
                     HttpStatus.BAD_REQUEST);
         }
 
@@ -543,7 +534,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void activateSession_asTutorOfGroupWithNonMatchingGroup_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             request.patchWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/activate",
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/activate",
                     null, HttpStatus.BAD_REQUEST);
         }
 
@@ -552,7 +543,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         void activateSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
             var session = firstCourseTutorialGroup1Sessions.getFirst();
             request.patchWithoutResponseBody(
-                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/activate", null,
+                    "/api/tutorialgroup/courses/" + exampleCourse2Id + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/activate", null,
                     HttpStatus.BAD_REQUEST);
         }
 

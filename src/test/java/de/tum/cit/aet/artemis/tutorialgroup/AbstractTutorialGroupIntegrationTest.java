@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -108,21 +109,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected CourseTestService courseTestService;
 
-    protected record TestCourseOneUsers(User instructor, User tutor1, User tutor2, User student1, User student2, User student3, User student4) {
-    };
-
-    protected record TestCourseTwoUsers(User instructor, User editor, User tutor) {
-    };
-
-    protected record TestTutorialGroupOneData(TutorialGroup group, TutorialGroupSchedule schedule, List<TutorialGroupSession> sessions, Channel channel) {
-    };
-
-    protected record TestTutorialGroupTwoData(TutorialGroup group, Channel channel) {
-    };
-
-    protected record TestTutorialGroupThreeData(TutorialGroup group, List<TutorialGroupSession> sessions) {
-    };
-
     static final LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
     static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
@@ -173,6 +159,10 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime FIRST_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 5, 12, 0);
 
+    static final LocalDateTime SECOND_SEPTEMBER_MONDAY_10_00 = LocalDateTime.of(2022, 9, 12, 10, 0);
+
+    static final LocalDateTime SECOND_SEPTEMBER_MONDAY_12_00 = LocalDateTime.of(2022, 9, 12, 12, 0);
+
     protected static final String FIRST_COURSE_INSTRUCTOR1_LOGIN = "firstcourseinstructor1";
 
     protected static final String FIRST_COURSE_EDITOR1_LOGIN = "firstcourseeditor1";
@@ -203,7 +193,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     Course exampleCourse2;
 
-    Long exampleCourseId2;
+    Long exampleCourse2Id;
 
     String exampleTimeZone = "Europe/Bucharest";
 
@@ -225,14 +215,29 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         var secondCourse = courseUtilService.createCourseWithUserPrefix("secondCourse");
         secondCourse.setTimeZone(exampleTimeZone);
         this.exampleCourse2 = courseRepository.save(secondCourse);
-        exampleCourseId2 = secondCourse.getId();
+        exampleCourse2Id = secondCourse.getId();
     }
 
     abstract String getTestPrefix();
 
-    // === Test Data Creation ===
+    // === Creation of Test Scenarios ===
 
-    TestCourseOneUsers createAndSaveTestCourseOneUsers() {
+    protected record UsersInCourseOne(User instructor, User tutor1, User tutor2, User student1, User student2, User student3, User student4) {
+    };
+
+    protected record UsersInCourseTwo(User instructor, User editor, User tutor) {
+    };
+
+    protected record TutorialGroupOneInCourseOneData(TutorialGroup group, TutorialGroupSchedule schedule, List<TutorialGroupSession> sessions, Channel channel) {
+    };
+
+    protected record TutorialGroupTwoInCourseOneData(TutorialGroup group, TutorialGroupSession session, Channel channel) {
+    };
+
+    protected record TutorialGroupOneInCourseTwoData(TutorialGroup group, List<TutorialGroupSession> sessions) {
+    };
+
+    UsersInCourseOne createAndSaveUsersInCourseOneData() {
         userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT1_LOGIN);
         userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT2_LOGIN);
         userUtilService.addStudent(exampleCourse.getStudentGroupName(), FIRST_COURSE_STUDENT3_LOGIN);
@@ -255,10 +260,10 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         student4.setRegistrationNumber("4");
         userRepository.save(student4);
 
-        return new TestCourseOneUsers(instructor, tutor1, tutor2, student1, student2, student3, student4);
+        return new UsersInCourseOne(instructor, tutor1, tutor2, student1, student2, student3, student4);
     }
 
-    TestCourseTwoUsers createAndSaveTestCourseTwoUsers() {
+    UsersInCourseTwo createAndSaveUsersInCourseTwoData() {
         userUtilService.addTeachingAssistant(exampleCourse2.getTeachingAssistantGroupName(), SECOND_COURSE_TUTOR1_LOGIN);
         userUtilService.addEditor(exampleCourse2.getEditorGroupName(), SECOND_COURSE_EDITOR1_LOGIN);
         userUtilService.addInstructor(exampleCourse2.getInstructorGroupName(), SECOND_COURSE_INSTRUCTOR1_LOGIN);
@@ -267,44 +272,52 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         var editor = userRepository.findOneByLogin(SECOND_COURSE_EDITOR1_LOGIN).orElseThrow();
         var tutor = userRepository.findOneByLogin(SECOND_COURSE_TUTOR1_LOGIN).orElseThrow();
 
-        return new TestCourseTwoUsers(instructor, editor, tutor);
+        return new UsersInCourseTwo(instructor, editor, tutor);
     }
 
-    TestTutorialGroupOneData createAndSaveTestTutorialGroupOneData(User tutor, User student) {
+    TutorialGroupOneInCourseOneData createAndSaveTutorialGroupOneInCourseOneData(User tutor, User student) {
         var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
                 tutor, Set.of(student));
 
         TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "13:00:00", "14:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
                 FIFTH_AUGUST_MONDAY.toString(), "01.05.13");
 
-        var sessions = tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(exampleCourse, tutorialGroup, schedule);
-        sessions.getFirst().setStatus(TutorialGroupSessionStatus.CANCELLED);
-        sessions.get(1).setLocation("new room");
-        sessions.get(2).setStart(sessions.get(2).getStart().plusHours(2));
-        sessions.get(2).setEnd(sessions.get(2).getEnd().plusHours(2));
-        sessions.get(3).setStart(sessions.get(3).getStart().plusDays(1));
-        sessions.get(3).setEnd(sessions.get(3).getEnd().plusDays(1));
-        sessions.get(4).setAttendanceCount(10);
+        var scheduleConformingSessions = tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(exampleCourse, tutorialGroup, schedule);
+        scheduleConformingSessions.getFirst().setStatus(TutorialGroupSessionStatus.CANCELLED);
+        scheduleConformingSessions.get(1).setLocation("new room");
+        scheduleConformingSessions.get(2).setStart(scheduleConformingSessions.get(2).getStart().plusHours(2));
+        scheduleConformingSessions.get(2).setEnd(scheduleConformingSessions.get(2).getEnd().plusHours(2));
+        scheduleConformingSessions.get(3).setStart(scheduleConformingSessions.get(3).getStart().plusDays(1));
+        scheduleConformingSessions.get(3).setEnd(scheduleConformingSessions.get(3).getEnd().plusDays(1));
+        scheduleConformingSessions.get(4).setAttendanceCount(10);
+        List<TutorialGroupSession> sessions = new LinkedList<>(scheduleConformingSessions);
+
+        TutorialGroupSession individualSession = tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)),
+                ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), "01.05.13", null, TutorialGroupSessionStatus.ACTIVE, null, tutorialGroup);
+        sessions.add(individualSession);
         tutorialGroupSessionRepository.saveAllAndFlush(sessions);
 
         var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
 
-        return new TestTutorialGroupOneData(tutorialGroup, schedule, sessions, channel);
+        return new TutorialGroupOneInCourseOneData(tutorialGroup, schedule, sessions, channel);
     }
 
-    TestTutorialGroupTwoData createAndSaveTestTutorialGroupTwoData(User tutor, User student) {
+    TutorialGroupTwoInCourseOneData createAndSaveTutorialGroupTwoInCourseOneData(User tutor, User student) {
         var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Tue 13", "SampleInfo2", 20, true, null, Language.GERMAN.name(), tutor,
                 Set.of(student));
+        TutorialGroupSession session = tutorialGroupUtilService.createTutorialGroupSession(ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)),
+                ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), "01.05.13", null, TutorialGroupSessionStatus.ACTIVE, null, tutorialGroup);
+        tutorialGroupSessionRepository.saveAndFlush(session);
         var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
-        return new TestTutorialGroupTwoData(tutorialGroup, channel);
+        return new TutorialGroupTwoInCourseOneData(tutorialGroup, session, channel);
     }
 
-    TestTutorialGroupThreeData createAndSaveTestTutorialGroupThreeData(User tutor) {
+    TutorialGroupOneInCourseTwoData createAndSaveTutorialGroupOneInCourseTwoData(User tutor) {
         TutorialGroup group = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse2.getId(), "TG Wed 10", "SampleInfo3", 15, false, "01.05.12",
                 Language.ENGLISH.name(), tutor, Set.of());
         TutorialGroupSession session = tutorialGroupUtilService.createIndividualTutorialGroupSession(group.getId(),
-                ZonedDateTime.of(FIRST_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)), ZonedDateTime.of(FIRST_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), null);
-        return new TestTutorialGroupThreeData(group, List.of(session));
+                ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)), ZonedDateTime.of(SECOND_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), null);
+        return new TutorialGroupOneInCourseTwoData(group, List.of(session));
     }
 
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDateTime localDate) {
