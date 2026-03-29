@@ -61,7 +61,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
     /** Handles messages from parent window, validating origin for security. */
     private readonly handleParentMessage = (event: MessageEvent<IframeMessage>): void => {
-        if (event.origin !== window.location.origin) {
+        if (event.origin !== window.location.origin || event.source !== window.parent) {
             return;
         }
 
@@ -73,23 +73,23 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
         switch (type) {
             case 'loadPDF':
-                if (data?.url) {
+                if (typeof data?.url === 'string' && data.url.length > 0) {
                     const urlChanged = data.url !== this.pdfUrl();
                     if (urlChanged) {
                         this.pdfUrl.set(data.url);
                     }
-                    if (data.initialPage !== undefined) {
+                    if (data.initialPage !== undefined && Number.isInteger(data.initialPage) && data.initialPage > 0) {
                         this.currentPage.set(data.initialPage);
                     } else if (urlChanged) {
                         this.currentPage.set(1);
                     }
                 }
-                if (data?.isDarkMode !== undefined && data.isDarkMode !== this.isDarkMode()) {
+                if (typeof data?.isDarkMode === 'boolean' && data.isDarkMode !== this.isDarkMode()) {
                     this.isDarkMode.set(data.isDarkMode);
                 }
                 break;
             case 'themeChange':
-                if (data?.isDarkMode !== undefined && data.isDarkMode !== this.isDarkMode()) {
+                if (typeof data?.isDarkMode === 'boolean' && data.isDarkMode !== this.isDarkMode()) {
                     this.isDarkMode.set(data.isDarkMode);
                 }
                 break;

@@ -26,6 +26,7 @@ import {
     faFileWord,
 } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { addPublicFilePrefix } from 'app/app.constants';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
@@ -37,17 +38,20 @@ import { Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MessageModule } from 'primeng/message';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 @Component({
     selector: 'jhi-attachment-video-unit',
     imports: [
         LectureUnitComponent,
         ArtemisDatePipe,
+        ArtemisTranslatePipe,
         TranslateDirective,
         SafeResourceUrlPipe,
         VideoPlayerComponent,
         PdfViewerIframeWrapperComponent,
         FaIconComponent,
         MessageModule,
+        ProgressSpinnerModule,
     ],
     templateUrl: './attachment-video-unit.component.html',
     styleUrl: './attachment-video-unit.component.scss',
@@ -131,6 +135,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         }
 
         if (activePdfUrl?.startsWith('blob:')) {
+            this.revokePdfUrl();
             this.pdfUrl.set(undefined);
             this.pdfLoadError.set(true);
             this.isPdfLoading.set(false);
