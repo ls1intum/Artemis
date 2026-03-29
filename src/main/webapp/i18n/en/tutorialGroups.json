@@ -162,7 +162,7 @@
                 },
                 "sectionTitle": {
                     "generalInformation": "General Information",
-                    "planSessions": "Plan Sessions"
+                    "defineSessionPlan": "Define Session Schedule"
                 },
                 "inputLabel": {
                     "title": "Title",

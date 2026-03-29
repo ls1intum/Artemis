@@ -162,7 +162,7 @@
                 },
                 "sectionTitle": {
                     "generalInformation": "Generelle Informationen",
-                    "planSessions": "Sessions planen"
+                    "defineSessionPlan": "Sessionplan definieren"
                 },
                 "inputLabel": {
                     "title": "Titel",
