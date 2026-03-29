@@ -353,6 +353,59 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @Nested
     class DeleteSessionTests {
 
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void deleteSession_asTutorOfGroupWithoutExistingGroup_shouldReturnNotFound() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/-1/sessions/" + session.getId(), HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR2_LOGIN, roles = "TA")
+        void deleteSession_asTutorOfOtherGroup_shouldReturnAccessForbidden() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void deleteSession_asEditorOfOtherCourse_shouldReturnAccessForbidden() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void deleteSession_asTutorOfGroupWithoutExistingSession_shouldReturnNotFound() throws Exception {
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/-1", HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void deleteSession_asTutorOfGroupWithNonMatchingGroup_shouldReturnBadRequest() throws Exception {
+            var session = secondCourseTutorialGroup1Sessions.getFirst();
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void deleteSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void deleteSession_asTutorOfGroup_shouldReturnNoContent() throws Exception {
+            var session = buildAndSaveExampleIndividualTutorialGroupSession(firstCourseTutorialGroup1.getId(), FIRST_SEPTEMBER_MONDAY_00_00);
+            request.delete("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId(),
+                    HttpStatus.NO_CONTENT);
+            assertThat(tutorialGroupSessionRepository.existsById(session.getId())).isFalse();
+        }
     }
 
     @Nested
