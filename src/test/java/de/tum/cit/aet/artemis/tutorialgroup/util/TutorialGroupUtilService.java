@@ -165,38 +165,6 @@ public class TutorialGroupUtilService {
         return tutorialGroupSchedule;
     }
 
-    public List<TutorialGroupSession> createAndSaveTutorialGroupSessions(Course course, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
-        List<TutorialGroupSession> sessions = new ArrayList<>();
-        ZonedDateTime firstSessionStart = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), LocalTime.parse(tutorialGroupSchedule.getStartTime()),
-                ZoneId.of(course.getTimeZone()));
-        ZonedDateTime firstSessionEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), LocalTime.parse(tutorialGroupSchedule.getEndTime()),
-                ZoneId.of(course.getTimeZone()));
-
-        TutorialGroupSession cancelledSession = createTutorialGroupSession(firstSessionStart, firstSessionEnd, tutorialGroupSchedule.getLocation(), null,
-                TutorialGroupSessionStatus.CANCELLED, tutorialGroupSchedule, tutorialGroup);
-        sessions.add(cancelledSession);
-
-        TutorialGroupSession relocatedSession = createTutorialGroupSession(firstSessionStart.plusWeeks(1), firstSessionEnd.plusWeeks(1), "new room", null,
-                TutorialGroupSessionStatus.ACTIVE, tutorialGroupSchedule, tutorialGroup);
-        sessions.add(relocatedSession);
-
-        TutorialGroupSession changedTimeSession = createTutorialGroupSession(firstSessionStart.plusWeeks(2).plusHours(2), firstSessionEnd.plusWeeks(2).plusHours(2),
-                tutorialGroupSchedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroupSchedule, tutorialGroup);
-        sessions.add(changedTimeSession);
-
-        TutorialGroupSession changedDateSession = createTutorialGroupSession(firstSessionStart.plusWeeks(3).plusDays(1), firstSessionEnd.plusWeeks(3).plusDays(1),
-                tutorialGroupSchedule.getLocation(), null, TutorialGroupSessionStatus.ACTIVE, tutorialGroupSchedule, tutorialGroup);
-        sessions.add(changedDateSession);
-
-        TutorialGroupSession attendanceCountSession = createTutorialGroupSession(firstSessionStart.plusWeeks(4), firstSessionEnd.plusWeeks(4), tutorialGroupSchedule.getLocation(),
-                10, TutorialGroupSessionStatus.ACTIVE, tutorialGroupSchedule, tutorialGroup);
-        sessions.add(attendanceCountSession);
-
-        tutorialGroupSessionRepository.saveAllAndFlush(sessions);
-
-        return sessions;
-    }
-
     public List<TutorialGroupSession> createAndSaveRegularSessionsFromTutorialGroupSchedule(Course course, TutorialGroup tutorialGroup,
             TutorialGroupSchedule tutorialGroupSchedule) {
         List<TutorialGroupSession> sessions = new ArrayList<>();

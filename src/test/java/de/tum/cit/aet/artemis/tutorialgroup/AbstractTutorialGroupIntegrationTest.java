@@ -368,10 +368,22 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     TestTutorialGroupOneData createAndSaveTestTutorialGroupOneData(User tutor, User student) {
         var tutorialGroup = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse.getId(), "TG Mo 13", "SampleInfo1", 10, false, "Garching", Language.ENGLISH.name(),
                 tutor, Set.of(student));
+
         TutorialGroupSchedule schedule = tutorialGroupUtilService.createAndSaveTutorialGroupSchedule(tutorialGroup, 1, "13:00:00", "14:00:00", 1, FIRST_AUGUST_MONDAY.toString(),
                 FIFTH_AUGUST_MONDAY.toString(), "01.05.13");
-        var sessions = tutorialGroupUtilService.createAndSaveTutorialGroupSessions(exampleCourse, tutorialGroup, schedule);
+
+        var sessions = tutorialGroupUtilService.createAndSaveRegularSessionsFromTutorialGroupSchedule(exampleCourse, tutorialGroup, schedule);
+        sessions.getFirst().setStatus(TutorialGroupSessionStatus.CANCELLED);
+        sessions.get(1).setLocation("new room");
+        sessions.get(2).setStart(sessions.get(2).getStart().plusHours(2));
+        sessions.get(2).setEnd(sessions.get(2).getEnd().plusHours(2));
+        sessions.get(3).setStart(sessions.get(3).getStart().plusDays(1));
+        sessions.get(3).setEnd(sessions.get(3).getEnd().plusDays(1));
+        sessions.get(4).setAttendanceCount(10);
+        tutorialGroupSessionRepository.saveAllAndFlush(sessions);
+
         var channel = tutorialGroupChannelManagementService.createChannelForTutorialGroup(tutorialGroup);
+
         return new TestTutorialGroupOneData(tutorialGroup, schedule, sessions, channel);
     }
 
