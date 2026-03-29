@@ -133,17 +133,23 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
 
-    static final LocalDate THIRD_AUGUST_MONDAY = LocalDate.of(2022, 8, 15);
-
     static final LocalDate FOURTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 22);
 
     static final LocalDate FIFTH_AUGUST_MONDAY = LocalDate.of(2022, 8, 29);
 
     static final LocalDate FIRST_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 5);
 
-    static final LocalDate FOURTH_SEPTEMBER_MONDAY = LocalDate.of(2022, 9, 26);
-
     static final LocalDateTime FIRST_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 1, 0, 0);
+
+    static final LocalDate MONDAY_AFTER_DST_SWITCH = LocalDate.of(2020, 3, 30);
+
+    static final LocalDateTime MONDAY_BEFORE_DST_SWITCH_10_00 = LocalDateTime.of(2020, 3, 23, 10, 0);
+
+    static final LocalDateTime MONDAY_BEFORE_DST_SWITCH_12_00 = LocalDateTime.of(2020, 3, 23, 12, 0);
+
+    static final LocalDateTime MONDAY_AFTER_DST_SWITCH_10_00 = LocalDateTime.of(2020, 3, 30, 10, 0);
+
+    static final LocalDateTime MONDAY_AFTER_DST_SWITCH_12_00 = LocalDateTime.of(2020, 3, 30, 12, 0);
 
     static final LocalDateTime FIRST_AUGUST_MONDAY_08_00 = LocalDateTime.of(2022, 8, 1, 8, 0);
 
@@ -165,13 +171,7 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
 
     static final LocalDateTime SECOND_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 8, 23, 59);
 
-    static final LocalDateTime THIRD_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 15, 0, 0);
-
-    static final LocalDateTime THIRD_AUGUST_MONDAY_23_59 = LocalDateTime.of(2022, 8, 15, 23, 59);
-
     static final LocalDateTime FOURTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 22, 0, 0);
-
-    static final LocalDateTime FIFTH_AUGUST_MONDAY_00_00 = LocalDateTime.of(2022, 8, 29, 0, 0);
 
     static final LocalDateTime FIRST_SEPTEMBER_MONDAY_00_00 = LocalDateTime.of(2022, 9, 5, 0, 0);
 

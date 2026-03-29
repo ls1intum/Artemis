@@ -379,6 +379,37 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         @Test
         @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void create_asEditorWithScheduleSetCoveringDSTChange_shouldCreateTutorialGroup() throws Exception {
+            TutorialGroupScheduleDTO tutorialGroupScheduleDTO = new TutorialGroupScheduleDTO(MONDAY_BEFORE_DST_SWITCH_10_00, MONDAY_BEFORE_DST_SWITCH_12_00, 1,
+                    MONDAY_AFTER_DST_SWITCH, "01.03.12");
+            CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo DST", firstCourseTutor1.getId(), "English", false,
+                    "Garching", 10, "Bring you machine.", tutorialGroupScheduleDTO);
+
+            Long tutorialGroupId = request.postWithResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, Long.class,
+                    HttpStatus.OK);
+
+            TutorialGroup tutorialGroup = tutorialGroupTestRepository.findByIdWithTeachingAssistantAndRegistrationsAndScheduleAndSessionsElseThrow(tutorialGroupId);
+            assertTutorialGroupHasExpectedProperties(tutorialGroup, createAndUpdateTutorialGroupDTO, firstCourseTutor1, 0);
+
+            TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
+            assertTutorialGroupScheduleHasExpectedProperties(tutorialGroupSchedule, tutorialGroupScheduleDTO);
+
+            List<TutorialGroupSession> sessions = tutorialGroup.getTutorialGroupSessions().stream().sorted(Comparator.comparing(TutorialGroupSession::getStart)).toList();
+            assertThat(sessions).hasSize(2);
+            ZoneId timeZone = ZoneId.of(exampleTimeZone);
+            TutorialGroupSession firstSession = sessions.getFirst();
+            assertThat(firstSession.getStart().withZoneSameInstant(timeZone).toLocalDateTime()).isEqualTo(MONDAY_BEFORE_DST_SWITCH_10_00);
+            assertThat(firstSession.getEnd().withZoneSameInstant(timeZone).toLocalDateTime()).isEqualTo(MONDAY_BEFORE_DST_SWITCH_12_00);
+            TutorialGroupSession secondSession = sessions.get(1);
+            assertThat(secondSession.getStart().withZoneSameInstant(timeZone).toLocalDateTime()).isEqualTo(MONDAY_AFTER_DST_SWITCH_10_00);
+            assertThat(secondSession.getEnd().withZoneSameInstant(timeZone).toLocalDateTime()).isEqualTo(MONDAY_AFTER_DST_SWITCH_12_00);
+
+            Channel channel = tutorialGroup.getTutorialGroupChannel();
+            assertTutorialGroupChannelHasExpectedProperties(channel, tutorialGroup, firstCourseTutor1);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
         void create_asEditorWithoutScheduleSet_shouldCreateTutorialGroup() throws Exception {
             CreateAndUpdateTutorialGroupDTO createAndUpdateTutorialGroupDTO = new CreateAndUpdateTutorialGroupDTO("TG Mo 10", firstCourseTutor1.getId(), "English", false,
                     "Garching", 10, "Bring you machine.", null);
@@ -602,6 +633,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     createAndUpdateTutorialGroupDTO, HttpStatus.FORBIDDEN);
         }
 
+        // TODO: create individual sessions for both firstCourseTutorialGroup1 and firstCourseTutorialGroup2 -> add asserts what should happen to individual sessions to happy path
+        // tests
         // TODO: add notification cases
         // TODO: check what happens if channels enabled changes -> is the logic in create/update implemented correctly for all scenarios?
     }
@@ -684,7 +717,7 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             assertThat(tutorialGroupTestRepository.findById(tutorialGroupId)).isEmpty();
             assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroupId)).isEmpty();
-            assertThat(channelRepository.findById(channelId)).isEmpty();
+            // TODO: assert schedule and sessions gone
         }
 
         @Test
