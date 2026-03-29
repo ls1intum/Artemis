@@ -41,6 +41,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 
+// TODO: add notification related asserts
+
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     private static final String TEST_PREFIX = "tutorialgroup";
@@ -458,8 +460,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups", createAndUpdateTutorialGroupDTO, HttpStatus.FORBIDDEN);
         }
-
-        // TODO: check notifications in tests
     }
 
     @Nested
@@ -628,8 +628,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         }
 
         // TODO: create individual sessions for both firstCourseTutorialGroup1 and firstCourseTutorialGroup2 -> add asserts what should happen to individual sessions to happy path
-        // tests
-        // TODO: add notification cases
         // TODO: check what happens if channels enabled changes -> is the logic in create/update implemented correctly for all scenarios?
     }
 
@@ -705,13 +703,13 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
         @WithMockUser(username = FIRST_COURSE_INSTRUCTOR1_LOGIN, roles = "INSTRUCTOR")
         void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
             Long tutorialGroupId = firstCourseTutorialGroup1.getId();
-            Long channelId = firstCourseChannel1.getId();
 
             request.delete("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroupId, HttpStatus.NO_CONTENT);
 
             assertThat(tutorialGroupTestRepository.findById(tutorialGroupId)).isEmpty();
+            assertThat(tutorialGroupScheduleTestRepository.findByTutorialGroupId(tutorialGroupId)).isEmpty();
+            assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId)).isEmpty();
             assertThat(tutorialGroupTestRepository.getTutorialGroupChannel(tutorialGroupId)).isEmpty();
-            // TODO: assert schedule and sessions gone
         }
 
         @Test
@@ -732,7 +730,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             request.delete("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId(), HttpStatus.FORBIDDEN);
         }
 
-        // TODO: add notification case
     }
 
     @Nested
@@ -807,7 +804,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
             request.postWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/batch-register",
                     List.of(FIRST_COURSE_STUDENT3_LOGIN, FIRST_COURSE_STUDENT4_LOGIN), HttpStatus.BAD_REQUEST);
         }
-        // TODO: add notification cases
     }
 
     @Nested
@@ -877,7 +873,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
                     HttpStatus.BAD_REQUEST);
         }
 
-        // TODO: add notification cases
     }
 
     @Nested
