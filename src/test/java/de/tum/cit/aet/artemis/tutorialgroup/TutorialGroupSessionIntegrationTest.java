@@ -349,6 +349,8 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             assertThat(sessionDTO.dateChanged()).isFalse();
             assertThat(sessionDTO.attendanceCount()).isNull();
         }
+
+        // TODO: create group with sessions generated according to schedule -> assert session no longer follows schedule on update
     }
 
     @Nested

@@ -65,10 +65,6 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
     private TutorialGroup firstCourseTutorialGroup2;
 
-    private Channel firstCourseChannel2;
-
-    private User secondCourseEditor1;
-
     @Autowired
     private CourseNotificationTestRepository courseNotificationRepository;
 
@@ -95,10 +91,8 @@ class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest 
 
         TestTutorialGroupTwoData testTutorialGroupTwoData = createAndSaveTestTutorialGroupTwoData(firstCourseTutor2, firstCourseStudent2);
         firstCourseTutorialGroup2 = testTutorialGroupTwoData.group();
-        firstCourseChannel2 = testTutorialGroupTwoData.channel();
 
         TestCourseTwoUsers testCourseTwoUsers = createAndSaveTestCourseTwoUsers();
-        secondCourseEditor1 = testCourseTwoUsers.editor();
     }
 
     @Override
