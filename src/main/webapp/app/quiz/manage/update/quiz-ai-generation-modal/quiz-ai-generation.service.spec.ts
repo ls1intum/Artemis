@@ -50,7 +50,7 @@ describe('QuizAiGenerationService', () => {
 
     function flushRefineResponse(req: ReturnType<HttpTestingController['expectOne']>, type: 'single-choice' | 'multiple-choice', optionCount: number): void {
         const options = Array.from({ length: optionCount }, (_, i) => ({ text: `Option ${i}`, correct: i === 0 }));
-        req.flush({ question: { type, title: 'A Question', questionText: 'Some question text?', options }, explanation: 'Some explanation.' });
+        req.flush({ question: { type, title: 'A Question', questionText: 'Some question text?', options }, reasoning: 'Some explanation.' });
     }
 
     describe('refineMultipleChoiceQuestion', () => {
@@ -89,7 +89,7 @@ describe('QuizAiGenerationService', () => {
 
         it('should map response fields back to MultipleChoiceQuestion', () => {
             const question = buildMultipleChoiceQuestion(false);
-            let result: { refinedQuestion: MultipleChoiceQuestion; explanation: string } | undefined;
+            let result: { refinedQuestion: MultipleChoiceQuestion; reasoning: string } | undefined;
 
             service.refineMultipleChoiceQuestion(1, question, 'improve').subscribe((r) => (result = r));
 
@@ -105,7 +105,7 @@ describe('QuizAiGenerationService', () => {
                         { text: 'Option B', correct: false },
                     ],
                 },
-                explanation: 'Some explanation.',
+                reasoning: 'Some explanation.',
             });
 
             expect(result).toBeDefined();
@@ -119,7 +119,7 @@ describe('QuizAiGenerationService', () => {
             expect(result!.refinedQuestion.answerOptions![0].explanation).toBe('exp a');
             expect(result!.refinedQuestion.answerOptions![1].isCorrect).toBe(false);
             expect(result!.refinedQuestion.hasCorrectOption).toBe(true);
-            expect(result!.explanation).toBeDefined();
+            expect(result!.reasoning).toBeDefined();
         });
 
         it('should fall back to "Untitled Question" when question title is missing', () => {

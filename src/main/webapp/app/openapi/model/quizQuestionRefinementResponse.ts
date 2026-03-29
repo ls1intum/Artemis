@@ -16,8 +16,8 @@ import { GeneratedQuizQuestion } from './generatedQuizQuestion';
 export interface QuizQuestionRefinementResponse { 
     question: GeneratedQuizQuestion;
     /**
-     * Brief explanation of what was changed during refinement
+     * Brief summary of what was changed during refinement
      */
-    explanation: string;
+    reasoning: string;
 }
 

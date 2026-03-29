@@ -143,12 +143,12 @@ public class HyperionQuizQuestionGenerationService {
         }
 
         GeneratedQuizQuestionDTO refinedQuestion = mapAndValidateQuestion(output.question());
-        String explanation = sanitizeInput(output.explanation());
-        if (explanation.isBlank()) {
-            explanation = "The question was refined according to your instructions.";
+        String reasoning = sanitizeInput(output.reasoning());
+        if (reasoning.isBlank()) {
+            reasoning = "The question was refined according to your instructions.";
         }
 
-        return new QuizQuestionRefinementResponseDTO(refinedQuestion, explanation);
+        return new QuizQuestionRefinementResponseDTO(refinedQuestion, reasoning);
     }
 
     private List<GeneratedQuizQuestionDTO> mapAndValidateGeneratedQuestions(@Nullable GeneratedQuestionsOutput generatedQuestions) {
@@ -245,6 +245,6 @@ public class HyperionQuizQuestionGenerationService {
     private record GeneratedOptionOutput(String text, Boolean correct, String hint, String explanation) {
     }
 
-    private record RefinedQuestionWithExplanationOutput(GeneratedQuestionOutput question, String explanation) {
+    private record RefinedQuestionWithExplanationOutput(GeneratedQuestionOutput question, String reasoning) {
     }
 }

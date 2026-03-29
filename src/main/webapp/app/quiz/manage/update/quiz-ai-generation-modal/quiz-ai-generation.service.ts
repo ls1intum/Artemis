@@ -23,7 +23,7 @@ export class QuizAiGenerationService {
         courseId: number,
         question: MultipleChoiceQuestion,
         refinementPrompt: string,
-    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; explanation: string }> {
+    ): Observable<{ refinedQuestion: MultipleChoiceQuestion; reasoning: string }> {
         const request: QuizQuestionRefinementRequest = {
             question: {
                 type: (question.singleChoice ? 'single-choice' : 'multiple-choice') as GeneratedQuizQuestion.TypeEnum,
@@ -43,7 +43,7 @@ export class QuizAiGenerationService {
         return this.hyperionQuizQuestionGenerationApiService.refineQuizQuestion(courseId, request).pipe(
             map((response) => ({
                 refinedQuestion: this.applyRefinedContentToQuestion(question, this.toGeneratedQuestion(response.question, 0)),
-                explanation: response.explanation,
+                reasoning: response.reasoning,
             })),
         );
     }

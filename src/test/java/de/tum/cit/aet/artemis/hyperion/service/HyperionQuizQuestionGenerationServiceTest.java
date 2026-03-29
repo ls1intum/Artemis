@@ -115,7 +115,7 @@ class HyperionQuizQuestionGenerationServiceTest {
                       { "text": "POST", "correct": false }
                     ]
                   },
-                  "explanation": "Changed the wording to be more precise."
+                  "reasoning": "Changed the wording to be more precise."
                 }
                 """;
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
@@ -132,7 +132,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         assertThat(response.question().title()).isEqualTo("HTTP Idempotency");
         assertThat(response.question().questionText()).isEqualTo("Which HTTP method is idempotent?");
         assertThat(response.question().options()).hasSize(2);
-        assertThat(response.explanation()).isEqualTo("Changed the wording to be more precise.");
+        assertThat(response.reasoning()).isEqualTo("Changed the wording to be more precise.");
     }
 
     @Test
@@ -179,7 +179,7 @@ class HyperionQuizQuestionGenerationServiceTest {
                       { "text": "Lambdas", "correct": true }
                     ]
                   },
-                  "explanation": "   "
+                  "reasoning": "   "
                 }
                 """;
         when(chatModel.call(any(Prompt.class))).thenAnswer(_ -> new ChatResponse(List.of(new Generation(new AssistantMessage(json)))));
@@ -193,7 +193,7 @@ class HyperionQuizQuestionGenerationServiceTest {
 
         QuizQuestionRefinementResponseDTO response = service.refineQuizQuestion(course, request);
 
-        assertThat(response.explanation()).isEqualTo("The question was refined according to your instructions.");
+        assertThat(response.reasoning()).isEqualTo("The question was refined according to your instructions.");
     }
 
     @Test

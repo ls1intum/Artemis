@@ -109,7 +109,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
 
         const refinedQuestion = new MultipleChoiceQuestion();
         refinedQuestion.title = 'Refined Title';
-        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, explanation: 'Some explanation.' }));
+        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning: 'Some explanation.' }));
 
         const emittedValues: MultipleChoiceQuestion[] = [];
         component.questionRefined.subscribe((q) => emittedValues.push(q));
@@ -156,8 +156,8 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         setupWithHyperionEnabled(true);
 
         const refinedQuestion = new MultipleChoiceQuestion();
-        const explanation = 'Some explanation.';
-        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, explanation }));
+        const reasoning = 'Some explanation.';
+        vi.spyOn(quizAiGenerationService, 'refineMultipleChoiceQuestion').mockReturnValue(of({ refinedQuestion, reasoning }));
 
         component.refinePrompt.set('improve');
         runInInjectionContext(envInjector, () => component.submitRefinement());
@@ -166,6 +166,6 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         const explanationCard = fixture.debugElement.query(By.css('.refinement-explanation-card'));
         expect(explanationCard).not.toBeNull();
         const explanationText = fixture.debugElement.query(By.css('.refinement-explanation-text'));
-        expect(explanationText.nativeElement.textContent).toContain(explanation);
+        expect(explanationText.nativeElement.textContent).toContain(reasoning);
     });
 });

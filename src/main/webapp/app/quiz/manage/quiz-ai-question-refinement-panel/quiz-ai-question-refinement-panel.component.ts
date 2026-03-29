@@ -78,7 +78,7 @@ export class QuizAiQuestionRefinementPanelComponent {
             )
             .subscribe({
                 next: (result) => {
-                    this.refinementExplanation.set(result.explanation);
+                    this.refinementExplanation.set(result.reasoning);
                     this.refinePrompt.set('');
                     this.questionRefined.emit(result.refinedQuestion);
                 },
