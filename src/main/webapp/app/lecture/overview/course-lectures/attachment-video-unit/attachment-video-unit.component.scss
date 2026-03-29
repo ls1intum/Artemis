@@ -3,3 +3,20 @@
     padding-top: 20px;
     padding-bottom: 20px;
 }
+
+.pdf-viewer-spacing {
+    position: relative;
+}
+
+.pdf-loading-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+}
+
+jhi-lecture-pdf-viewer-iframe.pdf-viewer-loading {
+    opacity: 0;
+    pointer-events: none;
+}

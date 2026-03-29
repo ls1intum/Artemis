@@ -76,11 +76,12 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     private pdfSubscription?: Subscription;
 
-    // Validated PDF page (must be positive)
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
         return page && page > 0 ? page : undefined;
     });
+
+    readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
 
     readonly hasTranscript = computed(() => this.transcriptSegments().length > 0);
 
@@ -235,7 +236,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         this.pdfUrl.set(link);
     }
 
-    /** Blob fallback for PDF loading. Called when iframe signals load error. */
     private loadPdfAsBlob(): void {
         this.isPdfLoading.set(true);
 
@@ -246,7 +246,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        // Blob approach as safety fallback
         this.pdfSubscription = this.httpClient.get(link, { responseType: 'blob' }).subscribe({
             next: (blob) => {
                 if (blob) {

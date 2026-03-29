@@ -3,22 +3,21 @@ import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEve
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { faMagnifyingGlassMinus, faMagnifyingGlassPlus } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 
 pdfDefaultOptions.assetsFolder = 'assets/ngx-extended-pdf-viewer';
 
-type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange' | 'pdfLoadError';
-
-interface IframeMessageData {
-    page?: number;
-    pagesCount?: number;
-    url?: string;
-    initialPage?: number;
-    isDarkMode?: boolean;
-}
-
-interface IframeMessage {
-    type: IframeMessageType;
-    data?: IframeMessageData;
+interface PDFViewerApplication {
+    eventBus?: {
+        dispatch: (eventName: string) => void;
+    };
+    appConfig?: {
+        mainContainer?: HTMLElement;
+    };
+    pdfViewer?: {
+        container?: HTMLElement;
+        currentScale?: number;
+    };
 }
 
 /**
@@ -97,13 +96,11 @@ export class PdfViewerIframeContentComponent implements OnInit {
         }
     };
 
-    /** Updates current page and notifies parent. */
     onPageChange(page: number): void {
         this.currentPage.set(page);
         this.postMessageToParent('pageChange', { page });
     }
 
-    /** Updates total page count and notifies parent. */
     onPagesLoaded(event: PagesLoadedEvent): void {
         this.totalPages.set(event.pagesCount ?? 0);
         this.postMessageToParent('pagesLoaded', { pagesCount: event.pagesCount ?? 0 });
@@ -114,26 +111,24 @@ export class PdfViewerIframeContentComponent implements OnInit {
         this.postMessageToParent('pdfLoadError', {});
     }
 
-    /** Zooms in on the PDF. */
     zoomIn(): void {
         this.dispatchZoomEvent('zoomin');
     }
 
-    /** Zooms out on the PDF. */
     zoomOut(): void {
         this.dispatchZoomEvent('zoomout');
     }
 
-    /** Dispatches a zoom event to the PDF.js event bus. */
     private dispatchZoomEvent(eventName: 'zoomin' | 'zoomout'): void {
-        const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal() as any;
+        const pdfViewerApplication = this.pdfNotificationService.onPDFJSInitSignal() as PDFViewerApplication;
         const eventBus = pdfViewerApplication?.eventBus;
         if (!eventBus) {
             return;
         }
 
-        const container = pdfViewerApplication?.appConfig?.mainContainer ?? pdfViewerApplication?.pdfViewer?.container ?? document.getElementById('viewerContainer');
-        const currentScale = pdfViewerApplication?.pdfViewer?.currentScale;
+        const pdfViewer = pdfViewerApplication.pdfViewer;
+        const container = pdfViewerApplication.appConfig?.mainContainer ?? pdfViewer?.container ?? document.getElementById('viewerContainer');
+        const currentScale = pdfViewer?.currentScale;
 
         if (!container || !currentScale || !container.clientWidth || !container.clientHeight) {
             eventBus.dispatch(eventName);
@@ -145,14 +140,13 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
         eventBus.dispatch(eventName);
         requestAnimationFrame(() => {
-            const nextScale = pdfViewerApplication?.pdfViewer?.currentScale ?? currentScale;
+            const nextScale = pdfViewer?.currentScale ?? currentScale;
             const scaleFactor = nextScale / currentScale;
             container.scrollLeft = Math.max(0, centerX * scaleFactor - container.clientWidth / 2);
             container.scrollTop = Math.max(0, centerY * scaleFactor - container.clientHeight / 2);
         });
     }
 
-    /** Posts a message to the parent window. */
     private postMessageToParent(type: IframeMessageType, data: IframeMessageData): void {
         window.parent.postMessage({ type, data }, window.location.origin);
     }

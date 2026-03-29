@@ -5,21 +5,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
-
-type IframeMessageType = 'ready' | 'pageChange' | 'pagesLoaded' | 'loadPDF' | 'themeChange' | 'pdfLoadError';
-
-interface IframeMessageData {
-    page?: number;
-    pagesCount?: number;
-    url?: string;
-    initialPage?: number;
-    isDarkMode?: boolean;
-}
-
-interface IframeMessage {
-    type: IframeMessageType;
-    data?: IframeMessageData;
-}
+import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 
 /**
  * Wrapper component that loads the PDF viewer in an iframe.
@@ -80,7 +66,6 @@ export class PdfViewerIframeWrapperComponent {
         });
     }
 
-    /** Sends a loadPDF message to the iframe with current URL and theme. */
     private loadPdfInIframe(initialPage?: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
         const url = this.pdfUrl();
@@ -112,7 +97,6 @@ export class PdfViewerIframeWrapperComponent {
         }
     };
 
-    /** Posts a message to the iframe content window. */
     private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {
         const iframe = this.pdfIframe()?.nativeElement;
         if (iframe?.contentWindow) {

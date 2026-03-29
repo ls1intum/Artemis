@@ -51,9 +51,7 @@
     justify-content: center;
     gap: 0.5rem;
     width: 100%;
-    padding: 0 0.75rem;
     height: 100%;
-    transform: translateX(-8px);
 }
 
 .artemis-pdf-toolbar__button {
@@ -90,7 +88,9 @@
     border: none !important;
 }
 
-.iframe-pdf-container * {
+.iframe-pdf-container .page,
+.iframe-pdf-container .toolbar,
+.iframe-pdf-container button {
     box-shadow: none;
     filter: none;
 }
