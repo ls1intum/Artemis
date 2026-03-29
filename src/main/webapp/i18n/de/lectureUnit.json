@@ -224,7 +224,16 @@
                 "loadFailed": "PDF konnte nicht geladen werden",
                 "loadFailedDetail": "Das PDF-Dokument konnte nicht geladen werden. Bitte versuche es erneut.",
                 "zoomOut": "Verkleinern",
-                "zoomIn": "Vergrößern"
+                "zoomIn": "Vergrößern",
+                "search": "Im Dokument suchen",
+                "searchPlaceholder": "Suchen...",
+                "nextMatch": "Nächster Treffer",
+                "previousMatch": "Vorheriger Treffer",
+                "clearSearch": "Suche löschen",
+                "goToPage": "Gehe zu Seite",
+                "pageInputPlaceholder": "Seite",
+                "confirmPage": "Gehe zu Seite",
+                "downloadPdf": "PDF herunterladen"
             }
         },
         "exerciseUnit": {

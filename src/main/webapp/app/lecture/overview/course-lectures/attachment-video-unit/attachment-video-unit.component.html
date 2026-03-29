@@ -93,6 +93,7 @@
                     [initialPage]="validatedPdfPage()"
                     (pagesLoaded)="onPdfPagesLoaded($event)"
                     (loadError)="onPdfLoadError($event)"
+                    (downloadRequested)="handleDownload()"
                 />
             </div>
         }

@@ -11,12 +11,24 @@
 .iframe-pdf-container {
     width: 100%;
     height: 100%;
+
     --pdf-bar-height: 36px;
+    --toolbar-control-height: 24px;
+
     // Light mode theme variables (must be explicit since iframe cannot access parent app's CSS properties)
     --pdf-viewer-bg: #{light.$gray-100};
     --card-bg: #{light.$card-bg};
     --card-border-color: #{light.$card-border-color};
     --body-color: #{light.$body-color};
+    --toolbar-input-bg: #{light.$card-bg};
+    --toolbar-input-border-color: #{light.$gray-400};
+    --toolbar-input-focus-color: #{light.$gray-500};
+    --toolbar-input-placeholder-color: #{light.$gray-600};
+    --toolbar-input-text-color: #{light.$body-color};
+
+    // PDF.js native CSS variables for search highlighting
+    --highlight-bg-color: rgba(255, 255, 0, 0.4);
+    --highlight-selected-bg-color: rgba(255, 165, 0, 0.6);
 }
 
 .iframe-pdf-viewer {
@@ -34,9 +46,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: var(--pdf-bar-height);
+    height: 100%;
     border: none !important;
-    border-bottom: 1px solid var(--card-border-color) !important;
     background-color: var(--card-bg) !important;
 }
 
@@ -44,9 +55,53 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-wrap: nowrap;
     gap: 0.5rem;
     width: 100%;
     height: 100%;
+}
+
+.iframe-pdf-container #toolbarContainer {
+    height: var(--pdf-bar-height) !important;
+    min-height: var(--pdf-bar-height) !important;
+    padding: 0 0.375rem !important;
+    background-color: var(--card-bg) !important;
+    border: none !important;
+    border-bottom: 1px solid var(--card-border-color) !important;
+}
+
+.artemis-pdf-toolbar .p-inputnumber {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.artemis-pdf-toolbar :is(.artemis-pdf-toolbar__search-input, .artemis-pdf-toolbar__page-input) {
+    min-height: var(--toolbar-control-height) !important;
+    height: var(--toolbar-control-height) !important;
+    border: 1px solid var(--toolbar-input-border-color) !important;
+    border-radius: 0.25rem !important;
+    background-color: var(--toolbar-input-bg) !important;
+    color: var(--toolbar-input-text-color) !important;
+    font-size: 0.8rem !important;
+    font-weight: 400;
+    line-height: 1.1;
+    padding: 0.1rem 0.4rem !important;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+
+    &::placeholder {
+        color: var(--toolbar-input-placeholder-color);
+        opacity: 1;
+    }
+
+    &:focus {
+        border-color: var(--toolbar-input-focus-color) !important;
+        box-shadow: 0 0 0 1px var(--toolbar-input-focus-color) !important;
+        outline: none;
+    }
 }
 
 .artemis-pdf-toolbar__button {
@@ -61,24 +116,92 @@
     color: var(--body-color);
     cursor: pointer;
     transition: opacity 0.2s ease;
+
     &:hover,
     &:active {
         opacity: 0.8;
     }
+
     fa-icon {
         font-size: 1rem;
     }
 }
 
-.artemis-pdf-toolbar__page {
+.artemis-pdf-toolbar__page-navigation {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
     margin-left: 0.25rem;
+}
+
+.artemis-pdf-toolbar__page-navigation .p-inputnumber {
+    width: 2.1rem;
+}
+
+.artemis-pdf-toolbar__page-input {
+    width: 100%;
+    text-align: center;
+}
+
+.artemis-pdf-toolbar__page-confirm {
+    margin-left: 0;
+}
+
+.artemis-pdf-toolbar__page-total {
     font-weight: 500;
     font-size: 0.9rem;
     color: var(--body-color);
 }
 
+.artemis-pdf-toolbar__search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.artemis-pdf-toolbar__search-field {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.artemis-pdf-toolbar__search-icon {
+    position: absolute;
+    left: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--toolbar-input-placeholder-color);
+    font-size: 0.65rem;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.artemis-pdf-toolbar .artemis-pdf-toolbar__search-input {
+    width: 168px;
+    padding-left: 1.5rem !important;
+}
+
+.artemis-pdf-toolbar__search-controls {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.artemis-pdf-toolbar__search-count {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--body-color);
+    padding: 0 0.5rem;
+}
+
+.artemis-pdf-toolbar__divider {
+    width: 1px;
+    height: 24px;
+    background-color: var(--card-border-color);
+    margin: 0 0.5rem;
+}
+
 .iframe-pdf-container .toolbar,
-.iframe-pdf-container #toolbarContainer,
 .iframe-pdf-container #mainContainer {
     border: none !important;
 }
@@ -94,6 +217,7 @@
     border: none !important;
     outline: none;
     margin: 0 auto !important;
+
     &:not(:last-child) {
         margin-bottom: 0.5rem !important;
     }
@@ -105,4 +229,16 @@
     --card-bg: #{dark.$card-bg};
     --card-border-color: #{dark.$card-border-color};
     --body-color: #{dark.$body-color};
+    --toolbar-input-bg: #{dark.$card-bg};
+    --toolbar-input-border-color: #{dark.$gray-600};
+    --toolbar-input-focus-color: #{dark.$gray-400};
+    --toolbar-input-placeholder-color: #{dark.$gray-500};
+    --toolbar-input-text-color: #{dark.$body-color};
+
+    // PDF.js native CSS variables for search highlighting (more vibrant for better visibility in dark mode)
+    --highlight-bg-color: rgba(255, 255, 0, 0.5);
+    --highlight-selected-bg-color: rgba(255, 165, 0, 0.7);
 }
+
+// PDF.js uses native CSS variables for search highlighting
+// No additional CSS selectors needed - the variables are sufficient

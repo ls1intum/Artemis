@@ -31,6 +31,7 @@ export class PdfViewerIframeWrapperComponent {
     readonly iframeReady = signal(false);
     readonly pagesLoaded = output<{ pdfUrl: string; pagesCount: number }>();
     readonly loadError = output<{ pdfUrl: string }>();
+    readonly downloadRequested = output<void>();
 
     private readonly themeService = inject(ThemeService);
     private readonly location = inject(Location);
@@ -95,6 +96,8 @@ export class PdfViewerIframeWrapperComponent {
             this.pagesLoaded.emit({ pdfUrl: this.pdfUrl(), pagesCount: data?.pagesCount ?? 0 });
         } else if (type === 'pdfLoadError') {
             this.loadError.emit({ pdfUrl: this.pdfUrl() });
+        } else if (type === 'download') {
+            this.downloadRequested.emit();
         }
     };
 
