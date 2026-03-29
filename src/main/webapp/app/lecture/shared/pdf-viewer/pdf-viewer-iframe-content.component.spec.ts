@@ -57,6 +57,7 @@ describe('PdfViewerIframeContentComponent', () => {
             new MessageEvent('message', {
                 data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 5, isDarkMode: true } },
                 origin: window.location.origin,
+                source: window,
             }),
         );
         fixture.detectChanges();
@@ -70,12 +71,14 @@ describe('PdfViewerIframeContentComponent', () => {
             new MessageEvent('message', {
                 data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 2 } },
                 origin: window.location.origin,
+                source: window,
             }),
         );
         window.dispatchEvent(
             new MessageEvent('message', {
                 data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 7 } },
                 origin: window.location.origin,
+                source: window,
             }),
         );
 
@@ -88,12 +91,14 @@ describe('PdfViewerIframeContentComponent', () => {
             new MessageEvent('message', {
                 data: { type: 'loadPDF', data: { url: 'doc.pdf', initialPage: 4 } },
                 origin: window.location.origin,
+                source: window,
             }),
         );
         window.dispatchEvent(
             new MessageEvent('message', {
                 data: { type: 'loadPDF', data: { url: 'doc.pdf' } },
                 origin: window.location.origin,
+                source: window,
             }),
         );
 
@@ -101,12 +106,12 @@ describe('PdfViewerIframeContentComponent', () => {
     });
 
     it('should use default initialPage if not provided', () => {
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'loadPDF', data: { url: 'doc.pdf' } }, origin: window.location.origin }));
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'loadPDF', data: { url: 'doc.pdf' } }, origin: window.location.origin, source: window }));
         expect(component.currentPage()).toBe(1);
     });
 
     it('should handle themeChange message', () => {
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'themeChange', data: { isDarkMode: true } }, origin: window.location.origin }));
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'themeChange', data: { isDarkMode: true } }, origin: window.location.origin, source: window }));
         expect(component.isDarkMode()).toBe(true);
     });
 
