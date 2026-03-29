@@ -245,7 +245,7 @@ public class TutorialGroupResource {
         TutorialGroupScheduleDTO tutorialGroupScheduleDTO = createTutorialGroupDTO.tutorialGroupScheduleDTO();
         if (tutorialGroupScheduleDTO != null) {
             TutorialGroupSchedule schedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
-            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, tutorialGroup, schedule);
+            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(course, tutorialGroup, schedule);
             tutorialGroupScheduleRepository.findByTutorialGroup_Id(tutorialGroup.getId()).orElseThrow();
             tutorialGroup.setTutorialGroupSchedule(schedule);
         }
@@ -316,7 +316,7 @@ public class TutorialGroupResource {
         TutorialGroupScheduleDTO tutorialGroupScheduleDTO = updateTutorialGroupDTO.tutorialGroupScheduleDTO();
         TutorialGroupSchedule oldSchedule = tutorialGroup.getTutorialGroupSchedule();
         TutorialGroupSchedule newSchedule = TutorialGroupScheduleDTO.toTutorialGroupSchedule(tutorialGroupScheduleDTO);
-        tutorialGroupScheduleService.updateScheduleIfChanged(configuration, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
+        tutorialGroupScheduleService.updateScheduleAndSessionsIfChanged(course, tutorialGroup, Optional.ofNullable(oldSchedule), Optional.ofNullable(newSchedule));
 
         tutorialGroupChannelManagementService.updateNameOfTutorialGroupChannelIfItExists(tutorialGroup);
 

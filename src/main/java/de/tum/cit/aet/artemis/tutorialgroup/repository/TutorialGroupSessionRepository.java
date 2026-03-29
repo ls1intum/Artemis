@@ -104,17 +104,6 @@ public interface TutorialGroupSessionRepository extends ArtemisJpaRepository<Tut
     @Query("""
             SELECT session
             FROM TutorialGroupSession session
-            WHERE session.start <= :end
-                AND session.end >= :start
-                AND session.tutorialGroupSchedule IS NULL
-                AND session.tutorialGroup = :tutorialGroup
-            """)
-    Set<TutorialGroupSession> findOverlappingIndividualSessionsInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
-            @Param("end") ZonedDateTime end);
-
-    @Query("""
-            SELECT session
-            FROM TutorialGroupSession session
             WHERE session.start < :end
                 AND session.end > :start
                 AND session.tutorialGroup.course = :course
