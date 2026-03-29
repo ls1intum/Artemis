@@ -72,7 +72,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected TutorialGroupRegistrationTestRepository tutorialGroupRegistrationTestRepository;
 
-    // External Repositories
     @Autowired
     protected UserTestRepository userRepository;
 
@@ -88,18 +87,15 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected PostTestRepository postRepository;
 
-    // Services
     @Autowired
     protected TutorialGroupService tutorialGroupService;
 
     @Autowired
     protected TutorialGroupChannelManagementService tutorialGroupChannelManagementService;
 
-    // Util Services
     @Autowired
     protected TutorialGroupUtilService tutorialGroupUtilService;
 
-    // External Util Services
     @Autowired
     protected CourseUtilService courseUtilService;
 
@@ -109,7 +105,6 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @Autowired
     protected ConversationUtilService conversationUtilService;
 
-    // Misc
     @Autowired
     protected CourseTestService courseTestService;
 
