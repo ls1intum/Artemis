@@ -184,10 +184,10 @@ describe('ExamStudentsComponent', () => {
     it('should remove users from the exam', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeStudentFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
+        component.allRegisteredUsers.set([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        ] as ExamUser[]);
 
         component.removeFromExam(
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
@@ -211,7 +211,7 @@ describe('ExamStudentsComponent', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
-        component.exam = examWithCourse;
+        component.exam.set(examWithCourse);
         component.registerAllStudentsFromCourse();
 
         expect(examServiceStub).toHaveBeenCalledWith(course.id, examWithCourse.id, true);
@@ -224,10 +224,10 @@ describe('ExamStudentsComponent', () => {
     it('should remove all users from the exam', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
+        component.allRegisteredUsers.set([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        ] as ExamUser[]);
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: false });
         fixture.changeDetectorRef.detectChanges();
@@ -239,10 +239,10 @@ describe('ExamStudentsComponent', () => {
     it('should remove all users from the exam with participaations', () => {
         const examServiceStub = vi.spyOn(examManagementService, 'removeAllStudentsFromExam').mockReturnValue(of(new HttpResponse<void>()));
         fixture.detectChanges();
-        component.allRegisteredUsers = [
+        component.allRegisteredUsers.set([
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user1, user: user1 },
             { didCheckImage: false, didCheckLogin: false, didCheckName: false, didCheckRegistrationNumber: false, ...user2, user: user2 },
-        ] as ExamUser[];
+        ] as ExamUser[]);
 
         component.removeAllStudents({ deleteParticipationsAndSubmission: true });
         fixture.changeDetectorRef.detectChanges();

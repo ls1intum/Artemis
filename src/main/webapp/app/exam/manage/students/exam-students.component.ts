@@ -1,7 +1,7 @@
-import { Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject, viewChild } from '@angular/core';
+import { Component, EventEmitter, OnDestroy, ViewEncapsulation, computed, effect, inject, signal, viewChild } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
-import { Observable, Subject, Subscription, of } from 'rxjs';
+import { Observable, Subject, of } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
@@ -48,6 +48,7 @@ import { Menu } from 'primeng/menu';
 import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -76,7 +77,7 @@ const cssClasses = {
         ButtonDirective,
     ],
 })
-export class ExamStudentsComponent implements OnInit, OnDestroy {
+export class ExamStudentsComponent implements OnDestroy {
     protected readonly ActionType = ActionType;
     protected readonly missingImage = '/content/images/missing_image.png';
     protected readonly addPublicFilePrefix = addPublicFilePrefix;
@@ -96,26 +97,30 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     studentsExportDialog = viewChild.required(StudentsExportDialogComponent);
     studentsRoomDistributionDialog = viewChild.required(StudentsRoomDistributionDialogComponent);
 
-    courseId: number;
-    exam: Exam;
-    isTestExam: boolean;
-    allRegisteredUsers: ExamUser[] = [];
-    filteredUsersSize = 0;
-    paramSub: Subscription;
+    private routeData = toSignal(this.route.data, {
+        initialValue: { exam: undefined as Exam | undefined },
+    });
+
+    readonly courseId = signal<number>(0);
+    readonly exam = signal<Exam>(new Exam());
+    readonly allRegisteredUsers = signal<ExamUser[]>([]);
+
+    readonly filteredUsersSize = signal(0);
+    readonly rowClass = signal<string | undefined>(undefined);
+
+    readonly isLoading = signal(true);
+    readonly hasExamStarted = signal(false);
+    readonly hasExamEnded = signal(false);
+    readonly isSearching = signal(false);
+    readonly searchFailed = signal(false);
+    readonly searchNoResults = signal(false);
+    readonly isTransitioning = signal(false);
+    readonly isAdmin = signal(false);
+
+    readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
-
-    isLoading = false;
-    hasExamStarted = false;
-    hasExamEnded = false;
-    isSearching = false;
-    searchFailed = false;
-    searchNoResults = false;
-    isTransitioning = false;
-    rowClass: string | undefined = undefined;
-
-    isAdmin = false;
 
     // Icons
     protected readonly faPlus = faPlus;
@@ -131,7 +136,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     protected readonly faChevronDown = faChevronDown;
     protected readonly faUsersGear = faUsersGear;
 
-    manageStudentsMenuActions: MenuItem[] = [
+    readonly manageStudentsMenuActions: MenuItem[] = [
         { label: 'Add students', faIcon: faPlus },
         { label: 'Import users', faIcon: faFileImport, command: () => this.openImportUsersDialog() },
         { label: 'Export users', faIcon: faFileExport, command: () => this.openExportUsersDialog() },
@@ -139,16 +144,29 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         { label: 'Remove all students', faIcon: faUserSlash, styleClass: 'text-danger', command: () => this.openRemoveAllStudentsDialog() },
     ];
 
-    examLogisticsMenuActions: MenuItem[] = [
+    readonly examLogisticsMenuActions = computed<MenuItem[]>(() => [
         { label: 'Upload images', faIcon: faUpload, command: () => this.openUploadImagesDialog() },
         { label: 'Distribute', faIcon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
         {
             label: 'Verify attendance',
             faIcon: faCheck,
+            disabled: !this.hasExamStarted(),
             tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',
             command: () => this.openVerifyAttendance(),
         },
-    ];
+    ]);
+
+    constructor() {
+        this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
+        this.isAdmin.set(this.accountService.isAdmin());
+
+        effect(() => {
+            const exam = this.routeData().exam;
+            if (exam) {
+                this.setUpExamInformation(exam);
+            }
+        });
+    }
 
     openImportUsersDialog() {
         this.usersImportDialog()?.open();
@@ -163,7 +181,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         removeAllStudentsEmitter.subscribe((event) => this.removeAllStudents(event));
 
         this.deleteDialogService.openDeleteDialog({
-            entityTitle: this.exam.title || '',
+            entityTitle: this.exam()?.title || '',
             deleteQuestion: 'artemisApp.studentExams.removeAllStudents.question',
             translateValues: {},
             deleteConfirmationText: 'artemisApp.studentExams.removeAllStudents.confirmationText',
@@ -189,40 +207,38 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     }
 
     openVerifyAttendance() {
-        if (!this.hasExamStarted || !this.exam?.id) {
+        const exam = this.exam();
+        if (!this.hasExamStarted() || !exam?.id) {
             return;
         }
 
-        this.router.navigate(['/course-management', this.courseId, 'exams', this.exam.id, 'students', 'verify-attendance']);
-    }
-
-    ngOnInit() {
-        this.isLoading = true;
-        this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
-        this.isAdmin = this.accountService.isAdmin();
-        this.examLogisticsMenuActions = this.buildExamLogisticsMenuActions();
-        this.route.data.subscribe(({ exam }: { exam: Exam }) => {
-            this.setUpExamInformation(exam);
-        });
+        this.router.navigate(['/course-management', this.courseId(), 'exams', exam.id, 'students', 'verify-attendance']);
     }
 
     reloadExamWithRegisteredUsers() {
-        this.isLoading = true;
-        this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
+        const examId = this.exam().id;
+        if (!examId) {
+            return;
+        }
+
+        this.isLoading.set(true);
+        this.examManagementService.find(this.courseId(), examId, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.setUpExamInformation(examResponse.body!);
         });
     }
 
     private setUpExamInformation(exam: Exam) {
-        this.exam = exam;
-        this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
-        this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
-        this.examLogisticsMenuActions = this.buildExamLogisticsMenuActions();
+        this.exam.set(exam);
 
-        if (this.hasExamEnded) {
-            this.studentExamService.findAllForExam(this.courseId, exam.id!).subscribe((res) => {
+        const hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
+        this.hasExamStarted.set(hasExamStarted);
+        const hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
+        this.hasExamEnded.set(hasExamEnded);
+
+        if (hasExamEnded) {
+            this.studentExamService.findAllForExam(this.courseId(), exam.id!).subscribe((res) => {
                 const studentExams = res.body;
-                this.allRegisteredUsers =
+                const allRegisteredUsers =
                     exam.examUsers?.map((examUser) => {
                         const studentExam = studentExams?.filter((studentExam) => studentExam.user?.id === examUser.user!.id).first();
                         return {
@@ -231,32 +247,19 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                             didExamUserAttendExam: !!studentExam?.started,
                         };
                     }) || [];
+                this.allRegisteredUsers.set(allRegisteredUsers);
             });
         } else {
-            this.allRegisteredUsers =
+            const allRegisteredUsers =
                 exam.examUsers?.map((examUser) => {
                     return {
                         ...examUser.user!,
                         ...examUser,
                     };
                 }) || [];
+            this.allRegisteredUsers.set(allRegisteredUsers);
         }
-        this.isTestExam = this.exam.testExam!;
-        this.isLoading = false;
-    }
-
-    private buildExamLogisticsMenuActions(): MenuItem[] {
-        return [
-            { label: 'Upload images', faIcon: faUpload, command: () => this.openUploadImagesDialog() },
-            { label: 'Distribute', faIcon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
-            {
-                label: 'Verify attendance',
-                faIcon: faCheck,
-                tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',
-                disabled: !this.hasExamStarted,
-                command: () => this.openVerifyAttendance(),
-            },
-        ];
+        this.isLoading.set(false);
     }
 
     ngOnDestroy() {
@@ -272,34 +275,36 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     searchAllUsers = (stream$: Observable<{ text: string; entities: User[] }>): Observable<User[]> => {
         return stream$.pipe(
             switchMap(({ text: loginOrName }) => {
-                this.searchFailed = false;
-                this.searchNoResults = false;
+                this.searchFailed.set(false);
+                this.searchNoResults.set(false);
                 if (loginOrName.length < 3) {
                     return of([]);
                 }
-                this.isSearching = true;
+                this.isSearching.set(true);
                 return this.userService
                     .search(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         tap((users) => {
                             if (users.length === 0) {
-                                this.searchNoResults = true;
+                                this.searchNoResults.set(true);
                             }
                         }),
                         catchError(() => {
-                            this.searchFailed = true;
+                            this.searchFailed.set(true);
                             return of([]);
                         }),
                     );
             }),
             tap(() => {
-                this.isSearching = false;
+                this.isSearching.set(false);
             }),
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable().typeaheadButtons.length; i++) {
-                        const isAlreadyInCourseGroup = this.allRegisteredUsers.map((user) => user.id).includes(users[i].id);
+                        const isAlreadyInCourseGroup = this.allRegisteredUsers()
+                            .map((user) => user.id)
+                            .includes(users[i].id);
                         const button = this.dataTable().typeaheadButtons[i];
                         const hasIcon = button.querySelector('fa-icon');
                         if (!hasIcon) {
@@ -322,12 +327,20 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param callback Function that can be called with the selected user to trigger the DataTableComponent default behavior
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
+        const examId = this.exam().id;
+
         // If the user is not registered for this exam yet, perform the server call to add them
-        if (!this.allRegisteredUsers.map((eu) => eu.user!.id).includes(user.id) && user.login) {
-            this.isTransitioning = true;
-            this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
+        const userNotRegisteredForExam =
+            !this.allRegisteredUsers()
+                .map((eu) => eu.user!.id)
+                .includes(user.id) &&
+            user.login &&
+            examId;
+        if (userNotRegisteredForExam) {
+            this.isTransitioning.set(true);
+            this.examManagementService.addStudentToExam(this.courseId(), examId, user.login!).subscribe({
                 next: () => {
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
                     this.reloadExamWithRegisteredUsers();
                     // Flash green background color to signal to the user that this student was registered
                     this.flashRowClass(cssClasses.newlyRegistered);
@@ -336,7 +349,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     if (error.status === 403) {
                         this.onError(`artemisApp.exam.error.${error.error.errorKey}`);
                     }
-                    this.isTransitioning = false;
+                    this.isTransitioning.set(false);
                 },
             });
         } else {
@@ -352,9 +365,14 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param event generated by the jhiDeleteButton. Has the property deleteParticipationsAndSubmission, reflecting the checkbox choice of the user
      */
     removeFromExam(examUser: ExamUser, event: { [key: string]: boolean }) {
-        this.examManagementService.removeStudentFromExam(this.courseId, this.exam.id!, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
+        const examId = this.exam().id;
+        if (!examId) {
+            return;
+        }
+
+        this.examManagementService.removeStudentFromExam(this.courseId(), examId, examUser.user!.login!, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers = this.allRegisteredUsers.filter((eu) => eu.user!.login !== examUser.user!.login);
+                this.allRegisteredUsers.update((prevAllRegisteredUsers) => prevAllRegisteredUsers.filter((eu) => eu.user!.login !== examUser.user!.login));
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -365,9 +383,14 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * Unregister all students from the exam
      */
     removeAllStudents(event: { [key: string]: boolean }) {
-        this.examManagementService.removeAllStudentsFromExam(this.courseId, this.exam.id!, event.deleteParticipationsAndSubmission).subscribe({
+        const examId = this.exam().id;
+        if (!examId) {
+            return;
+        }
+
+        this.examManagementService.removeAllStudentsFromExam(this.courseId(), examId, event.deleteParticipationsAndSubmission).subscribe({
             next: () => {
-                this.allRegisteredUsers = [];
+                this.allRegisteredUsers.set([]);
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
@@ -380,7 +403,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param filteredUsersSize Total number of users after filters have been applied
      */
     handleUsersSizeChange = (filteredUsersSize: number) => {
-        this.filteredUsersSize = filteredUsersSize;
+        this.filteredUsersSize.set(filteredUsersSize);
     };
 
     /**
@@ -409,8 +432,8 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      * @param className Name of the class to be applied to all rows
      */
     flashRowClass = (className: string) => {
-        this.rowClass = className;
-        setTimeout(() => (this.rowClass = undefined), 500);
+        this.rowClass.set(className);
+        setTimeout(() => this.rowClass.set(undefined), 500);
     };
 
     /**
@@ -420,15 +443,16 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     onError(error: string) {
         this.alertService.error(error);
-        this.isTransitioning = false;
+        this.isTransitioning.set(false);
     }
 
     /**
      * Registers all students who are enrolled in the course for the exam
      */
     registerAllStudentsFromCourse() {
-        if (this.exam?.id) {
-            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId, this.exam.id).subscribe({
+        const exam = this.exam();
+        if (exam?.id) {
+            this.examManagementService.addAllStudentsOfCourseToExam(this.courseId(), exam.id).subscribe({
                 next: () => {
                     this.reloadExamWithRegisteredUsers();
                 },
