@@ -165,6 +165,7 @@ public class TutorialGroupSessionResource {
         checkForOverlapWithOtherSessions(sessionToUpdate, ZoneId.of(configuration.getCourse().getTimeZone()));
 
         // if the session belongs to a schedule we have to cut the connection to mark that it does not follow the schedule anymore
+        // TODO: this could possibly be dropped, same as the relation between schedule and sessions in general
         if (sessionToUpdate.getTutorialGroupSchedule() != null) {
             var schedule = tutorialGroupScheduleRepository.findByIdWithSessionsElseThrow(sessionToUpdate.getTutorialGroupSchedule().getId());
             schedule.getTutorialGroupSessions().remove(sessionToUpdate);
@@ -178,7 +179,7 @@ public class TutorialGroupSessionResource {
 
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
-        return ResponseEntity.ok(TutorialGroupSessionDTO.from(result, result.getTutorialGroupSchedule()));
+        return ResponseEntity.ok(TutorialGroupSessionDTO.from(result, tutorialGroup.getTutorialGroupSchedule()));
     }
 
     /**

@@ -126,6 +126,9 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     protected record TestTutorialGroupTwoData(TutorialGroup group, Channel channel) {
     };
 
+    protected record TestTutorialGroupThreeData(TutorialGroup group, List<TutorialGroupSession> sessions) {
+    };
+
     static final LocalDate FIRST_AUGUST_MONDAY = LocalDate.of(2022, 8, 1);
 
     static final LocalDate SECOND_AUGUST_MONDAY = LocalDate.of(2022, 8, 8);
@@ -286,9 +289,12 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
         return new TestTutorialGroupTwoData(tutorialGroup, channel);
     }
 
-    TutorialGroup createAndSaveTestTutorialGroupThreeData(User tutor) {
-        return tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse2.getId(), "TG Wed 10", "SampleInfo3", 15, false, "01.05.12", Language.ENGLISH.name(), tutor,
-                Set.of());
+    TestTutorialGroupThreeData createAndSaveTestTutorialGroupThreeData(User tutor) {
+        TutorialGroup group = tutorialGroupUtilService.createAndSaveTutorialGroup(exampleCourse2.getId(), "TG Wed 10", "SampleInfo3", 15, false, "01.05.12",
+                Language.ENGLISH.name(), tutor, Set.of());
+        TutorialGroupSession session = tutorialGroupUtilService.createIndividualTutorialGroupSession(group.getId(),
+                ZonedDateTime.of(FIRST_SEPTEMBER_MONDAY_10_00, ZoneId.of(exampleTimeZone)), ZonedDateTime.of(FIRST_SEPTEMBER_MONDAY_12_00, ZoneId.of(exampleTimeZone)), null);
+        return new TestTutorialGroupThreeData(group, List.of(session));
     }
 
     // === Abstract Methods ===

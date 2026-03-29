@@ -642,10 +642,10 @@ public class TutorialGroupService {
      * @throws EntityNotFoundException if no tutorial group exists with the given ID
      */
     public TutorialGroupDetailDTO getTutorialGroupDTO(long tutorialGroupId, long courseId, ZoneId courseTimeZone) {
-        RawTutorialGroupDTO rawGroupDTOs = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
+        RawTutorialGroupDTO rawGroupDTO = tutorialGroupRepository.getRawTutorialGroupDTO(tutorialGroupId, courseId)
                 .orElseThrow(() -> new EntityNotFoundException("No tutorial group found with id " + tutorialGroupId + " found for course with id " + courseId + "."));
 
-        String tutorLogin = rawGroupDTOs.tutorLogin();
+        String tutorLogin = rawGroupDTO.tutorLogin();
         String currentUserLogin = userRepository.getCurrentUserLogin();
         Long tutorChatId = null;
         if (!tutorLogin.equals(currentUserLogin)) {
@@ -656,11 +656,11 @@ public class TutorialGroupService {
         List<TutorialGroupSessionDTO> sessionDTOs;
         // The schedule related properties are null if and only if there is no schedule for the tutorial group.
         // It would be nicer to bundle the schedule properties of the RawTutorialGroupDTO into a nested DTO, but unfortunately JPQL does not support nested projections
-        if (rawGroupDTOs.scheduleDayOfWeek() != null) {
-            int scheduleDayOfWeek = rawGroupDTOs.scheduleDayOfWeek();
-            LocalTime scheduleStart = LocalTime.parse(rawGroupDTOs.scheduleStartTime());
-            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTOs.scheduleEndTime());
-            String scheduleLocation = rawGroupDTOs.scheduleLocation();
+        if (rawGroupDTO.scheduleDayOfWeek() != null) {
+            int scheduleDayOfWeek = rawGroupDTO.scheduleDayOfWeek();
+            LocalTime scheduleStart = LocalTime.parse(rawGroupDTO.scheduleStartTime());
+            LocalTime scheduleEnd = LocalTime.parse(rawGroupDTO.scheduleEndTime());
+            String scheduleLocation = rawGroupDTO.scheduleLocation();
             sessionDTOs = rawSessionDTOs.stream().map(data -> TutorialGroupSessionDTO.from(data, scheduleDayOfWeek, scheduleStart, scheduleEnd, scheduleLocation, courseTimeZone))
                     .toList();
         }
@@ -668,7 +668,7 @@ public class TutorialGroupService {
             sessionDTOs = rawSessionDTOs.stream().map(TutorialGroupSessionDTO::from).toList();
         }
 
-        return TutorialGroupDetailDTO.from(rawGroupDTOs, sessionDTOs, tutorChatId);
+        return TutorialGroupDetailDTO.from(rawGroupDTO, sessionDTOs, tutorChatId);
     }
 
     /**

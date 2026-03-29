@@ -40,7 +40,6 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
     public static TutorialGroupSessionDTO from(RawTutorialGroupDetailSessionDTO rawDto, int scheduleDayOfWeek, LocalTime scheduleStart, LocalTime scheduleEnd,
             String scheduleLocation, ZoneId courseTimeZone) {
         boolean isCancelled = rawDto.status() == TutorialGroupSessionStatus.CANCELLED;
-        // if isCancelled is true, set sameLocation, sameTime and sameDay always to true
         boolean sameLocation = rawDto.location().equals(scheduleLocation);
         ZonedDateTime sessionStart = rawDto.start().withZoneSameInstant(courseTimeZone);
         ZonedDateTime sessionEnd = rawDto.end().withZoneSameInstant(courseTimeZone);
@@ -71,6 +70,7 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
             LocalTime scheduleEnd = LocalTime.parse(schedule.getEndTime());
             sameLocation = session.getLocation().equals(schedule.getLocation());
             sameTime = session.getStart().toLocalTime().equals(scheduleStart) && session.getEnd().toLocalTime().equals(scheduleEnd);
+            sameDate = session.getStart().getDayOfWeek().getValue() == schedule.getDayOfWeek();
         }
         return new TutorialGroupSessionDTO(session.getId(), session.getStart(), session.getEnd(), session.getLocation(), isCancelled, !sameLocation, !sameTime, !sameDate,
                 session.getAttendanceCount());
