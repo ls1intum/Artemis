@@ -63,6 +63,7 @@
                             [placeholder]="'artemisApp.attachmentVideoUnit.pdfViewer.searchPlaceholder' | artemisTranslate"
                             [ngModel]="searchQuery()"
                             (ngModelChange)="performSearch($event)"
+                            (keydown.enter)="onSearchInputEnter($event)"
                             [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.search' | artemisTranslate"
                         />
                     </div>
@@ -81,6 +82,7 @@
                                 <fa-icon [icon]="faChevronUp" />
                             </button>
                             <button
+                                #searchNextButton
                                 class="artemis-pdf-toolbar__button"
                                 type="button"
                                 [title]="'artemisApp.attachmentVideoUnit.pdfViewer.nextMatch' | artemisTranslate"

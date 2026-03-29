@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -53,6 +53,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
     readonly isPageInputFocused = signal<boolean>(false);
 
     readonly pageInputElement = viewChild<InputNumber>('pageInput');
+    readonly searchNextButtonElement = viewChild<ElementRef<HTMLButtonElement>>('searchNextButton');
 
     protected readonly faMagnifyingGlassMinus = faMagnifyingGlassMinus;
     protected readonly faMagnifyingGlassPlus = faMagnifyingGlassPlus;
@@ -180,6 +181,18 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
         this.searchQuery.set(query);
         this.dispatchFindCommand({ type: 'find', query, highlightAll: true, findPrevious: false });
+    }
+
+    protected onSearchInputEnter(event: Event): void {
+        event.preventDefault();
+        this.searchNext();
+
+        setTimeout(() => {
+            const nextButton = this.searchNextButtonElement()?.nativeElement;
+            if (nextButton && !nextButton.disabled) {
+                nextButton.focus();
+            }
+        });
     }
 
     protected searchNext(): void {

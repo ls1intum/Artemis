@@ -15,16 +15,14 @@
     --toolbar-control-height: 24px;
     // Light mode theme variables (must be explicit since iframe cannot access parent app's CSS properties)
     --pdf-viewer-bg: #{light.$gray-100};
-    --card-bg: #{light.$card-bg};
-    --card-border-color: #{light.$card-border-color};
-    --body-color: #{light.$body-color};
-    --toolbar-input-bg: #{light.$card-bg};
+    --toolbar-surface-color: #{light.$card-bg};
+    --toolbar-border-color: #{light.$card-border-color};
+    --toolbar-text-color: #{light.$body-color};
+    --toolbar-muted-text-color: #{light.$gray-600};
     --toolbar-input-border-color: #{light.$gray-400};
     --toolbar-input-focus-color: #{light.$gray-500};
-    --toolbar-input-placeholder-color: #{light.$gray-600};
-    --toolbar-input-text-color: #{light.$body-color};
-    --highlight-bg-color: rgba(255, 255, 0, 0.4);
-    --highlight-selected-bg-color: rgba(255, 165, 0, 0.6);
+    --artemis-search-highlight-bg-color: #{rgba(light.$yellow, 0.5)};
+    --artemis-search-highlight-selected-bg-color: #{rgba(light.$orange, 0.5)};
 }
 
 .iframe-pdf-viewer {
@@ -44,7 +42,7 @@
     justify-content: center;
     height: 100%;
     border: none !important;
-    background-color: var(--card-bg) !important;
+    background-color: var(--toolbar-surface-color) !important;
 }
 
 .artemis-pdf-toolbar__center {
@@ -61,9 +59,9 @@
     height: var(--pdf-bar-height) !important;
     min-height: var(--pdf-bar-height) !important;
     padding: 0 0.375rem !important;
-    background-color: var(--card-bg) !important;
+    background-color: var(--toolbar-surface-color) !important;
     border: none !important;
-    border-bottom: 1px solid var(--card-border-color) !important;
+    border-bottom: 1px solid var(--toolbar-border-color) !important;
 }
 
 .artemis-pdf-toolbar .p-inputnumber {
@@ -77,8 +75,8 @@
     height: var(--toolbar-control-height) !important;
     border: 1px solid var(--toolbar-input-border-color) !important;
     border-radius: 0.25rem !important;
-    background-color: var(--toolbar-input-bg) !important;
-    color: var(--toolbar-input-text-color) !important;
+    background-color: var(--toolbar-surface-color) !important;
+    color: var(--toolbar-text-color) !important;
     font-size: 0.8rem !important;
     font-weight: 400;
     line-height: 1.1;
@@ -87,12 +85,10 @@
         border-color 0.2s ease,
         box-shadow 0.2s ease,
         background-color 0.2s ease;
-
     &::placeholder {
-        color: var(--toolbar-input-placeholder-color);
+        color: var(--toolbar-muted-text-color);
         opacity: 1;
     }
-
     &:focus {
         border-color: var(--toolbar-input-focus-color) !important;
         box-shadow: 0 0 0 1px var(--toolbar-input-focus-color) !important;
@@ -109,18 +105,28 @@
     padding: 0;
     border: none;
     background-color: transparent;
-    color: var(--body-color);
+    color: var(--toolbar-text-color);
     cursor: pointer;
     transition: opacity 0.2s ease;
-
     &:hover,
     &:active {
         opacity: 0.8;
     }
-
     fa-icon {
         font-size: 1rem;
     }
+}
+
+#toolbarViewer.artemis-pdf-toolbar button.artemis-pdf-toolbar__button:focus,
+#toolbarViewer.artemis-pdf-toolbar button.artemis-pdf-toolbar__button:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border-color: transparent !important;
+    filter: none !important;
+}
+
+#toolbarViewer.artemis-pdf-toolbar button.artemis-pdf-toolbar__button::-moz-focus-inner {
+    border: 0 !important;
 }
 
 .artemis-pdf-toolbar__page-navigation {
@@ -146,7 +152,7 @@
 .artemis-pdf-toolbar__page-total {
     font-weight: 500;
     font-size: 0.9rem;
-    color: var(--body-color);
+    color: var(--toolbar-text-color);
 }
 
 .artemis-pdf-toolbar__search {
@@ -166,7 +172,7 @@
     left: 0.5rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--toolbar-input-placeholder-color);
+    color: var(--toolbar-muted-text-color);
     font-size: 0.65rem;
     line-height: 1;
     pointer-events: none;
@@ -186,14 +192,14 @@
 .artemis-pdf-toolbar__search-count {
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--body-color);
+    color: var(--toolbar-text-color);
     padding: 0 0.5rem;
 }
 
 .artemis-pdf-toolbar__divider {
     width: 1px;
     height: 24px;
-    background-color: var(--card-border-color);
+    background-color: var(--toolbar-border-color);
     margin: 0 0.5rem;
 }
 
@@ -209,11 +215,24 @@
     filter: none;
 }
 
+.iframe-pdf-container .textLayer .highlight,
+.iframe-pdf-container .textLayer .customHighlight {
+    background-color: var(--artemis-search-highlight-bg-color) !important;
+    opacity: 1 !important;
+    backdrop-filter: none !important;
+}
+
+.iframe-pdf-container .textLayer .highlight.selected,
+.iframe-pdf-container .textLayer .customHighlight.selected {
+    background-color: var(--artemis-search-highlight-selected-bg-color) !important;
+    opacity: 1 !important;
+    backdrop-filter: none !important;
+}
+
 .iframe-pdf-container .page {
     border: none !important;
     outline: none;
     margin: 0 auto !important;
-
     &:not(:last-child) {
         margin-bottom: 0.5rem !important;
     }
@@ -221,15 +240,12 @@
 
 .iframe-pdf-container.dark-mode {
     --pdf-viewer-bg: #{dark.$gray-900};
-    --card-bg: #{dark.$card-bg};
-    --card-border-color: #{dark.$card-border-color};
-    --body-color: #{dark.$body-color};
-    --toolbar-input-bg: #{dark.$card-bg};
+    --toolbar-surface-color: #{dark.$card-bg};
+    --toolbar-border-color: #{dark.$card-border-color};
+    --toolbar-text-color: #{dark.$body-color};
+    --toolbar-muted-text-color: #{dark.$gray-500};
     --toolbar-input-border-color: #{dark.$gray-600};
     --toolbar-input-focus-color: #{dark.$gray-400};
-    --toolbar-input-placeholder-color: #{dark.$gray-500};
-    --toolbar-input-text-color: #{dark.$body-color};
-
-    --highlight-bg-color: rgba(255, 255, 0, 0.5);
-    --highlight-selected-bg-color: rgba(255, 165, 0, 0.7);
+    --artemis-search-highlight-bg-color: #{rgba(light.$yellow, 0.5)};
+    --artemis-search-highlight-selected-bg-color: #{rgba(light.$orange, 0.5)};
 }

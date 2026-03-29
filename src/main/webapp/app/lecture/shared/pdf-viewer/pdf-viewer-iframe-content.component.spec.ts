@@ -37,6 +37,7 @@ describe('PdfViewerIframeContentComponent', () => {
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.clearAllMocks();
     });
 
@@ -149,6 +150,35 @@ describe('PdfViewerIframeContentComponent', () => {
         vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(null as any);
         expect(() => component.zoomIn()).not.toThrow();
         expect(() => component.zoomOut()).not.toThrow();
+    });
+
+    it('should execute next search and focus next button when Enter is pressed in search input', () => {
+        vi.useFakeTimers();
+        const pdfNotificationService = TestBed.inject(PDFNotificationService);
+        vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
+        (component as any).searchQuery.set('needle');
+        (component as any).searchMatchesCount.set({ current: 1, total: 3 });
+        fixture.detectChanges();
+
+        const searchInput = fixture.nativeElement.querySelector('.artemis-pdf-toolbar__search-input') as HTMLInputElement;
+        const searchControlButtons = fixture.nativeElement.querySelectorAll('.artemis-pdf-toolbar__search-controls .artemis-pdf-toolbar__button') as NodeListOf<HTMLButtonElement>;
+        const searchNextButton = searchControlButtons.item(1);
+        const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true });
+
+        searchInput.dispatchEvent(enterEvent);
+        vi.runAllTimers();
+
+        expect(enterEvent.defaultPrevented).toBe(true);
+        expect(mockEventBus.dispatch).toHaveBeenCalledWith('find', {
+            type: 'again',
+            query: 'needle',
+            caseSensitive: false,
+            entireWord: false,
+            highlightAll: true,
+            findPrevious: false,
+        });
+        expect(document.activeElement).toBe(searchNextButton);
+        vi.useRealTimers();
     });
 
     it('should cleanup on destroy', () => {
