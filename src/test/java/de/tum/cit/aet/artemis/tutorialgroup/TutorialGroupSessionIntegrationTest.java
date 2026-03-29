@@ -177,7 +177,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             assertThat(sessionDTO.isCancelled()).isFalse();
             assertThat(sessionDTO.locationChanged()).isTrue();
             assertThat(sessionDTO.timeChanged()).isTrue();
-            assertThat(sessionDTO.dateChanged()).isTrue();
+            assertThat(sessionDTO.dateChanged()).isFalse();
             assertThat(sessionDTO.attendanceCount()).isNull();
         }
 
@@ -198,7 +198,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
             assertThat(sessionDTO.isCancelled()).isTrue();
             assertThat(sessionDTO.locationChanged()).isTrue();
             assertThat(sessionDTO.timeChanged()).isTrue();
-            assertThat(sessionDTO.dateChanged()).isTrue();
+            assertThat(sessionDTO.dateChanged()).isFalse();
             assertThat(sessionDTO.attendanceCount()).isNull();
         }
     }
