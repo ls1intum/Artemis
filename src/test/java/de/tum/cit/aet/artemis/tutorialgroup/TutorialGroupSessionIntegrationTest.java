@@ -17,6 +17,7 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroup;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
+import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.CreateOrUpdateTutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 
@@ -411,6 +412,79 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     @Nested
     class CancelSessionTests {
 
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfGroupWithoutExistingGroup_shouldReturnNotFound() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.patchWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/-1/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR2_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfOtherGroup_shouldReturnAccessForbidden() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.patchWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = SECOND_COURSE_EDITOR1_LOGIN, roles = "EDITOR")
+        void cancelSession_asEditorOfOtherCourse_shouldReturnAccessForbidden() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.patchWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.FORBIDDEN);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfGroupWithoutExistingSession_shouldReturnNotFound() throws Exception {
+            request.patchWithoutResponseBody("/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/-1/cancel",
+                    null, HttpStatus.NOT_FOUND);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfGroupWithSessionOverlappingFreePeriod_shouldReturnBadRequest() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.get(1);
+            var freePeriod = tutorialGroupUtilService.addTutorialGroupFreePeriod(exampleConfigurationId, FIRST_AUGUST_MONDAY_13_00, FIRST_AUGUST_MONDAY_14_00, "Holiday");
+            session.setTutorialGroupFreePeriod(freePeriod);
+            tutorialGroupSessionRepository.save(session);
+            request.patchWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = SECOND_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfGroupWithNonMatchingGroup_shouldReturnBadRequest() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.patchWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + secondCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfGroupWithNonMatchingCourse_shouldReturnBadRequest() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.patchWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId2 + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.BAD_REQUEST);
+        }
+
+        @Test
+        @WithMockUser(username = FIRST_COURSE_TUTOR1_LOGIN, roles = "TA")
+        void cancelSession_asTutorOfGroup_shouldReturnNoContent() throws Exception {
+            var session = firstCourseTutorialGroup1Sessions.getFirst();
+            request.patchWithoutResponseBody(
+                    "/api/tutorialgroup/courses/" + exampleCourseId + "/tutorial-groups/" + firstCourseTutorialGroup1.getId() + "/sessions/" + session.getId() + "/cancel", null,
+                    HttpStatus.NO_CONTENT);
+            TutorialGroupSession updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+            assertThat(updatedSession.getStatus()).isEqualTo(TutorialGroupSessionStatus.CANCELLED);
+        }
     }
 
     @Nested
