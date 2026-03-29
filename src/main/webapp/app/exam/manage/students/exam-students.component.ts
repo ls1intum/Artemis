@@ -33,7 +33,7 @@ import { Toolbar } from 'primeng/toolbar';
 import { MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/toolbar-menu-button/exam-students-menu-button.component';
+import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TableModule } from 'primeng/table';
@@ -463,7 +463,31 @@ export class ExamStudentsComponent implements OnDestroy {
         }
     }
 
-    asExamUser(value) {
+    attendanceCheckFailed(examUser: ExamUser | undefined) {
+        return (
+            examUser?.didExamUserAttendExam &&
+            this.hasExamEnded() &&
+            (!examUser.didCheckLogin || !examUser.didCheckImage || !examUser.didCheckName || !examUser.didCheckRegistrationNumber || !examUser.signingImagePath)
+        );
+    }
+
+    attendanceCheckPassed(examUser: ExamUser | undefined) {
+        return (
+            examUser?.didExamUserAttendExam &&
+            examUser.didCheckLogin &&
+            examUser.didCheckImage &&
+            examUser.didCheckName &&
+            examUser.didCheckRegistrationNumber &&
+            examUser.signingImagePath &&
+            this.hasExamEnded()
+        );
+    }
+
+    didAttendExam(examUser: ExamUser | undefined) {
+        return !examUser?.didExamUserAttendExam && this.hasExamEnded();
+    }
+
+    asExamUser(value: ExamUser | undefined) {
         return value as ExamUser | undefined;
     }
 }

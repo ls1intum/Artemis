@@ -9,7 +9,7 @@
     </ng-template>
 </p-menu>
 
-<button pButton [disabled]="disabled()" [class]="buttonClass()" size="small" (click)="toggleMenu($event)">
+<button pButton [disabled]="disabled()" [class]="buttonClass()" (click)="toggleMenu($event)">
     <i [class]="buttonIconClass() + ' me-1'"></i>
     {{ label() | artemisTranslate }}
     <i class="pi pi-chevron-down ms-1 fs-6"></i>
