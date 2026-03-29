@@ -1,5 +1,4 @@
 import {
-    AfterContentChecked,
     ChangeDetectionStrategy,
     ChangeDetectorRef,
     Component,
@@ -71,7 +70,7 @@ import { CourseWideSearchConfig } from 'app/communication/course-conversations-c
         ForwardedMessageComponent,
     ],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit, AfterContentChecked, OnDestroy {
+export class PostComponent extends PostingDirective<Post> implements OnInit, OnDestroy {
     metisService = inject(MetisService);
     changeDetector = inject(ChangeDetectorRef);
     renderer = inject(Renderer2);
@@ -150,16 +149,22 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, Aft
         effect(() => {
             this.posting();
             this.searchConfig();
+            this.showChannelReference();
             untracked(() => {
                 const posting = this.posting();
                 if (!posting) return;
+                // Ensure posting is a Post instance; if conversion is needed,
+                // return early — the .set() will re-trigger this effect with the converted value.
+                if (!(posting instanceof Post)) {
+                    this.posting.set(Object.assign(new Post(), posting));
+                    return;
+                }
                 this.contextInformation = this.metisService.getContextInformation(posting);
                 this.routerLink = this.metisService.getLinkForPost();
                 this.queryParams = this.metisService.getQueryParamsForPost(posting);
                 this.showAnnouncementIcon = (getAsChannelDTO(posting.conversation)?.isAnnouncementChannel && this.showChannelReference()) ?? false;
                 this.updateShowSearchResultInAnswersHint();
                 this.sortAnswerPosts();
-                this.assignPostingToPost();
             });
         });
     }
@@ -284,7 +289,10 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, Aft
     ngOnInit() {
         super.ngOnInit();
         this.pageType = this.metisService.getPageType();
-        this.contextInformation = this.metisService.getContextInformation(this.posting()!);
+        const posting = this.posting();
+        if (posting) {
+            this.contextInformation = this.metisService.getContextInformation(posting);
+        }
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
         this.updateShowSearchResultInAnswersHint();
         this.sortAnswerPosts();
@@ -335,14 +343,6 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, Aft
         } catch (error) {
             throw new Error(error.toString());
         }
-    }
-
-    /**
-     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when
-     * dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
-     */
-    ngAfterContentChecked() {
-        this.changeDetector.detectChanges();
     }
 
     /**

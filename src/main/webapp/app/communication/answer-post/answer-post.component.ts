@@ -92,7 +92,13 @@ export class AnswerPostComponent extends PostingDirective<AnswerPost> implements
         // Track posting signal changes (replaces ngOnChanges)
         effect(() => {
             this.posting();
-            untracked(() => this.assignPostingToAnswerPost());
+            untracked(() => {
+                const posting = this.posting();
+                if (!posting) return;
+                if (!(posting instanceof AnswerPost)) {
+                    this.posting.set(Object.assign(new AnswerPost(), posting));
+                }
+            });
         });
     }
 

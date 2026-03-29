@@ -1,5 +1,5 @@
 import { Component, OnInit, input, signal } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { PostingButtonComponent } from 'app/communication/posting-button/posting-button.component';
@@ -15,6 +15,8 @@ import { Conversation } from 'app/communication/shared/entities/conversation/con
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { deepClone } from 'app/shared/util/deep-clone.util';
+
 const TITLE_MAX_LENGTH = 200;
 
 export interface ContextSelectorOption {
@@ -40,6 +42,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     isAtLeastInstructorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
     similarPosts: Post[] = [];
+    private contextSubscription?: Subscription;
 
     readonly PageType = PageType;
     readonly EditType = PostingEditType;
@@ -94,8 +97,9 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
             posting.title = posting.title ?? '';
         }
         this.resetCurrentContextSelectorOption();
+        this.contextSubscription?.unsubscribe();
         this.formGroup = this.formBuilder.group(this.postValidator());
-        this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
+        this.contextSubscription = this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
             this.similarPosts = [];
         });
@@ -107,10 +111,15 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      */
     createPosting(): void {
         this.isLoading = true;
-        this.posting.set(this.setPostProperties(this.posting()!));
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
+        const payload = this.setPostProperties(deepClone(posting));
 
         const override = this.createOverride();
-        const create$ = override ? override(this.posting()!) : this.metisService.createPost(this.posting()!);
+        const create$ = override ? override(payload) : this.metisService.createPost(payload);
 
         create$.subscribe({
             next: (post: Post) => {
@@ -130,8 +139,13 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        this.posting.set(this.setPostProperties(this.posting()!));
-        this.metisService.updatePost(this.posting()!).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
+        const payload = this.setPostProperties(deepClone(posting));
+        this.metisService.updatePost(payload).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.resetFormGroup();
@@ -158,15 +172,9 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     private setPostProperties(post: Post): Post {
         post.title = this.formGroup.get('title')?.value;
         post.content = this.formGroup.get('content')?.value;
-        const currentContextSelectorOption: ContextSelectorOption = {
-            ...this.formGroup.get('context')?.value,
-        };
-        post = {
-            ...post,
-            ...currentContextSelectorOption,
-        };
-        if (currentContextSelectorOption.conversation) {
-            post.conversation = currentContextSelectorOption.conversation;
+        const contextValue = this.formGroup.get('context')?.value as ContextSelectorOption | undefined;
+        if (contextValue?.conversation) {
+            post.conversation = contextValue.conversation;
         }
         return post;
     }

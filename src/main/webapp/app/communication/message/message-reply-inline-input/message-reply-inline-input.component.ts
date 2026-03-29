@@ -10,6 +10,7 @@ import { ConversationDTO } from 'app/communication/shared/entities/conversation/
 import { AccountService } from 'app/core/auth/account.service';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { Subscription } from 'rxjs';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-message-reply-inline-input',
@@ -50,10 +51,12 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
         const previousPostingPostId = this.previousPostingPostId;
         this.previousPostingPostId = posting?.post?.id;
 
-        if (this.formGroup && posting && previousPostingPostId === posting.post?.id) {
-            posting.content = this.formGroup.get('content')?.value;
-        }
+        // Preserve current form content when re-rendering the same post
+        const preservedContent = this.formGroup && posting && previousPostingPostId === posting.post?.id ? this.formGroup.get('content')?.value : undefined;
         super.onPostingChanged();
+        if (preservedContent !== undefined) {
+            this.formGroup.get('content')?.setValue(preservedContent);
+        }
         this.loadDraft();
     }
 
@@ -75,13 +78,11 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             return;
         }
 
-        if (content !== undefined) {
-            posting.content = content;
-        }
+        const formContent = content !== undefined ? content : posting.content;
 
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
+            content: [formContent, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
 
         // Subscribe and store the subscription
@@ -104,8 +105,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             this.isLoading = false;
             return;
         }
-        posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(posting).subscribe({
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup('');
                 this.isLoading = false;
@@ -128,8 +130,9 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
             this.isLoading = false;
             return;
         }
-        posting.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(posting).subscribe({
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.updateAnswerPost(payload).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.clearDraft();
@@ -158,23 +161,28 @@ export class MessageReplyInlineInputComponent extends PostingCreateEditDirective
 
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         this.draftService.saveDraft(key, content);
     }
 
     private loadDraft(): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         const draft = this.draftService.loadDraft(key);
-        if (draft) {
-            const posting = this.posting();
-            if (posting) {
-                posting.content = draft;
-                this.resetFormGroup();
-            }
+        if (draft && this.posting() && this.formGroup) {
+            this.formGroup.get('content')?.setValue(draft);
         }
     }
 
     private clearDraft(): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         this.draftService.clearDraft(key);
     }
 

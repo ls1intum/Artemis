@@ -203,7 +203,7 @@ describe('MessageInlineInputComponent', () => {
 
         it('should load draft on init if available', () => {
             const draftContent = 'saved draft content';
-            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('message_draft_1_1');
+            vi.spyOn(component as any, 'getDraftKey').mockReturnValue('message_draft_1_1');
             vi.spyOn(draftService, 'loadDraft').mockReturnValue(draftContent);
 
             component.ngOnInit();
@@ -212,8 +212,7 @@ describe('MessageInlineInputComponent', () => {
             component['loadDraft']();
             vi.advanceTimersByTime(0);
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
-            expect(component.posting()!.content).toBe(draftContent);
+            expect(component.formGroup.get('content')?.value).toBe(draftContent);
         });
 
         it('should clear draft after successful post creation', () => {

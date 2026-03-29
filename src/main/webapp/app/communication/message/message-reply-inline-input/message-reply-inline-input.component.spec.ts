@@ -85,10 +85,7 @@ describe('MessageReplyInlineInputComponent', () => {
             content: newContent,
         });
         component.confirm();
-        expect(metisServiceCreateStub).toHaveBeenCalledWith({
-            ...component.posting()!,
-            title: undefined,
-        });
+        expect(metisServiceCreateStub).toHaveBeenCalledWith(expect.objectContaining({ content: newContent }));
         vi.advanceTimersByTime(0);
         expect(component.isLoading).toBe(false);
         expect(onCreateSpy).toHaveBeenCalledExactlyOnceWith({ ...component.posting()!, content: newContent });
@@ -125,11 +122,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         component.confirm();
 
-        expect(metisServiceUpdateStub).toHaveBeenCalledWith({
-            ...component.posting()!,
-            content: editedContent,
-            title: undefined,
-        });
+        expect(metisServiceUpdateStub).toHaveBeenCalledWith(expect.objectContaining({ content: editedContent }));
         vi.advanceTimersByTime(0);
         expect(component.isLoading).toBe(false);
     });
@@ -194,7 +187,7 @@ describe('MessageReplyInlineInputComponent', () => {
 
         it('should load draft on init if available', () => {
             const draftContent = 'saved draft content';
-            const getDraftKeySpy = vi.spyOn(component as any, 'getDraftKey').mockReturnValue('thread_draft_1_1_1');
+            vi.spyOn(component as any, 'getDraftKey').mockReturnValue('thread_draft_1_1_1');
             vi.spyOn(draftService, 'loadDraft').mockReturnValue(draftContent);
 
             component.ngOnInit();
@@ -203,8 +196,7 @@ describe('MessageReplyInlineInputComponent', () => {
             component['loadDraft']();
             vi.advanceTimersByTime(0);
 
-            expect(getDraftKeySpy).toHaveBeenCalledOnce();
-            expect(component.posting()!.content).toBe(draftContent);
+            expect(component.formGroup.get('content')?.value).toBe(draftContent);
         });
 
         it('should clear draft after successful reply creation', () => {

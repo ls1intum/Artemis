@@ -48,10 +48,11 @@ export abstract class PostingCreateEditDirective<T extends Posting> implements O
      * Called when the posting signal changes. Override in subclasses and call super.
      */
     protected onPostingChanged(): void {
-        if (!this.posting()) {
+        const posting = this.posting();
+        if (!posting) {
             return;
         }
-        this.content = this.posting()?.content ?? '';
+        this.content = posting.content ?? '';
         this.resetFormGroup();
     }
 

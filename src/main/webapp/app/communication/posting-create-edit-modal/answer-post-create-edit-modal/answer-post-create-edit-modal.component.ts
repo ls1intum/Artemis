@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { PostContentValidationPattern } from 'app/communication/metis.util';
 import { Posting } from 'app/communication/shared/entities/posting.model';
 import { PostingMarkdownEditorComponent } from 'app/communication/posting-markdown-editor/posting-markdown-editor.component';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
@@ -54,9 +55,14 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     createPosting(): void {
-        const posting = this.posting()!;
-        posting.content = this.formGroup.get('content')?.value;
-        this.metisService.createAnswerPost(posting).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.createAnswerPost(payload).subscribe({
             next: (answerPost: AnswerPost) => {
                 this.resetFormGroup();
                 this.isLoading = false;
@@ -74,9 +80,14 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
      * ends the process successfully by closing the modal and stopping the button's loading animation
      */
     updatePosting(): void {
-        const posting = this.posting()!;
-        posting.content = this.formGroup.get('content')?.value;
-        this.metisService.updateAnswerPost(posting).subscribe({
+        const posting = this.posting();
+        if (!posting) {
+            this.isLoading = false;
+            return;
+        }
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
+        this.metisService.updateAnswerPost(payload).subscribe({
             next: (updatedPost: AnswerPost) => {
                 this.postingUpdated.emit(updatedPost);
                 this.isLoading = false;

@@ -156,7 +156,10 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     }
 
     markMessageAsUnread() {
-        this.metisService.markMessageAsUnread(this.posting()!);
+        const posting = this.posting();
+        if (posting) {
+            this.metisService.markMessageAsUnread(posting);
+        }
     }
 
     protected toggleSavePost() {
@@ -179,10 +182,14 @@ export abstract class PostingDirective<T extends Posting> implements OnInit, OnD
     }
 
     private deletePostingWithoutTimeout() {
+        const posting = this.posting();
+        if (!posting) {
+            return;
+        }
         if (this.isAnswerPost) {
-            this.metisService.deleteAnswerPost(this.posting()!);
+            this.metisService.deleteAnswerPost(posting);
         } else {
-            this.metisService.deletePost(this.posting()!);
+            this.metisService.deletePost(posting);
         }
     }
 

@@ -12,6 +12,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ConversationDTO } from 'app/communication/shared/entities/conversation/conversation.model';
 import { DraftService } from 'app/communication/message/service/draft-message.service';
 import { Subscription } from 'rxjs';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -91,8 +92,9 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
                 this.isLoading = false;
                 return;
             }
-            posting.content = this.formGroup.get('content')?.value;
-            this.metisService.createPost(posting).subscribe({
+            const payload = deepClone(posting);
+            payload.content = this.formGroup.get('content')?.value;
+            this.metisService.createPost(payload).subscribe({
                 next: (post: Post) => {
                     this.isLoading = false;
                     this.clearDraft();
@@ -115,9 +117,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
             this.isLoading = false;
             return;
         }
-        posting.content = this.formGroup.get('content')?.value;
+        const payload = deepClone(posting);
+        payload.content = this.formGroup.get('content')?.value;
         this.isModalOpen.emit();
-        this.metisService.updatePost(posting).subscribe({
+        this.metisService.updatePost(payload).subscribe({
             next: () => {
                 this.isLoading = false;
                 this.clearDraft();
@@ -140,23 +143,28 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
 
     private saveDraft(content: string): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         this.draftService.saveDraft(key, content);
     }
 
     private loadDraft(): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         const draft = this.draftService.loadDraft(key);
-        if (draft) {
-            const posting = this.posting();
-            if (posting) {
-                posting.content = draft;
-                this.resetFormGroup();
-            }
+        if (draft && this.posting() && this.formGroup) {
+            this.formGroup.get('content')?.setValue(draft);
         }
     }
 
     private clearDraft(): void {
         const key = this.getDraftKey();
+        if (!key) {
+            return;
+        }
         this.draftService.clearDraft(key);
     }
 
