@@ -1,3 +1,4 @@
+import { Location } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -28,14 +29,13 @@ export class PdfViewerIframeWrapperComponent {
 
     readonly pdfIframe = viewChild<ElementRef<HTMLIFrameElement>>('pdfIframe');
     readonly iframeReady = signal(false);
-    readonly ready = output<{ pdfUrl: string }>();
+    readonly pagesLoaded = output<{ pdfUrl: string; pagesCount: number }>();
     readonly loadError = output<{ pdfUrl: string }>();
 
-    readonly iframeSrc = computed(() => {
-        return '/pdf-viewer-iframe';
-    });
-
     private readonly themeService = inject(ThemeService);
+    private readonly location = inject(Location);
+
+    readonly iframeSrc = computed(() => this.location.prepareExternalUrl('pdf-viewer-iframe'));
 
     constructor() {
         const destroyRef = inject(DestroyRef);
@@ -87,11 +87,12 @@ export class PdfViewerIframeWrapperComponent {
             return;
         }
 
-        const { type } = event.data;
+        const { type, data } = event.data;
 
         if (type === 'ready') {
             this.iframeReady.set(true);
-            this.ready.emit({ pdfUrl: this.pdfUrl() });
+        } else if (type === 'pagesLoaded') {
+            this.pagesLoaded.emit({ pdfUrl: this.pdfUrl(), pagesCount: data?.pagesCount ?? 0 });
         } else if (type === 'pdfLoadError') {
             this.loadError.emit({ pdfUrl: this.pdfUrl() });
         }

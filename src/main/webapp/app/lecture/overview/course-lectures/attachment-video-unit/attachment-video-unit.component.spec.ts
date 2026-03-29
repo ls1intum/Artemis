@@ -484,7 +484,7 @@ describe('AttachmentVideoUnitComponent', () => {
             expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe('api/core/files//path/to/file/test.pdf');
 
-            component['onPdfReady']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            component['onPdfPagesLoaded']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
 
             expect(component.isPdfLoading()).toBe(false);
 
@@ -516,11 +516,31 @@ describe('AttachmentVideoUnitComponent', () => {
 
             await fixture.whenStable();
 
-            expect(component.isPdfLoading()).toBe(false);
+            expect(component.isPdfLoading()).toBe(true);
             expect(component.pdfUrl()).toBe(mockBlobUrl);
             expect(createObjectURLSpy).toHaveBeenCalledWith(testBlob);
 
+            component['onPdfPagesLoaded']({ pdfUrl: mockBlobUrl });
+            expect(component.isPdfLoading()).toBe(false);
+
             createObjectURLSpy.mockRestore();
+        });
+
+        it('loadPdf: does not trigger blob fallback twice while request is in flight', async () => {
+            component.lectureUnit().attachment!.link = '/path/to/file/test.pdf';
+            fixture.detectChanges();
+
+            component.toggleCollapse(false);
+            await fixture.whenStable();
+
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+            component['onPdfLoadError']({ pdfUrl: 'api/core/files//path/to/file/test.pdf' });
+
+            const requests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
+            expect(requests).toHaveLength(1);
+
+            requests[0].flush(new Blob(['fake pdf content'], { type: 'application/pdf' }));
+            await fixture.whenStable();
         });
 
         it('toggleCollapse: resets pdfUrl when collapsed', async () => {

@@ -26,10 +26,7 @@
 }
 
 .iframe-pdf-container #viewerContainer,
-.iframe-pdf-container .pdfViewer,
-.iframe-pdf-container #viewer,
-.iframe-pdf-container .viewer,
-.iframe-pdf-container ngx-extended-pdf-viewer {
+.iframe-pdf-container .pdfViewer {
     background-color: var(--pdf-viewer-bg) !important;
 }
 
@@ -38,8 +35,6 @@
     align-items: center;
     justify-content: center;
     height: var(--pdf-bar-height);
-    min-height: var(--pdf-bar-height);
-    box-sizing: border-box;
     border: none !important;
     border-bottom: 1px solid var(--card-border-color) !important;
     background-color: var(--card-bg) !important;
@@ -65,7 +60,7 @@
     background-color: transparent;
     color: var(--body-color);
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: opacity 0.2s ease;
     &:hover,
     &:active {
         opacity: 0.8;
@@ -98,7 +93,7 @@
 .iframe-pdf-container .page {
     border: none !important;
     outline: none;
-    margin: 0 auto 0 !important;
+    margin: 0 auto !important;
     &:not(:last-child) {
         margin-bottom: 0.5rem !important;
     }

@@ -102,8 +102,14 @@ export class PdfViewerIframeContentComponent implements OnInit {
     }
 
     onPagesLoaded(event: PagesLoadedEvent): void {
-        this.totalPages.set(event.pagesCount ?? 0);
-        this.postMessageToParent('pagesLoaded', { pagesCount: event.pagesCount ?? 0 });
+        const totalPages = event.pagesCount ?? 0;
+        this.totalPages.set(totalPages);
+        // Validate current page is within range
+        const currentPage = this.currentPage();
+        if (currentPage < 1 || currentPage > totalPages) {
+            this.currentPage.set(1);
+        }
+        this.postMessageToParent('pagesLoaded', { pagesCount: totalPages });
     }
 
     /** Notifies parent of load failure to trigger blob fallback. */

@@ -262,6 +262,7 @@ const routes: Routes = [
         data: {
             authorities: IS_AT_LEAST_STUDENT,
             pageTitle: 'artemisApp.attachmentVideoUnit.pdfViewer.title',
+            hidePageRibbon: true,
         },
         canActivate: [UserRouteAccessService],
     },

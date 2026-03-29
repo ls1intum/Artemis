@@ -78,7 +78,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
-        return page && page > 0 ? page : undefined;
+        return page && Number.isInteger(page) && page > 0 ? page : undefined;
     });
 
     readonly showPdfSpinner = computed(() => this.isPdfLoading() && !!this.pdfUrl() && !this.pdfLoadError());
@@ -124,21 +124,35 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
     protected onPdfLoadError(event: { pdfUrl: string }): void {
         const failedUrl = event.pdfUrl;
-        const directPdfUrl = this.getAttachmentLink();
         const activePdfUrl = this.pdfUrl();
 
-        if (!failedUrl || !directPdfUrl || failedUrl !== directPdfUrl || failedUrl !== activePdfUrl) {
+        if (!failedUrl || !activePdfUrl || failedUrl !== activePdfUrl) {
+            return;
+        }
+
+        if (activePdfUrl?.startsWith('blob:')) {
+            this.pdfUrl.set(undefined);
+            this.pdfLoadError.set(true);
+            this.isPdfLoading.set(false);
+            return;
+        }
+
+        if (this.pdfSubscription) {
+            return;
+        }
+
+        if (failedUrl !== this.getAttachmentLink()) {
             return;
         }
 
         this.loadPdfAsBlob();
     }
 
-    protected onPdfReady(event: { pdfUrl: string }): void {
-        const readyUrl = event.pdfUrl;
+    protected onPdfPagesLoaded(event: { pdfUrl: string }): void {
+        const loadedUrl = event.pdfUrl;
         const activePdfUrl = this.pdfUrl();
 
-        if (!readyUrl || !activePdfUrl || readyUrl !== activePdfUrl) {
+        if (!loadedUrl || !activePdfUrl || loadedUrl !== activePdfUrl) {
             return;
         }
 
@@ -248,17 +262,16 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
 
         this.pdfSubscription = this.httpClient.get(link, { responseType: 'blob' }).subscribe({
             next: (blob) => {
-                if (blob) {
-                    this.revokePdfUrl();
-                    this.pdfUrl.set(URL.createObjectURL(blob));
-                    this.pdfLoadError.set(false);
-                }
-                this.isPdfLoading.set(false);
+                this.revokePdfUrl();
+                this.pdfUrl.set(URL.createObjectURL(blob));
+                this.pdfLoadError.set(false);
+                this.pdfSubscription = undefined;
             },
             error: () => {
                 this.pdfUrl.set(undefined);
                 this.pdfLoadError.set(true);
                 this.isPdfLoading.set(false);
+                this.pdfSubscription = undefined;
             },
         });
     }

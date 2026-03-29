@@ -43,9 +43,7 @@ describe('PdfViewerIframeWrapperComponent', () => {
         expect(component.iframeSrc()).toBe('/pdf-viewer-iframe');
     });
 
-    it('should handle ready message and emit ready event', () => {
-        const readySpy = vi.fn();
-        const readySubscription = component.ready.subscribe(readySpy);
+    it('should handle ready message', () => {
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
 
@@ -54,8 +52,6 @@ describe('PdfViewerIframeWrapperComponent', () => {
         fixture.detectChanges();
 
         expect(component.iframeReady()).toBe(true);
-        expect(readySpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf' });
-        readySubscription.unsubscribe();
     });
 
     it('should reject messages from wrong origin or source', () => {
@@ -80,6 +76,21 @@ describe('PdfViewerIframeWrapperComponent', () => {
 
         expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf' });
         loadErrorSubscription.unsubscribe();
+    });
+
+    it('should emit pagesLoaded event', () => {
+        const pagesLoadedSpy = vi.fn();
+        const pagesLoadedSubscription = component.pagesLoaded.subscribe(pagesLoadedSpy);
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+
+        const iframe = component.pdfIframe()?.nativeElement;
+        window.dispatchEvent(
+            new MessageEvent('message', { data: { type: 'pagesLoaded', data: { pagesCount: 12 } }, origin: window.location.origin, source: iframe?.contentWindow }),
+        );
+
+        expect(pagesLoadedSpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf', pagesCount: 12 });
+        pagesLoadedSubscription.unsubscribe();
     });
 
     it('should load PDF when iframe ready', async () => {
@@ -135,21 +146,6 @@ describe('PdfViewerIframeWrapperComponent', () => {
         await fixture.whenStable();
 
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'themeChange', data: { isDarkMode: true } }, window.location.origin);
-    });
-
-    it('should pass correct isDarkMode for DARK theme', async () => {
-        mockThemeService.currentTheme.set(Theme.DARK);
-        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.detectChanges();
-
-        const iframe = component.pdfIframe()?.nativeElement;
-        const postMessageSpy = vi.spyOn(iframe!.contentWindow!, 'postMessage');
-
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: iframe?.contentWindow }));
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(postMessageSpy).toHaveBeenCalledWith(expect.objectContaining({ data: expect.objectContaining({ isDarkMode: true }) }), window.location.origin);
     });
 
     it('should render footer when uploadDate or version provided', () => {
