@@ -1,0 +1,16 @@
+<p-menu #menu [model]="model()" [popup]="true" appendTo="body">
+    <ng-template #item let-item>
+        <span class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
+            @if (item.icon) {
+                <i [class]="item.icon + ' me-1'"></i>
+            }
+            <span class="p-menu-item-label">{{ item.label }}</span>
+        </span>
+    </ng-template>
+</p-menu>
+
+<button pButton [disabled]="disabled()" [class]="buttonClass()" size="small" (click)="toggleMenu($event)">
+    <i [class]="buttonIconClass() + ' me-1'"></i>
+    {{ label() }}
+    <i class="pi pi-chevron-down ms-1 fs-6"></i>
+</button>

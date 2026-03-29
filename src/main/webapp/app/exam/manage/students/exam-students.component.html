@@ -20,37 +20,14 @@
 
     <p-toolbar class="mb-3">
         <ng-template #start>
-            <p-menu #menu [model]="manageStudentsMenuActions()" [popup]="true" appendTo="body">
-                <ng-template #item let-item>
-                    <span class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
-                        @if (item.icon) {
-                            <span [class]="item.icon + ' me-1'"></span>
-                        }
-                        <span class="p-menu-item-label">{{ item.label }}</span>
-                    </span>
-                </ng-template>
-            </p-menu>
-            <button pButton [disabled]="isTestExam()" class="me-2" size="small" (click)="menu.toggle($event)">
-                <span class="pi pi-users me-1"></span>
-                Manage students
-                <span class="pi pi-chevron-down ms-1 fs-6"></span>
-            </button>
-
-            <p-menu #logisticsMenu [model]="examLogisticsMenuActions()" [popup]="true" appendTo="body">
-                <ng-template #item let-item>
-                    <span class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
-                        @if (item.icon) {
-                            <span [class]="item.icon + ' me-1'"></span>
-                        }
-                        <span class="p-menu-item-label">{{ item.label }}</span>
-                    </span>
-                </ng-template>
-            </p-menu>
-            <button pButton [disabled]="isTestExam()" size="small" (click)="logisticsMenu.toggle($event)">
-                <span class="pi pi-th-large me-1"></span>
-                Exam logistics
-                <span class="pi pi-chevron-down ms-1 fs-6"></span>
-            </button>
+            <jhi-exam-students-menu-button
+                [model]="manageStudentsMenuActions()"
+                label="Manage students"
+                buttonIconClass="pi pi-users"
+                [disabled]="isTestExam()"
+                buttonClass="me-2"
+            />
+            <jhi-exam-students-menu-button [model]="examLogisticsMenuActions()" label="Exam logistics" buttonIconClass="pi pi-th-large" [disabled]="isTestExam()" />
         </ng-template>
     </p-toolbar>
 

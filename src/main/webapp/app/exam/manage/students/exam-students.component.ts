@@ -30,11 +30,10 @@ import { StudentsRoomDistributionDialogComponent } from 'app/exam/manage/student
 import { StudentsReseatingDialogComponent } from 'app/exam/manage/students/room-distribution/students-reseating-dialog.component';
 import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-users/students-export-dialog.component';
 import { Toolbar } from 'primeng/toolbar';
-import { Menu } from 'primeng/menu';
-import { ButtonDirective } from 'primeng/button';
 import { MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/toolbar-menu-button/exam-students-menu-button.component';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -59,8 +58,7 @@ const cssClasses = {
         ArtemisTranslatePipe,
         StudentsReseatingDialogComponent,
         Toolbar,
-        Menu,
-        ButtonDirective,
+        ExamStudentsMenuButtonComponent,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
