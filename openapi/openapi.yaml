@@ -1039,9 +1039,9 @@ components:
         the changes made
       properties:
         question: {$ref: '#/components/schemas/GeneratedQuizQuestion'}
-        explanation: {type: string, description: Brief explanation of what was changed
+        reasoning: {type: string, description: Brief explanation of what was changed
             during refinement, minLength: 1}
-      required: [explanation, question]
+      required: [reasoning, question]
     ProblemStatementGenerationRequest:
       type: object
       description: Request to generate a problem statement

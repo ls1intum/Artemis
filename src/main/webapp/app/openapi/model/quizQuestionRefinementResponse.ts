@@ -18,6 +18,6 @@ export interface QuizQuestionRefinementResponse {
     /**
      * Brief explanation of what was changed during refinement
      */
-    explanation: string;
+    reasoning: string;
 }
 
