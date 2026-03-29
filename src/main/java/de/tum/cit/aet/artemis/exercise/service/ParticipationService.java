@@ -871,6 +871,14 @@ public class ParticipationService {
             buildFailed = progSubmission.isBuildFailed();
         }
 
+        Boolean lastResultIsManual = null;
+        if (latestSubmission != null && !latestSubmission.getResults().isEmpty()) {
+            Result latestResult = latestSubmission.getResults().stream().filter(r -> r.getId() != null).max((r1, r2) -> Long.compare(r1.getId(), r2.getId())).orElse(null);
+            if (latestResult != null && latestResult.getAssessmentType() != null) {
+                lastResultIsManual = latestResult.getAssessmentType() != AssessmentType.AUTOMATIC && latestResult.getAssessmentType() != AssessmentType.AUTOMATIC_ATHENA;
+            }
+        }
+
         String buildPlanId = null;
         String repositoryUri = null;
         if (participation instanceof ProgrammingExerciseStudentParticipation progParticipation) {
@@ -883,7 +891,7 @@ public class ParticipationService {
 
         return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
                 participantName, participantIdentifier, studentId, studentLogin, teamId, testRun, participation.getPresentationScore(), participation.getIndividualDueDate(),
-                buildPlanId, repositoryUri, buildFailed);
+                buildPlanId, repositoryUri, buildFailed, lastResultIsManual);
     }
 
     /**

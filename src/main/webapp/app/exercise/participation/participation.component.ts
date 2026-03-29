@@ -14,6 +14,12 @@ import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
 import { ProgrammingExerciseStudentParticipation } from 'app/exercise/shared/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
+import { InitializationState } from 'app/exercise/shared/entities/participation/participation.model';
+import { User } from 'app/core/user/user.model';
+import { Team } from 'app/exercise/shared/entities/team/team.model';
+import { Result } from 'app/exercise/shared/entities/result/result.model';
+import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AlertService } from 'app/shared/service/alert.service';
 import { faCheck, faCircleNotch, faEraser, faFilePowerpoint, faFilter, faPencil, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
@@ -225,7 +231,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 headerKey: 'artemisApp.exercise.submissionCount',
                 field: 'submissionCount',
                 width: '100px',
-                sort: false,
+                sort: true,
                 templateRef: this.submissionCountCellTemplate(),
             },
         );
@@ -394,6 +400,28 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     toProgrammingParticipation(dto: ParticipationManagementDTO): ProgrammingExerciseStudentParticipation {
         const p = new ProgrammingExerciseStudentParticipation();
         p.id = dto.participationId;
+        p.initializationState = dto.initializationState as InitializationState | undefined;
+        p.initializationDate = dto.initializationDate;
+        p.individualDueDate = dto.individualDueDate;
+        p.presentationScore = dto.presentationScore;
+        p.submissionCount = dto.submissionCount;
+        p.participantName = dto.participantName;
+        p.participantIdentifier = dto.participantIdentifier;
+        p.testRun = dto.testRun;
+        p.buildPlanId = dto.buildPlanId;
+        p.repositoryUri = dto.repositoryUri;
+        if (dto.studentId !== undefined || dto.studentLogin !== undefined) {
+            p.student = { id: dto.studentId, login: dto.studentLogin } as User;
+        }
+        if (dto.teamId !== undefined) {
+            p.team = { id: dto.teamId } as Team;
+        }
+        if (dto.lastResultIsManual !== undefined) {
+            const result = new Result();
+            result.assessmentType = dto.lastResultIsManual ? AssessmentType.MANUAL : AssessmentType.AUTOMATIC;
+            const submission: Submission = { results: [result] };
+            p.submissions = [submission];
+        }
         return p;
     }
 

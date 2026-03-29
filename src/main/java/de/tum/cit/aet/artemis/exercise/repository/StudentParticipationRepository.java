@@ -19,8 +19,12 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -29,6 +33,7 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackAffectedStudentDTO;
 import de.tum.cit.aet.artemis.assessment.dto.FeedbackDetailDTO;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.core.repository.base.ArtemisJpaRepository;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
 import de.tum.cit.aet.artemis.exam.domain.StudentExam;
@@ -46,7 +51,7 @@ import de.tum.cit.aet.artemis.quiz.domain.QuizSubmittedAnswerCount;
 @Profile(PROFILE_CORE)
 @Lazy
 @Repository
-public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long>, CustomStudentParticipationRepository {
+public interface StudentParticipationRepository extends ArtemisJpaRepository<StudentParticipation, Long>, JpaSpecificationExecutor<StudentParticipation> {
 
     /**
      * Converts List<[participationId, submissionCount]> into Map<participationId -> submissionCount>
@@ -1610,6 +1615,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
             FROM StudentParticipation p
                 LEFT JOIN FETCH p.student
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE p.id IN :ids
                 AND (s.id IS NULL
                     OR s.id = (
@@ -1633,6 +1639,7 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
                 LEFT JOIN FETCH p.team t
                 LEFT JOIN FETCH t.students
                 LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE p.id IN :ids
                 AND (s.id IS NULL
                     OR s.id = (
@@ -1666,5 +1673,58 @@ public interface StudentParticipationRepository extends ArtemisJpaRepository<Stu
      */
     default Map<Long, Integer> countSubmissionsPerParticipationByIdsAsMap(Collection<Long> ids) {
         return convertListOfCountsIntoMap(countSubmissionsPerParticipationByIds(ids));
+    }
+
+    /**
+     * Returns a page of participation IDs for the given exercise, applying search, filter, and score-range predicates.
+     * Uses {@link StudentParticipationSpecs} to build the query dynamically via the Criteria API.
+     *
+     * @param exerciseId      the exercise to query
+     * @param teamMode        whether the exercise uses teams
+     * @param searchTerm      free-text search (matched against student login/name or team name/shortName)
+     * @param filterProp      filter property name (All, Successful, Unsuccessful, BuildFailed, Manual, Automatic, Locked)
+     * @param scoreRangeLower inclusive lower bound of score range filter (nullable)
+     * @param scoreRangeUpper upper bound of score range filter; exclusive unless equal to 100 (nullable)
+     * @param pageable        pagination information
+     * @param sortOrder       ascending or descending
+     * @param sortedColumn    the column to sort by
+     * @return a page of participation IDs
+     */
+    default Page<Long> findParticipationIdsForScores(long exerciseId, boolean teamMode, String searchTerm, String filterProp, Integer scoreRangeLower, Integer scoreRangeUpper,
+            Pageable pageable, SortingOrder sortOrder, String sortedColumn) {
+        Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forMode(teamMode))
+                .and(StudentParticipationSpecs.searchByName(searchTerm, teamMode)).and(StudentParticipationSpecs.scoresFilter(filterProp))
+                .and(StudentParticipationSpecs.scoreInRange(scoreRangeLower, scoreRangeUpper))
+                .and(StudentParticipationSpecs.orderedForScores(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+
+        // Use unsorted pageable since ordering is applied via the specification
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
+        Page<StudentParticipation> page = findAll(spec, unsortedPageable);
+        return page.map(StudentParticipation::getId);
+    }
+
+    /**
+     * Returns a page of participation IDs for the given exercise for the management view, applying search and filter predicates.
+     * Uses {@link StudentParticipationSpecs} to build the query dynamically via the Criteria API.
+     *
+     * @param exerciseId       the exercise to query
+     * @param teamMode         whether the exercise uses teams
+     * @param searchTerm       free-text search (matched against student login/name or team name/shortName)
+     * @param filterProp       filter property name (All, Failed, NoSubmissions, NoPracticeMode)
+     * @param stuckBuildCutoff for the Failed filter: participations whose latest submission has no result and was submitted before this timestamp are considered stuck (nullable)
+     * @param pageable         pagination information
+     * @param sortOrder        ascending or descending
+     * @param sortedColumn     the column to sort by
+     * @return a page of participation IDs
+     */
+    default Page<Long> findParticipationIdsForManagement(long exerciseId, boolean teamMode, String searchTerm, String filterProp, ZonedDateTime stuckBuildCutoff, Pageable pageable,
+            SortingOrder sortOrder, String sortedColumn) {
+        Specification<StudentParticipation> spec = Specification.where(StudentParticipationSpecs.forExercise(exerciseId)).and(StudentParticipationSpecs.forMode(teamMode))
+                .and(StudentParticipationSpecs.searchByName(searchTerm, teamMode)).and(StudentParticipationSpecs.managementFilter(filterProp, stuckBuildCutoff))
+                .and(StudentParticipationSpecs.orderedForManagement(sortedColumn, sortOrder != null ? sortOrder : SortingOrder.ASCENDING, teamMode));
+
+        Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
+        Page<StudentParticipation> page = findAll(spec, unsortedPageable);
+        return page.map(StudentParticipation::getId);
     }
 }

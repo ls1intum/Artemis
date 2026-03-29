@@ -16,4 +16,5 @@ export interface ParticipationManagementDTO {
     buildPlanId?: string;
     repositoryUri?: string;
     buildFailed?: boolean;
+    lastResultIsManual?: boolean;
 }
