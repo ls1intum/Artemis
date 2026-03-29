@@ -2,7 +2,7 @@ import { Component, EventEmitter, OnDestroy, OnInit, ViewEncapsulation, inject, 
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamUser } from 'app/exam/shared/entities/exam-user.model';
 import { Observable, Subject, Subscription, of } from 'rxjs';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { User } from 'app/core/user/user.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
@@ -89,6 +89,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     private studentExamService = inject(StudentExamService);
     private deleteDialogService = inject(DeleteDialogService);
     private modalService = inject(NgbModal);
+    private router = inject(Router);
 
     dataTable = viewChild.required(DataTableComponent);
     usersImportDialog = viewChild.required(UsersImportDialogComponent);
@@ -141,6 +142,12 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     examLogisticsMenuActions: MenuItem[] = [
         { label: 'Upload images', faIcon: faUpload, command: () => this.openUploadImagesDialog() },
         { label: 'Distribute', faIcon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
+        {
+            label: 'Verify attendance',
+            faIcon: faCheck,
+            tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',
+            command: () => this.openVerifyAttendance(),
+        },
     ];
 
     openImportUsersDialog() {
@@ -181,10 +188,19 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         );
     }
 
+    openVerifyAttendance() {
+        if (!this.hasExamStarted || !this.exam?.id) {
+            return;
+        }
+
+        this.router.navigate(['/course-management', this.courseId, 'exams', this.exam.id, 'students', 'verify-attendance']);
+    }
+
     ngOnInit() {
         this.isLoading = true;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isAdmin = this.accountService.isAdmin();
+        this.examLogisticsMenuActions = this.buildExamLogisticsMenuActions();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.setUpExamInformation(exam);
         });
@@ -201,6 +217,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.exam = exam;
         this.hasExamStarted = exam.startDate?.isBefore(dayjs()) || false;
         this.hasExamEnded = exam.endDate?.isBefore(dayjs()) || false;
+        this.examLogisticsMenuActions = this.buildExamLogisticsMenuActions();
 
         if (this.hasExamEnded) {
             this.studentExamService.findAllForExam(this.courseId, exam.id!).subscribe((res) => {
@@ -226,6 +243,20 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         }
         this.isTestExam = this.exam.testExam!;
         this.isLoading = false;
+    }
+
+    private buildExamLogisticsMenuActions(): MenuItem[] {
+        return [
+            { label: 'Upload images', faIcon: faUpload, command: () => this.openUploadImagesDialog() },
+            { label: 'Distribute', faIcon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
+            {
+                label: 'Verify attendance',
+                faIcon: faCheck,
+                tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',
+                disabled: !this.hasExamStarted,
+                command: () => this.openVerifyAttendance(),
+            },
+        ];
     }
 
     ngOnDestroy() {

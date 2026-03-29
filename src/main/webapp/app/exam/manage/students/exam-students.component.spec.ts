@@ -12,7 +12,6 @@ import { Course } from 'app/core/course/shared/entities/course.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { ExamStudentsComponent } from 'app/exam/manage/students/exam-students.component';
-import { StudentsUploadImagesButtonComponent } from 'app/exam/manage/students/upload-images/students-upload-images-button.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/directive/delete-button.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -81,7 +80,6 @@ describe('ExamStudentsComponent', () => {
                 FaIconComponent,
                 UsersImportButtonStubComponent,
                 ExamStudentsComponent,
-                MockComponent(StudentsUploadImagesButtonComponent),
                 MockComponent(DataTableComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(DeleteButtonDirective),

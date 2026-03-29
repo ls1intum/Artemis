@@ -15,16 +15,6 @@
                     )
                 </span>
             }
-            @if (!isTestExam && hasExamStarted) {
-                <a
-                    [routerLink]="['/course-management', courseId, 'exams', exam.id, 'students', 'verify-attendance']"
-                    class="btn btn-info ms-auto"
-                    title="{{ 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip' | artemisTranslate }}"
-                >
-                    <fa-icon [icon]="faCheck" />
-                    <span class="d-none d-md-inline" jhiTranslate="artemisApp.examManagement.examStudents.verifyAttendanceBtn"></span>
-                </a>
-            }
         </div>
     </div>
 
@@ -32,7 +22,7 @@
         <ng-template #start>
             <p-menu #menu [model]="manageStudentsMenuActions" [popup]="true" appendTo="body">
                 <ng-template #item let-item>
-                    <span class="p-menu-item-link" [class]="item.styleClass || ''">
+                    <span class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
                         @if (item.faIcon) {
                             <fa-icon [icon]="item.faIcon" class="me-1" />
                         }
@@ -48,7 +38,7 @@
 
             <p-menu #logisticsMenu [model]="examLogisticsMenuActions" [popup]="true" appendTo="body">
                 <ng-template #item let-item>
-                    <span class="p-menu-item-link" [class]="item.styleClass || ''">
+                    <span class="p-menu-item-link" [class]="item.styleClass || ''" [title]="item.tooltip ? (item.tooltip | artemisTranslate) : ''">
                         @if (item.faIcon) {
                             <fa-icon [icon]="item.faIcon" class="me-1" />
                         }
