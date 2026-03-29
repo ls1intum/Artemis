@@ -588,6 +588,31 @@
                 "verifyAttendanceBtn": "Verify Attendance",
                 "examNotStarted": "The exam has not started yet",
                 "verifyChecks": "Verify Attendance",
+                "menu": {
+                    "manageStudents": "Manage students",
+                    "examLogistics": "Exam logistics",
+                    "addStudents": "Add students",
+                    "importUsers": "Import users",
+                    "exportUsers": "Export users",
+                    "registerCourseStudents": "Register course students",
+                    "removeAllStudents": "Remove all students",
+                    "uploadImages": "Upload images",
+                    "distribute": "Distribute",
+                    "verifyAttendance": "Verify attendance"
+                },
+                "addDialog": {
+                    "title": "Add students",
+                    "description": "Search for course students by login or name. Already registered students are marked and cannot be registered again.",
+                    "searchPlaceholder": "Search students",
+                    "loadingStudents": "Loading students...",
+                    "noUnregisteredStudents": "No unregistered students found.",
+                    "registering": "Registering",
+                    "registered": "Registered",
+                    "register": "Register",
+                    "close": "Close",
+                    "errorRegisterStudent": "Failed to register student to exam",
+                    "errorSearchStudents": "Failed to search students."
+                },
                 "removeFromExam": {
                     "modalQuestion": "Are you sure you want to unregister the student with login <strong>{{ title }}</strong> from this exam?",
                     "deleteParticipationsAndSubmission": "Additionally delete this student's participation and submissions in the associated exam? This action can NOT be undone!",

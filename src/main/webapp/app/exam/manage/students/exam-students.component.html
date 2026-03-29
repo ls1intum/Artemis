@@ -7,11 +7,11 @@
             </h3>
         </div>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span>:
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'"></span>:
             <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers().length }}</span>
             @if (filteredUsersSize() < allRegisteredUsers().length) {
                 <span class="text-body-secondary">
-                    (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize() }}
+                    (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'"></span>: {{ filteredUsersSize() }}
                     )
                 </span>
             }
@@ -22,12 +22,17 @@
         <ng-template #start>
             <jhi-exam-students-menu-button
                 [model]="manageStudentsMenuActions()"
-                label="Manage students"
+                label="artemisApp.examManagement.examStudents.menu.manageStudents"
                 buttonIconClass="pi pi-users"
                 [disabled]="isTestExam()"
                 buttonClass="me-2"
             />
-            <jhi-exam-students-menu-button [model]="examLogisticsMenuActions()" label="Exam logistics" buttonIconClass="pi pi-th-large" [disabled]="isTestExam()" />
+            <jhi-exam-students-menu-button
+                [model]="examLogisticsMenuActions()"
+                label="artemisApp.examManagement.examStudents.menu.examLogistics"
+                buttonIconClass="pi pi-th-large"
+                [disabled]="isTestExam()"
+            />
         </ng-template>
     </p-toolbar>
 

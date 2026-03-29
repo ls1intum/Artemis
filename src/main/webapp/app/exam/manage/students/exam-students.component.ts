@@ -141,18 +141,23 @@ export class ExamStudentsComponent implements OnDestroy {
     protected readonly faChair = faChair;
 
     readonly manageStudentsMenuActions = signal<MenuItem[]>([
-        { label: 'Add students', icon: 'pi pi-plus', command: () => this.openAddStudentsDialog() },
-        { label: 'Import users', icon: 'pi pi-file-import', command: () => this.openImportUsersDialog() },
-        { label: 'Export users', icon: 'pi pi-file-export', command: () => this.openExportUsersDialog() },
-        { label: 'Register course students', icon: 'pi pi-plus', command: () => this.registerAllStudentsFromCourse() },
-        { label: 'Remove all students', icon: 'pi pi-user-minus', styleClass: 'text-danger', command: () => this.openRemoveAllStudentsDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: 'pi pi-plus', command: () => this.openAddStudentsDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: 'pi pi-file-import', command: () => this.openImportUsersDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: 'pi pi-file-export', command: () => this.openExportUsersDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: 'pi pi-plus', command: () => this.registerAllStudentsFromCourse() },
+        {
+            label: 'artemisApp.examManagement.examStudents.menu.removeAllStudents',
+            icon: 'pi pi-user-minus',
+            styleClass: 'text-danger',
+            command: () => this.openRemoveAllStudentsDialog(),
+        },
     ]);
 
     readonly examLogisticsMenuActions = computed<MenuItem[]>(() => [
-        { label: 'Upload images', icon: 'pi pi-upload', command: () => this.openUploadImagesDialog() },
-        { label: 'Distribute', icon: 'pi pi-th-large', command: () => this.studentsRoomDistributionDialog()?.openDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.uploadImages', icon: 'pi pi-upload', command: () => this.openUploadImagesDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.distribute', icon: 'pi pi-th-large', command: () => this.studentsRoomDistributionDialog()?.openDialog() },
         {
-            label: 'Verify attendance',
+            label: 'artemisApp.examManagement.examStudents.menu.verifyAttendance',
             icon: 'pi pi-check',
             disabled: !this.hasExamStarted(),
             tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',

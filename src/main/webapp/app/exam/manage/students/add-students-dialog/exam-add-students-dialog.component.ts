@@ -6,6 +6,8 @@ import { User } from 'app/core/user/user.model';
 import { Exam } from 'app/exam/shared/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/services/exam-management.service';
 import { AlertService } from 'app/shared/service/alert.service';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ButtonDirective } from 'primeng/button';
 import { Dialog } from 'primeng/dialog';
 import { IconFieldModule } from 'primeng/iconfield';
@@ -16,7 +18,7 @@ import { InputTextModule } from 'primeng/inputtext';
     selector: 'jhi-exam-add-students-dialog',
     standalone: true,
     templateUrl: './exam-add-students-dialog.component.html',
-    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, ButtonDirective],
+    imports: [Dialog, FormsModule, IconFieldModule, InputIconModule, InputTextModule, ButtonDirective, TranslateDirective, ArtemisTranslatePipe],
 })
 export class ExamAddStudentsDialogComponent {
     private readonly courseManagementService = inject(CourseManagementService);
@@ -105,7 +107,7 @@ export class ExamAddStudentsDialogComponent {
             },
             error: () => {
                 this.currentlyRegisteringLogins.update((currentLogins) => this.copyAndDelete(currentLogins, login));
-                this.alertService.error('Failed to register student to exam');
+                this.alertService.error('artemisApp.examManagement.examStudents.addDialog.errorRegisterStudent');
             },
         });
     }
@@ -122,7 +124,7 @@ export class ExamAddStudentsDialogComponent {
                 this.isLoading.set(false);
             },
             error: () => {
-                this.alertService.error('Failed to search students.');
+                this.alertService.error('artemisApp.examManagement.examStudents.addDialog.errorSearchStudents');
                 this.allCourseStudents.set([]);
                 this.isLoading.set(false);
             },

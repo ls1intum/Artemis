@@ -588,6 +588,31 @@
                 "verifyAttendanceBtn": "Anwesenheitskontrolle bestätigen",
                 "examNotStarted": "Die Prüfung hat noch nicht begonnen",
                 "verifyChecks": "Anwesenheitskontrollen überprüfen",
+                "menu": {
+                    "manageStudents": "Studierende verwalten",
+                    "examLogistics": "Prüfungslogistik",
+                    "addStudents": "Studierende hinzufügen",
+                    "importUsers": "Nutzer importieren",
+                    "exportUsers": "Nutzer exportieren",
+                    "registerCourseStudents": "Alle Studierenden des Kurses anmelden",
+                    "removeAllStudents": "Alle Studierenden entfernen",
+                    "uploadImages": "Bilder hochladen",
+                    "distribute": "Verteilen",
+                    "verifyAttendance": "Anwesenheit prüfen"
+                },
+                "addDialog": {
+                    "title": "Studierende hinzufügen",
+                    "description": "Suche nach Kursteilnehmenden per Login oder Namen. Bereits angemeldete Studierende sind markiert und können nicht erneut angemeldet werden.",
+                    "searchPlaceholder": "Studierende suchen",
+                    "loadingStudents": "Studierende werden geladen...",
+                    "noUnregisteredStudents": "Keine nicht angemeldeten Studierenden gefunden.",
+                    "registering": "Wird angemeldet",
+                    "registered": "Angemeldet",
+                    "register": "Anmelden",
+                    "close": "Schließen",
+                    "errorRegisterStudent": "Fehler beim Anmelden der Person zur Klausur",
+                    "errorSearchStudents": "Fehler bei der Suche nach Studierenden."
+                },
                 "removeFromExam": {
                     "modalQuestion": "Soll die Person mit dem Login <strong>{{ title }}</strong> wirklich von dieser Prüfung abgemeldet werden? Ihre individuelle Klausur wird dabei gelöscht.",
                     "deleteParticipationsAndSubmission": "Zusätzlich die Teilnahme und Abgaben in der zugehörigen Klausur löschen? Diese Aktion kann NICHT rückgängig gemacht werden!",
