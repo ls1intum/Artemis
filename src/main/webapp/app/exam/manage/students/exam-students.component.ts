@@ -15,21 +15,7 @@ import { ExamManagementService } from 'app/exam/manage/services/exam-management.
 import { ButtonType } from 'app/shared/components/buttons/button/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/shared/service/alert.service';
-import {
-    faChair,
-    faCheck,
-    faChevronDown,
-    faFileExport,
-    faFileImport,
-    faInfoCircle,
-    faPlus,
-    faThLarge,
-    faTimes,
-    faUpload,
-    faUserSlash,
-    faUserTimes,
-    faUsersGear,
-} from '@fortawesome/free-solid-svg-icons';
+import { faChair, faCheck, faTimes, faUserSlash, faUserTimes } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -123,33 +109,26 @@ export class ExamStudentsComponent implements OnDestroy {
     dialogError$ = this.dialogErrorSource.asObservable();
 
     // Icons
-    protected readonly faPlus = faPlus;
     protected readonly faUserSlash = faUserSlash;
     protected readonly faUserTimes = faUserTimes;
-    protected readonly faInfoCircle = faInfoCircle;
     protected readonly faCheck = faCheck;
     protected readonly faTimes = faTimes;
-    protected readonly faThLarge = faThLarge;
-    protected readonly faUpload = faUpload;
     protected readonly faChair = faChair;
-    protected readonly faFileExport = faFileExport;
-    protected readonly faChevronDown = faChevronDown;
-    protected readonly faUsersGear = faUsersGear;
 
-    readonly manageStudentsMenuActions: MenuItem[] = [
-        { label: 'Add students', faIcon: faPlus },
-        { label: 'Import users', faIcon: faFileImport, command: () => this.openImportUsersDialog() },
-        { label: 'Export users', faIcon: faFileExport, command: () => this.openExportUsersDialog() },
-        { label: 'Register course students', faIcon: faPlus, command: () => this.registerAllStudentsFromCourse() },
-        { label: 'Remove all students', faIcon: faUserSlash, styleClass: 'text-danger', command: () => this.openRemoveAllStudentsDialog() },
-    ];
+    readonly manageStudentsMenuActions = signal<MenuItem[]>([
+        { label: 'Add students', icon: 'pi pi-plus' },
+        { label: 'Import users', icon: 'pi pi-file-import', command: () => this.openImportUsersDialog() },
+        { label: 'Export users', icon: 'pi pi-file-export', command: () => this.openExportUsersDialog() },
+        { label: 'Register course students', icon: 'pi pi-plus', command: () => this.registerAllStudentsFromCourse() },
+        { label: 'Remove all students', icon: 'pi pi-user-minus', styleClass: 'text-danger', command: () => this.openRemoveAllStudentsDialog() },
+    ]);
 
     readonly examLogisticsMenuActions = computed<MenuItem[]>(() => [
-        { label: 'Upload images', faIcon: faUpload, command: () => this.openUploadImagesDialog() },
-        { label: 'Distribute', faIcon: faThLarge, command: () => this.studentsRoomDistributionDialog()?.openDialog() },
+        { label: 'Upload images', icon: 'pi pi-upload', command: () => this.openUploadImagesDialog() },
+        { label: 'Distribute', icon: 'pi pi-th-large', command: () => this.studentsRoomDistributionDialog()?.openDialog() },
         {
             label: 'Verify attendance',
-            faIcon: faCheck,
+            icon: 'pi pi-check',
             disabled: !this.hasExamStarted(),
             tooltip: 'artemisApp.examManagement.examStudents.verifyAttendanceTooltip',
             command: () => this.openVerifyAttendance(),
