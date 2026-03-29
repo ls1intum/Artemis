@@ -32,14 +32,14 @@
         border-color 0.15s,
         background-color 0.15s;
 
-    &:hover:not(:disabled) {
-        border-color: var(--primary);
-        background: color-mix(in srgb, var(--primary) 5%, transparent);
-    }
-
     &:disabled {
         opacity: 0.3;
         cursor: default;
+    }
+
+    &:hover:not(:disabled) {
+        border-color: var(--primary);
+        background: color-mix(in srgb, var(--primary) 5%, transparent);
     }
 }
 
