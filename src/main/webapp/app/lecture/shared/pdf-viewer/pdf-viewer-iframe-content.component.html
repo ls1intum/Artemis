@@ -159,6 +159,18 @@
                 >
                     <fa-icon [icon]="faDownload" />
                 </button>
+                @if (!isFullscreenMode()) {
+                    <div class="artemis-pdf-toolbar__divider"></div>
+                    <button
+                        class="artemis-pdf-toolbar__button"
+                        type="button"
+                        [title]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
+                        [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.openFullscreen' | artemisTranslate"
+                        (click)="requestFullscreen()"
+                    >
+                        <fa-icon [icon]="faExpand" />
+                    </button>
+                }
             </div>
         </div>
     </ng-template>

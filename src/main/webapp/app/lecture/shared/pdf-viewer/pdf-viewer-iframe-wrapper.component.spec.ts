@@ -63,6 +63,7 @@ describe('PdfViewerIframeWrapperComponent', () => {
 
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: {} as Window }));
         expect(component.iframeReady()).toBe(false);
+        expect(component.fullscreenIframeReady()).toBe(false);
     });
 
     it('should emit loadError event', () => {
@@ -111,7 +112,10 @@ describe('PdfViewerIframeWrapperComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'loadPDF', data: { url: 'test.pdf', initialPage: 5, isDarkMode: false } }, window.location.origin);
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            { type: 'loadPDF', data: { url: 'test.pdf', initialPage: 5, isDarkMode: false, viewerMode: 'embedded' } },
+            window.location.origin,
+        );
     });
 
     it('should reload PDF when initialPage changes', async () => {
@@ -132,7 +136,10 @@ describe('PdfViewerIframeWrapperComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
 
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'loadPDF', data: { url: 'test.pdf', initialPage: 7, isDarkMode: false } }, window.location.origin);
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            { type: 'loadPDF', data: { url: 'test.pdf', initialPage: 7, isDarkMode: false, viewerMode: 'embedded' } },
+            window.location.origin,
+        );
     });
 
     it('should notify iframe on theme change', async () => {
@@ -152,6 +159,60 @@ describe('PdfViewerIframeWrapperComponent', () => {
         await fixture.whenStable();
 
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'themeChange', data: { isDarkMode: true } }, window.location.origin);
+    });
+
+    it('should open fullscreen iframe and load current page', async () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.componentRef.setInput('initialPage', 3);
+        fixture.detectChanges();
+
+        const inlineIframe = component.pdfIframe()?.nativeElement;
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'pageChange', data: { page: 6 } }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'openFullscreen' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
+        fixture.detectChanges();
+
+        expect(component.isFullscreenOpen()).toBe(true);
+        const fullscreenIframe = component.fullscreenPdfIframe()?.nativeElement;
+        const postMessageSpy = vi.spyOn(fullscreenIframe!.contentWindow!, 'postMessage');
+
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: fullscreenIframe?.contentWindow }));
+        fixture.detectChanges();
+        await fixture.whenStable();
+
+        expect(postMessageSpy).toHaveBeenCalledWith(
+            { type: 'loadPDF', data: { url: 'test.pdf', initialPage: 6, isDarkMode: false, viewerMode: 'fullscreen' } },
+            window.location.origin,
+        );
+    });
+
+    it('should close fullscreen and sync current page to inline iframe', () => {
+        fixture.componentRef.setInput('pdfUrl', 'test.pdf');
+        fixture.detectChanges();
+
+        const inlineIframe = component.pdfIframe()?.nativeElement;
+        const inlinePostMessageSpy = vi.spyOn(inlineIframe!.contentWindow!, 'postMessage');
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
+        fixture.detectChanges();
+        inlinePostMessageSpy.mockClear();
+
+        window.dispatchEvent(new MessageEvent('message', { data: { type: 'openFullscreen' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
+        fixture.detectChanges();
+
+        const fullscreenIframe = component.fullscreenPdfIframe()?.nativeElement;
+        window.dispatchEvent(
+            new MessageEvent('message', { data: { type: 'pageChange', data: { page: 8 } }, origin: window.location.origin, source: fullscreenIframe?.contentWindow }),
+        );
+
+        const closeButton = fixture.nativeElement.querySelector('.pdf-fullscreen-close') as HTMLButtonElement;
+        closeButton.click();
+        fixture.detectChanges();
+
+        expect(component.isFullscreenOpen()).toBe(false);
+        expect(inlinePostMessageSpy).toHaveBeenCalledWith(
+            { type: 'loadPDF', data: { url: 'test.pdf', initialPage: 8, isDarkMode: false, viewerMode: 'embedded' } },
+            window.location.origin,
+        );
     });
 
     it('should render footer when uploadDate or version provided', () => {

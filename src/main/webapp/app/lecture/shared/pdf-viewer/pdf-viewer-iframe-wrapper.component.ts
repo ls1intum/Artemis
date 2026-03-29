@@ -7,6 +7,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
+import { PdfFullscreenOverlayService } from './pdf-fullscreen-overlay.service';
 
 /** Wrapper for the iframe PDF viewer so multiple viewer instances can run simultaneously. */
 @Component({
@@ -31,6 +32,9 @@ export class PdfViewerIframeWrapperComponent {
 
     private readonly themeService = inject(ThemeService);
     private readonly location = inject(Location);
+    private readonly fullscreenService = inject(PdfFullscreenOverlayService);
+    private readonly currentPage = signal(1);
+    private readonly wasFullscreenOpen = signal(false);
 
     readonly iframeSrc = computed(() => this.location.prepareExternalUrl('pdf-viewer-iframe'));
 
@@ -40,15 +44,31 @@ export class PdfViewerIframeWrapperComponent {
         effect(() => {
             const initialPage = this.initialPage();
             if (this.iframeReady() && this.pdfUrl()) {
-                this.loadPdfInIframe(initialPage);
+                this.loadPdfInIframe(this.pdfIframe()?.nativeElement, initialPage, 'embedded');
             }
         });
 
         effect(() => {
             const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
             if (this.iframeReady()) {
-                this.postMessageToIframe('themeChange', { isDarkMode });
+                this.postMessageToIframe(this.pdfIframe()?.nativeElement, 'themeChange', { isDarkMode });
             }
+        });
+
+        // Restore page when fullscreen closes
+        effect(() => {
+            const isOpen = this.fullscreenService.fullscreenState().isOpen;
+            const wasOpen = this.wasFullscreenOpen();
+
+            if (wasOpen && !isOpen) {
+                // Fullscreen just closed, restore page
+                const page = this.fullscreenService.fullscreenState().currentPage ?? 1;
+                if (this.iframeReady() && this.pdfUrl()) {
+                    this.loadPdfInIframe(this.pdfIframe()?.nativeElement, page, 'embedded');
+                }
+            }
+
+            this.wasFullscreenOpen.set(isOpen);
         });
 
         window.addEventListener('message', this.handleIframeMessage as EventListener);
@@ -57,19 +77,26 @@ export class PdfViewerIframeWrapperComponent {
         });
     }
 
-    private loadPdfInIframe(initialPage?: number): void {
+    private loadPdfInIframe(iframe: HTMLIFrameElement | undefined, initialPage: number | undefined, viewerMode: 'embedded' | 'fullscreen'): void {
+        if (!iframe?.contentWindow || !this.pdfUrl()) {
+            return;
+        }
+
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
-        this.postMessageToIframe('loadPDF', {
+        this.postMessageToIframe(iframe, 'loadPDF', {
             url: this.pdfUrl(),
             initialPage: initialPage ?? 1,
             isDarkMode,
+            viewerMode,
         });
     }
 
     /** Handles iframe messages and ignores messages from invalid origins/sources. */
     private readonly handleIframeMessage = (event: MessageEvent<IframeMessage>): void => {
-        const iframe = this.pdfIframe()?.nativeElement;
-        if (!iframe || event.origin !== window.location.origin || event.source !== iframe.contentWindow) {
+        const inlineIframe = this.pdfIframe()?.nativeElement;
+        const isInlineSource = !!inlineIframe?.contentWindow && event.source === inlineIframe.contentWindow;
+
+        if (event.origin !== window.location.origin || !isInlineSource) {
             return;
         }
 
@@ -83,6 +110,11 @@ export class PdfViewerIframeWrapperComponent {
             case 'ready':
                 this.iframeReady.set(true);
                 break;
+            case 'pageChange':
+                if (typeof data?.page === 'number' && Number.isInteger(data.page) && data.page > 0) {
+                    this.currentPage.set(data.page);
+                }
+                break;
             case 'pagesLoaded':
                 this.pagesLoaded.emit({ pdfUrl: data?.url ?? this.pdfUrl(), pagesCount: data?.pagesCount ?? 0 });
                 break;
@@ -92,11 +124,18 @@ export class PdfViewerIframeWrapperComponent {
             case 'download':
                 this.downloadRequested.emit();
                 break;
+            case 'openFullscreen':
+                this.openFullscreen();
+                break;
         }
     };
 
-    private postMessageToIframe(type: IframeMessageType, data: IframeMessageData): void {
-        const iframe = this.pdfIframe()?.nativeElement;
+    private openFullscreen(): void {
+        const currentPage = this.currentPage() || this.initialPage() || 1;
+        this.fullscreenService.open(this.pdfUrl(), currentPage, this.uploadDate(), this.version());
+    }
+
+    private postMessageToIframe(iframe: HTMLIFrameElement | undefined, type: IframeMessageType, data: IframeMessageData): void {
         if (iframe?.contentWindow) {
             iframe.contentWindow.postMessage({ type, data }, window.location.origin);
         }

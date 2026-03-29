@@ -16,6 +16,7 @@ import { FooterComponent } from 'app/core/layouts/footer/footer.component';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { LLMSelectionModalComponent } from 'app/logos/llm-selection-popup.component';
 import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/components/modal/global-search-modal.component';
+import { PdfFullscreenOverlayComponent } from 'app/lecture/shared/pdf-viewer/pdf-fullscreen-overlay.component';
 
 @Component({
     selector: 'jhi-app',
@@ -23,6 +24,7 @@ import { GlobalSearchModalComponent } from 'app/core/navbar/global-search/compon
     styleUrls: ['./app.component.scss'],
     imports: [
         AlertOverlayComponent,
+        PdfFullscreenOverlayComponent,
         CdkScrollable,
         NgClass,
         NgStyle,

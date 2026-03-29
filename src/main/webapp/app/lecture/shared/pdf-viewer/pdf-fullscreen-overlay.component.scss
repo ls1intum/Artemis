@@ -1,0 +1,81 @@
+// Follow alert-overlay pattern: fixed positioning with high z-index
+:host {
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 2000;
+    pointer-events: none; // Don't intercept clicks except on actual content
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    --pdf-fullscreen-margin: 2rem;
+    --pdf-fullscreen-navbar-height: 57px;
+}
+
+.pdf-fullscreen-overlay {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    pointer-events: all; // Re-enable for overlay
+    background-color: rgba(0, 0, 0, 0.35);
+}
+
+.pdf-fullscreen-window {
+    position: fixed;
+    top: calc(2 * var(--pdf-fullscreen-margin));
+    right: var(--pdf-fullscreen-margin);
+    bottom: var(--pdf-fullscreen-margin);
+    left: var(--pdf-fullscreen-margin);
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--card-border-color);
+    border-radius: 0.4rem;
+    overflow: hidden;
+    background-color: var(--card-bg);
+    box-shadow: 0 0.75rem 2.5rem rgba(0, 0, 0, 0.35);
+}
+
+.pdf-fullscreen-close {
+    position: absolute;
+    right: 0.1rem;
+    z-index: 2;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    background-color: transparent;
+    color: var(--body-color);
+    font-size: 1.75rem;
+    font-weight: 900;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pdf-iframe {
+    width: 100%;
+    flex: 1;
+    border: none;
+    display: block;
+}
+
+.pdf-viewer-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.65rem;
+    line-height: 1;
+    color: var(--body-color);
+    white-space: nowrap;
+    border-top: 1px solid var(--card-border-color);
+    background-color: var(--card-bg);
+}
+
+.pdf-viewer-footer__separator {
+    margin: 0 0.35rem;
+}

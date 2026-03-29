@@ -233,7 +233,9 @@
                 "goToPage": "Go to page",
                 "pageInputPlaceholder": "Page",
                 "confirmPage": "Go to page",
-                "downloadPdf": "Download PDF"
+                "downloadPdf": "Download PDF",
+                "openFullscreen": "Open fullscreen",
+                "closeFullscreen": "Close fullscreen"
             }
         },
         "exerciseUnit": {

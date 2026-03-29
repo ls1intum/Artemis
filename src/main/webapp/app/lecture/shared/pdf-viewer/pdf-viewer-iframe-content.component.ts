@@ -2,7 +2,17 @@ import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, Vie
 import { FormsModule } from '@angular/forms';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { faCheck, faChevronDown, faChevronUp, faDownload, faMagnifyingGlass, faMagnifyingGlassMinus, faMagnifyingGlassPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
+import {
+    faCheck,
+    faChevronDown,
+    faChevronUp,
+    faDownload,
+    faExpand,
+    faMagnifyingGlass,
+    faMagnifyingGlassMinus,
+    faMagnifyingGlassPlus,
+    faTimes,
+} from '@fortawesome/free-solid-svg-icons';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumber, InputNumberModule } from 'primeng/inputnumber';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -49,6 +59,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
     readonly currentPage = signal<number>(1);
     readonly totalPages = signal<number>(0);
     readonly isDarkMode = signal<boolean>(false);
+    readonly isFullscreenMode = signal<boolean>(false);
     readonly pageInputValue = signal<number | undefined>(1);
     readonly isPageInputFocused = signal<boolean>(false);
 
@@ -63,6 +74,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
     protected readonly faTimes = faTimes;
     protected readonly faCheck = faCheck;
     protected readonly faDownload = faDownload;
+    protected readonly faExpand = faExpand;
 
     protected searchQuery = signal<string>('');
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
@@ -101,6 +113,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
                         this.setCurrentPage(1);
                     }
                 }
+                this.isFullscreenMode.set(data?.viewerMode === 'fullscreen');
                 this.updateDarkMode(data?.isDarkMode);
                 break;
             case 'themeChange':
@@ -257,6 +270,10 @@ export class PdfViewerIframeContentComponent implements OnInit {
 
     protected triggerDownload(): void {
         this.postMessageToParent('download', {});
+    }
+
+    protected requestFullscreen(): void {
+        this.postMessageToParent('openFullscreen', {});
     }
 
     private getPdfViewerApplication(): PDFViewerApplication | undefined {

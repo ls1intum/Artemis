@@ -136,6 +136,12 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pdfLoadError', data: { url: '' } }, window.location.origin);
     });
 
+    it('should request fullscreen mode from parent', () => {
+        postMessageSpy.mockClear();
+        (component as any).requestFullscreen();
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'openFullscreen', data: {} }, window.location.origin);
+    });
+
     it('should dispatch zoom events', () => {
         const pdfNotificationService = TestBed.inject(PDFNotificationService);
         vi.spyOn(pdfNotificationService, 'onPDFJSInitSignal').mockReturnValue(mockPdfViewerApp as any);
