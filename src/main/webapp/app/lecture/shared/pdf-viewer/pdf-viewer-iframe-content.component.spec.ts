@@ -126,13 +126,13 @@ describe('PdfViewerIframeContentComponent', () => {
         postMessageSpy.mockClear();
         component.onPagesLoaded({ pagesCount: 42, source: {} });
         expect(component.totalPages()).toBe(42);
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pagesLoaded', data: { pagesCount: 42 } }, window.location.origin);
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pagesLoaded', data: { pagesCount: 42, url: '' } }, window.location.origin);
     });
 
     it('should post pdfLoadError on loading failure', () => {
         postMessageSpy.mockClear();
         component.onPdfLoadingFailed();
-        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pdfLoadError', data: {} }, window.location.origin);
+        expect(postMessageSpy).toHaveBeenCalledWith({ type: 'pdfLoadError', data: { url: '' } }, window.location.origin);
     });
 
     it('should dispatch zoom events', () => {

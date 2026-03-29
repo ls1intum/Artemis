@@ -11,10 +11,8 @@
 .iframe-pdf-container {
     width: 100%;
     height: 100%;
-
     --pdf-bar-height: 36px;
     --toolbar-control-height: 24px;
-
     // Light mode theme variables (must be explicit since iframe cannot access parent app's CSS properties)
     --pdf-viewer-bg: #{light.$gray-100};
     --card-bg: #{light.$card-bg};
@@ -25,8 +23,6 @@
     --toolbar-input-focus-color: #{light.$gray-500};
     --toolbar-input-placeholder-color: #{light.$gray-600};
     --toolbar-input-text-color: #{light.$body-color};
-
-    // PDF.js native CSS variables for search highlighting
     --highlight-bg-color: rgba(255, 255, 0, 0.4);
     --highlight-selected-bg-color: rgba(255, 165, 0, 0.6);
 }
@@ -223,7 +219,6 @@
     }
 }
 
-// Dark mode overrides (toggled by TypeScript based on parent theme)
 .iframe-pdf-container.dark-mode {
     --pdf-viewer-bg: #{dark.$gray-900};
     --card-bg: #{dark.$card-bg};
@@ -235,10 +230,6 @@
     --toolbar-input-placeholder-color: #{dark.$gray-500};
     --toolbar-input-text-color: #{dark.$body-color};
 
-    // PDF.js native CSS variables for search highlighting (more vibrant for better visibility in dark mode)
     --highlight-bg-color: rgba(255, 255, 0, 0.5);
     --highlight-selected-bg-color: rgba(255, 165, 0, 0.7);
 }
-
-// PDF.js uses native CSS variables for search highlighting
-// No additional CSS selectors needed - the variables are sufficient

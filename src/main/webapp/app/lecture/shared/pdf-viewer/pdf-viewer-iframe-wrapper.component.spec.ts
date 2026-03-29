@@ -72,9 +72,11 @@ describe('PdfViewerIframeWrapperComponent', () => {
         fixture.detectChanges();
 
         const iframe = component.pdfIframe()?.nativeElement;
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'pdfLoadError' }, origin: window.location.origin, source: iframe?.contentWindow }));
+        window.dispatchEvent(
+            new MessageEvent('message', { data: { type: 'pdfLoadError', data: { url: 'failed.pdf' } }, origin: window.location.origin, source: iframe?.contentWindow }),
+        );
 
-        expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf' });
+        expect(loadErrorSpy).toHaveBeenCalledWith({ pdfUrl: 'failed.pdf' });
         loadErrorSubscription.unsubscribe();
     });
 
@@ -86,10 +88,14 @@ describe('PdfViewerIframeWrapperComponent', () => {
 
         const iframe = component.pdfIframe()?.nativeElement;
         window.dispatchEvent(
-            new MessageEvent('message', { data: { type: 'pagesLoaded', data: { pagesCount: 12 } }, origin: window.location.origin, source: iframe?.contentWindow }),
+            new MessageEvent('message', {
+                data: { type: 'pagesLoaded', data: { pagesCount: 12, url: 'loaded.pdf' } },
+                origin: window.location.origin,
+                source: iframe?.contentWindow,
+            }),
         );
 
-        expect(pagesLoadedSpy).toHaveBeenCalledWith({ pdfUrl: 'test.pdf', pagesCount: 12 });
+        expect(pagesLoadedSpy).toHaveBeenCalledWith({ pdfUrl: 'loaded.pdf', pagesCount: 12 });
         pagesLoadedSubscription.unsubscribe();
     });
 

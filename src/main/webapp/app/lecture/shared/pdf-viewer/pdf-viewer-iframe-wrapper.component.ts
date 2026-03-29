@@ -8,11 +8,7 @@ import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { Theme, ThemeService } from 'app/core/theme/shared/theme.service';
 import type { IframeMessage, IframeMessageData, IframeMessageType } from './pdf-viewer-iframe.types';
 
-/**
- * Wrapper component that loads the PDF viewer in an iframe.
- * This allows multiple PDF viewer instances on the same page,
- * circumventing ngx-extended-pdf-viewer's single-instance limitation.
- */
+/** Wrapper for the iframe PDF viewer so multiple viewer instances can run simultaneously. */
 @Component({
     selector: 'jhi-lecture-pdf-viewer-iframe',
     standalone: true,
@@ -41,7 +37,6 @@ export class PdfViewerIframeWrapperComponent {
     constructor() {
         const destroyRef = inject(DestroyRef);
 
-        // Effect to load PDF when iframe is ready and URL changes
         effect(() => {
             const initialPage = this.initialPage();
             if (this.iframeReady() && this.pdfUrl()) {
@@ -49,7 +44,6 @@ export class PdfViewerIframeWrapperComponent {
             }
         });
 
-        // Effect to notify iframe of theme changes
         effect(() => {
             const isDarkMode = this.themeService.currentTheme() === Theme.DARK;
             if (this.iframeReady()) {
@@ -57,27 +51,22 @@ export class PdfViewerIframeWrapperComponent {
             }
         });
 
-        const messageHandler = (event: MessageEvent<IframeMessage>) => {
-            this.handleIframeMessage(event);
-        };
-
-        window.addEventListener('message', messageHandler);
+        window.addEventListener('message', this.handleIframeMessage as EventListener);
         destroyRef.onDestroy(() => {
-            window.removeEventListener('message', messageHandler);
+            window.removeEventListener('message', this.handleIframeMessage as EventListener);
         });
     }
 
     private loadPdfInIframe(initialPage?: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
-        const url = this.pdfUrl();
         this.postMessageToIframe('loadPDF', {
-            url: url,
+            url: this.pdfUrl(),
             initialPage: initialPage ?? 1,
             isDarkMode,
         });
     }
 
-    /** Handles messages from the iframe, validating origin for security. */
+    /** Handles iframe messages and ignores messages from invalid origins/sources. */
     private readonly handleIframeMessage = (event: MessageEvent<IframeMessage>): void => {
         const iframe = this.pdfIframe()?.nativeElement;
         if (!iframe || event.origin !== window.location.origin || event.source !== iframe.contentWindow) {
@@ -90,14 +79,19 @@ export class PdfViewerIframeWrapperComponent {
 
         const { type, data } = event.data;
 
-        if (type === 'ready') {
-            this.iframeReady.set(true);
-        } else if (type === 'pagesLoaded') {
-            this.pagesLoaded.emit({ pdfUrl: this.pdfUrl(), pagesCount: data?.pagesCount ?? 0 });
-        } else if (type === 'pdfLoadError') {
-            this.loadError.emit({ pdfUrl: this.pdfUrl() });
-        } else if (type === 'download') {
-            this.downloadRequested.emit();
+        switch (type) {
+            case 'ready':
+                this.iframeReady.set(true);
+                break;
+            case 'pagesLoaded':
+                this.pagesLoaded.emit({ pdfUrl: data?.url ?? this.pdfUrl(), pagesCount: data?.pagesCount ?? 0 });
+                break;
+            case 'pdfLoadError':
+                this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl() });
+                break;
+            case 'download':
+                this.downloadRequested.emit();
+                break;
         }
     };
 

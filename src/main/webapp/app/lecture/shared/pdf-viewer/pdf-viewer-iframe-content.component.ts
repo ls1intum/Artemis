@@ -28,22 +28,10 @@ interface FindMatchesCount {
     total: number;
 }
 
-interface FindCommandPayload {
-    type: 'find' | 'again';
-    query: string;
-    caseSensitive: boolean;
-    entireWord: boolean;
-    highlightAll: boolean;
-    findPrevious: boolean;
-}
-
-const PAGE_INPUT_SELECTION_DELAY_MS = 0;
+type FindCommandType = 'find' | 'again';
 const PAGE_INPUT_BLUR_DELAY_MS = 200;
 
-/**
- * Standalone PDF viewer component that runs inside an iframe.
- * This allows multiple instances of ngx-extended-pdf-viewer on the same page.
- */
+/** Iframe PDF viewer content with toolbar, search, page navigation, and zoom. */
 @Component({
     selector: 'jhi-pdf-viewer-iframe-content',
     standalone: true,
@@ -78,21 +66,16 @@ export class PdfViewerIframeContentComponent implements OnInit {
     protected searchQuery = signal<string>('');
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
 
-    /** Sets up message listeners and notifies parent that iframe is ready. */
     ngOnInit(): void {
-        const messageHandler = (event: MessageEvent) => {
-            this.handleParentMessage(event);
-        };
-
-        window.addEventListener('message', messageHandler);
+        window.addEventListener('message', this.handleParentMessage as EventListener);
         this.destroyRef.onDestroy(() => {
-            window.removeEventListener('message', messageHandler);
+            window.removeEventListener('message', this.handleParentMessage as EventListener);
         });
 
         this.postMessageToParent('ready', {});
     }
 
-    /** Handles messages from parent window, validating origin for security. */
+    /** Handles valid parent messages and updates URL, page, and theme state. */
     private readonly handleParentMessage = (event: MessageEvent<IframeMessage>): void => {
         if (event.origin !== window.location.origin || event.source !== window.parent) {
             return;
@@ -112,44 +95,37 @@ export class PdfViewerIframeContentComponent implements OnInit {
                         this.pdfUrl.set(data.url);
                     }
                     if (data.initialPage !== undefined && Number.isInteger(data.initialPage) && data.initialPage > 0) {
-                        this.currentPage.set(data.initialPage);
+                        this.setCurrentPage(data.initialPage);
                     } else if (urlChanged) {
-                        this.currentPage.set(1);
+                        this.setCurrentPage(1);
                     }
                 }
-                if (typeof data?.isDarkMode === 'boolean' && data.isDarkMode !== this.isDarkMode()) {
-                    this.isDarkMode.set(data.isDarkMode);
-                }
+                this.updateDarkMode(data?.isDarkMode);
                 break;
             case 'themeChange':
-                if (typeof data?.isDarkMode === 'boolean' && data.isDarkMode !== this.isDarkMode()) {
-                    this.isDarkMode.set(data.isDarkMode);
-                }
+                this.updateDarkMode(data?.isDarkMode);
                 break;
         }
     };
 
     onPageChange(page: number): void {
-        this.currentPage.set(page);
-        this.pageInputValue.set(page);
+        this.setCurrentPage(page);
         this.postMessageToParent('pageChange', { page });
     }
 
     onPagesLoaded(event: PagesLoadedEvent): void {
         const totalPages = event.pagesCount ?? 0;
         this.totalPages.set(totalPages);
-        // Validate current page is within range
+
         const currentPage = this.currentPage();
         if (currentPage < 1 || currentPage > totalPages) {
-            this.currentPage.set(1);
-            this.pageInputValue.set(1);
+            this.setCurrentPage(1);
         }
-        this.postMessageToParent('pagesLoaded', { pagesCount: totalPages });
+        this.postMessageToParent('pagesLoaded', { pagesCount: totalPages, url: this.pdfUrl() });
     }
 
-    /** Notifies parent of load failure to trigger blob fallback. */
     onPdfLoadingFailed(): void {
-        this.postMessageToParent('pdfLoadError', {});
+        this.postMessageToParent('pdfLoadError', { url: this.pdfUrl() });
     }
 
     onFindMatchesCountUpdate(event: FindMatchesCount): void {
@@ -256,7 +232,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
         if (inputNumber?.input?.nativeElement) {
             setTimeout(() => {
                 inputNumber.input.nativeElement.select();
-            }, PAGE_INPUT_SELECTION_DELAY_MS);
+            });
         }
     }
 
@@ -274,27 +250,39 @@ export class PdfViewerIframeContentComponent implements OnInit {
         return this.pdfNotificationService.onPDFJSInitSignal() as unknown as PDFViewerApplication | undefined;
     }
 
-    private dispatchFindCommand(params: Pick<FindCommandPayload, 'type' | 'query' | 'highlightAll' | 'findPrevious'>): void {
+    private dispatchFindCommand(params: { type: FindCommandType; query: string; highlightAll: boolean; findPrevious: boolean }): void {
         const eventBus = this.getPdfViewerApplication()?.eventBus;
         if (!eventBus) {
             return;
         }
 
-        const payload: FindCommandPayload = {
+        eventBus.dispatch('find', {
             type: params.type,
             query: params.query,
             caseSensitive: false,
             entireWord: false,
             highlightAll: params.highlightAll,
             findPrevious: params.findPrevious,
-        };
-        eventBus.dispatch('find', payload);
+        });
     }
 
     private blurPageInput(): void {
         const inputNumber = this.pageInputElement();
         if (inputNumber?.input?.nativeElement) {
             inputNumber.input.nativeElement.blur();
+        }
+    }
+
+    /** Keeps page state and page input value in sync. */
+    private setCurrentPage(page: number): void {
+        this.currentPage.set(page);
+        this.pageInputValue.set(page);
+    }
+
+    /** Updates dark mode only when the value is valid and has changed. */
+    private updateDarkMode(isDarkMode?: boolean): void {
+        if (typeof isDarkMode === 'boolean' && isDarkMode !== this.isDarkMode()) {
+            this.isDarkMode.set(isDarkMode);
         }
     }
 }

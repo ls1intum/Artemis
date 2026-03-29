@@ -53,7 +53,6 @@
     <ng-template #customToolbar>
         <div id="toolbarViewer" class="artemis-pdf-toolbar">
             <div class="artemis-pdf-toolbar__center">
-                <!-- Search Section -->
                 <div class="artemis-pdf-toolbar__search">
                     <div class="artemis-pdf-toolbar__search-field">
                         <fa-icon class="artemis-pdf-toolbar__search-icon" [icon]="faMagnifyingGlass" />
@@ -67,7 +66,6 @@
                             [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.search' | artemisTranslate"
                         />
                     </div>
-
                     @if (searchQuery()) {
                         <div class="artemis-pdf-toolbar__search-controls">
                             @if (searchMatchesCount()) {
@@ -102,10 +100,7 @@
                         </div>
                     }
                 </div>
-
-                <!-- Divider -->
                 <div class="artemis-pdf-toolbar__divider"></div>
-
                 @if (totalPages() > 0) {
                     <div class="artemis-pdf-toolbar__page-navigation">
                         <p-inputNumber
@@ -134,8 +129,6 @@
                     </div>
                     <div class="artemis-pdf-toolbar__divider"></div>
                 }
-
-                <!-- Zoom Controls -->
                 <button
                     class="artemis-pdf-toolbar__button"
                     type="button"
@@ -154,11 +147,7 @@
                 >
                     <fa-icon [icon]="faMagnifyingGlassPlus" />
                 </button>
-
-                <!-- Divider -->
                 <div class="artemis-pdf-toolbar__divider"></div>
-
-                <!-- Download Button -->
                 <button
                     class="artemis-pdf-toolbar__button"
                     type="button"
