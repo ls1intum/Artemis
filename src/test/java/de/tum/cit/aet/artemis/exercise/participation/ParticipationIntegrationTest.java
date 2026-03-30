@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import java.net.URI;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -65,6 +64,8 @@ import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationDueDateUpdateDTO;
+import de.tum.cit.aet.artemis.exercise.dto.ParticipationUpdateDTO;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationFactory;
 import de.tum.cit.aet.artemis.exercise.participation.util.ParticipationUtilService;
 import de.tum.cit.aet.artemis.exercise.repository.TeamRepository;
@@ -1269,8 +1270,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation.setPresentationScore(1.);
         participation = participationRepo.save(participation);
-        participation.setPresentationScore(null);
-        var actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
+        var dto = new ParticipationUpdateDTO(participation.getId(), textExercise.getId(), null);
+        var actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
         assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to null").isNull();
@@ -1279,9 +1280,13 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateParticipation_notStored() throws Exception {
-        var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
-                userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
-        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+        var dto = new ParticipationUpdateDTO(-1L, textExercise.getId(), null);
+        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, StudentParticipation.class, HttpStatus.NOT_FOUND);
+    }
+
+    // Helper method to create a ParticipationUpdateDTO from a StudentParticipation
+    private ParticipationUpdateDTO toUpdateDTO(StudentParticipation participation) {
+        return new ParticipationUpdateDTO(participation.getId(), participation.getExercise().getId(), participation.getPresentationScore());
     }
 
     @Test
@@ -1290,8 +1295,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
-        participation.setPresentationScore(2.);
-        var actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class,
+        var dto = new ParticipationUpdateDTO(participation.getId(), textExercise.getId(), 2.);
+        var actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation).as("The participation was updated").isNotNull();
         assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to 1").isEqualTo(1.);
@@ -1303,6 +1308,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void updateParticipation_gradedPresentation(double input, boolean isBadRequest) throws Exception {
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setPresentationScore(0);
+        courseRepository.save(course);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 2, 20.);
         gradingScaleService.saveGradingScale(gradingScale);
@@ -1311,15 +1317,15 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
 
-        participation.setPresentationScore(input);
+        var dto = new ParticipationUpdateDTO(participation.getId(), textExercise.getId(), input);
 
         if (isBadRequest) {
-            StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation,
+            StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto,
                     StudentParticipation.class, HttpStatus.BAD_REQUEST);
             assertThat(actualParticipation).as("The participation was not updated").isNull();
         }
         else {
-            StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation,
+            StudentParticipation actualParticipation = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto,
                     StudentParticipation.class, HttpStatus.OK);
             assertThat(actualParticipation).as("The participation was updated").isNotNull();
             assertThat(actualParticipation.getPresentationScore()).as("Presentation score was set to " + input).isEqualTo(input);
@@ -1331,6 +1337,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     void updateParticipation_exceedingPresentationNumber() throws Exception {
         Course course = textExercise.getCourseViaExerciseGroupOrCourseMember();
         course.setPresentationScore(0);
+        courseRepository.save(course);
 
         GradingScale gradingScale = gradingScaleUtilService.generateGradingScale(2, new double[] { 0, 50, 100 }, true, 1, Optional.empty(), course, 1, 20.);
         gradingScaleService.saveGradingScale(gradingScale);
@@ -1341,17 +1348,17 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participationUtilService.createSubmissionAndResult(participation1, 50, true);
 
         // SHOULD ADD FIRST PRESENTATION GRADE
-        participation1.setPresentationScore(100.0);
+        var dto1 = new ParticipationUpdateDTO(participation1.getId(), textExercise.getId(), 100.0);
 
-        var actualParticipation1 = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation1, StudentParticipation.class,
+        var actualParticipation1 = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto1, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation1).as("The participation was updated").isNotNull();
         assertThat(actualParticipation1.getPresentationScore()).as("Presentation score was set to 100").isEqualTo(100.0);
 
         // SHOULD UPDATE FIRST PRESENTATION GRADE
-        participation1.setPresentationScore(80.0);
+        var dto1Update = new ParticipationUpdateDTO(participation1.getId(), textExercise.getId(), 80.0);
 
-        actualParticipation1 = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation1, StudentParticipation.class,
+        actualParticipation1 = request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto1Update, StudentParticipation.class,
                 HttpStatus.OK);
         assertThat(actualParticipation1).as("The participation was updated").isNotNull();
         assertThat(actualParticipation1.getPresentationScore()).as("Presentation score was set to 80").isEqualTo(80.0);
@@ -1361,9 +1368,9 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation2 = participationRepo.save(participation2);
 
-        participation2.setPresentationScore(100.0);
+        var dto2 = new ParticipationUpdateDTO(participation2.getId(), modelingExercise.getId(), 100.0);
 
-        request.putWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/participations", participation2, StudentParticipation.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/exercise/exercises/" + modelingExercise.getId() + "/participations", dto2, StudentParticipation.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1372,7 +1379,8 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = ParticipationFactory.generateStudentParticipation(InitializationState.INITIALIZED, textExercise,
                 userUtilService.getUserByLogin(TEST_PREFIX + "student1"));
         participation = participationRepo.save(participation);
-        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", participation, StudentParticipation.class, HttpStatus.FORBIDDEN);
+        var dto = new ParticipationUpdateDTO(participation.getId(), textExercise.getId(), null);
+        request.putWithResponseBody("/api/exercise/exercises/" + textExercise.getId() + "/participations", dto, StudentParticipation.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -1384,7 +1392,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation = participationRepo.save(participation);
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         request.putAndExpectError(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "examexercise");
     }
@@ -1399,7 +1407,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         participation = participationRepo.save(participation);
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(3));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         request.putAndExpectError(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 HttpStatus.BAD_REQUEST, "quizexercise");
     }
@@ -1415,7 +1423,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var submission = fileUploadExerciseUtilService.addFileUploadSubmission(exercise, ParticipationFactory.generateFileUploadSubmission(true), TEST_PREFIX + "student1");
         submission.getParticipation().setIndividualDueDate(ZonedDateTime.now().plusDays(1));
 
-        final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
+        final var participationsToUpdate = new DueDateUpdateDTOList((StudentParticipation) submission.getParticipation());
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1440,7 +1448,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         final var participation2 = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusHours(1));
 
-        final var participationsToUpdate = new StudentParticipationList(participation, participation2);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation, participation2);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1459,7 +1467,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         exercise = exerciseRepository.save(exercise);
 
         final var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1478,7 +1486,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
         var participation = participationUtilService.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(4));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1500,7 +1508,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1523,7 +1531,7 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
 
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(2));
 
-        final var participationsToUpdate = new StudentParticipationList(participation);
+        final var participationsToUpdate = new DueDateUpdateDTOList(participation);
         final var response = request.putWithResponseBodyList(String.format("/api/exercise/exercises/%d/participations/update-individual-due-date", exercise.getId()),
                 participationsToUpdate, StudentParticipation.class, HttpStatus.OK);
 
@@ -1532,16 +1540,14 @@ class ParticipationIntegrationTest extends AbstractAthenaTest {
     }
 
     /**
-     * When using {@code List<StudentParticipation>} directly as body in the unit tests, the deserialization fails as
-     * there no longer is a {@code type} attribute due to type erasure. Therefore, Jackson does not know which subtype
-     * of {@link Participation} is stored in the list.
-     * <p>
-     * Using this wrapper-class avoids this issue.
+     * Wrapper for a list of ParticipationDueDateUpdateDTO to avoid type erasure issues in tests.
      */
-    private static class StudentParticipationList extends ArrayList<StudentParticipation> {
+    private static class DueDateUpdateDTOList extends ArrayList<ParticipationDueDateUpdateDTO> {
 
-        public StudentParticipationList(StudentParticipation... participations) {
-            this.addAll(Arrays.asList(participations));
+        public DueDateUpdateDTOList(StudentParticipation... participations) {
+            for (StudentParticipation participation : participations) {
+                this.add(ParticipationDueDateUpdateDTO.of(participation));
+            }
         }
     }
 
