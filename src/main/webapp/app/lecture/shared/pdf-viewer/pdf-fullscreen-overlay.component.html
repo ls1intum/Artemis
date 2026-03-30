@@ -1,4 +1,4 @@
-@if (state().isOpen) {
+@if (metadata().isOpen) {
     <div class="pdf-fullscreen-overlay" (click)="close()">
         <div class="pdf-fullscreen-window" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
             <button
@@ -16,18 +16,18 @@
                 class="pdf-iframe"
                 [attr.title]="'artemisApp.attachmentVideoUnit.pdfViewer.title' | artemisTranslate"
             ></iframe>
-            @if (state().uploadDate || state().version) {
+            @if (metadata().uploadDate || metadata().version) {
                 <div class="pdf-viewer-footer">
-                    @if (state().uploadDate) {
+                    @if (metadata().uploadDate) {
                         <span jhiTranslate="artemisApp.attachmentVideoUnit.uploadDate">Upload Date</span>:
-                        {{ state().uploadDate | artemisDate }}
+                        {{ metadata().uploadDate | artemisDate }}
                     }
-                    @if (state().uploadDate && state().version) {
+                    @if (metadata().uploadDate && metadata().version) {
                         <span class="pdf-viewer-footer__separator">-</span>
                     }
-                    @if (state().version) {
+                    @if (metadata().version) {
                         <span jhiTranslate="artemisApp.attachmentVideoUnit.version">Version</span>:
-                        {{ state().version }}
+                        {{ metadata().version }}
                     }
                 </div>
             }

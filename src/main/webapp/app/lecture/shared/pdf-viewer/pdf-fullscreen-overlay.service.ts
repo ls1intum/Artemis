@@ -1,35 +1,36 @@
 import { Injectable, signal } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 
-export interface PdfFullscreenState {
+export interface PdfFullscreenMetadata {
     isOpen: boolean;
     pdfUrl?: string;
-    currentPage?: number;
     uploadDate?: Dayjs;
     version?: number;
 }
 
 @Injectable({ providedIn: 'root' })
 export class PdfFullscreenOverlayService {
-    private readonly state = signal<PdfFullscreenState>({ isOpen: false });
+    private readonly metadata = signal<PdfFullscreenMetadata>({ isOpen: false });
+    private readonly page = signal<number>(1);
 
-    readonly fullscreenState = this.state.asReadonly();
+    readonly fullscreenMetadata = this.metadata.asReadonly();
+    readonly currentPage = this.page.asReadonly();
 
     open(pdfUrl: string, currentPage: number, uploadDate?: Dayjs, version?: number): void {
-        this.state.set({
+        this.metadata.set({
             isOpen: true,
             pdfUrl,
-            currentPage,
             uploadDate,
             version,
         });
+        this.page.set(currentPage);
     }
 
     close(): void {
-        this.state.update((s) => ({ ...s, isOpen: false }));
+        this.metadata.update((m) => ({ ...m, isOpen: false }));
     }
 
-    updateCurrentPage(page: number): void {
-        this.state.update((s) => ({ ...s, currentPage: page }));
+    updateCurrentPage(pageNumber: number): void {
+        this.page.set(pageNumber);
     }
 }

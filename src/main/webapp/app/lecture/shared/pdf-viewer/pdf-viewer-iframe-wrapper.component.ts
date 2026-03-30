@@ -57,12 +57,12 @@ export class PdfViewerIframeWrapperComponent {
 
         // Restore page when fullscreen closes
         effect(() => {
-            const isOpen = this.fullscreenService.fullscreenState().isOpen;
+            const isOpen = this.fullscreenService.fullscreenMetadata().isOpen;
             const wasOpen = this.wasFullscreenOpen();
 
             if (wasOpen && !isOpen) {
                 // Fullscreen just closed, restore page
-                const page = this.fullscreenService.fullscreenState().currentPage ?? 1;
+                const page = this.fullscreenService.currentPage();
                 if (this.iframeReady() && this.pdfUrl()) {
                     this.loadPdfInIframe(this.pdfIframe()?.nativeElement, page, 'embedded');
                 }

@@ -7,6 +7,8 @@ import { signal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from 'test/helpers/mocks/service/mock-translate.service';
+import { PdfFullscreenOverlayService } from './pdf-fullscreen-overlay.service';
+import dayjs from 'dayjs/esm';
 
 describe('PdfViewerIframeWrapperComponent', () => {
     setupTestBed({ zoneless: true });
@@ -63,7 +65,6 @@ describe('PdfViewerIframeWrapperComponent', () => {
 
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: {} as Window }));
         expect(component.iframeReady()).toBe(false);
-        expect(component.fullscreenIframeReady()).toBe(false);
     });
 
     it('should emit loadError event', () => {
@@ -161,9 +162,14 @@ describe('PdfViewerIframeWrapperComponent', () => {
         expect(postMessageSpy).toHaveBeenCalledWith({ type: 'themeChange', data: { isDarkMode: true } }, window.location.origin);
     });
 
-    it('should open fullscreen iframe and load current page', async () => {
+    it('should call fullscreen service when openFullscreen message received', async () => {
+        const fullscreenService = TestBed.inject(PdfFullscreenOverlayService);
+        const openSpy = vi.spyOn(fullscreenService, 'open');
+        const uploadDate = dayjs();
+
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-        fixture.componentRef.setInput('initialPage', 3);
+        fixture.componentRef.setInput('uploadDate', uploadDate);
+        fixture.componentRef.setInput('version', 2);
         fixture.detectChanges();
 
         const inlineIframe = component.pdfIframe()?.nativeElement;
@@ -172,21 +178,12 @@ describe('PdfViewerIframeWrapperComponent', () => {
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'openFullscreen' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
         fixture.detectChanges();
 
-        expect(component.isFullscreenOpen()).toBe(true);
-        const fullscreenIframe = component.fullscreenPdfIframe()?.nativeElement;
-        const postMessageSpy = vi.spyOn(fullscreenIframe!.contentWindow!, 'postMessage');
-
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: fullscreenIframe?.contentWindow }));
-        fixture.detectChanges();
-        await fixture.whenStable();
-
-        expect(postMessageSpy).toHaveBeenCalledWith(
-            { type: 'loadPDF', data: { url: 'test.pdf', initialPage: 6, isDarkMode: false, viewerMode: 'fullscreen' } },
-            window.location.origin,
-        );
+        expect(openSpy).toHaveBeenCalledWith('test.pdf', 6, uploadDate, 2);
     });
 
-    it('should close fullscreen and sync current page to inline iframe', () => {
+    it('should reload inline iframe when fullscreen closes', async () => {
+        const fullscreenService = TestBed.inject(PdfFullscreenOverlayService);
+
         fixture.componentRef.setInput('pdfUrl', 'test.pdf');
         fixture.detectChanges();
 
@@ -194,21 +191,24 @@ describe('PdfViewerIframeWrapperComponent', () => {
         const inlinePostMessageSpy = vi.spyOn(inlineIframe!.contentWindow!, 'postMessage');
         window.dispatchEvent(new MessageEvent('message', { data: { type: 'ready' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
         fixture.detectChanges();
+        await fixture.whenStable();
         inlinePostMessageSpy.mockClear();
 
-        window.dispatchEvent(new MessageEvent('message', { data: { type: 'openFullscreen' }, origin: window.location.origin, source: inlineIframe?.contentWindow }));
+        // Simulate fullscreen opening
+        fullscreenService.open('test.pdf', 1, undefined, undefined);
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        const fullscreenIframe = component.fullscreenPdfIframe()?.nativeElement;
-        window.dispatchEvent(
-            new MessageEvent('message', { data: { type: 'pageChange', data: { page: 8 } }, origin: window.location.origin, source: fullscreenIframe?.contentWindow }),
-        );
-
-        const closeButton = fixture.nativeElement.querySelector('.pdf-fullscreen-close') as HTMLButtonElement;
-        closeButton.click();
+        // Simulate page change in fullscreen (now uses separate signal)
+        fullscreenService.updateCurrentPage(8);
         fixture.detectChanges();
+        await fixture.whenStable();
 
-        expect(component.isFullscreenOpen()).toBe(false);
+        // Simulate fullscreen closing
+        fullscreenService.close();
+        fixture.detectChanges();
+        await fixture.whenStable();
+
         expect(inlinePostMessageSpy).toHaveBeenCalledWith(
             { type: 'loadPDF', data: { url: 'test.pdf', initialPage: 8, isDarkMode: false, viewerMode: 'embedded' } },
             window.location.origin,

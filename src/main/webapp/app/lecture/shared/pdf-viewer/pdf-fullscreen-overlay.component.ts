@@ -21,7 +21,8 @@ export class PdfFullscreenOverlayComponent {
     private readonly themeService = inject(ThemeService);
     private readonly location = inject(Location);
 
-    readonly state = this.service.fullscreenState;
+    readonly metadata = this.service.fullscreenMetadata;
+    readonly currentPage = this.service.currentPage;
     readonly fullscreenIframe = viewChild<ElementRef<HTMLIFrameElement>>('fullscreenIframe');
     readonly iframeReady = signal(false);
     readonly iframeSrc = this.location.prepareExternalUrl('pdf-viewer-iframe');
@@ -32,11 +33,12 @@ export class PdfFullscreenOverlayComponent {
     constructor() {
         const destroyRef = inject(DestroyRef);
 
-        // Load PDF when iframe ready
+        // Load PDF when iframe ready (only triggers on isOpen/pdfUrl/iframeReady changes, not page changes)
         effect(() => {
-            const state = this.state();
-            if (state.isOpen && this.iframeReady() && state.pdfUrl) {
-                this.loadPdf(state.pdfUrl, state.currentPage ?? 1);
+            const { isOpen, pdfUrl } = this.metadata();
+            if (isOpen && this.iframeReady() && pdfUrl) {
+                const page = untracked(() => this.currentPage());
+                this.loadPdf(pdfUrl, page);
             }
         });
 
@@ -67,6 +69,10 @@ export class PdfFullscreenOverlayComponent {
 
         const iframe = this.fullscreenIframe()?.nativeElement;
         if (!iframe?.contentWindow || event.source !== iframe.contentWindow) {
+            return;
+        }
+
+        if (!event.data || typeof event.data !== 'object') {
             return;
         }
 
