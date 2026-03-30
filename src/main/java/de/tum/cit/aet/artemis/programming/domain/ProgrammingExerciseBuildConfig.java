@@ -1,6 +1,7 @@
 package de.tum.cit.aet.artemis.programming.domain;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -19,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 
 import de.tum.cit.aet.artemis.core.domain.DomainObject;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.dto.aeolus.Windfile;
 
 @Entity
@@ -245,6 +247,29 @@ public class ProgrammingExerciseBuildConfig extends DomainObject {
             log.error("Could not parse build plan configuration for programming exercise {}", this.getId(), e);
         }
         return null;
+    }
+
+    /**
+     * Tries to deserialize the buildPlanConfiguration as a {@link BuildPlanPhasesDTO} object.
+     * This provides discrimination between the new phases format and the old Windfile format:
+     * BuildPlanPhases JSON has a "phases" root key, while Windfile JSON has "api", "metadata", "actions".
+     *
+     * @return the {@link BuildPlanPhasesDTO} object, or null if the configuration is null, empty, or in Windfile format
+     */
+    public Optional<BuildPlanPhasesDTO> getBuildPlanPhases() {
+        if (buildPlanConfiguration == null) {
+            return Optional.empty();
+        }
+        try {
+            BuildPlanPhasesDTO phases = BuildPlanPhasesDTO.fromBuildPlanConfiguration(buildPlanConfiguration);
+            if (phases.phases() != null) {
+                return Optional.of(phases);
+            }
+        }
+        catch (JsonProcessingException e) {
+            // Not in phases format
+        }
+        return Optional.empty();
     }
 
     public void filterSensitiveInformation() {
