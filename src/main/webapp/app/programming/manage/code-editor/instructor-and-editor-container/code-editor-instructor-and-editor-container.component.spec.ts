@@ -559,6 +559,38 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(pullSpy).toHaveBeenCalledOnce();
         }));
 
+        it('should keep the final repository pull alive on DONE until the pull completes', fakeAsync(() => {
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-3b' }));
+
+            const job$ = new Subject<any>();
+            const pull$ = new Subject<void>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+            jest.spyOn(repoService, 'pull').mockReturnValue(pull$.asObservable());
+
+            comp.generateCode();
+            tick();
+
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
+            tick(250);
+
+            const trackedPullSubscription = (comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
+            expect(trackedPullSubscription?.closed).toBeFalse();
+
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
+            tick();
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+            expect(trackedPullSubscription?.closed).toBeFalse();
+            expect((comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE)).toBe(trackedPullSubscription);
+
+            pull$.complete();
+            tick();
+
+            expect((comp as any).codeGenerationPullSubscriptions.has(RepositoryType.TEMPLATE)).toBeFalse();
+        }));
+
         it('should unsubscribe in-flight repository pulls during cleanup', fakeAsync(() => {
             comp.selectedRepository = RepositoryType.TEMPLATE;
             selectCodeGenerationRepositories(RepositoryType.TEMPLATE);
@@ -755,6 +787,52 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
                 expect(comp.isGeneratingCode()).toBeFalse();
                 expect(ws.unsubscribeFromJob).toHaveBeenCalledWith('job-7');
+                expect(addAlertSpy).toHaveBeenCalledWith(
+                    expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }),
+                );
+            } finally {
+                window.setTimeout = originalSetTimeout;
+            }
+        });
+
+        it('should preserve the timed-out repository error state when that repository is still present in the queue', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            comp.selectedRepository = RepositoryType.TEMPLATE;
+            selectCodeGenerationRepositories(RepositoryType.TEMPLATE, RepositoryType.SOLUTION);
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-timeout' }));
+
+            const originalSetTimeout = window.setTimeout;
+            let timeoutCallback: (() => void) | undefined;
+            // @ts-ignore
+            window.setTimeout = ((fn: () => void, _delay?: number) => {
+                timeoutCallback = fn;
+                return 1 as any;
+            }) as any;
+
+            try {
+                (ws.subscribeToJob as jest.Mock).mockReturnValue(new Subject<any>().asObservable());
+                comp.generateCode();
+                await Promise.resolve();
+
+                // Simulate stale queue bookkeeping where the active repository is still present.
+                (comp as any).queuedCodeGenerationRepositories = [RepositoryType.TEMPLATE, RepositoryType.SOLUTION];
+
+                if (timeoutCallback) {
+                    timeoutCallback();
+                }
+
+                expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)).toEqual(
+                    expect.objectContaining({
+                        state: 'error',
+                        message: 'artemisApp.programmingExercise.codeGeneration.timeoutDetails',
+                    }),
+                );
+                expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                    expect.objectContaining({
+                        state: 'skipped',
+                        message: 'artemisApp.programmingExercise.codeGeneration.status.skippedMessage',
+                    }),
+                );
                 expect(addAlertSpy).toHaveBeenCalledWith(
                     expect.objectContaining({ type: AlertType.WARNING, translationKey: 'artemisApp.programmingExercise.codeGeneration.timeout' }),
                 );

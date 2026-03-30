@@ -10,6 +10,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,7 +95,8 @@ class HyperionCodeGenerationTaskServiceTest {
         verify(executionService).generateAndCompileCode(eq(exercise), eq(user), eq(1L), eq(RepositoryType.TESTS), publisherCaptor.capture());
 
         reset(websocket);
-        publisherCaptor.getValue().done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, 2, "Tests were committed, but the build failed.");
+        publisherCaptor.getValue().done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED, Map.of(), 2,
+                "Tests were committed, but the build failed.");
 
         ArgumentCaptor<HyperionCodeGenerationEventDTO> payloadCaptor = ArgumentCaptor.forClass(HyperionCodeGenerationEventDTO.class);
         verify(websocket).send(eq("student1"), eq("code-generation/jobs/job-3"), payloadCaptor.capture());
@@ -103,6 +105,8 @@ class HyperionCodeGenerationTaskServiceTest {
         assertThat(payload.type()).isEqualTo(HyperionCodeGenerationEventDTO.Type.DONE);
         assertThat(payload.success()).isFalse();
         assertThat(payload.completionStatus()).isEqualTo(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL);
+        assertThat(payload.completionReason()).isEqualTo(HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED);
+        assertThat(payload.completionReasonParams()).isEmpty();
         assertThat(payload.attempts()).isEqualTo(2);
         assertThat(payload.iteration()).isNull();
         assertThat(payload.message()).isEqualTo("Tests were committed, but the build failed.");

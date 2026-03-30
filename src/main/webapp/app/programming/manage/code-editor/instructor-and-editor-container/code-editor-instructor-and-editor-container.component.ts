@@ -685,8 +685,8 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param stopSpinner whether the global generation indicator should be switched off
      */
     private clearJobSubscription(stopSpinner: boolean) {
-        this.clearCodeGenerationRepositoryPulls();
         if (stopSpinner) {
+            this.clearCodeGenerationRepositoryPulls();
             this.isGeneratingCode.set(false);
         }
         if (this.activeJobId) {
@@ -739,11 +739,13 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private finishCurrentCodeGeneration(continueQueue: boolean) {
         const hasMoreRepositories = continueQueue && this.queuedCodeGenerationRepositories.length > 0;
-        this.clearJobSubscription(!hasMoreRepositories);
+        this.clearJobSubscription(false);
         this.activeCodeGenerationRepository = undefined;
 
         if (hasMoreRepositories) {
             this.waitForCodeGenerationSlotRelease();
+        } else {
+            this.isGeneratingCode.set(false);
         }
     }
 
@@ -765,7 +767,7 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
             state: 'error',
             message,
         }));
-        this.markQueuedCodeGenerationRepositoriesSkipped();
+        this.markQueuedCodeGenerationRepositoriesSkipped(repositoryType);
         this.queuedCodeGenerationRepositories = [];
         this.activeCodeGenerationRepository = undefined;
         this.clearCodeGenerationStatusSubscription();
@@ -783,13 +785,16 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
     /**
      * Marks any repositories still waiting in the queue as skipped.
      */
-    private markQueuedCodeGenerationRepositoriesSkipped() {
+    private markQueuedCodeGenerationRepositoriesSkipped(repositoryTypeToKeep?: SupportedCodeGenerationRepositoryType) {
         if (!this.queuedCodeGenerationRepositories.length) {
             return;
         }
 
         const skippedMessage = this.translateService.instant('artemisApp.programmingExercise.codeGeneration.status.skippedMessage');
-        const queuedRepositories = new Set(this.queuedCodeGenerationRepositories);
+        const queuedRepositories = new Set(this.queuedCodeGenerationRepositories.filter((repositoryType) => repositoryType !== repositoryTypeToKeep));
+        if (!queuedRepositories.size) {
+            return;
+        }
         this.codeGenerationStatuses.update((statuses) =>
             statuses.map((status) =>
                 queuedRepositories.has(status.repositoryType)

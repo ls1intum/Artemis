@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -87,6 +88,9 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private record CommitTriggerResult(String commitHash, boolean buildTriggered) {
+    }
+
+    private record CompletionDetails(String message, HyperionCodeGenerationEventDTO.CompletionReason reason, Map<String, String> reasonParams) {
     }
 
     private static final class GenerationExecutionProgress {
@@ -368,9 +372,9 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         HyperionCodeGenerationEventDTO.CompletionStatus completionStatus = determineCompletionStatus(executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
+        CompletionDetails completionDetails = buildCompletionDetails(repositoryType, executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
         int reportedAttempts = executionResult.attemptsUsed;
-        String completionMessage = buildCompletionMessage(repositoryType, executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
-        publisher.done(completionStatus, reportedAttempts, completionMessage);
+        publisher.done(completionStatus, completionDetails.reason(), completionDetails.reasonParams(), reportedAttempts, completionDetails.message());
 
         return executionResult.result;
     }
@@ -436,12 +440,14 @@ public class HyperionCodeGenerationExecutionService {
         }
     }
 
-    private String buildCompletionMessage(RepositoryType repositoryType, boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
+    private CompletionDetails buildCompletionDetails(RepositoryType repositoryType, boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
         if (!generatedFilesCommitted) {
-            return repositoryGenerationLabel(repositoryType) + " did not produce any committed files.";
+            return new CompletionDetails(repositoryGenerationLabel(repositoryType) + " did not produce any committed files.",
+                    HyperionCodeGenerationEventDTO.CompletionReason.NO_COMMITTED_FILES, Map.of());
         }
 
-        return committedFilesMessagePrefix(repositoryType) + buildResultMessageSuffix(buildResultOutcome.state());
+        HyperionCodeGenerationEventDTO.CompletionReason completionReason = buildCompletionReason(buildResultOutcome.state());
+        return new CompletionDetails(committedFilesMessagePrefix(repositoryType) + buildResultMessageSuffix(completionReason), completionReason, Map.of());
     }
 
     private HyperionCodeGenerationEventDTO.CompletionStatus determineCompletionStatus(boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
@@ -471,13 +477,24 @@ public class HyperionCodeGenerationExecutionService {
         };
     }
 
-    private String buildResultMessageSuffix(BuildResultState buildResultState) {
+    private HyperionCodeGenerationEventDTO.CompletionReason buildCompletionReason(BuildResultState buildResultState) {
         return switch (buildResultState) {
-            case SUCCESS -> ".";
-            case FAILED -> ", but the build failed.";
-            case TIMED_OUT -> ", but the build result is not available yet because polling timed out.";
+            case SUCCESS -> HyperionCodeGenerationEventDTO.CompletionReason.BUILD_SUCCEEDED;
+            case FAILED -> HyperionCodeGenerationEventDTO.CompletionReason.BUILD_FAILED;
+            case TIMED_OUT -> HyperionCodeGenerationEventDTO.CompletionReason.BUILD_TIMED_OUT;
+            case PARTICIPATION_NOT_FOUND -> HyperionCodeGenerationEventDTO.CompletionReason.PARTICIPATION_NOT_FOUND;
+            case CI_TRIGGER_FAILED -> HyperionCodeGenerationEventDTO.CompletionReason.CI_TRIGGER_FAILED;
+        };
+    }
+
+    private String buildResultMessageSuffix(HyperionCodeGenerationEventDTO.CompletionReason completionReason) {
+        return switch (completionReason) {
+            case BUILD_SUCCEEDED -> ".";
+            case BUILD_FAILED -> ", but the build failed.";
+            case BUILD_TIMED_OUT -> ", but the build result is not available yet because polling timed out.";
             case PARTICIPATION_NOT_FOUND -> ", but Hyperion could not resolve the participation needed to read the build result.";
             case CI_TRIGGER_FAILED -> ", but Hyperion could not trigger the CI build.";
+            case NO_COMMITTED_FILES -> ".";
         };
     }
 
