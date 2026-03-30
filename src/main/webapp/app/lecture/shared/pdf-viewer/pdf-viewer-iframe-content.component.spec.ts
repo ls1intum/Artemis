@@ -186,10 +186,4 @@ describe('PdfViewerIframeContentComponent', () => {
         expect(document.activeElement).toBe(searchNextButton);
         vi.useRealTimers();
     });
-
-    it('should cleanup on destroy', () => {
-        const removeSpy = vi.spyOn(window, 'removeEventListener');
-        fixture.destroy();
-        expect(removeSpy).toHaveBeenCalledWith('message', expect.any(Function));
-    });
 });

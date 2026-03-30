@@ -1,5 +1,5 @@
 import { Location, NgTemplateOutlet } from '@angular/common';
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, HostBinding, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, computed, effect, inject, input, output, signal, untracked, viewChild } from '@angular/core';
 import type { Dayjs } from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -49,16 +49,11 @@ export class PdfViewerComponent {
 
     // Internal state (embedded mode only)
     private readonly currentPage = signal(1);
-    private readonly wasFullscreenOpen = signal(false);
 
     // Computed properties (mode-dependent)
-    private readonly effectivePdfUrl = computed(() => (this.mode() === 'embedded' ? this.pdfUrl() : this.fullscreenService.fullscreenMetadata().pdfUrl));
-
     protected readonly effectiveUploadDate = computed(() => (this.mode() === 'embedded' ? this.uploadDate() : this.fullscreenService.fullscreenMetadata().uploadDate));
 
     protected readonly effectiveVersion = computed(() => (this.mode() === 'embedded' ? this.version() : this.fullscreenService.fullscreenMetadata().version));
-
-    private readonly effectiveInitialPage = computed(() => (this.mode() === 'embedded' ? this.initialPage() : this.fullscreenService.currentPage()));
 
     readonly iframeSrc = computed(() => this.location.prepareExternalUrl('pdf-viewer-iframe'));
 
@@ -68,31 +63,30 @@ export class PdfViewerComponent {
     // Icons (for fullscreen mode)
     protected readonly faXmark = faXmark;
 
-    @HostBinding('class.fullscreen-mode')
-    get fullscreenModeClass() {
-        return this.mode() === 'fullscreen' && this.fullscreenService.fullscreenMetadata().isOpen;
-    }
-
     constructor() {
-        const destroyRef = inject(DestroyRef);
+        let wasFullscreenOpen = false;
 
         // Load PDF when iframe ready
         effect(() => {
-            // For fullscreen mode, also check if isOpen
+            if (!this.iframeReady()) {
+                return;
+            }
+
             if (this.mode() === 'fullscreen') {
                 const { isOpen, pdfUrl } = this.fullscreenService.fullscreenMetadata();
-                if (isOpen && this.iframeReady() && pdfUrl) {
-                    // Use untracked to avoid reloading when page changes
-                    const page = untracked(() => this.fullscreenService.currentPage());
-                    this.loadPdf(pdfUrl, page);
+                if (!isOpen || !pdfUrl) {
+                    return;
                 }
-            } else {
-                // Embedded mode
-                const pdfUrl = this.effectivePdfUrl();
-                const initialPage = this.effectiveInitialPage();
-                if (this.iframeReady() && pdfUrl) {
-                    this.loadPdf(pdfUrl, initialPage ?? 1);
-                }
+
+                // Use untracked to avoid reloading when page changes
+                const page = untracked(() => this.fullscreenService.currentPage());
+                this.loadPdf(pdfUrl, page);
+                return;
+            }
+
+            const pdfUrl = this.pdfUrl();
+            if (pdfUrl) {
+                this.loadPdf(pdfUrl, this.initialPage() ?? 1);
             }
         });
 
@@ -109,25 +103,16 @@ export class PdfViewerComponent {
             if (this.mode() !== 'embedded') return;
 
             const isOpen = this.fullscreenService.fullscreenMetadata().isOpen;
-            const wasOpen = this.wasFullscreenOpen();
 
-            if (wasOpen && !isOpen) {
+            if (wasFullscreenOpen && !isOpen) {
                 const page = this.fullscreenService.currentPage();
-                if (this.iframeReady() && this.effectivePdfUrl()) {
-                    this.loadPdf(this.effectivePdfUrl()!, page);
+                const pdfUrl = this.pdfUrl();
+                if (this.iframeReady() && pdfUrl) {
+                    this.loadPdf(pdfUrl, page);
                 }
             }
 
-            this.wasFullscreenOpen.set(isOpen);
-        });
-
-        const messageListener = (event: Event) => {
-            this.handleIframeMessage(event as MessageEvent<IframeMessage>);
-        };
-
-        window.addEventListener('message', messageListener);
-        destroyRef.onDestroy(() => {
-            window.removeEventListener('message', messageListener);
+            wasFullscreenOpen = isOpen;
         });
     }
 
@@ -139,8 +124,13 @@ export class PdfViewerComponent {
         }
     }
 
+    @HostListener('window:message', ['$event'])
+    protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
+        this.handleIframeMessage(event);
+    }
+
     /** Handles iframe messages and ignores messages from invalid origins/sources. */
-    private readonly handleIframeMessage = (event: MessageEvent<IframeMessage>): void => {
+    private handleIframeMessage(event: MessageEvent<IframeMessage>): void {
         // Origin validation
         if (event.origin !== window.location.origin) {
             return;
@@ -157,6 +147,7 @@ export class PdfViewerComponent {
         }
 
         const { type, data } = event.data;
+        const mode = this.mode();
 
         // Common handlers
         if (type === 'ready') {
@@ -165,7 +156,7 @@ export class PdfViewerComponent {
         }
 
         if (type === 'pageChange' && typeof data?.page === 'number' && Number.isInteger(data.page) && data.page > 0) {
-            if (this.mode() === 'embedded') {
+            if (mode === 'embedded') {
                 this.currentPage.set(data.page);
             } else {
                 this.fullscreenService.updateCurrentPage(data.page);
@@ -173,32 +164,33 @@ export class PdfViewerComponent {
             return;
         }
 
-        // Embedded-mode-only handlers
-        if (this.mode() === 'embedded') {
-            switch (type) {
-                case 'pagesLoaded':
-                    this.pagesLoaded.emit({
-                        pdfUrl: data?.url ?? this.effectivePdfUrl()!,
-                        pagesCount: data?.pagesCount ?? 0,
-                    });
-                    break;
-                case 'pdfLoadError':
-                    this.loadError.emit({ pdfUrl: data?.url ?? this.effectivePdfUrl()! });
-                    break;
-                case 'download':
-                    this.downloadRequested.emit();
-                    break;
-                case 'openFullscreen':
-                    this.openFullscreen();
-                    break;
-            }
+        if (mode !== 'embedded') {
+            return;
         }
-    };
+
+        switch (type) {
+            case 'pagesLoaded':
+                this.pagesLoaded.emit({
+                    pdfUrl: data?.url ?? this.pdfUrl()!,
+                    pagesCount: data?.pagesCount ?? 0,
+                });
+                break;
+            case 'pdfLoadError':
+                this.loadError.emit({ pdfUrl: data?.url ?? this.pdfUrl()! });
+                break;
+            case 'download':
+                this.downloadRequested.emit();
+                break;
+            case 'openFullscreen':
+                this.openFullscreen();
+                break;
+        }
+    }
 
     private openFullscreen(): void {
         if (this.mode() !== 'embedded') return;
 
-        const pdfUrl = this.effectivePdfUrl();
+        const pdfUrl = this.pdfUrl();
         if (!pdfUrl) return;
 
         const currentPage = this.currentPage() || this.initialPage() || 1;
@@ -207,13 +199,12 @@ export class PdfViewerComponent {
 
     private loadPdf(url: string, page: number): void {
         const isDarkMode = untracked(() => this.themeService.currentTheme() === Theme.DARK);
-        const viewerMode = this.mode() === 'embedded' ? 'embedded' : 'fullscreen';
 
         this.postMessageToIframe('loadPDF', {
             url,
             initialPage: page,
             isDarkMode,
-            viewerMode,
+            viewerMode: this.mode(),
         });
     }
 

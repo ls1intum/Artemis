@@ -1,24 +1,8 @@
-// Embedded mode styles
 :host {
     display: block;
-
-    // In fullscreen mode, override host styles
-    &.fullscreen-mode {
-        width: 100vw;
-        height: 100vh;
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: 2000;
-        pointer-events: none; // Don't intercept clicks except on actual content
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
 }
 
 .pdf-iframe-wrapper {
-    margin: 0;
     width: 100%;
     height: 100%;
     border: 1px solid var(--card-border-color);
@@ -26,14 +10,10 @@
     overflow: hidden;
 }
 
-// Fullscreen mode styles
 .pdf-fullscreen-overlay {
-    position: absolute;
-    top: 0;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    pointer-events: all; // Re-enable for overlay
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
     background-color: rgba(0, 0, 0, 0.35);
 }
 
@@ -70,19 +50,16 @@
     justify-content: center;
 }
 
-// Shared styles
 .pdf-iframe {
     width: 100%;
     border: none;
     display: block;
 
-    // Embedded mode: fixed aspect ratio
     .pdf-iframe-wrapper & {
         height: 100%;
         aspect-ratio: 2 / 1;
     }
 
-    // Fullscreen mode: flexible height
     .pdf-fullscreen-window & {
         flex: 1;
     }

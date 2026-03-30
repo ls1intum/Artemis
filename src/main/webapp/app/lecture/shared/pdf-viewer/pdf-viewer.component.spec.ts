@@ -238,16 +238,6 @@ describe('PdfViewerComponent', () => {
             fixture.detectChanges();
             expect(fixture.nativeElement.querySelector('.pdf-viewer-footer')).toBeTruthy();
         });
-
-        it('should cleanup on destroy', () => {
-            const removeSpy = vi.spyOn(window, 'removeEventListener');
-
-            fixture.componentRef.setInput('pdfUrl', 'test.pdf');
-            fixture.detectChanges();
-            fixture.destroy();
-
-            expect(removeSpy).toHaveBeenCalledWith('message', expect.any(Function));
-        });
     });
 
     describe('Fullscreen Mode', () => {
@@ -385,16 +375,6 @@ describe('PdfViewerComponent', () => {
             const footer = fixture.nativeElement.querySelector('.pdf-viewer-footer');
             expect(footer).toBeTruthy();
             expect(footer.textContent).toContain('3');
-        });
-
-        it('should cleanup on destroy', () => {
-            const removeSpy = vi.spyOn(window, 'removeEventListener');
-
-            fullscreenService.open('test.pdf', 1, undefined, undefined);
-            fixture.detectChanges();
-            fixture.destroy();
-
-            expect(removeSpy).toHaveBeenCalledWith('message', expect.any(Function));
         });
     });
 });

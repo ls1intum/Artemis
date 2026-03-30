@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, ElementRef, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, HostListener, OnInit, ViewEncapsulation, inject, signal, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgxExtendedPdfViewerModule, PDFNotificationService, type PagesLoadedEvent, pdfDefaultOptions } from 'ngx-extended-pdf-viewer';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -38,8 +38,6 @@ interface FindMatchesCount {
     total: number;
 }
 
-type FindCommandType = 'find' | 'again';
-
 /** Iframe PDF viewer content with toolbar, search, page navigation, and zoom. */
 @Component({
     selector: 'jhi-pdf-viewer-iframe-content',
@@ -52,15 +50,13 @@ type FindCommandType = 'find' | 'again';
 })
 export class PdfViewerIframeContentComponent implements OnInit {
     private readonly pdfNotificationService = inject(PDFNotificationService);
-    private readonly destroyRef = inject(DestroyRef);
 
-    readonly pdfUrl = signal<string>('');
-    readonly currentPage = signal<number>(1);
-    readonly totalPages = signal<number>(0);
-    readonly isDarkMode = signal<boolean>(false);
-    readonly isFullscreenMode = signal<boolean>(false);
+    readonly pdfUrl = signal('');
+    readonly currentPage = signal(1);
+    readonly totalPages = signal(0);
+    readonly isDarkMode = signal(false);
+    readonly isFullscreenMode = signal(false);
     readonly pageInputValue = signal<number | undefined>(1);
-    readonly isPageInputFocused = signal<boolean>(false);
 
     readonly pageInputElement = viewChild<InputNumber>('pageInput');
     readonly searchNextButtonElement = viewChild<ElementRef<HTMLButtonElement>>('searchNextButton');
@@ -75,24 +71,20 @@ export class PdfViewerIframeContentComponent implements OnInit {
     protected readonly faDownload = faDownload;
     protected readonly faExpand = faExpand;
 
-    protected searchQuery = signal<string>('');
+    protected searchQuery = signal('');
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
 
     ngOnInit(): void {
-        const messageListener = (event: Event) => {
-            this.handleParentMessage(event as MessageEvent<IframeMessage>);
-        };
-
-        window.addEventListener('message', messageListener);
-        this.destroyRef.onDestroy(() => {
-            window.removeEventListener('message', messageListener);
-        });
-
         this.postMessageToParent('ready', {});
     }
 
+    @HostListener('window:message', ['$event'])
+    protected onWindowMessage(event: MessageEvent<IframeMessage>): void {
+        this.handleParentMessage(event);
+    }
+
     /** Handles valid parent messages and updates URL, page, and theme state. */
-    private readonly handleParentMessage = (event: MessageEvent<IframeMessage>): void => {
+    private handleParentMessage(event: MessageEvent<IframeMessage>): void {
         if (event.origin !== window.location.origin || event.source !== window.parent) {
             return;
         }
@@ -123,7 +115,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
                 this.updateDarkMode(data?.isDarkMode);
                 break;
         }
-    };
+    }
 
     onPageChange(page: number): void {
         this.setCurrentPage(page);
@@ -196,12 +188,12 @@ export class PdfViewerIframeContentComponent implements OnInit {
         }
 
         this.searchQuery.set(query);
-        this.dispatchFindCommand({ type: 'find', query, highlightAll: true, findPrevious: false });
+        this.dispatchFindCommand('find', query, true, false);
     }
 
     protected onSearchInputEnter(event: Event): void {
         event.preventDefault();
-        this.searchNext();
+        this.search(false);
 
         setTimeout(() => {
             const nextButton = this.searchNextButtonElement()?.nativeElement;
@@ -211,28 +203,19 @@ export class PdfViewerIframeContentComponent implements OnInit {
         });
     }
 
-    protected searchNext(): void {
+    protected search(findPrevious: boolean): void {
         const query = this.searchQuery();
         if (!query) {
             return;
         }
 
-        this.dispatchFindCommand({ type: 'again', query, highlightAll: true, findPrevious: false });
-    }
-
-    protected searchPrevious(): void {
-        const query = this.searchQuery();
-        if (!query) {
-            return;
-        }
-
-        this.dispatchFindCommand({ type: 'again', query, highlightAll: true, findPrevious: true });
+        this.dispatchFindCommand('again', query, true, findPrevious);
     }
 
     protected clearSearch(): void {
         this.searchQuery.set('');
         this.searchMatchesCount.set(undefined);
-        this.dispatchFindCommand({ type: 'find', query: '', highlightAll: false, findPrevious: false });
+        this.dispatchFindCommand('find', '', false, false);
     }
 
     protected confirmPageNavigation(): void {
@@ -248,25 +231,14 @@ export class PdfViewerIframeContentComponent implements OnInit {
             const fallbackPage = previousPage > 0 && previousPage <= totalPages ? previousPage : 1;
             this.pageInputValue.set(fallbackPage);
         } else {
-            this.currentPage.set(value);
+            this.setCurrentPage(value);
         }
 
-        this.blurPageInput();
-        this.isPageInputFocused.set(false);
+        this.pageInputElement()?.input?.nativeElement?.blur();
     }
 
     protected onPageInputFocus(): void {
-        this.isPageInputFocused.set(true);
-        const inputNumber = this.pageInputElement();
-        if (inputNumber?.input?.nativeElement) {
-            setTimeout(() => {
-                inputNumber.input.nativeElement.select();
-            });
-        }
-    }
-
-    protected onPageInputBlur(): void {
-        this.isPageInputFocused.set(false);
+        setTimeout(() => this.pageInputElement()?.input?.nativeElement?.select());
     }
 
     protected triggerDownload(): void {
@@ -281,27 +253,20 @@ export class PdfViewerIframeContentComponent implements OnInit {
         return this.pdfNotificationService.onPDFJSInitSignal() as unknown as PDFViewerApplication | undefined;
     }
 
-    private dispatchFindCommand(params: { type: FindCommandType; query: string; highlightAll: boolean; findPrevious: boolean }): void {
+    private dispatchFindCommand(type: 'find' | 'again', query: string, highlightAll: boolean, findPrevious: boolean): void {
         const eventBus = this.getPdfViewerApplication()?.eventBus;
         if (!eventBus) {
             return;
         }
 
         eventBus.dispatch('find', {
-            type: params.type,
-            query: params.query,
+            type,
+            query,
             caseSensitive: false,
             entireWord: false,
-            highlightAll: params.highlightAll,
-            findPrevious: params.findPrevious,
+            highlightAll,
+            findPrevious,
         });
-    }
-
-    private blurPageInput(): void {
-        const inputNumber = this.pageInputElement();
-        if (inputNumber?.input?.nativeElement) {
-            inputNumber.input.nativeElement.blur();
-        }
     }
 
     /** Keeps page state and page input value in sync. */

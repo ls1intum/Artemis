@@ -146,7 +146,6 @@
 }
 
 .artemis-pdf-toolbar__page-confirm {
-    margin-left: 0;
     width: 24px;
     height: 24px;
     fa-icon {
@@ -230,8 +229,6 @@
 .iframe-pdf-container .textLayer .highlight.selected,
 .iframe-pdf-container .textLayer .customHighlight.selected {
     background-color: var(--artemis-search-highlight-selected-bg-color) !important;
-    opacity: 1 !important;
-    backdrop-filter: none !important;
 }
 
 .iframe-pdf-container .page {
