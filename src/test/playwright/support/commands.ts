@@ -159,7 +159,6 @@ export class Commands {
         // Otherwise, wait for the result count to increase by at least 1.
         const targetCount = minResults ?? numberOfBuildResults + 1;
 
-        console.log(`Waiting for build results to reach ${targetCount} (currently ${numberOfBuildResults})...`);
         while (Date.now() - startTime < timeout) {
             exerciseParticipation = await getParticipation();
             const currentBuildResultsCount = countResults(exerciseParticipation);

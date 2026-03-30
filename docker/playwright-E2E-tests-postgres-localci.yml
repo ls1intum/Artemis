@@ -61,6 +61,7 @@ services:
             # Pass through Playwright test timeouts
             TEST_TIMEOUT_SECONDS: ${TEST_TIMEOUT_SECONDS:-300}
             FAST_TEST_TIMEOUT_SECONDS: ${FAST_TEST_TIMEOUT_SECONDS:-60}
+            SLOW_TEST_TIMEOUT_SECONDS: ${SLOW_TEST_TIMEOUT_SECONDS:-300}
         network_mode: service:artemis-app
 
 networks:
