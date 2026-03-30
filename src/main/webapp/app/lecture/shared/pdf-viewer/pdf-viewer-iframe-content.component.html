@@ -117,16 +117,14 @@
                             [attr.aria-label]="'artemisApp.attachmentVideoUnit.pdfViewer.goToPage' | artemisTranslate"
                             inputStyleClass="artemis-pdf-toolbar__page-input"
                         />
-                        @if (isPageInputFocused()) {
-                            <button
-                                class="artemis-pdf-toolbar__button artemis-pdf-toolbar__page-confirm"
-                                type="button"
-                                [title]="'artemisApp.attachmentVideoUnit.pdfViewer.confirmPage' | artemisTranslate"
-                                (click)="confirmPageNavigation()"
-                            >
-                                <fa-icon [icon]="faCheck" />
-                            </button>
-                        }
+                        <button
+                            class="artemis-pdf-toolbar__button artemis-pdf-toolbar__page-confirm"
+                            type="button"
+                            [title]="'artemisApp.attachmentVideoUnit.pdfViewer.confirmPage' | artemisTranslate"
+                            (click)="confirmPageNavigation()"
+                        >
+                            <fa-icon [icon]="faCheck" />
+                        </button>
                         <span class="artemis-pdf-toolbar__page-total">/{{ totalPages() }}</span>
                     </div>
                     <div class="artemis-pdf-toolbar__divider"></div>

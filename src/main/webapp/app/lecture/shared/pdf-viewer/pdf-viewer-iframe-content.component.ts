@@ -39,7 +39,6 @@ interface FindMatchesCount {
 }
 
 type FindCommandType = 'find' | 'again';
-const PAGE_INPUT_BLUR_DELAY_MS = 200;
 
 /** Iframe PDF viewer content with toolbar, search, page navigation, and zoom. */
 @Component({
@@ -263,9 +262,7 @@ export class PdfViewerIframeContentComponent implements OnInit {
     }
 
     protected onPageInputBlur(): void {
-        setTimeout(() => {
-            this.isPageInputFocused.set(false);
-        }, PAGE_INPUT_BLUR_DELAY_MS);
+        this.isPageInputFocused.set(false);
     }
 
     protected triggerDownload(): void {

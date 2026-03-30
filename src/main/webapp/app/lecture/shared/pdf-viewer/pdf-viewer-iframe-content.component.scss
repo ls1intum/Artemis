@@ -147,6 +147,11 @@
 
 .artemis-pdf-toolbar__page-confirm {
     margin-left: 0;
+    width: 24px;
+    height: 24px;
+    fa-icon {
+        font-size: 0.85rem;
+    }
 }
 
 .artemis-pdf-toolbar__page-total {
