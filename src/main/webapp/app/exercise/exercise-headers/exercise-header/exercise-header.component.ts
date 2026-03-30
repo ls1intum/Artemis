@@ -23,6 +23,8 @@ export class ExerciseHeaderComponent {
     readonly onSubmitExercise = input<() => void>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = model<ParticipationMode>('graded');
+    readonly athenaEnabled = input<boolean>(false);
+    readonly feedbackRequestLimit = input<number>(10);
 
     readonly exerciseIcon = computed(() => {
         const exercise = this.exercise();

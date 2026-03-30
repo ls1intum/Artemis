@@ -28,6 +28,8 @@
         [submissionPolicy]="submissionPolicy()"
         [course]="exercise().course"
         [isPractice]="participationMode() === 'practice'"
+        [athenaEnabled]="athenaEnabled()"
+        [feedbackRequestLimit]="feedbackRequestLimit()"
         (viewingSubmissionChange)="isViewingSubmission.set($event)"
     />
 </div>

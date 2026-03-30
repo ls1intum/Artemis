@@ -347,7 +347,9 @@
                 "selectExercise": "Please select an Exercise.",
                 "status": "Status",
                 "codeIssues": "Code Issues",
-                "codeIssuesTooltip": "Number of static code analysis issues found in your latest submission."
+                "codeIssuesTooltip": "Number of static code analysis issues found in your latest submission.",
+                "aiFeedbackRequests": "AI Feedback",
+                "aiFeedbackRequestsTooltip": "Number of AI feedback requests used out of the allowed limit."
             }
         }
     }

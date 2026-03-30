@@ -9,6 +9,7 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { Course } from 'app/core/course/shared/entities/course.model';
 import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { InformationBox, InformationBoxComponent } from 'app/shared/information-box/information-box.component';
 import { ComplaintService } from 'app/assessment/shared/services/complaint.service';
 import { isDateLessThanAWeekInTheFuture } from 'app/shared/util/date.utils';
@@ -59,6 +60,8 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     @Input() submissionPolicy?: SubmissionPolicy;
     @Input() sortedHistoryResults: Result[] = [];
     @Input() isPractice: boolean = false;
+    @Input() athenaEnabled: boolean = false;
+    @Input() feedbackRequestLimit: number = 10;
 
     dueDate?: dayjs.Dayjs;
     programmingExercise?: ProgrammingExercise;
@@ -66,6 +69,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     now: dayjs.Dayjs;
     achievedPoints: number = 0;
     numberOfSubmissions: number;
+    currentFeedbackRequestCount: number = 0;
     informationBoxItems: InformationBox[] = [];
 
     ngOnInit() {
@@ -101,6 +105,9 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
             }
             this.updateStaticCodeAnalysisItem();
         }
+        if (this.athenaEnabled) {
+            this.updateAiFeedbackItem();
+        }
     }
 
     createInformationBoxItems() {
@@ -110,6 +117,7 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         this.addSubmissionStatusItem();
         this.addSubmissionPolicyItem();
         this.addStaticCodeAnalysisItem();
+        this.addAiFeedbackItem();
         this.addDifficultyItem();
         this.addCategoryItems();
     }
@@ -343,6 +351,40 @@ export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
         const itemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.codeIssues');
         if (itemIndex !== -1) {
             this.informationBoxItems.splice(itemIndex, 1, this.getStaticCodeAnalysisItem());
+        }
+    }
+
+    addAiFeedbackItem() {
+        if (this.athenaEnabled) {
+            this.countAiFeedbackRequests();
+            this.informationBoxItems.push(this.getAiFeedbackItem());
+        }
+    }
+
+    getAiFeedbackItem(): InformationBox {
+        return {
+            title: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests',
+            content: {
+                type: 'string',
+                value: `${this.currentFeedbackRequestCount} / ${this.feedbackRequestLimit}`,
+            },
+            contentColor: this.currentFeedbackRequestCount >= this.feedbackRequestLimit ? 'danger' : 'warning',
+            tooltip: 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequestsTooltip',
+        };
+    }
+
+    countAiFeedbackRequests() {
+        this.currentFeedbackRequestCount =
+            getAllResultsOfAllSubmissions(this.studentParticipation?.submissions)?.filter(
+                (result) => result.assessmentType === AssessmentType.AUTOMATIC_ATHENA && result.successful === true,
+            ).length ?? 0;
+    }
+
+    updateAiFeedbackItem() {
+        this.countAiFeedbackRequests();
+        const itemIndex = this.informationBoxItems.findIndex((item) => item.title === 'artemisApp.courseOverview.exerciseDetails.aiFeedbackRequests');
+        if (itemIndex !== -1) {
+            this.informationBoxItems.splice(itemIndex, 1, this.getAiFeedbackItem());
         }
     }
 }

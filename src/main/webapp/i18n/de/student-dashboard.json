@@ -347,7 +347,9 @@
                 "selectExercise": "Bitte wähle eine Aufgabe aus.",
                 "status": "Status",
                 "codeIssues": "Code-Probleme",
-                "codeIssuesTooltip": "Anzahl der statischen Code-Analyse-Probleme in deiner letzten Abgabe."
+                "codeIssuesTooltip": "Anzahl der statischen Code-Analyse-Probleme in deiner letzten Abgabe.",
+                "aiFeedbackRequests": "KI-Feedback",
+                "aiFeedbackRequestsTooltip": "Anzahl der genutzten KI-Feedback-Anfragen im Verhältnis zum erlaubten Limit."
             }
         }
     }

@@ -178,6 +178,8 @@ export class ExerciseHeaderActionsComponent {
 
     readonly athenaEnabled = this.profileService.isProfileActive(PROFILE_ATHENA);
 
+    readonly showFeedbackPopover = computed(() => !this.examMode() && (this.exercise().allowFeedbackRequests ?? false));
+
     readonly beforeDueDate = computed(() => {
         const exercise = this.exercise();
         return !exercise.dueDate || !hasExerciseDueDatePassed(exercise, this._gradedParticipation());

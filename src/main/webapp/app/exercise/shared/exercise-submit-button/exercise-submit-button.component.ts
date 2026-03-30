@@ -28,7 +28,7 @@ export class ExerciseSubmitButtonComponent {
 
     readonly popover = viewChild<NgbPopover>('popoverRef');
 
-    readonly isAiFeedbackEnabled = computed(() => true); //TODO ldv !!this.exercise().feedbackSuggestionModule
+    readonly isAiFeedbackEnabled = computed(() => !!this.exercise().feedbackSuggestionModule);
 
     readonly faRobot = faRobot;
 

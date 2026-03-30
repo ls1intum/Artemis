@@ -30,24 +30,33 @@
         </div>
     }
     @if (onSubmitExercise() && (exercise().type !== ExerciseType.QUIZ || gradedParticipation()?.initializationState === InitializationState.INITIALIZED)) {
-        <!-- TODO ldv: gate with exercise().feedbackSuggestionModule instead of always showing -->
-        <span
-            [ngbPopover]="submitPopContent"
-            [autoClose]="false"
-            placement="bottom-end bottom-start bottom auto"
-            container="body"
-            triggers="manual"
-            popoverClass="ai-feedback-popover"
-            #submitPopoverRef="ngbPopover"
-        >
+        @if (showFeedbackPopover()) {
+            <span
+                [ngbPopover]="submitPopContent"
+                [autoClose]="false"
+                placement="bottom-end bottom-start bottom auto"
+                container="body"
+                triggers="manual"
+                popoverClass="ai-feedback-popover"
+                #submitPopoverRef="ngbPopover"
+            >
+                <button
+                    jhi-exercise-action-button
+                    [buttonIcon]="faPaperPlane"
+                    [buttonLabel]="'entity.action.submit' | artemisTranslate"
+                    [smallButton]="smallButtons()"
+                    (click)="submitAndShowPopover()"
+                ></button>
+            </span>
+        } @else {
             <button
                 jhi-exercise-action-button
                 [buttonIcon]="faPaperPlane"
                 [buttonLabel]="'entity.action.submit' | artemisTranslate"
                 [smallButton]="smallButtons()"
-                (click)="submitAndShowPopover()"
+                (click)="onSubmitExercise()!()"
             ></button>
-        </span>
+        }
     }
     @if (onContinueExercise()) {
         <button
