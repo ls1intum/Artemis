@@ -119,6 +119,7 @@
                                     [originalPostDetails]="originalPostDetails"
                                     (isDeleteEvent)="onDeleteEvent(true)"
                                     (onBookmarkClicked)="toggleSavePost()"
+                                    (reactionsUpdated)="onReactionsUpdated($event)"
                                 />
                             }
                         </div>
@@ -157,6 +158,7 @@
                     [isEmojiCount]="true"
                     [hoverBar]="false"
                     (onBookmarkClicked)="toggleSavePost()"
+                    (reactionsUpdated)="onReactionsUpdated($event)"
                 />
             }
         </div>

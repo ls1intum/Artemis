@@ -27,6 +27,8 @@ import { Course, isCommunicationEnabled } from 'app/core/course/shared/entities/
 import { PostingFooterComponent } from 'app/communication/posting-footer/posting-footer.component';
 import { getAsChannelDTO } from 'app/communication/shared/entities/conversation/channel.model';
 import { AnswerPost } from 'app/communication/shared/entities/answer-post.model';
+import { Reaction } from 'app/communication/shared/entities/reaction.model';
+import { deepClone } from 'app/shared/util/deep-clone.util';
 import { CdkConnectedOverlay, CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { DOCUMENT, NgClass, NgStyle } from '@angular/common';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -171,6 +173,16 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnD
 
     get reactionsBar() {
         return this.reactionsBarComponent();
+    }
+
+    onReactionsUpdated(updatedReactions: Reaction[]) {
+        const current = this.posting();
+        if (!current) {
+            return;
+        }
+        const updated = deepClone(current);
+        updated.reactions = updatedReactions;
+        this.posting.set(updated);
     }
 
     /**

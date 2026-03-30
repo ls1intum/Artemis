@@ -241,6 +241,40 @@ export class CommunicationAPIRequests {
      * @param content - The content of the post.
      * @returns Promise<Post> representing the course lecture post created.
      */
+    /**
+     * Creates a one-to-one chat (DM) with the specified partner.
+     *
+     * @param course - The course in which to create the DM.
+     * @param partnerUsername - The username of the partner.
+     * @returns Promise with the created conversation.
+     */
+    async createOneToOneChat(course: Course, partnerUsername: string) {
+        const response = await this.page.request.post(`api/communication/courses/${course.id}/one-to-one-chats`, { data: [partnerUsername] });
+        if (!response.ok()) {
+            throw new Error(`createOneToOneChat failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
+        return response.json();
+    }
+
+    /**
+     * Adds an emoji reaction to a post.
+     *
+     * @param courseId - The ID of the course.
+     * @param postId - The ID of the post to react to.
+     * @param emojiId - The emoji identifier (e.g., 'thumbsup').
+     */
+    async addReactionToPost(courseId: number, postId: number, emojiId: string) {
+        const data = {
+            emojiId,
+            relatedPostId: postId,
+        };
+        const response = await this.page.request.post(`api/communication/courses/${courseId}/postings/reactions`, { data });
+        if (!response.ok()) {
+            throw new Error(`addReactionToPost failed: ${response.status()} ${response.statusText()} - ${await response.text()}`);
+        }
+        return response.json();
+    }
+
     async createCourseLecturePost(course: Course, lecture: Lecture, title: string, content: string) {
         const data = {
             content,
