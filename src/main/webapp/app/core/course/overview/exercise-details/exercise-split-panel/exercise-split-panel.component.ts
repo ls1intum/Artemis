@@ -5,7 +5,6 @@ import { ProgrammingExercise } from 'app/programming/shared/entities/programming
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
 import { faAlignLeft, faAngleDown, faAngleUp, faComment, faGear, faGraduationCap } from '@fortawesome/free-solid-svg-icons';
 import { ProblemStatementComponent } from 'app/core/course/overview/exercise-details/problem-statement/problem-statement.component';
-import { DiscussionFeedComponent } from 'app/communication/shared/discussion-section/discussion-feed.component';
 import { TextEditorComponent } from 'app/text/overview/text-editor/text-editor.component';
 import { CodeEditorStudentContainerComponent } from 'app/programming/overview/code-editor-student-container/code-editor-student-container.component';
 import { ModelingSubmissionComponent } from 'app/modeling/overview/modeling-submission/modeling-submission.component';
@@ -34,6 +33,7 @@ import { PlagiarismVerdict } from 'app/plagiarism/shared/entities/PlagiarismVerd
 import { PlagiarismCaseInfo } from 'app/plagiarism/shared/entities/PlagiarismCaseInfo';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
+import { DiscussionSectionComponent } from 'app/communication/shared/discussion-section/discussion-section.component';
 
 @Component({
     selector: 'jhi-exercise-split-panel',
@@ -44,7 +44,6 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
         ResizablePanelsComponent,
         PanelDirective,
         ProblemStatementComponent,
-        DiscussionFeedComponent,
         IrisBaseChatbotComponent,
         IrisLogoComponent,
         TranslateDirective,
@@ -58,6 +57,7 @@ import { ExampleSolutionInfo } from 'app/exercise/services/exercise.service';
         FaIconComponent,
         NgbTooltip,
         ArtemisTranslatePipe,
+        DiscussionSectionComponent,
     ],
 })
 export class ExerciseSplitPanelComponent {

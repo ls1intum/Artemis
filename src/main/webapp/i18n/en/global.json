@@ -47,6 +47,10 @@
             "tipDescription": "Search for exercises, lectures, and more. Use filters to narrow your results.",
             "arrowUpAriaLabel": "Arrow up",
             "arrowDownAriaLabel": "Arrow down",
+            "searchLectureContentHint": "Type to search through lecture transcripts and materials",
+            "lectureResultsAriaLabel": "Lecture search results",
+            "lectureSearchError": "Search failed. Please try again.",
+            "pageAbbreviation": "pg.",
             "filterChipAriaLabel": "Filter: {{ filter }}",
             "actionBadge": "Action",
             "actions": {
@@ -78,7 +82,13 @@
             },
             "comingSoon": "Coming soon",
             "enterToActivate": "Press Enter to activate",
-            "searchFailed": "Search failed. Please try again."
+            "searchFailed": "Search failed. Please try again.",
+            "askIris": "Ask Iris AI",
+            "askIrisDescription": "Get an AI-generated answer from your lecture content",
+            "irisAnswerTitle": "Iris AI Answer",
+            "irisAnswerSources": "Sources",
+            "irisAnswerError": "Iris couldn't generate an answer. Please try again.",
+            "continueInIris": "Continue conversation in Iris"
         },
         "menu": {
             "home": "Home",
