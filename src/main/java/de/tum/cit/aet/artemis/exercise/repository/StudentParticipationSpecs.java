@@ -21,11 +21,13 @@ import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
 import de.tum.cit.aet.artemis.assessment.domain.Result_;
 import de.tum.cit.aet.artemis.core.domain.DomainObject_;
+import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.domain.User_;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
 import de.tum.cit.aet.artemis.exercise.domain.InitializationState;
 import de.tum.cit.aet.artemis.exercise.domain.Submission;
 import de.tum.cit.aet.artemis.exercise.domain.Submission_;
+import de.tum.cit.aet.artemis.exercise.domain.Team;
 import de.tum.cit.aet.artemis.exercise.domain.Team_;
 import de.tum.cit.aet.artemis.exercise.domain.participation.Participation_;
 import de.tum.cit.aet.artemis.exercise.domain.participation.StudentParticipation;
@@ -103,8 +105,18 @@ public class StudentParticipationSpecs {
             return (root, query, cb) -> {
                 List<Predicate> tokenPredicates = tokens.stream().map(token -> {
                     String pattern = likePattern(token);
-                    return cb.or(cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.NAME)), pattern, '\\'),
+                    Predicate teamNameMatch = cb.or(cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.NAME)), pattern, '\\'),
                             cb.like(cb.lower(root.get(StudentParticipation_.TEAM).get(Team_.SHORT_NAME)), pattern, '\\'));
+
+                    Subquery<Long> studentSub = query.subquery(Long.class);
+                    Root<Team> teamRoot = studentSub.from(Team.class);
+                    Join<Team, User> studentJoin = teamRoot.join(Team_.STUDENTS);
+                    studentSub.select(cb.literal(1L));
+                    studentSub.where(cb.equal(teamRoot.get(DomainObject_.ID), root.get(StudentParticipation_.TEAM).get(DomainObject_.ID)),
+                            cb.or(cb.like(cb.lower(studentJoin.get(User_.LOGIN)), pattern, '\\'), cb.like(cb.lower(studentJoin.get(User_.FIRST_NAME)), pattern, '\\'),
+                                    cb.like(cb.lower(studentJoin.get(User_.LAST_NAME)), pattern, '\\')));
+
+                    return cb.or(teamNameMatch, cb.exists(studentSub));
                 }).toList();
                 return cb.or(tokenPredicates.toArray(new Predicate[0]));
             };
