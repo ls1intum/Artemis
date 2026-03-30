@@ -186,6 +186,7 @@
                     "titleLength": "Titel darf eine maximale Länge von 19 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
                     "campusLength": "Campus darf eine maximale Länge von 255 Zeichen haben. Das sytsem entfernt automatisch führende und abschließende Whitespaces.",
                     "languageRequired": "Bitte wähle eine Sprache.",
+                    "languageLength": "Sprache darf maximal 255 Zeichen enthalten. Das System entfernt automatisch führende/abschließende Leerzeichen.",
                     "firstSessionStartRequired": "Bitte wähle ein Zeitpunkt.",
                     "firstSessionEndRequired": "Bitte wähle ein Zeitpunkt.",
                     "firstSessionEndNotAfterStart": "Das Ende der Session muss nach dem Anfang liegen.",
