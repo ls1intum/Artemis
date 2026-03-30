@@ -35,7 +35,7 @@
                         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations"></span>
                     </a>
                 }
-                @if (exercise()!.isAtLeastInstructor) {
+                @if (exercise()!.isAtLeastInstructor && !exercise()!.teamMode) {
                     <jhi-external-submission class="d-inline-block" [exercise]="exercise()!" />
                 }
                 <button
@@ -94,7 +94,7 @@
                 [loading]="isLoading()"
                 [tableActions]="filterActionsTemplate() ?? null"
                 [rowActions]="exercise()!.isAtLeastInstructor ? actionsTemplate : null"
-                [options]="tableOptions"
+                [options]="tableOptions()"
                 (onLazyLoad)="onLazyLoad($event)"
             />
         </div>

@@ -8,11 +8,7 @@ import { ButtonComponent } from 'app/shared/components/buttons/button/button.com
 
 @Component({
     selector: 'jhi-external-submission',
-    template: `
-        @if (!exercise.teamMode) {
-            <jhi-button [btnType]="ButtonType.WARNING" [icon]="faPlus" [title]="'entity.action.addExternalSubmission'" (onClick)="openExternalSubmissionDialog($event)" />
-        }
-    `,
+    template: ` <jhi-button [btnType]="ButtonType.WARNING" [icon]="faPlus" [title]="'entity.action.addExternalSubmission'" (onClick)="openExternalSubmissionDialog($event)" /> `,
     imports: [ButtonComponent],
 })
 export class ExternalSubmissionButtonComponent {

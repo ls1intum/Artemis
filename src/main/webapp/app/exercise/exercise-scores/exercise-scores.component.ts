@@ -162,7 +162,12 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly filterActionsTemplate = viewChild<TemplateRef<unknown>>('filterDropdownTemplate');
     readonly exportPopover = viewChild<NgbPopover>('exportPopover');
 
-    readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: 'flex' };
+    readonly tableOptions = computed<TableViewOptions>(() => ({
+        striped: true,
+        scrollable: true,
+        scrollHeight: 'flex',
+        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
+    }));
 
     readonly columns = computed<ColumnDef<ParticipationScoreDTO>[]>(() => {
         const ex = this.exercise();

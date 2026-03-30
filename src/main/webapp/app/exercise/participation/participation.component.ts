@@ -167,7 +167,13 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly editingDueDateIds = signal<ReadonlySet<number>>(new Set());
     private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
 
-    readonly tableOptions: TableViewOptions = { dataKey: 'participationId', striped: true, scrollable: true, scrollHeight: 'flex' };
+    readonly tableOptions = computed<TableViewOptions>(() => ({
+        dataKey: 'participationId',
+        striped: true,
+        scrollable: true,
+        scrollHeight: 'flex',
+        searchPlaceholder: this.exercise()?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents',
+    }));
 
     // Template refs
     readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('idCellTemplate');

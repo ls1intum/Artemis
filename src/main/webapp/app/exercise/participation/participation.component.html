@@ -22,7 +22,7 @@
                 [loading]="isLoading()"
                 [tableActions]="filterActionsTemplate ?? null"
                 [rowActions]="actionsTemplate"
-                [options]="tableOptions"
+                [options]="tableOptions()"
                 (onLazyLoad)="onLazyLoad($event)"
             />
         </div>
