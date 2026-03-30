@@ -12,6 +12,8 @@ configuration.ts
 encoder.ts
 model/artifactLocation.ts
 model/bloomRadar.ts
+model/buildPhase.ts
+model/buildPlanPhases.ts
 model/channel.ts
 model/checklistActionRequest.ts
 model/checklistActionResponse.ts
