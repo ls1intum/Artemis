@@ -164,7 +164,7 @@ public class HazelcastConfiguration {
 
     private final EurekaInstanceHelper eurekaInstanceHelper;
 
-    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
+    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name:Artemis}")
     private String instanceName;
 
     @Value("${spring.hazelcast.interface:}")

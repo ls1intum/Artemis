@@ -94,7 +94,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
 
     private final String relyingPartyName = "Artemis";
 
-    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, MappingJackson2HttpMessageConverter converter, JWTCookieService jwtCookieService,
+    public ArtemisPasskeyWebAuthnConfigurer(AuditEventRepository auditEventRepository, com.fasterxml.jackson.databind.ObjectMapper objectMapper, JWTCookieService jwtCookieService,
             UserRepository userRepository, PublicKeyCredentialUserEntityRepository publicKeyCredentialUserEntityRepository, UserCredentialRepository userCredentialRepository,
             PublicKeyCredentialCreationOptionsRepository publicKeyCredentialCreationOptionsRepository,
             PublicKeyCredentialRequestOptionsRepository publicKeyCredentialRequestOptionsRepository, AndroidFingerprintService androidFingerprintService,
@@ -102,7 +102,7 @@ public class ArtemisPasskeyWebAuthnConfigurer {
             GlobalNotificationSettingRepository globalNotificationSettingRepository, RateLimitService rateLimitService,
             de.tum.cit.aet.artemis.core.repository.PasskeyCredentialsRepository passkeyCredentialsRepository) {
         this.auditEventRepository = auditEventRepository;
-        this.converter = converter;
+        this.converter = new MappingJackson2HttpMessageConverter(objectMapper);
         this.jwtCookieService = jwtCookieService;
         this.userRepository = userRepository;
         this.publicKeyCredentialUserEntityRepository = publicKeyCredentialUserEntityRepository;

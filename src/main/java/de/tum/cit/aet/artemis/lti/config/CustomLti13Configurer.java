@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.lti.config;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
@@ -21,6 +22,9 @@ import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorization
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
  */
 @Conditional(LtiEnabled.class)
+// The spring-security-lti13 library requires AntPathRequestMatcher which was removed in Spring Security 7.
+// This bean will not be created when running with Spring Security 7 until the library is updated.
+@ConditionalOnClass(name = "org.springframework.security.web.util.matcher.AntPathRequestMatcher")
 @Component
 @Lazy
 public class CustomLti13Configurer extends Lti13Configurer {

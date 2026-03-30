@@ -45,7 +45,7 @@ import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
 // See: https://github.com/hazelcast/hazelcast/issues/26553
 @SpringBootApplication(exclude = HazelcastObjectExtractionConfiguration.class)
 @EnableConfigurationProperties({ LiquibaseProperties.class, ProgrammingLanguageConfiguration.class, TheiaConfiguration.class, LicenseConfiguration.class,
-        ArtemisCompatibleVersionsConfiguration.class })
+        ArtemisCompatibleVersionsConfiguration.class, de.tum.cit.aet.artemis.core.config.ArtemisProperties.class })
 public class ArtemisApp {
 
     private static final Logger log = LoggerFactory.getLogger(ArtemisApp.class);

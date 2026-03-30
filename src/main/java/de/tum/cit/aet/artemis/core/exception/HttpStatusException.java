@@ -53,6 +53,16 @@ public abstract class HttpStatusException extends ErrorResponseException {
     }
 
     /**
+     * Returns the title of the problem detail, preserving backward compatibility with the old Zalando API
+     * where getMessage() returned just the title string.
+     */
+    @Override
+    public String getMessage() {
+        ProblemDetail body = getBody();
+        return body.getTitle() != null ? body.getTitle() : super.getMessage();
+    }
+
+    /**
      * @param entityName of the component where the error occurred
      * @param errorKey   that matches a translation key in the client side i18n error.json files
      * @param skipAlert  if the error should not be handled by the client side intercepting alert service

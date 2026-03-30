@@ -64,7 +64,7 @@ public class HazelcastClusterManager {
 
     private final Instant startupTime = Instant.now();
 
-    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name}")
+    @Value("${spring.jpa.properties.hibernate.cache.hazelcast.instance_name:Artemis}")
     private String instanceName;
 
     public HazelcastClusterManager(EurekaInstanceHelper eurekaInstanceHelper, Environment env) {

@@ -337,9 +337,15 @@ public class SecurityConfiguration {
 
         // Conditionally adds configuration for LTI if it is enabled.
         if (moduleFeatureService.isLtiEnabled()) {
-            // Activates the LTI endpoints and filters.
-            log.info("LTI module feature is enabled; enabling LTI endpoints and security configuration.");
-            http.with(customLti13Configurer.orElseThrow(), configurer -> configurer.configure(http));
+            if (customLti13Configurer.isPresent()) {
+                log.info("LTI module feature is enabled; enabling LTI endpoints and security configuration.");
+                http.with(customLti13Configurer.get(), configurer -> configurer.configure(http));
+            }
+            else {
+                // spring-security-lti13 0.3.4 uses AntPathRequestMatcher which was removed in Spring Security 7.
+                log.warn("LTI is enabled but the CustomLti13Configurer bean is not available. "
+                        + "The spring-security-lti13 library needs to be updated for Spring Security 7 compatibility.");
+            }
         }
 
         // Builds and returns the SecurityFilterChain.

@@ -30,7 +30,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 
@@ -207,12 +206,7 @@ public class ExceptionTranslator extends ResponseEntityExceptionHandler {
         }
     }
 
-    @ExceptionHandler(NoResourceFoundException.class)
-    public ResponseEntity<ProblemDetail> handleResourceNotFoundException(NoResourceFoundException ex, NativeWebRequest request) {
-        ProblemDetail detail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
-        postProcess(detail, request);
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(detail);
-    }
+    // NoResourceFoundException is handled by the parent ResponseEntityExceptionHandler
 
     /**
      * Handles {@link RateLimitExceededException} exceptions that occur when a client

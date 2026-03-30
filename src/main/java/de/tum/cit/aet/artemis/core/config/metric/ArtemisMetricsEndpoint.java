@@ -1,5 +1,7 @@
 package de.tum.cit.aet.artemis.core.config.metric;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
+
 import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryMXBean;
 import java.lang.management.ThreadMXBean;
@@ -10,6 +12,7 @@ import java.util.Map;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -20,6 +23,7 @@ import org.springframework.stereotype.Component;
  * {@link de.tum.cit.aet.artemis.core.web.CustomMetricsExtension} which
  * adds active-user counts.
  */
+@Profile(PROFILE_CORE)
 @Component
 @Lazy
 @Endpoint(id = "artemis-metrics")
