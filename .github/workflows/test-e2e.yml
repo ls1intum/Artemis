@@ -402,9 +402,15 @@ jobs:
               // is left untouched for the report-results job to handle.
               body = body.replace(/<!-- PHASE2 -->.*<!-- \/PHASE2 -->/s, phase2Row);
 
-              // Append Phase 2 flakiness table before <!-- OVERALL -->
-              if (flakinessTable) {
-                body = body.replace('<!-- OVERALL -->', flakinessTable + '\n<!-- OVERALL -->');
+              // Replace or insert Phase 2 flakiness table using idempotent markers
+              const phase2FlakinessMarker = /<!-- PHASE2_FLAKINESS -->[\s\S]*?<!-- \/PHASE2_FLAKINESS -->\n?/;
+              const phase2FlakinessBlock = flakinessTable
+                ? `<!-- PHASE2_FLAKINESS -->${flakinessTable}\n<!-- /PHASE2_FLAKINESS -->\n`
+                : '';
+              if (phase2FlakinessMarker.test(body)) {
+                body = body.replace(phase2FlakinessMarker, phase2FlakinessBlock);
+              } else if (flakinessTable) {
+                body = body.replace('<!-- OVERALL -->', phase2FlakinessBlock + '<!-- OVERALL -->');
               }
 
               await github.rest.issues.updateComment({

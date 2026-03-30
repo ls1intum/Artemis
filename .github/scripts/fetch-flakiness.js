@@ -92,13 +92,15 @@ async function fetchFlakinessScores(failedTests, heliosSecret) {
  */
 function buildFlakinessTable(flakinessResults) {
     if (!Array.isArray(flakinessResults) || !flakinessResults.length) return '';
+    const escapeMd = (s = '') => String(s).replaceAll('|', '\\|').replaceAll('`', '\\`');
     let table = '\n#### Flakiness Scores for Failed Tests\n\n';
     table += '| Test | Flakiness Score | Default Branch Failure Rate | Combined Failure Rate |\n';
     table += '|------|:---:|:---:|:---:|\n';
     for (const r of flakinessResults) {
         const dfr = (r.defaultBranchFailureRate * 100).toFixed(1);
         const cfr = (r.combinedFailureRate * 100).toFixed(1);
-        table += `| \`${r.testName}\` | **${r.flakinessScore}%** | ${dfr}% | ${cfr}% |\n`;
+        const testId = `${escapeMd(r.className)}#${escapeMd(r.testName)}`;
+        table += `| \`${testId}\` | **${r.flakinessScore}%** | ${dfr}% | ${cfr}% |\n`;
     }
     return table;
 }
