@@ -11,12 +11,11 @@
         </div>
         <span class="text-body-tertiary" style="font-size: 12px">{{ sortedHistoryResults().length }} results</span>
     </div>
-    <div style="max-height: 362px; overflow-y: auto; width: 443px">
+    <div class="list-group list-group-flush" style="max-height: 362px; overflow-y: auto; width: 443px">
         @for (result of displayedResults(); track result; let i = $index; let last = $last) {
             <div
-                class="d-flex align-items-center gap-2 px-3 py-2"
+                class="list-group-item list-group-item-action d-flex align-items-center gap-2 px-3 py-2"
                 [class.bg-primary-subtle]="result.id === activeResultId()"
-                [class.border-bottom]="!last"
                 [attr.role]="isRowClickable() ? 'button' : undefined"
                 (click)="isRowClickable() ? navigateToSubmission(result, $event) : undefined"
             >

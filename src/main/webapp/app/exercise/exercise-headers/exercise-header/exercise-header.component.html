@@ -13,7 +13,8 @@
             class="w-auto"
             [courseId]="courseId()"
             [exercise]="exercise()"
-            [onSubmitExercise]="onSubmitExercise()"
+            [onSubmitExercise]="effectiveOnSubmitExercise()"
+            [onContinueExercise]="onContinueExercise()"
             [plagiarismCaseInfo]="plagiarismCaseInfo()"
             [participationMode]="participationMode()"
         />
@@ -27,5 +28,6 @@
         [submissionPolicy]="submissionPolicy()"
         [course]="exercise().course"
         [isPractice]="participationMode() === 'practice'"
+        (viewingSubmissionChange)="isViewingSubmission.set($event)"
     />
 </div>

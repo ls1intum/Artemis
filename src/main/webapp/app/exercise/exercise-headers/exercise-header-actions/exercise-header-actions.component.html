@@ -49,6 +49,15 @@
             ></button>
         </span>
     }
+    @if (onContinueExercise()) {
+        <button
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [buttonLabel]="'entity.action.continue' | artemisTranslate"
+            [smallButton]="smallButtons()"
+            (click)="onContinueExercise()!()"
+        ></button>
+    }
     @switch (exercise().type) {
         <!-- QUIZ EXERCISE ACTIONS START -->
         @case (ExerciseType.QUIZ) {

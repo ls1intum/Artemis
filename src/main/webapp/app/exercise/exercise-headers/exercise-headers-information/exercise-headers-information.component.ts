@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, inject, output, viewChild } from '@angular/core';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
@@ -45,6 +45,10 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 export class ExerciseHeadersInformationComponent implements OnInit, OnChanges {
     private sortService = inject(SortService);
     private serverDateService = inject(ArtemisServerDateService);
+
+    readonly resultHistoryDropdown = viewChild(ResultHistoryDropdownComponent);
+
+    viewingSubmissionChange = output<boolean>();
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;

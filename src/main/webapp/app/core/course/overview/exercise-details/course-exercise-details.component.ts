@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnDestroy, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { Subscription, combineLatest } from 'rxjs';
 import { filter, skip } from 'rxjs/operators';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
@@ -35,8 +35,6 @@ import { MODULE_FEATURE_IRIS } from 'app/app.constants';
 import { IrisSettingsService } from 'app/iris/manage/settings/shared/iris-settings.service';
 import { ChatServiceMode } from 'app/iris/overview/services/iris-chat.service';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseHeaderComponent } from 'app/exercise/exercise-headers/exercise-header/exercise-header.component';
 import { ScienceService } from 'app/shared/science/science.service';
 import { hasResults } from 'app/exercise/participation/participation.utils';
@@ -53,7 +51,7 @@ interface InstructorActionItem {
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview/course-overview.scss', './course-exercise-details.component.scss'],
     providers: [ExerciseCacheService],
-    imports: [FaIconComponent, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, RouterLink, ExerciseHeaderComponent, NgbTooltip, ExerciseSplitPanelComponent],
+    imports: [ExerciseHeaderComponent, ExerciseSplitPanelComponent],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private exerciseService = inject(ExerciseService);
