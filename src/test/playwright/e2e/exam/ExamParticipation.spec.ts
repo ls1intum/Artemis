@@ -56,6 +56,9 @@ test.describe('Exam participation', () => {
             const programmingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.PROGRAMMING, {
                 submission: cAllSuccessfulSubmission,
                 programmingLanguage: ProgrammingLanguage.C,
+                // This test checks the exam workflow (start → submit → hand-in), not build timing.
+                // Waiting for the C build result (can exceed 3 min under CI load) would fail the test.
+                skipBuildResultCheck: true,
             });
             const quizExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
             const modelingExercise = await examExerciseGroupCreation.addGroupWithExercise(exam, ExerciseType.MODELING);
