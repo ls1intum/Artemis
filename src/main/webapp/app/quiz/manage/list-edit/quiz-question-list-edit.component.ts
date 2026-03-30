@@ -57,10 +57,10 @@ export class QuizQuestionListEditComponent {
 
     faPlus = faPlus;
 
-    /** Indices of questions whose AI refinement panel is currently open. Empty = all panels closed. */
-    openRefinementIndices = signal(new Set<number>());
-    /** Indices of questions whose editor card is currently collapsed. Empty = all cards expanded. */
-    collapsedQuestionIndices = signal(new Set<number>());
+    /** Questions whose AI refinement panel is currently open. */
+    openRefinementQuestions = signal(new Set<QuizQuestion>());
+    /** Questions whose editor card is currently collapsed. */
+    collapsedQuestions = signal(new Set<QuizQuestion>());
 
     showExistingQuestions = false;
 
@@ -74,45 +74,46 @@ export class QuizQuestionListEditComponent {
     }
 
     /**
-     * Toggle the AI refinement panel for the question at the given index.
+     * Toggle the AI refinement panel for the given question.
      *
-     * @param index the index of the question of whose refinement panel to toggle
+     * @param question the question whose refinement panel to toggle
      */
-    toggleRefinement(index: number): void {
-        const updated = new Set(this.openRefinementIndices());
-        if (updated.has(index)) {
-            updated.delete(index);
+    toggleRefinement(question: QuizQuestion): void {
+        const updated = new Set(this.openRefinementQuestions());
+        if (updated.has(question)) {
+            updated.delete(question);
         } else {
-            updated.add(index);
+            updated.add(question);
         }
-        this.openRefinementIndices.set(updated);
+        this.openRefinementQuestions.set(updated);
     }
 
     /**
      * Track collapsed state of a question so the AI refinement panel hides while collapsed
      * but its open state is preserved for when the question is expanded again.
      *
-     * @param index the index of the question
+     * @param question the question whose collapsed state changed
      * @param collapsed whether the question is now collapsed
      */
-    handleCollapseChanged(index: number, collapsed: boolean): void {
-        const updated = new Set(this.collapsedQuestionIndices());
+    handleCollapseChanged(question: QuizQuestion, collapsed: boolean): void {
+        const updated = new Set(this.collapsedQuestions());
         if (collapsed) {
-            updated.add(index);
+            updated.add(question);
         } else {
-            updated.delete(index);
+            updated.delete(question);
         }
-        this.collapsedQuestionIndices.set(updated);
+        this.collapsedQuestions.set(updated);
     }
 
     /**
-     * Refresh the edit component after the question object at the given index was mutated in-place by AI refinement.
+     * Refresh the edit component after the question object was mutated in-place by AI refinement.
      *
-     * @param index the index of the refined question in quizQuestions
+     * @param question the refined question object
      * @param _refinedQuestion the refined Question
      */
-    handleQuestionRefined(index: number, _refinedQuestion: MultipleChoiceQuestion) {
+    handleQuestionRefined(question: QuizQuestion, _refinedQuestion: MultipleChoiceQuestion) {
         // The question object was mutated in-place; find the corresponding MC edit component and reload its editor.
+        const index = this.quizQuestions().indexOf(question);
         const mcIndex = this.quizQuestions()
             .slice(0, index)
             .filter((q) => q.type === this.MULTIPLE_CHOICE).length;
@@ -121,13 +122,19 @@ export class QuizQuestionListEditComponent {
     }
 
     /**
-     * Remove the QuizQuestion from the quizQuestions list according to the given index.
+     * Remove the given QuizQuestion from the quizQuestions list.
      *
-     * @param index the index of QuizQuestion to be deleted
+     * @param quizQuestion the QuizQuestion to be deleted
      */
-    handleQuestionDeleted(index: number) {
-        const quizQuestion = this.quizQuestions()[index];
+    handleQuestionDeleted(quizQuestion: QuizQuestion) {
+        const index = this.quizQuestions().indexOf(quizQuestion);
         this.quizQuestions().splice(index, 1);
+        const openUpdated = new Set(this.openRefinementQuestions());
+        openUpdated.delete(quizQuestion);
+        this.openRefinementQuestions.set(openUpdated);
+        const collapsedUpdated = new Set(this.collapsedQuestions());
+        collapsedUpdated.delete(quizQuestion);
+        this.collapsedQuestions.set(collapsedUpdated);
         this.onQuestionDeleted.emit(quizQuestion);
     }
 
