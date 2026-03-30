@@ -62,7 +62,7 @@ public class ArtemisPublicKeyCredentialCreationOptionsFilter extends OncePerRequ
     private final WebAuthnRelyingPartyOperations rpOperations;
 
     private final HttpMessageConverter<Object> converter = new MappingJackson2HttpMessageConverter(
-            Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module()).build());
+            Jackson2ObjectMapperBuilder.json().modules(new WebauthnJackson2Module(), new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule()).build());
 
     /**
      * Creates a new instance.
