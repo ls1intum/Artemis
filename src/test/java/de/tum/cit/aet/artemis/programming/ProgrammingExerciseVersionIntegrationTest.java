@@ -212,7 +212,7 @@ class ProgrammingExerciseVersionIntegrationTest extends AbstractProgrammingInteg
 
         ExerciseVersionUtilService.updateExercise(programmingExercise);
         final var endpoint = "/api/programming/programming-exercises/timeline";
-        MultiValueMap<String, String> params = new HttpHeaders();
+        MultiValueMap<String, String> params = new org.springframework.util.LinkedMultiValueMap<>();
         params.add("notificationText", "The notification text");
         request.putWithResponseBodyAndParams(endpoint, programmingExercise, ProgrammingExercise.class, HttpStatus.OK, params);
 

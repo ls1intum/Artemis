@@ -124,7 +124,7 @@ public class AeolusTemplateResource {
             }
             Windfile windfile = aeolusTemplateService.getWindfileFor(language, optionalProjectType, staticAnalysis, sequentialRuns);
             if (windfile == null) {
-                return new ResponseEntity<>(null, null, HttpStatus.NOT_FOUND);
+                return ResponseEntity.notFound().build();
             }
             HttpHeaders responseHeaders = new HttpHeaders();
             responseHeaders.setContentType(MediaType.APPLICATION_JSON);

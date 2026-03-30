@@ -164,7 +164,7 @@ public class ArtemisWebAuthnConfigurer<H extends HttpSecurityBuilder<H>> extends
     }
 
     @Override
-    public void configure(H http) throws Exception {
+    public void configure(H http) {
         WebAuthnRelyingPartyOperations rpOperations = webAuthnRelyingPartyOperations(publicKeyCredentialUserEntityRepository, userCredentialRepository);
         WebAuthnAuthenticationFilter webAuthnAuthnFilter = new ArtemisWebAuthnAuthenticationFilter(auditEventRepository, converter, jwtCookieService,
                 publicKeyCredentialRequestOptionsRepository, artemisSuccessfulLoginService);

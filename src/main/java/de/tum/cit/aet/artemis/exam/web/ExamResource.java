@@ -82,6 +82,7 @@ import de.tum.cit.aet.artemis.core.service.feature.FeatureToggle;
 import de.tum.cit.aet.artemis.core.service.messaging.InstanceMessageSendService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
 import de.tum.cit.aet.artemis.core.util.TimeLogUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.exam.config.ExamEnabled;
 import de.tum.cit.aet.artemis.exam.domain.Exam;
 import de.tum.cit.aet.artemis.exam.domain.ExerciseGroup;
@@ -118,7 +119,6 @@ import de.tum.cit.aet.artemis.exercise.dto.ExerciseGroupWithIdAndExamDTO;
 import de.tum.cit.aet.artemis.exercise.repository.ExerciseRepository;
 import de.tum.cit.aet.artemis.exercise.service.SubmissionService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
-import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Exam.

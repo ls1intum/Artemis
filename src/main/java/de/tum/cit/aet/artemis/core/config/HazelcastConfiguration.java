@@ -1,11 +1,11 @@
 package de.tum.cit.aet.artemis.core.config;
 
+import static de.tum.cit.aet.artemis.core.config.ArtemisConstants.SPRING_PROFILE_TEST;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_CORE;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_LOCALCI;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_BUILDAGENT;
 import static de.tum.cit.aet.artemis.core.config.Constants.PROFILE_TEST_INDEPENDENT;
-import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -23,9 +23,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
+import org.springframework.boot.web.server.autoconfigure.ServerProperties;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.cache.interceptor.KeyGenerator;
@@ -59,10 +59,9 @@ import com.hazelcast.spi.properties.ClusterProperty;
 import com.hazelcast.spring.cache.HazelcastCacheManager;
 import com.hazelcast.spring.context.SpringManagedContext;
 
+import de.tum.cit.aet.artemis.core.config.cache.PrefixedKeyGenerator;
 import de.tum.cit.aet.artemis.core.service.FileService;
 import de.tum.cit.aet.artemis.programming.service.localci.LocalCIPriorityQueueComparator;
-import tech.jhipster.config.JHipsterProperties;
-import tech.jhipster.config.cache.PrefixedKeyGenerator;
 
 /**
  * Configures and initializes the Hazelcast distributed data grid for Artemis.
@@ -327,7 +326,7 @@ public class HazelcastConfiguration {
      * @return the configured HazelcastInstance appropriate for the deployment context
      */
     @Bean(name = "hazelcastInstance")
-    public HazelcastInstance hazelcastInstance(JHipsterProperties jHipsterProperties) {
+    public HazelcastInstance hazelcastInstance(ArtemisProperties jHipsterProperties) {
         if (isTestEnvironment()) {
             return createTestHazelcastInstance(jHipsterProperties);
         }
@@ -411,7 +410,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration for cache maps (TTL, backup count)
      * @return a fully isolated HazelcastInstance for testing
      */
-    private HazelcastInstance createTestHazelcastInstance(JHipsterProperties jHipsterProperties) {
+    private HazelcastInstance createTestHazelcastInstance(ArtemisProperties jHipsterProperties) {
         log.debug("Creating isolated Hazelcast instance for testing");
 
         Config config = new Config();
@@ -496,7 +495,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration containing cache TTL, backup count settings
      * @return the configured HazelcastInstance ready for cluster participation
      */
-    private HazelcastInstance createClusterMemberInstance(JHipsterProperties jHipsterProperties) {
+    private HazelcastInstance createClusterMemberInstance(ArtemisProperties jHipsterProperties) {
         log.debug("Configuring Hazelcast cluster member");
 
         HazelcastInstance existingInstance = Hazelcast.getHazelcastInstanceByName(instanceName);
@@ -955,7 +954,7 @@ public class HazelcastConfiguration {
      * @param config             the Hazelcast configuration to modify
      * @param jHipsterProperties configuration for backup count
      */
-    private void configureLocalCIQueueIfNeeded(Config config, JHipsterProperties jHipsterProperties) {
+    private void configureLocalCIQueueIfNeeded(Config config, ArtemisProperties jHipsterProperties) {
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
         if (activeProfiles.contains(PROFILE_LOCALCI) || activeProfiles.contains(PROFILE_BUILDAGENT)) {
             log.debug("Configuring Build Job Queue for Local CI");
@@ -1239,7 +1238,7 @@ public class HazelcastConfiguration {
      * @param config             the Hazelcast configuration to modify
      * @param jHipsterProperties configuration for TTL and backup count
      */
-    private void configureCacheMaps(Config config, JHipsterProperties jHipsterProperties) {
+    private void configureCacheMaps(Config config, ArtemisProperties jHipsterProperties) {
         config.getMapConfigs().put("default", createDefaultMapConfig(jHipsterProperties));
         config.getMapConfigs().put("files", createFilesMapConfig(jHipsterProperties));
         config.getMapConfigs().put("de.tum.cit.aet.artemis.*.domain.*", createDomainMapConfig(jHipsterProperties));
@@ -1276,7 +1275,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration for backup count
      * @return the default map configuration
      */
-    private MapConfig createDefaultMapConfig(JHipsterProperties jHipsterProperties) {
+    private MapConfig createDefaultMapConfig(ArtemisProperties jHipsterProperties) {
         return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE));
     }
@@ -1300,7 +1299,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration for backup count and TTL
      * @return the file cache map configuration
      */
-    private MapConfig createFilesMapConfig(JHipsterProperties jHipsterProperties) {
+    private MapConfig createFilesMapConfig(ArtemisProperties jHipsterProperties) {
         return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE))
                 .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
@@ -1327,7 +1326,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration for TTL
      * @return the domain entity cache map configuration
      */
-    private MapConfig createDomainMapConfig(JHipsterProperties jHipsterProperties) {
+    private MapConfig createDomainMapConfig(ArtemisProperties jHipsterProperties) {
         return new MapConfig().setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
 
@@ -1355,7 +1354,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration for backup count and TTL
      * @return the rate limit buckets map configuration
      */
-    private MapConfig createRateLimitBucketsMapConfig(JHipsterProperties jHipsterProperties) {
+    private MapConfig createRateLimitBucketsMapConfig(ArtemisProperties jHipsterProperties) {
         return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setTimeToLiveSeconds(jHipsterProperties.getCache().getHazelcast().getTimeToLiveSeconds());
     }
@@ -1389,7 +1388,7 @@ public class HazelcastConfiguration {
      * @param jHipsterProperties configuration for backup count
      * @return the Atlas session cache map configuration
      */
-    private MapConfig createAtlasSessionMapConfig(JHipsterProperties jHipsterProperties) {
+    private MapConfig createAtlasSessionMapConfig(ArtemisProperties jHipsterProperties) {
         return new MapConfig().setBackupCount(jHipsterProperties.getCache().getHazelcast().getBackupCount())
                 .setEvictionConfig(new EvictionConfig().setEvictionPolicy(EvictionPolicy.LRU).setMaxSizePolicy(MaxSizePolicy.PER_NODE)).setTimeToLiveSeconds(2 * 60 * 60);
     }

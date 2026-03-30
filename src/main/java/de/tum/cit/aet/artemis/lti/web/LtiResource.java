@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastInstructor
 import de.tum.cit.aet.artemis.core.security.annotations.enforceRoleInCourse.EnforceAtLeastInstructorInCourse;
 import de.tum.cit.aet.artemis.core.service.AuthorizationCheckService;
 import de.tum.cit.aet.artemis.core.service.course.CourseService;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
 import de.tum.cit.aet.artemis.lti.config.LtiEnabled;
 import de.tum.cit.aet.artemis.lti.domain.LtiPlatformConfiguration;
 import de.tum.cit.aet.artemis.lti.domain.OnlineCourseConfiguration;
@@ -48,7 +49,6 @@ import de.tum.cit.aet.artemis.lti.repository.LtiPlatformConfigurationRepository;
 import de.tum.cit.aet.artemis.lti.service.DeepLinkingType;
 import de.tum.cit.aet.artemis.lti.service.LtiDeepLinkingService;
 import de.tum.cit.aet.artemis.lti.service.OnlineCourseConfigurationService;
-import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller to handle LTI13 launches.

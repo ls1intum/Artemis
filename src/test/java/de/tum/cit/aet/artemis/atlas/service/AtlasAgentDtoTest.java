@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.domain.competency.Competency;
 import de.tum.cit.aet.artemis.atlas.domain.competency.CompetencyRelation;
@@ -32,7 +31,7 @@ import de.tum.cit.aet.artemis.atlas.dto.atlasml.MapCompetencyToCompetencyRequest
  */
 class AtlasAgentDtoTest {
 
-    private final ObjectMapper objectMapper = JsonMapper.builder().addModule(new JavaTimeModule()).build();
+    private final ObjectMapper objectMapper = JsonMapper.builder().build();
 
     @Nested
     class CompetencyGraphNodeDTOTests {

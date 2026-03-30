@@ -13,9 +13,9 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 
+import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
 import de.tum.cit.aet.artemis.core.web.CustomMetricsExtension;
 import io.micrometer.core.annotation.Timed;
-import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
 
 /**
  * CustomMetricsExtensionConfiguration.
@@ -27,23 +27,23 @@ public class CustomMetricsExtensionConfiguration {
     @Configuration
     @Lazy
     @ConditionalOnClass(Timed.class)
-    @AutoConfigureAfter(JHipsterMetricsEndpointConfiguration.class)
-    public static class JHipsterMetricsEndpointConfiguration {
+    @AutoConfigureAfter(ArtemisMetricsEndpointConfiguration.class)
+    public static class ArtemisMetricsEndpointConfiguration {
 
         /**
          * customMetricsExtension.
          *
-         * @param jHipsterMetricsEndpoint Default JHI Metrics
-         * @param simpUserRegistry        Registry used to retrieve the number of active users.
+         * @param artemisMetricsEndpoint Default Artemis Metrics
+         * @param simpUserRegistry       Registry used to retrieve the number of active users.
          * @return CustomMetricsExtension object.
          */
         @Bean
         @Lazy
-        @ConditionalOnBean({ JHipsterMetricsEndpoint.class, SimpUserRegistry.class })
+        @ConditionalOnBean({ ArtemisMetricsEndpoint.class, SimpUserRegistry.class })
         @ConditionalOnMissingBean
         @ConditionalOnAvailableEndpoint
-        public CustomMetricsExtension customMetricsExtension(JHipsterMetricsEndpoint jHipsterMetricsEndpoint, SimpUserRegistry simpUserRegistry) {
-            return new CustomMetricsExtension(jHipsterMetricsEndpoint, simpUserRegistry);
+        public CustomMetricsExtension customMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, SimpUserRegistry simpUserRegistry) {
+            return new CustomMetricsExtension(artemisMetricsEndpoint, simpUserRegistry);
         }
     }
 }

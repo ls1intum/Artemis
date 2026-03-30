@@ -54,8 +54,8 @@ import de.tum.cit.aet.artemis.core.service.ldap.LdapUserService;
 import de.tum.cit.aet.artemis.core.service.user.UserCreationService;
 import de.tum.cit.aet.artemis.core.service.user.UserService;
 import de.tum.cit.aet.artemis.core.util.HeaderUtil;
-import tech.jhipster.web.util.PaginationUtil;
-import tech.jhipster.web.util.ResponseUtil;
+import de.tum.cit.aet.artemis.core.web.util.PaginationUtil;
+import de.tum.cit.aet.artemis.core.web.util.ResponseUtil;
 
 /**
  * REST controller for managing users.

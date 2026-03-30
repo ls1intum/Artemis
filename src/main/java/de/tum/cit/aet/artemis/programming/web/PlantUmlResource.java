@@ -18,11 +18,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.cit.aet.artemis.core.config.ArtemisProperties;
 import de.tum.cit.aet.artemis.core.security.allowedTools.AllowedTools;
 import de.tum.cit.aet.artemis.core.security.allowedTools.ToolTokenType;
 import de.tum.cit.aet.artemis.core.security.annotations.EnforceAtLeastStudent;
 import de.tum.cit.aet.artemis.programming.service.PlantUmlService;
-import tech.jhipster.config.JHipsterProperties;
 
 @Profile(PROFILE_CORE)
 @Lazy
@@ -36,7 +36,7 @@ public class PlantUmlResource {
 
     private final CacheControl cache;
 
-    public PlantUmlResource(PlantUmlService plantUmlService, JHipsterProperties jHipsterProperties) {
+    public PlantUmlResource(PlantUmlService plantUmlService, ArtemisProperties jHipsterProperties) {
         this.plantUmlService = plantUmlService;
         this.cache = CacheControl.maxAge(jHipsterProperties.getHttp().getCache().getTimeToLiveInDays(), TimeUnit.DAYS).cachePrivate();
     }

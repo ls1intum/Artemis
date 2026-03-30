@@ -12,35 +12,35 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.simp.user.SimpUserRegistry;
 import org.springframework.stereotype.Component;
 
-import tech.jhipster.config.metric.JHipsterMetricsEndpoint;
+import de.tum.cit.aet.artemis.core.config.metric.ArtemisMetricsEndpoint;
 
 /**
  * CustomMetricsExtension.
- * Extends the default JHI Metrics with custom metrics for Artemis.
+ * Extends the default Artemis Metrics with custom metrics.
  */
 @Component
 @Lazy
 @Profile(PROFILE_CORE)
-@EndpointWebExtension(endpoint = JHipsterMetricsEndpoint.class)
+@EndpointWebExtension(endpoint = ArtemisMetricsEndpoint.class)
 public class CustomMetricsExtension {
 
-    private final JHipsterMetricsEndpoint jHipsterMetricsEndpoint;
+    private final ArtemisMetricsEndpoint artemisMetricsEndpoint;
 
     private final SimpUserRegistry simpUserRegistry;
 
-    public CustomMetricsExtension(JHipsterMetricsEndpoint jHipsterMetricsEndpoint, SimpUserRegistry simpUserRegistry) {
-        this.jHipsterMetricsEndpoint = jHipsterMetricsEndpoint;
+    public CustomMetricsExtension(ArtemisMetricsEndpoint artemisMetricsEndpoint, SimpUserRegistry simpUserRegistry) {
+        this.artemisMetricsEndpoint = artemisMetricsEndpoint;
         this.simpUserRegistry = simpUserRegistry;
     }
 
     /**
-     * Expands the jhimetrics call with number of active users.
+     * Expands the metrics call with number of active users.
      *
-     * @return extended jhimetrics
+     * @return extended metrics
      */
     @ReadOperation
     public Map<String, Map<?, ?>> getMetrics() {
-        var metrics = this.jHipsterMetricsEndpoint.allMetrics();
+        var metrics = this.artemisMetricsEndpoint.allMetrics();
         HashMap<String, Integer> activeUsers = new HashMap<>();
         activeUsers.put("activeUsers", this.simpUserRegistry.getUserCount());
         metrics.put("customMetrics", new HashMap<>(activeUsers));

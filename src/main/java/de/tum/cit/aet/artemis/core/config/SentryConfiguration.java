@@ -14,11 +14,10 @@ import org.springframework.context.annotation.Profile;
 
 import io.sentry.Sentry;
 import io.sentry.SentryOptions;
-import tech.jhipster.config.JHipsterConstants;
 
 @Configuration
 @Lazy
-@Profile({ JHipsterConstants.SPRING_PROFILE_PRODUCTION })
+@Profile({ ArtemisConstants.SPRING_PROFILE_PRODUCTION })
 public class SentryConfiguration {
 
     private static final Logger log = LoggerFactory.getLogger(SentryConfiguration.class);

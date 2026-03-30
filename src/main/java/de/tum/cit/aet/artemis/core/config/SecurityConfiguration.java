@@ -30,13 +30,13 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
-import org.springframework.web.servlet.HandlerExceptionResolver;
-import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
 import de.tum.cit.aet.artemis.core.security.ArtemisInternalAuthenticationProvider;
 import de.tum.cit.aet.artemis.core.security.Role;
@@ -153,10 +153,28 @@ public class SecurityConfiguration {
         return builder.build();
     }
 
-    // NOTE: this replaces the old @Import annotation above the class because it does not work with Spring Boot 3.3 and Spring Security 6.3 any more
+    /**
+     * Delegates authentication failures to the HandlerExceptionResolver so that
+     * {@link de.tum.cit.aet.artemis.core.exception.ExceptionTranslator} can produce ProblemDetail responses.
+     *
+     * @param resolver the exception resolver to delegate to
+     * @return the authentication entry point
+     */
     @Bean
-    public SecurityProblemSupport securityProblemSupport(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
-        return new SecurityProblemSupport(resolver);
+    public AuthenticationEntryPoint authenticationEntryPoint(@Qualifier("handlerExceptionResolver") org.springframework.web.servlet.HandlerExceptionResolver resolver) {
+        return (request, response, authException) -> resolver.resolveException(request, response, null, authException);
+    }
+
+    /**
+     * Delegates access-denied failures to the HandlerExceptionResolver so that
+     * {@link de.tum.cit.aet.artemis.core.exception.ExceptionTranslator} can produce ProblemDetail responses.
+     *
+     * @param resolver the exception resolver to delegate to
+     * @return the access denied handler
+     */
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler(@Qualifier("handlerExceptionResolver") org.springframework.web.servlet.HandlerExceptionResolver resolver) {
+        return (request, response, accessDeniedException) -> resolver.resolveException(request, response, null, accessDeniedException);
     }
 
     @Bean
@@ -216,13 +234,14 @@ public class SecurityConfiguration {
      * </ul>
      * </p>
      *
-     * @param http                   The {@link HttpSecurity} object to configure security settings for HTTP requests.
-     * @param securityProblemSupport The {@link SecurityProblemSupport} instance to handle authentication entry points and access denied responses.
+     * @param http          The {@link HttpSecurity} object to configure security settings for HTTP requests.
+     * @param entryPoint    The {@link AuthenticationEntryPoint} to handle unauthenticated requests.
+     * @param deniedHandler The {@link AccessDeniedHandler} to handle access denied responses.
      * @return The configured {@link SecurityFilterChain}.
      * @throws Exception If an error occurs during the configuration process.
      */
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, SecurityProblemSupport securityProblemSupport) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationEntryPoint entryPoint, AccessDeniedHandler deniedHandler) throws Exception {
         // @formatter:off
         http
             // Disables CSRF (Cross-Site Request Forgery) protection; useful in stateless APIs where the token management is unnecessary.
@@ -230,7 +249,7 @@ public class SecurityConfiguration {
             // Adds a CORS (Cross-Origin Resource Sharing) filter before the username/password authentication to handle cross-origin requests.
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
             // Configures exception handling with a custom entry point and access denied handler for authentication issues.
-            .exceptionHandling(handler -> handler.authenticationEntryPoint(securityProblemSupport).accessDeniedHandler(securityProblemSupport))
+            .exceptionHandling(handler -> handler.authenticationEntryPoint(entryPoint).accessDeniedHandler(deniedHandler))
             // Adds a custom filter for Single Page Applications (SPA), i.e. the client, after the basic authentication filter.
             .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
             // Configures security headers.

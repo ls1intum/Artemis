@@ -21,7 +21,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyProgressUtilService;
 import de.tum.cit.aet.artemis.atlas.competency.util.CompetencyUtilService;
@@ -269,7 +268,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
                 assertThat(irisFile).exists();
 
                 ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
+
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
                 assertThat(sessions).isNotEmpty();
@@ -297,7 +296,7 @@ class DataExportAdditionalServicesTest extends AbstractSpringIntegrationIndepend
                 assertThat(irisFile).exists();
 
                 ObjectMapper objectMapper = new ObjectMapper();
-                objectMapper.registerModule(new JavaTimeModule());
+
                 List<IrisChatSessionExportDTO> sessions = objectMapper.readValue(irisFile.toFile(), new TypeReference<>() {
                 });
                 assertThat(sessions).isNotEmpty();
