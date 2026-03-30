@@ -1,0 +1,118 @@
+import { TestBed } from '@angular/core/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { setupTestBed } from '@analogjs/vitest-angular/setup-testbed';
+import { LectureSearchService } from './lecture-search.service';
+import { LectureSearchResult } from 'app/core/navbar/global-search/models/lecture-search-result.model';
+import { IrisSearchResult } from 'app/core/navbar/global-search/models/iris-search-result.model';
+
+describe('LectureSearchService', () => {
+    setupTestBed({ zoneless: true });
+
+    let service: LectureSearchService;
+    let httpTesting: HttpTestingController;
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            providers: [LectureSearchService, provideHttpClient(), provideHttpClientTesting()],
+        });
+        service = TestBed.inject(LectureSearchService);
+        httpTesting = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpTesting.verify();
+    });
+
+    it('should be created', () => {
+        expect(service).toBeTruthy();
+    });
+
+    describe('search()', () => {
+        it('should POST to api/iris/lecture-search with query and default limit of 10', () => {
+            service.search('angular signals').subscribe();
+
+            const req = httpTesting.expectOne('api/iris/lecture-search');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({ query: 'angular signals', limit: 10 });
+
+            req.flush([]);
+        });
+
+        it('should accept a custom limit', () => {
+            service.search('spring boot', 25).subscribe();
+
+            const req = httpTesting.expectOne('api/iris/lecture-search');
+            expect(req.request.body).toEqual({ query: 'spring boot', limit: 25 });
+
+            req.flush([]);
+        });
+
+        it('should return the results from the server', () => {
+            const mockResults: LectureSearchResult[] = [
+                {
+                    course: { id: 1, name: 'Advanced Web Development' },
+                    lecture: { id: 1, name: 'Angular Basics' },
+                    lectureUnit: { id: 1, name: 'Introduction to Signals', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
+                    snippet: 'Signals are a reactive primitive...',
+                },
+            ];
+
+            let actualResults: LectureSearchResult[] | undefined;
+            service.search('signals').subscribe((results) => {
+                actualResults = results;
+            });
+
+            const req = httpTesting.expectOne('api/iris/lecture-search');
+            req.flush(mockResults);
+
+            expect(actualResults).toEqual(mockResults);
+        });
+    });
+
+    describe('ask()', () => {
+        it('should POST to api/iris/search-answer with query and default limit of 5', () => {
+            service.ask('what are signals?').subscribe();
+
+            const req = httpTesting.expectOne('api/iris/search-answer');
+            expect(req.request.method).toBe('POST');
+            expect(req.request.body).toEqual({ query: 'what are signals?', limit: 5 });
+
+            req.flush({ answer: '', sources: [] });
+        });
+
+        it('should accept a custom limit', () => {
+            service.ask('explain dependency injection', 3).subscribe();
+
+            const req = httpTesting.expectOne('api/iris/search-answer');
+            expect(req.request.body).toEqual({ query: 'explain dependency injection', limit: 3 });
+
+            req.flush({ answer: '', sources: [] });
+        });
+
+        it('should return the answer and sources from the server', () => {
+            const mockResult: IrisSearchResult = {
+                answer: 'Signals are a reactive primitive in Angular...',
+                sources: [
+                    {
+                        course: { id: 1, name: 'Advanced Web Development' },
+                        lecture: { id: 1, name: 'Angular Basics' },
+                        lectureUnit: { id: 1, name: 'Introduction to Signals', link: '/courses/1/lectures/1/units/1', pageNumber: 3 },
+                        snippet: 'Signals are a reactive primitive...',
+                    },
+                ],
+            };
+
+            let actualResult: IrisSearchResult | undefined;
+            service.ask('what are signals?').subscribe((result) => {
+                actualResult = result;
+            });
+
+            const req = httpTesting.expectOne('api/iris/search-answer');
+            req.flush(mockResult);
+
+            expect(actualResult).toEqual(mockResult);
+        });
+    });
+});

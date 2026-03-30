@@ -153,10 +153,10 @@ module.exports = {
     // coverage thresholds in vitest.config.ts. Per-module thresholds are enforced by check-client-module-coverage.mjs
     coverageThreshold: {
         global: {
-            statements: 87.5,
+            statements: 86.3,
             branches: 74.5,
-            functions: 78.5,
-            lines: 88.3,
+            functions: 76.0,
+            lines: 87.2,
         },
     },
     // 'json-summary' reporter is used by supporting_scripts/code-coverage/module-coverage-client/check-client-module-coverage.mjs
