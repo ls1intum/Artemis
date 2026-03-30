@@ -28,6 +28,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExercise;
@@ -366,10 +367,10 @@ public class HyperionCodeGenerationExecutionService {
             exerciseVersionService.createExerciseVersion(exercise, user);
         }
 
-        boolean success = executionResult.generatedFilesCommitted;
+        HyperionCodeGenerationEventDTO.CompletionStatus completionStatus = determineCompletionStatus(executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
         int reportedAttempts = executionResult.attemptsUsed;
         String completionMessage = buildCompletionMessage(repositoryType, executionResult.generatedFilesCommitted, executionResult.buildResultOutcome);
-        publisher.done(success, reportedAttempts, completionMessage);
+        publisher.done(completionStatus, reportedAttempts, completionMessage);
 
         return executionResult.result;
     }
@@ -410,7 +411,7 @@ public class HyperionCodeGenerationExecutionService {
             return null;
         }
 
-        publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher);
+        publishGeneratedFiles(repository, generatedFiles, exercise, repositoryType, publisher, executionProgress.attemptsUsed);
         CommitTriggerResult commitTriggerResult = commitAndGetHash(repository, user, repositoryUri, exercise, repositoryType);
         String commitHash = commitTriggerResult.commitHash();
         executionProgress.lastCommitHash = commitHash;
@@ -422,15 +423,15 @@ public class HyperionCodeGenerationExecutionService {
     }
 
     private void publishGeneratedFiles(Repository repository, List<GeneratedFileDTO> generatedFiles, ProgrammingExercise exercise, RepositoryType repositoryType,
-            HyperionCodeGenerationEventPublisher publisher) throws IOException {
+            HyperionCodeGenerationEventPublisher publisher, int iteration) throws IOException {
         for (GeneratedFileDTO file : generatedFiles) {
             boolean existed = gitService.getFileByName(repository, file.path()).isPresent();
             updateSingleFile(repository, file, exercise);
             if (existed) {
-                publisher.fileUpdated(file.path(), repositoryType);
+                publisher.fileUpdated(file.path(), repositoryType, iteration);
             }
             else {
-                publisher.newFile(file.path(), repositoryType);
+                publisher.newFile(file.path(), repositoryType, iteration);
             }
         }
     }
@@ -441,6 +442,15 @@ public class HyperionCodeGenerationExecutionService {
         }
 
         return committedFilesMessagePrefix(repositoryType) + buildResultMessageSuffix(buildResultOutcome.state());
+    }
+
+    private HyperionCodeGenerationEventDTO.CompletionStatus determineCompletionStatus(boolean generatedFilesCommitted, BuildResultOutcome buildResultOutcome) {
+        if (!generatedFilesCommitted) {
+            return HyperionCodeGenerationEventDTO.CompletionStatus.ERROR;
+        }
+
+        return buildResultOutcome.state() == BuildResultState.SUCCESS ? HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS
+                : HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL;
     }
 
     private String repositoryGenerationLabel(RepositoryType repositoryType) {

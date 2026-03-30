@@ -37,6 +37,7 @@ import de.tum.cit.aet.artemis.hyperion.dto.ArtifactLocationDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyCheckResponseDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.ConsistencyIssueDTO;
 import de.tum.cit.aet.artemis.hyperion.dto.GeneratedFileDTO;
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionConsistencyCheckService;
 import de.tum.cit.aet.artemis.hyperion.service.HyperionProgrammingExerciseContextRendererService;
 import de.tum.cit.aet.artemis.programming.domain.File;
@@ -198,11 +199,36 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isEqualTo(buildResult);
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
-        verify(publisher).done(true, 1, "Solution files were generated and committed to the solution repository.");
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.SUCCESS, 1, "Solution files were generated and committed to the solution repository.");
     }
 
     @Test
-    void generateAndCompileCode_withCommittedFilesAndFailedBuild_reportsDoneSuccess() throws Exception {
+    void generateAndCompileCode_withNoGeneratedFiles_reportsErrorCompletion() throws Exception {
+        HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
+        Repository repository = mock(Repository.class);
+        String originalCommitId = "orig-hash";
+        SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
+        solutionParticipation.setId(99L);
+        solutionParticipation.setRepositoryUri("http://localhost/git/abc/abc-solution.git");
+        exercise.setSolutionParticipation(solutionParticipation);
+
+        when(gitService.getOrCheckoutRepository(any(LocalVCRepositoryUri.class), eq(true), eq("main"), eq(false))).thenReturn(repository);
+        when(gitService.getLastCommitHash(any(LocalVCRepositoryUri.class))).thenReturn(originalCommitId);
+        doNothing().when(gitService).resetToOriginHead(repository);
+        when(repositoryStructureService.getRepositoryStructure(repository)).thenReturn("structure");
+        when(solutionStrategy.generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any())).thenReturn(List.of());
+        when(exerciseVersionService.isRepositoryTypeVersionable(RepositoryType.SOLUTION)).thenReturn(false);
+
+        Result result = service.generateAndCompileCode(exercise, user, 1L, RepositoryType.SOLUTION, publisher);
+
+        assertThat(result).isNull();
+        verify(continuousIntegrationTriggerService, never()).triggerBuild(any(), anyString(), any());
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.ERROR, 1, "Solution generation did not produce any committed files.");
+        verify(exerciseVersionService, never()).createExerciseVersion(any(), any());
+    }
+
+    @Test
+    void generateAndCompileCode_withCommittedFilesAndFailedBuild_reportsPartialCompletion() throws Exception {
         HyperionCodeGenerationEventPublisher publisher = mock(HyperionCodeGenerationEventPublisher.class);
         Repository repository = mock(Repository.class);
         String originalCommitId = "orig-hash";
@@ -235,7 +261,8 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isEqualTo(buildResult);
         verify(solutionStrategy, times(2)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
-        verify(publisher).done(true, 2, "Solution files were generated and committed to the solution repository, but the build failed.");
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, 2,
+                "Solution files were generated and committed to the solution repository, but the build failed.");
     }
 
     @Test
@@ -266,7 +293,7 @@ class HyperionCodeGenerationExecutionServiceTest {
 
         assertThat(result).isNull();
         verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
-        verify(publisher).done(true, 1,
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, 1,
                 "Solution files were generated and committed to the solution repository, but Hyperion could not resolve the participation needed to read the build result.");
     }
 
@@ -302,7 +329,7 @@ class HyperionCodeGenerationExecutionServiceTest {
 
             assertThat(result).isNull();
             verify(publisher).error("sleep interrupted");
-            verify(publisher).done(true, 1,
+            verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, 1,
                     "Solution files were generated and committed to the solution repository, but the build result is not available yet because polling timed out.");
             verify(exerciseVersionService).createExerciseVersion(exercise, user);
         }
@@ -340,7 +367,8 @@ class HyperionCodeGenerationExecutionServiceTest {
         verify(programmingSubmissionRepository, never()).findFirstByParticipationIdAndCommitHashOrderByIdDescWithFeedbacksAndTeamStudents(anyLong(), anyString());
         verify(resultRepository, never()).findLatestResultWithFeedbacksAndTestcasesForSubmission(anyLong());
         verify(solutionStrategy, times(1)).generateCode(eq(user), eq(exercise), eq(1L), any(), any(), any());
-        verify(publisher).done(true, 1, "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
+        verify(publisher).done(HyperionCodeGenerationEventDTO.CompletionStatus.PARTIAL, 1,
+                "Solution files were generated and committed to the solution repository, but Hyperion could not trigger the CI build.");
         verify(exerciseVersionService).createExerciseVersion(exercise, user);
     }
 

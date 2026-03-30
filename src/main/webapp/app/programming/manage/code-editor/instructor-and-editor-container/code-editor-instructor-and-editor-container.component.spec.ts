@@ -384,7 +384,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
 
             // Emit DONE success event
-            job$.next({ type: 'DONE', success: true });
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
 
             expect(comp.isGeneratingCode()).toBeFalse();
             expect(addAlertSpy).toHaveBeenCalledWith(
@@ -396,7 +396,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             );
         });
 
-        it('should mark the repository as error and preserve the message on DONE without success flag', async () => {
+        it('should mark the repository as warning and preserve the message on DONE partial completion', async () => {
             const addAlertSpy = jest.spyOn(alertService, 'addAlert');
             comp.selectedRepository = RepositoryType.SOLUTION;
             selectCodeGenerationRepositories(RepositoryType.SOLUTION);
@@ -410,7 +410,37 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenCalledWith(42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
 
-            job$.next({ type: 'DONE', success: false, message: 'Generation finished without producing files' });
+            job$.next({ type: 'DONE', success: false, completionStatus: 'PARTIAL', message: 'Generation completed, but the build failed' });
+
+            expect(comp.isGeneratingCode()).toBeFalse();
+            expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
+                expect.objectContaining({
+                    state: 'warning',
+                    message: 'Generation completed, but the build failed',
+                }),
+            );
+            expect(addAlertSpy).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    type: AlertType.WARNING,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.warning',
+                    translationParams: { repositoryType: RepositoryType.SOLUTION },
+                }),
+            );
+        });
+
+        it('should mark the repository as error and show error alert on DONE failure', async () => {
+            const addAlertSpy = jest.spyOn(alertService, 'addAlert');
+            comp.selectedRepository = RepositoryType.SOLUTION;
+            selectCodeGenerationRepositories(RepositoryType.SOLUTION);
+
+            (codeGenerationApi.generateCode as jest.Mock).mockReturnValue(of({ jobId: 'job-2b' }));
+            const job$ = new Subject<any>();
+            (ws.subscribeToJob as jest.Mock).mockReturnValue(job$.asObservable());
+
+            comp.generateCode();
+            await Promise.resolve();
+
+            job$.next({ type: 'DONE', success: false, completionStatus: 'ERROR', message: 'Generation finished without producing files' });
 
             expect(comp.isGeneratingCode()).toBeFalse();
             expect(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.SOLUTION)).toEqual(
@@ -421,8 +451,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             );
             expect(addAlertSpy).toHaveBeenCalledWith(
                 expect.objectContaining({
-                    type: AlertType.SUCCESS,
-                    translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
+                    type: AlertType.DANGER,
+                    translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
                     translationParams: { repositoryType: RepositoryType.SOLUTION },
                 }),
             );
@@ -478,8 +508,8 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             tick();
 
-            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
-            job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java' });
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
+            job$.next({ type: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 });
 
             expect(pullSpy).not.toHaveBeenCalled();
 
@@ -487,8 +517,20 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(pullSpy).toHaveBeenCalledOnce();
             expect(comp.codeGenerationActivityLog()).toEqual([
-                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java' }),
-                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java' }),
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'NEW_FILE', path: 'src/test/java/AppTest.java', iteration: 2 }),
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 }),
+            ]);
+            expect(
+                comp.getCodeGenerationIterationActivityGroups(comp.codeGenerationStatuses().find((status) => status.repositoryType === RepositoryType.TEMPLATE)!.fileActivities),
+            ).toEqual([
+                {
+                    iteration: 2,
+                    activities: [expect.objectContaining({ path: 'src/test/java/AppTest.java', iteration: 2 })],
+                },
+                {
+                    iteration: 1,
+                    activities: [expect.objectContaining({ path: 'src/main/java/App.java', iteration: 1 })],
+                },
             ]);
         }));
 
@@ -504,10 +546,10 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             tick();
 
-            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
             expect(pullSpy).not.toHaveBeenCalled();
 
-            job$.next({ type: 'DONE', success: true, attempts: 1 });
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             tick();
 
             expect(pullSpy).toHaveBeenCalledOnce();
@@ -530,7 +572,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             tick();
 
-            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 1 });
             tick(250);
 
             const trackedPullSubscription = (comp as any).codeGenerationPullSubscriptions.get(RepositoryType.TEMPLATE);
@@ -555,11 +597,11 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java' });
+            job$.next({ type: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 2 });
 
             expect(pullSpy).not.toHaveBeenCalled();
             expect(comp.codeGenerationActivityLog()).toEqual([
-                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java' }),
+                expect.objectContaining({ repositoryType: RepositoryType.TEMPLATE, eventType: 'FILE_UPDATED', path: 'src/main/java/App.java', iteration: 2 }),
             ]);
         });
 
@@ -604,7 +646,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             await Promise.resolve();
 
-            job$.next({ type: 'DONE', success: true });
+            job$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS' });
             await Promise.resolve();
 
             expect(executeRefresh).toHaveBeenCalled();
@@ -743,17 +785,17 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
 
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(1, 42, { repositoryType: RepositoryType.TEMPLATE, checkOnly: false });
 
-            templateJob$.next({ type: 'DONE', success: true, attempts: 1 });
+            templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
 
-            solutionJob$.next({ type: 'DONE', success: true, attempts: 1 });
+            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { checkOnly: true });
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(5, 42, { repositoryType: RepositoryType.TESTS, checkOnly: false });
 
-            testsJob$.next({ type: 'DONE', success: true, attempts: 1 });
+            testsJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             await Promise.resolve();
 
             expect(comp.isGeneratingCode()).toBeFalse();
@@ -779,7 +821,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             comp.generateCode();
             tick();
 
-            templateJob$.next({ type: 'DONE', success: true, attempts: 1 });
+            templateJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             tick();
 
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(2, 42, { checkOnly: true });
@@ -790,7 +832,7 @@ describe('CodeEditorInstructorAndEditorContainerComponent', () => {
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(3, 42, { checkOnly: true });
             expect(codeGenerationApi.generateCode).toHaveBeenNthCalledWith(4, 42, { repositoryType: RepositoryType.SOLUTION, checkOnly: false });
 
-            solutionJob$.next({ type: 'DONE', success: true, attempts: 1 });
+            solutionJob$.next({ type: 'DONE', success: true, completionStatus: 'SUCCESS', attempts: 1 });
             tick();
 
             expect(comp.isGeneratingCode()).toBeFalse();

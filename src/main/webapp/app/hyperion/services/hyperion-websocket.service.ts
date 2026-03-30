@@ -2,10 +2,12 @@ import { Injectable, OnDestroy, inject } from '@angular/core';
 import { WebsocketService } from 'app/shared/service/websocket.service';
 import { Observable, Subject, Subscription } from 'rxjs';
 
+export type HyperionCompletionStatus = 'SUCCESS' | 'PARTIAL' | 'ERROR';
+
 export type HyperionEvent =
     | { type: 'STARTED' | 'PROGRESS'; iteration?: number }
-    | { type: 'FILE_UPDATED' | 'NEW_FILE'; path: string }
-    | { type: 'DONE'; success: boolean; attempts: number; message?: string }
+    | { type: 'FILE_UPDATED' | 'NEW_FILE'; path: string; iteration?: number }
+    | { type: 'DONE'; success: boolean; completionStatus?: HyperionCompletionStatus; attempts: number; message?: string }
     | { type: 'ERROR'; message?: string };
 
 type SubscribedJob = { wsSubscription: Subscription; subject: Subject<HyperionEvent> };

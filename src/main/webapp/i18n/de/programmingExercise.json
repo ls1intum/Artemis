@@ -306,6 +306,7 @@
                 "confirmTitle": "Code-Generierung bestätigen",
                 "confirmText": "Diese Aktion nutzt ein LLM, kann Zeit benötigen und Credits kosten. Möchten Sie fortfahren?",
                 "success": "{{repositoryType}} Code-Generierung abgeschlossen.",
+                "warning": "{{repositoryType}} Code-Generierung mit Problemen abgeschlossen.",
                 "error": "{{repositoryType}} Code-Generierung fehlgeschlagen. Bitte versuchen Sie es später erneut.",
                 "timeoutDetails": "Die Generierung hat nach zu langer Wartezeit das Zeitlimit erreicht.",
                 "queueReleaseTimeoutDetails": "Die vorherige Repository-Generierung hat die Bereinigung nicht rechtzeitig abgeschlossen, daher konnte das nächste Repository nicht gestartet werden.",
@@ -322,6 +323,7 @@
                     "tests": "Tests Repository"
                 },
                 "activityTitle": "Dateiaktivität",
+                "iteration": "Iteration {{iteration}}",
                 "noActivity": "Es wurden noch keine Dateien erstellt oder aktualisiert.",
                 "attempts": "Versuche: {{attempts}}",
                 "status": {
@@ -329,6 +331,7 @@
                     "queued": "In Warteschlange",
                     "running": "Läuft",
                     "success": "Abgeschlossen",
+                    "warning": "Mit Problemen abgeschlossen",
                     "error": "Fehlgeschlagen",
                     "skipped": "Übersprungen",
                     "skippedMessage": "Übersprungen, weil eine vorherige Repository-Generierung fehlgeschlagen ist.",

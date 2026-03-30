@@ -223,7 +223,17 @@
                                     </div>
                                     <p-popover #codeGenerationSettingsPopover [dismissable]="true" styleClass="code-generation-popover p-0">
                                         <div class="code-generation-popover__section">
-                                            <div class="code-generation-popover__title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.settingsTitle"></div>
+                                            <div class="code-generation-popover__header">
+                                                <div class="code-generation-popover__title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.settingsTitle"></div>
+                                                <button
+                                                    type="button"
+                                                    class="code-generation-popover__close"
+                                                    [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                                                    (click)="codeGenerationSettingsPopover.hide()"
+                                                >
+                                                    <fa-icon [icon]="faTimes" />
+                                                </button>
+                                            </div>
                                             <div class="code-generation-popover__hint" jhiTranslate="artemisApp.programmingExercise.codeGeneration.executionOrder"></div>
                                             @for (repositoryType of supportedCodeGenerationRepositories; track repositoryType) {
                                                 <label class="code-generation-checkbox-row" [attr.for]="'code-generation-' + repositoryType">
@@ -294,7 +304,17 @@
                         </button>
                         <p-popover #codeGenerationStatusPopover [dismissable]="true" [appendTo]="'body'" styleClass="code-generation-popover code-generation-status-popover p-0">
                             <div class="code-generation-popover__section">
-                                <div class="code-generation-popover__title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.statusTitle"></div>
+                                <div class="code-generation-popover__header">
+                                    <div class="code-generation-popover__title" jhiTranslate="artemisApp.programmingExercise.codeGeneration.statusTitle"></div>
+                                    <button
+                                        type="button"
+                                        class="code-generation-popover__close"
+                                        [attr.aria-label]="'entity.action.close' | artemisTranslate"
+                                        (click)="codeGenerationStatusPopover.hide()"
+                                    >
+                                        <fa-icon [icon]="faTimes" />
+                                    </button>
+                                </div>
                                 <div class="code-generation-status-grid">
                                     @for (status of codeGenerationStatuses(); track status.repositoryType) {
                                         <section class="code-generation-status-card">
@@ -309,19 +329,26 @@
                                             @if (status.message) {
                                                 <div class="small text-body-secondary mt-1">{{ status.message }}</div>
                                             }
-                                            @if (status.attempts !== undefined) {
-                                                <div
-                                                    class="small mt-1 text-body-secondary"
-                                                    [jhiTranslate]="'artemisApp.programmingExercise.codeGeneration.attempts'"
-                                                    [translateValues]="{ attempts: status.attempts }"
-                                                ></div>
-                                            }
                                             @if (status.fileActivities.length) {
                                                 <div class="code-generation-activity-list">
-                                                    @for (activity of status.fileActivities; track activity.timestamp + activity.path) {
-                                                        <div class="code-generation-activity-item">
-                                                            <span [jhiTranslate]="getCodeGenerationFileActionTranslationKey(activity.eventType)"></span>
-                                                            <code>{{ activity.path }}</code>
+                                                    @for (activityGroup of getCodeGenerationIterationActivityGroups(status.fileActivities); track activityGroup.iteration ?? -1) {
+                                                        <div class="code-generation-iteration-group">
+                                                            <div class="code-generation-iteration-group__title">
+                                                                @if (activityGroup.iteration !== undefined) {
+                                                                    <span
+                                                                        [jhiTranslate]="'artemisApp.programmingExercise.codeGeneration.iteration'"
+                                                                        [translateValues]="{ iteration: activityGroup.iteration }"
+                                                                    ></span>
+                                                                } @else {
+                                                                    <span jhiTranslate="artemisApp.programmingExercise.codeGeneration.activityTitle"></span>
+                                                                }
+                                                            </div>
+                                                            @for (activity of activityGroup.activities; track activity.timestamp + activity.path) {
+                                                                <div class="code-generation-activity-item">
+                                                                    <span [jhiTranslate]="getCodeGenerationFileActionTranslationKey(activity.eventType)"></span>
+                                                                    <code>{{ activity.path }}</code>
+                                                                </div>
+                                                            }
                                                         </div>
                                                     }
                                                 </div>

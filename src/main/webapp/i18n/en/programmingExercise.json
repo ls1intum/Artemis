@@ -306,6 +306,7 @@
                 "confirmTitle": "Confirm Code Generation",
                 "confirmText": "This action uses an LLM and may take time and spend credits. Do you want to continue?",
                 "success": "{{repositoryType}} code generation completed.",
+                "warning": "{{repositoryType}} code generation completed with issues.",
                 "error": "{{repositoryType}} code generation failed. Please try again later.",
                 "timeoutDetails": "The generation timed out after waiting too long for a response.",
                 "queueReleaseTimeoutDetails": "The previous repository generation did not finish cleanup in time, so the next repository could not start.",
@@ -322,6 +323,7 @@
                     "tests": "Tests Repository"
                 },
                 "activityTitle": "File Activity",
+                "iteration": "Iteration {{iteration}}",
                 "noActivity": "No files have been created or updated yet.",
                 "attempts": "Attempts made: {{attempts}}",
                 "status": {
@@ -329,6 +331,7 @@
                     "queued": "Queued",
                     "running": "Running",
                     "success": "Completed",
+                    "warning": "Completed with issues",
                     "error": "Failed",
                     "skipped": "Skipped",
                     "skippedMessage": "Skipped because a previous repository generation failed.",

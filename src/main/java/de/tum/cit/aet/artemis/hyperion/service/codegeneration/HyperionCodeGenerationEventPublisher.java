@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.hyperion.service.codegeneration;
 
+import de.tum.cit.aet.artemis.hyperion.dto.HyperionCodeGenerationEventDTO;
 import de.tum.cit.aet.artemis.programming.domain.RepositoryType;
 
 public interface HyperionCodeGenerationEventPublisher {
@@ -21,25 +22,27 @@ public interface HyperionCodeGenerationEventPublisher {
      *
      * @param path           file path
      * @param repositoryType repository type
+     * @param iteration      generation iteration that produced the update
      */
-    void fileUpdated(String path, RepositoryType repositoryType);
+    void fileUpdated(String path, RepositoryType repositoryType, int iteration);
 
     /**
      * Publishes new file event.
      *
      * @param path           file path
      * @param repositoryType repository type
+     * @param iteration      generation iteration that produced the file
      */
-    void newFile(String path, RepositoryType repositoryType);
+    void newFile(String path, RepositoryType repositoryType, int iteration);
 
     /**
      * Publishes job completion event.
      *
-     * @param success  whether the job succeeded
-     * @param attempts number of attempts
-     * @param message  result message
+     * @param completionStatus terminal completion outcome
+     * @param attempts         number of attempts
+     * @param message          result message
      */
-    void done(boolean success, int attempts, String message);
+    void done(HyperionCodeGenerationEventDTO.CompletionStatus completionStatus, int attempts, String message);
 
     /**
      * Publishes job error event.

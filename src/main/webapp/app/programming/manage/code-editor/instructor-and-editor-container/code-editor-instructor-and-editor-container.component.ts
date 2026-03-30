@@ -40,7 +40,7 @@ import { AlertService, AlertType } from 'app/shared/service/alert.service';
 import { facArtemisIntelligence } from 'app/shared/icons/icons';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-modal/confirm-autofocus-modal.component';
-import { HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
+import { HyperionCompletionStatus, HyperionEvent, HyperionWebsocketService } from 'app/hyperion/services/hyperion-websocket.service';
 import { CodeEditorRepositoryService } from 'app/programming/shared/code-editor/services/code-editor-repository.service';
 import { Observable, Subscription, catchError, of, take, tap } from 'rxjs';
 import { ProblemStatementAiOperationsHelper } from 'app/programming/manage/shared/problem-statement-ai-operations.helper';
@@ -82,7 +82,7 @@ const CODE_GENERATION_FILE_PULL_DEBOUNCE_MS = 250;
 const CODE_GENERATION_STATUS_POPOVER_CENTER_OFFSET_PX = -10;
 
 type SupportedCodeGenerationRepositoryType = (typeof SUPPORTED_CODE_GENERATION_REPOSITORIES)[number];
-type CodeGenerationExecutionState = 'idle' | 'queued' | 'running' | 'success' | 'error' | 'skipped';
+type CodeGenerationExecutionState = 'idle' | 'queued' | 'running' | 'success' | 'warning' | 'error' | 'skipped';
 type CodeGenerationFileEventType = 'FILE_UPDATED' | 'NEW_FILE';
 type CodeGenerationRepositoryTranslationKey = `artemisApp.programmingExercise.codeGeneration.repositories.${Lowercase<SupportedCodeGenerationRepositoryType>}`;
 type CodeGenerationStateTranslationKey = `artemisApp.programmingExercise.codeGeneration.status.${CodeGenerationExecutionState}`;
@@ -93,6 +93,7 @@ const CODE_GENERATION_STATE_CLASSES: Record<CodeGenerationExecutionState, string
     queued: 'text-warning',
     running: 'text-primary',
     success: 'text-success',
+    warning: 'text-warning',
     error: 'text-danger',
     skipped: 'text-muted',
 };
@@ -106,7 +107,13 @@ interface CodeGenerationFileActivity {
     repositoryType: SupportedCodeGenerationRepositoryType;
     eventType: CodeGenerationFileEventType;
     path: string;
+    iteration?: number;
     timestamp: number;
+}
+
+interface CodeGenerationIterationActivityGroup {
+    iteration?: number;
+    activities: CodeGenerationFileActivity[];
 }
 
 interface CodeGenerationRepositoryStatus {
@@ -701,26 +708,23 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      */
     private handleCodeGenerationJobEvent(repositoryType: SupportedCodeGenerationRepositoryType, event: HyperionEvent) {
         if (event.type === 'FILE_UPDATED' || event.type === 'NEW_FILE') {
-            this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path);
+            this.registerCodeGenerationFileActivity(repositoryType, event.type, event.path, event.iteration);
             this.scheduleCodeGenerationRepositoryPull(repositoryType);
             return;
         }
 
         if (event.type === 'DONE') {
+            const completionState = this.getCodeGenerationExecutionState(event);
             this.flushCodeGenerationRepositoryPull(repositoryType);
             this.codeEditorContainer?.actions?.executeRefresh();
             this.updateCodeGenerationStatus(repositoryType, (status) => ({
                 ...status,
-                state: event.success ? 'success' : 'error',
+                state: completionState,
                 attempts: event.attempts,
                 message: event.message,
             }));
-            this.codeGenAlertService.addAlert({
-                type: AlertType.SUCCESS,
-                translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
-                translationParams: { repositoryType },
-            });
-            this.finishCurrentCodeGeneration(event.success || this.queuedCodeGenerationRepositories.length > 0);
+            this.showCodeGenerationCompletionAlert(repositoryType, completionState);
+            this.finishCurrentCodeGeneration(true);
             return;
         }
 
@@ -805,17 +809,81 @@ export class CodeEditorInstructorAndEditorContainerComponent extends CodeEditorI
      * @param eventType file activity event type
      * @param path changed file path
      */
-    private registerCodeGenerationFileActivity(repositoryType: SupportedCodeGenerationRepositoryType, eventType: CodeGenerationFileEventType, path: string) {
+    private registerCodeGenerationFileActivity(repositoryType: SupportedCodeGenerationRepositoryType, eventType: CodeGenerationFileEventType, path: string, iteration?: number) {
         const activity: CodeGenerationFileActivity = {
             repositoryType,
             eventType,
             path,
+            iteration,
             timestamp: Date.now(),
         };
         this.updateCodeGenerationStatus(repositoryType, (status) => ({
             ...status,
             fileActivities: [activity, ...status.fileActivities],
         }));
+    }
+
+    getCodeGenerationIterationActivityGroups(fileActivities: CodeGenerationFileActivity[]): CodeGenerationIterationActivityGroup[] {
+        const groups = new Map<number | 'unknown', CodeGenerationFileActivity[]>();
+        for (const activity of fileActivities) {
+            const key = activity.iteration ?? 'unknown';
+            const existingActivities = groups.get(key) ?? [];
+            existingActivities.push(activity);
+            groups.set(key, existingActivities);
+        }
+
+        return Array.from(groups.entries())
+            .sort(([leftIteration], [rightIteration]) => {
+                if (leftIteration === 'unknown') {
+                    return 1;
+                }
+                if (rightIteration === 'unknown') {
+                    return -1;
+                }
+                return rightIteration - leftIteration;
+            })
+            .map(([iteration, activities]) => ({
+                iteration: iteration === 'unknown' ? undefined : iteration,
+                activities,
+            }));
+    }
+
+    private getCodeGenerationExecutionState(event: Extract<HyperionEvent, { type: 'DONE' }>): Extract<CodeGenerationExecutionState, 'success' | 'warning' | 'error'> {
+        const completionStatus: HyperionCompletionStatus = event.completionStatus ?? (event.success ? 'SUCCESS' : 'ERROR');
+        switch (completionStatus) {
+            case 'SUCCESS':
+                return 'success';
+            case 'PARTIAL':
+                return 'warning';
+            default:
+                return 'error';
+        }
+    }
+
+    private showCodeGenerationCompletionAlert(
+        repositoryType: SupportedCodeGenerationRepositoryType,
+        completionState: Extract<CodeGenerationExecutionState, 'success' | 'warning' | 'error'>,
+    ) {
+        const alertByState: Record<typeof completionState, { type: AlertType; translationKey: string }> = {
+            success: {
+                type: AlertType.SUCCESS,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.success',
+            },
+            warning: {
+                type: AlertType.WARNING,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.warning',
+            },
+            error: {
+                type: AlertType.DANGER,
+                translationKey: 'artemisApp.programmingExercise.codeGeneration.error',
+            },
+        };
+        const alert = alertByState[completionState];
+        this.codeGenAlertService.addAlert({
+            type: alert.type,
+            translationKey: alert.translationKey,
+            translationParams: { repositoryType },
+        });
     }
 
     /**
