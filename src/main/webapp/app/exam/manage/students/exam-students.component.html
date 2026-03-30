@@ -43,6 +43,7 @@
         paginator
         [globalFilterFields]="['login', 'name']"
         rowHover
+        [scrollable]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords} registered students"
         showCurrentPageReport
         class="border border-1 rounded-4 overflow-hidden"
@@ -80,7 +81,7 @@
                         <span> Status </span>
                     </div>
                 </th>
-                <th style="min-width: 6rem">
+                <th style="min-width: 6rem" alignFrozen="right" pFrozenColumn>
                     <span class="d-flex align-items-center gap-2">Actions</span>
                 </th>
             </tr>
@@ -142,7 +143,7 @@
                         </div>
                     }
                 </td>
-                <td>
+                <td alignFrozen="right" pFrozenColumn>
                     <div class="d-flex gap-1">
                         <button
                             pButton
