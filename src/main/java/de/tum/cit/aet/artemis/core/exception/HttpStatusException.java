@@ -29,15 +29,18 @@ public abstract class HttpStatusException extends ErrorResponseException {
      *                           component where the error occurred has information to display a more concrete error message)
      */
     public HttpStatusException(URI type, String defaultMessage, HttpStatus status, String entityName, String errorKey, Map<String, Object> parameters) {
-        super(status, asProblemDetail(type, defaultMessage, status, parameters), null);
+        super(status, asProblemDetail(type, defaultMessage, status, entityName, errorKey, parameters), null);
         this.entityName = entityName;
         this.errorKey = errorKey;
     }
 
-    private static ProblemDetail asProblemDetail(URI type, String title, HttpStatus status, Map<String, Object> parameters) {
+    private static ProblemDetail asProblemDetail(URI type, String title, HttpStatus status, String entityName, String errorKey, Map<String, Object> parameters) {
         ProblemDetail detail = ProblemDetail.forStatus(status);
         detail.setType(type);
         detail.setTitle(title);
+        // Include entityName and errorKey in the response for backward compatibility with client-side error handling
+        detail.setProperty("entityName", entityName);
+        detail.setProperty("errorKey", errorKey);
         if (parameters != null) {
             parameters.forEach(detail::setProperty);
         }
