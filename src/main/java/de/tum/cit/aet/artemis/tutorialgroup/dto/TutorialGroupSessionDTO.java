@@ -60,6 +60,13 @@ public record TutorialGroupSessionDTO(@NotNull Long id, @NotNull ZonedDateTime s
         return new TutorialGroupSessionDTO(rawDto.id(), rawDto.start(), rawDto.end(), rawDto.location(), isCancelled, false, false, false, rawDto.attendanceCount());
     }
 
+    /**
+     * Builds a {@link TutorialGroupSessionDTO} from a persisted tutorial group session and its optional schedule.
+     *
+     * @param session  the session entity to convert
+     * @param schedule the schedule used to determine deviations, may be {@code null}
+     * @return a DTO with session details and flags for schedule deviations
+     */
     public static TutorialGroupSessionDTO from(TutorialGroupSession session, TutorialGroupSchedule schedule) {
         boolean isCancelled = session.getStatus() == TutorialGroupSessionStatus.CANCELLED;
         boolean sameLocation = false;

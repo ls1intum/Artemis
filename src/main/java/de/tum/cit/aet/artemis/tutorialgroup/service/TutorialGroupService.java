@@ -341,6 +341,14 @@ public class TutorialGroupService {
         return notFoundStudentDTOs;
     }
 
+    /**
+     * Registers multiple students in a tutorial group based on their logins.
+     *
+     * @param tutorialGroup    the tutorial group to register the students for
+     * @param logins           the student logins to register
+     * @param registrationType the type of registration to apply
+     * @param responsibleUser  the user performing the registration
+     */
     public void registerMultipleStudentsViaLogin(TutorialGroup tutorialGroup, List<String> logins, TutorialGroupRegistrationType registrationType, User responsibleUser) {
         Set<User> students = new HashSet<>();
         for (var login : logins) {

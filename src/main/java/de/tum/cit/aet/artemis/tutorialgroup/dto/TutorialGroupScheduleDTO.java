@@ -18,9 +18,16 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSchedule;
 public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart, @NotNull LocalDateTime firstSessionEnd, @NotNull @Min(1) Integer repetitionFrequency,
         @NotNull LocalDate tutorialPeriodEnd, @NotNull String location) {
 
+    /**
+     * Converts a {@link TutorialGroupScheduleDTO} into a {@link TutorialGroupSchedule} entity instance.
+     *
+     * @param tutorialGroupScheduleDTO the schedule DTO to convert
+     * @return the converted entity, or {@code null} if the DTO is {@code null}
+     */
     public static TutorialGroupSchedule toTutorialGroupSchedule(TutorialGroupScheduleDTO tutorialGroupScheduleDTO) {
-        if (tutorialGroupScheduleDTO == null)
+        if (tutorialGroupScheduleDTO == null) {
             return null;
+        }
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
         var schedule = new TutorialGroupSchedule();
@@ -34,6 +41,12 @@ public record TutorialGroupScheduleDTO(@NotNull LocalDateTime firstSessionStart,
         return schedule;
     }
 
+    /**
+     * Converts a {@link TutorialGroupSchedule} entity into its {@link TutorialGroupScheduleDTO} representation.
+     *
+     * @param tutorialGroupSchedule the entity to convert
+     * @return the converted DTO
+     */
     public static TutorialGroupScheduleDTO toTutorialGroupScheduleDTO(TutorialGroupSchedule tutorialGroupSchedule) {
         LocalDate tutorialPeriodStart = LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive());
         LocalDate firstSessionDate = tutorialPeriodStart.with(TemporalAdjusters.nextOrSame(DayOfWeek.of(tutorialGroupSchedule.getDayOfWeek())));

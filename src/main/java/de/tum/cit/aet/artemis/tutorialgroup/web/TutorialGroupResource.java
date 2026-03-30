@@ -199,6 +199,13 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(tutorialGroupDetailDTO);
     }
 
+    /**
+     * GET /courses/:courseId/tutorial-groups/:tutorialGroupId/schedule : get the schedule of a tutorial group.
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs
+     * @param tutorialGroupId the id of the tutorial group
+     * @return the {@link ResponseEntity} with the tutorial group schedule, or 204 if no schedule exists
+     */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/schedule")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<TutorialGroupScheduleDTO> getTutorialGroupSchedule(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
@@ -210,6 +217,13 @@ public class TutorialGroupResource {
         return scheduleOptional.map(schedule -> ResponseEntity.ok(TutorialGroupScheduleDTO.toTutorialGroupScheduleDTO((schedule)))).orElse(ResponseEntity.noContent().build());
     }
 
+    /**
+     * POST /courses/:courseId/tutorial-groups : create a tutorial group for a course.
+     *
+     * @param courseId               the id of the course to which the tutorial group belongs
+     * @param createTutorialGroupDTO the data used to create the tutorial group
+     * @return the {@link ResponseEntity} with the id of the created tutorial group
+     */
     @PostMapping("courses/{courseId}/tutorial-groups")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Long> createTutorialGroup(@PathVariable Long courseId, @RequestBody @Valid CreateAndUpdateTutorialGroupDTO createTutorialGroupDTO) {
@@ -263,6 +277,14 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(tutorialGroup.getId());
     }
 
+    /**
+     * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId : update an existing tutorial group.
+     *
+     * @param courseId               the id of the course to which the tutorial group belongs
+     * @param tutorialGroupId        the id of the tutorial group to update
+     * @param updateTutorialGroupDTO the data used to update the tutorial group
+     * @return the {@link ResponseEntity} with status 204 (NO_CONTENT)
+     */
     @PutMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @EnforceAtLeastEditorInCourse
     public ResponseEntity<Void> updateTutorialGroup(@PathVariable long courseId, @PathVariable long tutorialGroupId,
@@ -350,6 +372,14 @@ public class TutorialGroupResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/batch-register : register multiple students to a tutorial group using their logins.
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs
+     * @param tutorialGroupId the id of the tutorial group
+     * @param logins          the logins of the students to register
+     * @return the {@link ResponseEntity} with status 204 (NO_CONTENT)
+     */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/batch-register")
     @EnforceAtLeastTutor
     public ResponseEntity<Void> batchRegisterStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId, @RequestBody List<String> logins) {
@@ -395,6 +425,16 @@ public class TutorialGroupResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * GET /courses/:courseId/tutorial-groups/:tutorialGroupId/unregistered-students : search students of the course that are not registered in the tutorial group yet.
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs
+     * @param tutorialGroupId the id of the tutorial group
+     * @param loginOrName     the search string matched against login or name
+     * @param pageIndex       the zero-based page index
+     * @param pageSize        the number of results per page
+     * @return the {@link ResponseEntity} with the matching unregistered students
+     */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/unregistered-students")
     @EnforceAtLeastTutor
     public ResponseEntity<List<TutorialGroupStudentDTO>> searchUnregisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId,
@@ -417,6 +457,13 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(foundStudents);
     }
 
+    /**
+     * GET /courses/:courseId/tutorial-groups/:tutorialGroupId/registered-students : get all registered students of a tutorial group.
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs
+     * @param tutorialGroupId the id of the tutorial group
+     * @return the {@link ResponseEntity} with the registered students of the tutorial group
+     */
     @GetMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/registered-students")
     @EnforceAtLeastTutorInCourse
     public ResponseEntity<Set<TutorialGroupStudentDTO>> getRegisteredStudents(@PathVariable long courseId, @PathVariable long tutorialGroupId) {
@@ -429,13 +476,12 @@ public class TutorialGroupResource {
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/register-multiple" : Register multiple users to the tutorial group
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/import-registrations : register multiple students to a tutorial group using registration data.
      *
-     * @param courseId        the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId the id of the tutorial group to which the users should be registered to
-     * @param studentDTOs     the list of students who should be registered to the tutorial group
-     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database as students of the tutorial group
-     *         course
+     * @param courseId        the id of the course to which the tutorial group belongs
+     * @param tutorialGroupId the id of the tutorial group
+     * @param studentDTOs     DTOs containing login or registration number of the students that should be registered
+     * @return the students that could not be found and therefore were not registered
      */
     @PostMapping("courses/{courseId}/tutorial-groups/{tutorialGroupId}/import-registrations")
     @EnforceAtLeastInstructorInCourse
