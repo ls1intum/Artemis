@@ -1,22 +1,24 @@
-import { Component, Input, OnChanges, SimpleChanges, ViewChild, inject } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild, inject } from '@angular/core';
 import { ProgrammingExercise, ProgrammingLanguage, ProjectType } from 'app/programming/shared/entities/programming-exercise.model';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { ProgrammingExerciseCreationConfig } from 'app/programming/manage/update/programming-exercise-creation-config';
 import { AeolusService } from 'app/programming/shared/services/aeolus.service';
 import { ProgrammingExerciseBuildConfigurationComponent } from 'app/programming/manage/update/update-components/custom-build-plans/programming-exercise-build-configuration/programming-exercise-build-configuration.component';
-import { MonacoEditorComponent } from 'app/shared/monaco-editor/monaco-editor.component';
 import { ASSIGNMENT_REPO_NAME, TEST_REPO_NAME } from 'app/shared/constants/input.constants';
 import { FormsModule } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon/help-icon.component';
+import { BuildPhasesEditorComponent } from 'app/programming/manage/update/update-components/custom-build-plans/build-phases-editor/build-phases-editor.component';
+import { BUILD_PHASE_NAME_PATTERN, BUILD_PHASE_RESERVED_NAMES, BuildPhase, BuildPlanPhases } from 'app/programming/shared/entities/build-plan-phases.model';
+import { ScriptAction } from 'app/programming/shared/entities/build.action';
+import { WindFile } from 'app/programming/shared/entities/wind.file';
 
 @Component({
     selector: 'jhi-programming-exercise-custom-build-plan',
     templateUrl: './programming-exercise-custom-build-plan.component.html',
     styleUrls: ['../../../../shared/programming-exercise-form.scss'],
-    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, MonacoEditorComponent],
+    imports: [FormsModule, TranslateDirective, HelpIconComponent, ProgrammingExerciseBuildConfigurationComponent, BuildPhasesEditorComponent],
 })
-export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
+export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges, OnInit {
     private aeolusService = inject(AeolusService);
 
     @Input() programmingExercise: ProgrammingExercise;
@@ -30,17 +32,36 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
     sequentialTestRuns?: boolean;
     isImportFromFile = false;
 
-    code: string = '#!/bin/bash\n\n# Add your custom build plan action here';
-    private _editor?: MonacoEditorComponent;
+    buildPlanPhases: BuildPlanPhases = {
+        phases: [
+            {
+                name: '',
+                script: '# enter the script of this phase',
+                condition: 'ALWAYS',
+                forceRun: false,
+                resultPaths: [],
+            },
+        ],
+    } as BuildPlanPhases;
 
-    @ViewChild('editor', { static: false }) set editor(value: MonacoEditorComponent) {
-        this._editor = value;
-        if (this._editor) {
-            this.setupEditor();
-            if (this.programmingExercise.id || this.isImportFromFile) {
-                this.code = this.programmingExercise.buildConfig?.buildScript || '';
+    ngOnInit() {
+        const configJson = this.programmingExercise.buildConfig?.buildPlanConfiguration;
+        if (configJson) {
+            try {
+                const parsed = JSON.parse(configJson);
+                if (parsed?.phases?.length) {
+                    this.buildPlanPhases = parsed as BuildPlanPhases;
+                    return;
+                }
+            } catch {
+                // Not valid JSON or not phases format
             }
-            this._editor.setText(this.code);
+        }
+
+        const windfile = this.programmingExercise.buildConfig?.windfile;
+        if (windfile?.actions?.length) {
+            this.buildPlanPhases = this.buildPlanFromWindfile(windfile);
+            return;
         }
     }
 
@@ -92,6 +113,11 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
             this.aeolusService.getAeolusTemplateFile(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
                 next: (file) => {
                     this.programmingExercise.buildConfig!.windfile = this.aeolusService.parseWindFile(file);
+                    const windfile = this.programmingExercise.buildConfig!.windfile;
+                    if (!windfile?.actions?.length) {
+                        return;
+                    }
+                    this.buildPlanPhases = this.buildPlanFromWindfile(windfile);
                 },
                 error: () => {
                     this.programmingExercise.buildConfig!.windfile = undefined;
@@ -102,54 +128,45 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         if (!this.programmingExercise.buildConfig?.windfile) {
             this.resetCustomBuildPlan();
         }
-        if (!isImportFromFile || !this.programmingExercise.buildConfig?.buildScript) {
-            this.aeolusService.getAeolusTemplateScript(this.programmingLanguage, this.projectType, this.staticCodeAnalysisEnabled, this.sequentialTestRuns).subscribe({
-                next: (file: string) => {
-                    file = this.replacePlaceholders(file);
-                    this.codeChanged(file);
-                    this.editor?.setText(file);
-                },
-                error: () => {
-                    this.programmingExercise.buildConfig!.buildScript = undefined;
-                },
-            });
-        }
-        if (!this.programmingExercise.buildConfig?.buildScript) {
-            this.resetCustomBuildPlan();
-        }
         if (!this.programmingExercise.buildConfig?.timeoutSeconds) {
             this.programmingExercise.buildConfig!.timeoutSeconds = 0;
         }
     }
 
-    get editor(): MonacoEditorComponent | undefined {
-        return this._editor;
-    }
-
-    faQuestionCircle = faQuestionCircle;
-
-    codeChanged(codeOrEvent: string | { text: string; fileName: string }): void {
-        const code = typeof codeOrEvent === 'string' ? codeOrEvent : codeOrEvent.text;
-        this.code = code;
-        this.editor?.setText(code);
-        this.programmingExercise.buildConfig!.buildScript = code;
+    /**
+     * Called when the build phases editor emits a change.
+     */
+    onPhasesChange(phases: BuildPhase[]) {
+        this.buildPlanPhases = { ...this.buildPlanPhases, phases };
     }
 
     /**
-     * Sets up the Monaco editor for the build plan script
+     * Stores the selected Docker image alongside the current phase configuration.
+     *
+     * @param dockerImage the selected Docker image
      */
-    setupEditor(): void {
-        if (!this._editor) {
-            return;
-        }
-        this._editor.changeModel('build-plan.sh', '');
+    setDockerImage(dockerImage: string) {
+        this.buildPlanPhases = { ...this.buildPlanPhases, dockerImage: dockerImage.trim() };
     }
 
-    setDockerImage(dockerImage: string) {
-        if (!this.programmingExercise.buildConfig?.windfile || !this.programmingExercise.buildConfig?.windfile.metadata.docker) {
-            return;
+    /**
+     * Returns the build plan phases as a JSON string including the docker image.
+     * Used by the parent component to serialize phases into buildPlanConfiguration.
+     * @returns JSON string of BuildPlanPhases with dockerImage, or undefined if no phases available
+     */
+    getBuildPlanPhasesJSON(): string | undefined {
+        if (!this.buildPlanPhases?.phases?.length || !this.arePhaseNamesValid(this.buildPlanPhases.phases)) {
+            return undefined;
         }
-        this.programmingExercise.buildConfig!.windfile.metadata.docker.image = dockerImage.trim();
+        return JSON.stringify(this.buildPlanPhases);
+    }
+
+    arePhaseNamesValid(phases: BuildPhase[]): boolean {
+        const normalizedNames = phases.map((phase) => phase.name.toLowerCase());
+        const namesAreUnique = new Set(normalizedNames).size === normalizedNames.length;
+        const namesArePatternValid = phases.every((phase) => BUILD_PHASE_NAME_PATTERN.test(phase.name));
+        const namesAreNotReserved = phases.every((phase) => !BUILD_PHASE_RESERVED_NAMES.has(phase.name.toLowerCase()));
+        return namesAreUnique && namesArePatternValid && namesAreNotReserved;
     }
 
     setTimeout(timeout: number) {
@@ -162,5 +179,33 @@ export class ProgrammingExerciseCustomBuildPlanComponent implements OnChanges {
         buildScript = buildScript.replaceAll('${studentParentWorkingDirectoryName}', assignmentRepoName);
         buildScript = buildScript.replaceAll('${testWorkingDirectory}', testRepoName);
         return buildScript;
+    }
+
+    /**
+     * Converts windfile actions into BuildPlanPhases format.
+     * Only ScriptActions (actions with a script property) are included.
+     * @param windfile The windfile containing actions to convert
+     * @returns BuildPlanPhases with one phase per script action and the docker image
+     */
+    private buildPlanFromWindfile(windfile: WindFile): BuildPlanPhases {
+        const phases: BuildPhase[] = windfile.actions
+            .filter((action): action is ScriptAction => 'script' in action && !!action.script)
+            .map((action) => ({
+                name: action.name || '',
+                script: this.wrapScriptWithWorkdir(action.script, action.workdir),
+                condition: 'ALWAYS' as const,
+                forceRun: action.runAlways,
+                resultPaths: (action.results ?? []).map((r) => r.path).filter((p): p is string => !!p),
+            }));
+        const dockerImage = windfile.metadata?.docker?.image;
+        return { phases, dockerImage };
+    }
+
+    private wrapScriptWithWorkdir(script: string, workdir?: string): string {
+        if (!workdir?.trim()) {
+            return this.replacePlaceholders(script);
+        }
+
+        return this.replacePlaceholders(`ORIGINAL_DIR="$(pwd)"\ncd "${workdir}"\n${script}\ncd "$ORIGINAL_DIR"`);
     }
 }
