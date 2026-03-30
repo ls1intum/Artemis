@@ -22,7 +22,6 @@ import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 @Conditional(IrisEnabled.class)
 public interface IrisSessionRepository extends ArtemisJpaRepository<IrisSession, Long> {
 
-    // TODO: überprüfen, ob mit IrisChatSessionRepository vereint werden kann
     @Query("""
             SELECT s
             FROM IrisSession s

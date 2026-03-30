@@ -15,8 +15,7 @@ import de.tum.cit.aet.artemis.core.domain.User;
 @Entity
 @DiscriminatorValue("TUTOR_SUGGESTION")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-// TODO: extend IrisSession ?
-public class IrisTutorSuggestionSession extends IrisChatSession {
+public class IrisTutorSuggestionSession extends IrisSession {
 
     @JsonIgnore
     private Long postId;

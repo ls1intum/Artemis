@@ -168,11 +168,10 @@ public class IrisSessionService {
     @SuppressWarnings("unchecked")
     private <S extends IrisSession> IrisSubFeatureWrapper<S> getIrisSessionSubService(S session) {
         return switch (session) {
-            // IrisTutorSuggestionSession must come before IrisChatSession (it is a subtype)
             case IrisTutorSuggestionSession tutorSuggestionSession ->
                 (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisTutorSuggestionSessionService, tutorSuggestionSession);
             case IrisChatSession chatSession -> (IrisSubFeatureWrapper<S>) new IrisSubFeatureWrapper<>(irisChatSessionService, chatSession);
-            case null, default -> throw new BadRequestException("Unknown Iris session type " + session.getClass().getSimpleName());
+            case null, default -> throw new BadRequestException("Unknown Iris session type");
         };
     }
 

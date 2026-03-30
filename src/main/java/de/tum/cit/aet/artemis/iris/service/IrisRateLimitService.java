@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.iris.config.IrisEnabled;
 import de.tum.cit.aet.artemis.iris.domain.session.IrisChatSession;
+import de.tum.cit.aet.artemis.iris.domain.session.IrisSession;
 import de.tum.cit.aet.artemis.iris.domain.settings.IrisRateLimitConfiguration;
 import de.tum.cit.aet.artemis.iris.exception.IrisRateLimitExceededException;
 import de.tum.cit.aet.artemis.iris.repository.IrisMessageRepository;
@@ -31,17 +32,6 @@ public class IrisRateLimitService {
     public IrisRateLimitService(IrisMessageRepository irisMessageRepository, IrisSettingsService irisSettingsService) {
         this.irisMessageRepository = irisMessageRepository;
         this.irisSettingsService = irisSettingsService;
-    }
-
-    /**
-     * Get the rate limit information for the given user. Uses application-level defaults.
-     *
-     * @param user the user
-     * @return the rate limit information
-     */
-    // TODO: Nachschauen, ob vorher auch nicht genutzt
-    public IrisRateLimitInformation getRateLimitInformation(User user) {
-        return getRateLimitInformation((Long) null, user);
     }
 
     /**
@@ -75,18 +65,8 @@ public class IrisRateLimitService {
      * @param user    the user
      * @return resolved rate limit information
      */
-    public IrisRateLimitInformation getRateLimitInformation(IrisChatSession session, User user) {
+    public IrisRateLimitInformation getRateLimitInformation(IrisSession session, User user) {
         return getRateLimitInformation(resolveCourseId(session).orElse(null), user);
-    }
-
-    /**
-     * Checks if the rate limit of the given user is exceeded using application defaults.
-     *
-     * @param user the user
-     */
-    // TODO: Nachschauen, ob vorher auch nicht genutzt
-    public void checkRateLimitElseThrow(User user) {
-        checkRateLimitElseThrow((Long) null, user);
     }
 
     /**
@@ -108,7 +88,7 @@ public class IrisRateLimitService {
      * @param session the iris session
      * @param user    the user
      */
-    public void checkRateLimitElseThrow(IrisChatSession session, User user) {
+    public void checkRateLimitElseThrow(IrisSession session, User user) {
         checkRateLimitElseThrow(resolveCourseId(session).orElse(null), user);
     }
 
@@ -119,10 +99,12 @@ public class IrisRateLimitService {
         return irisSettingsService.getCourseSettingsWithRateLimit(courseId).effectiveRateLimit();
     }
 
-    private Optional<Long> resolveCourseId(IrisChatSession session) {
-        // IrisChatSession always carries courseId; 0 means not set (e.g. tutor suggestions)
-        long courseId = session.getCourseId();
-        return courseId > 0 ? Optional.of(courseId) : Optional.empty();
+    private Optional<Long> resolveCourseId(IrisSession session) {
+        if (session instanceof IrisChatSession chatSession) {
+            long courseId = chatSession.getCourseId();
+            return courseId > 0 ? Optional.of(courseId) : Optional.empty();
+        }
+        return Optional.empty();
     }
 
     /**

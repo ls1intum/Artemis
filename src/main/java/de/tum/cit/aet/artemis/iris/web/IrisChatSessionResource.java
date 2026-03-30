@@ -4,6 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import jakarta.ws.rs.BadRequestException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
@@ -186,8 +188,11 @@ public class IrisChatSessionResource {
         boolean enabled = irisSettingsService.isEnabledForCourse(courseId);
 
         if (enabled) {
-            irisSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(irisSession.getMessages()));
-            return ResponseEntity.ok((IrisChatSession) irisSession);
+            if (!(irisSession instanceof IrisChatSession chatSession)) {
+                throw new BadRequestException("Session is not a chat session");
+            }
+            chatSession.setCitationInfo(irisCitationService.resolveCitationInfoFromMessages(chatSession.getMessages()));
+            return ResponseEntity.ok(chatSession);
         }
         throw new AccessForbiddenAlertException("This Iris chat Type is disabled in the course.", "iris", "iris.disabled");
     }
@@ -241,7 +246,7 @@ public class IrisChatSessionResource {
     public ResponseEntity<Void> deleteSession(@PathVariable Long sessionId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         IrisChatSession session = irisChatSessionRepository.findById(sessionId).orElseThrow(() -> new EntityNotFoundException("Iris chat session", sessionId));
-        if (user.getId() == null || session.getUserId() != user.getId().longValue()) {
+        if (user.getId() == null || session.getUserId() != user.getId()) {
             throw new AccessForbiddenAlertException("You do not have access to this Iris chat session.", "iris", "iris.forbidden");
         }
         log.info("REST request to delete Iris chat session {} for user id {}", sessionId, user.getId());
