@@ -206,13 +206,13 @@ public abstract class AbstractTutorialGroupIntegrationTest extends AbstractSprin
     @BeforeEach
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
-        var firstCourse = courseUtilService.createCourseWithUserPrefix("firstCourse");
+        var firstCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "firstCourse");
         firstCourse.setTimeZone(exampleTimeZone);
         this.exampleCourse = courseRepository.save(firstCourse);
         exampleCourseId = firstCourse.getId();
         exampleConfigurationId = tutorialGroupUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
-        var secondCourse = courseUtilService.createCourseWithUserPrefix("secondCourse");
+        var secondCourse = courseUtilService.createCourseWithUserPrefix(testPrefix + "secondCourse");
         secondCourse.setTimeZone(exampleTimeZone);
         this.exampleCourse2 = courseRepository.save(secondCourse);
         exampleCourse2Id = secondCourse.getId();

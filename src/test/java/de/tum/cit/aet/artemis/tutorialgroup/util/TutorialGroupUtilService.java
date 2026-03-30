@@ -31,7 +31,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSession;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupSessionStatus;
 import de.tum.cit.aet.artemis.tutorialgroup.domain.TutorialGroupsConfiguration;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupFreePeriodRepository;
-import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupScheduleRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupSessionRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.repository.TutorialGroupsConfigurationRepository;
 import de.tum.cit.aet.artemis.tutorialgroup.test_repository.TutorialGroupRegistrationTestRepository;
@@ -66,9 +65,6 @@ public class TutorialGroupUtilService {
 
     @Autowired
     private TutorialGroupRegistrationTestRepository tutorialGroupRegistrationRepository;
-
-    @Autowired
-    private TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
 
     /**
      * Creates and saves a TutorialGroupSession for the TutorialGroup with the given ID.

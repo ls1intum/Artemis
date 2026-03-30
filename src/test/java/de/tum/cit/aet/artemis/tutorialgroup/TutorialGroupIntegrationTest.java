@@ -41,8 +41,8 @@ import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupScheduleDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupSessionDTO;
 import de.tum.cit.aet.artemis.tutorialgroup.dto.TutorialGroupStudentDTO;
 
-// TODO: add notification related asserts
 // TODO: check what happens if 'channels enabled' changes -> is the logic in create/update implemented correctly for all scenarios?
+// TODO: add notification related asserts
 // TODO: check coverage and logic if import export endpoints
 
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {

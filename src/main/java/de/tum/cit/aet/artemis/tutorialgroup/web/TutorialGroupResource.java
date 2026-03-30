@@ -166,8 +166,6 @@ public class TutorialGroupResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
         boolean isAdminOrInstructor = authorizationCheckService.isAdmin(user) || authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-        ;
-        // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupService.findAllForCourse(course, user, isAdminOrInstructor);
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
