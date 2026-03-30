@@ -63,7 +63,7 @@ export class TutorialEditContainerComponent {
             .subscribe({
                 next: () => {
                     this.isTutorialGroupLoading.set(false);
-                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId); // TODO: rather return and set group here?
+                    this.tutorialGroupCourseAndGroupService.fetchTutorialGroup(courseId, tutorialGroupId);
                     this.router.navigate(['..'], { relativeTo: this.activatedRoute });
                 },
                 error: () => {
