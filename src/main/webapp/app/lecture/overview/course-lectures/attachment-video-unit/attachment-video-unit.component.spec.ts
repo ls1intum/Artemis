@@ -538,6 +538,7 @@ describe('AttachmentVideoUnitComponent', () => {
 
             const requests = httpMock.match((request) => request.url.includes('test.pdf') && request.responseType === 'blob');
             expect(requests).toHaveLength(1);
+            expect(component['isBlobLoadInProgress']()).toBe(true);
 
             requests[0].flush(new Blob(['fake pdf content'], { type: 'application/pdf' }));
             await fixture.whenStable();

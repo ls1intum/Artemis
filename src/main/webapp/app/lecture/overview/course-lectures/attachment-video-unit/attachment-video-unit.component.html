@@ -85,7 +85,8 @@
                         <p-progressSpinner ariaLabel="{{ 'artemisApp.attachmentVideoUnit.pdfViewer.loadingPdf' | artemisTranslate }}" />
                     </div>
                 }
-                <jhi-lecture-pdf-viewer-iframe
+                <jhi-pdf-viewer
+                    mode="embedded"
                     [class.pdf-viewer-loading]="showPdfSpinner()"
                     [pdfUrl]="pdfUrl()!"
                     [uploadDate]="lectureUnit().attachment?.uploadDate"

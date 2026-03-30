@@ -79,9 +79,13 @@ export class PdfViewerIframeContentComponent implements OnInit {
     protected searchMatchesCount = signal<FindMatchesCount | undefined>(undefined);
 
     ngOnInit(): void {
-        window.addEventListener('message', this.handleParentMessage as EventListener);
+        const messageListener = (event: Event) => {
+            this.handleParentMessage(event as MessageEvent<IframeMessage>);
+        };
+
+        window.addEventListener('message', messageListener);
         this.destroyRef.onDestroy(() => {
-            window.removeEventListener('message', this.handleParentMessage as EventListener);
+            window.removeEventListener('message', messageListener);
         });
 
         this.postMessageToParent('ready', {});

@@ -251,6 +251,6 @@
     --toolbar-muted-text-color: #{dark.$gray-500};
     --toolbar-input-border-color: #{dark.$gray-600};
     --toolbar-input-focus-color: #{dark.$gray-400};
-    --artemis-search-highlight-bg-color: #{rgba(light.$yellow, 0.5)};
-    --artemis-search-highlight-selected-bg-color: #{rgba(light.$orange, 0.5)};
+    --artemis-search-highlight-bg-color: #{rgba(dark.$yellow, 0.5)};
+    --artemis-search-highlight-selected-bg-color: #{rgba(dark.$orange, 0.5)};
 }

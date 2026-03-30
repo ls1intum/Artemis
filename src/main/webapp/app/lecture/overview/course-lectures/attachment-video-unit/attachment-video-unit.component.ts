@@ -7,7 +7,7 @@ import { LectureUnitComponent } from 'app/lecture/overview/course-lectures/lectu
 import urlParser from 'js-video-url-parser';
 import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { VideoPlayerComponent } from 'app/lecture/shared/video-player/video-player.component';
-import { PdfViewerIframeWrapperComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer-iframe-wrapper.component';
+import { PdfViewerComponent } from 'app/lecture/shared/pdf-viewer/pdf-viewer.component';
 import { LectureTranscriptionService } from 'app/lecture/manage/services/lecture-transcription.service';
 import { AttachmentVideoUnitService } from 'app/lecture/manage/lecture-units/services/attachment-video-unit.service';
 import {
@@ -48,7 +48,7 @@ import { ProgressSpinnerModule } from 'primeng/progressspinner';
         TranslateDirective,
         SafeResourceUrlPipe,
         VideoPlayerComponent,
-        PdfViewerIframeWrapperComponent,
+        PdfViewerComponent,
         FaIconComponent,
         MessageModule,
         ProgressSpinnerModule,
@@ -77,8 +77,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     readonly pdfUrl = signal<string | undefined>(undefined);
     readonly isPdfLoading = signal<boolean>(false);
     readonly pdfLoadError = signal<boolean>(false);
-
-    private pdfSubscription?: Subscription;
+    private readonly isBlobLoadInProgress = signal<boolean>(false);
+    private blobLoadSubscription?: Subscription;
 
     readonly validatedPdfPage = computed(() => {
         const page = this.targetPdfPage();
@@ -142,7 +142,7 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             return;
         }
 
-        if (this.pdfSubscription) {
+        if (this.isBlobLoadInProgress()) {
             return;
         }
 
@@ -208,8 +208,8 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
             }
         } else {
             this.cancelPdfLoad();
-            this.clearPdfState();
             this.isPdfLoading.set(false);
+            this.clearPdfState();
         }
     }
 
@@ -256,34 +256,48 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
     }
 
     private loadPdfAsBlob(): void {
+        this.cancelPdfLoad();
         this.isPdfLoading.set(true);
+        this.isBlobLoadInProgress.set(true);
 
         const link = this.getAttachmentLink();
         if (!link) {
             this.pdfLoadError.set(true);
             this.isPdfLoading.set(false);
+            this.isBlobLoadInProgress.set(false);
             return;
         }
 
-        this.pdfSubscription = this.httpClient.get(link, { responseType: 'blob' }).subscribe({
-            next: (blob) => {
-                this.revokePdfUrl();
-                this.pdfUrl.set(URL.createObjectURL(blob));
-                this.pdfLoadError.set(false);
-                this.pdfSubscription = undefined;
-            },
-            error: () => {
-                this.pdfUrl.set(undefined);
-                this.pdfLoadError.set(true);
-                this.isPdfLoading.set(false);
-                this.pdfSubscription = undefined;
-            },
-        });
+        this.blobLoadSubscription = this.httpClient
+            .get(link, { responseType: 'blob' })
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe({
+                next: (blob) => {
+                    this.revokePdfUrl();
+                    this.pdfUrl.set(URL.createObjectURL(blob));
+                    this.pdfLoadError.set(false);
+                    this.isBlobLoadInProgress.set(false);
+                    this.blobLoadSubscription = undefined;
+                },
+                error: () => {
+                    this.pdfUrl.set(undefined);
+                    this.pdfLoadError.set(true);
+                    this.isPdfLoading.set(false);
+                    this.isBlobLoadInProgress.set(false);
+                    this.blobLoadSubscription = undefined;
+                },
+            });
     }
 
     ngOnDestroy(): void {
         this.cancelPdfLoad();
         this.revokePdfUrl();
+    }
+
+    private cancelPdfLoad(): void {
+        this.blobLoadSubscription?.unsubscribe();
+        this.blobLoadSubscription = undefined;
+        this.isBlobLoadInProgress.set(false);
     }
 
     private clearPdfState(): void {
@@ -297,11 +311,6 @@ export class AttachmentVideoUnitComponent extends LectureUnitDirective<Attachmen
         if (url && url.startsWith('blob:')) {
             URL.revokeObjectURL(url);
         }
-    }
-
-    private cancelPdfLoad(): void {
-        this.pdfSubscription?.unsubscribe();
-        this.pdfSubscription = undefined;
     }
 
     /**
