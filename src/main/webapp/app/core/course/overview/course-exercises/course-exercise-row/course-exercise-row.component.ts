@@ -80,6 +80,9 @@ export class CourseExerciseRowComponent implements OnInit {
     readonly routerLink = computed(() => {
         const course = this.course();
         const exercise = this.exercise();
+        if (exercise?.type === ExerciseType.QUIZ) {
+            return ['/courses', course?.id?.toString() ?? '', 'exercises', 'quiz-exercises', exercise?.id?.toString() ?? '', 'live'];
+        }
         return ['/courses', course?.id?.toString() ?? '', 'exercises', exercise?.id?.toString() ?? ''];
     });
 

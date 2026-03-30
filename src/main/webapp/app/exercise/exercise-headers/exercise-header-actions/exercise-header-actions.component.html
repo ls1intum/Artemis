@@ -29,7 +29,7 @@
             </div>
         </div>
     }
-    @if (onSubmitExercise() && (exercise().type !== ExerciseType.QUIZ || gradedParticipation()?.initializationState === InitializationState.INITIALIZED)) {
+    @if (onSubmitExercise()) {
         @if (showFeedbackPopover()) {
             <span
                 [ngbPopover]="submitPopContent"
@@ -75,20 +75,6 @@
                     <ng-container
                         [ngTemplateOutlet]="quizActionButton"
                         [ngTemplateOutletContext]="{ $implicit: { icon: faRedo, label: 'artemisApp.exerciseActions.practice', quizMode: 'practice', hideLabelMobile: false } }"
-                    />
-                }
-                @if (quizNotStarted() && gradedParticipation()?.initializationState !== InitializationState.INITIALIZED) {
-                    <ng-container
-                        [ngTemplateOutlet]="quizActionButton"
-                        [ngTemplateOutletContext]="{
-                            $implicit: {
-                                id: 'open-exercise-' + exercise().id,
-                                icon: faPlayCircle,
-                                label: 'artemisApp.exerciseActions.openQuiz',
-                                quizMode: 'live',
-                                hideLabelMobile: false,
-                            },
-                        }"
                     />
                 }
                 @if (uninitializedQuiz()) {
