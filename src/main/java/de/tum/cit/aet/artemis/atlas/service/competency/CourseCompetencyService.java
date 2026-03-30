@@ -41,6 +41,7 @@ import de.tum.cit.aet.artemis.atlas.service.atlasml.AtlasMLService;
 import de.tum.cit.aet.artemis.atlas.service.learningpath.LearningPathService;
 import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.User;
+import de.tum.cit.aet.artemis.core.dto.CourseCompetencyProgressDTO;
 import de.tum.cit.aet.artemis.core.dto.SearchResultPageDTO;
 import de.tum.cit.aet.artemis.core.dto.pageablesearch.CompetencyPageableSearchDTO;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
@@ -437,6 +438,17 @@ public class CourseCompetencyService {
         });
 
         return competencies;
+    }
+
+    /**
+     * Gets the course progress for all competencies of a course.
+     *
+     * @param course the course entity
+     * @return a list of course competency progress DTOs
+     */
+    public List<CourseCompetencyProgressDTO> getCourseProgressForAllCompetencies(Course course) {
+        return courseCompetencyRepository.findByCourseIdWithExercises(course.getId()).stream()
+                .map(competency -> competencyProgressService.getCompetencyCourseProgress(competency, course)).toList();
     }
 
     /**
