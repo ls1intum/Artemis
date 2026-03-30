@@ -24,12 +24,15 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
     let alertService: AlertService;
     let envInjector: EnvironmentInjector;
 
-    const mockQuestion = new MultipleChoiceQuestion();
-    mockQuestion.id = 1;
-    mockQuestion.title = 'Test Question';
-    mockQuestion.text = 'What is 2+2?';
-    mockQuestion.singleChoice = true;
-    mockQuestion.answerOptions = [];
+    function createMockQuestion(): MultipleChoiceQuestion {
+        const q = new MultipleChoiceQuestion();
+        q.id = 1;
+        q.title = 'Test Question';
+        q.text = 'What is 2+2?';
+        q.singleChoice = true;
+        q.answerOptions = [];
+        return q;
+    }
 
     function setupWithHyperionEnabled(enabled: boolean): void {
         const mockProfileService = new MockProfileService();
@@ -50,7 +53,7 @@ describe('QuizAiQuestionRefinementPanelComponent', () => {
         alertService = TestBed.inject(AlertService);
         envInjector = TestBed.inject(EnvironmentInjector);
 
-        fixture.componentRef.setInput('question', mockQuestion);
+        fixture.componentRef.setInput('question', createMockQuestion());
         fixture.componentRef.setInput('courseId', 42);
         fixture.componentRef.setInput('isOpen', true);
         fixture.detectChanges();

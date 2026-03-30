@@ -7,6 +7,7 @@ import { GeneratedQuizQuestion } from 'app/openapi/model/generatedQuizQuestion';
 import { QuizQuestionRefinementRequest } from 'app/openapi/model/quizQuestionRefinementRequest';
 import { GeneratedQuestion } from 'app/quiz/manage/update/quiz-ai-generation-modal/quiz-ai-generation.types';
 import { MultipleChoiceQuestion } from 'app/quiz/shared/entities/multiple-choice-question.model';
+import { ScoringType } from 'app/quiz/shared/entities/quiz-question.model';
 import { AnswerOption } from 'app/quiz/shared/entities/answer-option.model';
 
 @Injectable({ providedIn: 'root' })
@@ -55,6 +56,9 @@ export class QuizAiGenerationService {
         original.hint = refined.hint;
         original.explanation = refined.explanation;
         original.singleChoice = refined.type !== 'multiple-choice';
+        if (original.singleChoice) {
+            original.scoringType = ScoringType.ALL_OR_NOTHING;
+        }
         original.answerOptions = refined.options.map((opt) => {
             const answerOption = new AnswerOption();
             answerOption.text = opt.text;

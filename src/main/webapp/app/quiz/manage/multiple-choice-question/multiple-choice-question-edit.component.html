@@ -202,12 +202,12 @@
                 </div>
             } @else {
                 <div class="form-group question-action-buttons">
-                    <div class="refine-button" (click)="refineRequested.emit()">
+                    <button type="button" class="refine-button" aria-label="Refine question" (click)="refineRequested.emit()">
                         <fa-icon [icon]="faWandMagicSparkles" size="2x" />
-                    </div>
-                    <div class="delete-button" (click)="deleteQuestion()">
+                    </button>
+                    <button type="button" class="delete-button" aria-label="Delete question" (click)="deleteQuestion()">
                         <fa-icon [icon]="faTrash" size="2x" />
-                    </div>
+                    </button>
                 </div>
             }
         </div>

@@ -114,11 +114,17 @@ export class QuizQuestionListEditComponent {
     handleQuestionRefined(question: QuizQuestion, _refinedQuestion: MultipleChoiceQuestion) {
         // The question object was mutated in-place; find the corresponding MC edit component and reload its editor.
         const index = this.quizQuestions().indexOf(question);
+        if (index < 0) {
+            return;
+        }
         const mcIndex = this.quizQuestions()
             .slice(0, index)
             .filter((q) => q.type === this.MULTIPLE_CHOICE).length;
-        this.editMultipleChoiceQuestionComponents()[mcIndex]?.reloadFromQuestion();
-        this.onQuestionUpdated.emit();
+        const mcComponent = this.editMultipleChoiceQuestionComponents()[mcIndex];
+        if (mcComponent) {
+            mcComponent.reloadFromQuestion();
+            this.onQuestionUpdated.emit();
+        }
     }
 
     /**
@@ -128,6 +134,9 @@ export class QuizQuestionListEditComponent {
      */
     handleQuestionDeleted(quizQuestion: QuizQuestion) {
         const index = this.quizQuestions().indexOf(quizQuestion);
+        if (index < 0) {
+            return;
+        }
         this.quizQuestions().splice(index, 1);
         const openUpdated = new Set(this.openRefinementQuestions());
         openUpdated.delete(quizQuestion);
