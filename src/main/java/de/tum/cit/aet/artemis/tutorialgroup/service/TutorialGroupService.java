@@ -27,8 +27,6 @@ import jakarta.ws.rs.BadRequestException;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.jspecify.annotations.NonNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -72,8 +70,6 @@ import de.tum.cit.aet.artemis.tutorialgroup.util.TutorialGroupImportErrors;
 @Lazy
 @Service
 public class TutorialGroupService {
-
-    private static final Logger log = LoggerFactory.getLogger(TutorialGroupService.class);
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
@@ -169,7 +165,6 @@ public class TutorialGroupService {
     private void setAverageAttendance(TutorialGroup tutorialGroup) {
         Collection<TutorialGroupSession> sessions;
 
-        // Check if sessions are already loaded via JPA; otherwise fetch from the database
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
             sessions = tutorialGroup.getTutorialGroupSessions();
         }
@@ -179,19 +174,12 @@ public class TutorialGroupService {
 
         //@formatter:off
         sessions.stream()
-            // Keep only sessions that have already ended
             .filter(session -> session.getEnd().isBefore(ZonedDateTime.now()))
-            // Keep only sessions that are marked as ACTIVE
             .filter(session -> TutorialGroupSessionStatus.ACTIVE.equals(session.getStatus()))
-            // Exclude sessions without attendance data
             .filter(session -> session.getAttendanceCount() != null)
-            // Sort by start time in descending order (most recent first)
             .sorted(Comparator.comparing(TutorialGroupSession::getStart).reversed())
-            // Limit to the last three valid sessions
             .limit(3)
-            // Map to attendance count for averaging
             .mapToInt(TutorialGroupSession::getAttendanceCount)
-            // Compute the average and set it (rounded to integer), or null if no valid sessions
             .average()
             .ifPresentOrElse(
                 value -> tutorialGroup.setAverageAttendance((int) Math.round(value)),
@@ -208,9 +196,8 @@ public class TutorialGroupService {
     private void setNextSession(TutorialGroup tutorialGroup) {
         Optional<TutorialGroupSession> nextSessionOptional = Optional.empty();
         if (getPersistenceUtil().isLoaded(tutorialGroup, "tutorialGroupSessions") && tutorialGroup.getTutorialGroupSessions() != null) {
-            // determine the next session
-            // we show currently running sessions and up to 30 minutes after the end of the session so that students can still join and tutors can easily update the attendance of
-            // the session
+            // determine the next session - we show currently running sessions and up to 30 minutes after the end of the session so that students can still
+            // join and tutors can easily update the attendance of the session
             nextSessionOptional = tutorialGroup.getTutorialGroupSessions().stream().filter(session -> session.getStatus() == TutorialGroupSessionStatus.ACTIVE)
                     .filter(session -> session.getEnd().plusMinutes(30).isAfter(ZonedDateTime.now())).min(Comparator.comparing(TutorialGroupSession::getStart));
         }
@@ -233,7 +220,6 @@ public class TutorialGroupService {
 
     /**
      * Deregister a student from a tutorial group.
-     * <p>
      * In addition, also removes the students from the respective tutorial group channel if it exists.
      *
      * @param student          The student to deregister.
@@ -266,7 +252,6 @@ public class TutorialGroupService {
 
     /**
      * Register a student to a tutorial group.
-     * <p>
      * In addition, also adds the student to the respective tutorial group channel if it exists.
      *
      * @param student          The student to register.
@@ -321,7 +306,6 @@ public class TutorialGroupService {
 
     /**
      * Register multiple students to a tutorial group.
-     * <p>
      * In addition, also adds the students to the respective tutorial group channel if it exists.
      *
      * @param tutorialGroup    the tutorial group to register the students for
@@ -360,7 +344,6 @@ public class TutorialGroupService {
 
     /**
      * Import registrations
-     * <p>
      * Important to note: A registration must contain a title of the tutorial group, but it must not contain a student.
      *
      * <ul>
@@ -663,7 +646,6 @@ public class TutorialGroupService {
         List<RawTutorialGroupDetailSessionDTO> rawSessionDTOs = tutorialGroupSessionRepository.getTutorialGroupDetailSessionData(tutorialGroupId);
         List<TutorialGroupSessionDTO> sessionDTOs;
         // The schedule related properties are null if and only if there is no schedule for the tutorial group.
-        // It would be nicer to bundle the schedule properties of the RawTutorialGroupDTO into a nested DTO, but unfortunately JPQL does not support nested projections
         if (rawGroupDTO.scheduleDayOfWeek() != null) {
             int scheduleDayOfWeek = rawGroupDTO.scheduleDayOfWeek();
             LocalTime scheduleStart = LocalTime.parse(rawGroupDTO.scheduleStartTime());
@@ -785,7 +767,6 @@ public class TutorialGroupService {
         return out.toString();
     }
 
-    // Method to write a row for a tutorial group, optionally including student details
     private void writeTutorialGroupRow(CSVPrinter printer, TutorialGroup tutorialGroup, List<String> fields, User student) throws IOException {
         for (String field : fields) {
             printer.print(switch (field) {
