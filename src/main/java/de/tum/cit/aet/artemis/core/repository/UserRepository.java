@@ -946,11 +946,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
         return getValueElseThrow(findOneWithGroupsAndAuthoritiesByLogin(username));
     }
 
-    @NonNull
-    default User getUserWithGroupsAndAuthorities(Long userId) {
-        return getValueElseThrow(findOneWithGroupsAndAuthoritiesById(userId));
-    }
-
     /**
      * Finds a single user with groups and authorities using the registration number
      *
@@ -988,11 +983,6 @@ public interface UserRepository extends ArtemisJpaRepository<User, Long>, JpaSpe
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByEmail(email);
-    }
-
-    @NonNull
-    default User findByIdElseThrow(long userId) {
-        return getValueElseThrow(findById(userId), userId);
     }
 
     @NonNull
