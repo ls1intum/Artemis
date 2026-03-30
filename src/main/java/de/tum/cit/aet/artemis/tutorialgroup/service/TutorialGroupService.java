@@ -45,7 +45,6 @@ import de.tum.cit.aet.artemis.core.domain.Course;
 import de.tum.cit.aet.artemis.core.domain.Language;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.calendar.CalendarEventDTO;
-import de.tum.cit.aet.artemis.core.exception.AccessForbiddenException;
 import de.tum.cit.aet.artemis.core.exception.BadRequestAlertException;
 import de.tum.cit.aet.artemis.core.exception.EntityNotFoundException;
 import de.tum.cit.aet.artemis.core.repository.UserRepository;
@@ -262,30 +261,6 @@ public class TutorialGroupService {
     private void deregisterStudentsFromAllTutorialGroupInCourse(Set<User> students, Course course, TutorialGroupRegistrationType registrationType) {
         tutorialGroupRegistrationRepository.deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(students, registrationType, course);
         tutorialGroupChannelManagementService.removeUsersFromAllTutorialGroupChannelsInCourse(course, students);
-    }
-
-    /**
-     * Register a student to a tutorial group.
-     * <p>
-     * In addition, also adds the student to the respective tutorial group channel if it exists.
-     *
-     * @param student          The student to register.
-     * @param tutorialGroup    The tutorial group to register to.
-     * @param registrationType The type of registration.
-     * @param responsibleUser  The user who is responsible for the registration.
-     */
-    public void registerStudent(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser) {
-        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
-                student, registrationType);
-        if (existingRegistration.isPresent()) {
-            // we still need to make sure the user is also already added to the channel
-            tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
-            return; // Registration already exists, nothing to do.
-        }
-        TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
-        tutorialGroupRegistrationRepository.save(newRegistration);
-        notifyStudentAboutRegistration(tutorialGroup, responsibleUser, student);
-        tutorialGroupChannelManagementService.addUsersToTutorialGroupChannel(tutorialGroup, Set.of(student));
     }
 
     private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType, User responsibleUser,
@@ -698,47 +673,6 @@ public class TutorialGroupService {
             tutorialGroupToCheck = tutorialGroupRepository.findByIdWithTeachingAssistantAndCourseElseThrow(tutorialGroupToCheck.getId());
         }
         return (tutorialGroupToCheck.getTeachingAssistant() != null && tutorialGroupToCheck.getTeachingAssistant().equals(user));
-    }
-
-    /**
-     * Checks if a user is allowed to change the registrations of a tutorial group
-     *
-     * @param tutorialGroup       the tutorial group for which to check permission
-     * @param user                the user for which to check permission
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     */
-    public void checkIfUserIsAllowedToChangeRegistrationsOfTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
-        // ToDo: Clarify if this is the correct permission check
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            throw new AccessForbiddenException("The user is not allowed to change the registrations of tutorial group: " + tutorialGroup.getId());
-        }
-    }
-
-    /**
-     * Checks if a user is allowed to delete the passed tutorial group. This is the case if the user is admin, or instructor of the group's course, or tutor of thr group.
-     *
-     * @param tutorialGroup       the tutorial group for which to check permission
-     * @param user                the user for which to check permission
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     */
-    public void checkIfUserIsAllowedToDeleteTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            throw new AccessForbiddenException("The user is not allowed to delete the tutorial group: " + tutorialGroup.getId());
-        }
-    }
-
-    /**
-     * Checks if a user is allowed to modify the sessions of a tutorial group
-     *
-     * @param tutorialGroup       the tutorial group for which to check permission
-     * @param user                the user for which to check permission
-     * @param isAdminOrInstructor whether the instructor of the course of the tutorial group or is admin
-     */
-    public void checkIfUserIsAllowedToModifySessionsOfTutorialGroupElseThrow(@NonNull TutorialGroup tutorialGroup, @NonNull User user, boolean isAdminOrInstructor) {
-        // ToDo: Clarify if this is the correct permission check
-        if (!this.userHasManagingRightsForTutorialGroup(tutorialGroup, user, isAdminOrInstructor)) {
-            throw new AccessForbiddenException("The user is not allowed to modify the sessions of tutorial group: " + tutorialGroup.getId());
-        }
     }
 
     private Optional<User> findStudent(String login, String studentCourseGroupName) {
