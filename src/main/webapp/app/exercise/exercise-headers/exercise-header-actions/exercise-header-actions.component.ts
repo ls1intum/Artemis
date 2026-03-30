@@ -113,7 +113,6 @@ export class ExerciseHeaderActionsComponent {
     readonly examMode = input<boolean>(false);
     readonly isGeneratingFeedback = input<boolean>(false);
     readonly onSubmitExercise = input<() => void>();
-    readonly onContinueExercise = input<() => void>();
     readonly plagiarismCaseInfo = input<PlagiarismCaseInfo>();
     readonly participationMode = input<ParticipationMode>('graded');
 

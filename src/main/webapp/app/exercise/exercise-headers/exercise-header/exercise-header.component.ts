@@ -1,4 +1,4 @@
-import { Component, computed, input, model, signal, viewChild } from '@angular/core';
+import { Component, computed, input, model } from '@angular/core';
 import { Exercise, ExerciseType, getIcon } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { QuizExercise } from 'app/quiz/shared/entities/quiz-exercise.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
@@ -39,23 +39,5 @@ export class ExerciseHeaderComponent {
 
     readonly activeParticipation = computed(() => {
         return this.participationMode() === 'practice' ? (this.practiceParticipation() ?? this.studentParticipation()) : this.studentParticipation();
-    });
-
-    readonly isViewingSubmission = signal(false);
-
-    private readonly headersInfo = viewChild(ExerciseHeadersInformationComponent);
-
-    readonly effectiveOnSubmitExercise = computed(() => {
-        if (this.isViewingSubmission()) {
-            return undefined;
-        }
-        return this.onSubmitExercise();
-    });
-
-    readonly onContinueExercise = computed(() => {
-        if (!this.isViewingSubmission()) {
-            return undefined;
-        }
-        return () => this.headersInfo()?.resultHistoryDropdown()?.continueToLatest();
     });
 }

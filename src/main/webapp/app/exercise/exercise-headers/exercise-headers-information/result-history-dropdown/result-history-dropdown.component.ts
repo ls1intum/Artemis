@@ -1,8 +1,8 @@
-import { Component, ElementRef, computed, effect, inject, input, output, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, viewChild } from '@angular/core';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { StudentParticipation } from 'app/exercise/shared/entities/participation/student-participation.model';
-import { getLatestResultOfStudentParticipation } from 'app/exercise/participation/participation.utils';
+import { getAllResultsOfAllSubmissions } from 'app/exercise/shared/entities/submission/submission.model';
 import { Popover } from 'primeng/popover';
 import { ButtonModule } from 'primeng/button';
 import { Tag } from 'primeng/tag';
@@ -42,70 +42,23 @@ export class ResultHistoryDropdownComponent {
     exercise = input.required<Exercise>();
     sortedHistoryResults = input.required<Result[]>();
     studentParticipation = input<StudentParticipation>();
-    showUngradedResults = input<boolean>(false);
 
     displayedResults = computed(() => this.sortedHistoryResults());
 
-    private readonly selectedResultId = signal<number | undefined>(undefined);
-
-    private readonly latestResultId = computed(() => {
+    activeResultId = computed(() => {
         const participation = this.studentParticipation();
         if (!participation) {
             return undefined;
         }
-        return getLatestResultOfStudentParticipation(participation, this.showUngradedResults())?.id;
+        const results = getAllResultsOfAllSubmissions(participation.submissions);
+        return results.length ? results.sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0]?.id : undefined;
     });
-
-    activeResultId = computed(() => {
-        return this.selectedResultId() ?? this.latestResultId();
-    });
-
-    isViewingSubmission = computed(() => {
-        return this.selectedResultId() !== undefined;
-    });
-
-    viewingSubmissionChange = output<boolean>();
-
-    constructor() {
-        effect(() => {
-            this.studentParticipation();
-            this.selectedResultId.set(undefined);
-        });
-    }
-
-    continueToLatest() {
-        this.selectedResultId.set(undefined);
-        this.viewingSubmissionChange.emit(false);
-        const participation = this.studentParticipation();
-        if (!participation) {
-            return;
-        }
-        const exercise = this.exercise();
-        const courseId = getCourseFromExercise(exercise)?.id;
-
-        if (exercise.type === ExerciseType.QUIZ) {
-            if (isPracticeMode(participation)) {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'practice', participation.id]);
-            } else {
-                this.router.navigate(['/courses', courseId, 'exercises', 'quiz-exercises', exercise.id, 'live']);
-            }
-            return;
-        }
-
-        const exerciseTypePath = exercise.type === ExerciseType.TEXT ? 'text-exercises' : 'modeling-exercises';
-        this.router.navigate(['/courses', courseId, 'exercises', exerciseTypePath, exercise.id, 'participate', participation.id]);
-    }
 
     resultsPopover = viewChild<Popover>('resultsPopover');
     dropdownArrow = viewChild<ElementRef>('dropdownArrow');
 
     toggleResultsPopover(event: Event) {
-        const popover = this.resultsPopover();
-        if (popover?.overlayVisible) {
-            popover.hide();
-        } else {
-            popover?.show(event, this.dropdownArrow()?.nativeElement);
-        }
+        this.resultsPopover()?.toggle(event, this.dropdownArrow()?.nativeElement);
     }
 
     getResultIcon(result: Result): IconProp {
@@ -187,9 +140,6 @@ export class ResultHistoryDropdownComponent {
 
     navigateToSubmission(result: Result, event: Event) {
         event.stopPropagation();
-        this.selectedResultId.set(result.id);
-        this.viewingSubmissionChange.emit(true);
-        this.resultsPopover()?.hide();
         const participation = result.submission?.participation;
         if (!participation) {
             return;
@@ -214,7 +164,6 @@ export class ResultHistoryDropdownComponent {
 
     showFeedback(result: Result, event: Event) {
         event.stopPropagation();
-        this.selectedResultId.set(result.id);
         const participation = result.submission?.participation;
         if (!participation) {
             return;
