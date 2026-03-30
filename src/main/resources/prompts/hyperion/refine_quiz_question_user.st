@@ -6,6 +6,8 @@ Course Description: {{courseDescription}}
 Type: {{questionType}}
 Title: {{questionTitle}}
 Question Text: {{questionText}}
+{{questionHintLine}}
+{{questionExplanationLine}}
 Answer Options:
 {{answerOptions}}
 

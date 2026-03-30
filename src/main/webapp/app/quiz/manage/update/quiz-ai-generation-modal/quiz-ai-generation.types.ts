@@ -15,4 +15,5 @@ export interface GeneratedQuestion {
     questionText: string;
     options: GeneratedOption[];
     hint?: string;
+    explanation?: string;
 }

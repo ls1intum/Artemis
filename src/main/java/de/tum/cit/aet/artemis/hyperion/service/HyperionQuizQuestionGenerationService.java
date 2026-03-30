@@ -120,14 +120,29 @@ public class HyperionQuizQuestionGenerationService {
         String refinementPrompt = sanitizeInput(request.refinementPrompt());
         GeneratedQuizQuestionDTO originalQuestion = request.question();
 
-        String answerOptionsText = originalQuestion.options().stream().map(opt -> "- [" + (opt.correct() ? "correct" : "wrong") + "] " + sanitizeInput(opt.text()))
-                .collect(Collectors.joining("\n"));
+        String questionHintLine = originalQuestion.hint() != null && !originalQuestion.hint().isBlank() ? "Hint: " + sanitizeInput(originalQuestion.hint()) : "";
+        String questionExplanationLine = originalQuestion.explanation() != null && !originalQuestion.explanation().isBlank()
+                ? "Explanation: " + sanitizeInput(originalQuestion.explanation())
+                : "";
+
+        String answerOptionsText = originalQuestion.options().stream().map(opt -> {
+            StringBuilder sb = new StringBuilder("- [" + (opt.correct() ? "correct" : "wrong") + "] " + sanitizeInput(opt.text()));
+            if (opt.hint() != null && !opt.hint().isBlank()) {
+                sb.append("\n  Hint: ").append(sanitizeInput(opt.hint()));
+            }
+            if (opt.explanation() != null && !opt.explanation().isBlank()) {
+                sb.append("\n  Explanation: ").append(sanitizeInput(opt.explanation()));
+            }
+            return sb.toString();
+        }).collect(Collectors.joining("\n"));
 
         var outputConverter = new BeanOutputConverter<>(RefinedQuestionWithExplanationOutput.class);
         String systemPrompt = templateService.render(PROMPT_REFINE_QUIZ_QUESTION_SYSTEM, Map.of());
-        String userPrompt = templateService.renderObject(PROMPT_REFINE_QUIZ_QUESTION_USER, Map.of("courseTitle", getSanitizedCourseTitle(course), "courseDescription",
-                getSanitizedCourseDescription(course), "questionType", originalQuestion.type().getValue(), "questionTitle", sanitizeInput(originalQuestion.title()), "questionText",
-                sanitizeInput(originalQuestion.questionText()), "answerOptions", answerOptionsText, "refinementPrompt", refinementPrompt, "format", outputConverter.getFormat()));
+        String userPrompt = templateService.renderObject(PROMPT_REFINE_QUIZ_QUESTION_USER,
+                Map.of("courseTitle", getSanitizedCourseTitle(course), "courseDescription", getSanitizedCourseDescription(course), "questionType",
+                        originalQuestion.type().getValue(), "questionTitle", sanitizeInput(originalQuestion.title()), "questionText",
+                        sanitizeInput(originalQuestion.questionText()), "questionHintLine", questionHintLine, "questionExplanationLine", questionExplanationLine, "answerOptions",
+                        answerOptionsText, "refinementPrompt", refinementPrompt, "format", outputConverter.getFormat()));
 
         RefinedQuestionWithExplanationOutput output;
         try {
@@ -190,8 +205,9 @@ public class HyperionQuizQuestionGenerationService {
         validateCorrectOptionCount(questionType, options);
 
         String questionHint = generatedQuestion.hint() != null ? sanitizeInput(generatedQuestion.hint()) : null;
+        String questionExplanation = generatedQuestion.explanation() != null ? sanitizeInput(generatedQuestion.explanation()) : null;
 
-        return new GeneratedQuizQuestionDTO(questionType, questionTitle, questionText, options, questionHint);
+        return new GeneratedQuizQuestionDTO(questionType, questionTitle, questionText, options, questionHint, questionExplanation);
     }
 
     private GeneratedQuizAnswerOptionDTO mapAndValidateOption(@Nullable GeneratedOptionOutput generatedOption) {
@@ -239,7 +255,7 @@ public class HyperionQuizQuestionGenerationService {
     private record GeneratedQuestionsOutput(List<GeneratedQuestionOutput> questions) {
     }
 
-    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options, String hint) {
+    private record GeneratedQuestionOutput(String type, String title, String questionText, List<GeneratedOptionOutput> options, String hint, String explanation) {
     }
 
     private record GeneratedOptionOutput(String text, Boolean correct, String hint, String explanation) {

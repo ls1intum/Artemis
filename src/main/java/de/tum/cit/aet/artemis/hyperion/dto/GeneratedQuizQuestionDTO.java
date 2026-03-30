@@ -19,5 +19,5 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record GeneratedQuizQuestionDTO(@NotNull @Schema(description = "Question type") QuizQuestionGenerationType type,
         @NotBlank @Schema(description = "Question title") String title, @NotBlank @Schema(description = "Question text") String questionText,
         @NotEmpty @Schema(description = "Answer options") List<@Valid GeneratedQuizAnswerOptionDTO> options,
-        @Schema(description = "Optional hint for the overall question") String hint) {
+        @Schema(description = "Optional hint for the overall question") String hint, @Schema(description = "Optional explanation for the overall question") String explanation) {
 }

@@ -124,7 +124,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Software Engineering");
 
         GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which HTTP method updates a resource?",
-                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null);
+                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
         QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make the question more precise");
 
         QuizQuestionRefinementResponseDTO response = service.refineQuizQuestion(course, request);
@@ -143,7 +143,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Software Engineering");
 
         GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method?",
-                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null);
+                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
         QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make it harder");
 
         assertThatThrownBy(() -> serviceWithNullClient.refineQuizQuestion(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
@@ -158,7 +158,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Software Engineering");
 
         GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.SINGLE_CHOICE, "HTTP Methods", "Which method?",
-                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null);
+                List.of(new GeneratedQuizAnswerOptionDTO("PUT", true, null, null), new GeneratedQuizAnswerOptionDTO("POST", false, null, null)), null, null);
         QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Make it harder");
 
         assertThatThrownBy(() -> service.refineQuizQuestion(course, request)).isInstanceOf(InternalServerErrorAlertException.class)
@@ -188,7 +188,7 @@ class HyperionQuizQuestionGenerationServiceTest {
         course.setTitle("Java");
 
         GeneratedQuizQuestionDTO originalQuestion = new GeneratedQuizQuestionDTO(QuizQuestionGenerationType.MULTIPLE_CHOICE, "Java Features", "What are Java features?",
-                List.of(new GeneratedQuizAnswerOptionDTO("Generics", true, null, null), new GeneratedQuizAnswerOptionDTO("Pointers", false, null, null)), null);
+                List.of(new GeneratedQuizAnswerOptionDTO("Generics", true, null, null), new GeneratedQuizAnswerOptionDTO("Pointers", false, null, null)), null, null);
         QuizQuestionRefinementRequestDTO request = new QuizQuestionRefinementRequestDTO(originalQuestion, "Add more options");
 
         QuizQuestionRefinementResponseDTO response = service.refineQuizQuestion(course, request);

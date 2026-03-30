@@ -34,6 +34,10 @@ export interface GeneratedQuizQuestion {
      * Optional hint for the overall question
      */
     hint?: string;
+    /**
+     * Optional explanation for the overall question
+     */
+    explanation?: string;
 }
 export namespace GeneratedQuizQuestion {
     export const TypeEnum = {

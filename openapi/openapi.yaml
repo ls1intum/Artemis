@@ -815,6 +815,8 @@ components:
           items: {$ref: '#/components/schemas/GeneratedQuizAnswerOption'}
           minItems: 1
         hint: {type: string, description: Optional hint for the overall question}
+        explanation: {type: string, description: Optional explanation for the overall
+            question}
       required: [options, questionText, title, type]
     ProblemStatementGenerationResponse:
       type: object

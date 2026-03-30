@@ -30,6 +30,7 @@ export class QuizAiGenerationService {
                 title: question.title?.trim() || 'Untitled Question',
                 questionText: question.text ?? '',
                 hint: question.hint ?? undefined,
+                explanation: question.explanation ?? undefined,
                 options: (question.answerOptions ?? []).map((opt) => ({
                     text: opt.text ?? '',
                     correct: !!opt.isCorrect,
@@ -52,6 +53,7 @@ export class QuizAiGenerationService {
         original.title = refined.title;
         original.text = refined.questionText;
         original.hint = refined.hint;
+        original.explanation = refined.explanation;
         original.singleChoice = refined.type !== 'multiple-choice';
         original.answerOptions = refined.options.map((opt) => {
             const answerOption = new AnswerOption();
@@ -73,6 +75,7 @@ export class QuizAiGenerationService {
             title: question.title,
             questionText: question.questionText,
             hint: question.hint ?? undefined,
+            explanation: question.explanation ?? undefined,
             options: question.options.map((option) => ({
                 text: option.text,
                 correct: !!option.correct,
