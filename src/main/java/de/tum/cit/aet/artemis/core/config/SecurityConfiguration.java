@@ -154,15 +154,13 @@ public class SecurityConfiguration {
     }
 
     /**
-     * Delegates authentication failures to the HandlerExceptionResolver so that
-     * {@link de.tum.cit.aet.artemis.core.exception.ExceptionTranslator} can produce ProblemDetail responses.
+     * Returns 401 Unauthorized for unauthenticated requests.
      *
-     * @param resolver the exception resolver to delegate to
      * @return the authentication entry point
      */
     @Bean
-    public AuthenticationEntryPoint authenticationEntryPoint(@Qualifier("handlerExceptionResolver") org.springframework.web.servlet.HandlerExceptionResolver resolver) {
-        return (request, response, authException) -> resolver.resolveException(request, response, null, authException);
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return new org.springframework.security.web.authentication.HttpStatusEntryPoint(org.springframework.http.HttpStatus.UNAUTHORIZED);
     }
 
     /**
