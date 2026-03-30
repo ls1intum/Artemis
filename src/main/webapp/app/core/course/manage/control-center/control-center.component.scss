@@ -1,0 +1,46 @@
+:host {
+    display: block;
+    flex: 0 0 auto;
+    width: 280px;
+}
+
+.iris-panel {
+    border: 1px solid var(--bs-border-color);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.iris-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.iris-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.iris-toggle {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.iris-learn-more {
+    font-size: 0.7rem;
+    font-weight: 300;
+    cursor: pointer;
+    color: var(--bs-primary);
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
