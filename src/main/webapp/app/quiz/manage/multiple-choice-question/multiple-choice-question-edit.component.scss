@@ -63,7 +63,10 @@
         }
 
         .refine-button {
+            background: none;
+            border: none;
             cursor: pointer;
+            padding: 0;
         }
 
         .refine-button:hover {
@@ -71,7 +74,10 @@
         }
 
         .delete-button {
+            background: none;
+            border: none;
             cursor: pointer;
+            padding: 0;
         }
 
         .delete-button:hover {
