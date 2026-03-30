@@ -2,7 +2,7 @@ package de.tum.cit.aet.artemis.tutorialgroup.util;
 
 import jakarta.validation.constraints.NotNull;
 
-import org.springframework.lang.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
