@@ -21,7 +21,7 @@ import { Result } from 'app/exercise/shared/entities/result/result.model';
 import { Submission } from 'app/exercise/shared/entities/submission/submission.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { AlertService } from 'app/shared/service/alert.service';
-import { faCheck, faCircleNotch, faEraser, faFilePowerpoint, faFilter, faPencil, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faCircleNotch, faEraser, faFilePowerpoint, faPencil, faTable, faTimes, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { GradingService } from 'app/assessment/manage/grading/grading-service';
 import { GradeStepsDTO } from 'app/assessment/shared/entities/grade-step.model';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -39,10 +39,10 @@ import { RepositoryType } from 'app/programming/shared/code-editor/model/code-ed
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { TableLazyLoadEvent } from 'primeng/table';
 import { buildDbQueryFromLazyEvent } from 'app/shared/table-view/request-builder';
-import { CellTemplateRef, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { ParticipationManagementDTO } from './participation-management-dto.model';
 import { ParticipationSearch } from 'app/shared/table/pageable-table';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle } from '@ng-bootstrap/ng-bootstrap';
+import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 
 export enum FilterProp {
     ALL = 'All',
@@ -68,9 +68,7 @@ export enum FilterProp {
         FeatureToggleDirective,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
-        NgbDropdown,
-        NgbDropdownToggle,
-        NgbDropdownMenu,
+        FilterDropdownComponent,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {
@@ -90,9 +88,10 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faEraser = faEraser;
     protected readonly faFilePowerpoint = faFilePowerpoint;
-    protected readonly faFilter = faFilter;
     protected readonly faPencil = faPencil;
     protected readonly faCheck = faCheck;
+
+    protected FilterProp = FilterProp;
 
     protected readonly ExerciseType = ExerciseType;
     protected readonly ActionType = ActionType;
@@ -135,7 +134,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return base;
     });
 
-    readonly relevantFilters = computed<FilterProp[]>(() => {
+    readonly relevantFilters = computed<string[]>(() => {
         const ex = this.exercise();
         if (!ex) return [];
         return Object.values(FilterProp).filter((f) => {
@@ -165,6 +164,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     // Track individual due date inline editing
     readonly editingDueDateIds = signal<ReadonlySet<number>>(new Set());
     private readonly pendingDueDates = new Map<number, dayjs.Dayjs | undefined>();
+
+    readonly tableOptions: TableViewOptions = { dataKey: 'participationId', striped: true, scrollable: true, scrollHeight: 'flex' };
 
     // Template refs
     readonly idCellTemplate = viewChild<CellTemplateRef<ParticipationManagementDTO>>('idCellTemplate');
@@ -388,8 +389,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    updateParticipationFilter(newValue: FilterProp) {
-        this.activeFilter.set(newValue);
+    updateParticipationFilter(newValue: string) {
+        this.activeFilter.set(newValue as FilterProp);
         this.loadPage();
     }
 

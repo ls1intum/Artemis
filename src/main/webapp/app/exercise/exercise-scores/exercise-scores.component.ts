@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, TemplateRef, ViewEncapsulation, computed, inject, signal, viewChild } from '@angular/core';
-import { KeyValuePipe } from '@angular/common';
 import { PROFILE_LOCALCI } from 'app/app.constants';
 import { ProfileService } from 'app/core/layouts/profiles/shared/profile.service';
 import { ParticipationService } from 'app/exercise/participation/participation.service';
@@ -14,14 +13,14 @@ import { ResultService } from 'app/exercise/result/result.service';
 import { Exercise, ExerciseType } from 'app/exercise/shared/entities/exercise/exercise.model';
 import { AssessmentType } from 'app/assessment/shared/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/programming/shared/entities/programming-exercise.model';
-import { faComment, faDownload, faFilter, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
 import { ExerciseCacheService } from 'app/exercise/services/exercise-cache.service';
-import { NgbDropdown, NgbDropdownMenu, NgbDropdownToggle, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { FormsModule } from '@angular/forms';
 import { ExternalSubmissionButtonComponent } from '../external-submission/external-submission-button.component';
 import { ExerciseActionButtonComponent } from 'app/shared/components/buttons/exercise-action-button/exercise-action-button.component';
 import { ExerciseScoresExportButtonComponent } from './export-button/exercise-scores-export-button.component';
@@ -37,7 +36,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { RepositoryType } from 'app/programming/shared/code-editor/model/code-editor.model';
-import { CellTemplateRef, ColumnDef, TableViewComponent } from 'app/shared/table-view/table-view';
+import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from 'app/shared/table-view/table-view';
 import { ParticipationScoreDTO } from './participation-score-dto.model';
 import { ParticipationScoreSearch } from 'app/shared/table/pageable-table';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -65,11 +64,7 @@ export enum FilterProp {
     encapsulation: ViewEncapsulation.None,
     imports: [
         TranslateDirective,
-        NgbDropdown,
-        NgbDropdownToggle,
         FaIconComponent,
-        NgbDropdownMenu,
-        FormsModule,
         RouterLink,
         ExternalSubmissionButtonComponent,
         ExerciseActionButtonComponent,
@@ -82,10 +77,10 @@ export enum FilterProp {
         FeatureToggleLinkDirective,
         ManageAssessmentButtonsComponent,
         ResultComponent,
-        KeyValuePipe,
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         ArtemisDurationFromSecondsPipe,
+        FilterDropdownComponent,
     ],
 })
 export class ExerciseScoresComponent implements OnInit, OnDestroy {
@@ -94,7 +89,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     protected readonly faFolderOpen = faFolderOpen;
     protected readonly faListAlt = faListAlt;
     protected readonly farFileCode = faFileCode;
-    protected readonly faFilter = faFilter;
     protected readonly faComment = faComment;
     protected readonly RepositoryType = RepositoryType;
     protected readonly ExerciseType = ExerciseType;
@@ -134,6 +128,23 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly localCIEnabled = signal(true);
     readonly rangeFilter = signal<Range | undefined>(undefined);
     readonly activeFilter = signal<FilterProp>(FilterProp.ALL);
+    readonly relevantFilters = computed<string[]>(() => {
+        const ex = this.exercise();
+        if (!ex) return [];
+        return Object.values(FilterProp).filter((f) => {
+            switch (f) {
+                case FilterProp.BUILD_FAILED:
+                    return ex.type === ExerciseType.PROGRAMMING;
+                case FilterProp.MANUAL:
+                case FilterProp.AUTOMATIC:
+                    return this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
+                case FilterProp.LOCKED:
+                    return this.newManualResultAllowed() && !!ex.isAtLeastInstructor;
+                default:
+                    return true;
+            }
+        });
+    });
 
     private lastLazyEvent: TableLazyLoadEvent | undefined;
     paramSub: Subscription;
@@ -150,6 +161,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly durationTemplate = viewChild<CellTemplateRef<ParticipationScoreDTO>>('durationTemplate');
     readonly filterActionsTemplate = viewChild<TemplateRef<unknown>>('filterDropdownTemplate');
     readonly exportPopover = viewChild<NgbPopover>('exportPopover');
+
+    readonly tableOptions: TableViewOptions = { striped: true, scrollable: true, scrollHeight: 'flex' };
 
     readonly columns = computed<ColumnDef<ParticipationScoreDTO>[]>(() => {
         const ex = this.exercise();
@@ -213,7 +226,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         cols.push(
             {
                 headerKey: 'artemisApp.exercise.submissionCount',
+                field: 'submissionCount',
                 width: '110px',
+                sort: true,
                 templateRef: this.submissionCountTemplate(),
             },
             {
@@ -291,25 +306,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             : ['/course-management', course.id!.toString(), ex.type + '-exercises', ex.id!.toString(), 'participations', participationId.toString(), 'submissions'];
     }
 
-    updateParticipationFilter(newValue: FilterProp) {
-        this.activeFilter.set(newValue);
+    updateParticipationFilter(newValue: string) {
+        this.activeFilter.set(newValue as FilterProp);
         this.loadPage();
-    }
-
-    isFilterRelevantForConfiguration(filterProp: FilterProp): boolean {
-        const ex = this.exercise();
-        if (!ex) return false;
-        switch (filterProp) {
-            case FilterProp.BUILD_FAILED:
-                return ex.type === ExerciseType.PROGRAMMING;
-            case FilterProp.MANUAL:
-            case FilterProp.AUTOMATIC:
-                return this.newManualResultAllowed() || !!ex.allowComplaintsForAutomaticAssessments;
-            case FilterProp.LOCKED:
-                return this.newManualResultAllowed() && !!ex.isAtLeastInstructor;
-            default:
-                return true;
-        }
     }
 
     /**

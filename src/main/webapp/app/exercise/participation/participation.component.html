@@ -1,8 +1,8 @@
 @if (exercise()) {
-    <div>
+    <div class="d-flex flex-column h-100">
         <div class="d-flex justify-content-between mb-2">
             <h2>{{ exercise()!.title }}</h2>
-            <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-start gap-2">
                 @if (exercise()!.isAtLeastInstructor && exercise()!.type === ExerciseType.PROGRAMMING) {
                     <jhi-programming-exercise-instructor-submission-state [exercise]="exercise()!" />
                 }
@@ -14,40 +14,24 @@
                 }
             </div>
         </div>
-
-        <jhi-table-view
-            [cols]="columns()"
-            [vals]="participations()"
-            [totalRows]="totalRows()"
-            [loading]="isLoading()"
-            [tableActions]="filterActionsTemplate ?? null"
-            [rowActions]="actionsTemplate"
-            [options]="{ lazy: true, dataKey: 'participationId' }"
-            (onLazyLoad)="onLazyLoad($event)"
-        />
+        <div style="flex: 1; min-height: 0">
+            <jhi-table-view
+                [cols]="columns()"
+                [vals]="participations()"
+                [totalRows]="totalRows()"
+                [loading]="isLoading()"
+                [tableActions]="filterActionsTemplate ?? null"
+                [rowActions]="actionsTemplate"
+                [options]="tableOptions"
+                (onLazyLoad)="onLazyLoad($event)"
+            />
+        </div>
     </div>
 }
 
 <!-- Filter dropdown in the table caption bar -->
 <ng-template #filterActionsTemplate>
-    <div aria-label="Filter Dropdown" ngbDropdown>
-        <button class="btn btn-primary" ngbDropdownToggle id="participation-filter-dropdown">
-            <fa-icon [icon]="faFilter" />
-            <span class="d-none d-md-inline">
-                {{ 'artemisApp.exercise.scoresFilter' | artemisTranslate: { filter: ('artemisApp.exercise.show' + activeFilter() | artemisTranslate) } }}
-            </span>
-        </button>
-        <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="participation-filter-dropdown">
-            @for (filter of relevantFilters(); track filter) {
-                <li>
-                    <label class="radio-inline ms-2 mb-0 d-flex align-items-center">
-                        <input type="radio" [ngModel]="activeFilter()" (click)="updateParticipationFilter(filter)" [value]="filter" />
-                        <span class="ms-1">{{ 'artemisApp.exercise.show' + filter | artemisTranslate }}</span>
-                    </label>
-                </li>
-            }
-        </ul>
-    </div>
+    <jhi-filter-dropdown [filters]="relevantFilters()" [activeFilter]="activeFilter()" (filterChange)="updateParticipationFilter($event)" />
 </ng-template>
 
 <!-- Row actions -->
@@ -55,7 +39,7 @@
     <div class="btn-group gap-1">
         @if (exercise()!.type === ExerciseType.PROGRAMMING && exercise()!.isAtLeastInstructor) {
             @if (hasLoadedPendingSubmissions()) {
-                <jhi-programming-exercise-instructor-trigger-build-button [exercise]="exercise()!" [participation]="toProgrammingParticipation(dto)" class="me-1" />
+                <jhi-programming-exercise-instructor-trigger-build-button [exercise]="exercise()!" [participation]="toProgrammingParticipation(dto)" />
             } @else {
                 <fa-icon [icon]="faCircleNotch" animation="spin" class="text-secondary" />
             }
@@ -87,13 +71,13 @@
             </button>
         }
         @if (basicPresentationEnabled() && !dto.testRun && dto.presentationScore !== 1) {
-            <button (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm me-1">
+            <button (click)="addBasicPresentation(dto)" class="btn btn-info btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.addPresentation.label"></span>
             </button>
         }
         @if (gradedPresentationEnabled() && !dto.testRun && hasGradedPresentationChanged(dto) && dto.presentationScore !== undefined) {
-            <button [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100" (click)="addGradedPresentation(dto)" class="btn btn-info btn-sm me-1">
+            <button [disabled]="(dto.presentationScore ?? 0) < 0 || (dto.presentationScore ?? 0) > 100" (click)="addGradedPresentation(dto)" class="btn btn-info btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.savePresentation.label"></span>
             </button>
@@ -102,7 +86,7 @@
             (basicPresentationEnabled() && (dto.presentationScore ?? 0) > 0) ||
             (gradedPresentationEnabled() && (!hasGradedPresentationChanged(dto) || dto.presentationScore === undefined))
         ) {
-            <button (click)="removePresentation(dto)" class="btn btn-danger btn-sm me-1">
+            <button (click)="removePresentation(dto)" class="btn btn-danger btn-sm">
                 <fa-icon [icon]="faFilePowerpoint" />
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.participation.removePresentation.label"></span>
             </button>
@@ -149,13 +133,11 @@
 </ng-template>
 
 <ng-template #submissionCountCellTemplate let-cell>
-    <div class="w-100 text-center">
-        @if (exercise()!.isAtLeastInstructor) {
-            <a [routerLink]="getParticipationLink(cell.data.participationId)">{{ cell.data.submissionCount }}</a>
-        } @else {
-            {{ cell.data.submissionCount }}
-        }
-    </div>
+    @if (exercise()!.isAtLeastInstructor) {
+        <a [routerLink]="getParticipationLink(cell.data.participationId)">{{ cell.data.submissionCount }}</a>
+    } @else {
+        {{ cell.data.submissionCount }}
+    }
 </ng-template>
 
 <ng-template #participantNameCellTemplate let-cell>
