@@ -92,7 +92,7 @@
 
     @if (showDiscussion()) {
         <ng-template jhiPanel [label]="'artemisApp.metis.communication.label'" [icon]="faComment">
-            <jhi-discussion-feed [exercise]="exercise()" />
+            <jhi-discussion-section [exercise]="exercise()" [embedded]="true" />
         </ng-template>
     }
 </jhi-resizable-panels>
