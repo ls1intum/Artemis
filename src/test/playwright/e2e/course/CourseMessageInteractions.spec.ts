@@ -182,6 +182,125 @@ test.describe('Message interactions', { tag: '@fast' }, () => {
         });
     });
 
+    test.describe('Mark answer as resolving', () => {
+        let message: Post;
+        let reply: Post;
+
+        test.beforeEach('Create message and reply in seed channel', async ({ login, communicationAPIRequests }) => {
+            await login(admin);
+            message = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, seedChannelId, 'channel', 'Resolve test ' + generateUUID().slice(0, 8));
+            reply = await communicationAPIRequests.createCourseMessageReply({ id: writeCourse.id } as any, message, 'Answer to resolve ' + generateUUID().slice(0, 8));
+        });
+
+        test('Instructor should be able to mark and unmark an answer as resolving', async ({ login, courseMessages, page }) => {
+            await login(instructor, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+            await courseMessages.checkMessage(message.id!, message.content!);
+            // Open the thread to see the reply
+            await courseMessages.openThreadForMessage(message.id!);
+            await courseMessages.checkThreadReply(reply.id!, reply.content!);
+            // Hover over the reply to reveal the reaction bar with the resolve button
+            const threadSidebar = page.locator('.expanded-thread');
+            const replyLocator = threadSidebar.locator(`#item-${reply.id!}`);
+            await replyLocator.locator('.message-container').hover();
+            const resolveButton = replyLocator.locator('#toggleElement');
+            await resolveButton.waitFor({ state: 'visible', timeout: 5000 });
+            // Mark as resolving
+            const responsePromise = page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
+            await resolveButton.click();
+            await responsePromise;
+            // Verify the resolved icon appears in the always-visible emoji-count bar
+            await expect(replyLocator.locator('.resolved')).toBeVisible({ timeout: 10000 });
+            // Hover again and unmark
+            await replyLocator.locator('.message-container').hover();
+            await resolveButton.waitFor({ state: 'visible', timeout: 5000 });
+            const responsePromise2 = page.waitForResponse((resp) => resp.url().includes('/answer-messages/') && resp.request().method() === 'PUT');
+            await resolveButton.click();
+            await responsePromise2;
+            // Verify the resolved icon is gone and the notResolved icon shows
+            await expect(replyLocator.locator('.resolved')).toHaveCount(0, { timeout: 10000 });
+        });
+
+        test('Student who is not the author cannot resolve an answer', async ({ login, courseMessages, page }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+            await courseMessages.checkMessage(message.id!, message.content!);
+            // Open the thread
+            await courseMessages.openThreadForMessage(message.id!);
+            await courseMessages.checkThreadReply(reply.id!, reply.content!);
+            // The resolve button should not be clickable for a non-author student
+            const threadSidebar = page.locator('.expanded-thread');
+            const replyLocator = threadSidebar.locator(`#item-${reply.id!}`);
+            // The button exists but should not have clickable behavior (no .clickable class or icon hidden)
+            const resolveButton = replyLocator.locator('#toggleElement');
+            // For non-author students, the resolve icon should not be visible at all
+            await expect(replyLocator.locator('.notResolved')).toHaveCount(0, { timeout: 5000 });
+        });
+    });
+
+    test.describe('Saved posts view', () => {
+        let message: Post;
+
+        test.beforeEach('Create and bookmark a message', async ({ login, communicationAPIRequests, courseMessages }) => {
+            await login(admin);
+            message = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, seedChannelId, 'channel', 'Saved post test ' + generateUUID().slice(0, 8));
+        });
+
+        test('Student should be able to view bookmarked messages in saved posts', async ({ login, courseMessages, page }) => {
+            // First bookmark a message
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+            await courseMessages.checkMessage(message.id!, message.content!);
+            await courseMessages.bookmarkMessage(message.id!);
+            await courseMessages.checkMessageBookmarked(message.id!, true);
+            // Navigate to the saved posts view via URL
+            await page.goto(`/courses/${writeCourse.id}/communication?conversationId=in_progress`);
+            // Verify the saved posts container is visible
+            await expect(page.locator('.saved-posts')).toBeVisible({ timeout: 15000 });
+            // Verify the saved posts heading shows
+            await expect(page.locator('.saved-posts h4')).toBeVisible();
+            // Verify the bookmarked message appears in the saved posts list
+            await expect(page.locator('.saved-posts-post-container')).toBeVisible();
+            await expect(page.getByText(message.content!)).toBeVisible({ timeout: 10000 });
+        });
+
+        test('Empty saved posts view should show empty state', async ({ login, page }) => {
+            // Navigate directly to archived saved posts (unlikely to have any)
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=archived`);
+            // Verify the saved posts container is visible
+            await expect(page.locator('.saved-posts')).toBeVisible({ timeout: 15000 });
+            // Verify the empty notice appears
+            await expect(page.locator('.saved-posts-empty-notice')).toBeVisible({ timeout: 10000 });
+        });
+    });
+
+    test.describe('Student cannot pin messages', () => {
+        let message: Post;
+
+        test.beforeEach('Create message in seed channel', async ({ login, communicationAPIRequests }) => {
+            await login(admin);
+            message = await communicationAPIRequests.createCourseMessage({ id: writeCourse.id } as any, seedChannelId, 'channel', 'Student pin test ' + generateUUID().slice(0, 8));
+        });
+
+        test('Student should not see the pin option in the context menu', async ({ login, courseMessages, page }) => {
+            await login(studentOne, `/courses/${writeCourse.id}/communication?conversationId=${seedChannelId}`);
+            await courseMessages.checkMessage(message.id!, message.content!);
+            const postLocator = courseMessages.getSinglePost(message.id!);
+            // Right-click to open context menu
+            for (let attempt = 0; attempt < 3; attempt++) {
+                await postLocator.locator('.message-container').click({ button: 'right' });
+                try {
+                    await page.locator('.dropdown-menu.show').waitFor({ state: 'visible', timeout: 3000 });
+                    break;
+                } catch {
+                    if (attempt === 2) throw new Error('Context menu did not appear');
+                }
+            }
+            // Verify the pin option is NOT in the dropdown
+            await expect(page.locator('.dropdown-menu.show .dropdown-item', { hasText: /pin/i })).toHaveCount(0);
+            // Verify other options ARE present (bookmark, reply, forward)
+            await expect(page.locator('.dropdown-menu.show .dropdown-item', { hasText: /save|bookmark/i })).toBeVisible();
+            await expect(page.locator('.dropdown-menu.show .dropdown-item', { hasText: /reply/i })).toBeVisible();
+        });
+    });
+
     test.describe('Message search', () => {
         const uniqueSearchText = 'SearchE2E_' + generateUUID().slice(0, 8);
 
