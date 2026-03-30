@@ -34,7 +34,7 @@ describe('CourseOverviewGuard', () => {
 
     const lecture = new Lecture();
 
-    const mockCourse: Course = { id: 1, lectures: [lecture], exams: [visibleRealExam], faqEnabled: true } as Course;
+    const mockCourse: Course = { id: 1, lectures: [lecture], exams: [visibleRealExam], numberOfAcceptedFaqs: 3 } as Course;
 
     const responseFakeCourse = { body: mockCourse } as HttpResponse<Course>;
 
@@ -155,7 +155,7 @@ describe('CourseOverviewGuard', () => {
             expect(resultValue).toBe(true);
         });
 
-        it('should return true if type is faq and course has faqEnabled', () => {
+        it('should return true if type is faq and course has accepted faqs', () => {
             const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.FAQ);
             let resultValue = true;
             result.subscribe((value) => {
@@ -181,6 +181,33 @@ describe('CourseOverviewGuard', () => {
                 resultValue = value;
             });
             expect(resultValue).toBe(false);
+        });
+
+        it('should return false if type is dashboard and only iris is enabled', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const result = guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
+            let resultValue = true;
+            result.subscribe((value) => {
+                resultValue = value;
+            });
+            expect(resultValue).toBeFalsy();
+        });
+
+        it('should redirect to iris when dashboard is denied but iris is enabled', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = true;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/iris']);
+        });
+
+        it('should redirect to exercises when dashboard is denied and iris is not enabled', () => {
+            mockCourse.studentCourseAnalyticsDashboardEnabled = false;
+            mockCourse.irisEnabledInCourse = false;
+            const navigateSpy = vi.spyOn(router, 'navigate');
+            guard.handleReturn(mockCourse, CourseOverviewRoutePath.DASHBOARD);
+            expect(navigateSpy).toHaveBeenCalledWith(['/courses/1/exercises']);
         });
 
         it('should navigate to exercises if type is unknown', () => {

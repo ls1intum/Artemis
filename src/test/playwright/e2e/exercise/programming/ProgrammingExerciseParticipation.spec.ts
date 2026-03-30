@@ -5,6 +5,7 @@ import cPartiallySuccessfulSubmission from '../../../fixtures/exercise/programmi
 import { ExerciseCommit, ExerciseMode, ProgrammingLanguage } from '../../../support/constants';
 import { test } from '../../../support/fixtures';
 import { expect } from '@playwright/test';
+import { BUILD_RESULT_TIMEOUT } from '../../../support/timeouts';
 import { SshEncryptionAlgorithm } from '../../../support/pageobjects/exercises/programming/GitClient';
 import cAllSuccessful from '../../../fixtures/exercise/programming/c/all_successful/submission.json';
 import { admin, instructor, studentFour, studentOne, studentTwo, tutor } from '../../../support/users';
@@ -46,7 +47,7 @@ test.describe('Programming exercise basic submissions', { tag: '@slow' }, () => 
                 await programmingExerciseOverview.openCodeEditor(exercise.id!);
                 await programmingExerciseEditor.makeSubmissionAndVerifyResults(exercise.id!, submission, async () => {
                     const resultScore = programmingExerciseEditor.getResultScoreFromExercise(exercise.id!);
-                    await expect(resultScore).toContainText(submission.expectedResult, { timeout: 60000 });
+                    await expect(resultScore).toContainText(submission.expectedResult, { timeout: BUILD_RESULT_TIMEOUT * 2 });
                 });
             });
 
@@ -142,6 +143,7 @@ test.describe('Programming exercise advanced participation', { tag: '@slow' }, (
             );
             tutorUser = await (await userManagementAPIRequests.getUser(tutor.username)).json();
             const response = await exerciseAPIRequests.createTeam(exercise.id!, students, tutorUser);
+            expect(response.ok(), `Team creation failed: ${response.status()} ${response.statusText()}`).toBeTruthy();
             team = await response.json();
         });
 

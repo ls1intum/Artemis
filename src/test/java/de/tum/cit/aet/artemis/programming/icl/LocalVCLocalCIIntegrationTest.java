@@ -1,5 +1,6 @@
 package de.tum.cit.aet.artemis.programming.icl;
 
+import static de.tum.cit.aet.artemis.core.config.Constants.LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_EXAM_CONDUCTION;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_NORMAL;
 import static de.tum.cit.aet.artemis.programming.service.localci.LocalCITriggerService.PRIORITY_OPTIONAL_EXERCISE;
@@ -9,6 +10,7 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -48,8 +50,11 @@ import de.tum.cit.aet.artemis.programming.AbstractProgrammingIntegrationLocalCIL
 import de.tum.cit.aet.artemis.programming.domain.AuthenticationMechanism;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseBuildConfig;
 import de.tum.cit.aet.artemis.programming.domain.ProgrammingExerciseStudentParticipation;
+import de.tum.cit.aet.artemis.programming.domain.build.BuildPhaseCondition;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.cit.aet.artemis.programming.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.cit.aet.artemis.programming.dto.BuildPhaseDTO;
+import de.tum.cit.aet.artemis.programming.dto.BuildPlanPhasesDTO;
 import de.tum.cit.aet.artemis.programming.service.ProgrammingExerciseBuildConfigService;
 import de.tum.cit.aet.artemis.programming.service.localci.distributed.api.queue.DistributedQueue;
 import de.tum.cit.aet.artemis.programming.service.localvc.VcsAccessLogService;
@@ -249,6 +254,107 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
         log.info("Found {} failed access logs", failedAccessLogs.size());
         testUserLogs.forEach(accessLog -> log.info("VCS Access Log: action={}, user={}, authMechanism={}", accessLog.getRepositoryActionType(), accessLog.getUser().getLogin(),
                 accessLog.getAuthenticationMechanism()));
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testVcsAccessLog_userVcsToken_logsCorrectMechanism() {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+        var student = userUtilService.getUserByLogin(student1Login);
+
+        // Set user VCS token with valid expiry
+        String token = "vcpat-valid-token-for-log-test-exactly50characters";
+        userUtilService.setUserVcsAccessTokenAndExpiryDateAndSave(student, token, ZonedDateTime.now().plusDays(1));
+
+        // Clear any existing logs
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // Fetch using the user VCS token
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, token, projectKey1, assignmentRepositorySlug);
+
+        // Wait for the access log to be saved
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            return logs.stream().anyMatch(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.USER_VCS_ACCESS_TOKEN);
+        });
+
+        var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        var tokenAuthLogs = logs.stream().filter(log -> log.getAuthenticationMechanism() == AuthenticationMechanism.USER_VCS_ACCESS_TOKEN).toList();
+        assertThat(tokenAuthLogs).hasSize(1);
+        var logEntry = tokenAuthLogs.getFirst();
+        assertThat(logEntry.getUser().getLogin()).isEqualTo(student1Login);
+        assertThat(logEntry.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testVcsAccessLog_multipleFetches_logsEachOperation() {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Clear any existing logs
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // First fetch
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Second fetch
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Wait for access logs to be saved
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            return logs.size() >= 2;
+        });
+
+        var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        assertThat(logs).hasSizeGreaterThanOrEqualTo(2);
+
+        // Both fetches should have correct user and password-based auth
+        logs.forEach(accessLog -> {
+            assertThat(accessLog.getUser().getLogin()).isEqualTo(student1Login);
+            assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
+            assertThat(accessLog.getRepositoryActionType()).isIn(RepositoryActionType.PULL, RepositoryActionType.CLONE);
+        });
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testVcsAccessLog_fetchAndPush_logsCorrectData() {
+        var participation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+
+        // Clear any existing logs
+        vcsAccessLogRepository.deleteAll();
+        vcsAccessLogRepository.flush();
+
+        // Fetch the repository
+        localVCLocalCITestService.testFetchSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Push to the repository
+        localVCLocalCITestService.testPushSuccessful(assignmentRepository.workingCopyGitRepo, student1Login, projectKey1, assignmentRepositorySlug);
+
+        // Wait for access logs to be saved
+        await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(200)).until(() -> {
+            var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+            return logs.size() >= 2;
+        });
+
+        var logs = vcsAccessLogRepository.findAllByParticipationId(participation.getId());
+        assertThat(logs).hasSizeGreaterThanOrEqualTo(2);
+
+        // Verify all logs have correct user and authentication mechanism
+        for (var accessLog : logs) {
+            assertThat(accessLog.getUser().getLogin()).isEqualTo(student1Login);
+            assertThat(accessLog.getAuthenticationMechanism()).isEqualTo(AuthenticationMechanism.PASSWORD);
+        }
+
+        // Verify we have both read (PULL/CLONE) and write (PUSH) operations logged
+        var readLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PULL || log.getRepositoryActionType() == RepositoryActionType.CLONE)
+                .toList();
+        assertThat(readLogs).as("Fetch should be logged as read operation").isNotEmpty();
+        var pushLogs = logs.stream().filter(log -> log.getRepositoryActionType() == RepositoryActionType.PUSH).toList();
+        assertThat(pushLogs).as("Push should be logged").isNotEmpty();
     }
 
     @Disabled("Submission policy test requires build results to be processed for submission counting")
@@ -466,6 +572,56 @@ class LocalVCLocalCIIntegrationTest extends AbstractProgrammingIntegrationLocalC
 
             assertThatThrownBy(() -> localCITriggerService.triggerBuild(studentParticipation, false)).isInstanceOf(ResponseStatusException.class)
                     .hasMessageContaining("Invalid network: invalid");
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPhaseBuildPlanBeforeDueDate_excludesAfterDueDatePhases() throws Exception {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            when(exerciseDateService.isAfterDueDate(studentParticipation)).thenReturn(false);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().buildScript()).contains("set -e").contains("./gradlew testClasses\n").doesNotContain("./gradlew test\n");
+            assertThat(buildJobQueueItem.buildConfig().resultPaths()).isEmpty();
+            assertThat(buildJobQueueItem.buildConfig().areTestsExpected()).isFalse();
+        }
+
+        @Test
+        @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+        void testPhaseBuildPlanAfterDueDate_includesAfterDueDatePhases() throws Exception {
+            ProgrammingExerciseBuildConfig buildConfig = programmingExercise.getBuildConfig();
+            BuildPlanPhasesDTO phases = new BuildPlanPhasesDTO(List.of(new BuildPhaseDTO("Compile", "./gradlew testClasses", BuildPhaseCondition.ALWAYS, false, List.of()),
+                    new BuildPhaseDTO("Test", "./gradlew test", BuildPhaseCondition.AFTER_DUE_DATE, false, List.of("build/test-results/test/*.xml"))), "");
+            buildConfig.setBuildPlanConfiguration(phases.toBuildPlanConfiguration());
+            programmingExerciseBuildConfigRepository.save(buildConfig);
+
+            ProgrammingExerciseStudentParticipation studentParticipation = localVCLocalCITestService.createParticipation(programmingExercise, student1Login);
+            when(exerciseDateService.isAfterDueDate(studentParticipation)).thenReturn(true);
+            localCITriggerService.triggerBuild(studentParticipation, false);
+
+            await().until(() -> {
+                BuildJobQueueItem buildJobQueueItem = queuedJobs.peek();
+                return buildJobQueueItem != null && buildJobQueueItem.participationId() == studentParticipation.getId();
+            });
+            BuildJobQueueItem buildJobQueueItem = queuedJobs.poll();
+
+            assertThat(buildJobQueueItem).isNotNull();
+            assertThat(buildJobQueueItem.buildConfig().buildScript()).contains("set -e").contains("./gradlew testClasses\n").contains("./gradlew test\n");
+            assertThat(buildJobQueueItem.buildConfig().resultPaths()).containsExactly(LOCAL_CI_DOCKER_CONTAINER_WORKING_DIRECTORY + "/testing-dir/build/test-results/test/*.xml");
+            assertThat(buildJobQueueItem.buildConfig().areTestsExpected()).isTrue();
         }
     }
 }

@@ -77,9 +77,13 @@ else
     run_playwright parallel e2e --project=fast-tests --project=slow-tests
 fi
 
-# Merge reports
-echo "--- Merging test reports ---"
-npm run merge-junit-reports || true
+# Remove any stale results.xml (e.g. from playwright:setup init test) before
+# moving the real report into place, so CI never consumes an outdated report.
+echo "--- Finalizing test reports ---"
+rm -f ./test-reports/results.xml
+if [ -f ./test-reports/results-parallel.xml ]; then
+    mv ./test-reports/results-parallel.xml ./test-reports/results.xml
+fi
 npm run merge-coverage-reports || true
 
 # Upload reports to E2E Reports Dashboard

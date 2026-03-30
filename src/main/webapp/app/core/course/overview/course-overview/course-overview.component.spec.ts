@@ -352,8 +352,8 @@ describe('CourseOverviewComponent', () => {
         expect(sidebarItems[4].title).toContain('Learning Path');
     });
 
-    it('should create faq item when faqs are enabled', () => {
-        component.course.set({ id: 123, faqEnabled: true });
+    it('should create faq item when accepted faqs exist', () => {
+        component.course.set({ id: 123, numberOfAcceptedFaqs: 3 });
         const sidebarItems = component.getSidebarItems();
         expect(sidebarItems[3].title).toContain('FAQs');
     });
