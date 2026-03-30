@@ -43,6 +43,7 @@ import { CellTemplateRef, ColumnDef, TableViewComponent, TableViewOptions } from
 import { ParticipationManagementDTO } from './participation-management-dto.model';
 import { ParticipationSearch } from 'app/shared/table/pageable-table';
 import { FilterDropdownComponent } from 'app/exercise/shared/filter-dropdown/filter-dropdown.component';
+import { TeamStudentsListComponent } from 'app/exercise/team/team-participate/team-students-list.component';
 
 export enum FilterProp {
     ALL = 'All',
@@ -69,6 +70,7 @@ export enum FilterProp {
         ArtemisDatePipe,
         ArtemisTranslatePipe,
         FilterDropdownComponent,
+        TeamStudentsListComponent,
     ],
 })
 export class ParticipationComponent implements OnInit, OnDestroy {

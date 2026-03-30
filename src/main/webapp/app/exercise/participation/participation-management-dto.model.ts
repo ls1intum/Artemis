@@ -1,5 +1,10 @@
 import dayjs from 'dayjs/esm';
 
+export interface TeamStudentDTO {
+    name?: string;
+    login?: string;
+}
+
 export interface ParticipationManagementDTO {
     participationId: number;
     initializationState?: string;
@@ -10,6 +15,7 @@ export interface ParticipationManagementDTO {
     studentId?: number;
     studentLogin?: string;
     teamId?: number;
+    teamStudents?: TeamStudentDTO[];
     testRun: boolean;
     presentationScore?: number;
     individualDueDate?: dayjs.Dayjs;

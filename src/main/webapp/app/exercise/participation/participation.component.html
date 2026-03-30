@@ -155,7 +155,7 @@
 </ng-template>
 
 <ng-template #teamStudentsCellTemplate let-cell>
-    {{ cell.data.participantIdentifier }}
+    <jhi-team-students-list [students]="cell.data.teamStudents" />
 </ng-template>
 
 <ng-template #practiceCellTemplate let-cell>

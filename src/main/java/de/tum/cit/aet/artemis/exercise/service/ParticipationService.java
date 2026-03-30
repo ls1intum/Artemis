@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.cit.aet.artemis.assessment.domain.AssessmentType;
 import de.tum.cit.aet.artemis.assessment.domain.Result;
+import de.tum.cit.aet.artemis.assessment.dto.UserNameAndLoginDTO;
 import de.tum.cit.aet.artemis.assessment.repository.ResultRepository;
 import de.tum.cit.aet.artemis.core.domain.User;
 import de.tum.cit.aet.artemis.core.dto.SortingOrder;
@@ -847,6 +848,7 @@ public class ParticipationService {
         Long studentId = null;
         String studentLogin = null;
         Long teamId = null;
+        List<UserNameAndLoginDTO> teamStudents = null;
 
         if (participation.getStudent().isPresent()) {
             User student = participation.getStudent().get();
@@ -860,6 +862,7 @@ public class ParticipationService {
             participantName = team.getName();
             participantIdentifier = team.getShortName();
             teamId = team.getId();
+            teamStudents = team.getStudents().stream().map(s -> new UserNameAndLoginDTO(s.getName(), s.getLogin())).toList();
         }
         else {
             participantName = null;
@@ -891,8 +894,8 @@ public class ParticipationService {
         boolean testRun = Boolean.TRUE.equals(participation.isTestRun());
 
         return new ParticipationManagementDTO(participation.getId(), participation.getInitializationState(), participation.getInitializationDate(), submissionCount,
-                participantName, participantIdentifier, studentId, studentLogin, teamId, testRun, participation.getPresentationScore(), participation.getIndividualDueDate(),
-                buildPlanId, repositoryUri, buildFailed, lastResultIsManual);
+                participantName, participantIdentifier, studentId, studentLogin, teamId, teamStudents, testRun, participation.getPresentationScore(),
+                participation.getIndividualDueDate(), buildPlanId, repositoryUri, buildFailed, lastResultIsManual);
     }
 
     /**
