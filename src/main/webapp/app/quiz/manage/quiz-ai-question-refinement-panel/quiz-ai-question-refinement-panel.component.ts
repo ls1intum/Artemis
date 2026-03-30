@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
+import { Component, DestroyRef, ViewEncapsulation, effect, inject, input, output, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -28,6 +28,7 @@ export class QuizAiQuestionRefinementPanelComponent {
     private quizAiGenerationService = inject(QuizAiGenerationService);
     private profileService = inject(ProfileService);
     private translateService = inject(TranslateService);
+    private destroyRef = inject(DestroyRef);
 
     protected readonly faCircleNotch = faCircleNotch;
     protected readonly faPaperPlane = faPaperPlane;
@@ -73,7 +74,7 @@ export class QuizAiQuestionRefinementPanelComponent {
         this.refineSubscription = this.quizAiGenerationService
             .refineMultipleChoiceQuestion(this.courseId(), this.question() as MultipleChoiceQuestion, prompt)
             .pipe(
-                takeUntilDestroyed(),
+                takeUntilDestroyed(this.destroyRef),
                 finalize(() => this.isRefining.set(false)),
             )
             .subscribe({
