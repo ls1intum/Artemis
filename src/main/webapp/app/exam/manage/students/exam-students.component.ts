@@ -32,11 +32,12 @@ import { StudentsExportDialogComponent } from 'app/exam/manage/students/export-u
 import { Toolbar } from 'primeng/toolbar';
 import { MenuItem } from 'primeng/api';
 import { DeleteDialogService } from 'app/shared/delete-dialog/service/delete-dialog.service';
-import { toSignal } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toSignal } from '@angular/core/rxjs-interop';
 import { ExamStudentsMenuButtonComponent } from 'app/exam/manage/students/exam-students-menu-button/exam-students-menu-button.component';
 import { ExamAddStudentsDialogComponent } from 'app/exam/manage/students/add-students-dialog/exam-add-students-dialog.component';
 import { StudentExam } from 'app/exam/shared/entities/student-exam.model';
 import { TableModule } from 'primeng/table';
+import { ButtonDirective } from 'primeng/button';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -64,6 +65,7 @@ const cssClasses = {
         ExamStudentsMenuButtonComponent,
         ExamAddStudentsDialogComponent,
         TableModule,
+        ButtonDirective,
     ],
 })
 export class ExamStudentsComponent implements OnDestroy {
@@ -132,6 +134,8 @@ export class ExamStudentsComponent implements OnDestroy {
 
     readonly isTestExam = computed(() => this.exam()?.testExam ?? false);
 
+    private removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -143,10 +147,10 @@ export class ExamStudentsComponent implements OnDestroy {
     protected readonly faChair = faChair;
 
     readonly manageStudentsMenuActions = signal<MenuItem[]>([
-        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: 'pi pi-plus', command: () => this.openAddStudentsDialog() },
+        { label: 'artemisApp.examManagement.examStudents.menu.addStudents', icon: 'pi pi-user-plus', command: () => this.openAddStudentsDialog() },
         { label: 'artemisApp.examManagement.examStudents.menu.importUsers', icon: 'pi pi-file-import', command: () => this.openImportUsersDialog() },
         { label: 'artemisApp.examManagement.examStudents.menu.exportUsers', icon: 'pi pi-file-export', command: () => this.openExportUsersDialog() },
-        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: 'pi pi-plus', command: () => this.registerAllStudentsFromCourse() },
+        { label: 'artemisApp.examManagement.examStudents.menu.registerCourseStudents', icon: 'pi pi-user-plus', command: () => this.registerAllStudentsFromCourse() },
         {
             label: 'artemisApp.examManagement.examStudents.menu.removeAllStudents',
             icon: 'pi pi-user-minus',
@@ -171,6 +175,10 @@ export class ExamStudentsComponent implements OnDestroy {
         this.courseId.set(Number(this.route.snapshot.paramMap.get('courseId')));
         this.isAdmin.set(this.accountService.isAdmin());
 
+        this.removeAllStudentsEmitter.pipe(takeUntilDestroyed()).subscribe((event) => {
+            this.removeAllStudents(event);
+        });
+
         effect(() => {
             const exam = this.routeData().exam;
             if (exam) {
@@ -192,9 +200,6 @@ export class ExamStudentsComponent implements OnDestroy {
     }
 
     openRemoveAllStudentsDialog() {
-        const removeAllStudentsEmitter = new EventEmitter<{ [key: string]: boolean }>();
-        removeAllStudentsEmitter.subscribe((event) => this.removeAllStudents(event));
-
         this.deleteDialogService.openDeleteDialog({
             entityTitle: this.exam()?.title || '',
             deleteQuestion: 'artemisApp.studentExams.removeAllStudents.question',
@@ -205,7 +210,7 @@ export class ExamStudentsComponent implements OnDestroy {
             },
             actionType: ActionType.Remove,
             buttonType: ButtonType.ERROR,
-            delete: removeAllStudentsEmitter,
+            delete: this.removeAllStudentsEmitter,
             dialogError: this.dialogError$,
             requireConfirmationOnlyForAdditionalChecks: false,
         });

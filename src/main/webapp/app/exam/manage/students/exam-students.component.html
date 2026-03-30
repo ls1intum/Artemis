@@ -23,7 +23,7 @@
             <jhi-exam-students-menu-button
                 [model]="manageStudentsMenuActions()"
                 label="artemisApp.examManagement.examStudents.menu.manageStudents"
-                buttonIconClass="pi pi-users"
+                buttonIconClass="pi pi-user-edit"
                 [disabled]="isTestExam()"
                 buttonClass="me-2"
             />
@@ -86,44 +86,44 @@
             </tr>
         </ng-template>
         <ng-template #body let-student>
-            @let examUser = asExamUser(student);
+            @let examUser = asExamUser(student)!;
             <tr>
                 <td>
                     <img
                         style="max-width: 60px"
-                        [id]="examUser?.id"
+                        [id]="examUser.id"
                         class="img-fluid"
-                        [src]="examUser?.studentImagePath ? addPublicFilePrefix(examUser?.studentImagePath) : missingImage"
+                        [src]="examUser.studentImagePath ? addPublicFilePrefix(examUser.studentImagePath) : missingImage"
                     />
                 </td>
                 <td>
-                    <span>{{ examUser?.user?.name }}</span>
-                    <span class="text-secondary">({{ examUser?.user?.login }})</span>
+                    <span>{{ examUser.user?.name }}</span>
+                    <span class="text-secondary">({{ examUser.user?.login }})</span>
                 </td>
                 <td>
-                    <span>{{ examUser?.user?.visibleRegistrationNumber }}</span>
+                    <span>{{ examUser.user?.visibleRegistrationNumber }}</span>
                 </td>
                 <td>
-                    @if (examUser?.actualRoom) {
+                    @if (examUser.actualRoom) {
                         <div>
-                            <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser?.plannedRoom }}</del>
-                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser?.actualRoom }}</span>
+                            <del title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</del>
+                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualRoom' | artemisTranslate }}">{{ examUser.actualRoom }}</span>
                         </div>
                     } @else {
                         <div>
-                            <span title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser?.plannedRoom }}</span>
+                            <span title="{{ 'artemisApp.exam.examUsers.plannedRoom' | artemisTranslate }}">{{ examUser.plannedRoom }}</span>
                         </div>
                     }
                 </td>
                 <td>
-                    @if (examUser?.actualSeat) {
+                    @if (examUser.actualSeat) {
                         <div>
-                            <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser?.plannedSeat }}</del>
-                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser?.actualSeat }}</span>
+                            <del title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</del>
+                            <span class="ml-1" title="{{ 'artemisApp.exam.examUsers.actualSeat' | artemisTranslate }}">{{ examUser.actualSeat }}</span>
                         </div>
                     } @else {
                         <div>
-                            <span title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser?.plannedSeat }}</span>
+                            <span title="{{ 'artemisApp.exam.examUsers.plannedSeat' | artemisTranslate }}">{{ examUser.plannedSeat }}</span>
                         </div>
                     }
                 </td>
@@ -143,8 +143,38 @@
                     }
                 </td>
                 <td>
-                    <span>action1</span>
-                    <span>action2</span>
+                    <div class="d-flex gap-1">
+                        <button
+                            pButton
+                            size="small"
+                            severity="secondary"
+                            [title]="'artemisApp.exam.examUsers.changeLocationButton' | artemisTranslate"
+                            (click)="reseatingDialog.openDialog(examUser)"
+                            [disabled]="isTestExam()"
+                        >
+                            <fa-icon [icon]="faChair" />
+                        </button>
+                        <button
+                            pButton
+                            jhiDeleteButton
+                            severity="danger"
+                            size="small"
+                            title="Remove"
+                            [disabled]="isTestExam()"
+                            [renderButtonStyle]="false"
+                            [renderButtonText]="false"
+                            [actionType]="ActionType.Remove"
+                            [entityTitle]="examUser.user?.login || ''"
+                            deleteQuestion="artemisApp.examManagement.examStudents.removeFromExam.modalQuestion"
+                            deleteConfirmationText="artemisApp.examManagement.examStudents.removeFromExam.typeNameToConfirm"
+                            (delete)="removeFromExam(examUser, $event)"
+                            [additionalChecks]="{ deleteParticipationsAndSubmission: 'artemisApp.examManagement.examStudents.removeFromExam.deleteParticipationsAndSubmission' }"
+                            [dialogError]="dialogError$"
+                            [requireConfirmationOnlyForAdditionalChecks]="true"
+                        >
+                            <i class="pi pi-user-minus"></i>
+                        </button>
+                    </div>
                 </td>
             </tr>
         </ng-template>
