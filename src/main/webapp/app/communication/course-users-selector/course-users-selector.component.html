@@ -1,7 +1,7 @@
 <div (focusout)="onTouched()">
     <div class="form-group">
-        @if (label) {
-            <label [for]="id + '-search-input'">{{ label }}</label>
+        @if (label()) {
+            <label [for]="id + '-search-input'">{{ label() }}</label>
         }
         <input
             #searchInput
@@ -57,19 +57,19 @@
         }
     </div>
     <div class="text-end">
-        @if (rolesToAllowSearchingIn.includes('students')) {
+        @if (rolesToAllowSearchingIn().includes('students')) {
             <div class="form-check form-check-inline">
                 <input type="checkbox" class="form-check-input" id="students" [checked]="searchStudents" (change)="searchStudents = !searchStudents; onFilterChange()" />
                 <label class="form-check-label" for="students" jhiTranslate="artemisApp.course.students"></label>
             </div>
         }
-        @if (rolesToAllowSearchingIn.includes('tutors')) {
+        @if (rolesToAllowSearchingIn().includes('tutors')) {
             <div class="form-check form-check-inline">
                 <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
                 <label class="form-check-label" for="tutors" jhiTranslate="artemisApp.course.tutors"></label>
             </div>
         }
-        @if (rolesToAllowSearchingIn.includes('instructors')) {
+        @if (rolesToAllowSearchingIn().includes('instructors')) {
             <div class="form-check form-check-inline">
                 <input
                     type="checkbox"
@@ -82,7 +82,7 @@
             </div>
         }
     </div>
-    @if (showUserList) {
+    @if (showUserList()) {
         <ul class="list-group">
             @for (user of selectedUsers; track trackIdentity(i, user); let i = $index) {
                 <li class="selected-user list-group-item d-flex justify-content-between align-items-center">
